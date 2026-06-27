@@ -1,0 +1,112 @@
+extend type Query {
+  getSampleValueAssessment(sampleId: String!): SPARK_ValueAssessmentResponse
+  getValueAssessmentCategories: SPARK_ValueAssessmentCategoriesResponse
+  searchValueAssessmentMaterials(valueAssessmentId: String!, q: String): SPARK_ValueAssessmentFabricSearchResponse
+  searchValueAssessmentFabrics(valueAssessmentId: String!, q: String): SPARK_ValueAssessmentFabricSearchResponse
+  getAssessmentDetails(assessmentId: String!): SPARK_AssessmentResponse
+}
+
+extend type Mutation {
+  createScenario(valueAssessmentId: String!, name: String!): SPARK_ValueAssessmentRecord
+  updateScenarioReplaceFabric(scenarioAssessmentId: String!, fabricId: String!, newFabricId: String!): SPARK_AssessmentResponse
+  createValueAssessmentMockFabric(valueAssessmentId: String!, requirementId: String!, materialCategoryId: String!, fabricWidthUnit: String!, description: String!, cost: Float!, fabricWidth: Float!): SPARK_CreateValueAssessmentMockFabricResponse
+  includeOrExcludePattern(scenarioAssessmentId: String!, patternId: String!, action: String!): SPARK_AssessmentResponse
+}
+
+type SPARK_ValueAssessmentResponse {
+  data: SPARK_ValueAssessment
+  message: String
+  errors: [SPARK_ValueAssessmentErrors]
+}
+
+type SPARK_ValueAssessmentCategoriesResponse {
+  data: [SPARK_ValueAssessmentCategory]
+  message: String
+  errors: [SPARK_ValueAssessmentErrors]
+}
+
+type SPARK_CreateValueAssessmentMockFabricResponse {
+  data: SPARK_ValueAssessmentFabricRecord
+  message: String
+  errors: [SPARK_ValueAssessmentErrors]
+}
+
+type SPARK_ValueAssessmentFabricSearchResponse {
+  data: [SPARK_ValueAssessmentFabricRecord]
+  totalItems: Int
+  message: String
+  errors: [SPARK_ValueAssessmentErrors]
+}
+
+type SPARK_AssessmentResponse {
+  data: SPARK_ValueAssessmentRecord
+  message: String
+  errors: [SPARK_ValueAssessmentErrors]
+}
+
+type SPARK_ValueAssessmentErrors {
+  resource: String
+  field: String
+  code: String
+  reason: String
+}
+
+type SPARK_ValueAssessment {
+  id: String
+  avatar: String
+  silhouette: String
+  plannedRetailPrice: Float
+  createdBy: String
+  createdAt: String
+  updatedAt: String
+  originalAssessment: SPARK_ValueAssessmentRecord
+  scenarioAssessments: [SPARK_ValueAssessmentRecord]
+  consumptionUnitType: String
+}
+
+type SPARK_ValueAssessmentFabricRecord {
+  id: String!
+  humanId: String,
+  requirementId: String
+  description: String
+  materialCategory: String
+  isMockFabric: Boolean
+}
+
+type SPARK_ValueAssessmentCategory {
+  id: String
+  name: String
+}
+
+type SPARK_ValueAssessmentRecord {
+  id: String
+  name: String
+  isFavorite: Boolean
+  isOriginal: Boolean
+  createdAt: String
+  updatedAt: String
+  consumptionUnitType: String
+  columns: [SPARK_ValueAssessmentColumn]
+  rows: [SPARK_ValueAssessmentRow]
+}
+
+type SPARK_ValueAssessmentColumn {
+  field: String
+  headerName: String
+}
+
+type SPARK_ValueAssessmentRow {
+  id: String
+  active: Boolean
+  uuid: String
+  type: String
+  isResolved: Boolean
+  costGroup: [String]
+  costs: [SPARK_ValueAssessmentRowCost]
+}
+
+type SPARK_ValueAssessmentRowCost {
+  columnFieldId: String
+  cost: Float
+  consumption: Float
+}

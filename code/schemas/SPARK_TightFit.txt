@@ -1,0 +1,41 @@
+extend type Query {
+    getTightFits(ids: [String], name: String, statusIds: [Int], brandIds: [Int], divisionIds: [Int], departmentIds: [Int]): SPARK_TightFitsResponse
+    getTightFitByIdAndVersion(id: String, version: Int): SPARK_TightFit
+}
+
+extend type Mutation {
+    addTightFit(tightFit: SPARK_TightFitInput): SPARK_TightFit
+    updateTightFit(tightFit: SPARK_TightFitInput): SPARK_TightFit
+}
+
+type SPARK_TightFitsResponse {
+    tightFits: [SPARK_TightFit]
+}
+
+type SPARK_TightFit {
+    humanId: String
+    version: Int
+    name: String
+    statusId: Int
+    divisions: [IG_Division]
+    brands: [VMM_Brand]
+    departments: [IG_Department]
+    coreSizes: [SPARK_MeasurementSetCoreSizes]
+    rows: [SPARK_MeasurementRow]
+    createdBy: SPARK_UserProfileAttributes
+    updatedBy: SPARK_UserProfileAttributes
+    createdAt: String
+    updatedAt: String
+    statusName: String
+}
+
+input SPARK_TightFitInput {
+    tightFitId: String
+    name: String
+    statusId: Int
+    divisionIds: [Int]
+    brandIds: [Int]
+    departmentIds: [Int]
+    coreSizes: [SPARK_MeasurementSetCoreSizesInput]
+    rows: [Spark_MeasurementRowInput]
+}

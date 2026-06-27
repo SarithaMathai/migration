@@ -1,0 +1,57 @@
+extend type Query {
+  getMeasurementTemplates (
+    page: Int!
+    size: Int!
+  ) : SPARK_MeasurementTemplatesPaged
+  getMeasurementTemplatesByIds(ids:[String]): SPARK_MeasurementTemplatesPaged
+}
+extend type Mutation {
+  addMeasurementTemplate(measurementTemplate: SPARK_MeasurementTemplateInput) : SPARK_MeasurementTemplate
+  updateMeasurementTemplate(measurementTemplate: SPARK_MeasurementTemplateInput) : SPARK_MeasurementTemplate
+  deleteMeasurementTemplate(ids: [ID]):Boolean
+}
+
+type SPARK_MeasurementTemplatesPaged {
+  content:[SPARK_MeasurementTemplate]
+  pageable: SPARK_Pageable
+  paging: SPARK_Paging
+}
+
+type SPARK_MeasurementTemplate {
+  humanId: String
+  name: String
+  status: SPARK_CodeDescription
+  divisions: [IG_Division]
+  brands: [VMM_Brand]
+  departments: [IG_Department]
+  version: Int
+  createdBy: SPARK_UserProfileAttributes
+  updatedBy: SPARK_UserProfileAttributes
+  createdAt: DateTime
+  updatedAt: DateTime
+  rows: [SPARK_MeasurementTemplateRow]
+}
+
+type SPARK_MeasurementTemplateRow{
+  pointOfMeasure: SPARK_Pom
+  toleranceOver: String
+  toleranceUnder: String
+  unitOfMeasure: SPARK_UnitsOfMeasure
+}
+
+input SPARK_MeasurementTemplateInput {
+  name: String
+  divisionIds: [Int]
+  brandIds: [Int]
+  departmentIds: [Int]
+  rows: [SPARK_MeasurementTemplateRowInput]
+  templateId: String
+  statusId: Int
+}
+
+input SPARK_MeasurementTemplateRowInput {
+  pointOfMeasure: SPARK_PomInput
+  toleranceOver: String
+  toleranceUnder: String
+  unitOfMeasureId: Int
+}

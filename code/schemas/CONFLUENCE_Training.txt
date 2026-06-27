@@ -1,0 +1,62 @@
+extend type Query {
+  getTrainingLabels: [CONFLUENCE_Labels]
+  searchTrainingDocuments(topics: [String]): [CONFLUENCE_Documents]
+  getAllTrainingDocuments: CONFLUENCE_Training_Documents_AND_Labels
+  getImage(imageId:String, imageName:String, imageType:String, attachmentType: String) : String
+  getVideo(videoId:String, videoName:String, type:String) : String
+  getTrainingDocumentById(documentId: ID): CONFLUENCE_Documents
+}
+
+type CONFLUENCE_Training_Documents_AND_Labels {
+  labels: [CONFLUENCE_Labels]
+  documents(userType: String): CONFLUENCE_DocumentsPageable
+}
+
+type CONFLUENCE_Labels {
+  name: String
+  id: ID
+}
+
+type CONFLUENCE_DocumentsPageable {
+  searchResults : [CONFLUENCE_Documents]
+}
+
+type CONFLUENCE_Documents
+{
+  id: ID
+  title: String
+  createdBy: CONFLUENCE_UserDetails
+  createdDate: String
+  updatedDate: String
+  attachments: [CONFLUENCE_Attachments]
+  labels: [CONFLUENCE_Labels]
+  content: String
+  updatedBy: CONFLUENCE_UserDetails
+  verificationGroup: [String]
+  topics: CONFLUENCE_DocumentTopics
+  tags: [String]
+  contentTypes: [String]
+}
+
+type CONFLUENCE_DocumentTopics {
+  name: String
+  isIgnore: Boolean
+}
+
+type CONFLUENCE_Attachments {
+  attachmentId: String
+  attachmentName: String
+  extensions: CONFLUENCE_Attachment_Extensions
+}
+
+type CONFLUENCE_Attachment_Extensions {
+  mediaType: String
+  fileSize: String
+}
+
+type CONFLUENCE_UserDetails {
+  firstName: String
+  lastName: String
+  isInternal: Boolean
+
+}

@@ -1,0 +1,175 @@
+# =============================================================================
+# Claims Domain — Federated Target DGS Schema (translated from source SDL)
+# Pipeline Version: 2.0 · Generated: 2026-06-27
+# DGS Target: Green-field → SEPARATE `claims` subgraph (repo spark-claims) — NOT the plm-product monorepo
+# Source:    code/schemas/SPARK_Claims.txt (the real SDL) + code/resolvers/product/SPARK_Claims.txt (behaviour)
+# Target:    spark-claims/apps/app/src/main/resources/schema/claims.graphqls
+# This is the FEDERATED TARGET schema, translated from the SDL (SPARK_ prefix dropped, @key added).
+# Nullability/return-types are taken from the SDL (verified against the resolver). Claims is its OWN
+# subgraph: Product/search/workspace/user-profile/VMM are all cross-subgraph (federation/gateway).
+# Status: 🔜 all need migration.
+# =============================================================================
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@extends", "@external", "@shareable"])
+
+scalar DateTime
+
+# --- External stubs (all cross-subgraph — claims is its own DGS) ---
+type Product @extends @key(fields: "id") { id: ID! @external }                  # plm-product subgraph
+type VMM_BusinessPartner @extends @key(fields: "id") { id: ID! @external }
+type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
+type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
+type UserGroup_Participants @extends @key(fields: "id") { id: ID! @external }
+type AccessControl @extends @key(fields: "id") { id: ID! @external }
+type ResourcePermissions @extends @key(fields: "id") { id: ID! @external }
+type ProductComponentStatus @extends @key(fields: "id") { id: ID! @external }
+type TeamPaged @extends @key(fields: "id") { id: ID! @external }                # team/search subgraph
+
+# --- Shared value types ---
+type CodeDescription @shareable { code: Int, description: String }
+
+# --- Owned entity: a claim ---
+type Claims @key(fields: "humanId") {
+  humanId: String                 # @key — the SDL exposes no `id` field; the resolver keys on humanId
+  parentId: String
+  version: Int
+  claimName: String
+  additionalInfo: String
+  claimNotes: String
+  manualLock: Boolean
+  subjectiveStatements: [String]
+  workspaceContext: [String]
+  status: CodeDescription
+  statuses: [ProductComponentStatus]
+  claimDetails: [ClaimDetails]
+  createdAt: String
+  updatedAt: DateTime
+  # field resolvers ↓
+  access: AccessControl
+  currentUserPermissions: ResourcePermissions
+  createdBy: UserProfileAttributes
+  updatedBy: UserProfileAttributes
+  partners: [VMM_BusinessPartner]
+  businessPartner: VMM_BusinessPartner     # 3-way fallback (partnerId || {bpId:0,bpName:'Target'} || dpPartnerId)
+  designPartner: VMM_BusinessPartner
+  workspaces: [WorkspaceV2]
+  product: Product                          # only when parentId starts with 'PID'
+  parentDetails: ParentDetails              # backed by the parent product record
+  participantDetails: UserGroup_Participants
+}
+
+type ParentDetails {
+  otherClaimBps: [Int]        # field resolver → elastic claims by parentId (🔴 search)
+  systemTeams: TeamPaged      # field resolver → elastic team search from product BPs (🔴 search)
+  droppedPartnerIds: [Int]    # direct from the parent product record
+}
+
+type ClaimDetails {
+  id: String!
+  claimCategory: String
+  technicalClaim: String
+  claimId: String
+  claimName: String           # field resolver → guestFacingClaim (computed)
+  claimDescription: String
+  guestFacingClaim: String
+  guestFacingClaimId: ID
+  appliesTo: String
+  vendorSubstantiate: ClaimSubstantiate
+  status: CodeDescription
+  communicationChannel: CodeDescription
+  shareWithGuests: Boolean
+  claimsAbout: CodeDescription
+  packagingCopy: ClaimPackagingCopy
+}
+
+type ClaimPackagingCopy { packagingLocation: String, packagingVerbiage: String, descriptor: String, warningsAndCaution: String }
+type ClaimSubstantiate { substantiated: Boolean, substantiatedAt: String, substantiatedBy: UserProfileAttributes }
+type ClaimExport { id: String, requestId: String, createdAt: String, status: String }
+type Guest_Facing { id: ID, name: String }
+type CommunicationChannel { code: Int, description: String, info: String }
+
+# --- Inputs ---
+input ClaimsInput {
+  additionalInfo: String
+  claimNotes: String
+  parentId: String
+  humanId: String
+  partners: [PartnerDetails]
+  claimDetails: [ClaimDetailsInput]
+  status: String
+  workspaceContext: [ID]
+  inheritSecurityFromParent: Boolean
+  participantDetails: UserGroup_ParticipantsInput
+  claimName: String     # TEMPLATE ONLY
+  type: Int             # TEMPLATE ONLY
+  subjectiveStatements: [String]
+}
+
+input ClaimsUpdateInput {
+  additionalInfo: String
+  claimNotes: String
+  parentId: String
+  humanId: String
+  partner: PartnerDetails
+  dpPartner: PartnerDetails
+  claimDetails: [ClaimDetailsInput]
+  status: String
+  workspaceContext: PartialWorkspaceAssociationsInput   # object on update (drives the multi-step write)
+  claimName: String     # TEMPLATE ONLY
+  subjectiveStatements: [String]
+  statuses: [ProductComponentStatusUpdateInput]
+}
+
+input BulkClaimsUpdateInput { updateClaimDtoList: [ClaimsUpdateInput] }
+input PartnerDetails { id: ID, name: String, accessControlGroupId: String, type: Int }
+input ClaimDetailsInput {
+  id: ID
+  claimCategory: String
+  technicalClaim: String
+  claimId: String
+  guestFacingClaim: String
+  guestFacingClaimId: ID
+  appliesTo: String
+  vendorSubstantiate: ClaimSubstantiateInput
+  status: ID
+  communicationChannel: ID
+  shareWithGuests: Boolean
+  claimsAbout: ID
+}
+input ClaimSubstantiateInput { substantiated: Boolean }
+input PartialWorkspaceAssociationsInput { addWorkspaces: [ID], removeWorkspaces: [ID] }
+input ProductComponentStatusUpdateInput { workspaceId: String, statusId: Int, productId: String }
+input UserGroup_ParticipantsInput { _placeholder: String }
+
+# --- Queries (names + nullability preserved from the SDL) ---
+extend type Query {
+  getClaims(parentHumanId: String, claimHumanIds: [String], partnerIds: [String]): [Claims]   # 🔜 B01
+  getClaimByIds(claimHumanIds: [String]): [Claims]                                             # 🔜 B02
+  getCommunicationChannels: [CommunicationChannel]                                             # 🔜 B03 (cacheable)
+  getAllClaimsAbout: [CodeDescription]                                                         # 🔜 B04 (cacheable)
+  getClaimExports: [ClaimExport]                                                               # 🔜 B05
+  searchGuestFacing(queryParam: String): [Guest_Facing]                                        # 🔜 C01
+  getClaimsElastic(parentHumanId: String): [Claims]                                            # 🔜 C02 (🔴 search)
+}
+
+# --- Mutations (names + nullability preserved from the SDL) ---
+extend type Mutation {
+  createClaim(sparkClaim: ClaimsInput): [Claims]                       # 🔜 D01 (throws on validationErrors)
+  bulkUpdateClaim(sparkClaim: BulkClaimsUpdateInput): [Claims]         # 🔜 D02 (status_code error contract)
+  requestClaimExport: String                                          # 🔜 D03
+  lockClaim(claimId: String!): Claims                                 # 🔜 D04
+  unlockClaim(claimId: String!): Claims                               # 🔜 D05
+  updateClaim(sparkClaim: ClaimsUpdateInput): Claims                   # 🔜 E01 (proxy ACL + workspace + body, non-atomic)
+}
+
+# --- Federation: Claims contributes to Product + TechPack (Phase F, BLOCKED-BY product) ---
+# extend type Product @key(fields: "id") {
+#   id: ID! @external
+#   claims(partnerIds: [String], includeClaims: Boolean): [Claims]      # F01
+# }
+# extend type ResourcesCount @key(fields: "productId partnerId") {       # F02 (TechPack — see SPARK-PROD-F05)
+#   productId: ID! @external
+#   partnerId: ID! @external
+#   claims: [ID]
+# }

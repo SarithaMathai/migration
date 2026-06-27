@@ -1,0 +1,77 @@
+extend type Query {
+  getRelationship(
+    id: String!
+    type: String
+    maxDepth: Int
+  ): SPARK_GetRelationship
+  getWhereUsed(id: String!, type: String, maxDepth: Int): SPARK_GetRelationship @deprecated(reason: "Use whereUsedSearch")
+  searchRelationshipsByIds(id: String, type: String, maxDepth: Int, excludeTypeList: [String], includeBranches: [String], includeNodeTypes: [String]): [SPARK_GetRelationship]
+  whereUsedSearch(id: String, maxDepth: Int, excludeTypeList: [String], includeBranches: [String], includeNodeTypes: [String]): [SPARK_GetRelationship]
+}
+
+extend type Mutation {
+  addRelationship(
+    sparkRelationship: SPARK_RelationshipInput!
+  ): SPARK_AddRelationshipNode
+  removeRelationship(
+    id: String!
+    sparkRelationship: [SPARK_RemoveRelation]!
+  ): String
+  deleteResource(id: String!): String
+}
+
+input SPARK_RelationshipInput {
+  newRelationshipRootDto: SPARK_RelationshipRootInput
+  newRelationshipNodeDto: [SPARK_RelationshipNodeInput]
+}
+
+input SPARK_RelationshipRootInput {
+  root: String!
+  rootResourceType: String!
+}
+
+input SPARK_RelationshipNodeInput {
+  node: String
+  nodeResourceType: String
+  depth: Int
+  metadata: String
+}
+
+input SPARK_RemoveRelation {
+  id: String!
+  resourceType: String!
+}
+
+type SPARK_GetRelationship {
+  id: String!
+  type: String
+  nodes: [SPARK_RelationshipNode]
+}
+
+type SPARK_RelationshipNode {
+  id: String!
+  type: String
+  depth: Int
+  metadata: String
+}
+
+type SPARK_AddRelationshipNode {
+  root: SPARK_Root!
+  node: SPARK_Node
+}
+
+type SPARK_Root {
+  id: String
+  relationshipId: String
+  resourceType: String
+  resourceId: String
+}
+
+type SPARK_Node {
+  id: String
+  relationshipId: String
+  associations: [Int]
+  resourceType: String
+  resourceId: String
+  metadata: String
+}

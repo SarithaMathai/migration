@@ -1,0 +1,144 @@
+extend type Query {
+  getReleasePacketHistory(workspaceId:String!, productId:String!, partnerId:String!): SPARK_TechPack
+  getBulkReleasePacketHistory(releasePacketHistoryRequestDtos: [SPARK_BulkReleaseHistoryInput]): [SPARK_TechPack]
+  getProductPacketReports: [SPARK_TechPackReports]
+}
+
+extend type Mutation {
+  abortGeneratePdf(ids: [ID!]): [SPARK_TechPackArchive]
+  retryPdfGeneration(reportId: String!): SPARK_TechPackArchive
+  generateCoreTechPack(sparkTechpackContent: SPARK_TechPackInput!): SPARK_TechPack
+  generateCoreTechPacksBulk(sparkBulkTechpackContent: SPARK_BulkTechpackInput!): SPARK_TechPack
+}
+
+type SPARK_TechPackArchive {
+  id: ID!
+  name: String
+  status: String
+}
+
+type SPARK_TechPack {
+  id: ID!
+  name: String
+  status: SPARK_TechPackStatus
+  createdAt: DateTime!
+  updatedAt: DateTime
+  owner: ID
+  ownerName:SPARK_UserProfileAttributes
+  productId: String,
+  resourceId: String,
+}
+
+type SPARK_TechPackReports {
+  id: String
+  resourceId: String
+  docName: String
+  fileName: String
+  partnerId: ID
+  workspaceId: String
+  productId: String
+  status: String
+  owner: String
+  ownerName:SPARK_UserProfileAttributes
+  createdAt: DateTime
+  visited: Boolean
+  archived: Boolean
+  docSize: String
+  documentType: String
+  releasedPacket: Boolean
+  progressPercentage: Int
+}
+
+enum SPARK_TechPackStatus {
+  Processing
+  Completed
+  Failed
+}
+
+input SPARK_BulkReleaseHistoryInput {
+  workspaceId: String!,
+  productId: String!,
+  partnerId: ID!
+}
+
+input SPARK_TechPackInput {
+  mappings: SPARK_TechPackMappingInput
+  partner: VMM_BusinessPartnerInput
+  parentId: String
+  generationTime: String
+  releasedPacket: Boolean
+  includeTableOfContents: Boolean
+  packetType: String
+  rootLevelAttachments: [SPARK_AttachmentLocationInput]
+}
+
+input SPARK_AttachmentLocationInput {
+  attachmentId: String!
+  location: String!
+}
+
+input SPARK_BulkTechpackInput {
+  mappings: [SPARK_TechPackMappingInput]
+  workspaceId: String
+  workspaceDescription: String
+  partner: VMM_BusinessPartnerInput
+  parentId: String
+  generationTime: String
+  releasedPacket: Boolean
+  includeOverview: Boolean
+  includeTableOfContents: Boolean
+  packetType: String
+  rootLevelAttachments: [SPARK_AttachmentLocationInput]
+}
+
+input SPARK_TechPackMappingInput {
+  product: String
+  productDescription: String
+  productThumbnailId: String
+  description: String
+  parentProductId: String
+  workspace: String
+  packaging: String
+  spgId: String
+  packagingBoms: [String]
+  productBoms: [String]
+  claims: [String]
+  measurementSets: [String]
+  constructionSets: [String]
+  samples: [String]
+  attachments: [String]
+  tcinIds: [String]
+  includeTcinIds: Boolean
+  discussionAttachments: [String]
+  includeDiscussionAttachments: Boolean
+  includeSampleAttachments: Boolean
+  discussions: [String]
+  watchlists: [String]
+  enableWorkspaceContextFiltering: Boolean
+  packagingDielineAttachments: [String]
+}
+
+input VMM_BusinessPartnerInput {
+  id: ID
+  name: String
+}
+
+input productContextInput{
+  partnerId: ID
+  productId: ID
+  parentProductId: ID
+  workspaceContext: String
+}
+
+input bulkGenerateProductPacketMappingInput {
+  includeBoms: Boolean
+  includeClaims: Boolean
+  includeConstructions: Boolean
+  includeDiscussionAttachments: Boolean
+  includeDiscussions: Boolean
+  includeMeasurementSets: Boolean
+  includeOverview: Boolean
+  includeProductAttachments: Boolean
+  includeSample: Boolean
+  includeWatchlists: Boolean
+}

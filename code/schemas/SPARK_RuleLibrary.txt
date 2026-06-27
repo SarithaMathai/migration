@@ -1,0 +1,109 @@
+extend type Query {
+	getAllRuleOptions: [SPARK_Rule]
+	getAllRuleLibraries: SPARK_RuleLibrary_Paged
+	getRuleLibrary(id: String!): SPARK_RuleLibrary
+	searchRuleLibrary(
+		productIds: [String]
+		departmentIds: [Int]
+		departments: [SPARK_Department_Class_Search]
+		businessPartnerIds: [ID]
+		activeOnly: Boolean
+	): [SPARK_RuleLibrary]
+	searchRuleLibraryGroupedByPIDS(
+		productIds: [String]
+		departmentIds: [Int]
+		departments: [SPARK_Department_Class_Search]
+		businessPartnerIds: [ID]
+		activeOnly: Boolean
+	): [SPARK_RuleLibrary_By_Product]
+	searchRuleLibraryByResource(
+		productIds: [String]
+		departmentIds: [Int]
+		departments: [SPARK_Department_Class_Search]
+		businessPartnerIds: [ID]
+		activeOnly: Boolean
+	): SPARK_RuleLibrary_SearchResults_List
+}
+
+extend type Mutation {
+	addRuleLibrary(ruleLibrary: SPARK_RuleLibrary_Input!) :  SPARK_RuleLibrary
+	updateRuleLibrary(id: String!, ruleLibrary: SPARK_RuleLibrary_Input!) :  SPARK_RuleLibrary
+	deleteRuleLibrary(id: String!): Boolean
+}
+
+input SPARK_RuleLibrary_Input {
+  active: Boolean
+  criteria: SPARK_RuleCriteria_Input
+  rule: Int
+}
+
+input SPARK_Department_Class_Search {
+	id: Int
+	classIds: [Int]
+}
+
+input SPARK_RuleCriteria_Input {
+	departmentIds: [Int]
+	departments: [SPARK_Department_Class_Input]
+	businessPartnerIds: [ID]
+}
+
+input SPARK_Department_Class_Input {
+	id: Int
+	classIds: [Int]
+	brandComplianceRule: Boolean
+}
+
+type SPARK_RuleLibrary_By_Product {
+	productId: String
+	rules: [SPARK_RuleLibrary]
+}
+
+type SPARK_RuleLibrary {
+  id: String
+  active: Boolean
+  criteria: SPARK_RuleCriteria
+  rule: SPARK_CodeDescription
+  insightsClassExclusion: [IG_Clazz]
+  version: Int
+  createdAt: DateTime!
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: DateTime!
+  updatedBy: SPARK_UserProfileAttributes
+}
+
+type SPARK_RuleLibrary_SearchResults_List {
+	results: [SPARK_RuleLibrary_SearchResults]
+}
+
+type SPARK_RuleLibrary_SearchResults {
+	resource: String
+	resourceType: String
+	rules: [SPARK_RuleLibrary]
+}
+
+type SPARK_RuleLibrary_Paged {
+	content: [SPARK_RuleLibrary]
+	paging: SPARK_Paging
+	pageable: SPARK_Pageable
+}
+
+type SPARK_RuleCriteria {
+	departmentClasses: [SPARK_RuleDepartmentClass]
+	businessPartners: [VMM_BusinessPartner]
+	brandComplianceRule: Boolean
+}
+
+type SPARK_RuleDepartmentClass {
+	department: IG_Department
+	clazzes: [IG_Clazz]
+	brandComplianceRule: Boolean
+}
+
+type SPARK_Rule {
+	id: Int
+	name: String
+	orderBy: Int
+	ruleType: String
+	overriddenBy: [SPARK_Rule!]
+}

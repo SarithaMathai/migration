@@ -1,0 +1,93 @@
+extend type Query {
+  getBidsForProduct(pids:[String], workspaceId: String, askId: String): [Negotiator_Bid]
+}
+
+type Negotiator_Spark_Data {
+    pid: String
+    description: String
+    thumbnailId: String
+}
+
+type Negotiator_Item {
+    systemStatus: String
+    description: String
+    programName: String
+    impressionId: String
+    impressionSourceId: String
+    impression: String
+    department: IG_Department
+    clazz: IG_Clazz
+    size: String
+    impressionType: String
+    sizeId: String
+}
+
+type Negotiator_Import_Vendor {
+    id: Int
+    vendorName: String
+    percentFreeCarrierUnits: Float
+    freeCarrierUnitCost: Float
+    freeCarrierFactoryCity: String
+    dutyRate: Float
+    portOfExport: String
+    countryOfOrigin: String
+    inlandRate: Float
+    oceanRate: Float
+    portToDcRate: Float
+}
+
+type Negotiator_Cost {
+    imu: Float
+    pmu: Float
+    totalNetCost: Float
+    totalDutyCost: Float
+    fees: Float
+    totalFirstCost: Float
+    totalDvsCost: Float
+    avgFirstCost: Float
+    avgNetCost: Float
+    netPmu: Float
+    totalFreightCost: Float
+    totalFactoryFreightCost: Float
+    totalDomesticFreightCost: Float
+    totalImportFreightCost: Float
+    totalRetail: Float
+}
+
+type Negotiator_Unit {
+    estTotalUnits: Float
+    forecastedUnits: Float
+    commitUnits: Float
+}
+
+type Negotiator_Factory {
+    id: String
+    name: String
+}
+
+type Negotiator_Shipping {
+    factories: [Negotiator_Factory]
+}
+
+type Negotiator_Bid {
+    id: String
+    eventId: String
+    eventItemId: String
+    bidId: String
+    buyersChoice: Boolean
+    awardBusiness: Boolean
+    exposeToBp: Boolean
+    deleted: Boolean
+    createdUserId: String
+    updateUserId: String
+    createdAt: DateTime
+    updatedAt: DateTime
+    item : Negotiator_Item
+    sparkData: [Negotiator_Spark_Data]
+    importVendor: Negotiator_Import_Vendor
+    cost: Negotiator_Cost
+    units: Negotiator_Unit
+    shipping: Negotiator_Shipping
+    status: String
+    businessPartner: VMM_BusinessPartner
+}

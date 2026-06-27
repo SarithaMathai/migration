@@ -1,0 +1,89 @@
+extend type Mutation {
+  addFileLibrary(sparkFileLibrary: SPARK_FileLibraryInput): SPARK_FileLibrary
+  updateFileLibrary(humanId: String!, sparkFileLibrary: SPARK_FileLibraryInput): SPARK_FileLibrary
+}
+
+extend type Query {
+  getFileLibraries(
+    page: Int = 0,
+    size: Int = 20,
+    humanIds: [String]
+    types: [String]
+    statusIds: [Int]
+    brandIds: [Int]
+  ): SPARK_FileLibraryPaged,
+  getPackageLibrary(id: String): SPARK_FileLibrary
+  getRelatedPackagingComponents(id: String): SPARK_PackagingPaged
+  getSPGElasticSearch(
+    q: String,
+    page: Int = 0,
+    size: Int = 20,
+    ): SPARK_FileLibraryPaged
+}
+
+input SPARK_FileLibraryInput {
+  type: String!
+  name: String
+  packagingFormatId: Int
+  @deprecated
+  description: String
+  fixedDimensions: String
+  brandIds: [ID]
+  notes: String
+  @deprecated
+  attachmentId: String
+  attachmentIds: [String]
+  printedId: Int
+  substrateTypeId: ID
+  passThrough: Boolean
+  existingAttachment: Boolean
+  statusId: Int
+  pegId: Int
+  grainFluteDimensionId: Int
+}
+
+type SPARK_FileLibraryAttchmentPaged {
+  content: [SPARK_SearchAttachment]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_SpgFileLibrary {
+    humanId: ID
+    type: String
+    @deprecated
+    description: String
+    fixedDimensions: String
+    name: String
+    notes: String
+    status: SPARK_CodeDescription
+    version: Int
+    @deprecated
+    attachment: SPARK_SearchAttachment
+    @deprecated
+    attachmentId: String
+    attachmentIds: [String]
+    latestArdFile: SPARK_SearchAttachment
+    latestPreviewableFile: SPARK_SearchAttachment
+    attachments: SPARK_FileLibraryAttchmentPaged
+    packagingFormat: SPARK_CodeDescription
+    brands: [VMM_Brand]
+    printed: SPARK_CodeDescription
+    substrateType: SPARK_CodeDescription
+    passThrough: Boolean
+    createdAt: DateTime
+    createdBy: SPARK_UserProfileAttributes
+    updatedAt: DateTime
+    updatedBy: SPARK_UserProfileAttributes
+    existingAttachment: Boolean
+    peg: SPARK_CodeDescription
+    grainFluteDimension: SPARK_CodeDescription
+}
+
+type SPARK_FileLibraryPaged {
+  content: [SPARK_FileLibrary]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+union SPARK_FileLibrary = SPARK_SpgFileLibrary # add additional types like | SPARK_OtherLibraryType

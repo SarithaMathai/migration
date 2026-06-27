@@ -1,0 +1,96 @@
+extend type Query {
+  getPalette(id: ID!): SPARK_Palette
+  getPaletteTypes: [SPARK_CodeDescription]
+  getPaletteStatusOptions: [SPARK_CodeDescription]
+  searchMaterialsForPalette(
+    q: String
+    nestedQueryList: [SPARK_NestedQueryInput]
+    page: Int = 0
+    size: Int = 48
+    paletteId: ID!
+    sortField: String
+    sortDirection: SPARK_SortDirection
+    options: SPARK_MaterialsSearchOptions
+  ): SPARK_PaletteMaterialsPaged
+}
+
+extend type Mutation {
+  addPalette(sparkPalette: SPARK_PaletteInput!): SPARK_Palette
+  updatePalette(sparkPalette: SPARK_PaletteInput!): SPARK_Palette
+  updatePaletteTeams(humanId: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [String]
+  deletePalette(humanId: ID!): SPARK_HumanId
+  addMaterialsToPalette(humanId: ID!, materialsToAdd: [String]): SPARK_Palette
+  removeMaterialsFromPalette(humanId: ID!, materialsToRemove: [String]): SPARK_Palette
+}
+
+type SPARK_Palette {
+  humanId: ID
+  status: SPARK_CodeDescription
+  description: String
+  additionalInfo: String
+  thumbnailId: String
+  paletteTypes: [SPARK_CodeDescription]
+  brands: [VMM_Brand]
+  relatedMaterials: [String]
+
+  # Additional Info
+  designCycles: [SPARK_Tag]
+  tags:  [SPARK_Tag]
+  departments: [IG_Department]
+  notes: String
+
+  # Teams Info
+  teams: [SPARK_Team]
+  businessPartners: [VMM_BusinessPartner]
+  droppedPartnerIds: [ID]
+
+  # Master Fabric
+  masterFabric: SPARK_MasterFabric
+
+  # Files
+  files: [SPARK_Attachment]
+
+  createdBy: SPARK_UserProfileAttributes
+  createdAt: String
+  updatedBy: SPARK_UserProfileAttributes
+  updatedAt: String
+}
+
+type SPARK_MasterFabric {
+  layers: [SPARK_FabricLayer]
+}
+
+type SPARK_PaletteMaterialsPaged {
+  content: [SPARK_Material]
+  paging: SPARK_Paging
+  counts: SPARK_MaterialCounts
+}
+
+input SPARK_PaletteInput {
+  humanId: ID
+  status: Int
+  description: String
+  additionalInfo: String
+  thumbnailId: String
+  paletteTypes: [Int]
+  brands: [String]
+  additionalInformation: SPARK_PaletteAdditionalInfoInput
+
+  # Teams Info
+  teamsToAdd: [SPARK_TeamToAddInput]
+
+  relatedMaterials: [String]
+  masterFabric: SPARK_MasterFabricInput
+  files: [String]
+}
+
+input SPARK_MasterFabricInput {
+  layers: [SPARK_FabricLayerInput]
+}
+
+input SPARK_PaletteAdditionalInfoInput {
+  designCycles: [String]
+  tags:  [String]
+  departments: [String]
+  notes: String
+}

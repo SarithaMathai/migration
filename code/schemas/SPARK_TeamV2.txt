@@ -1,0 +1,91 @@
+extend type Query {
+  # getTeams(page: Int = 0, size: Int = 20, teamIds: [String]): SPARK_TeamPaged
+  getTeamV2(id: ID!): SPARK_TeamV2
+  getTeamsV2(ids: [ID]!): [SPARK_TeamV2]!
+  getTeamType: [SPARK_TeamCodeDescription]
+  getBusinessPartnerType: [SPARK_CodeDescription]
+  # searchTeams(
+  #   page: Int = 0
+  #   size: Int = 100
+  #   ids: [Int]
+  #   teamName: String
+  #   teamNames: [String]
+  # ): SPARK_TeamPaged
+  # filterTeams(
+  #   page: Int = 0
+  #   size: Int = 100
+  #   ids: [Int]
+  #   teamName: String
+  #   teamNames: [String]
+  # ): SPARK_TeamPaged
+  # getTeamCommonBPs: [VMM_BusinessPartner]
+}
+
+extend type Mutation {
+  createTeamV2(teamInput: SPARK_TeamInputV2!): SPARK_TeamV2
+  updateTeamV2(teamInput: SPARK_TeamUpdateInputV2!): SPARK_TeamV2
+}
+
+type SPARK_TeamV2 {
+  id: ID
+  teamName: String
+  teamType: String
+  accessControlGroupIds: [String]
+  members: [SPARK_UserProfileAttributes]
+  businessPartner: SPARK_ResolvedPartner
+  #Deprecated
+  resources: SPARK_ResourceMapping
+  status: SPARK_TeamStatus
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+  users: [SPARK_UserProfileAttributes]
+  purpose: String
+  version: Int
+  partnerType: SPARK_CodeDescription
+  #internal: String
+}
+
+input SPARK_TeamInputV2 {
+  members: [SPARK_TeamMemberInputV2]
+#  accessControlGroupIds: [String]
+  #name: String
+  #internal: Boolean
+  partnerId: ID
+  purpose: String
+  partnerType: String
+  resourceType: String
+  teamName: String
+  teamType: String!
+  statusId: Int
+}
+
+input SPARK_TeamUpdateInputV2 {
+  members: [SPARK_TeamMemberInputV2]!
+  #name: String
+  #internal: Boolean
+  partnerId: ID
+  partnerType: Int
+  purpose: String
+  resourceType: String
+  teamName: String
+  teamType: String!
+  teamId: ID!
+  statusId: Int
+}
+
+input SPARK_TeamMemberInputV2 {
+  userProfileId: String
+  roleIds: [Int]
+}
+
+type SPARK_TeamPagedV2 {
+  content: [SPARK_TeamV2]!
+  paging: SPARK_Paging
+}
+
+type SPARK_TeamCodeDescription {
+  code: String!
+  description: String!
+}

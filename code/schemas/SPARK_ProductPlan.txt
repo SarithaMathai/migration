@@ -1,0 +1,285 @@
+extend type Mutation {
+  addProductPlan(sparkProductPlan: SPARK_ProductPlanInput): SPARK_ProductPlan
+  updateProductPlan(id: String!, sparkProductPlan: SPARK_ProductPlanInput): SPARK_ProductPlan
+  associateProductsToAsk(askId: String, productIds: [String]): SPARK_ProductAsk
+  updateRecommendationStatus(statusInput: [SPARK_RecommendationStatusInput]): Boolean
+  compareAskVersions(askIds: [String]!, startDate: String!, endDate: String!): [SPARK_ProductPlanVersion]
+  moveProductsTo(fromAskId: String!, toAskId: String, productIds: [String]!): SPARK_ProductAsk
+  removeProductsFromAsk(fromAskId: String!, productIds: [String]!): SPARK_ProductAsk
+}
+
+extend type Query {
+  getProductPlanById(id: String!): SPARK_ProductPlan
+  searchProductPlans(
+    page: Int = 0
+    size: Int = 200
+    brandIds:[Int]
+    divisionIds:[Int]
+    deptIds:[Int]
+    ): SPARK_ProductPlan_Paged
+  getWorkspaceProductPlan(
+    from: String!
+    to: String!
+    page: Int = 0
+    size: Int = 200
+    classIds: [Int]
+    departmentIds: [Int]
+    sortOrder: String
+    sortBy: String
+  ): SPARK_ProductAsk_Paged
+  getProductAskById(askId: String!): SPARK_ProductAsk
+  getProductAsks(
+    workspaceId: String!
+    productIds: [String]
+    page: Int = 0
+    size: Int = 200
+  ): SPARK_ProductAsk_Paged
+  searchAskActivities(askIds: [String]!, page: Int, size: Int, startDate: String, sortOrder: String, sortBy: String): SPARK_ProductAskActivity_Paged
+}
+
+type SPARK_ProductAsk {
+    humanId: String
+    description: String
+    source: String
+    status: String
+    brandType: String
+    brand: VMM_Brand
+    divisionId: String
+    department: IG_Department
+    requestType: String
+    startDate: String
+    intendedRegRetail: Float
+    sellingChannel: String
+    projectedUnits: Int
+    clazz: IG_Clazz
+    subClassId: String
+    styleId: String
+    itemTypeId: String
+    itemType: String
+    merchTypeId: String
+    merchType: String
+    associatedProducts: [AskToProductAssociation]
+    bids: [Negotiator_Bid]
+    carryForwardTcins: [String] 
+    variations: [ProductAskVariation]
+    variationThemes: [ProductAskTheme]
+    relatedProductAsks: [String]
+    relatedProducts: [String]
+}
+
+type ProductAskVariation {
+    tcin: String
+    businessPartnerId: Int
+    vendorId: Int
+    isCarryForward: Boolean
+    itemType: String
+    itemState: String
+    costConfirmed: Boolean
+    units: ProductAskVariationUnits
+    merchandiseTypeAttributes: [ProductAskMerchandiseTypeAttributeValue]
+    themes: [Deprecated_ProductAskVariationTheme]
+}
+
+type Deprecated_ProductAskVariationTheme {
+  name:  String
+  value: Int
+}
+
+type ProductAskVariationUnits {
+    forecastUnits: Int
+    commitUnits: Int
+}
+
+type ProductAskMerchandiseTypeAttributeValue {
+    name: String
+    id: Int
+    value: ProductAskAttributeValue
+}
+
+type ProductAskAttributeValue {
+    id: Int
+    name: String
+}
+
+type ProductAskTheme {
+    name: VariationTheme
+    count: Int
+    values: [ProductAskThemeValue]
+}
+
+enum VariationTheme {
+    COLOR
+    SIZE
+    SIZE_GROUP
+}
+
+type ProductAskThemeValue {
+    id: Int
+    name: String
+    group: ProductAskThemeGroup
+}
+
+type ProductAskThemeGroup {
+    id: Int
+    name: String
+}
+
+type AskToProductAssociation {
+    productId: String
+    product: SPARK_Product
+    businessPartners: [AssociatedProductStatuses]
+}
+
+type AssociatedProductStatuses {
+  partnerId: String,
+  recommendationStatus: SPARK_ProductAskRecommendationStatus
+  selected: Boolean
+}
+
+enum SPARK_ProductAskRecommendationStatus {
+  PREFERRED
+  BACKUP
+  NONE
+}
+
+type SPARK_ProductAsk_Paged {
+  content: [SPARK_ProductAsk]
+  totalPages: Int
+  totalElements: Int
+  first: Boolean
+  last: Boolean
+  size: Int
+  pageable: SPARK_Pageable
+}
+
+type SPARK_ProductAskActivity_Paged {
+  content: [SPARK_AskActivity],
+  totalPages: Int
+  totalElements: Int
+  first: Boolean
+  last: Boolean
+  size: Int
+}
+
+type SPARK_AskActivity {
+  eventDate: String,
+	eventSummary: SPARK_AskEvent
+  eventType: String,
+  id: String,
+  resourceId: Int,
+  resourceType: String,
+  subEventType: String,
+  userId: String,
+  user: SPARK_UserProfileAttributes
+}
+
+type SPARK_AskEvent {
+  description: String,
+  humanId: String,
+  modifiedAttributes: [SPARK_AskEventAttribute]
+}
+
+type SPARK_AskEventAttribute 	{
+  attributeName: String,
+  attributeNewValue: String,
+  attributeOldValue: String
+}
+
+type SPARK_ProductPlan {
+  id: String!
+  name: String
+  description: String
+  assortmentPlan: SPARK_AssortmentPlan
+  lines: [SPARK_LineItem!]
+  departments: [DopplerDepartment!]
+  brand: VMM_Brand
+  status: SPARK_CodeDescription
+  version: Int
+  createdBy: SPARK_UserProfileAttributes!
+  updatedBy: SPARK_UserProfileAttributes!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type SPARK_LineItem {
+  id: Int!
+  dropped: Boolean
+  vendorLines: [SPARK_VendorLine]
+}
+
+type SPARK_VendorLine {
+  product: SPARK_Product
+  businessPartner: VMM_BusinessPartner
+  dropped: Boolean
+}
+
+type SPARK_AssortmentPlan {
+  id: String!
+  source: String!
+}
+
+type SPARK_ProductPlan_Paged {
+  content: [SPARK_ProductPlan]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+input SPARK_ProductPlanInput {
+  id: String
+  name: String
+  description: String
+  assortmentPlan: SPARK_AssortmentPlanInput
+  lines: [SPARK_LineItemInput]
+  departments: [DopplerDepartmentInput]
+  brandId: Int
+  statusId: Int
+}
+
+input SPARK_AssortmentPlanInput {
+  id: String!
+  source: String!
+}
+
+input SPARK_LineItemInput {
+  id: Int
+  dropped: Boolean
+  vendorLines: [SPARK_VendorLineInput]
+}
+
+input SPARK_VendorLineInput {
+  pid: String
+  bpId: ID
+  dropped: Boolean
+}
+
+input SPARK_RecommendationStatusInput {
+    askId: String
+    workspaceId: String
+    productId: String
+    partnerId: ID,
+    status: SPARK_ProductAskRecommendationStatus
+}
+
+
+type SPARK_ProductPlanVersion {
+  fromVersion: SPARK_ProductPlanVersionSnapshot
+  toVersion: SPARK_ProductPlanVersionSnapshot
+  modifiedAttributes: [SPARK_AskEventAttribute]
+  action: String
+}
+
+type SPARK_ProductPlanVersionSnapshot {
+  snapshot: SPARK_ProductAsk
+  updatedByUserId: String
+  action: String
+  version: Int
+  versionCreateTimestamp: String
+}
+
+type SPARK_ProductPlanComparisonChanges {
+  fieldName: String
+  oldValue: String
+  newValue: String
+  changeType: String
+  valueType: String
+}

@@ -1,0 +1,69 @@
+extend type Query {
+  getColorColoro(id: ID!, proxyId: String): SPARK_ColorColoro
+  getColorColoros(ids: [ID]!): [SPARK_ColorColoro]
+}
+
+extend type Mutation {
+  addColoroColor(sparkColorColoro: SPARK_ColorColoroInput!): SPARK_ColorColoro
+  updateColoroColor(sparkColorColoro: SPARK_ColorColoroInput!): SPARK_ColorColoro
+}
+
+type SPARK_ColorColoro {
+  humanId: ID
+  name: String
+  targetStandard: Boolean
+  status: SPARK_CodeDescription
+  providerName: String
+  notes: String
+  referenceId: String
+  substrate: SPARK_CodeDescription
+  colorHistoryItems: [SPARK_ColorHistoryItem]
+  colorHistoryNotes: String
+  tags: [SPARK_Tag]
+  files: [SPARK_Attachment]
+  red: Int
+  green: Int
+  blue: Int
+  icsPoly: String
+  icsNylon: String
+  icsCotton: String
+  oog: Boolean
+  pantoneEquivalent: String
+  providerId: String
+  colorTeamLibraryBoard: String
+  bestMatchColorReference: String
+  colorLinks: [SPARK_ColorLink]
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+}
+
+
+input SPARK_ColorColoroInput {
+  humanId: ID
+  name: String
+  category: String
+  red: Int
+  green: Int
+  blue: Int
+  status: Int
+  substrate: Int
+  notes: String
+  targetStandard: Boolean
+  colorHistoryItemsToAdd: [SPARK_ColorHistoryItemInput]
+  colorHistoryItemsToRemove: [SPARK_ColorHistoryItemInput]
+  colorHistoryNotes: String
+  providerName: String
+  tags: [String]
+  files: [String]
+  icsPoly: String
+  icsNylon: String
+  icsCotton: String
+  fromFeed: Boolean
+  pantoneEquivalent: String
+  providerId: String
+  colorTeamLibraryBoard: String
+  bestMatchColorReference: String
+  colorLinks: [SPARK_ColorLinkInput]
+}

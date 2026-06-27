@@ -1,0 +1,567 @@
+extend type Query {
+  getFabric(id: ID!): SPARK_Fabric
+  getFabrics(ids: [ID]!): [SPARK_Fabric]
+  getFabricSpecification(id: ID!): SPARK_FabricSpecification
+  getFabricSpecifications(ids: [ID]!): [SPARK_FabricSpecification]
+  getFabricSpecificationsByParentId(parentId: String!): [SPARK_FabricSpecification]
+  getAllFabricSpecByDesignCycle(ids: [ID]!): [String]
+  getFabricSuppliers: [VMM_BusinessPartner]
+  getFabricSpecificationAestheticStatus: [SPARK_CodeDescription]
+  getFabricSpecificationTestingStatus: [SPARK_CodeDescription]
+  getFiberContent: [SPARK_FiberContent]
+  getImpressionIntent: [SPARK_CodeDescription]
+  getMechanicalFinishes: [SPARK_CodeDescription]
+  getChemicalFinishes: [SPARK_CodeDescription]
+  getIronInstructions: [SPARK_CodeDescription]
+  getBleachInstructions: [SPARK_CodeDescription]
+  getFabricStatus: [SPARK_CodeDescription]
+  getFabricBrands: [SPARK_CodeDescription]
+  getDryCleanInstructions: [SPARK_CodeDescription]
+  getFacilityTypes: [SPARK_CodeDescription]
+  validateReferenceId(referenceId: String): Boolean
+  getFabricCostingById(fabricCostingId: ID!): SPARK_FabricCosting
+  exportFabric(
+    q: String,
+    nestedQueryList: [SPARK_NestedQueryInput],
+    isThumbnailRequired: Boolean,
+    isFacilityRequired: Boolean,
+    format: SPARK_FabricReportFormat
+    contextIds: [String],
+    options: SPARK_MaterialsSearchOptions
+  ): SPARK_ExportResponse
+  getFabricCostingsBySearchFilters(fabricCostingSearchFilters: SPARK_FabricCostingSearchFiltersInput): [SPARK_FabricCosting]
+  exportFabricsOnPalette(q: String, nestedQueryList: [SPARK_NestedQueryInput],isThumbnailRequired: Boolean, paletteId: ID!, isFacilityRequired: Boolean, format: SPARK_FabricReportFormat): SPARK_ExportResponse
+  getFabricDevelopmentReasons: [SPARK_CodeDescription]
+  exportFabricCosting(q: String, nestedQueryList: [SPARK_NestedQueryInput]): SPARK_ExportResponse
+  exportFabricCostingOnPalette(q: String, nestedQueryList: [SPARK_NestedQueryInput], paletteId: ID!): SPARK_ExportResponse
+  getSwatchNameById(id: ID!): Swatch_Asset
+}
+
+extend type Mutation {
+  addFabric(sparkFabric: SPARK_FabricInput!): SPARK_Fabric
+  cloneFabric(
+    sparkFabric: SPARK_FabricInput!
+    filesToCopy: [String]
+  ): SPARK_Fabric
+  updateFabric(sparkFabric: SPARK_FabricInput!, filesToRemove: [String]): SPARK_Fabric
+  deleteFabric(humanId: ID!): SPARK_HumanId
+  addTeamsToFabric(humanId: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [String]
+  setFabricThumbnail(humanId: ID!, thumbnailId: ID, designThumbnailId: ID): SPARK_Fabric
+  setSpecificationThumbnail(humanId: ID!, thumbnailId: ID, designThumbnailId: ID, technicalFaceId: ID, technicalBackId: ID): SPARK_FabricSpecification
+  updateFabricFromSpec(
+    humanId: ID!
+    sparkFabric: SPARK_FabricInput,
+    fabricSpecificationHumanId: String
+  ): SPARK_Fabric
+  addFabricSpecification(
+    sparkFabricSpecification: SPARK_FabricSpecificationInput!
+    parentFabricId: ID
+  ): SPARK_FabricSpecification
+  addFabricCosting(sparkFabricCosting: SPARK_FabricCostingInput): SPARK_FabricCosting
+  updateFabricCosting(sparkFabricCosting: SPARK_FabricCostingInput): SPARK_FabricCosting
+  updateFabricSpecification(
+    sparkFabricSpecification: SPARK_FabricSpecificationInput!
+  ): SPARK_FabricSpecification
+  updateFabricSpecificationEvaluation(
+    humanId: ID!
+    sparkFabricEvaluation: SPARK_FabricEvaluationInput!
+  ): SPARK_FabricSpecification
+  deleteFabricSpecification(humanId: ID!): SPARK_HumanId
+  updateFabricTeams(humanId: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [String]
+  bulkUpdateFabricSpecifications(bulkUpdateFabricSpecs: [SPARK_BulkUpdateFabricSpecificationItem]): [SPARK_FabricSpecification]
+  addSwatchAssetToSpec(swatchInput: SwatchAsset_Input): SPARK_Attachment
+}
+
+input SPARK_FabricInput {
+  humanId: ID
+  flexId: String
+  status: Int
+  additionalDescription: String
+  additionalInfo: SPARK_FabricAdditionalInfoInput
+  digital: Boolean
+  inspiration: Boolean
+  colorways: [SPARK_ColorwayInput]
+  layers: [SPARK_FabricLayerInput]
+  mechanicalFinishes: [Int]
+  chemicalFinishes: [Int]
+  additionalInfoFinishes: String
+  name: String!
+  files: [String]
+  thumbnailId: String
+  adoptedDigitalFabric: Boolean
+  teamsToAdd: [SPARK_TeamToAddInput]
+  gvs: Boolean
+  @deprecated
+  brand: Int
+  brands: [Int]
+  developmentReason: Int
+  platformFabric: Boolean
+  designThumbnailId: String
+  parent: String
+  visualDescriptions: [Int]
+  visualDescriptionComment: String
+  productType: String
+}
+
+input Spark_Solid_CostingInput {
+  solid: Float
+}
+
+type Spark_Solid_Costing {
+  solid: Float
+}
+
+type Spark_Yarn_Costing {
+  yarnCostOne : Spark_Yarn_Costing_Detail
+  yarnCostTwo: Spark_Yarn_Costing_Detail
+  yarnCostThree: Spark_Yarn_Costing_Detail
+  yarnCostFour: Spark_Yarn_Costing_Detail
+}
+
+input Spark_Yarn_CostingInput {
+  yarnCostOne : Spark_Yarn_Costing_DetailInput
+  yarnCostTwo: Spark_Yarn_Costing_DetailInput
+  yarnCostThree: Spark_Yarn_Costing_DetailInput
+  yarnCostFour: Spark_Yarn_Costing_DetailInput
+}
+
+type Spark_YarnDyed_StripesCost {
+  autoStripeEngineeredOnetoFour: Float
+  autoStripeEngineeredFivePlus: Float
+  feederStripe: Float
+  stripeAvgCost : Float
+}
+
+input Spark_YarnDyed_StripesCostInput {
+  autoStripeEngineeredOnetoFour: Float
+  autoStripeEngineeredFivePlus: Float
+  feederStripe: Float
+  stripeAvgCost : Float
+}
+input Spark_PreparedForPrintCostInput {
+  offWhiteGround : Float
+  bleachedWhiteGround: Float
+  dyedGround: Float
+  pfpAverageCost: Float
+}
+
+type Spark_PreparedForPrintCost {
+  offWhiteGround : Float
+  bleachedWhiteGround: Float
+  dyedGround: Float
+  pfpAverageCost: Float
+}
+
+input SPARK_FabricCostingInput {
+  fabricCostingId: String
+  fabricSpecId: String
+  designCycle: String
+  solidCost: Spark_Solid_CostingInput
+  yarnCost: Spark_Yarn_CostingInput
+  yarnDyedStripesCost: Spark_YarnDyed_StripesCostInput
+  preparedForPrintCost: Spark_PreparedForPrintCostInput
+}
+
+type SPARK_FabricCosting {
+  fabricCostingId: String
+  fabricSpec: SPARK_FabricSpecification
+  designCycle: SPARK_Tag
+  solidCost: Spark_Solid_Costing
+  yarnCost: Spark_Yarn_Costing
+  yarnDyedStripesCost: Spark_YarnDyed_StripesCost
+  preparedForPrintCost: Spark_PreparedForPrintCost
+}
+input SPARK_FabricLayerInput {
+  totalContent: Boolean
+  yarns: [SPARK_FabricYarnInput]
+  fiberDetails: [SPARK_FabricFiberDetailInput]
+  fabricType: String
+  fabType: Int
+  fabricSubType: Int
+  constructionEpi: Int
+  constructionPpi: Int
+  constructionWpi: Int
+  constructionCpi: Int
+  machineEpi: Int
+  machinePpi: Int
+  multiplePicks: Int
+  weightMetric: Float
+  weightImperial: Float
+  finishedWidthInches: Int
+  gauge: Int
+  specialTesting: [String]
+  performanceClaims: [String]
+}
+
+input SPARK_FabricYarnInput {
+  positioning: String
+  unitOfMeasure: String
+  yarnSize: Int
+  ply: Int
+  filamentCount: Int
+  characteristics: [String]
+  expirationDate: String
+  cost: Float
+  crossSection: [String]
+  drawingProcess: [String]
+  fiberProcess: [String]
+  lusture: [String]
+  spinningMethod: [String]
+  yarnContents: [SPARK_FabricFiberDetailInput]
+  spinningCountryOfOrigin: String
+  yarnCountryOfOrigin: String
+  leadTime: Int
+  yarnWeight: Int
+}
+
+input SPARK_FabricFiberDetailInput {
+  fiberContent: Int
+  brand: String
+  percentage: Int
+  fiberCountryOfOrigin: String
+}
+
+input SPARK_FabricAdditionalInfoInput {
+  designCycle: [String]
+  notes: String
+  referenceId: String
+  tags: [String]
+}
+
+input SPARK_FabricSpecificationInput {
+  humanId: ID
+  status: Int
+  flexId: String
+  parentHumanId: ID
+  thumbnailId: ID
+  name: String
+  fabricRecordDetail: SPARK_FabricInput
+  impressions: [SPARK_FabricImpressionInput]
+  mechanicalType: [String]
+  printMethod: [String]
+  printDyeChemistry: [String]
+  dyeChemistry: [String]
+  dyeMethod: [String]
+  dips: Int
+  instructions: SPARK_FabricInstructionsInput
+  evaluation: SPARK_FabricEvaluationInput
+  additionalInfoSpecification: SPARK_FabricAdditionalInfoSpecificationInput
+  files: [String]
+  filesToRemove: [String]
+  readyForReview: Boolean
+  supplierId: ID
+  platformFabric: Boolean
+  designThumbnailId: String
+  technicalFaceId: String
+  technicalBackId: String
+  brands: [Int]
+  developmentReason: Int
+  assignees: [String]
+  inspiration: Boolean
+}
+
+input SPARK_BulkUpdateFabricSpecificationItem {
+  humanId: ID
+  updateFabricSpecification: SPARK_FabricSpecificationInput
+}
+
+input SPARK_FabricImpressionInput {
+  intent: Int
+  cost: Float
+  width: Float
+  expirationDate: String
+  facilities: [SPARK_FabricFacilityInput]
+  bulkLeadTime: Int
+  sampleLeadTime: Int
+  minimumQuantity: Int
+  unitOfMeasure: String
+  mcq: Int
+  mcqUnitOfMeasure: String
+  costUnitOfMeasure: String
+  bulkYarnLeadTime: Int
+}
+
+input SPARK_FabricFacilityInput {
+  facilityId: String
+  type: Int
+}
+
+input SPARK_FabricInstructionsInput {
+  wash: String
+  temperature: String
+  sorting: String
+  cycle: String
+  setting: String
+  heat: String
+  additional: [String]
+  ironInstructions: Int
+  bleachInstructions: Int
+  dryCleanInstructions: Int
+  specialcareInstructions: String
+  dryClean: Boolean
+  doNotWash: Boolean
+  liquidDetergent: Boolean
+  spotClean: Boolean
+  dryerSheets: Boolean
+  doNotWring: Boolean
+  metalHanger: Boolean
+}
+
+input SPARK_FabricEvaluationInput {
+  aesthaticStatus: Int
+  testingStatus: Int
+  finalApproved: Boolean
+  userId: String
+}
+
+input SPARK_FabricAdditionalInfoSpecificationInput {
+  tags: [String]
+  designCycle: [String]
+  referenceId: String
+  notes: String
+}
+
+type SPARK_Fabric {
+  name: String
+  humanId: ID
+  flexId: String
+  digital: Boolean
+  teams: [SPARK_Team]
+  droppedPartnerIds: [ID]
+  businessPartners: [VMM_BusinessPartner]
+  additionalDescription: String
+  createdBy: SPARK_UserProfileAttributes!
+  createdAt: String
+  updatedBy: SPARK_UserProfileAttributes!
+  updatedAt: String
+  additionalInfo: SPARK_FabricAdditionalInfo
+  layers: [SPARK_FabricLayer]
+  mechanicalFinishes: [SPARK_CodeDescription]
+  chemicalFinishes: [SPARK_CodeDescription]
+  additionalInfoFinishes: String
+  files: [SPARK_Attachment]
+  claims: [SPARK_Claims]
+  thumbnailId: String
+  adoptedDigitalFabric: Boolean
+  status: SPARK_CodeDescription
+  gvs: Boolean
+  @deprecated
+  brand: SPARK_CodeDescription
+  brands: [SPARK_CodeDescription]
+  developmentReason: SPARK_CodeDescription
+  platformFabric: Boolean
+  inspiration: Boolean
+  colorways: [SPARK_Colorway]
+  designThumbnailId: String
+  parent: SPARK_MaterialResource
+  connectedBoms: [SPARK_Bom]
+  developedArtworks: [SPARK_Artwork]
+  developedFabrics: [SPARK_Fabric]
+  linkedFabrics: SPARK_ResourceLinkSearch
+  visualDescriptions: [SPARK_CodeDescription]
+  visualDescriptionComment: String
+  productType: String
+}
+
+type SPARK_FabricAdditionalInfo {
+  designCycle: [SPARK_Tag]
+  notes: String
+  referenceId: String
+  tags: [SPARK_Tag]
+}
+
+type SPARK_FabricLayer {
+  totalContent: Boolean
+  fiberDetails: [SPARK_FabricFiberDetail]
+  yarns: [SPARK_FabricYarn]
+  fabricType: String
+  fabType: SPARK_CodeDescription
+  fabricSubType: SPARK_CodeDescription
+  constructionEpi: Int
+  constructionPpi: Int
+  constructionWpi: Int
+  constructionCpi: Int
+  machineEpi: Int
+  machinePpi: Int
+  multiplePicks: Int
+  weightMetric: Float
+  weightImperial: Float
+  finishedWidthInches: Int
+  gauge: Int
+  specialTesting: [String]
+  performanceClaims: [String]
+}
+
+type SPARK_FabricYarn {
+  positioning: String
+  unitOfMeasure: String
+  yarnSize: Int
+  ply: Int
+  filamentCount: Int
+  characteristics: [String]
+  expirationDate: String
+  cost: Float
+  crossSection: [String]
+  drawingProcess: [String]
+  fiberProcess: [String]
+  lusture: [String]
+  spinningMethod: [String]
+  yarnContents: [SPARK_FabricFiberDetail]
+  spinningCountryOfOrigin: SPARK_Tag
+  yarnCountryOfOrigin: SPARK_Tag
+  leadTime: Int
+  yarnWeight: Int
+}
+
+type SPARK_FabricFiberDetail {
+  fiberContent: SPARK_FiberContent
+  brand: String
+  percentage: Int
+  fiberCountryOfOrigin: SPARK_Tag
+}
+
+type SPARK_FabricSpecification {
+  humanId: String
+  status: SPARK_CodeDescription
+  flexId: String
+  thumbnailId: ID
+  name: String
+  parentHumanId: ID
+  parentRecord: SPARK_Fabric
+  fabricRecordDetail: SPARK_Fabric
+  createdBy: SPARK_UserProfileAttributes!
+  createdAt: String
+  updatedBy: SPARK_UserProfileAttributes!
+  updatedAt: String
+  impressions: [SPARK_FabricImpression]
+  mechanicalType: [String]
+  printMethod: [String]
+  printDyeChemistry: [String]
+  dyeChemistry: [String]
+  dyeMethod: [String]
+  dips: Int
+  instructions: SPARK_FabricInstructions
+  evaluation: SPARK_FabricEvaluation
+  additionalInfoSpecification: SPARK_FabricAdditionalInfoSpecification
+  files: [SPARK_Attachment]
+  claims: [SPARK_Claims]
+  readyForReview: Boolean
+  gvs: Boolean
+  supplierId: ID
+  platformFabric: Boolean
+  supplierName: String
+  colorSamples: SPARK_SamplesPaged
+  artworkSamples: SPARK_SamplesPaged
+  designThumbnailId: String
+  dtv: Boolean
+  technicalFaceId: String
+  technicalBackId: String
+  brands: [SPARK_CodeDescription]
+  developmentReason: SPARK_CodeDescription
+  assignees: [SPARK_UserProfileAttributes]
+  inspiration: Boolean
+  monoMaterial: Boolean
+}
+
+type SPARK_FabricImpression {
+  intent: SPARK_CodeDescription
+  cost: Float
+  width: Float
+  expirationDate: String
+  facilities: [SPARK_FabricFacility]
+  bulkLeadTime: Int
+  sampleLeadTime: Int
+  minimumQuantity: Int
+  unitOfMeasure: String
+  mcq: Int
+  mcqUnitOfMeasure: String
+  costUnitOfMeasure: String
+  bulkYarnLeadTime: Int
+}
+
+type SPARK_FabricFacility {
+  facilityId: String
+  facility: VMM_Location
+  type: SPARK_CodeDescription
+}
+
+type SPARK_FabricInstructions {
+  wash: String
+  temperature: String
+  sorting: String
+  cycle: String
+  setting: String
+  heat: String
+  additional: [String]
+  ironInstructions: SPARK_CodeDescription
+  bleachInstructions: SPARK_CodeDescription
+  dryCleanInstructions: SPARK_CodeDescription
+  specialcareInstructions: String
+  dryClean: Boolean
+  doNotWash: Boolean
+  liquidDetergent: Boolean
+  spotClean: Boolean
+  dryerSheets: Boolean
+  doNotWring: Boolean
+  metalHanger: Boolean
+}
+
+type SPARK_FabricAdditionalInfoSpecification {
+  tags: [SPARK_Tag]
+  designCycle: [SPARK_Tag]
+  referenceId: String
+  notes: String
+}
+
+type SPARK_FabricEvaluation {
+  aesthaticStatus: SPARK_CodeDescription
+  testingStatus: SPARK_CodeDescription
+  finalApproved: Boolean
+  userId: String
+  approvedBy: SPARK_UserProfileAttributes
+  approvedDate: String
+  aestheticApprovedBy: SPARK_UserProfileAttributes
+  aestheticApprovedDate: String
+  testingApprovedBy: SPARK_UserProfileAttributes
+  testingApprovedDate: String
+}
+
+input SPARK_FabricCostingSearchFiltersInput {
+  designCycleIds: [String]
+  fabricSpecIds: [String]
+}
+
+type Spark_Yarn_Costing_Detail {
+  value: Float
+  description: String
+}
+
+input Spark_Yarn_Costing_DetailInput {
+  value: Float
+  description: String
+}
+
+type SPARK_FiberContent {
+  code: Int
+  description: String
+  type: String
+}
+
+enum SPARK_FabricReportFormat {
+  FLAT,
+  NESTED
+}
+input SwatchAsset_Input {
+  swatchId: String
+  assetName: String
+  parentResourceId: String
+  relatedResourceId: String
+  businessPartners: [ID]
+  resource: String
+}
+
+type Swatch_Asset {
+  id: String
+  uuid: String
+  name: String
+}

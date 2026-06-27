@@ -1,0 +1,8 @@
+extend type Mutation {
+  createExportRequest(id: String!, exportType: String!, filtersInput: Spark_Greenfield_Filters_Input): Spark_Insights_Export
+}
+
+type Spark_Insights_Export {
+requestId: String
+status: String
+}

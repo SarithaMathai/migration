@@ -1,0 +1,173 @@
+# =============================================================================
+# ProductDetails Domain — Federated Target DGS Schema (translated from source SDL)
+# Pipeline Version: 2.0 · Generated: 2026-06-27
+# DGS Target: Green-field → plm-product subgraph (co-located)
+# Source:    code/schemas/SPARK_ProductDetail.txt (the real SDL) + code/resolvers/product/SPARK_ProductDetail.txt (behaviour)
+# Target:    plm-product/apps/app/src/main/resources/schema/productdetails.graphqls
+# Backend:   /enterprise_product_development_products/construction/v1  (a.k.a. "construction" sets)
+# This is the FEDERATED TARGET schema, translated from the SDL (SPARK_ prefix dropped, @key added).
+# Nullability/return-types are taken from the SDL (verified against the resolver).
+# Status: 🔜 all need migration.
+# =============================================================================
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@extends", "@external", "@shareable"])
+
+scalar DateTime
+
+# --- Type references ---
+# MONOREPO: Product, ProductComponentStatus, VersionableId, SpecificationTemplate are CO-LOCATED in the
+# same plm-product subgraph — INTERNAL types (the @extends @external is a standalone-compile placeholder).
+# True federation stubs are the SEPARATE DGS subgraphs (attachment, workspace, user-profile, access-control,
+# search) + platform VMM. See 03-schema-analysis.md §3.
+type Product @extends @key(fields: "id") { id: ID! @external }                  # INTERNAL (same subgraph)
+type ProductComponentStatus @extends @key(fields: "id") { id: ID! @external }   # INTERNAL
+type VersionableId @extends @key(fields: "id version") { id: ID! @external, version: Int! @external }  # INTERNAL
+
+# True federation stubs (separate DGS subgraphs + platform):
+type VMM_BusinessPartner @extends @key(fields: "id") { id: ID! @external }
+type Attachment @extends @key(fields: "id") { id: ID! @external }
+type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
+type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
+type UserGroup_Participants @extends @key(fields: "id") { id: ID! @external }
+type AccessControl @extends @key(fields: "id") { id: ID! @external }
+type ResourcePermissions @extends @key(fields: "id") { id: ID! @external }
+
+# --- Shared value types ---
+type CodeDescription @shareable { code: Int, description: String }
+
+# --- Owned entity: the product-details (construction) set ---
+type ProductDetails @key(fields: "id") {
+  id: String                      # @key; the SDL exposes both id and humanId (resolver uses humanId||id for ACL)
+  humanId: String
+  version: Int
+  type: Int
+  name: String
+  notes: String
+  parentId: String
+  status: CodeDescription
+  statuses: [ProductComponentStatus]
+  rows: [ProductDetailsItem]
+  archived: Boolean
+  manualLock: Boolean
+  relatedResources: [String]
+  workspaceContext: [String]
+  constructionTemplate: [VersionableId]
+  # field resolvers ↓
+  access: AccessControl
+  currentUserPermissions: ResourcePermissions
+  product: Product
+  businessPartners: [VMM_BusinessPartner]
+  workspaces: [WorkspaceV2]
+  attachment: Attachment
+  participantDetails: UserGroup_Participants
+  createdBy: UserProfileAttributes
+  updatedBy: UserProfileAttributes
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type ProductDetailsPaged { content: [ProductDetails] }
+
+type ProductDetailsItem {
+  id: String
+  templateId: String
+  section: String
+  category: ProductDetailsCategoryWithSection
+  subCategory: CodeDescription
+  detail: String
+  critical: Boolean
+  criticalFromLibrary: Boolean
+  specialInstructions: String
+  # field resolvers ↓ (both via elastic attachment search)
+  attachment: Attachment
+  constructionSetAttachments: [Attachment]
+}
+
+type ProductDetailsCategoryWithSection {
+  code: Int
+  description: String
+  subCategories: [CodeDescription]    # field resolver → specificationsTemplate master data (internal)
+}
+
+# --- Inputs ---
+input ProductDetailSetInput {
+  status: Int
+  notes: String
+  name: String
+  parentId: String
+  rows: [ProductDetailsItemInput]
+  workspaceContext: [String]
+  businessPartners: [ProductDetailPartnerInput]
+  archived: Boolean
+  relatedResources: [String]
+  attachmentIds: [String]
+  deleteAttachmentIds: [String]
+  participantDetails: UserGroup_ParticipantsInput
+  type: Int
+  statuses: [WorkspaceStatusPairInput]
+}
+
+input ProductDetailSetUpdateInput {
+  status: Int
+  notes: String
+  name: String
+  parentId: String
+  rows: [ProductDetailsItemInput]
+  workspaceContext: PartialWorkspaceAssociationsInput   # NOTE: object on update (vs [String] on create)
+  businessPartners: [ProductDetailPartnerInput]
+  archived: Boolean
+  relatedResources: [String]
+  attachmentIds: [String]
+  deleteAttachmentIds: [String]
+  participantDetails: UserGroup_ParticipantsInput
+  type: Int
+  statuses: [WorkspaceStatusPairInput]
+}
+
+input ProductDetailPartnerInput { partnerId: ID, partnerType: Int, systemTeamId: String }
+
+input ProductDetailsItemInput {
+  templateId: String
+  section: String
+  category: CodeDescriptionInput
+  subCategory: CodeDescriptionInput
+  detail: String
+  critical: Boolean
+  specialInstructions: String
+  criticalFromLibrary: Boolean
+  id: String
+  attachmentIds: [String]
+}
+
+input CodeDescriptionInput { code: Int, description: String }
+
+input ProductDetailsManagePermissionInput { managePermissionsRequest: [ProductDetailsManageAccessRequest] }
+input ProductDetailsManageAccessRequest { resourceId: ID!, businessPartners: [ProductDetailPartnerInput] }
+
+input PDTLAttachmentCloneRef { relatedResources: [String], context: String }
+
+input ComponentStatusInput { workspaceId: String!, type: String, statusId: Int }   # matches SDL SPARK_ComponentStatusInput
+input WorkspaceStatusPairInput { workspaceId: ID, statusId: Int }
+input PartialWorkspaceAssociationsInput { addWorkspaces: [ID], removeWorkspaces: [ID] }
+input UserGroup_ParticipantsInput { _placeholder: String }
+
+# --- Queries (names + nullability preserved from the SDL) ---
+extend type Query {
+  getProductDetailsById(ids: [String]): [ProductDetails]               # 🔜 B01
+  getProductDetailsElastic(resourceId: String): ProductDetailsPaged    # 🔜 C01 (🔴 search)
+}
+
+# --- Mutations (names + nullability preserved from the SDL) ---
+extend type Mutation {
+  createProductDetailsSet(productDetails: ProductDetailSetInput): ProductDetails                              # 🔜 D01 (throws on validationErrors)
+  updateProductDetailAccess(updateAccessPermissions: ProductDetailsManagePermissionInput): [ProductDetails]   # 🔜 D02
+  productDetailLockUnlock(constructionSetId: ID!, isLock: Boolean): ProductDetails                            # 🔜 D03
+  cloneFilesForProductDetails(attachmentIds: [String], cloneReference: [PDTLAttachmentCloneRef]): [Attachment]# 🔜 D04 (🔴 attachment)
+  updateProductDetailComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): ProductDetailsPaged  # 🔜 D05 (no JWT — confirm)
+  updateProductDetailsSet(productDetailsId: ID!, productDetails: ProductDetailSetUpdateInput): ProductDetails  # 🔜 E01 (multi-step, non-atomic)
+}
+
+# --- Federation: ProductDetails contributes to Product (Phase F — INTERNAL, same subgraph) ---
+# Product.productDetails resolves in-process (co-located); no gateway hop. Depends only on the Product
+# type existing in the merged schema. See reference-federation-patterns.md §0.

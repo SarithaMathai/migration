@@ -1,0 +1,85 @@
+# Machine-readable story index for Product — feed to Jira MCP / Confluence rollup.
+domain: product
+target_dgs: plm-product
+epic: "Product → plm-product DGS migration"
+labels_common: [dgs-migration, product]
+generated: 2026-06-26
+pipeline_version: "2.0"
+acl_policy: "ACL ignored in implementation; current-impl ACL usage noted as context only"
+stories:
+  - { id: SPARK-PROD-A01, summary: "Schema skeleton + scalars", phase: A, category: CAT-1, complexity: Low, depends_on: [], blocked_by: none }
+  - { id: SPARK-PROD-A02, summary: "Owned types + inputs", phase: A, category: CAT-1, complexity: Medium, depends_on: [SPARK-PROD-A01], blocked_by: none }
+  - { id: SPARK-PROD-A03, summary: "External stubs (platform + sibling)", phase: A, category: CAT-1, complexity: Low, depends_on: [SPARK-PROD-A01], blocked_by: none }
+  - { id: SPARK-PROD-A04, summary: "Categories union @DgsTypeResolver", phase: A, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A02, SPARK-PROD-A03], blocked_by: none }
+  - { id: SPARK-PROD-A05, summary: "ResourcesCount composite-key type", phase: A, category: CAT-1, complexity: Low, depends_on: [SPARK-PROD-A01], blocked_by: none }
+  - { id: SPARK-PROD-A06, summary: "ProductService Kotlin port (42 methods)", phase: A, category: CAT-3, complexity: High, depends_on: [SPARK-PROD-A01], blocked_by: none }
+  - { id: SPARK-PROD-B01, summary: "getProduct", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A02, SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B02, summary: "getProductsByIds", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A02, SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B03, summary: "getProductStatus (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B04, summary: "getProductVersions", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B05, summary: "getCopyStatus", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B06, summary: "getProductTemplateById", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B07, summary: "getProductRules", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B08, summary: "getProductRulesById", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B09, summary: "getAllAvailableRules", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-B10, summary: "getProductDeptRules (flag fork)", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], ext_services: [{key: ruleLibrary, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-B11, summary: "getProductBPRules (flag fork)", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], ext_services: [{key: ruleLibrary, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-C01, summary: "getProducts (two-stage hydration)", phase: C, category: CAT-2, complexity: High, depends_on: [SPARK-PROD-A06], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-C02, summary: "getProductTemplates", phase: C, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-C03, summary: "getCategories", phase: C, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A04, SPARK-PROD-A06], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-C04, summary: "getRatingByTcin (external)", phase: C, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: rating, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-C05, summary: "searchProductRules", phase: C, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: ruleLibrary, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-D01, summary: "addProduct", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: workspaceV2, severity: RED}, {key: attachment, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-D02, summary: "addProducts (bulk)", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: attachment, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-D03, summary: "bulkUpdateProducts", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D04, summary: "updateProduct", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: attachment, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-D05, summary: "carryForwardProduct", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D06, summary: "addTeamsToProduct", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D07, summary: "addBusinessPartnersToProductWithType", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D08, summary: "removeProductResources", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D09, summary: "updateBusinessPartnerStatuses", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D10, summary: "updateViewToggle", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D11, summary: "updateWorkspaceAttributes", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D12, summary: "updateProductTeamsWorkspaceContext", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D13, summary: "linkProduct (throws on error)", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D14, summary: "unlinkProduct", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D15, summary: "addProductRule", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D16, summary: "updateProductRule", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D17, summary: "deleteProductRule", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-D18, summary: "updateComponentStatus (bulk)", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-E01, summary: "productBusinessPartnerActions", phase: E, category: CAT-2, complexity: Very High, depends_on: [SPARK-PROD-A06], ext_services: [{key: sampleV2, severity: YELLOW}, {key: recentlyViewed, severity: BLUE}, {key: todo, severity: BLUE}, {key: favorite, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-E02, summary: "updateComponentStatuses (5-loader fan-out)", phase: E, category: CAT-2, complexity: High, depends_on: [SPARK-PROD-A06], ext_services: [{key: claim, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-PROD-E03, summary: "getProductTechPackCountV1 stub + facade (Option D)", phase: E, category: CAT-2, complexity: Very High, depends_on: [SPARK-PROD-A05], ext_services: [{key: attachment, severity: RED}, {key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-E04, summary: "getProductTechPackBulkCountV1 (ordering fix)", phase: E, category: CAT-2, complexity: Very High, depends_on: [SPARK-PROD-E03], ext_services: [{key: attachment, severity: RED}, {key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-F01, summary: "ResourcesCount.productAttachments+discussionAttachments (Attachment)", phase: F, category: CAT-4, complexity: Medium, depends_on: [SPARK-PROD-E03], blocked_by: attachment }
+  - { id: SPARK-PROD-F02, summary: "ResourcesCount.discussions (Discussion)", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-PROD-E03], blocked_by: discussion }
+  - { id: SPARK-PROD-F03, summary: "ResourcesCount.sample (Sample)", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-PROD-E03], blocked_by: sample }
+  - { id: SPARK-PROD-F04, summary: "ResourcesCount.measurementSets (Measurement — INTERNAL, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-E03], blocked_by: none }
+  - { id: SPARK-PROD-F05, summary: "ResourcesCount.claims (Claim)", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-PROD-E03], blocked_by: claim }
+  - { id: SPARK-PROD-F06, summary: "ResourcesCount.productBoms+packagingBoms+boms (BOM — INTERNAL, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-E03], blocked_by: none }
+  - { id: SPARK-PROD-F07, summary: "ResourcesCount.constructions (Construction)", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-PROD-E03], blocked_by: construction }
+  - { id: SPARK-PROD-F08, summary: "ResourcesCount.watchlists (Watchlist — INTERNAL, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-E03], blocked_by: none }
+  - { id: SPARK-PROD-F09, summary: "Retire TechPack aggregation facade", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-PROD-F01, SPARK-PROD-F02, SPARK-PROD-F03, SPARK-PROD-F04, SPARK-PROD-F05, SPARK-PROD-F06, SPARK-PROD-F07, SPARK-PROD-F08], blocked_by: none }
+  - { id: SPARK-PROD-F10, summary: "Hive Gateway supergraph composition", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-F11, summary: "Platform stub verification", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-PROD-F10], blocked_by: none }
+  - { id: SPARK-PROD-F12, summary: "Deferred partner-wrapper decision", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-PROD-E01], blocked_by: none }
+  - { id: SPARK-PROD-G01, summary: "Product.attachmentsWithMetaData", phase: G, category: CAT-2, complexity: Very High, depends_on: [SPARK-PROD-A02, SPARK-PROD-A06], ext_services: [{key: attachment, severity: RED}, {key: relationship, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-PROD-G02, summary: "Product.components", phase: G, category: CAT-2, complexity: Very High, depends_on: [SPARK-PROD-A02, SPARK-PROD-A06], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-G03, summary: "Product.attachments/attachmentsV3/attachmentSummary", phase: G, category: CAT-2, complexity: High, depends_on: [SPARK-PROD-G01], ext_services: [{key: attachment, severity: RED}, {key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-G04, summary: "ProductsCategories.categories (12-case) + Doppler", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A04], ext_services: [{key: doppler, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-G05, summary: "Product.samples/sampleIds/elasticSamplesList", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: sampleV2, severity: YELLOW}, {key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-G06, summary: "Product.teams/discussionsV2/discussionsCount/workspaces", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: teamV2, severity: YELLOW}, {key: discussion, severity: YELLOW}, {key: search, severity: RED}, {key: workspaceV2, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-G07, summary: "Product.partners + status", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: vmm, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-G08, summary: "Product.sibling components (internal)", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-G09, summary: "Product.productWorkspaceAttributes/Info", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: workspaceV2, severity: RED}, {key: search, severity: RED}, {key: tag, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-PROD-G10, summary: "Product.ancestryProducts/rating/reservedDpcis", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: relationship, severity: YELLOW}, {key: rating, severity: BLUE}, {key: apex, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-G11, summary: "Product.notRemovable* + asks + variations (de-reflect)", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: vmm, severity: BLUE}, {key: workspaceV2, severity: RED}], blocked_by: none }
+  - { id: SPARK-PROD-G12, summary: "Product.division bug fix (wrong loader)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A06], ext_services: [{key: ig, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-G13, summary: "IG/tag/tcin/spg + template trivial group", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PROD-A06], ext_services: [{key: ig, severity: BLUE}, {key: tag, severity: YELLOW}, {key: corona, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PROD-G14, summary: "Simple user/status fields + trivial pass-throughs", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-PROD-A02], ext_services: [{key: userAttributes, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-PROD-G15, summary: "Port product utils to Kotlin", phase: G, category: CAT-3, complexity: Medium, depends_on: [SPARK-PROD-A06], blocked_by: none }
+  - { id: SPARK-PROD-G16, summary: "Tests, parity, load, cut-over rehearsal", phase: G, category: CAT-5, complexity: High, depends_on: [SPARK-PROD-C01, SPARK-PROD-E01, SPARK-PROD-E03, SPARK-PROD-G01, SPARK-PROD-G02], blocked_by: none }
+totals:
+  story_count: 72
+  by_complexity: { Low: 40, Medium: 22, High: 5, "Very High": 5 }
+  by_phase: { A: 6, B: 11, C: 5, D: 18, E: 4, F: 12, G: 16 }

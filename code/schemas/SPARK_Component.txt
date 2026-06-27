@@ -1,0 +1,23 @@
+extend type Query {
+  getComponentVersions(id: String!): [SPARK_Component]
+  # ids are needed to preserve compatibility with fetching proxy library resoruces on bom
+  getComponentVersion(id: String!, version: Int!, ids: [String]): SPARK_Component
+}
+
+extend type Mutation {
+  updateComponentWorkspaceAssociation(input: SPARK_UpdateWorkspaceAssociationsInput): SPARK_Component
+}
+
+input SPARK_PartialWorkspaceAssociationsInput {
+  addWorkspaces: [ID]!,
+  removeWorkspaces: [ID]!,
+}
+
+input SPARK_UpdateWorkspaceAssociationsInput {
+  id: ID!,
+  type: SPARK_ResourceType!,
+  addWorkspaces: [ID]!,
+  removeWorkspaces: [ID]!
+}
+
+union SPARK_Component = SPARK_Measurements | SPARK_Bom | SPARK_Claims | SPARK_ProductDetails | SPARK_Watchlist | SPARK_Packaging

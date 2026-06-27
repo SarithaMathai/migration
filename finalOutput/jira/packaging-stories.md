@@ -1,0 +1,302 @@
+# packaging — Jira stories (paste one block per issue)
+
+> **Epic:** Packaging → plm-product DGS migration  ·  **Labels:** `dgs-migration`, `packaging`, `<type>`
+> Create the Epic first, then paste each block below as a new Story's description.
+> Story points are AI-derived from complexity (confirm in refinement). See [README.md](./README.md).
+
+## SPARK-PKG-A01 · Schema skeleton + DateTime scalar
+**Type:** Story  ·  **Phase:** A  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** —
+**Labels:** `dgs-migration`, `packaging`, `schema`
+
+**Current Behaviour:** green-field; schema translated from `code/schemas/SPARK_Packaging.txt`.
+**Target:** federation v2.3 header, `scalar DateTime → Instant`, empty `extend type Query`/`Mutation`.
+**Acceptance:** 1. `./gradlew generateJava` passes. 2. `DateTime` round-trips. **Tests:** ☐ compiles ☐ scalar serde.
+
+---
+
+## SPARK-PKG-A02 · Owned types + inputs (~24 types, ~20 inputs)
+**Type:** Story  ·  **Phase:** A  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A01
+**Labels:** `dgs-migration`, `packaging`, `schema`
+
+**Target:** `Packaging` (`@key(fields:"humanId")`), `Dieline` (`@key(fields:"humanId")`), the ~20 value
+types and ~20 inputs — per [03-schema.graphql](./03-schema.graphql). Carry `@deprecated` directives
+(`retailPrice`, `creativePath`, `resourceType`, `fileDeliveryEmail`, `Dieline.attachments`). **Acceptance:** 1. all types+inputs present; entities keyed on `humanId`; nullability matches SDL. 2. validates. **Tests:** ☐ validates ☐ entity stubs.
+
+---
+
+## SPARK-PKG-A03 · External stubs (platform + sibling DGS)
+**Type:** Story  ·  **Phase:** A  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A01
+**Labels:** `dgs-migration`, `packaging`, `schema`
+
+**Target:** stubs `Attachment`, `SearchAttachment`, `WorkspaceV2`, `UserProfileAttributes`,
+`UserGroup_Participants`, `AccessControl`, `VMM_BusinessPartner` + internal placeholders `Product`,
+`ProductComponentStatus`, `SpgFileLibrary`. **Acceptance:** 1. compiles; gateway composes. **Tests:** ☐ compiles ☐ stub resolves.
+
+---
+
+## SPARK-PKG-A04 · PackagingService port (packaging/v1)
+**Type:** Story  ·  **Phase:** A  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A01
+**Labels:** `dgs-migration`, `packaging`, `service`
+
+**Current Behaviour (Phase 2 §Service):** ~16 REST methods on `packaging/v1` (+ dielines + export).
+**Target:** Kotlin service; preserve create/bulk throw-on-error and the `{content}` status wrap; snake/camel
+at the Feign boundary. **Acceptance:** 1. methods present (POST, PUT, /dielines/{id}/evaluate, bulk add/update, GET listings, GET /{id}, /export, /{id}/lock|unlock, /component_status_update, /{id}/workspace_associations). 2. add throws on validation error. **Tests:** ☐ endpoint build ☐ create error ☐ status wrap.
+
+---
+
+### Phase B — Core Reads
+
+---
+
+## SPARK-PKG-B01 · getPackagings
+**Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A02, SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `query`
+
+**Current Behaviour (Q1):** (own) `getPackagings().load({page,size,packagingIds,parentIds,workspaceIds,partnerIds,statusIds})` → paged. **Target:** `@DgsQuery → PackagingPaged`. **Acceptance:** 1. all 7 filter args forwarded; defaults page=0/size=10000. **Tests:** ☐ filters ☐ paging ☐ integration.
+
+---
+
+## SPARK-PKG-B02 · getPackagingById
+**Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A02, SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `query`
+
+**Current Behaviour (Q2):** (ACL context) token → (own) `getPackagingById.load(packagingId)`. **Target:** `@DgsQuery → Packaging`. **Acceptance:** 1. returns packaging; miss→null. **Tests:** ☐ happy ☐ miss.
+
+---
+
+## SPARK-PKG-B03 · getDielines
+**Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A02, SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `query`
+
+**Current Behaviour (Q3):** (own) `getDielines.load({...})` → `.dielines`. **Target:** `@DgsQuery → [Dieline]`. **Acceptance:** 1. filters forwarded; returns the `dielines` array. **Tests:** ☐ filters ☐ integration.
+
+---
+
+## SPARK-PKG-B04 · getPackagingFieldValuesByType
+**Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `query`
+
+**Current Behaviour (Q4):** (own) `getPackagingFieldValuesByType(type, ids)`. **Target:** `@DgsQuery → [PackagingFieldValues]`. **Acceptance:** 1. by type (+optional ids). **Tests:** ☐ by type.
+
+---
+
+## SPARK-PKG-B05 · getDielineEvaluationStatuses (cacheable)
+**Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `query`
+
+**Current Behaviour (Q5):** (own) `getDielineEvaluationStatuses()`. **Target:** `@DgsQuery` → `@Cacheable` → `[CodeDescription]`. **Acceptance:** 1. returns statuses; cached. **Tests:** ☐ list ☐ cache hit.
+
+---
+
+## SPARK-PKG-B06 · getCountries (cacheable)
+**Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `query`
+
+**Current Behaviour (Q6):** (own) `getCountries(codes)`. **Target:** `@DgsQuery` → `@Cacheable` → `[Countries]`. **Acceptance:** 1. returns countries (optionally filtered by codes). **Tests:** ☐ all ☐ filtered.
+
+---
+
+### Phase C — Search & Listing
+
+---
+
+## SPARK-PKG-C01 · getPackagingElastic
+**Type:** Story  ·  **Phase:** C  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `query`
+
+**Current Behaviour (Q7):** (🔴 search) `search.getPackagingElastic.load({ q:"parentId: {parentHumanId}" })` → `.content`. **EXT:** 🔴 search. **Target:** `@DgsQuery → [Packaging]`. **Acceptance:** 1. `parentId:` elastic query built; returns content. **Tests:** ☐ query build ☐ parity.
+
+---
+
+### Phase D — Mutations (simple)
+
+---
+
+## SPARK-PKG-D01 · addPackaging (throws on validationErrors)
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M1):** (own) `POST packaging/v1`. **Throw on `validationErrors`/`message`.** **Target:** `@DgsMutation → Packaging`; port throw-on-error. **Acceptance:** 1. creates. 2. validation error → exception. **Tests:** ☐ create ☐ validation-error→throw.
+
+---
+
+## SPARK-PKG-D02 · evaluateDieline
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M3):** (own) `PUT packaging/v1/dielines/{dielineId}/evaluate`. **Target:** `@DgsMutation → Dieline`. **Acceptance:** 1. evaluates the dieline. **Tests:** ☐ evaluate.
+
+---
+
+## SPARK-PKG-D03 · bulkAddPackagings
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M4):** (own) `bulkAddPackagings`. **Throw on `validationErrors`/`message`.** **Target:** `@DgsMutation → PackagingBulk`. **Acceptance:** 1. bulk creates. 2. error → throw. **Tests:** ☐ bulk ☐ error.
+
+---
+
+## SPARK-PKG-D04 · bulkUpdatePackagings
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M5):** token for `packaging[].humanId` → (own) `bulkUpdatePackagings`. **Throw on error.** **Target:** `@DgsMutation → PackagingBulk`. **Acceptance:** 1. bulk updates. 2. error → throw. **Tests:** ☐ bulk ☐ error.
+
+---
+
+## SPARK-PKG-D05 · exportPackaging
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M6):** token → (own) `requestPackagingExport({workspace_id, workspace_description, product_ids})` → request id. **Target:** `@DgsMutation → String`. **Acceptance:** 1. returns the export request id. **Tests:** ☐ request.
+
+---
+
+## SPARK-PKG-D06 · lockPackaging
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M7):** token → `PUT packaging/v1/{id}/lock`. **Target:** `@DgsMutation → Packaging`. **Acceptance:** 1. locks. **Tests:** ☐ lock.
+
+---
+
+## SPARK-PKG-D07 · unlockPackaging
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M8):** token → `PUT packaging/v1/{id}/unlock`. **Target:** `@DgsMutation → Packaging`. **Acceptance:** 1. unlocks. **Tests:** ☐ unlock.
+
+---
+
+## SPARK-PKG-D08 · cloneFilesForDielines
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M9):** token → `Promise.all(attachmentIds.map(id => (🔴 attachment) cloneAttachmentV3({cloneReferences}, id)))`, flatten. **EXT:** 🔴 attachment. **Target:** structured-concurrency fan-out. **Acceptance:** 1. clones each id with the shared `cloneReferences`. **Tests:** ☐ clone ☐ parity.
+
+---
+
+## SPARK-PKG-D09 · updatePackagingComponentStatus (no JWT — confirm)
+**Type:** Story  ·  **Phase:** D  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**Current Behaviour (M10):** (own) `updatePackagingComponentStatus({productId, ids, status})`. **No JWT — confirm backend-enforced.** **Target:** `@DgsMutation → PackagingPagedForStatus`. **Acceptance:** 1. updates statuses. 2. no-token behaviour documented. **Tests:** ☐ update.
+
+---
+
+### Phase E — Complex Operations
+
+---
+
+## SPARK-PKG-E01 · updatePackaging (multi-step: body + attachment add/remove, non-atomic)
+**Type:** Story  ·  **Phase:** E  ·  **Complexity:** High  ·  **Points (est.):** 5  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `mutation`
+
+**As a** DGS engineer **I want** the multi-step packaging update with a failure strategy **so that** body and
+attachment add/remove changes stay consistent.
+**Current Behaviour (M2):** 1) token; set `humanId=packagingId`; `PUT packaging/v1` (body); 2) if
+`attachmentsToRemove` → (🔴 attachment) `archiveAttachmentBulkV2` + (🟡 relationship) `removeRelationship`;
+3) if `attachmentsToAdd` → (🟡 relationship) `addBulkRelationShip` (**reject on status≥400**) then
+(🔴 attachment) `bulkUpdateAttributes`; 4) **throw on `validationErrors`/`message`**. No rollback.
+**EXT:** 🔴 attachment · 🟡 relationship. **Target:** ordered steps + chosen failure strategy
+(**PO decision**); **align** the add/remove error handling (the remove branch currently swallows errors).
+**Acceptance:** 1. all branches in order. 2. add rejects on status≥400; remove error handling decided. 3. partial-failure strategy. **Tests:** ☐ body-only ☐ remove ☐ add ☐ status≥400 ☐ partial-failure ☐ parity.
+
+---
+
+### Phase F — Federation (internal)
+
+---
+
+## SPARK-PKG-F01 · Product packaging links (INTERNAL, same subgraph)
+**Type:** Story  ·  **Phase:** F  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `field-resolver`
+
+**Current Behaviour:** Product references packaging (e.g. `components(...packaging)`, packaging attributes)
+from the co-located packaging service. **Target:** **internal** `@DgsData` calling `PackagingService`
+in-process (not gateway federation; depends only on the `Product`/`Component` types existing). **Acceptance:** 1. resolves in-process; no gateway hop. **Tests:** ☐ resolves ☐ parity.
+
+---
+
+### Phase G — Field Resolvers & Tests
+
+---
+
+## SPARK-PKG-G01 · access + businessPartner + participantDetails
+**Type:** Story  ·  **Phase:** G  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A02, SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `field-resolver`
+
+**Current Behaviour:** `access` → `accessControl.getPermissions([humanId])[0]` (context); `businessPartner`
+→ (🔵 vmm) `loadBpsWithType([businessPartner])[0]`; `participantDetails` → `getUserGroup(humanId||id)`. **Acceptance:** 1. each resolves; null-safe. **Tests:** ☐ access ☐ bp ☐ participants.
+
+---
+
+## SPARK-PKG-G02 · createdBy + updatedBy + dielineEvaluators
+**Type:** Story  ·  **Phase:** G  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `field-resolver`
+
+**Current Behaviour:** `createdBy`/`updatedBy` (🟡 user-profile `getUser`); `dielineEvaluators` → map
+`userAttributes.getUserByID`, default `[]`. **Acceptance:** 1. each resolves; null id → null. **Tests:** ☐ users ☐ evaluators.
+
+---
+
+## SPARK-PKG-G03 · product + workspaces + attachments
+**Type:** Story  ·  **Phase:** G  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `field-resolver`
+
+**Current Behaviour:** `product` (internal, only if `parentId` starts `'PID'`); `workspaces`
+→ (🔴 search) `getWorkspacesPagedV3({q:"id:(...)"})`.content; `attachments`
+→ (🔴 search) `searchAttachmentsByRelatedResource(humanId)`. **Acceptance:** 1. `product` null when not `PID*`. 2. workspaces/attachments via elastic. **Tests:** ☐ product branch ☐ workspaces ☐ attachments.
+
+---
+
+## SPARK-PKG-G04 · suggestedRetailPriceByDPCI + waveDescription + retailPrice
+**Type:** Story  ·  **Phase:** G  ·  **Complexity:** High  ·  **Points (est.):** 5  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `field-resolver`
+
+**Current Behaviour:** `suggestedRetailPriceByDPCI` — gated on `requiresSuggestedRetailPrice` + a BP id:
+collect printer ids from `packagingElements` → (own) `getDielines(printerIds)` → unique dpcis →
+(🔵 apex/pricing) `getRetailPriceByDpci({dpcis, bpId, productId})`; else `[]`. `waveDescription`
+→ (🟡 tag) `getTag(wave).name` if `wave`, else `waveDescription`. `retailPrice` → `0` (deprecated). **Target:** port the pricing chain; cache/batch dielines. **Acceptance:** 1. price chain matches source; gate honored. 2. wave tag fallback. 3. `retailPrice`→0. **Tests:** ☐ price chain ☐ gate ☐ wave ☐ retailPrice.
+
+---
+
+## SPARK-PKG-G05 · Dieline + PrinterDieline + PackagingElement field resolvers
+**Type:** Story  ·  **Phase:** G  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-A04
+**Labels:** `dgs-migration`, `packaging`, `field-resolver`
+
+**Current Behaviour:** `Dieline.evaluatedBy` (🟡 user-profile), `Dieline.attachments` (🔴 search),
+`Dieline.attachment` (🔴 attachment `getAttachmentsV3([attachmentId])[0]`); `PrinterDieline.dielines`
+(own `getDielines({printerIds, statusIds})`); `PackagingElement.packagingLibrary` (internal fileLibrary). **Acceptance:** 1. each field resolves to the right source. **Tests:** ☐ dieline fields ☐ printer dielines ☐ packagingLibrary.
+
+---
+
+## SPARK-PKG-G06 · Tests, parity harness
+**Type:** Story  ·  **Phase:** G  ·  **Complexity:** Medium  ·  **Points (est.):** 3  ·  **Depends on:** SPARK-PKG-B01, SPARK-PKG-E01, SPARK-PKG-G03, SPARK-PKG-G04
+**Labels:** `dgs-migration`, `packaging`, `tests`
+
+**Target:** ≥80% unit coverage; parity fixtures (incl. the multi-step `updatePackaging`, the pricing chain,
+attachment-by-search fields, create/bulk error contracts); contract test (schema diff intentional-only,
+incl. `@deprecated`). **Acceptance:** 1. unit ≥80%. 2. parity green. 3. schema-diff intentional. **Tests:** ☐ parity ☐ contract.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|------|-----------|--------|------------|-------|
+| `updatePackaging` multi-step partial failure (E01) | Medium | High | Saga / compensation; align add/remove error handling | Tech Lead + PO |
+| `suggestedRetailPriceByDPCI` multi-hop pricing (G04) | Medium | Medium | Cache/batch; honor the `requiresSuggestedRetailPrice` gate | Backend Eng |
+| `updatePackagingComponentStatus` no auth token (D09) | Low | Medium | Confirm backend-enforced | PO |
+| Attachment-by-search field perf (G03/G05) | Low | Medium | Shared helper; batch | Backend Eng |
+| Claims pass-through on `PackagingInput` | Low | Low | Confirm ownership (packaging vs claims) | Architect |
+
+## 5. Summary
+- **Stories:** 28 (A:4 · B:6 · C:1 · D:9 · E:1 · F:1 · G:6).
+- **Critical path:** A01→A02/A04→E01→G04→G06.
+- **Highest risk:** `updatePackaging` (E01); `suggestedRetailPriceByDPCI` (G04).
+- **Co-located:** packaging is in the `plm-product` monorepo; Product packaging links resolve internally.
+
+---
+**Phase Completed:** Phase 4 — Migration Stories · **Domain:** `packaging` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md.
+
+---

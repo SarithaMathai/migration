@@ -1,0 +1,150 @@
+extend type Query {
+  getNotifications(
+    page: Int
+    size: Int
+    read: Boolean
+    complete: Boolean
+    flagged: Boolean
+    notificationTypes: [String]
+    resourceId: String
+  ): SPARK_NotificationsPaged
+  getNotificationGroups(
+    page: Int
+    size: Int
+    recipientId: String
+    unread: Boolean
+    flagged: Boolean
+    complete: Boolean
+    notificationTypes: [String]
+    resourceId: String
+    tags: [String]
+    sampleStatuses: [String]
+    conversationTypes: [String]
+    watchlistActions: [String]
+    claimActions: [String]
+    businessPartnerIds: [String]
+  ): SPARK_Notification_GroupsPaged
+  getNotificationGroupStats(
+    page: Int
+    size: Int
+    recipientId: String
+    unread: Boolean
+    flagged: Boolean
+    complete: Boolean
+    notificationTypes: [String]
+    resourceId: String
+    tags: [String]
+    sampleStatuses: [String]
+    conversationTypes: [String]
+    watchlistActions: [String]
+    claimActions: [String]
+    businessPartnerIds: [String]
+  ): SPARK_Notification_Group_Stats
+}
+
+extend type Mutation {
+  updateNotificationStatus(notificationStatusInput:SPARK_Bulk_Notification_Status!):SPARK_NotificationsPaged
+  updateNotificationGroups(input:[SPARK_UpdateNotificationGroup]!): [String]
+}
+
+union SPARK_DiscussionOrThread = SPARK_Discussion | SPARK_DiscussionReply
+union SPARK_Notification_Resource = SPARK_Discussion | SPARK_DiscussionReply | SPARK_SampleV2 | SPARK_Packaging
+
+type SPARK_Notification_Group_Stats {
+  tags: [SPARK_Tag]
+  businessPartners: [VMM_BusinessPartner]
+}
+
+type SPARK_Notification_GroupsPaged {
+  content:[SPARK_Notification_Group]
+  paging: SPARK_Paging
+}
+
+type SPARK_NotificationsPaged{
+  content:[SPARK_Notification]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_Notification_Watchlist {
+  description: String
+  businessPartners: [VMM_BusinessPartner]
+  id: String
+  workspaceId: String
+  productId: String
+  tags: [SPARK_Tag]
+}
+
+type SPARK_Notification_Claim {
+  description: String
+  businessPartners: [VMM_BusinessPartner]
+  id: String
+  workspaceId: String
+  productId: String
+  tags: [SPARK_Tag]
+}
+
+type SPARK_Notification {
+  body: String
+  complete: Boolean
+  completedAt: DateTime
+  flagged: Boolean
+  from: String
+  id: String
+  notificationType: String
+  read: Boolean
+  author: SPARK_UserProfileAttributes
+  recipient: SPARK_Notification_Recipient
+  requestId: String
+  resourceId: String
+  resourceType: String
+  parentId: String
+  relatedResources: [String]
+  status: String
+  subject: String
+  timestamp: DateTime
+  discussionOrThread: SPARK_DiscussionOrThread
+  resource: SPARK_Notification_Resource
+  tags: [SPARK_Tag]
+  attachmentCount: Int
+}
+
+type SPARK_Notification_Group {
+  id: String
+  sample: SPARK_SampleV2
+  packaging: SPARK_Packaging
+  discussion: SPARK_Notification_Resource
+  watchlist: SPARK_Notification_Watchlist
+  claim: SPARK_Notification_Claim
+  primaryResourceId: String
+  primaryResourceType: String
+  recipient: SPARK_Notification_Recipient
+  lastNotificationTime: DateTime
+  notifications: [SPARK_Notification]
+  totalAttachmentCount: Int
+  workspaceId: String
+}
+
+type SPARK_Notification_Recipient {
+  emailAddress: String
+  partner: VMM_BusinessPartner
+  userProfile: SPARK_UserProfileAttributes
+}
+
+input SPARK_Bulk_Notification_Status{
+  updates: [SPARK_Notification_Status!]!
+}
+
+input SPARK_Notification_Status {
+  flagged: Boolean
+  complete: Boolean
+  notificationId: String!
+  read: Boolean
+}
+
+input SPARK_UpdateNotificationGroup {
+  flagged: Boolean
+  complete: Boolean
+  notificationGroupId: String!
+  read: Boolean
+}

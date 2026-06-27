@@ -1,0 +1,43 @@
+extend type Query {
+  searchItemByProduct(pid: String!, from: Int!, size: Int!): AssortmentSearchResults
+  getAssortmentItemByTcin(tcin: String!): Corona_Tcin
+}
+
+type AssortmentSearchResults {
+  totalResultCount: Int
+  itemDocuments: [AssortmentItemDocument]
+}
+
+type AssortmentItemDocument {
+  tcinInfo: Corona_Tcin
+  tcin: String
+  lifecycleState: String
+  vendors: [AssortmentItemVendor]
+}
+
+type AssortmentItemVendor {
+  id: String
+  name: String
+  businessPartner: VMM_BusinessPartner
+}
+
+type Corona_Tcin {
+  tcin: String
+  launchDateTime: String
+  itemProcessStatus: ItemProcessStatus
+  dpci: String
+  productIds: [String]
+  vendorIds: [String]
+  createTimestamp: String
+  codeNames: [CodeName]
+  parentTcins: [String]
+}
+
+type CodeName {
+  code: String
+  name: String
+}
+
+type ItemProcessStatus {
+  statusCode: String
+}

@@ -1,0 +1,1186 @@
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,Complexity,Story point estimate,Labels,Labels,Labels,Depends On,Description
+Epic,,Impression → plm-product DGS migration,Impression → plm-product DGS migration,,,,,dgs-migration,impression,epic,,Epic for the impression domain migration to the plm-product DGS.
+Story,SPARK-IMP-A01,SPARK-IMP-A01 · Schema skeleton + DateTime scalar,,Impression → plm-product DGS migration,A,Low,2,dgs-migration,impression,schema,,"**As a** DGS migration engineer **I want** the `impression.graphqls` skeleton + `DateTime` scalar **so that**
+later impression work compiles on a stable base.
+**Current Behaviour:** green-field; schema translated from `code/schemas/SPARK_Impression.txt`.
+**Target DGS Implementation:** federation v2.3 header, `scalar DateTime → Instant`, empty `extend type Query`/`Mutation`.
+**Files:** `schema/impression.graphqls`, `config/ScalarConfig.kt`. **Dependencies:** None.
+**Acceptance Criteria:** 1. `./gradlew generateJava` passes. 2. `DateTime` round-trips ISO-8601.
+**Test Cases:** ☐ Unit: schema compiles ☐ Unit: DateTime serde."
+Story,SPARK-IMP-A02,SPARK-IMP-A02 · Owned types + inputs,,Impression → plm-product DGS migration,A,Low,2,dgs-migration,impression,schema,SPARK-IMP-A01,"**As a** DGS migration engineer **I want** `Impression`, `ImpressionCount`, `CountsByBp` and the 3 inputs
+defined **so that** resolvers/mutations have a contract.
+**Current Behaviour:** see [03-schema.graphql](./03-schema.graphql).
+**Target DGS Implementation:** add the types; `@key(fields:""id"")` on `Impression`; `@shareable` on `CountsByBp`.
+**Files:** `schema/impression.graphqls`. **Dependencies:** A01.
+**Acceptance Criteria:** 1. All owned types + inputs present. 2. `@key` only on `Impression`. 3. Schema validates.
+**Test Cases:** ☐ Unit: schema validates ☐ Unit: `Impression` entity stub resolves."
+Story,SPARK-IMP-A03,SPARK-IMP-A03 · External stubs,,Impression → plm-product DGS migration,A,Low,2,dgs-migration,impression,schema,SPARK-IMP-A01,"**Current Behaviour:** references `VMM_BusinessPartner`, `Product`, `WorkspaceV2`, `UserProfileAttributes`.
+**Target DGS Implementation:** add each as `@extends @key(fields:""id"") { id: ID! @external }`.
+**Files:** `schema/impression.graphqls`. **Dependencies:** A01.
+**Acceptance Criteria:** 1. 4 stubs compile; gateway composes without conflict.
+**Test Cases:** ☐ Unit: compiles ☐ Integration: gateway resolves a `VMM_BusinessPartner` stub."
+Story,SPARK-IMP-A04,SPARK-IMP-A04 · ImpressionService Kotlin port (2 methods),,Impression → plm-product DGS migration,A,Low,2,dgs-migration,impression,service,SPARK-IMP-A01,"**Current Behaviour (S1):** base `…/impressions/product`. `searchImpressionsByProductId` →
+`GET /{productId}?workspaceIds=&partnerIds=` (repeated params from arrays); `updateImpressions` →
+`PUT /{productId}` (snake_case request, camelCase response). **ACL note (context):** both curry a capability
+token because impressions are product-scoped; ignored in DGS.
+**Target DGS Implementation:** `ImpressionClient` Feign (GET + PUT) + `ImpressionService`. Build the GET query
+string by repeating `workspaceIds`/`partnerIds`. Jackson snake/camel.
+**Files:** `service/ImpressionService.kt`, `client/ImpressionClient.kt`, `model/ImpressionDto.kt`. **Dependencies:** A01.
+**Acceptance Criteria:** 1. GET builds repeated `workspaceIds`/`partnerIds` params. 2. PUT sends snake_case, maps camelCase response. 3. Both signatures present.
+**Test Cases:** ☐ Unit: GET query-string build ☐ Unit: snake/camel mapping."
+Story,SPARK-IMP-B01,SPARK-IMP-B01 · searchImpressionsByProductId data fetcher,,Impression → plm-product DGS migration,B,Low,2,dgs-migration,impression,query,"SPARK-IMP-A02, SPARK-IMP-A04","**Current Behaviour (Q1):** `GET {base}/…/impressions/product/{id}?workspaceIds=&partnerIds=` → camelCase list.
+`enableWorkspaceContextFiltering` is accepted but **not forwarded** to the service today — confirm intended.
+**ACL note (context):** capability token for `id`; ignored in DGS.
+**Target DGS Implementation:** `@DgsQuery searchImpressionsByProductId(id, partnerIds, workspaceIds, enableWorkspaceContextFiltering): List<Impression>` → `impressionService.searchByProductId(...)`. Decide whether to wire `enableWorkspaceContextFiltering` to the backend.
+**Files:** `dataFetcher/ImpressionQueryDataFetcher.kt`. **Dependencies:** A02, A04.
+**Acceptance Criteria:** 1. Returns impressions for `id` with optional partner/workspace filters. 2. `enableWorkspaceContextFiltering` behaviour documented (forwarded or intentionally ignored). 3. Empty → `[]`.
+**Test Cases:** ☐ Unit: filters in query string ☐ Unit: empty ☐ Integration."
+Story,SPARK-IMP-B02,SPARK-IMP-B02 · getImpressionCountsByProductId data fetcher,,Impression → plm-product DGS migration,B,Low,2,dgs-migration,impression,query,"SPARK-IMP-A02, SPARK-IMP-A04","**Current Behaviour (Q2):** reuses the same REST search call for `id`; returns the impressions list typed as
+`ImpressionCount`; the `ImpressionCount.counts` field (G02) aggregates.
+**Target DGS Implementation:** `@DgsQuery getImpressionCountsByProductId(id): ImpressionCount` → returns the
+impressions list as the parent for `counts`. **PO decision:** preserve this contract, or switch to a typed
+`ImpressionCountResult` computed in the fetcher (see 03-analysis).
+**Files:** `dataFetcher/ImpressionQueryDataFetcher.kt`. **Dependencies:** A02, A04.
+**Acceptance Criteria:** 1. Returns the impressions list as the `ImpressionCount` parent. 2. Contract decision recorded. 3. Empty product → `counts` yields `totalCount: 0` (see G02).
+**Test Cases:** ☐ Unit: returns list-as-parent ☐ Integration: `{ counts { bpType counts } }`."
+Story,SPARK-IMP-D01,SPARK-IMP-D01 · updateImpressions mutation,,Impression → plm-product DGS migration,D,Medium,3,dgs-migration,impression,mutation,SPARK-IMP-A04,"**Current Behaviour (M1):** `PUT {base}/…/impressions/product/{productId}` with `{impressionsToDelete, impressionsToUpdate}` (snake_case); on `validationErrors || message` → throw. **ACL note (context):** capability token for `productId`; ignored in DGS.
+**Target DGS Implementation:** `@DgsMutation updateImpressions(productId, productImpression): List<Impression>`
+→ `impressionService.update(...)`; map camelCase↔snake_case; on `validationErrors`/`message` → typed
+`ImpressionValidationException`.
+**Files:** `dataFetcher/ImpressionMutationDataFetcher.kt`. **Dependencies:** A04.
+**Acceptance Criteria:** 1. PUT sends delete + update sets snake_case. 2. Returns updated impressions camelCase. 3. Backend `validationErrors`/`message` → exception (not silent return).
+**Test Cases:** ☐ Unit: request shape ☐ Unit: validationErrors → exception ☐ Integration."
+Story,SPARK-IMP-F01,"SPARK-IMP-F01 · Implement Product.impressions/impressionCounts (internal, same subgraph)",,Impression → plm-product DGS migration,F,Low,2,dgs-migration,impression,field-resolver,SPARK-IMP-A04,"**Monorepo:** `product` and `impression` are the same `plm-product` subgraph — this is an **internal** field
+resolver, not gateway federation.
+**Current Behaviour:** product navigates to impressions via the impression search call.
+**Target DGS Implementation:** plain `@DgsData` fields on the internal `Product` type for
+`impressions(partnerIds, workspaceIds)` and `impressionCounts` → in-process `impressionService` calls.
+**No** `@DgsEntityFetcher`/`@extends @external`. Depends on `Product` existing (product A02).
+**Acceptance Criteria:** 1. `Product.impressions/impressionCounts` resolve internally via `impressionService`. 2. no gateway hop. 3. Parity vs current product-side resolver.
+**Test Cases:** ☐ Unit: calls impression service ☐ Integration: `Product { impressions { id } }` in-process ☐ Parity."
+Story,SPARK-IMP-G01,SPARK-IMP-G01 · Impression field resolvers (5),,Impression → plm-product DGS migration,G,Low,2,dgs-migration,impression,field-resolver,"SPARK-IMP-A02, SPARK-IMP-A04","**Current Behaviour (F1–F5):** `businessPartners` (`loadBpsWithType(partnerIds.map(p=>({partnerId:p})))`),
+`owningBusinessPartner` (`loadBp(owningPartnerId)`), `workspaces` (`getWorkspacesByIdsV2(workspaceContext)` or `[]`),
+`createdBy`/`updatedBy` (`userAttributes.getUserByID.load(...)`).
+**EXT:** 🟡 workspaceV2; 🔵 vmm; 🔵 user-profile.
+**Target DGS Implementation:** 5 `@DgsData` fields resolving via federated references / clients.
+`workspaces` → `[]` when `workspaceContext` empty.
+**Files:** `dataFetcher/ImpressionFieldDataFetcher.kt`. **Dependencies:** A02, A04.
+**Acceptance Criteria:** 1. partners resolve from `partnerIds`/`owningPartnerId`. 2. `workspaces` empty → `[]`. 3. `createdBy`/`updatedBy` resolve by user id (null id → null).
+**Test Cases:** ☐ Unit: partners mapping ☐ Unit: empty workspaces ☐ Unit: null user id ☐ Integration: federated `Impression { createdBy { id } }`."
+Story,SPARK-IMP-G02,SPARK-IMP-G02 · ImpressionCount.counts aggregation,,Impression → plm-product DGS migration,G,Medium,3,dgs-migration,impression,field-resolver,"SPARK-IMP-A02, SPARK-IMP-A04","**As a** DGS migration engineer **I want** the `counts` aggregation **so that** clients get per-partner +
+total impression counts.
+**Current Behaviour (F6):** parent = impressions array. `parentId = impressions[0].parentId` →
+`product.getByID.load(parentId)` (**internal** same-DGS) → partner ids → per-partner count
+`impressions.filter(i => i.partnerIds.includes(partnerId)).length` → append `{bpType:'totalCount', counts: impressions.length}`.
+On any error → log + return `[{bpType:'totalCount', counts:0}]`.
+**Target DGS Implementation:** `@DgsData counts` computing the per-partner + total rows; product via internal
+`productService.getById`. Preserve the try/catch fallback. **PO note:** consider `ImpressionCountResult`
+restructure (03-analysis) — if adopted, this becomes a fetcher computation, not a field-on-array.
+**Files:** `dataFetcher/ImpressionCountFieldDataFetcher.kt`. **Dependencies:** A02, A04.
+**Acceptance Criteria:** 1. One row per product partner with the correct count + a `totalCount` row. 2. Empty/missing product → `[{bpType:'totalCount', counts:0}]` (no exception thrown). 3. Product fetched internally (no HTTP hop).
+**Test Cases:** ☐ Unit: per-partner counts ☐ Unit: totalCount row ☐ Unit: error → dummy 0 ☐ Integration."
+Story,SPARK-IMP-G03,SPARK-IMP-G03 · Test coverage & parity,,Impression → plm-product DGS migration,G,Low,2,dgs-migration,impression,tests,"SPARK-IMP-B01, SPARK-IMP-B02, SPARK-IMP-D01, SPARK-IMP-G02","**Target DGS Implementation:** ≥80% unit coverage; parity fixtures for both queries + the mutation +
+`counts` (incl. the error→0 path).
+**Acceptance Criteria:** 1. Unit ≥80%. 2. Parity green for search/counts/update. 3. `counts` error path covered.
+**Test Cases:** ☐ Parity: search/counts/update ☐ Unit: counts error path ☐ Load: p95 parity for search.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|---|---|---|---|---|
+| `ImpressionCount` array-as-parent contract (empty list) | Low | Low | Preserve fallback; consider `ImpressionCountResult` | Architect |
+| `enableWorkspaceContextFiltering` not forwarded | Low | Low | Confirm intent (B01) | Backend Eng |
+| F01 internal (same subgraph) — depends on Product type existing | Low | Low | Sequence after product A02; no gateway block | Tech Lead |
+
+## 5. Summary
+- **Stories:** 11 (A:4 · B:2 · D:1 · F:1 · G:3). **No High/Very-High** beyond the small `counts` aggregation.
+- **Lowest-risk domain — recommended first migration / team warm-up.**
+- **Independent of federation:** ships before F01.
+
+---
+**Phase Completed:** Phase 4 · **Domain:** `impression`."
+Epic,,Measurement → plm-product DGS migration,Measurement → plm-product DGS migration,,,,,dgs-migration,measurement,epic,,Epic for the measurement domain migration to the plm-product DGS.
+Story,SPARK-MEAS-A01,SPARK-MEAS-A01 · Schema skeleton + DateTime scalar,,Measurement → plm-product DGS migration,A,Low,2,dgs-migration,measurement,schema,,"**As a** DGS migration engineer **I want** the `measurement.graphqls` skeleton + `DateTime` **so that** later
+work compiles on a stable base.
+**Current Behaviour:** green-field; schema translated from `code/schemas/SPARK_Measurement.txt`.
+**Target DGS Implementation:** federation v2.3 header, `scalar DateTime → Instant`, empty `extend type Query`/`Mutation`.
+**Files:** `schema/measurement.graphqls`, `config/ScalarConfig.kt`. **Dependencies:** None.
+**Acceptance Criteria:** 1. `./gradlew generateJava` passes. 2. `DateTime` round-trips ISO-8601.
+**Test Cases:** ☐ Unit: compiles ☐ Unit: DateTime serde."
+Story,SPARK-MEAS-A02,SPARK-MEAS-A02 · Owned types + inputs,,Measurement → plm-product DGS migration,A,Medium,3,dgs-migration,measurement,schema,SPARK-MEAS-A01,"**Current Behaviour:** `Measurement` (set), `SampleMeasurementSet`, 6 value types + ~18 inputs — see [03-schema.graphql](./03-schema.graphql).
+**Target DGS Implementation:** add the types; `@key(fields:""id"")` on `Measurement`; `@key(fields:""sampleId"")` on `SampleMeasurementSet`; `@shareable` on the 5 shared value types.
+**Files:** `schema/measurement.graphqls`. **Dependencies:** A01.
+**Acceptance Criteria:** 1. All owned types + inputs present. 2. Keys applied as above. 3. Schema validates.
+**Test Cases:** ☐ Unit: validates ☐ Unit: both entities resolve via stub."
+Story,SPARK-MEAS-A03,SPARK-MEAS-A03 · External stubs,,Measurement → plm-product DGS migration,A,Low,2,dgs-migration,measurement,schema,SPARK-MEAS-A01,"**Current Behaviour:** references 12 external types incl. `TightFit` (composite key `id version`), `MeasurementTemplate`/`SizeTemplate` (sibling domains), `SampleV2`.
+**Target DGS Implementation:** add each stub with the correct `@key`; `TightFit @key(fields:""id version"")`.
+**Files:** `schema/measurement.graphqls`. **Dependencies:** A01.
+**Acceptance Criteria:** 1. 12 stubs compile; gateway composes. 2. `TightFit` composite key correct.
+**Test Cases:** ☐ Unit: compiles ☐ Integration: gateway resolves a `MeasurementTemplate` stub."
+Story,SPARK-MEAS-A04,SPARK-MEAS-A04 · MeasurementService Kotlin port (18 methods),,Measurement → plm-product DGS migration,A,Medium,3,dgs-migration,measurement,service,SPARK-MEAS-A01,"**Current Behaviour (S1):** base `…/measurements/v1` + master data. 18 methods (see [02 §Service Classes](./02-resolver-analysis.md)). `addMeasurement`/`updateMeasurement` prime the read cache; `updateMeasurement` sets `omitParamsInBody`. **ACL note (context):** resource-scoped calls curry a capability token; ignored in DGS.
+**Target DGS Implementation:** `MeasurementClient` Feign + `MeasurementService`. Master-data methods (`getUnitsOfMeasure`, `getThicknessUnitsOfMeasure`, `getMeasurementSetStatus`) `@Cacheable`. Build `getMeasurementByIds` query string with `qs`-style params. Confirm fate of 2 unused version methods.
+**Files:** `service/MeasurementService.kt`, `client/MeasurementClient.kt`, `model/MeasurementDto.kt`. **Dependencies:** A01.
+**Acceptance Criteria:** 1. All 18 method signatures present; verb/path per §Service Classes. 2. Master-data `@Cacheable`. 3. `updateMeasurement` PUT omits `humanId` from body. 4. Jackson snake/camel both ways.
+**Test Cases:** ☐ Unit: `getMeasurementByIds` query build ☐ Unit: cache hit ☐ Unit: snake/camel."
+Story,SPARK-MEAS-B01,SPARK-MEAS-B01 · getMeasurementByIds data fetcher,,Measurement → plm-product DGS migration,B,Low,2,dgs-migration,measurement,query,"SPARK-MEAS-A02, SPARK-MEAS-A04","**Current Behaviour (Q1):** `GET {base}/…/measurements/v1?ids=&calculated=&mustHaveRows=` → camelCase. **ACL note (context):** token for `ids`; ignored in DGS.
+**Target DGS Implementation:** `@DgsQuery getMeasurementByIds(ids, calculated): MeasurementPaged` (SDL: paged `{content}`, not a bare list) → `measurementService.getByIds(ids, calculated)`. Add a `MeasurementDataLoader` keyed on id.
+**Files:** `dataFetcher/MeasurementQueryDataFetcher.kt`. **Dependencies:** A02, A04.
+**Acceptance Criteria:** 1. Returns measurements for ids with `calculated` flag forwarded. 2. Empty ids → `[]`. 3. snake→camel mapping.
+**Test Cases:** ☐ Unit: happy path ☐ Unit: empty ☐ Integration."
+Story,SPARK-MEAS-B02,SPARK-MEAS-B02 · getUnitsOfMeasure (cacheable),,Measurement → plm-product DGS migration,B,Low,2,dgs-migration,measurement,query,SPARK-MEAS-A04,"**Current Behaviour (Q4):** `GET {base}/…/master_data/unit_of_measure[?ids=]` → `units_of_measure` camelCase.
+**Target DGS Implementation:** `@DgsQuery` → `@Cacheable` service method returning `[UnitOfMeasure]`.
+**Acceptance Criteria:** 1. Returns UoM list (optionally filtered by ids). 2. Cached.
+**Test Cases:** ☐ Unit: list ☐ Unit: cache hit."
+Story,SPARK-MEAS-B03,SPARK-MEAS-B03 · getThicknessUnitsOfMeasure (cacheable),,Measurement → plm-product DGS migration,B,Low,2,dgs-migration,measurement,query,SPARK-MEAS-A04,"**Current Behaviour (Q5):** `GET {base}/…/master_data/thickness_uom` → `units_of_measure`.
+**Target DGS Implementation:** `@DgsQuery` → `@Cacheable` returning `[UnitOfMeasure]`.
+**Acceptance Criteria:** 1. Returns thickness UoM list. 2. Cached.
+**Test Cases:** ☐ Unit: list ☐ Unit: cache hit."
+Story,SPARK-MEAS-B04,SPARK-MEAS-B04 · getMeasurementSetStatus (cacheable),,Measurement → plm-product DGS migration,B,Low,2,dgs-migration,measurement,query,SPARK-MEAS-A04,"**Current Behaviour (Q6):** `GET {base}/masterData?name=MeasurementSetStatus` → `{key:value}` map → `[{code, description}]`.
+**Target DGS Implementation:** `@DgsQuery` → `@Cacheable` mapping the map to the list.
+**Acceptance Criteria:** 1. Returns statuses. 2. Cached. 3. key→code, value→description.
+**Test Cases:** ☐ Unit: map→list ☐ Unit: cache hit."
+Story,SPARK-MEAS-B05,SPARK-MEAS-B05 · getSampleMeasurement data fetcher,,Measurement → plm-product DGS migration,B,Low,2,dgs-migration,measurement,query,"SPARK-MEAS-A02, SPARK-MEAS-A04","**Current Behaviour (Q7):** `GET {base}/…/measurements/v1/sample/{sampleId}` → camelCase. **ACL note (context):** token for `sampleId`; ignored in DGS.
+**Target DGS Implementation:** `@DgsQuery getSampleMeasurement(sampleId): SampleMeasurementSet` (SDL: a single object, not a list).
+**Acceptance Criteria:** 1. Returns the sample measurement set for `sampleId`. 2. Not found → `null`.
+**Test Cases:** ☐ Unit: happy path ☐ Unit: empty ☐ Integration."
+Story,SPARK-MEAS-C01,SPARK-MEAS-C01 · getMeasurements (relationship + listing),,Measurement → plm-product DGS migration,C,Medium,3,dgs-migration,measurement,query,SPARK-MEAS-A04,"**Current Behaviour (Q2):**
+1. `relationships = relationship.findRelationships(resourceId, {includeNodeTypes:['measurement_set'], maxDepth:0})`.
+2. `ids = relationships.map(n => n.id)`; if empty → `[]`.
+3. (ACL context) token for `ids`.
+4. `{content} = getMeasurementByIds(ids, calculated, businessPartnerIds, mustHaveRows)`.
+5. Return `{content: orderBy(content, createdAt DESC)}` (client-side).
+**EXT Service Calls:** **EXT** → key: `relationship` · severity: 🔴 — resolves the measurement_set ids for a resource.
+**Target DGS Implementation:** `@DgsQuery getMeasurements(resourceId, businessPartnerIds, calculated, mustHaveRows): MeasurementPaged`. Call relationship via `RelationshipClient`/federation, then the service. **PO decision:** push the `createdAt DESC` sort to the backend.
+**Files:** `dataFetcher/MeasurementQueryDataFetcher.kt`. **Dependencies:** A04.
+**Acceptance Criteria:** 1. Resolves ids via relationship then fetches measurements. 2. No ids → `{content:[]}` (no measurement call). 3. Sorted `createdAt DESC` (location documented).
+**Test Cases:** ☐ Unit: id resolution ☐ Unit: empty short-circuit ☐ Unit: sort ☐ Integration."
+Story,SPARK-MEAS-C02,SPARK-MEAS-C02 · getMeasurementsElastic data fetcher,,Measurement → plm-product DGS migration,C,Low,2,dgs-migration,measurement,query,SPARK-MEAS-A04,"**Current Behaviour (Q3):** `{content} = search.getMeasurementSets.load({q:`parentId: ${resourceId}`})` → sort `createdAt DESC` → `{content}`.
+**EXT Service Calls:** **EXT** → key: `search` · severity: 🔴 — elastic measurement-set index.
+**Target DGS Implementation:** `@DgsQuery getMeasurementsElastic(resourceId): MeasurementPaged` → `searchClient.measurementSets(""parentId: $resourceId"")`; sort `createdAt DESC` (or backend).
+**Acceptance Criteria:** 1. Returns elastic content for `parentId`. 2. Sorted `createdAt DESC`. 3. Empty → `{content:[]}`.
+**Test Cases:** ☐ Unit: query build ☐ Unit: sort ☐ Integration."
+Story,SPARK-MEAS-D01,SPARK-MEAS-D01 · addMeasurement mutation,,Measurement → plm-product DGS migration,D,Medium,3,dgs-migration,measurement,mutation,SPARK-MEAS-A04,"**Current Behaviour (M1):** `POST {base}/…/measurements/v1` (snake_case request, `primeKey: humanId`); on `validationErrors||message` → throw. No ACL (new resource).
+**Target DGS Implementation:** `@DgsMutation addMeasurement(sparkMeasurement): Measurement` → typed `MeasurementValidationException`; prime read cache.
+**Acceptance Criteria:** 1. POST creates + returns mapped `Measurement`. 2. `validationErrors`/`message` → exception. 3. Cache primed with `humanId`.
+**Test Cases:** ☐ Unit: happy ☐ Unit: validation → exception ☐ Integration."
+Story,SPARK-MEAS-D02,SPARK-MEAS-D02 · updateMeasurementAccess mutation,,Measurement → plm-product DGS migration,D,Low,2,dgs-migration,measurement,mutation,SPARK-MEAS-A04,"**Current Behaviour (M4):** `PUT …/{id}/permission` body `{systemTeamIds}` **or** `{systemTeamDto}` (whichever provided). **ACL note (context):** token for `id`; ignored in DGS.
+**Target DGS Implementation:** `@DgsMutation updateMeasurementAccess(measurementSetId, systemTeamIds, systemTeamDto): Measurement`. **PO decision:** adopt tagged `MeasurementAccessInput` (keep wire format).
+**Acceptance Criteria:** 1. Sends `{systemTeamIds}` when provided, else `{systemTeamDto}`. 2. Returns updated measurement. 3. Input-shape decision recorded.
+**Test Cases:** ☐ Unit: teamIds path ☐ Unit: dto path ☐ Integration."
+Story,SPARK-MEAS-D03,SPARK-MEAS-D03 · lockMeasurementSet mutation,,Measurement → plm-product DGS migration,D,Low,2,dgs-migration,measurement,mutation,SPARK-MEAS-A04,"**Current Behaviour (M5):** `PUT …/{id}/lock`. **ACL note (context):** token for `id`; ignored in DGS.
+**Target DGS Implementation:** `@DgsMutation lockMeasurementSet(measurementSetId): Measurement`.
+**Acceptance Criteria:** 1. PUT `/lock` returns locked set. 2. 404 → null.
+**Test Cases:** ☐ Unit: lock ☐ Unit: 404."
+Story,SPARK-MEAS-D04,SPARK-MEAS-D04 · unlockMeasurementSet mutation,,Measurement → plm-product DGS migration,D,Low,2,dgs-migration,measurement,mutation,SPARK-MEAS-A04,"**Current Behaviour (M6):** `PUT …/{id}/unlock`. ACL note as D03.
+**Target DGS Implementation:** `@DgsMutation unlockMeasurementSet(measurementSetId): Measurement`.
+**Acceptance Criteria:** 1. PUT `/unlock` returns unlocked set. 2. 404 → null.
+**Test Cases:** ☐ Unit: unlock ☐ Unit: 404."
+Story,SPARK-MEAS-D05,SPARK-MEAS-D05 · updateMeasurementComponentStatus mutation,,Measurement → plm-product DGS migration,D,Low,2,dgs-migration,measurement,mutation,SPARK-MEAS-A04,"**Current Behaviour (M2):** `PUT …/component_status_update` body `{productId, ids, status}`. **No ACL token** — confirm backend enforces (like BOM D05).
+**Target DGS Implementation:** `@DgsMutation updateMeasurementComponentStatus(productId, ids, status): MeasurementPaged`; wrap result `{content}`.
+**Acceptance Criteria:** 1. PUT sends `{productId, ids, status}` snake_case. 2. Returns `MeasurementPaged{content}`. 3. Auth decision recorded.
+**Test Cases:** ☐ Unit: body shape ☐ Unit: result wrap ☐ Integration."
+Story,SPARK-MEAS-D06,SPARK-MEAS-D06 · putSampleMeasurementSet mutation,,Measurement → plm-product DGS migration,D,Medium,3,dgs-migration,measurement,mutation,SPARK-MEAS-A04,"**Current Behaviour (M7):** `PUT …/sample` (`primeKey: sampleId`); token for `[measurementSetId, sampleId]`; on `validationErrors||message` → throw.
+**Target DGS Implementation:** `@DgsMutation putSampleMeasurementSet(sampleMeasurementSet): SampleMeasurementSet` → typed exception; prime by `sampleId`.
+**Acceptance Criteria:** 1. PUT upserts the sample set. 2. `validationErrors`/`message` → exception. 3. Cache primed by `sampleId`.
+**Test Cases:** ☐ Unit: happy ☐ Unit: validation ☐ Integration."
+Story,SPARK-MEAS-D07,SPARK-MEAS-D07 · deleteSampleMeasurementSet mutation,,Measurement → plm-product DGS migration,D,Low,2,dgs-migration,measurement,mutation,SPARK-MEAS-A04,"**Current Behaviour (M8):** `DELETE …/sample/{sampleId}`. **ACL note (context):** token for `sampleId`; ignored in DGS.
+**Target DGS Implementation:** `@DgsMutation deleteSampleMeasurementSet(sampleId): SampleMeasurementSet`.
+**Acceptance Criteria:** 1. DELETE removes the sample set; returns the deleted/empty result. 2. 404 → null.
+**Test Cases:** ☐ Unit: delete ☐ Unit: 404."
+Story,SPARK-MEAS-E01,SPARK-MEAS-E01 · updateMeasurement — 2-step orchestrated write,,Measurement → plm-product DGS migration,E,High,5,dgs-migration,measurement,mutation,SPARK-MEAS-A04,"**As a** DGS migration engineer **I want** `updateMeasurement` as an explicit 2-step write with a failure
+strategy **so that** workspace and body updates stay consistent.
+**Current Behaviour (M3):**
+1. `workspaceAssociations = sparkMeasurement.updateWorkspaceAssociations || {}`. (ACL context) token for `[humanId]`.
+2. **If** add/remove workspaces → `workspaceAssociationHelper(MEASUREMENT, humanId, add, remove)`; on its `validationErrors||message` → throw. **(commits first)**
+3. `measurement.updateMeasurement(sparkMeasurement)` → `PUT …/measurements/v1/{humanId}` (`omitParamsInBody`).
+4. On `validationErrors||message` → throw. Return measurement.
+**Risk 🟡:** 2 sequential writes, no rollback — workspace change persists if body PUT fails.
+**EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association).
+**Target DGS Implementation:** `MeasurementUpdateOrchestrator`: workspace assoc → body PUT. **PO decision E01:** failure strategy (saga / compensation log / best-effort). Typed exception replaces shape-sniff; prime cache on success.
+**Files:** `service/MeasurementUpdateOrchestrator.kt`, `MeasurementMutationDataFetcher.kt`. **Dependencies:** A04.
+**Acceptance Criteria:** 1. Parity for 3 fixtures: body-only; body+workspace-add; body+workspace-remove. 2. Workspace step runs before body PUT. 3. Body PUT omits `humanId`. 4. Chosen failure strategy implemented. 5. `validationErrors`/`message` → exception.
+**Test Cases:** ☐ Unit: order workspace→body ☐ Unit: no-workspace skip ☐ Unit: body-failure path ☐ Parity: 3 fixtures.
+
+---
+
+> **Monorepo note:** F01 is **internal** (product+measurement are the same `plm-product` subgraph); F02 is
+> **true federation** (sample is a separate DGS). See [reference-federation-patterns.md §0](../scripts/reference-federation-patterns.md)."
+Story,SPARK-MEAS-F01,"SPARK-MEAS-F01 · Implement Product.measurementSets (internal, same subgraph)",,Measurement → plm-product DGS migration,F,Medium,3,dgs-migration,measurement,field-resolver,SPARK-MEAS-A04,"**Current Behaviour:** product navigates to measurement sets via the relationship + getMeasurements flow.
+**Target DGS Implementation:** plain `@DgsData measurementSets(...)` on the internal `Product` type (same
+subgraph) reusing the C01 relationship+listing logic. **No** `@DgsEntityFetcher`/`@extends @external`.
+Depends on `Product` existing (product A02), not on a separate deployment.
+**Acceptance Criteria:** 1. `Product.measurementSets` resolves internally via `measurementService`. 2. no gateway hop. 3. Parity vs current product resolver.
+**Test Cases:** ☐ Unit: calls measurement service ☐ Integration: `Product { measurementSets { content { id } } }` in-process ☐ Parity."
+Story,SPARK-MEAS-F02,SPARK-MEAS-F02 · Contribute sampleMeasurement to SampleV2 entity,,Measurement → plm-product DGS migration,F,Low,2,dgs-migration,measurement,field-resolver,SPARK-MEAS-A04,"**Current Behaviour:** sample navigates to its measurement set via `getSampleMeasurement`.
+**Target DGS Implementation:** `extend type SampleV2 @key(fields:""id"")` with `@DgsData sampleMeasurement` → `getSampleMeasurement(sampleId)`. **BLOCKED-BY** sample domain Phase 3.
+**Acceptance Criteria:** 1. `SampleV2.sampleMeasurement` resolves. 2. Parity vs current.
+**Test Cases:** ☐ Integration: federated `SampleV2 { sampleMeasurement { sampleId } }`."
+Story,SPARK-MEAS-G01,SPARK-MEAS-G01 · Measurement field resolvers (13),,Measurement → plm-product DGS migration,G,Medium,3,dgs-migration,measurement,field-resolver,"SPARK-MEAS-A02, SPARK-MEAS-A04","**Current Behaviour (field table in [02](./02-resolver-analysis.md)):** `access`/`currentUserPermissions`
+(ACL — context only), `businessPartners` (loadBps), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`),
+`product` (PID-prefixed → internal `product.getByID`), `workspaces` (`getWorkspacesByIdsV2` or null),
+`status` (`{code:statusId, description:statusName}` computed), `updatedFromResource` (switch type='sample' →
+`sampleV2.getSampleById`), `measurementTemplates` (`measurementTemplate.getMeasurementTemplatesByIds(...).content`),
+`sizeTemplate` (`sizeTemplate.getSizeTemplates([id])[0]`), `tightFitTemplate` (`tightFit.getTightFitByIdAndVersion({id,version})`),
+`participantDetails` (`getUserGroup`).
+**EXT:** 🟡 workspaceV2/sampleV2/measurementTemplate/sizeTemplate/tightFit; 🔵 vmm/user-profile.
+**Target DGS Implementation:** one `@DgsData` set; sibling fields → federated references; `product` internal; `status` computed; `updatedFromResource` switch preserved (only `sample` realized).
+**Files:** `dataFetcher/MeasurementFieldDataFetcher.kt`. **Dependencies:** A02, A04.
+**Acceptance Criteria:** 1. All 13 fields resolve. 2. `product` null when `resourceId` not `PID*`. 3. `status` = `{statusId, statusName}`. 4. `workspaces` empty → null. 5. `updatedFromResource` resolves only for `type==='sample'`.
+**Test Cases:** ☐ Unit: product PID branch ☐ Unit: status computed ☐ Unit: updatedFromResource switch ☐ Unit: empty workspaces ☐ Integration: federated `Measurement { measurementTemplates { id } }`."
+Story,SPARK-MEAS-G02,SPARK-MEAS-G02 · SampleMeasurementSet field resolvers (2),,Measurement → plm-product DGS migration,G,Low,2,dgs-migration,measurement,field-resolver,"SPARK-MEAS-A02, SPARK-MEAS-A04","**Current Behaviour (`:165-174`):** `createdBy` (`getUserByIDOrNullIfNotFound`), `measurementSizeId` (`measurementSize && measurementSize.code` — computed).
+**Target DGS Implementation:** 2 `@DgsData` fields.
+**Acceptance Criteria:** 1. `createdBy` resolves by user id (null id → null). 2. `measurementSizeId` = `measurementSize.code`.
+**Test Cases:** ☐ Unit: createdBy ☐ Unit: measurementSizeId computed."
+Story,SPARK-MEAS-G03,SPARK-MEAS-G03 · Test coverage & parity,,Measurement → plm-product DGS migration,G,Medium,3,dgs-migration,measurement,tests,"SPARK-MEAS-B01, SPARK-MEAS-C01, SPARK-MEAS-E01, SPARK-MEAS-G01","**Target DGS Implementation:** ≥80% unit coverage; parity fixtures for the 7 queries + 8 mutations + `updateMeasurement` 3 fixtures + the relationship path.
+**Acceptance Criteria:** 1. Unit ≥80%. 2. Parity green for reads/writes incl. `getMeasurements` relationship path. 3. `updateMeasurement` failure path covered.
+**Test Cases:** ☐ Parity: 15 op fixtures ☐ Unit: updateMeasurement failure ☐ Load: p95 parity for `getMeasurementByIds`, `getMeasurements`.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|---|---|---|---|---|
+| `updateMeasurement` 2-step non-atomic write | Medium | Medium | E01 failure strategy | Tech Lead |
+| `getMeasurements` relationship dependency 🔴 | Medium | Medium | Sequence relationship federation | Platform |
+| `updateMeasurementAccess` polymorphic input | Low | Low | Tagged `MeasurementAccessInput` (D02) | Backend Eng |
+| `updateMeasurementComponentStatus` no JWT | Low | Low | Confirm backend enforces | PO |
+| F01 internal (same subgraph, depends on Product type); F02 federated (sample DGS) | Low | Low | Sequence F01 after product A02; F02 after sample migrates | Tech Lead |
+
+## 5. Summary
+- **Stories:** 24 (A:4 · B:5 · C:2 · D:7 · E:1 · F:2 · G:3).
+- **Critical path:** A01→A02→A04→E01; A04→C01.
+- **Highest risk:** `updateMeasurement` 2-step write; relationship dependency in `getMeasurements`.
+- **Independent of federation:** ships before F01/F02.
+
+---
+**Phase Completed:** Phase 4 · **Domain:** `measurement`."
+Epic,,BOM → plm-product DGS migration,BOM → plm-product DGS migration,,,,,dgs-migration,bom,epic,,Epic for the bom domain migration to the plm-product DGS.
+Story,SPARK-BOM-A01,SPARK-BOM-A01 · Schema skeleton + DGS module + DateTime scalar,,BOM → plm-product DGS migration,A,Low,2,dgs-migration,bom,schema,,"**As a** DGS migration engineer **I want** the `bom.graphqls` skeleton with the federation v2.3 header and
+the `DateTime` scalar wired **so that** all later BOM type/resolver work compiles on a stable base.
+
+**Current Behaviour:** No DGS exists (green-field). Schema is translated from `code/schemas/SPARK_Bom.txt` — see
+[03-schema.graphql](./03-schema.graphql).
+
+**Target DGS Implementation:** Create `bom.graphqls` with `@link(url:""https://specs.apollo.dev/federation/v2.3"", import:[""@key"",""@extends"",""@external"",""@shareable"",""@requires""])`, `scalar DateTime`, empty `extend type Query`/`Mutation`. Wire `DateTime → Instant` in `ScalarConfig.kt`.
+
+**Files to Create / Modify:** `schema/bom.graphqls`; `config/ScalarConfig.kt`.
+**Dependencies:** None.
+**Acceptance Criteria:**
+1. `./gradlew generateJava` passes with the empty schema.
+2. `DateTime` round-trips ISO-8601 UTC.
+3. PR passes schema lint.
+**Test Cases:** ☐ Unit: schema compiles ☐ Unit: `DateTime` serde round-trip."
+Story,SPARK-BOM-A02,SPARK-BOM-A02 · Define all owned BOM types + inputs,,BOM → plm-product DGS migration,A,Medium,3,dgs-migration,bom,schema,SPARK-BOM-A01,"**As a** DGS migration engineer **I want** all owned BOM types + 16 input types defined **so that** field
+resolvers and mutations have a stable contract.
+
+**Current Behaviour:** ~34 owned types (2 entities, 7 material impls, 5 impression impls, value types) +
+16 inputs — all listed in [03-schema.graphql §4–§5](./03-schema.graphql).
+
+**Target DGS Implementation:** Port every owned type from `03-schema.graphql`. Apply `@key(fields:""id"")`
+to `Bom` and `Bom_Unified` only. Apply `@shareable` to `CodeDescription`, `UnitsOfMeasure`, `Paging`,
+`ValueWithUnit`. Do **not** add `@key` to embedded value types.
+
+**Files to Create / Modify:** `schema/bom.graphqls`.
+**Dependencies:** A01.
+**Acceptance Criteria:**
+1. All owned types + inputs from `03-schema.graphql` present.
+2. `@key` only on `Bom`/`Bom_Unified`; `@shareable` on the 4 shared value types.
+3. `./gradlew generateJava` passes.
+**Test Cases:** ☐ Unit: schema validates ☐ Unit: `Bom` entity resolves via federation stub."
+Story,SPARK-BOM-A03,SPARK-BOM-A03 · Add external stubs (platform + sibling DGS),,BOM → plm-product DGS migration,A,Low,2,dgs-migration,bom,schema,SPARK-BOM-A01,"**As a** DGS migration engineer **I want** the 23 external stub types defined with `@extends @external`
+**so that** BOM fields can reference gateway-stitched and sibling-DGS types without schema errors.
+
+**Current Behaviour:** BOM references 1 platform type (`VMM_BusinessPartner`) + 22 sibling-DGS types
+(see [03-schema.graphql §1–§2](./03-schema.graphql)).
+
+**Target DGS Implementation:** Add each stub as `type X @extends @key(fields:""id"") { id: ID! @external }`.
+**Files to Create / Modify:** `schema/bom.graphqls`.
+**Dependencies:** A01.
+**Acceptance Criteria:**
+1. All 23 stubs compile; Hive Gateway composes the subgraph without type conflicts.
+2. No stub carries a body beyond its `@key` field(s).
+**Test Cases:** ☐ Unit: schema compiles with external refs ☐ Integration: gateway resolves a `VMM_BusinessPartner` stub for a bom query."
+Story,SPARK-BOM-A04,SPARK-BOM-A04 · @DgsTypeResolver for the 2 BOM interfaces (7+5 impls),,BOM → plm-product DGS migration,A,Medium,3,dgs-migration,bom,field-resolver,SPARK-BOM-A02,"**As a** DGS migration engineer **I want** type resolvers for `BomMaterialInterface` (7 impls) and
+`BomImpressionDetailsInterface` (5 impls) **so that** polymorphic material/impression lists resolve to the
+correct concrete type.
+
+**Current Behaviour (from Phase 2 — C3 / C11):**
+- Material: switch on `material.materialCategory.code` → 4→Trim, 6→Wash, 2→Fabric, 15→Combination,
+  16→FabricSpec, {10,11,12,13,14,17–24}→Packaging, **default (1,5,9)→BomMaterial**.
+- Impression: switch on `impression.type` → 603→Trim, 605→TrimZipper, 604→Wash, 602→Fabric, **default 601→Base**.
+
+**Target DGS Implementation:** Two `@DgsTypeResolver(name=...)` functions mirroring the switches. Keep the
+default branches exactly (HUB code 9 must fall through to `BomMaterial`). Source the category codes from a
+`BomConstants.kt` enum (replaces the resolver's `MATERIAL_CATEGORY_ID` — fixes the circular import).
+
+**Files to Create / Modify:** `dataFetcher/BomTypeResolvers.kt`; `model/BomConstants.kt`.
+**Dependencies:** A02.
+**Acceptance Criteria:**
+1. Each `materialCategory.code` maps to the type in the table above; unknown codes → `BomMaterial`.
+2. Each impression `type` maps correctly; unknown → `BomBaseImpressionDetails`.
+3. `BomConstants` holds all 21 category codes + 5 impression codes (verify values against backend).
+**Test Cases:** ☐ Unit: all 7 material codes + default ☐ Unit: all 5 impression codes + default."
+Story,SPARK-BOM-A05,SPARK-BOM-A05 · BomService Kotlin port (17 REST methods),,BOM → plm-product DGS migration,A,Medium,3,dgs-migration,bom,service,SPARK-BOM-A01,"**As a** DGS migration engineer **I want** `BomService` ported to Kotlin **so that** data fetchers delegate
+to typed service calls instead of Node loaders.
+
+**Current Behaviour (from Phase 2 — S1):** 17 methods against base
+`{spark-product}/enterprise_product_development_products/bom/v1` + `/masterData`. See the table in
+[02-resolver-analysis.md §Service Classes](./02-resolver-analysis.md). Requests use `deepToSnakeCase`,
+responses `deepToCamelCase`. `addBom`/`updateBom` prime the read cache (`primeKey: humanId`);
+`updateBom` sets `omitParamsInBody: true`. **ACL note (context):** read/write of a specific bom curries a
+capability token because the backend authorizes per-resource access — ACL is ignored here.
+
+**Target DGS Implementation:** `BomClient` Feign interface (one method per REST endpoint) + `BomService`
+delegating to it. Jackson `SnakeCaseStrategy` for request/response. Master-data methods (`getBomStatus`,
+`getBomMaterialTypes`, packaging master data) annotated `@Cacheable(""bomMasterData"")`. Preserve
+`omitParamsInBody` (don't send `humanId` in the PUT body). Confirm the fate of 3 unused methods
+(`getActiveBomsByProductIdAndBomType`, `getBomVersionsById`, `getBomVersion`) before deleting.
+
+**Files to Create / Modify:** `service/BomService.kt`; `client/BomClient.kt`; `model/BomDto.kt` (+ master-data DTOs).
+**Dependencies:** A01.
+**Acceptance Criteria:**
+1. All 17 method signatures present; each maps to the verb/path in §Service Classes.
+2. Jackson converts camelCase ↔ snake_case both directions.
+3. Master-data methods are `@Cacheable`; cache hit on second call.
+4. PUT `updateBom` omits `humanId` from the body.
+5. 3 unused methods either ported with a `// TODO confirm cross-domain caller` or removed per PO decision.
+**Test Cases:** ☐ Unit: `getBomByIds` builds `GET …/bom/v1?ids=` ☐ Unit: snake/camel mapping ☐ Unit: master-data cache hit.
+
+---
+
+### Phase B — Core Reads (one query per story)"
+Story,SPARK-BOM-B01,SPARK-BOM-B01 · getBomByIds data fetcher,,BOM → plm-product DGS migration,B,Low,2,dgs-migration,bom,query,"SPARK-BOM-A02, SPARK-BOM-A05","**As a** DGS migration engineer **I want** the `getBomByIds` query **so that** clients can fetch boms by id list.
+
+**Current Behaviour (Q1):** if `ids` empty → `[]`; else `GET {base}/…/bom/v1?ids={ids}` → `deepToCamelCase`.
+**ACL note (context):** current impl gets a capability token for `ids` because boms are resource-scoped; ACL ignored in DGS.
+
+**Target DGS Implementation:** `@DgsQuery fun getBomByIds(ids): List<Bom>` → `bomService.getByIds(ids)`.
+Add a request-scoped `BomDataLoader` keyed on id (the source isn't batched — improve here). Empty list → `[]`.
+**Files to Create / Modify:** `dataFetcher/BomQueryDataFetcher.kt` (+ `dataloader/BomDataLoader.kt`).
+**Dependencies:** A02, A05.
+**Acceptance Criteria:**
+1. `getBomByIds([""B1"",""B2""])` returns mapped `Bom` objects from the REST list endpoint.
+2. Empty `ids` → returns `[]` with **no** REST call.
+3. Response snake_case → camelCase per schema.
+**Test Cases:** ☐ Unit: happy path 2 ids ☐ Unit: empty ids → no REST call ☐ Integration: query via DGS test client."
+Story,SPARK-BOM-B02,SPARK-BOM-B02 · getBomDataV2 data fetcher,,BOM → plm-product DGS migration,B,Low,2,dgs-migration,bom,query,"SPARK-BOM-A02, SPARK-BOM-A05","**As a** DGS migration engineer **I want** `getBomDataV2` **so that** callers needing the smaller
+`Bom_Unified` projection are served.
+
+**Current Behaviour (Q2):** identical REST call to B01; only the return type differs (`Bom_Unified` ⊆ `Bom`).
+**Target DGS Implementation:** `@DgsQuery getBomDataV2(ids): List<Bom_Unified>` reusing `bomService.getByIds`;
+map to `Bom_Unified`. Confirm `Bom_Unified` is a strict field subset.
+**Files / Dependencies:** `BomQueryDataFetcher.kt`; A02, A05.
+**Acceptance Criteria:**
+1. Returns `Bom_Unified` for the same REST payload as B01.
+2. Empty ids → `[]`.
+3. No field present on `Bom_Unified` that is absent from the REST response.
+**Test Cases:** ☐ Unit: maps to `Bom_Unified` ☐ Unit: empty ids ☐ Parity: B01 vs B02 share source data."
+Story,SPARK-BOM-B03,SPARK-BOM-B03 · getBomStatus (cacheable master data),,BOM → plm-product DGS migration,B,Low,2,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q3):** `GET {base}/masterData?name=BomStatus`; transform `{key:value}` map → `[{code,description}]`. No ACL.
+**Target DGS Implementation:** `@DgsQuery getBomStatus(): List<CodeDescription>` → `@Cacheable(""bomMasterData"", key=""'status'"")` service method that maps the map to the list.
+**Files / Dependencies:** `BomQueryDataFetcher.kt`; A05.
+**Acceptance Criteria:** 1. Returns `[{code,description}]` from the status map. 2. Second call served from cache (no REST). 3. Map key→`code`, value→`description`.
+**Test Cases:** ☐ Unit: map→list ☐ Unit: cache hit ☐ Integration: query returns statuses."
+Story,SPARK-BOM-B04,SPARK-BOM-B04 · getBomByParentId data fetcher,,BOM → plm-product DGS migration,B,Low,2,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q4):** `GET {base}/…/bom/v1/byProductId/{parentId}` → sort `content` by `createdAt` DESC (client-side) → `{content}`. **ACL note (context):** capability token for `parentId`; ignored in DGS.
+**Target DGS Implementation:** `@DgsQuery getBomByParentId(parentId): BomPaged`. **PO decision B04:** push the
+sort to the backend; until then replicate `sortedByDescending { it.createdAt }`. Return `BomPaged{content}`.
+**Files / Dependencies:** `BomQueryDataFetcher.kt`; A05.
+**Acceptance Criteria:** 1. Returns boms for `parentId` sorted `createdAt` DESC. 2. Empty → `{content: []}`. 3. Sort location documented (client vs backend).
+**Test Cases:** ☐ Unit: sort order ☐ Unit: empty ☐ Integration: query via DGS client."
+Story,SPARK-BOM-B05,SPARK-BOM-B05 · getBomMaterialTypes (merge with Material Hub),,BOM → plm-product DGS migration,B,Medium,3,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q5):** load bom material types (`GET …/master_data/bom_material_types[?ids]`) **and**
+`materialHub.getHubMaterialTypes` (today sequential), concat; map each hub type →
+`{code:9, description:type, bomType:{code:1,description:'Product'}, libraryLink:true, freeText:true}`.
+**EXT Service Calls:** **EXT** → key: `materialHub` · severity: 🟡 — hub material type list to merge into bom types.
+**Target DGS Implementation:** `@DgsQuery getBomMaterialTypes(ids): List<BomMaterialType>`. Fetch both
+sources **in parallel** (`coroutineScope`), concat, synthesize hub rows as above. Hub fetch via federated
+`materialHub` reference or a `MaterialHubClient`.
+**Files / Dependencies:** `BomQueryDataFetcher.kt`; A05.
+**Acceptance Criteria:** 1. Returns bom types + synthesized hub types. 2. Hub rows carry `code=9, libraryLink=true, freeText=true, bomType={1,'Product'}`. 3. The two fetches run concurrently. 4. EXT hub failure → return bom types only (partial), logged.
+**Test Cases:** ☐ Unit: merge shape ☐ Unit: hub synthesis fields ☐ Unit: hub failure → partial ☐ Integration."
+Story,SPARK-BOM-B06,SPARK-BOM-B06 · getBomPackagingMaterialTypes (cacheable),,BOM → plm-product DGS migration,B,Low,2,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q6):** `GET …/master_data/packaging_bom_material_types` → camelCase. No ACL.
+**Target DGS Implementation:** `@DgsQuery` → `@Cacheable` service method.
+**Files / Dependencies:** `BomQueryDataFetcher.kt`; A05.
+**Acceptance Criteria:** 1. Returns packaging material types. 2. Cached on second call.
+**Test Cases:** ☐ Unit: returns list ☐ Unit: cache hit."
+Story,SPARK-BOM-B07,SPARK-BOM-B07 · getBomPackagingSubstrates (cacheable),,BOM → plm-product DGS migration,B,Low,2,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q7):** `GET …/master_data/packaging_bom_substrate_types` → camelCase.
+**Target DGS Implementation:** `@DgsQuery` → `@Cacheable` service method returning `[BomPackagingSubstrate]`.
+**Acceptance Criteria:** 1. Returns substrate list. 2. Cached.
+**Test Cases:** ☐ Unit: list ☐ Unit: cache hit."
+Story,SPARK-BOM-B08,SPARK-BOM-B08 · getBomPackagingUnitOfMeasure (cacheable),,BOM → plm-product DGS migration,B,Low,2,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q8):** `GET …/master_data/packaging_unit_of_measure` → camelCase (`units_of_measure`).
+**Target DGS Implementation:** `@DgsQuery` → `@Cacheable` returning `[UnitsOfMeasure]`.
+**Acceptance Criteria:** 1. Returns UoM list. 2. Cached.
+**Test Cases:** ☐ Unit: list ☐ Unit: cache hit.
+
+---
+
+### Phase C — Search & Listing"
+Story,SPARK-BOM-C01,SPARK-BOM-C01 · getBomElastic data fetcher,,BOM → plm-product DGS migration,C,Low,2,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q9):** `{content} = search.getBomElastic.load(query)`; return `content`. The **entire
+`query` object** is passed to elastic — document the exact field set.
+**EXT Service Calls:** **EXT** → key: `search` · severity: 🔴 — elastic bom search index.
+**Target DGS Implementation:** `@DgsQuery getBomElastic(q): List<Bom>` → `searchClient.bomElastic(query)`; return `content`. Define the query DTO from the fields the backend expects (verify).
+**Files / Dependencies:** `BomSearchDataFetcher.kt`; A05.
+**Acceptance Criteria:** 1. Returns `content` boms for a query. 2. Query DTO field set documented + matches backend. 3. Empty → `[]`.
+**Test Cases:** ☐ Unit: returns content ☐ Unit: empty ☐ Integration."
+Story,SPARK-BOM-C02,SPARK-BOM-C02 · searchMaterialsBom data fetcher,,BOM → plm-product DGS migration,C,Medium,3,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q10):**
+1. `fabricSuppliers = VMM_BusinessPartner.getRelatedFabricSuppliersByMerchVendors({merchVendorIds: partnerIds})` (cross-resolver import — replace with a service/federation call).
+2. Build `queryPayload` from args.
+3. If `nestedSearchFilters` present: flatten each `[i]` into 5 keys `nestedSearchFilters[i].{type|fieldPath|nestedFieldPath|operator|values}`, then delete the array key.
+4. `search.searchMaterialsBom.load(queryPayload)`.
+**EXT Service Calls:** **EXT** → key: `search` · 🔴; **EXT** → key: `vmm` · 🔵 (fabric-supplier lookup).
+**Target DGS Implementation:** `@DgsQuery searchMaterialsBom(...): BomMaterialSearch`. Fetch fabric suppliers
+via a `VmmClient`/federation (not a resolver import). **PO decision C02:** keep the query-string flatten or
+send a structured nested DTO if the backend supports it — preserve the existing wire format by default.
+**Files / Dependencies:** `BomSearchDataFetcher.kt`; A05.
+**Acceptance Criteria:** 1. Returns `BomMaterialSearch{content,paging}`. 2. With `nestedSearchFilters`, the request serializes to the same `nestedSearchFilters[i].*` keys as today (or the agreed DTO). 3. `size` default 20. 4. Fabric-supplier prefetch via service/federation, not a resolver import.
+**Test Cases:** ☐ Unit: payload build ☐ Unit: nested-filter flatten ☐ Unit: default size ☐ Integration."
+Story,SPARK-BOM-C03,SPARK-BOM-C03 · getComboSupplierForBom data fetcher,,BOM → plm-product DGS migration,C,Medium,3,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q13):**
+1. `fabricSpecCombos = SPARK_Combination.searchFabricSpecCombos({q:`parentComboId:${comboId}`, page:0, size:100})` (cross-resolver import).
+2. Filter combos: keep where `fsId` set AND ((`partnerIds` non-empty & `mvIds.length===1` & `partnerIds.includes(mvIds[0])`) OR `partnerIds` empty).
+3. For each (parallel): `fs = vmm.getByID.load(fsId)`; if `fs.bpName`, push `{fabricSupplier:{id:fsId,name:fs.bpName}, fabricSpecCombo}`.
+**EXT Service Calls:** **EXT** → key: `combination` · 🟡; **EXT** → key: `vmm` · 🔵.
+**Target DGS Implementation:** `@DgsQuery getComboSupplierForBom(comboId, partnerIds): List<BomComboSupplier>`.
+Call combination via `CombinationClient`/federation. VMM lookups in parallel (`coroutineScope`/`async`).
+**PO decision:** the `mvIds.length===1` filter silently drops multi-MV combos — confirm intended.
+**Files / Dependencies:** `BomSearchDataFetcher.kt`; A05.
+**Acceptance Criteria:** 1. Returns suppliers only for combos with a resolvable `fsId` and `bpName`. 2. Filter logic matches the rule above (document the `mvIds.length===1` behaviour). 3. VMM lookups run concurrently.
+**Test Cases:** ☐ Unit: filter incl/excl ☐ Unit: missing `bpName` skipped ☐ Unit: empty partnerIds path ☐ Integration."
+Story,SPARK-BOM-C04,SPARK-BOM-C04 · getValidTrimSuppliersForBom data fetcher,,BOM → plm-product DGS migration,C,Low,2,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q11):** `getRelatedSuppliersForMVs(ctx, merchVendorIds, [TRIM_SUPPLIER.code])` → `[Int]` partner ids.
+**EXT Service Calls:** **EXT** → key: `vmm` · 🔵.
+**Target DGS Implementation:** `@DgsQuery` delegating to a `VmmSupplierService.relatedSuppliers(merchVendorIds, roles=[TRIM_SUPPLIER])`. Source the role code from `BomConstants` (confirm code value).
+**Acceptance Criteria:** 1. Returns related trim-supplier partner ids. 2. Role filter = TRIM_SUPPLIER only. 3. Empty input → `[]`.
+**Test Cases:** ☐ Unit: role filter ☐ Unit: empty ☐ Integration."
+Story,SPARK-BOM-C05,SPARK-BOM-C05 · getValidRawMaterialSuppliersForBom data fetcher,,BOM → plm-product DGS migration,C,Low,2,dgs-migration,bom,query,SPARK-BOM-A05,"**Current Behaviour (Q12):** same as C04 with roles `[RAW_MATERIAL_SUPPLIER, FABRIC_SUPPLIER, TRIM_SUPPLIER]`.
+**Target DGS Implementation:** `@DgsQuery` delegating with the three roles.
+**Acceptance Criteria:** 1. Returns ids matching the 3 roles. 2. Empty input → `[]`.
+**Test Cases:** ☐ Unit: 3-role filter ☐ Unit: empty ☐ Integration.
+
+---
+
+### Phase D — Mutations (simple)"
+Story,SPARK-BOM-D01,SPARK-BOM-D01 · addBom mutation,,BOM → plm-product DGS migration,D,Medium,3,dgs-migration,bom,mutation,SPARK-BOM-A05,"**Current Behaviour (M1):** `bom = bomService.addBom(sparkBom)` → `POST {base}/…/bom/v1`
+(`transformRequest: deepToSnakeCase`, `primeKey: humanId`); if `bom.validationErrors || bom.message` →
+throw. No ACL (new resource).
+**Input validation:** `name` and `parentId` required (schema `String!`).
+**Target DGS Implementation:** `@DgsMutation addBom(sparkBom: BomInput): Bom` → `bomService.add(...)`. Map
+camelCase→snake_case. On `validationErrors`/`message` in the response → throw typed `BomValidationException`.
+After success, `bomDataLoader.prime(humanId, bom)`.
+**Files / Dependencies:** `BomMutationDataFetcher.kt`; A05.
+**Acceptance Criteria:** 1. POST creates a bom and returns it mapped to `Bom`. 2. Backend `validationErrors`/`message` → `BomValidationException` (not a silent return). 3. Request body is snake_case. 4. Read cache primed with `humanId`.
+**Test Cases:** ☐ Unit: happy path ☐ Unit: validationErrors → exception ☐ Unit: cache primed ☐ Integration."
+Story,SPARK-BOM-D02,SPARK-BOM-D02 · manageBomWorkspaces mutation,,BOM → plm-product DGS migration,D,Low,2,dgs-migration,bom,mutation,SPARK-BOM-A05,"**Current Behaviour (M3):** if `toAdd`/`toRemove` non-empty → `workspaceAssociationHelper(BOM, bomId, toAdd, toRemove)` → PUT `…/{bomId}/{associate|dissociate}_workspace`; else returns `undefined`.
+**EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association). **ACL note (context):** capability token for `bomId`; ignored in DGS.
+**Target DGS Implementation:** `@DgsMutation manageBomWorkspaces(bomId, workspacesToAdd, workspacesToRemove): Bom`
+→ `bomService.manageWorkspaceAssociations(...)`. Both empty → return `null` (document for clients).
+**Acceptance Criteria:** 1. Adds/removes workspace associations via the correct endpoint. 2. Both lists empty → `null`, no REST call. 3. Returns the updated bom.
+**Test Cases:** ☐ Unit: add path ☐ Unit: remove path ☐ Unit: both empty → null ☐ Integration."
+Story,SPARK-BOM-D03,SPARK-BOM-D03 · lockBom mutation,,BOM → plm-product DGS migration,D,Low,2,dgs-migration,bom,mutation,SPARK-BOM-A05,"**Current Behaviour (M4):** `PUT …/{bomId}/lock`. **ACL note (context):** capability token for `bomId`; ignored in DGS.
+**Target DGS Implementation:** `@DgsMutation lockBom(bomId): Bom` → `bomService.lock(bomId)`.
+**Acceptance Criteria:** 1. PUT to `/lock` returns the locked bom. 2. 404 → null.
+**Test Cases:** ☐ Unit: lock ☐ Unit: 404 ☐ Integration."
+Story,SPARK-BOM-D04,SPARK-BOM-D04 · unlockBom mutation,,BOM → plm-product DGS migration,D,Low,2,dgs-migration,bom,mutation,SPARK-BOM-A05,"**Current Behaviour (M5):** `PUT …/{bomId}/unlock`. ACL note as D03.
+**Target DGS Implementation:** `@DgsMutation unlockBom(bomId): Bom` → `bomService.unlock(bomId)`.
+**Acceptance Criteria:** 1. PUT to `/unlock` returns the unlocked bom. 2. 404 → null.
+**Test Cases:** ☐ Unit: unlock ☐ Unit: 404 ☐ Integration."
+Story,SPARK-BOM-D05,SPARK-BOM-D05 · updateBomComponentStatus mutation,,BOM → plm-product DGS migration,D,Low,2,dgs-migration,bom,mutation,SPARK-BOM-A05,"**Current Behaviour (M6):** `PUT …/bom/v1/component_status_update` body `{productId, ids, status}`. **No ACL token** — the only write without one. **PO decision D05:** confirm backend enforces authorization server-side.
+**Target DGS Implementation:** `@DgsMutation updateBomComponentStatus(productId, ids, status): BomPaged` → `bomService.updateComponentStatus({...})`; wrap result as `{content}`.
+**Acceptance Criteria:** 1. PUT sends `{productId, ids, status}` (snake_case). 2. Returns `BomPaged{content}`. 3. Decision on server-side auth recorded in the PR.
+**Test Cases:** ☐ Unit: body shape ☐ Unit: result wrap ☐ Integration.
+
+---
+
+### Phase E — Complex Operations"
+Story,SPARK-BOM-E01,SPARK-BOM-E01 · updateBom — 3-step orchestrated write,,BOM → plm-product DGS migration,E,Very High,8,dgs-migration,bom,mutation,"SPARK-BOM-A05, SPARK-BOM-D02","**As a** DGS migration engineer **I want** `updateBom` implemented as an explicit 3-step orchestration with a
+chosen failure strategy **so that** body, workspace, and permission updates stay consistent.
+
+**Current Behaviour (M2):**
+1. (ACL note — context) capability token obtained for `humanId` because the update is resource-scoped; ignored in DGS.
+2. **If** `workspaceContext` has add/remove → `workspaceAssociationHelper(BOM, humanId, add, remove)` (**commits first**) → PUT `…/{bomId}/{associate|dissociate}_workspace`.
+3. `bomService.updateBom(sparkBom)` → `PUT {base}/…/bom/v1/{humanId}` (`omitParamsInBody: true`).
+4. If `validationErrors || message` → throw.
+5. **If** `businessPartners` present → `bomService.updatePermissions().load(sparkBom)` → PUT `…/{humanId}/permission`.
+6. Return the updated bom.
+**Risk 🔴:** three sequential writes, **no rollback** today. Step-2 workspace change persists even if step 3 fails; step-5 permission update can leave ACL stale.
+**EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association step).
+**Target DGS Implementation:** `BomUpdateOrchestrator` running steps in order: workspace assoc → body PUT
+(`omitParamsInBody`) → optional permissions PUT. **PO decision E01:** apply one of — (a) saga with
+compensating dissociate/associate, (b) compensation log + alert, (c) documented best-effort. Replace the
+`validationErrors||message` shape-sniff with a typed `BomValidationException`. Prime the read cache on success.
+**Files / Dependencies:** `service/BomUpdateOrchestrator.kt`, `BomMutationDataFetcher.kt`; A05, D02 (shares the workspace step).
+**Acceptance Criteria:**
+1. Parity for 5 fixtures: body-only; body+workspace-add; body+workspace-remove; body+partners; body+workspace+partners.
+2. Workspace step runs **before** the body PUT; permissions step only when `businessPartners` present.
+3. Body PUT omits `humanId` from the body.
+4. Chosen failure strategy implemented; partial failure emits a compensation-log entry (if (b)/(c)) or compensates (if (a)).
+5. Backend `validationErrors`/`message` → `BomValidationException`.
+6. Read cache updated with the returned bom.
+**Test Cases:** ☐ Unit: order workspace→body→perms ☐ Unit: no-workspace skip ☐ Unit: no-partners skip ☐ Unit: step-3 failure path (strategy) ☐ Parity: 5 fixtures.
+
+---
+
+### Phase F — Internal Contributions to Product / ResourcesCount (same subgraph)
+
+> **Monorepo:** `product` and `bom` are the **same `plm-product` subgraph**, so these are **internal field
+> resolvers** (CAT-2), not cross-subgraph federation. They depend on the `Product`/`ResourcesCount` types
+> existing in the merged schema but are **not** gateway-federated and **not** blocked by a separate
+> deployment. See [reference-federation-patterns.md §0](../scripts/reference-federation-patterns.md)."
+Story,SPARK-BOM-F01,"SPARK-BOM-F01 · Implement Product.productBoms/boms/packagingBoms (internal, same subgraph)",,BOM → plm-product DGS migration,F,Medium,3,dgs-migration,bom,field-resolver,SPARK-BOM-A05,"**As a** DGS migration engineer **I want** the bom-list fields on `Product` served by the BOM code **so that**
+product → bom navigation lives with the BOM service inside `plm-product`.
+
+**Current Behaviour:** these three field resolvers live in the product resolver and call
+`ctx.loaders.bom.getActiveBomsByProductId(...)` / `...AndBomType(...)`.
+**Target DGS Implementation:** plain `@DgsData` field resolvers on the `Product` type (same subgraph) →
+`bomService.getActiveBomsByProductId` (and `...AndBomType` for `boms(types)`). **No** `@DgsEntityFetcher` /
+`@extends @external` — `Product` is an internal type. Depends on `Product` existing (product A02), not on a
+separate deployment.
+**Acceptance Criteria:** 1. `Product.productBoms/boms/packagingBoms` resolve via `bomService` internally. 2. the equivalent product-side resolvers are removed. 3. `boms(types)` filters by bom type. 4. no gateway hop.
+**Test Cases:** ☐ Unit: each field calls `bomService` ☐ Integration: `Product { productBoms { id } }` in-process ☐ Parity vs current product resolver."
+Story,SPARK-BOM-F02,"SPARK-BOM-F02 · Fill ResourcesCount.bomsCount (internal, same subgraph)",,BOM → plm-product DGS migration,F,Low,2,dgs-migration,bom,field-resolver,SPARK-BOM-A05,"**As a** DGS migration engineer **I want** `bomsCount` on `ResourcesCount` filled by the BOM code **so that**
+the TechPack aggregate's bom count is owned by BOM.
+**Current Behaviour:** the TechPack count map computes a bom count via elastic in the product orchestration.
+**Target DGS Implementation:** `@DgsData bomsCount` on the `ResourcesCount` type (owned by `product` in the
+**same subgraph**) → internal bom elastic count. **No** entity fetcher / federation — only the *externally*
+owned `ResourcesCount` fields (attachments/discussions/etc.) need real federation. Depends on `ResourcesCount`
+existing (product A05).
+**EXT:** 🔴 `search` (count query, the search DGS).
+**Acceptance Criteria:** 1. `bomsCount` resolves internally on `ResourcesCount`. 2. count matches current elastic semantics. 3. no gateway hop for this field.
+**Test Cases:** ☐ Unit: count query ☐ Integration: `ResourcesCount { bomsCount }` in-process ☐ Parity vs facade count.
+
+---
+
+### Phase G — Field Resolvers & Tests (one story per type block)
+
+> Each Phase-G story implements all field resolvers for one type. Titles name the type, not an ""and"" of
+> operations. Trivial scalar pass-throughs are bundled in **G14**. Every sibling-DGS field resolves as a
+> federated reference; until that subgraph publishes its stub it returns `{id}`."
+Story,SPARK-BOM-G01,SPARK-BOM-G01 · Bom + Bom_Unified field resolvers (9 shared),,BOM → plm-product DGS migration,G,Medium,3,dgs-migration,bom,field-resolver,"SPARK-BOM-A02, SPARK-BOM-A05","**Current Behaviour (C1):** 9 identical fields on both types — `humanId` (`humanId ?? id`), `access` &
+`currentUserPermissions` (accessControl — **ACL context only, ignore in impl**), `businessPartners`
+(`loadBusinessPartners`), `createdBy`/`updatedBy` (`getUser`), `product` (if `parentId` starts `PID` →
+`product.getByID`, else null), `workspaces` (`getWorkspacesByIdsV2`), `participantDetails` (`getUserGroup`).
+**EXT Service Calls:** 🟡 `workspaceV2`; 🔵 user-profile (`createdBy`/`updatedBy`/`participantDetails`); 🔵 teams (`businessPartners`). `product` is an internal same-DGS call.
+**Target DGS Implementation:** One `@DgsData` set backing both `Bom` and `Bom_Unified`. Sibling fields →
+federated references; `product` → internal `productService.getById`. `access`/`currentUserPermissions` —
+omit ACL work; if surfaced, resolve via the platform-provided permission context (no plumbing).
+**PO note:** confirm `parentId` only ever starts `PID`.
+**Files / Dependencies:** `BomEntityFieldDataFetcher.kt`; A02, A05.
+**Acceptance Criteria:** 1. All 9 fields resolve on both types from one impl. 2. `product` null when `parentId` not `PID*`. 3. Sibling fields emit correct `@key`s for federation. 4. No ACL plumbing introduced.
+**Test Cases:** ☐ Unit: `humanId` fallback ☐ Unit: `product` PID branch ☐ Unit: workspace mapping ☐ Integration: federated `Bom { createdBy { id } }`."
+Story,SPARK-BOM-G02,SPARK-BOM-G02 · BomMaterial_Unified field resolvers (3),,BOM → plm-product DGS migration,G,Medium,3,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**Current Behaviour (C2):** `libraryResourceId` (Direct), `libraryResource` = `getBomMaterial` 4-case
+dispatcher (TRIM→trim batch+size+caption, WASH→wash, FABRIC→fabricSpecCombo search, HUB→hub; default null),
+`materialLibraryUom` (only when category=TRIM → trim UoMs). **ACL context:** wash/hub use a capability token; ignore in impl.
+**EXT:** 🟡 materialHub/trim/wash, 🔴 fabric(search).
+**Target DGS Implementation:** `BomMaterialEnrichmentService.summary(material)` dispatching on
+`materialCategory.code`. Reuse the per-source clients/federation.
+**Files / Dependencies:** `BomMaterialUnifiedFieldDataFetcher.kt`; A04, A05.
+**Acceptance Criteria:** 1. Each category routes to the correct source; unknown → null. 2. `materialLibraryUom` resolves only for TRIM. 3. `libraryResourceId` = `libraryResource.id`.
+**Test Cases:** ☐ Unit: 4 category routes + default ☐ Unit: UoM TRIM-only ☐ Integration."
+Story,SPARK-BOM-G03,SPARK-BOM-G03 · BomMaterial field resolvers (8),,BOM → plm-product DGS migration,G,Medium,3,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**Current Behaviour (C4):** `libraryResource` (H5 hub), `genericMaterialType` (hub `baseMaterial.relatedMaterialType`
+precedence over local), `origins`/`certifications` (H3 coded-options filter+enrich), `weight` (H1),
+`sizeUnitOfMeasure` (H2), `countryOfOrigin` (tag), `parentLibraryResourceId`/`libraryResourceId` (Direct),
+`impressionDetails` (`material.impressions`). Hub resource loaded twice (libraryResource + genericMaterialType) — DataLoader-memoized; consolidate. **ACL context:** hub uses a capability token; ignore in impl.
+**EXT:** 🟡 materialHub; 🔵 tag.
+**Target DGS Implementation:** `BomMaterialFieldDataFetcher` with a single memoized hub fetch reused by
+`libraryResource` + `genericMaterialType`. Coded-options cached per request (`@Cacheable`).
+**Acceptance Criteria:** 1. `genericMaterialType` returns hub value when `relatedMaterialType` differs from local, else local. 2. `origins`/`certifications` filtered to known codes and enriched to `{code,description}`. 3. `weight` uses UoM fallback code 23 (grams). 4. Hub fetched once per material.
+**Test Cases:** ☐ Unit: genericMaterialType precedence ☐ Unit: origins enrich/filter ☐ Unit: weight fallback ☐ Unit: single hub fetch ☐ Integration."
+Story,SPARK-BOM-G04,SPARK-BOM-G04 · BomPackagingMaterial field resolvers (2),,BOM → plm-product DGS migration,G,Low,2,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**Current Behaviour (C5):** `impressionDetails` (`material.impressions`), `countryOfOrigin` (tag).
+**Target DGS Implementation:** two `@DgsData` fields; `countryOfOrigin` via `tag` reference.
+**Acceptance Criteria:** 1. `impressionDetails` = parent impressions. 2. `countryOfOrigin` resolves from `countryOfOriginIds` (empty → `[]`).
+**Test Cases:** ☐ Unit: passthrough ☐ Unit: tag lookup ☐ Unit: empty ids."
+Story,SPARK-BOM-G05,SPARK-BOM-G05 · BomFabricMaterial field resolvers (4),,BOM → plm-product DGS migration,G,Low,2,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**Current Behaviour (C6):** `libraryResource` = `search.searchFabricSpecCombos({q:`id:${fscId}`,page:0,size:1})` → `content[0] ?? {id:fscId}`; `weight` (H1), `countryOfOrigin`, `impressionDetails`, `libraryResourceId`.
+**EXT:** 🔴 search; 🟡 materialHub (weight); 🔵 tag.
+**Target DGS Implementation:** `libraryResource` via `searchClient.fabricSpecCombos(...)` with `{id}` fallback.
+**Acceptance Criteria:** 1. Returns the matched fabricSpecCombo or `{id}`. 2. `weight`/`countryOfOrigin` as G03. 
+**Test Cases:** ☐ Unit: found ☐ Unit: fallback `{id}` ☐ Integration."
+Story,SPARK-BOM-G06,SPARK-BOM-G06 · BomFabricSpecMaterial field resolvers (4),,BOM → plm-product DGS migration,G,Low,2,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**Current Behaviour (C7):** `libraryResource` = `fabric.getSpecificationByID.load(id) ?? {id}`; `weight`, `countryOfOrigin`, `impressionDetails`.
+**EXT:** 🟡 fabric, materialHub; 🔵 tag.
+**Target DGS Implementation:** `libraryResource` via `FabricClient.getSpecificationById` with `{id}` fallback.
+**Acceptance Criteria:** 1. Returns fabric spec or `{id}`. 2. weight/countryOfOrigin as G03.
+**Test Cases:** ☐ Unit: found ☐ Unit: fallback ☐ Integration."
+Story,SPARK-BOM-G07,SPARK-BOM-G07 · BomCombinationMaterial field resolvers (4),,BOM → plm-product DGS migration,G,Low,2,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**Current Behaviour (C8):** `libraryResource` = `combination.getById.load(id) ?? {id}`; `weight`, `countryOfOrigin`.
+**Target DGS Implementation:** `libraryResource` via `CombinationClient.getById` with `{id}` fallback.
+**Acceptance Criteria:** 1. Returns combination or `{id}`. 2. weight/countryOfOrigin as G03.
+**Test Cases:** ☐ Unit: found ☐ Unit: fallback ☐ Integration."
+Story,SPARK-BOM-G08,SPARK-BOM-G08 · BomTrimMaterial field resolvers (7) — trim size dispatchers,,BOM → plm-product DGS migration,G,High,5,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**As a** DGS migration engineer **I want** the trim material fields including the 15-case size/caption
+dispatchers **so that** trim rows display the correct size value, caption, UoM and facility.
+
+**Current Behaviour (C9):**
+- `libraryResource` = `trim.getTrimBatch.load(trimId)`.
+- `materialLibraryUom` = trim UoMs, find by `materialLibraryUomId.toString()` (preserve int→string coercion).
+- `sizeValue` = reload trim → match size by `librarySizeId` → `getTrimSizeValue(trimType, trimSubType, size)` — **15-case TRIM_TYPES** (`bomUtils.txt:57-114`).
+- `sizeCaption` = reload trim → `getBomSizeCaption(trim, size)` — **15-case**, returns `{edit, view}` (`bomUtils.txt:116-187`).
+- `facilityName` = if already set return it; else reload trim → find supplier by `supplierId` → facility by `facilityId` → `location.getLocationById(facilityId)` → `vmmFacility.name`.
+- `weight`, `countryOfOrigin` as G03. The trim is loaded 3× (memoized) — consolidate.
+**EXT:** 🟡 trim; 🔵 location (facility); 🔵 tag.
+**Target DGS Implementation:** `TrimEnrichmentService.enrich(material)` does **one** `getTrimBatch` and feeds
+`libraryResource`/`sizeValue`/`sizeCaption`/`materialLibraryUom`. Port the two 15-case dispatchers into a
+single Kotlin `TrimSizePresentation` table (`sizeValue` + `{edit,view}` caption per trim type/subtype).
+Preserve `materialLibraryUomId.toString()`. `facilityName` 2-level lookup via `LocationClient`.
+**Files / Dependencies:** `BomTrimMaterialFieldDataFetcher.kt`, `TrimSizePresentation.kt`, `TrimEnrichmentService.kt`; A04, A05.
+**Acceptance Criteria:**
+1. `sizeValue` matches `getTrimSizeValue` for all 15 trim types (parity table) incl. THREAD/LABEL subtype branches.
+2. `sizeCaption` returns the correct `{edit,view}` per type incl. compatible-size and finished-size cases.
+3. `materialLibraryUom` matches via string-coerced code.
+4. `facilityName` returns the pre-set value if present, else the resolved VMM facility name.
+5. Trim is fetched once per material (one REST call).
+**Test Cases:** ☐ Unit: 15 trim-type `sizeValue` cases ☐ Unit: caption edit/view per type ☐ Unit: UoM string coercion ☐ Unit: facilityName pre-set vs resolved ☐ Unit: single trim fetch ☐ Parity: recorded trim fixtures."
+Story,SPARK-BOM-G09,SPARK-BOM-G09 · BomWashMaterial field resolvers (4),,BOM → plm-product DGS migration,G,Low,2,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**Current Behaviour (C10):** `libraryResource` = `wash.getWash(jwt).load(washId) ?? {id}`; `weight`, `countryOfOrigin`, `impressionDetails`. **ACL context:** wash uses a capability token; ignore in impl.
+**Target DGS Implementation:** `libraryResource` via `WashClient.getWash(washId)` with `{id}` fallback.
+**Acceptance Criteria:** 1. Returns wash or `{id}`. 2. weight/countryOfOrigin as G03.
+**Test Cases:** ☐ Unit: found ☐ Unit: fallback ☐ Integration."
+Story,SPARK-BOM-G10,SPARK-BOM-G10 · BomImpressionDetails_Unified field resolvers (6) — internal/external branch,,BOM → plm-product DGS migration,G,High,5,dgs-migration,bom,field-resolver,"SPARK-BOM-A04, SPARK-BOM-A05","**As a** DGS migration engineer **I want** the unified impression-detail resolvers with the
+internal/external user branch **so that** library/color materials resolve for both user types.
+
+**Current Behaviour (C12):**
+- `libraryResource`: **internal** (`currentUser.internal`) → `searchMaterialById('libraryResource', detail)`;
+  **external** → `bomIds = args.ids`; if no `libraryResource.id` → null; else `searchMaterialsByProxyIds.load({q:`id:(${id})`, proxyIds: bomIds, page:0, size:1})` → `content[0] ?? {id}`.
+- `groundColor`/`textColor`/`sliderColor`/`tapeColor`/`teethColor` → `searchMaterialById(name, detail)` (5 loader calls).
+**Risk 🔴:** the external branch reads `args.ids` — only present when the parent query carried `ids`. **ACL context:** external path obtains a capability token for `bomIds`; ignore in impl, but keep `proxyIds`.
+**EXT:** 🔴 search.
+**Target DGS Implementation:** Pass `bomIds` via `DgsDataFetchingEnvironment` **local context** set by the
+parent query — **do not** read `args.ids`. Branch on the user-internal flag from the request context. Color
+fields via a `MaterialDataLoader` keyed on id.
+**Files / Dependencies:** `BomImpressionDetailsFieldDataFetcher.kt`; A04, A05.
+**Acceptance Criteria:**
+1. Internal path resolves `libraryResource` via material-by-id; external path via proxy-id search.
+2. `bomIds` come from DGS local context, not field args (the fragile `args.ids` contract is removed).
+3. Missing `libraryResource.id` → null.
+4. 5 color fields resolve via batched material loader.
+**Test Cases:** ☐ Unit: internal branch ☐ Unit: external branch (proxyIds) ☐ Unit: null id ☐ Unit: color batch ☐ Parity: internal vs external."
+Story,SPARK-BOM-G11,SPARK-BOM-G11 · BomFabricLibraryImpressionDetails.libraryResource,,BOM → plm-product DGS migration,G,Medium,3,dgs-migration,bom,field-resolver,SPARK-BOM-G10,"**Current Behaviour (C13):** single `libraryResource` field with the same internal/external branch as G10.
+**Target DGS Implementation:** reuse the G10 branch helper.
+**Acceptance Criteria:** 1. Same behaviour as G10's `libraryResource` for this type. 2. Uses local-context `bomIds`.
+**Test Cases:** ☐ Unit: internal ☐ Unit: external."
+Story,SPARK-BOM-G12,SPARK-BOM-G12 · BomTrimLibraryImpressionDetails field resolvers (3),,BOM → plm-product DGS migration,G,Medium,3,dgs-migration,bom,field-resolver,SPARK-BOM-G10,"**Current Behaviour (C14):** `libraryResource` (G10 branch) + `groundColor`, `textColor` via `searchMaterialById`.
+**Target DGS Implementation:** reuse G10 helper + 2 color fields via material loader.
+**Acceptance Criteria:** 1. `libraryResource` as G10. 2. `groundColor`/`textColor` resolve via material loader.
+**Test Cases:** ☐ Unit: libraryResource ☐ Unit: colors."
+Story,SPARK-BOM-G13,SPARK-BOM-G13 · BomTrimZipperLibraryImpressionDetails field resolvers (3 colors),,BOM → plm-product DGS migration,G,Low,2,dgs-migration,bom,field-resolver,SPARK-BOM-G10,"**Current Behaviour (C15):** `sliderColor`, `tapeColor`, `teethColor` via `searchMaterialById`.
+**Target DGS Implementation:** 3 `@DgsData` fields via material loader.
+**Acceptance Criteria:** 1. Three color fields resolve by id. 2. Missing id → null.
+**Test Cases:** ☐ Unit: three colors ☐ Unit: null id."
+Story,SPARK-BOM-G14,SPARK-BOM-G14 · Trivial pass-through fields (bundle),,BOM → plm-product DGS migration,G,Low,2,dgs-migration,bom,field-resolver,SPARK-BOM-A02,"**Current Behaviour:** the only allowed bundle — fields that return a parent value with no service call:
+`BomMaterialType.id` = `` `${code}_${description}` `` (computed); `BomMaterialSearch.paging` = whole-object
+passthrough; every material type's `impressionDetails` = `parent.impressions` (rename); `*.libraryResourceId`
+= `get(parent,'libraryResource.id')`; `*.parentLibraryResourceId`; and ~30 scalar pass-throughs per material
+type covered by DTO mapping.
+**Target DGS Implementation:** Jackson DTO mapping for scalars; tiny `@DgsData` for the 3 computed/renamed fields.
+**Acceptance Criteria:** 1. `BomMaterialType.id` = `code_description`. 2. `impressionDetails` maps from `impressions`. 3. `libraryResourceId` from nested id. 4. No EXT calls.
+**Test Cases:** ☐ Unit: synthetic id ☐ Unit: rename mapping ☐ Unit: nested id extraction."
+Story,SPARK-BOM-G15,SPARK-BOM-G15 · BomMaterialSearchResult field resolvers (5),,BOM → plm-product DGS migration,G,Medium,3,dgs-migration,bom,field-resolver,"SPARK-BOM-A05, SPARK-BOM-C02","**Current Behaviour (C18):** `description` (`description ?? name`), `status` (`status?.description ?? status`),
+`fabricSpec` (if `type==='fabric_spec_combo'` & `fabricSpecId` → `fabric.getSpecificationByID`), `fabric`
+(if `type==='combination'` & `fabricRecordHumanId` → `fabric.getByID(jwt)`), `fabricId` (combination → `fabricRecordHumanId`),
+`relatedMaterials` (2-branch internal/external elastic by `relatedAssetIds` buckets). **Bug 🟡:** external
+branch does `proxyIds.push(detail.parentComboId)` — mutates the args array; defensive-copy. **ACL context:** `fabric.getByID` and external branch use a capability token; ignore in impl, keep `proxyIds`.
+**EXT:** 🟡 fabric; 🔴 search.
+**Target DGS Implementation:** field resolvers as above; `relatedMaterials` builds buckets from `intentLineIds`
+(`split('.')[0]`, unique) and runs the internal (`getPage`) or external (`searchMaterialsByProxyIds`) query.
+**Defensive-copy** `proxyIds` before appending `parentComboId`.
+**Acceptance Criteria:** 1. `description`/`status` handle both shapes. 2. `fabricSpec`/`fabric`/`fabricId` gated by `type`. 3. `relatedMaterials` buckets `intentLineIds` correctly. 4. `proxyIds` not mutated (copy used). 
+**Test Cases:** ☐ Unit: status object/string ☐ Unit: type gates ☐ Unit: bucket dedup ☐ Unit: proxyIds immutability ☐ Parity: internal vs external."
+Story,SPARK-BOM-G16,SPARK-BOM-G16 · Test coverage & parity harness,,BOM → plm-product DGS migration,G,Medium,3,dgs-migration,bom,tests,"SPARK-BOM-B01, SPARK-BOM-E01, SPARK-BOM-G08, SPARK-BOM-G10","**As a** DGS migration engineer **I want** unit + integration + parity coverage **so that** the BOM subgraph
+matches spark-internal-graphql before cut-over.
+**Target DGS Implementation:** ≥80% unit coverage on fetchers/services; a parity harness recording ≥30
+query/mutation fixtures (all 7 material variants + both impression branches represented) and diffing JSON;
+a CI schema-conformance check across the 7 material impls.
+**Acceptance Criteria:** 1. Unit coverage ≥80%. 2. Parity harness covers all 7 material types + internal/external impression branch + `updateBom` 5 fixtures. 3. Schema-conformance check fails the build if an impl misses an interface field.
+**Test Cases:** ☐ Parity: 30+ fixtures green ☐ CI: conformance check ☐ Load: p95 parity for `getBomByIds`, `getBomByParentId`, `searchMaterialsBom`.
+
+---
+
+## 4. Risk Register
+
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|------|-----------|--------|------------|-------|
+| `updateBom` 3-step non-atomic write | Medium | High | E01 failure strategy (saga/compensation/best-effort) | Tech Lead |
+| `BomImpressionDetails_Unified.libraryResource` `args.ids` contract | Medium | Medium | G10 moves `bomIds` to DGS local context | Backend Eng |
+| 7-variant polymorphism drift | Medium | Medium | G16 CI schema-conformance check | Backend Eng |
+| Sibling material subgraphs not federated yet | High | Medium | Sequence hub/trim/wash/fabric/combination stubs first | Platform |
+| Trim 15-case dispatcher porting errors (G08) | Medium | Medium | Parity table per trim type | Backend Eng |
+| Latent bugs (`getHubMaterial` await; `getFabricMaterial` null; array mutation) | Medium | Low | Fix on port (G03/G05/G15) + unit tests | Backend Eng |
+| F01/F02 are internal (same subgraph) — depend on Product/ResourcesCount types existing | Low | Low | Sequence after product A02/A05; no gateway block | Tech Lead |
+
+## 5. Summary
+- **Stories:** 42 (A:5 · B:8 · C:5 · D:5 · E:1 · F:2 · G:16).
+- **Critical path:** A01→A02→A05→E01 and A04→G08/G10→G16.
+- **Highest risk:** `updateBom` atomicity (E01); impression `args.ids` contract (G10).
+- **Monorepo:** F01/F02 are **internal** field resolvers in the same `plm-product` subgraph (not gateway
+  federation). Real cross-subgraph federation in BOM is only the **material DGS** references (hub/trim/wash/
+  fabric/combination) + workspace/tag/user-profile/access-control.
+
+---
+**Phase Completed:** Phase 4 — Migration Stories · **Domain:** `bom` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md."
+Epic,,Product → plm-product DGS migration,Product → plm-product DGS migration,,,,,dgs-migration,product,epic,,Epic for the product domain migration to the plm-product DGS.
+Story,SPARK-PROD-A01,SPARK-PROD-A01 · Schema skeleton + scalars,,Product → plm-product DGS migration,A,Low,2,dgs-migration,product,schema,,"**As a** DGS engineer **I want** the `product.graphqls` skeleton + federation header + `DateTime`/`JsonNode`
+scalars **so that** all later product work compiles. **Current Behaviour:** green-field (schema translated from `code/schemas/SPARK_Product.txt`).
+**Target:** v2.3 `@link`, `scalar DateTime→Instant`, `scalar JsonNode`, empty `extend type Query`/`Mutation`.
+**Files:** `schema/product.graphqls`, `config/ScalarConfig.kt`. **Deps:** none.
+**Acceptance:** 1. `./gradlew generateJava` passes. 2. scalars round-trip. **Tests:** ☐ compiles ☐ scalar serde."
+Story,SPARK-PROD-A02,SPARK-PROD-A02 · Owned types + inputs,,Product → plm-product DGS migration,A,Medium,3,dgs-migration,product,schema,SPARK-PROD-A01,"**As a** DGS engineer **I want** ~40 owned types + ~30 inputs from [03-schema.graphql](./03-schema.graphql)
+**so that** resolvers/mutations have a contract. **Target:** `@key(fields:""id"")` on `Product`/`ProductRules`;
+`@shareable` on `Paging`/`Pageable`/`CodeDescription`/`CodeDescriptionOrder`/`AccessV3`/`WorkspaceStatus`/
+`ResourcePermissions`/`PermissionEntry`/`SpgFileLibrary`. **Deps:** A01.
+**Acceptance:** 1. All owned types+inputs present. 2. Keys/shareables applied. 3. Schema validates. **Tests:** ☐ validates ☐ entity stub."
+Story,SPARK-PROD-A03,SPARK-PROD-A03 · External stubs (platform + sibling),,Product → plm-product DGS migration,A,Low,2,dgs-migration,product,schema,SPARK-PROD-A01,"**Target:** 6 platform stubs (`VMM_*`, `IG_*`, `DopplerCapacityType`, `CORONA_ItemDetails`) + ~16 sibling
+stubs per [03-schema.graphql §1](./03-schema.graphql). Note co-located stubs resolve internally at runtime.
+**Deps:** A01. **Acceptance:** 1. all stubs compile; gateway composes. **Tests:** ☐ compiles ☐ gateway resolves a VMM stub."
+Story,SPARK-PROD-A04,SPARK-PROD-A04 · Categories union @DgsTypeResolver,,Product → plm-product DGS migration,A,Medium,3,dgs-migration,product,field-resolver,"SPARK-PROD-A02, SPARK-PROD-A03","**Current Behaviour (Phase 2):** 12-case switch over `category.type`, **default → `IG_Clazz_Filter`**.
+**Target:** `@DgsTypeResolver(name=""Categories"")` mirroring the 12 cases + default. **Deps:** A02, A03.
+**Acceptance:** 1. all 12 known tags map correctly. 2. unknown → `IG_Clazz_Filter`. **Tests:** ☐ 12 cases ☐ default."
+Story,SPARK-PROD-A05,SPARK-PROD-A05 · ResourcesCount composite-key type,,Product → plm-product DGS migration,A,Low,2,dgs-migration,product,schema,SPARK-PROD-A01,"**Target:** add the composite-key type with 11 stub fields, each commented with its owning subgraph (see
+[03-schema.graphql §3](./03-schema.graphql)). Product owns the type + stub resolver; siblings extend later (Phase F).
+**Deps:** A01. **Acceptance:** 1. `@key` = `productId partnerId`; context fields not in key. 2. stub fields annotated. **Tests:** ☐ compiles ☐ entity fetcher stub."
+Story,SPARK-PROD-A06,SPARK-PROD-A06 · ProductService Kotlin port (42 methods),,Product → plm-product DGS migration,A,High,5,dgs-migration,product,service,SPARK-PROD-A01,"**Current Behaviour (Phase 2 §Service):** 42 REST wrappers against `v1`/`v2`, elastic, `spark_rules`, external rating.
+**Target:** split into `ProductReadService`, `ProductWriteService`, `ProductElasticService`, `ProductCopyService`,
+`ProductRuleService`, `ProductComponentStatusService`, `RatingClient` (Feign, external), plus internal calls for
+co-located ops. Master/status reads `@Cacheable`. Preserve `getByID` priming, `linkProduct` `throwOnError`,
+external-rating API-key (→ Vault). **ACL note (context):** capability-token currying is omitted (ACL ignored).
+**Deps:** A01. **Acceptance:** 1. all 42 signatures present. 2. co-located methods make no outbound HTTP. 3. rating secret in config/Vault. 4. `linkProduct` throws on backend error. **Tests:** ☐ endpoint build ☐ cache hit ☐ rating parse ☐ linkProduct throws.
+
+---
+
+### Phase B — Core Reads (one query per story)
+
+> Pattern: `@DgsQuery` → `ProductReadService.method`. Full pseudo-logic in [02 §Query Resolvers](./02-resolver-analysis.md). All depend on A02+A06."
+Story,SPARK-PROD-B01,SPARK-PROD-B01 · getProduct,,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,"SPARK-PROD-A02, SPARK-PROD-A06","**Current Behaviour (Q3):** `getByID.load(id)` `GET ${v1}?productId={id}` → camelCase or null; DataLoader-batched.
+**Target:** `@DgsQuery getProduct(id): Product` via `ProductDataLoader` keyed on id. **Acceptance:** 1. returns product; 404→null. 2. batches N ids in 1 call. **Tests:** ☐ happy ☐ 404→null ☐ batch ☐ integration."
+Story,SPARK-PROD-B02,SPARK-PROD-B02 · getProductsByIds,,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,"SPARK-PROD-A02, SPARK-PROD-A06","**Current Behaviour (Q6):** `getByIdList.load(ids)` `GET ${v1}?productId={csv}&page=0&size=10000&sort=createdDate,desc`; primes `getByID`. **Target:** `@DgsQuery` → `ProductsPaged`. **Acceptance:** 1. returns paged products for ids. 2. primes single-id loader. **Tests:** ☐ happy ☐ empty ☐ integration."
+Story,SPARK-PROD-B03,SPARK-PROD-B03 · getProductStatus (cacheable),,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,**Current Behaviour (Q7):** `getStatus.load()` master status list. **Target:** `@DgsQuery` → `@Cacheable` → `[MasterProductStatus]`. **Acceptance:** 1. returns statuses. 2. cached. **Tests:** ☐ list ☐ cache hit.
+Story,SPARK-PROD-B04,SPARK-PROD-B04 · getProductVersions,,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,**Current Behaviour (Q10):** `getVersions.load({id})` `GET ${v1}/{id}/versions?page=0&size=10000`. **Target:** `@DgsQuery` → `ProductsPaged`. **Acceptance:** 1. returns versions. **Tests:** ☐ happy ☐ integration.
+Story,SPARK-PROD-B05,SPARK-PROD-B05 · getCopyStatus,,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,**Current Behaviour (Q4):** `getCopyStatus.load(id)` `GET ${v2}/count/resource-type?copyId={id}`. **Target:** `@DgsQuery` → `ProductCopy`. **Acceptance:** 1. returns copy status. **Tests:** ☐ happy ☐ integration.
+Story,SPARK-PROD-B06,SPARK-PROD-B06 · getProductTemplateById,,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,**Current Behaviour (Q18):** `getByID.load(id)` → `response || {}` (empty object on miss — **preserve**). **Target:** `@DgsQuery getProductTemplateById(id): Product`. **Acceptance:** 1. returns product or empty object (not null). **Tests:** ☐ happy ☐ miss→{}.
+Story,SPARK-PROD-B07,SPARK-PROD-B07 · getProductRules,,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,**Current Behaviour (Q12):** `getAllRules.load()` `GET ${base}/spark_rules/v1` → `content`. **Target:** `@DgsQuery` → `[ProductRules]`. **Acceptance:** 1. returns rules content. **Tests:** ☐ list ☐ integration.
+Story,SPARK-PROD-B08,SPARK-PROD-B08 · getProductRulesById,,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,**Current Behaviour (Q13):** `getRuleById.load(id)` `GET ${base}/spark_rules/v1/{id}`. **Target:** `@DgsQuery` → `ProductRules`. **Acceptance:** 1. returns rule. **Tests:** ☐ happy ☐ 404.
+Story,SPARK-PROD-B09,SPARK-PROD-B09 · getAllAvailableRules,,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,**Current Behaviour (Q14):** `getAvailableRules.load()` `GET …/spark_rules/v1/rules`. **Target:** `@DgsQuery` → `[AvailableRules]`. **Acceptance:** 1. returns available rules. **Tests:** ☐ list.
+Story,SPARK-PROD-B10,SPARK-PROD-B10 · getProductDeptRules (flag fork),,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,**Current Behaviour (Q15):** **flag fork** `USE_NEW_RULES_API ? ruleLibrary.searchRuleLibrary : product.searchProductDeptRules` `GET …/spark_rules/v1/search?productIds=&departmentIds=&activeOnly=`. **PO decision:** flag cutover (rules may move to spark-tag DGS). **Target:** `@DgsQuery`; both code paths covered. **Acceptance:** 1. default `activeOnly=true`. 2. flag selects the correct backend. **Tests:** ☐ legacy path ☐ flag path ☐ parity.
+Story,SPARK-PROD-B11,SPARK-PROD-B11 · getProductBPRules (flag fork),,Product → plm-product DGS migration,B,Low,2,dgs-migration,product,query,SPARK-PROD-A06,"**Current Behaviour (Q16):** same as B10 with `businessPartnerIds`. **Target:** `@DgsQuery`. **Acceptance:** 1. flag fork honored; BP filter applied. **Tests:** ☐ legacy ☐ flag ☐ parity.
+
+---
+
+### Phase C — Search & Listing"
+Story,SPARK-PROD-C01,SPARK-PROD-C01 · getProducts (two-stage hydration),,Product → plm-product DGS migration,C,High,5,dgs-migration,product,query,SPARK-PROD-A06,"**As a** DGS engineer **I want** `getProducts` with elastic+canonical two-stage hydration **so that** listing
+returns canonical records enriched with elastic flags.
+**Current Behaviour (Q1):** (🔴 search) `getFilteredProductsListing({resourceType ?? 'products', includeBoms ?? true, includeClaims ?? true, includeMeasurementSets ?? true, includeProductDetails ?? true, filter ?? [], q ?? '', page, size})` → ids → (internal) `getPage({products:ids, page:0, size})` `GET ${v1}?productId=&sort=createdDate,desc` → merge elastic flags (`boms, productDetails, claims, measurementSets, samples, sampleIds, hasSamplesUpcomingDue, hasNotEvaluatedReceivedSamples, receivedNotEvaluatedCount`) onto canonical records. **Boolean defaults are truthy (`?? true`) — pin in tests.**
+**EXT:** 🔴 search. **Target:** `ProductElasticService.getFilteredProductsListing` then `ProductReadService.getPage`; merge. **Deps:** A06.
+**Acceptance:** 1. parity for 4 arg combos (no flags / all flags / resourceType=workspaces / filter array). 2. truthy defaults preserved. 3. elastic flags merged onto canonical. **Tests:** ☐ 4 combos ☐ default truthiness ☐ merge ☐ parity."
+Story,SPARK-PROD-C02,SPARK-PROD-C02 · getProductTemplates,,Product → plm-product DGS migration,C,Medium,3,dgs-migration,product,query,SPARK-PROD-A06,"**Current Behaviour (Q2):** (🔴 search) `getFilteredProductsListing({resourceType:'product', includeBoms:false, ...7 includeXxxTemplates flags, types})` → return elastic response (no 2nd hydration). **Target:** `@DgsQuery` → `ProductTemplatesList`. **Acceptance:** 1. all 7 template-include flags forwarded. 2. `types:[Int]` filter applied. **Tests:** ☐ flags ☐ types filter ☐ parity."
+Story,SPARK-PROD-C03,SPARK-PROD-C03 · getCategories,,Product → plm-product DGS migration,C,Medium,3,dgs-migration,product,query,"SPARK-PROD-A04, SPARK-PROD-A06",**Current Behaviour (Q5):** default `productType ?? 100`; (🔴 search) `getProductCategories` `GET ${elastic}/search/${snake_case(type)}?resourceType=&resourceId=&productType=` → `ProductsCategories` (polymorphic `categories` via A04). **Target:** `@DgsQuery`; preserve `snakeCase(type)` in the path. **Acceptance:** 1. `snake_case(type)` path exact. 2. wires to `Categories` union. **Tests:** ☐ snake-case path ☐ union dispatch ☐ parity.
+Story,SPARK-PROD-C04,SPARK-PROD-C04 · getRatingByTcin (external),,Product → plm-product DGS migration,C,Medium,3,dgs-migration,product,query,SPARK-PROD-A06,"**Current Behaviour (Q11):** (🔵 external) `GET ${RATING_ENDPOINT}?reviewType=product&includes=statistics&reviewedId={tcin}&key={API_KEY}` (`skipJsonParse`) → `JSON.parse` → `{averageRating, reviewCount}`; **catch → null** (silent). **Target:** `RatingClient` Feign (text/plain, manual parse); secret from Vault. **Acceptance:** 1. parses statistics to `Rating`. 2. any error → null. 3. API key from config/Vault, not source. **Tests:** ☐ parse ☐ error→null ☐ secret config."
+Story,SPARK-PROD-C05,SPARK-PROD-C05 · searchProductRules,,Product → plm-product DGS migration,C,Medium,3,dgs-migration,product,query,SPARK-PROD-A06,"**Current Behaviour (Q17):** flag fork; legacy `GET …/spark_rules/v1/search_mapped?...` → `productRuleResponseTransformer` → camelCase. **Target:** `@DgsQuery`; port the transformer. **Acceptance:** 1. flag fork honored. 2. legacy response transformed correctly. **Tests:** ☐ legacy transform ☐ flag path ☐ parity.
+
+---
+
+### Phase D — Mutations (simple, one per story)
+
+> Pattern: `@DgsMutation` → `ProductWriteService.method`. Pseudo-logic in [02 §Mutation Resolvers](./02-resolver-analysis.md). All depend on A06. ACL is context-only."
+Story,SPARK-PROD-D01,SPARK-PROD-D01 · addProduct,,Product → plm-product DGS migration,D,Medium,3,dgs-migration,product,mutation,SPARK-PROD-A06,"**Current Behaviour (M1):** `POST ${v1}` + optional `copyProductToProduct(copyProduct)` + workspace association. **Target:** `@DgsMutation addProduct(workspaceId, sparkProduct, copyProduct): Product`; orchestrate create→copy→assoc. **Acceptance:** 1. creates product. 2. optional copy runs when `copyProduct` present. 3. workspace assoc applied. **Tests:** ☐ create ☐ create+copy ☐ create+assoc ☐ integration."
+Story,SPARK-PROD-D02,SPARK-PROD-D02 · addProducts (bulk),,Product → plm-product DGS migration,D,Medium,3,dgs-migration,product,mutation,SPARK-PROD-A06,"**Current Behaviour (M2):** bulk `POST ${v1}/bulk` + attachment-link side-effects (no rollback — **preserve, flag**). **Target:** `@DgsMutation` → `ProductBulkType`. **Acceptance:** 1. bulk creates. 2. attachment links applied; no-rollback behaviour documented. **Tests:** ☐ bulk ☐ links ☐ integration."
+Story,SPARK-PROD-D03,SPARK-PROD-D03 · bulkUpdateProducts,,Product → plm-product DGS migration,D,Medium,3,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M3):** `PUT ${v1}/mass_update`. **Target:** `@DgsMutation` → `ProductBulkType`. **Acceptance:** 1. mass-updates products. **Tests:** ☐ bulk update ☐ integration.
+Story,SPARK-PROD-D04,SPARK-PROD-D04 · updateProduct,,Product → plm-product DGS migration,D,Medium,3,dgs-migration,product,mutation,SPARK-PROD-A06,"**Current Behaviour (M4):** `PUT ${v1}/{id}` + optional copy + archive removed-template attachments (template branch). **Target:** `@DgsMutation updateProduct(input, copyProduct): Product`. **Acceptance:** 1. updates product. 2. optional copy. 3. removed-template attachments archived (template branch). **Tests:** ☐ update ☐ copy ☐ template archival."
+Story,SPARK-PROD-D05,SPARK-PROD-D05 · carryForwardProduct,,Product → plm-product DGS migration,D,Medium,3,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M5):** `PUT ${v1}/{productId}/carry_forward/{workspaceId}` — uses **every** field on `CarryForwardProductInput`. **Target:** `@DgsMutation`; verify full input mapping. **Acceptance:** 1. all input fields mapped to the request. **Tests:** ☐ full mapping ☐ integration.
+Story,SPARK-PROD-D06,SPARK-PROD-D06 · addTeamsToProduct,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M6):** `POST ${v1}/{productId}/resources/bulk` + manage_workspace_teams. **Target:** `@DgsMutation`. **Acceptance:** 1. adds teams + new partners + workspace links. **Tests:** ☐ teams ☐ partners ☐ integration.
+Story,SPARK-PROD-D07,SPARK-PROD-D07 · addBusinessPartnersToProductWithType,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M7):** `POST ${v1}/{productId}/partners-add/bulk`. **Target:** `@DgsMutation`. **Acceptance:** 1. adds partners with type. **Tests:** ☐ add ☐ integration.
+Story,SPARK-PROD-D08,SPARK-PROD-D08 · removeProductResources,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M8):** `DELETE ${v1}/{productId}/resources/bulk`. **Target:** `@DgsMutation`. **Acceptance:** 1. removes resources. **Tests:** ☐ remove ☐ integration.
+Story,SPARK-PROD-D09,SPARK-PROD-D09 · updateBusinessPartnerStatuses,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M9):** `PUT ${v1}/{productId}/status_update/bulk`. **Target:** `@DgsMutation`. **Acceptance:** 1. updates partner statuses. **Tests:** ☐ update ☐ integration.
+Story,SPARK-PROD-D10,SPARK-PROD-D10 · updateViewToggle,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M11):** `PUT ${v1}` view toggle. **Target:** `@DgsMutation`. **Acceptance:** 1. toggles hidden. **Tests:** ☐ toggle.
+Story,SPARK-PROD-D11,SPARK-PROD-D11 · updateWorkspaceAttributes,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M12):** `PUT ${v1}/{productId}` workspace attrs. **Target:** `@DgsMutation`. **Acceptance:** 1. updates workspace attrs. **Tests:** ☐ update.
+Story,SPARK-PROD-D12,SPARK-PROD-D12 · updateProductTeamsWorkspaceContext,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M13):** `PUT` team-workspace add/remove. **Target:** `@DgsMutation`. **Acceptance:** 1. adds/removes team-workspace pairs. **Tests:** ☐ add ☐ remove.
+Story,SPARK-PROD-D13,SPARK-PROD-D13 · linkProduct (throws on error),,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M14):** `PUT` link — **throws on backend error** (only mutation that does). **Target:** `@DgsMutation`; port `throwOnError` as a checked exception. **Acceptance:** 1. links parent/child. 2. backend error → exception (not null). **Tests:** ☐ link ☐ error→exception.
+Story,SPARK-PROD-D14,SPARK-PROD-D14 · unlinkProduct,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M15):** `PUT` unlink. **Target:** `@DgsMutation`. **Acceptance:** 1. unlinks parent/child. **Tests:** ☐ unlink.
+Story,SPARK-PROD-D15,SPARK-PROD-D15 · addProductRule,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M16):** `POST …/spark_rules/v1`. **Target:** `@DgsMutation` → `ProductRules`. **Acceptance:** 1. creates rule. **Tests:** ☐ create.
+Story,SPARK-PROD-D16,SPARK-PROD-D16 · updateProductRule,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M17):** `PUT …/spark_rules/v1/{id}`. **Target:** `@DgsMutation`. **Acceptance:** 1. updates rule. **Tests:** ☐ update.
+Story,SPARK-PROD-D17,SPARK-PROD-D17 · deleteProductRule,,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M18):** `DELETE …/spark_rules/v1/{id}` → Boolean. **Target:** `@DgsMutation`. **Acceptance:** 1. deletes; returns Boolean. **Tests:** ☐ delete ☐ not-found.
+Story,SPARK-PROD-D18,SPARK-PROD-D18 · updateComponentStatus (bulk),,Product → plm-product DGS migration,D,Low,2,dgs-migration,product,mutation,SPARK-PROD-A06,"**Current Behaviour (M19):** bulk `PUT ${v1}/component_status_update/bulk`. **Target:** `@DgsMutation`. **Acceptance:** 1. bulk-updates component statuses. **Tests:** ☐ bulk ☐ integration.
+
+---
+
+### Phase E — Complex Operations"
+Story,SPARK-PROD-E01,SPARK-PROD-E01 · productBusinessPartnerActions,,Product → plm-product DGS migration,E,Very High,8,dgs-migration,product,mutation,SPARK-PROD-A06,"**As a** DGS engineer **I want** the partner-action dispatcher with a failure strategy **so that** drop/undrop
+stays consistent across cleanup services.
+**Current Behaviour (M10):** ~220-line dispatcher, 3 cases (`REMOVE_PARTNER`/`DROP_PARTNER`/`UNDROP_PARTNER`).
+Partner update + cleanup across `recentlyViewed`/`todo`/`favorite`/`sampleV2`/accessControl. No rollback. (ACL context.)
+**Target:** `ProductBusinessPartnerActionService` with 3 strategy methods; **PO decision** saga vs compensation-log vs best-effort. **Acceptance:** 1. all 3 paths reach REST parity (recorded fixtures). 2. partial-failure compensation log/strategy. 3. cleanup fan-out runs per case. **Tests:** ☐ REMOVE ☐ DROP ☐ UNDROP ☐ partial-failure ☐ parity."
+Story,SPARK-PROD-E02,SPARK-PROD-E02 · updateComponentStatuses (5-loader fan-out),,Product → plm-product DGS migration,E,High,5,dgs-migration,product,mutation,SPARK-PROD-A06,**Current Behaviour (M20):** parallel fan-out to `bom`/`measurement`/`productDetail`/`packaging` (internal) + `claim` (🟡 EXT). **Shadow-var bug** noted. **Target:** `coroutineScope { launch {…} } ×5` with structured concurrency; claim via `ClaimClient`. Fix the shadow var. **Acceptance:** 1. per-loader failures don't fail siblings. 2. shadow var fixed. 3. parity. **Tests:** ☐ 5-way fan-out ☐ partial failure isolation ☐ parity.
+Story,SPARK-PROD-E03,SPARK-PROD-E03 · getProductTechPackCountV1 stub + facade (Option D),,Product → plm-product DGS migration,E,Very High,8,dgs-migration,product,query,SPARK-PROD-A05,"**As a** DGS engineer **I want** the TechPack query served by a thin stub over an aggregation facade **so that**
+it works on day 1 while per-subgraph federation is sequenced.
+**Current Behaviour (Q8 / helper):** the 17-step `getTechPackResourceCountMap` (ACL tree ×2, attachment hydration, 7 parallel elastic, critical-discussion→attachment join, build `ResourcesCount`). See [02 §Helper](./02-resolver-analysis.md).
+**Target (Option D Phase 1):** `@DgsQuery getProductTechPackCountV1(...)` → `TechPackAggregatorClient.getCount(...)` (Feign to a facade extracted from `getTechPackResourceCountMap`); `@DgsEntityFetcher(name=""ResourcesCount"")` rebuilds the entity from `_entities`. **PO decision:** Node extract vs Kotlin aggregation service. See [reference-federation-patterns.md §3](../scripts/reference-federation-patterns.md). **Deps:** A05.
+**Acceptance:** 1. returns populated `ResourcesCount` from the facade. 2. entity fetcher reconstructs from key+context. 3. parity vs source for 5 inputs. 4. facade observable. **Tests:** ☐ facade call ☐ entity fetcher ☐ parity 5 inputs ☐ integration."
+Story,SPARK-PROD-E04,SPARK-PROD-E04 · getProductTechPackBulkCountV1 (ordering fix),,Product → plm-product DGS migration,E,Very High,8,dgs-migration,product,query,SPARK-PROD-E03,"**Current Behaviour (Q9):** `Promise.all(bulk.map(getTechPackResourceCountMap))` — **latent ordering bug** (result order = completion order). **Target:** bulk facade endpoint; **return in input order** (key/sort by productId). **Deps:** E03. **Acceptance:** 1. `bulk(P1..Pn) == [single(P1)..single(Pn)]` in input order. 2. empty list → []. **Tests:** ☐ order preserved ☐ empty ☐ parity.
+
+---
+
+### Phase F — Federation & Stitching (TechPack federate + gateway + decisions)"
+Story,SPARK-PROD-F01,SPARK-PROD-F01 · ResourcesCount.productAttachments+discussionAttachments (Attachment),,Product → plm-product DGS migration,F,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-E03,"**Monorepo split:** `ResourcesCount` is owned by `product` in the `plm-product` subgraph. Fields owned by
+**co-located** domains (`measurementSets`→measurement, `productBoms`/`packagingBoms`/`boms`→bom) are filled by
+**internal** `@DgsData` (CAT-2, same subgraph — these are `SPARK-MEAS-F.../SPARK-BOM-F02` internal stories,
+not gateway federation). Fields owned by **separate DGS subgraphs** use true federation
+(`extend type ResourcesCount @key(fields:""productId partnerId"")` + `@DgsEntityFetcher`), with full bodies in
+each owning domain's `04-stories.md`. See [reference-federation-patterns.md §0/§3](../scripts/reference-federation-patterns.md).
+
+| Story | Owner | Fields | Mechanism |
+|---|---|---|---|
+| F01 | Attachment | `productAttachments`, `discussionAttachments` | **federation** — BLOCKED-BY attachment domain |
+| F02 | Discussion | `discussions` | **federation** — BLOCKED-BY discussion domain |
+| F03 | Sample | `sample` | **federation** — BLOCKED-BY sample domain |
+| F04 | Measurement | `measurementSets` | **internal** (same subgraph) — see [measurement F-stories](../measurement/04-stories.md) |
+| F05 | Claim | `claims` | **federation** — BLOCKED-BY claim domain |
+| F06 | BOM | `productBoms`, `packagingBoms`, `boms` | **internal** (same subgraph) — see [bom F02](../bom/04-stories.md) |
+| F07 | Construction | `constructions` | **federation** — BLOCKED-BY construction domain |
+| F08 | Watchlist | `watchlists` | **federation** — BLOCKED-BY watchlist domain |
+
+**Acceptance (federated F01/F02/F03/F05/F07/F08):** the field resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
+**Acceptance (internal F04/F06):** the field resolves in-process; no gateway hop; parity vs facade. **Tests:** ☐ field resolves ☐ parity."
+Story,SPARK-PROD-F02,SPARK-PROD-F02 · ResourcesCount.discussions (Discussion),,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,federation,SPARK-PROD-E03,"ResourcesCount.discussions (Discussion)
+
+(Full detail is in finalOutput/product/04-stories.md — phase F section.)"
+Story,SPARK-PROD-F03,SPARK-PROD-F03 · ResourcesCount.sample (Sample),,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,federation,SPARK-PROD-E03,"ResourcesCount.sample (Sample)
+
+(Full detail is in finalOutput/product/04-stories.md — phase F section.)"
+Story,SPARK-PROD-F04,"SPARK-PROD-F04 · ResourcesCount.measurementSets (Measurement — INTERNAL, same subgraph)",,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,story,SPARK-PROD-E03,"ResourcesCount.measurementSets (Measurement — INTERNAL, same subgraph)
+
+(Full detail is in finalOutput/product/04-stories.md — phase F section.)"
+Story,SPARK-PROD-F05,SPARK-PROD-F05 · ResourcesCount.claims (Claim),,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,federation,SPARK-PROD-E03,"ResourcesCount.claims (Claim)
+
+(Full detail is in finalOutput/product/04-stories.md — phase F section.)"
+Story,SPARK-PROD-F06,"SPARK-PROD-F06 · ResourcesCount.productBoms+packagingBoms+boms (BOM — INTERNAL, same subgraph)",,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,story,SPARK-PROD-E03,"ResourcesCount.productBoms+packagingBoms+boms (BOM — INTERNAL, same subgraph)
+
+(Full detail is in finalOutput/product/04-stories.md — phase F section.)"
+Story,SPARK-PROD-F07,SPARK-PROD-F07 · ResourcesCount.constructions (Construction),,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,federation,SPARK-PROD-E03,"ResourcesCount.constructions (Construction)
+
+(Full detail is in finalOutput/product/04-stories.md — phase F section.)"
+Story,SPARK-PROD-F08,SPARK-PROD-F08 · ResourcesCount.watchlists (Watchlist),,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,federation,SPARK-PROD-E03,"ResourcesCount.watchlists (Watchlist)
+
+(Full detail is in finalOutput/product/04-stories.md — phase F section.)"
+Story,SPARK-PROD-F09,SPARK-PROD-F09 · Retire TechPack aggregation facade,,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,field-resolver,"SPARK-PROD-F01, SPARK-PROD-F02, SPARK-PROD-F03, SPARK-PROD-F04, SPARK-PROD-F05, SPARK-PROD-F06, SPARK-PROD-F07, SPARK-PROD-F08",**Target:** remove `TechPackAggregatorClient`; `TechPackDataFetcher` returns key+context only; decommission the facade. **Acceptance:** 1. all 11 `ResourcesCount` fields resolve via federation. 2. facade health-check 404. 3. no orphaned config. **Tests:** ☐ all fields via federation ☐ no facade alerts.
+Story,SPARK-PROD-F10,SPARK-PROD-F10 · Hive Gateway supergraph composition,,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,field-resolver,SPARK-PROD-A06,**Target:** add `plm-product` subgraph URL; verify composition with VMM/IG/CORONA/Doppler stubs; smoke-test cross-subgraph query. **Acceptance:** 1. supergraph composes. 2. cross-subgraph smoke test passes. **Tests:** ☐ compose ☐ smoke.
+Story,SPARK-PROD-F11,SPARK-PROD-F11 · Platform stub verification,,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,field-resolver,SPARK-PROD-F10,**Target:** confirm the gateway resolves full platform types from product-emitted `@key` stubs. **Acceptance:** 1. each platform type resolves via its stub key. **Tests:** ☐ VMM ☐ IG ☐ Doppler ☐ CORONA.
+Story,SPARK-PROD-F12,SPARK-PROD-F12 · Deferred partner-wrapper decision,,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,schema,SPARK-PROD-E01,"**Current Behaviour:** `removeProductBusinessPartner`/`dropProductBusinessPartner`/`unDropProductBusinessPartner` are schema-drift wrappers; traffic routes through `productBusinessPartnerActions`. **Target:** PO decides delete vs keep `@deprecated`; implement. **Acceptance:** 1. traffic survey complete. 2. decision implemented. **Tests:** ☐ schema diff intentional.
+
+---
+
+### Phase G — Field Resolvers, Bug-fixes, Utils, Tests (one story per group)"
+Story,SPARK-PROD-G01,SPARK-PROD-G01 · Product.attachmentsWithMetaData,,Product → plm-product DGS migration,G,Very High,8,dgs-migration,product,field-resolver,"SPARK-PROD-A02, SPARK-PROD-A06","**Current Behaviour (Phase 2C):** ~150 ln — `relationship.searchByIds` → 5-bucket partition → v2+v3 attachment hydration → discussions/threads/samples batched → 5-source merge → draft filter → `orderProductAttachments`. **Target:** `AttachmentEnrichmentService` Kotlin port; keep the ""ACL should do draft filter"" TODO as a follow-up. **Acceptance:** 1. parity for mixed attachment/discussion/thread/sample. 2. ordering rank preserved (product=0, discussion=1, sample=2; createdAt DESC tiebreak). **Tests:** ☐ merge ☐ ordering ☐ parity."
+Story,SPARK-PROD-G02,SPARK-PROD-G02 · Product.components,,Product → plm-product DGS migration,G,Very High,8,dgs-migration,product,field-resolver,"SPARK-PROD-A02, SPARK-PROD-A06",**Current Behaviour (Phase 2C):** ~190 ln — 4 parallel elastic (measurement/claim/bom/productDetail) + packaging + **per-claim N+1 ACL** + 5-type merge + count rollups. **Target:** refactor N+1 ACL into a batched call; preserve type tagging + `cloneDeep(initialCountsByBp)`. **Acceptance:** 1. parity for 50+ components. 2. `archivedCount`/`countByComponents` match source. 3. ACL batched (no N+1). **Tests:** ☐ merge ☐ counts ☐ batched ACL ☐ parity.
+Story,SPARK-PROD-G03,SPARK-PROD-G03 · Product.attachments/attachmentsV3/attachmentSummary,,Product → plm-product DGS migration,G,High,5,dgs-migration,product,field-resolver,SPARK-PROD-G01,**Current Behaviour:** four related resolvers sharing `AttachmentEnrichmentService` (G01). **Target:** thin `@DgsData` fields over the shared service. **Acceptance:** 1. each field returns its shape. 2. shares G01 service. **Tests:** ☐ each field ☐ parity.
+Story,SPARK-PROD-G04,SPARK-PROD-G04 · ProductsCategories.categories (12-case) + Doppler,,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A04,**Current Behaviour:** 12-branch dispatcher; `DopplerDepartment.primary/secondaryCapacityTypeName` share one Doppler call (memoized). **Target:** Kotlin dispatcher → 12 helpers; Doppler via DataLoader. **Acceptance:** 1. each category type built correctly. 2. Doppler fetched once. **Tests:** ☐ 12 cases ☐ single doppler fetch.
+Story,SPARK-PROD-G05,SPARK-PROD-G05 · Product.samples/sampleIds/elasticSamplesList,,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A06,**Current Behaviour:** **stops reading `info.variableValues`** — pass explicit args from the query layer (contract change). **Target:** explicit args; document the contract change. **Acceptance:** 1. samples/sampleIds/elastic resolve. 2. no `info.variableValues` read. **Tests:** ☐ samples ☐ contract change ☐ parity.
+Story,SPARK-PROD-G06,SPARK-PROD-G06 · Product.teams/discussionsV2/discussionsCount/workspaces,,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A06,**Current Behaviour:** team/discussion/workspace elastic lookups. **Target:** federated references + elastic. **Acceptance:** 1. each field resolves. **Tests:** ☐ teams ☐ discussions ☐ workspaces ☐ parity.
+Story,SPARK-PROD-G07,SPARK-PROD-G07 · Product.partners + status,,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A06,**Current Behaviour:** `loadBps`/`loadBpsWithType` (VMM); `status` merges partner/workspace statuses. **Target:** `vmmUtils` Kotlin port; preserve int-parse normalization. **Acceptance:** 1. partners resolve via VMM. 2. `status` merge correct. **Tests:** ☐ partners ☐ status merge ☐ parity.
+Story,SPARK-PROD-G08,SPARK-PROD-G08 · Product.sibling components (internal),,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A06,**Current Behaviour:** sibling-domain passthroughs with `includeXxx` boolean branches — **internal same-DGS calls** (not cross-subgraph). **Target:** internal service calls to the co-located sibling services. **Acceptance:** 1. each sibling field resolves internally. 2. `includeXxx` branches honored. **Tests:** ☐ each field ☐ include branch ☐ parity.
+Story,SPARK-PROD-G09,SPARK-PROD-G09 · Product.productWorkspaceAttributes/Info,,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A06,"**Current Behaviour:** both produce shapes with a **deferred `designCycle: async()=>…`** field-on-value. **Target:** model `designCycle` as a nested `@DgsData`, not an inline closure. **Acceptance:** 1. both fields resolve. 2. `designCycle` is a nested fetcher. **Tests:** ☐ attrs ☐ designCycle nested ☐ parity."
+Story,SPARK-PROD-G10,SPARK-PROD-G10 · Product.ancestryProducts/rating/reservedDpcis,,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A06,**Current Behaviour:** `rating` via `RatingClient`; `reservedDpcis` via `getReservedDpcisFromApex`. **Target:** federated/Feign references. **Acceptance:** 1. ancestry/rating/dpcis resolve. 2. rating null-on-error. **Tests:** ☐ ancestry ☐ rating ☐ dpcis.
+Story,SPARK-PROD-G11,SPARK-PROD-G11 · Product.notRemovable* + asks + variations (de-reflect),,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A06,**Current Behaviour:** source utils call into 4–5 sibling field resolvers **reflectively**. **Target:** **replace reflective resolver invocation with direct service-method calls** (same logical union). **Acceptance:** 1. same results as source. 2. no reflective resolver calls. **Tests:** ☐ union correctness ☐ no reflection ☐ parity.
+Story,SPARK-PROD-G12,SPARK-PROD-G12 · Product.division bug fix (wrong loader),,Product → plm-product DGS migration,G,Low,2,dgs-migration,product,field-resolver,SPARK-PROD-A06,**Current Behaviour:** source `Product.division` (and `DopplerDepartment.division`) call `ig.department.getByID` instead of `ig.division.getByID` — **latent bug**. **Target:** wire to `DivisionService`; **PO decision** whether to feature-flag the fix during cutover (clients may depend on department-shaped result). **Acceptance:** 1. returns true division shape. 2. fix logged with PO; flag decision recorded. **Tests:** ☐ division shape ☐ contract parity expectation documented.
+Story,SPARK-PROD-G13,SPARK-PROD-G13 · IG/tag/tcin/spg + template trivial group,,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,field-resolver,SPARK-PROD-A06,"**Current Behaviour:** `department`/`departments`/`clazz`/`brand`/`brands`/`divisions`/`productTemplateDepartments`, `tags`, `tcins`, `SPARK_Tcin.itemDetails` (CORONA), `SPARK_PackagingAttribute.spg` (internal fileLibrary), `SPARK_ProductRules.*`, `VMM_BusinessPartnerCategory.*`, `MasterProductStatus.*`. **Target:** group into one PR; federated/internal references. **Acceptance:** 1. each field resolves to the right source. **Tests:** ☐ hierarchy ☐ tcin/CORONA ☐ spg internal."
+Story,SPARK-PROD-G14,SPARK-PROD-G14 · Simple user/status fields + trivial pass-throughs,,Product → plm-product DGS migration,G,Low,2,dgs-migration,product,field-resolver,SPARK-PROD-A02,"**Current Behaviour:** `createdBy`/`updatedBy`/`versionCreatedBy` (user-profile), `ProductComponentStatus.updatedBy`, `SPARK_ResourcesCount.productThumbnailId` (re-fetch product), plus ~60 direct scalar pass-throughs (DTO-mapped). **Target:** thin `@DgsData` for user/thumbnail; Jackson DTO mapping for scalars. **Acceptance:** 1. user fields resolve (null id → null). 2. `productThumbnailId` re-fetches. 3. scalars mapped. **Tests:** ☐ user fields ☐ thumbnail ☐ scalar mapping."
+Story,SPARK-PROD-G15,SPARK-PROD-G15 · Port product utils to Kotlin,,Product → plm-product DGS migration,G,Medium,3,dgs-migration,product,service,SPARK-PROD-A06,"**Current Behaviour:** `attachmentUtils`, `partnerUtils`, `teamUtils`, `productUtils`, `componentStatusUtils`, `resolvePaging`, `vmmUtils`, `accessControlUtils`, `removePartnerUtils`. **Target:** Kotlin ports; single camel/snake normalization at the Feign boundary; **fix** `componentStatusUtils.incrementAllContextCounter` (never resets — verify intent); batch `getAccessControlBatch` with parallel chunking. **Acceptance:** 1. utils ported with unit tests. 2. counter logic fixed/verified. 3. ACL batch parallel-chunked. **Tests:** ☐ each util ☐ counter ☐ ACL chunking."
+Story,SPARK-PROD-G16,"SPARK-PROD-G16 · Tests, parity, load, cut-over rehearsal",,Product → plm-product DGS migration,G,High,5,dgs-migration,product,tests,"SPARK-PROD-C01, SPARK-PROD-E01, SPARK-PROD-E03, SPARK-PROD-G01, SPARK-PROD-G02","**Target:** ≥80% unit coverage; parity harness ≥50 fixtures (incl. TechPack, partner actions, components, attachmentsWithMetaData, the division-bug-fix, rules flag both paths); load test p95 for `getProduct`/`getProducts`/`components`/`attachmentsWithMetaData`/TechPack; contract test (schema diff shows only intentional changes); cut-over rehearsal (shadow traffic). **Acceptance:** 1. unit ≥80%. 2. ≥50 parity fixtures green. 3. load p95 parity. 4. schema-diff intentional-only. 5. shadow-traffic rehearsal + rollback drill. **Tests:** ☐ parity ☐ load ☐ contract ☐ shadow.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|------|-----------|--------|------------|-------|
+| TechPack composite-key aggregate (E03/E04) | High | High | Option D facade-then-federate; bulk-order fix | Tech Lead + Platform |
+| `productBusinessPartnerActions` partial failure (E01) | Medium | High | Saga/compensation — PO decision | Tech Lead |
+| `components` N+1 ACL regression (G02) | Medium | Medium | Batch ACL on port | Backend Eng |
+| `attachmentsWithMetaData` perf (G01) | Medium | High | Parallel fetch + cached relationship walk | Backend Eng |
+| `Product.division` bug fix (G12) breaks clients | Medium | Medium | Feature-flag + client survey | PO |
+| 8 TechPack placeholders block on 8 domains | High | Medium | Facade keeps day-1 function; retire only when all live | Tech Lead |
+| `USE_NEW_RULES_API` legacy delete | Low | High | Verify all envs; staged rollout | PO |
+| Drift wrappers may have live consumers | Medium | Medium | Traffic survey (F12) | PO |
+| External rating secret | Low | Medium | Vault | Platform |
+
+## 5. Summary
+- **Stories:** 72 (A:6 · B:11 · C:5 · D:18 · E:4 · F:12 · G:16).
+- **Critical path:** A01→A02/A06→C01→E03(TechPack facade)→G01→G02→G16.
+- **Highest risk:** TechPack (E03/E04), `productBusinessPartnerActions` (E01).
+- **Host DGS:** product is the home of the whole product family; co-located siblings resolve internally.
+
+---
+**Phase Completed:** Phase 4 — Migration Stories · **Domain:** `product` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md."
+Epic,,Claims → claims DGS migration,Claims → claims DGS migration,,,,,dgs-migration,claims,epic,,Epic for the claims domain migration to the plm-product DGS.
+Story,SPARK-CLM-A01,SPARK-CLM-A01 · Schema skeleton + DateTime scalar,,Claims → claims DGS migration,A,Low,2,dgs-migration,claims,schema,,"**Current Behaviour:** green-field; schema translated from `code/schemas/SPARK_Claims.txt`.
+**Target:** federation v2.3 header, `scalar DateTime → Instant`, empty `extend type Query`/`Mutation`.
+**Acceptance:** 1. `./gradlew generateJava` passes. 2. `DateTime` round-trips. **Tests:** ☐ compiles ☐ scalar serde."
+Story,SPARK-CLM-A02,SPARK-CLM-A02 · Owned types + inputs,,Claims → claims DGS migration,A,Medium,3,dgs-migration,claims,schema,SPARK-CLM-A01,"**Target:** `Claims` (**`@key(fields:""humanId"")`** — SDL has no `id`), the 7 value types, the ~9 inputs,
+`@shareable CodeDescription` — per [03-schema.graphql](./03-schema.graphql). **Note:** `workspaceContext`
+is `[ID]` on create but `PartialWorkspaceAssociationsInput` on update (preserve). **Acceptance:** 1. all types+inputs present; `@key=humanId`; nullability matches SDL. 2. validates. **Tests:** ☐ validates ☐ entity stub."
+Story,SPARK-CLM-A03,SPARK-CLM-A03 · External stubs (Product + platform + sibling DGS),,Claims → claims DGS migration,A,Low,2,dgs-migration,claims,schema,SPARK-CLM-A01,"**Target:** `@extends @external` stubs — `Product`, `WorkspaceV2`, `UserProfileAttributes`,
+`UserGroup_Participants`, `AccessControl`, `ResourcePermissions`, `ProductComponentStatus`, `TeamPaged`,
+`VMM_BusinessPartner`. (All cross-subgraph — claims is its own DGS.) **Acceptance:** 1. compiles; gateway composes. **Tests:** ☐ compiles ☐ stub resolves."
+Story,SPARK-CLM-A04,SPARK-CLM-A04 · ClaimService Kotlin port,,Claims → claims DGS migration,A,Medium,3,dgs-migration,claims,service,SPARK-CLM-A01,"**Current Behaviour (Phase 2 §Service):** 13 REST methods on the claim base (2 unused: versions).
+**Target:** Kotlin service; preserve create/update throw-on-error and the `bulkUpdateClaim` `status_code`
+contract; **fix** `bulkUpdateClaim` to camelCase the response (source snake-cases it). **Acceptance:** 1. used methods present (POST, GET listing, GET /search, PUT /{humanId}, PUT /bulk-update, GET /communication-channels, GET/POST /export, GET /search/guest_facing_claim, PUT /{id}/lock|unlock, GET /claims-about). 2. bulk response camelCased. **Tests:** ☐ endpoint build ☐ bulk transform ☐ error contracts.
+
+---
+
+### Phase B — Core Reads"
+Story,SPARK-CLM-B01,SPARK-CLM-B01 · getClaims,,Claims → claims DGS migration,B,Low,2,dgs-migration,claims,query,"SPARK-CLM-A02, SPARK-CLM-A04","**Current Behaviour (Q1):** (own) `claim.getClaims.load({parentHumanId, claimHumanIds, partnerIds})` `GET {base}` (filtered) → camelCase. **No ACL token.** **Target:** `@DgsQuery → [Claims]`. **Acceptance:** 1. filters by the 3 args. **Tests:** ☐ happy ☐ empty ☐ integration."
+Story,SPARK-CLM-B02,SPARK-CLM-B02 · getClaimByIds,,Claims → claims DGS migration,B,Low,2,dgs-migration,claims,query,"SPARK-CLM-A02, SPARK-CLM-A04",**Current Behaviour (Q2):** (ACL context) token → `GET {base}/search?claimIds={csv}`. **Target:** `@DgsQuery → [Claims]`. **Acceptance:** 1. returns claims for ids. **Tests:** ☐ happy ☐ empty.
+Story,SPARK-CLM-B03,SPARK-CLM-B03 · getCommunicationChannels (cacheable),,Claims → claims DGS migration,B,Low,2,dgs-migration,claims,query,SPARK-CLM-A04,**Current Behaviour (Q3):** (own) `GET {base}/communication-channels`. **Target:** `@DgsQuery` → `@Cacheable` → `[CommunicationChannel]`. **Acceptance:** 1. returns channels; cached. **Tests:** ☐ list ☐ cache hit.
+Story,SPARK-CLM-B04,SPARK-CLM-B04 · getAllClaimsAbout (cacheable),,Claims → claims DGS migration,B,Low,2,dgs-migration,claims,query,SPARK-CLM-A04,**Current Behaviour (Q4):** (own) `GET {base}/claims-about`. **Target:** `@DgsQuery` → `@Cacheable` → `[CodeDescription]`. **Acceptance:** 1. returns list; cached. **Tests:** ☐ list ☐ cache hit.
+Story,SPARK-CLM-B05,SPARK-CLM-B05 · getClaimExports,,Claims → claims DGS migration,B,Low,2,dgs-migration,claims,query,SPARK-CLM-A04,"**Current Behaviour (Q5):** (own) `GET {base}/export`. **Target:** `@DgsQuery → [ClaimExport]`. **Acceptance:** 1. returns export records. **Tests:** ☐ list.
+
+---
+
+### Phase C — Search & Listing"
+Story,SPARK-CLM-C01,SPARK-CLM-C01 · searchGuestFacing,,Claims → claims DGS migration,C,Medium,3,dgs-migration,claims,query,SPARK-CLM-A04,**Current Behaviour (Q6):** (own) `GET {base}/search/guest_facing_claim?{qs(queryParam)}` → camelCase. **Target:** `@DgsQuery → [Guest_Facing]`. **Acceptance:** 1. query-string built from `queryParam`. **Tests:** ☐ search ☐ empty.
+Story,SPARK-CLM-C02,SPARK-CLM-C02 · getClaimsElastic,,Claims → claims DGS migration,C,Medium,3,dgs-migration,claims,query,SPARK-CLM-A04,"**Current Behaviour (Q7):** (🔴 search) `search.getClaimsElastic.load({ q:""parentId: {parentHumanId}"" })`. **EXT:** 🔴 search. **Target:** `@DgsQuery → [Claims]` via the search subgraph/client. **Acceptance:** 1. `parentId:` elastic query built. **Tests:** ☐ query build ☐ parity.
+
+---
+
+### Phase D — Mutations (simple)"
+Story,SPARK-CLM-D01,SPARK-CLM-D01 · createClaim (throws on validationErrors),,Claims → claims DGS migration,D,Medium,3,dgs-migration,claims,mutation,SPARK-CLM-A04,**Current Behaviour (M1):** (own) `POST {base}` (snake_case). **If `validationErrors`/`message` → throw.** **Target:** `@DgsMutation → [Claims]`; port throw-on-error. **Acceptance:** 1. creates claim(s). 2. validation error → exception. **Tests:** ☐ create ☐ validation-error→throw.
+Story,SPARK-CLM-D02,SPARK-CLM-D02 · bulkUpdateClaim (status_code contract; fix snake-case response),,Claims → claims DGS migration,D,Medium,3,dgs-migration,claims,mutation,SPARK-CLM-A04,"**Current Behaviour (M3):** (own) `PUT {base}/bulk-update`. **Error contract:** result is array → return; `status_code>400` → throw; else throw ""unhandled"". **Latent:** source snake-cases the response — **fix to camelCase**. **Target:** `@DgsMutation → [Claims]`. **Acceptance:** 1. array result returned (camelCase). 2. error status → exception. **Tests:** ☐ bulk ☐ error status ☐ camelCase."
+Story,SPARK-CLM-D03,SPARK-CLM-D03 · requestClaimExport,,Claims → claims DGS migration,D,Low,2,dgs-migration,claims,mutation,SPARK-CLM-A04,**Current Behaviour (M4):** (own) `POST {base}/export` → `response.request_id`. **Target:** `@DgsMutation → String`. **Acceptance:** 1. returns the request id. **Tests:** ☐ request.
+Story,SPARK-CLM-D04,SPARK-CLM-D04 · lockClaim,,Claims → claims DGS migration,D,Low,2,dgs-migration,claims,mutation,SPARK-CLM-A04,**Current Behaviour (M5):** (ACL context) token → `PUT {base}/{claimId}/lock`. **Target:** `@DgsMutation → Claims`. **Acceptance:** 1. locks the claim. **Tests:** ☐ lock.
+Story,SPARK-CLM-D05,SPARK-CLM-D05 · unlockClaim,,Claims → claims DGS migration,D,Low,2,dgs-migration,claims,mutation,SPARK-CLM-A04,"**Current Behaviour (M6):** (ACL context) token → `PUT {base}/{claimId}/unlock`. **Target:** `@DgsMutation → Claims`. **Acceptance:** 1. unlocks the claim. **Tests:** ☐ unlock.
+
+---
+
+### Phase E — Complex Operations"
+Story,SPARK-CLM-E01,"SPARK-CLM-E01 · updateClaim (proxy ACL + workspace + body, non-atomic)",,Claims → claims DGS migration,E,High,5,dgs-migration,claims,mutation,SPARK-CLM-A04,"**As a** DGS engineer **I want** the multi-step claim update with a failure strategy **so that** workspace
+and body changes stay consistent.
+**Current Behaviour (M2):** 1) `getUserPermissionsJWTByProxy({id:humanId, proxyIds:[parentId],
+basePermissions:true})` (proxy/external ACL path — context only); 2) if `workspaceContext.{add,remove}`
+non-empty → `workspaceAssociationHelper(CLAIM, humanId, add, remove)`; 3) `PUT {base}/{humanId}`;
+4) **throw on `validationErrors`/`message`**. No rollback.
+**EXT:** 🟡 workspaceV2. **Target:** ordered steps + chosen failure strategy (**PO decision**). The proxy
+ACL is **context-only** (note it; build nothing). **Acceptance:** 1. workspace assoc runs when present. 2. body update + throw-on-error. 3. partial-failure strategy. **Tests:** ☐ body-only ☐ +workspace ☐ validation-error→throw ☐ partial-failure ☐ parity.
+
+---
+
+### Phase F — Federation Contributions (BLOCKED-BY product)"
+Story,SPARK-CLM-F01,SPARK-CLM-F01 · Product.claims (federation contribution),,Claims → claims DGS migration,F,Medium,3,dgs-migration,claims,field-resolver,SPARK-CLM-A04,"**Target:** `extend type Product @key(fields:""id"") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] }` with a `@DgsEntityFetcher`; the claims subgraph fills `Product.claims` over the gateway. **BLOCKED-BY:** the `Product` entity existing (plm-product Phase A). **Acceptance:** 1. `Product.claims` resolves via federation. 2. parity vs the current in-gateway resolver. **Tests:** ☐ field resolves ☐ parity."
+Story,SPARK-CLM-F02,SPARK-CLM-F02 · ResourcesCount.claims (TechPack — see SPARK-PROD-F05),,Claims → claims DGS migration,F,Low,2,dgs-migration,claims,field-resolver,SPARK-CLM-A04,"**Target:** `extend type ResourcesCount @key(fields:""productId partnerId"") { claims: [ID] }` with a
+`@DgsEntityFetcher`; fills the TechPack `claims` count. **BLOCKED-BY:** product TechPack facade
+(`SPARK-PROD-E03`/`F05`). **Acceptance:** 1. field resolves on the federated `ResourcesCount`; parity vs facade. **Tests:** ☐ field resolves ☐ parity.
+
+---
+
+### Phase G — Field Resolvers & Tests"
+Story,SPARK-CLM-G01,SPARK-CLM-G01 · access + currentUserPermissions + participantDetails,,Claims → claims DGS migration,G,Medium,3,dgs-migration,claims,field-resolver,"SPARK-CLM-A02, SPARK-CLM-A04","**Current Behaviour:** `access` → `accessControl.getPermissions([humanId])[0]`; `currentUserPermissions`
+→ `getUserAccessUnencoded(humanId)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.) **Acceptance:** 1. each resolves; null-safe. **Tests:** ☐ access ☐ perms ☐ participants."
+Story,SPARK-CLM-G02,SPARK-CLM-G02 · createdBy + updatedBy + businessPartner + designPartner (3-way fallback),,Claims → claims DGS migration,G,Medium,3,dgs-migration,claims,field-resolver,SPARK-CLM-A04,"**Current Behaviour:** users via 🟡 user-profile; `businessPartner` **3-way fallback** (`partnerId` ||
+`{bpId:0,bpName:'Target'}` when no `dpPartnerId` || `dpPartnerId`); `designPartner` `dpPartnerId` or
+`{bpId:null,bpName:null}`. **Target:** preserve every branch exactly. **Acceptance:** 1. all 3 BP branches correct (incl. `bpId:0` Target). 2. null id → null user. **Tests:** ☐ partnerId ☐ dp fallback ☐ Target(0) ☐ users."
+Story,SPARK-CLM-G03,SPARK-CLM-G03 · product + parentDetails (otherClaimBps/systemTeams/droppedPartnerIds),,Claims → claims DGS migration,G,High,5,dgs-migration,claims,field-resolver,SPARK-CLM-A04,"**Current Behaviour:** `product` (🟡 product, only if `parentId` starts `'PID'`); `parentDetails` →
+`product.getByID(parentId)` (the product feeds `ParentDetails`): `otherClaimBps` (🔴 search
+`getClaimsElastic` → partner ids), `systemTeams` (🔴 search `searchTeams` from product BPs; empty→`{content:[]}`),
+`droppedPartnerIds` (direct). **Target:** federated product reference + search. **Acceptance:** 1. `product` null when not `PID*`. 2. `otherClaimBps`/`systemTeams` elastic queries match source; empty-BP → `{content:[]}`. **Tests:** ☐ product branch ☐ otherClaimBps ☐ systemTeams ☐ empty BPs."
+Story,SPARK-CLM-G04,SPARK-CLM-G04 · workspaces + substantiatedBy + claimDetails.claimName,,Claims → claims DGS migration,G,Medium,3,dgs-migration,claims,field-resolver,SPARK-CLM-A04,"**Current Behaviour:** `workspaces` (🟡 workspaceV2 by `workspaceContext`); `substantiatedBy`
+(🟡 user-profile); `ClaimDetails.claimName` = `guestFacingClaim` (computed). **Acceptance:** 1. each resolves; `workspaces` null when empty. 2. `claimName` mirrors `guestFacingClaim`. **Tests:** ☐ workspaces ☐ substantiatedBy ☐ claimName."
+Story,SPARK-CLM-G05,"SPARK-CLM-G05 · Tests, parity harness",,Claims → claims DGS migration,G,Medium,3,dgs-migration,claims,tests,"SPARK-CLM-B01, SPARK-CLM-E01, SPARK-CLM-G02, SPARK-CLM-G03","**Target:** ≥80% unit coverage; parity fixtures (incl. `updateClaim` proxy path, `bulkUpdateClaim`
+camelCase fix, the `businessPartner` 3-way fallback, `parentDetails` elastic lookups); contract test
+(schema diff intentional-only). **Acceptance:** 1. unit ≥80%. 2. parity green. 3. schema-diff intentional. **Tests:** ☐ parity ☐ contract.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|------|-----------|--------|------------|-------|
+| `updateClaim` proxy-ACL multi-step partial failure (E01) | Medium | High | Saga / compensation — PO decision | Tech Lead + PO |
+| `bulkUpdateClaim` snake-cased response (likely bug) (D02) | Medium | Medium | Fix to camelCase; parity test | Backend Eng |
+| `businessPartner` 3-way fallback regressions (G02) | Low | Medium | Unit-test each branch incl. Target(0) | Backend Eng |
+| `ParentDetails` elastic team/BP lookups (G03) | Low | Medium | Preserve empty handling; paginate | Backend Eng |
+| Federation contributions wait on product (F01/F02) | Low | Low | Post-launch; not on critical path | Architect |
+
+## 5. Summary
+- **Stories:** 24 (A:4 · B:5 · C:2 · D:5 · E:1 · F:2 · G:5).
+- **Critical path:** A01→A02/A04→E01→G02/G03→G05.
+- **Highest risk:** `updateClaim` (E01); the `bulkUpdateClaim` transform bug (D02).
+- **Separate subgraph:** claims contributes `Product.claims` + TechPack `ResourcesCount.claims` (Phase F).
+
+---
+**Phase Completed:** Phase 4 — Migration Stories · **Domain:** `claims` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md."
+Epic,,Packaging → plm-product DGS migration,Packaging → plm-product DGS migration,,,,,dgs-migration,packaging,epic,,Epic for the packaging domain migration to the plm-product DGS.
+Story,SPARK-PKG-A01,SPARK-PKG-A01 · Schema skeleton + DateTime scalar,,Packaging → plm-product DGS migration,A,Low,2,dgs-migration,packaging,schema,,"**Current Behaviour:** green-field; schema translated from `code/schemas/SPARK_Packaging.txt`.
+**Target:** federation v2.3 header, `scalar DateTime → Instant`, empty `extend type Query`/`Mutation`.
+**Acceptance:** 1. `./gradlew generateJava` passes. 2. `DateTime` round-trips. **Tests:** ☐ compiles ☐ scalar serde."
+Story,SPARK-PKG-A02,"SPARK-PKG-A02 · Owned types + inputs (~24 types, ~20 inputs)",,Packaging → plm-product DGS migration,A,Medium,3,dgs-migration,packaging,schema,SPARK-PKG-A01,"**Target:** `Packaging` (`@key(fields:""humanId"")`), `Dieline` (`@key(fields:""humanId"")`), the ~20 value
+types and ~20 inputs — per [03-schema.graphql](./03-schema.graphql). Carry `@deprecated` directives
+(`retailPrice`, `creativePath`, `resourceType`, `fileDeliveryEmail`, `Dieline.attachments`). **Acceptance:** 1. all types+inputs present; entities keyed on `humanId`; nullability matches SDL. 2. validates. **Tests:** ☐ validates ☐ entity stubs."
+Story,SPARK-PKG-A03,SPARK-PKG-A03 · External stubs (platform + sibling DGS),,Packaging → plm-product DGS migration,A,Low,2,dgs-migration,packaging,schema,SPARK-PKG-A01,"**Target:** stubs `Attachment`, `SearchAttachment`, `WorkspaceV2`, `UserProfileAttributes`,
+`UserGroup_Participants`, `AccessControl`, `VMM_BusinessPartner` + internal placeholders `Product`,
+`ProductComponentStatus`, `SpgFileLibrary`. **Acceptance:** 1. compiles; gateway composes. **Tests:** ☐ compiles ☐ stub resolves."
+Story,SPARK-PKG-A04,SPARK-PKG-A04 · PackagingService port (packaging/v1),,Packaging → plm-product DGS migration,A,Medium,3,dgs-migration,packaging,service,SPARK-PKG-A01,"**Current Behaviour (Phase 2 §Service):** ~16 REST methods on `packaging/v1` (+ dielines + export).
+**Target:** Kotlin service; preserve create/bulk throw-on-error and the `{content}` status wrap; snake/camel
+at the Feign boundary. **Acceptance:** 1. methods present (POST, PUT, /dielines/{id}/evaluate, bulk add/update, GET listings, GET /{id}, /export, /{id}/lock|unlock, /component_status_update, /{id}/workspace_associations). 2. add throws on validation error. **Tests:** ☐ endpoint build ☐ create error ☐ status wrap.
+
+---
+
+### Phase B — Core Reads"
+Story,SPARK-PKG-B01,SPARK-PKG-B01 · getPackagings,,Packaging → plm-product DGS migration,B,Low,2,dgs-migration,packaging,query,"SPARK-PKG-A02, SPARK-PKG-A04","**Current Behaviour (Q1):** (own) `getPackagings().load({page,size,packagingIds,parentIds,workspaceIds,partnerIds,statusIds})` → paged. **Target:** `@DgsQuery → PackagingPaged`. **Acceptance:** 1. all 7 filter args forwarded; defaults page=0/size=10000. **Tests:** ☐ filters ☐ paging ☐ integration."
+Story,SPARK-PKG-B02,SPARK-PKG-B02 · getPackagingById,,Packaging → plm-product DGS migration,B,Low,2,dgs-migration,packaging,query,"SPARK-PKG-A02, SPARK-PKG-A04",**Current Behaviour (Q2):** (ACL context) token → (own) `getPackagingById.load(packagingId)`. **Target:** `@DgsQuery → Packaging`. **Acceptance:** 1. returns packaging; miss→null. **Tests:** ☐ happy ☐ miss.
+Story,SPARK-PKG-B03,SPARK-PKG-B03 · getDielines,,Packaging → plm-product DGS migration,B,Low,2,dgs-migration,packaging,query,"SPARK-PKG-A02, SPARK-PKG-A04",**Current Behaviour (Q3):** (own) `getDielines.load({...})` → `.dielines`. **Target:** `@DgsQuery → [Dieline]`. **Acceptance:** 1. filters forwarded; returns the `dielines` array. **Tests:** ☐ filters ☐ integration.
+Story,SPARK-PKG-B04,SPARK-PKG-B04 · getPackagingFieldValuesByType,,Packaging → plm-product DGS migration,B,Low,2,dgs-migration,packaging,query,SPARK-PKG-A04,"**Current Behaviour (Q4):** (own) `getPackagingFieldValuesByType(type, ids)`. **Target:** `@DgsQuery → [PackagingFieldValues]`. **Acceptance:** 1. by type (+optional ids). **Tests:** ☐ by type."
+Story,SPARK-PKG-B05,SPARK-PKG-B05 · getDielineEvaluationStatuses (cacheable),,Packaging → plm-product DGS migration,B,Low,2,dgs-migration,packaging,query,SPARK-PKG-A04,**Current Behaviour (Q5):** (own) `getDielineEvaluationStatuses()`. **Target:** `@DgsQuery` → `@Cacheable` → `[CodeDescription]`. **Acceptance:** 1. returns statuses; cached. **Tests:** ☐ list ☐ cache hit.
+Story,SPARK-PKG-B06,SPARK-PKG-B06 · getCountries (cacheable),,Packaging → plm-product DGS migration,B,Low,2,dgs-migration,packaging,query,SPARK-PKG-A04,"**Current Behaviour (Q6):** (own) `getCountries(codes)`. **Target:** `@DgsQuery` → `@Cacheable` → `[Countries]`. **Acceptance:** 1. returns countries (optionally filtered by codes). **Tests:** ☐ all ☐ filtered.
+
+---
+
+### Phase C — Search & Listing"
+Story,SPARK-PKG-C01,SPARK-PKG-C01 · getPackagingElastic,,Packaging → plm-product DGS migration,C,Medium,3,dgs-migration,packaging,query,SPARK-PKG-A04,"**Current Behaviour (Q7):** (🔴 search) `search.getPackagingElastic.load({ q:""parentId: {parentHumanId}"" })` → `.content`. **EXT:** 🔴 search. **Target:** `@DgsQuery → [Packaging]`. **Acceptance:** 1. `parentId:` elastic query built; returns content. **Tests:** ☐ query build ☐ parity.
+
+---
+
+### Phase D — Mutations (simple)"
+Story,SPARK-PKG-D01,SPARK-PKG-D01 · addPackaging (throws on validationErrors),,Packaging → plm-product DGS migration,D,Medium,3,dgs-migration,packaging,mutation,SPARK-PKG-A04,**Current Behaviour (M1):** (own) `POST packaging/v1`. **Throw on `validationErrors`/`message`.** **Target:** `@DgsMutation → Packaging`; port throw-on-error. **Acceptance:** 1. creates. 2. validation error → exception. **Tests:** ☐ create ☐ validation-error→throw.
+Story,SPARK-PKG-D02,SPARK-PKG-D02 · evaluateDieline,,Packaging → plm-product DGS migration,D,Low,2,dgs-migration,packaging,mutation,SPARK-PKG-A04,**Current Behaviour (M3):** (own) `PUT packaging/v1/dielines/{dielineId}/evaluate`. **Target:** `@DgsMutation → Dieline`. **Acceptance:** 1. evaluates the dieline. **Tests:** ☐ evaluate.
+Story,SPARK-PKG-D03,SPARK-PKG-D03 · bulkAddPackagings,,Packaging → plm-product DGS migration,D,Medium,3,dgs-migration,packaging,mutation,SPARK-PKG-A04,**Current Behaviour (M4):** (own) `bulkAddPackagings`. **Throw on `validationErrors`/`message`.** **Target:** `@DgsMutation → PackagingBulk`. **Acceptance:** 1. bulk creates. 2. error → throw. **Tests:** ☐ bulk ☐ error.
+Story,SPARK-PKG-D04,SPARK-PKG-D04 · bulkUpdatePackagings,,Packaging → plm-product DGS migration,D,Medium,3,dgs-migration,packaging,mutation,SPARK-PKG-A04,**Current Behaviour (M5):** token for `packaging[].humanId` → (own) `bulkUpdatePackagings`. **Throw on error.** **Target:** `@DgsMutation → PackagingBulk`. **Acceptance:** 1. bulk updates. 2. error → throw. **Tests:** ☐ bulk ☐ error.
+Story,SPARK-PKG-D05,SPARK-PKG-D05 · exportPackaging,,Packaging → plm-product DGS migration,D,Low,2,dgs-migration,packaging,mutation,SPARK-PKG-A04,"**Current Behaviour (M6):** token → (own) `requestPackagingExport({workspace_id, workspace_description, product_ids})` → request id. **Target:** `@DgsMutation → String`. **Acceptance:** 1. returns the export request id. **Tests:** ☐ request."
+Story,SPARK-PKG-D06,SPARK-PKG-D06 · lockPackaging,,Packaging → plm-product DGS migration,D,Low,2,dgs-migration,packaging,mutation,SPARK-PKG-A04,**Current Behaviour (M7):** token → `PUT packaging/v1/{id}/lock`. **Target:** `@DgsMutation → Packaging`. **Acceptance:** 1. locks. **Tests:** ☐ lock.
+Story,SPARK-PKG-D07,SPARK-PKG-D07 · unlockPackaging,,Packaging → plm-product DGS migration,D,Low,2,dgs-migration,packaging,mutation,SPARK-PKG-A04,**Current Behaviour (M8):** token → `PUT packaging/v1/{id}/unlock`. **Target:** `@DgsMutation → Packaging`. **Acceptance:** 1. unlocks. **Tests:** ☐ unlock.
+Story,SPARK-PKG-D08,SPARK-PKG-D08 · cloneFilesForDielines,,Packaging → plm-product DGS migration,D,Medium,3,dgs-migration,packaging,mutation,SPARK-PKG-A04,"**Current Behaviour (M9):** token → `Promise.all(attachmentIds.map(id => (🔴 attachment) cloneAttachmentV3({cloneReferences}, id)))`, flatten. **EXT:** 🔴 attachment. **Target:** structured-concurrency fan-out. **Acceptance:** 1. clones each id with the shared `cloneReferences`. **Tests:** ☐ clone ☐ parity."
+Story,SPARK-PKG-D09,SPARK-PKG-D09 · updatePackagingComponentStatus (no JWT — confirm),,Packaging → plm-product DGS migration,D,Low,2,dgs-migration,packaging,mutation,SPARK-PKG-A04,"**Current Behaviour (M10):** (own) `updatePackagingComponentStatus({productId, ids, status})`. **No JWT — confirm backend-enforced.** **Target:** `@DgsMutation → PackagingPagedForStatus`. **Acceptance:** 1. updates statuses. 2. no-token behaviour documented. **Tests:** ☐ update.
+
+---
+
+### Phase E — Complex Operations"
+Story,SPARK-PKG-E01,"SPARK-PKG-E01 · updatePackaging (multi-step: body + attachment add/remove, non-atomic)",,Packaging → plm-product DGS migration,E,High,5,dgs-migration,packaging,mutation,SPARK-PKG-A04,"**As a** DGS engineer **I want** the multi-step packaging update with a failure strategy **so that** body and
+attachment add/remove changes stay consistent.
+**Current Behaviour (M2):** 1) token; set `humanId=packagingId`; `PUT packaging/v1` (body); 2) if
+`attachmentsToRemove` → (🔴 attachment) `archiveAttachmentBulkV2` + (🟡 relationship) `removeRelationship`;
+3) if `attachmentsToAdd` → (🟡 relationship) `addBulkRelationShip` (**reject on status≥400**) then
+(🔴 attachment) `bulkUpdateAttributes`; 4) **throw on `validationErrors`/`message`**. No rollback.
+**EXT:** 🔴 attachment · 🟡 relationship. **Target:** ordered steps + chosen failure strategy
+(**PO decision**); **align** the add/remove error handling (the remove branch currently swallows errors).
+**Acceptance:** 1. all branches in order. 2. add rejects on status≥400; remove error handling decided. 3. partial-failure strategy. **Tests:** ☐ body-only ☐ remove ☐ add ☐ status≥400 ☐ partial-failure ☐ parity.
+
+---
+
+### Phase F — Federation (internal)"
+Story,SPARK-PKG-F01,"SPARK-PKG-F01 · Product packaging links (INTERNAL, same subgraph)",,Packaging → plm-product DGS migration,F,Low,2,dgs-migration,packaging,field-resolver,SPARK-PKG-A04,"**Current Behaviour:** Product references packaging (e.g. `components(...packaging)`, packaging attributes)
+from the co-located packaging service. **Target:** **internal** `@DgsData` calling `PackagingService`
+in-process (not gateway federation; depends only on the `Product`/`Component` types existing). **Acceptance:** 1. resolves in-process; no gateway hop. **Tests:** ☐ resolves ☐ parity.
+
+---
+
+### Phase G — Field Resolvers & Tests"
+Story,SPARK-PKG-G01,SPARK-PKG-G01 · access + businessPartner + participantDetails,,Packaging → plm-product DGS migration,G,Medium,3,dgs-migration,packaging,field-resolver,"SPARK-PKG-A02, SPARK-PKG-A04","**Current Behaviour:** `access` → `accessControl.getPermissions([humanId])[0]` (context); `businessPartner`
+→ (🔵 vmm) `loadBpsWithType([businessPartner])[0]`; `participantDetails` → `getUserGroup(humanId||id)`. **Acceptance:** 1. each resolves; null-safe. **Tests:** ☐ access ☐ bp ☐ participants."
+Story,SPARK-PKG-G02,SPARK-PKG-G02 · createdBy + updatedBy + dielineEvaluators,,Packaging → plm-product DGS migration,G,Low,2,dgs-migration,packaging,field-resolver,SPARK-PKG-A04,"**Current Behaviour:** `createdBy`/`updatedBy` (🟡 user-profile `getUser`); `dielineEvaluators` → map
+`userAttributes.getUserByID`, default `[]`. **Acceptance:** 1. each resolves; null id → null. **Tests:** ☐ users ☐ evaluators."
+Story,SPARK-PKG-G03,SPARK-PKG-G03 · product + workspaces + attachments,,Packaging → plm-product DGS migration,G,Medium,3,dgs-migration,packaging,field-resolver,SPARK-PKG-A04,"**Current Behaviour:** `product` (internal, only if `parentId` starts `'PID'`); `workspaces`
+→ (🔴 search) `getWorkspacesPagedV3({q:""id:(...)""})`.content; `attachments`
+→ (🔴 search) `searchAttachmentsByRelatedResource(humanId)`. **Acceptance:** 1. `product` null when not `PID*`. 2. workspaces/attachments via elastic. **Tests:** ☐ product branch ☐ workspaces ☐ attachments."
+Story,SPARK-PKG-G04,SPARK-PKG-G04 · suggestedRetailPriceByDPCI + waveDescription + retailPrice,,Packaging → plm-product DGS migration,G,High,5,dgs-migration,packaging,field-resolver,SPARK-PKG-A04,"**Current Behaviour:** `suggestedRetailPriceByDPCI` — gated on `requiresSuggestedRetailPrice` + a BP id:
+collect printer ids from `packagingElements` → (own) `getDielines(printerIds)` → unique dpcis →
+(🔵 apex/pricing) `getRetailPriceByDpci({dpcis, bpId, productId})`; else `[]`. `waveDescription`
+→ (🟡 tag) `getTag(wave).name` if `wave`, else `waveDescription`. `retailPrice` → `0` (deprecated). **Target:** port the pricing chain; cache/batch dielines. **Acceptance:** 1. price chain matches source; gate honored. 2. wave tag fallback. 3. `retailPrice`→0. **Tests:** ☐ price chain ☐ gate ☐ wave ☐ retailPrice."
+Story,SPARK-PKG-G05,SPARK-PKG-G05 · Dieline + PrinterDieline + PackagingElement field resolvers,,Packaging → plm-product DGS migration,G,Medium,3,dgs-migration,packaging,field-resolver,SPARK-PKG-A04,"**Current Behaviour:** `Dieline.evaluatedBy` (🟡 user-profile), `Dieline.attachments` (🔴 search),
+`Dieline.attachment` (🔴 attachment `getAttachmentsV3([attachmentId])[0]`); `PrinterDieline.dielines`
+(own `getDielines({printerIds, statusIds})`); `PackagingElement.packagingLibrary` (internal fileLibrary). **Acceptance:** 1. each field resolves to the right source. **Tests:** ☐ dieline fields ☐ printer dielines ☐ packagingLibrary."
+Story,SPARK-PKG-G06,"SPARK-PKG-G06 · Tests, parity harness",,Packaging → plm-product DGS migration,G,Medium,3,dgs-migration,packaging,tests,"SPARK-PKG-B01, SPARK-PKG-E01, SPARK-PKG-G03, SPARK-PKG-G04","**Target:** ≥80% unit coverage; parity fixtures (incl. the multi-step `updatePackaging`, the pricing chain,
+attachment-by-search fields, create/bulk error contracts); contract test (schema diff intentional-only,
+incl. `@deprecated`). **Acceptance:** 1. unit ≥80%. 2. parity green. 3. schema-diff intentional. **Tests:** ☐ parity ☐ contract.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|------|-----------|--------|------------|-------|
+| `updatePackaging` multi-step partial failure (E01) | Medium | High | Saga / compensation; align add/remove error handling | Tech Lead + PO |
+| `suggestedRetailPriceByDPCI` multi-hop pricing (G04) | Medium | Medium | Cache/batch; honor the `requiresSuggestedRetailPrice` gate | Backend Eng |
+| `updatePackagingComponentStatus` no auth token (D09) | Low | Medium | Confirm backend-enforced | PO |
+| Attachment-by-search field perf (G03/G05) | Low | Medium | Shared helper; batch | Backend Eng |
+| Claims pass-through on `PackagingInput` | Low | Low | Confirm ownership (packaging vs claims) | Architect |
+
+## 5. Summary
+- **Stories:** 28 (A:4 · B:6 · C:1 · D:9 · E:1 · F:1 · G:6).
+- **Critical path:** A01→A02/A04→E01→G04→G06.
+- **Highest risk:** `updatePackaging` (E01); `suggestedRetailPriceByDPCI` (G04).
+- **Co-located:** packaging is in the `plm-product` monorepo; Product packaging links resolve internally.
+
+---
+**Phase Completed:** Phase 4 — Migration Stories · **Domain:** `packaging` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md."
+Epic,,ProductDetails → plm-product DGS migration,ProductDetails → plm-product DGS migration,,,,,dgs-migration,productDetails,epic,,Epic for the productDetails domain migration to the plm-product DGS.
+Story,SPARK-PDTL-A01,SPARK-PDTL-A01 · Schema skeleton + DateTime scalar,,ProductDetails → plm-product DGS migration,A,Low,2,dgs-migration,productDetails,schema,,"**Current Behaviour:** green-field; schema translated from `code/schemas/SPARK_ProductDetail.txt`.
+**Target:** federation v2.3 header, `scalar DateTime → Instant`, empty `extend type Query`/`Mutation`.
+**Files:** `schema/productdetails.graphqls`, `config/ScalarConfig.kt`. **Deps:** none.
+**Acceptance:** 1. `./gradlew generateJava` passes. 2. `DateTime` round-trips. **Tests:** ☐ compiles ☐ scalar serde."
+Story,SPARK-PDTL-A02,SPARK-PDTL-A02 · Owned types + inputs,,ProductDetails → plm-product DGS migration,A,Medium,3,dgs-migration,productDetails,schema,SPARK-PDTL-A01,"**Target:** `ProductDetails` (`@key(fields:""id"")`), `ProductDetailsItem`, `ProductDetailsCategoryWithSection`,
+`ProductDetailsPaged`, the 8 inputs, `@shareable CodeDescription` — per [03-schema.graphql](./03-schema.graphql).
+**Note:** `workspaceContext` is `[String]` on create but `PartialWorkspaceAssociationsInput` on update (preserve).
+**Deps:** A01. **Acceptance:** 1. all types+inputs present; nullability matches SDL. 2. schema validates. **Tests:** ☐ validates ☐ entity stub."
+Story,SPARK-PDTL-A03,SPARK-PDTL-A03 · External stubs (platform + sibling DGS),,ProductDetails → plm-product DGS migration,A,Low,2,dgs-migration,productDetails,schema,SPARK-PDTL-A01,"**Target:** stubs `Attachment`, `WorkspaceV2`, `UserProfileAttributes`, `UserGroup_Participants`,
+`AccessControl`, `ResourcePermissions`, `VMM_BusinessPartner` + internal placeholders `Product`,
+`ProductComponentStatus`, `VersionableId`. **Deps:** A01. **Acceptance:** 1. compiles; gateway composes. **Tests:** ☐ compiles ☐ stub resolves."
+Story,SPARK-PDTL-A04,SPARK-PDTL-A04 · ProductDetailsService port (construction/v1),,ProductDetails → plm-product DGS migration,A,Medium,3,dgs-migration,productDetails,service,SPARK-PDTL-A01,"**Current Behaviour (Phase 2 §Service):** 9 REST methods on `construction/v1` (2 unused: versions).
+**Target:** Kotlin service; snake/camel at the Feign boundary; preserve the create error-contract
+(throw on `validationErrors`/`message`) and the `{content}` wrap on component-status.
+**Deps:** A01. **Acceptance:** 1. used methods present (GET ?ids, POST, PUT /{id}, /manage-permissions, /{id}/{lock|unlock}, /component_status_update, /{id}/workspace_associations). 2. create throws on validation error. **Tests:** ☐ endpoint build ☐ create error ☐ status wrap.
+
+---
+
+### Phase B — Core Reads"
+Story,SPARK-PDTL-B01,SPARK-PDTL-B01 · getProductDetailsById,,ProductDetails → plm-product DGS migration,B,Low,2,dgs-migration,productDetails,query,"SPARK-PDTL-A02, SPARK-PDTL-A04","**Current Behaviour (Q1):** (ACL context) token for `ids` → `GET construction/v1?ids={csv}` → camelCase list.
+**Target:** `@DgsQuery getProductDetailsById(ids): [ProductDetails]`. **Acceptance:** 1. returns list for ids; empty → []. **Tests:** ☐ happy ☐ empty ☐ integration.
+
+---
+
+### Phase C — Search & Listing"
+Story,SPARK-PDTL-C01,SPARK-PDTL-C01 · getProductDetailsElastic,,ProductDetails → plm-product DGS migration,C,Medium,3,dgs-migration,productDetails,query,SPARK-PDTL-A04,"**Current Behaviour (Q2):** (🔴 search) `search.getProductDetailsElastic.load({ q:""parentId: {resourceId}"" })` → paged.
+**EXT:** 🔴 search. **Target:** `@DgsQuery → ProductDetailsPaged`. **Note:** the source resolver reads a `types` arg not in the SDL — drop (or add to schema) per [03-analysis §2](./03-schema-analysis.md).
+**Acceptance:** 1. `parentId:` elastic query built. 2. paged shape returned. **Tests:** ☐ query build ☐ parity.
+
+---
+
+### Phase D — Mutations (simple)"
+Story,SPARK-PDTL-D01,SPARK-PDTL-D01 · createProductDetailsSet (throws on validationErrors),,ProductDetails → plm-product DGS migration,D,Medium,3,dgs-migration,productDetails,mutation,SPARK-PDTL-A04,**Current Behaviour (M1):** (ACL context) token for literal capability → `POST construction/v1` (snake_case). **If response has `validationErrors` or `message` → throw.** **Target:** `@DgsMutation`; port the throw-on-error contract. **Acceptance:** 1. creates set. 2. validation error → exception (not a partial object). **Tests:** ☐ create ☐ validation-error→throw.
+Story,SPARK-PDTL-D02,SPARK-PDTL-D02 · updateProductDetailAccess,,ProductDetails → plm-product DGS migration,D,Low,2,dgs-migration,productDetails,mutation,SPARK-PDTL-A04,**Current Behaviour (M2):** map `managePermissionsRequest[].resourceId` → token → `PUT construction/v1/manage-permissions` (`primeKey=humanId`). **Target:** `@DgsMutation → [ProductDetails]`. **Acceptance:** 1. updates partner access for each resource. **Tests:** ☐ update ☐ integration.
+Story,SPARK-PDTL-D03,SPARK-PDTL-D03 · productDetailLockUnlock,,ProductDetails → plm-product DGS migration,D,Low,2,dgs-migration,productDetails,mutation,SPARK-PDTL-A04,"**Current Behaviour (M3):** token for `[constructionSetId]` → `PUT construction/v1/{id}/{lock|unlock}`. **Target:** `@DgsMutation`. **Acceptance:** 1. `isLock=true`→lock path, false→unlock path. **Tests:** ☐ lock ☐ unlock."
+Story,SPARK-PDTL-D04,SPARK-PDTL-D04 · cloneFilesForProductDetails,,ProductDetails → plm-product DGS migration,D,Medium,3,dgs-migration,productDetails,mutation,SPARK-PDTL-A04,"**Current Behaviour (M5):** token → `Promise.all(attachmentIds.map((id,i) => (🔴 attachment) cloneAttachmentV3({cloneReferences:[cloneReference[i]]}, id)))`, stamp `parentResource=id`, flatten. No rollback. **EXT:** 🔴 attachment. **Target:** structured-concurrency fan-out via `AttachmentClient`. **Acceptance:** 1. clones each id with its paired cloneReference. 2. `parentResource` stamped. **Tests:** ☐ clone ☐ pairing ☐ parity."
+Story,SPARK-PDTL-D05,SPARK-PDTL-D05 · updateProductDetailComponentStatus (no JWT — confirm),,ProductDetails → plm-product DGS migration,D,Low,2,dgs-migration,productDetails,mutation,SPARK-PDTL-A04,"**Current Behaviour (M6):** `PUT construction/v1/component_status_update`; wraps result as `{content}`. **No JWT — confirm backend-enforced.** **Target:** `@DgsMutation → ProductDetailsPaged`. **Acceptance:** 1. updates statuses; result wrapped as `{content}`. 2. no-token behaviour documented. **Tests:** ☐ update ☐ wrap.
+
+---
+
+### Phase E — Complex Operations"
+Story,SPARK-PDTL-E01,"SPARK-PDTL-E01 · updateProductDetailsSet (multi-step, non-atomic)",,ProductDetails → plm-product DGS migration,E,High,5,dgs-migration,productDetails,mutation,SPARK-PDTL-A04,"**As a** DGS engineer **I want** the multi-step product-details update with a failure strategy **so that**
+workspace, attachment, and body changes stay consistent.
+**Current Behaviour (M4):** 1) if `workspaceContext.{add,remove}Workspaces` non-empty →
+`workspaceAssociationHelper(PRODUCT_DETAIL, id, add, remove)` (throws on error); 2) null `workspaceContext`;
+3) if `deleteAttachmentIds` → (🔴 attachment) `archiveAttachmentBulkV3` (separate ACL token);
+4) `PUT construction/v1/{id}`. **No rollback across steps.**
+**EXT:** 🔴 attachment · 🟡 workspaceV2. **Target:** ordered steps with a chosen failure strategy
+(**PO decision** saga / compensation log / best-effort). **Acceptance:** 1. all 4 steps in order. 2. partial-failure strategy implemented. 3. workspace assoc throws propagate. **Tests:** ☐ full path ☐ workspace-only ☐ attachment-archive ☐ partial-failure ☐ parity.
+
+---
+
+### Phase F — Federation (internal)"
+Story,SPARK-PDTL-F01,"SPARK-PDTL-F01 · Product.productDetails (INTERNAL, same subgraph)",,ProductDetails → plm-product DGS migration,F,Low,2,dgs-migration,productDetails,field-resolver,SPARK-PDTL-A04,"**Current Behaviour:** Product exposes `productDetails` resolved from the co-located ProductDetails service. **Target:** **internal** `@DgsData` on `Product` calling `ProductDetailsService` in-process (not gateway federation; depends only on the `Product` type existing). **Acceptance:** 1. `Product.productDetails` resolves in-process; no gateway hop. **Tests:** ☐ resolves ☐ parity.
+
+---
+
+### Phase G — Field Resolvers & Tests"
+Story,SPARK-PDTL-G01,SPARK-PDTL-G01 · access + currentUserPermissions + participantDetails,,ProductDetails → plm-product DGS migration,G,Medium,3,dgs-migration,productDetails,field-resolver,"SPARK-PDTL-A02, SPARK-PDTL-A04","**Current Behaviour:** `access` → `accessControl.getPermissions([humanId||id])[0]`; `currentUserPermissions`
+→ `getUserAccessUnencoded(humanId||id)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.) **Target:** thin `@DgsData`; ACL is context-only. **Acceptance:** 1. each field resolves; null-safe on empty. **Tests:** ☐ access ☐ perms ☐ participants."
+Story,SPARK-PDTL-G02,SPARK-PDTL-G02 · product + createdBy + updatedBy + businessPartners + workspaces,,ProductDetails → plm-product DGS migration,G,Medium,3,dgs-migration,productDetails,field-resolver,SPARK-PDTL-A04,"**Current Behaviour:** `product` (internal, only if `parentId` starts `'PID'`), `createdBy`/`updatedBy`
+(🟡 user-profile), `businessPartners` (🔵 vmm `loadBpsWithType`), `workspaces` (🟡 workspaceV2 by ids). **Target:** internal + federated references. **Acceptance:** 1. each resolves; `product` null when `parentId` not `PID*`. 2. null id → null user. **Tests:** ☐ product branch ☐ users ☐ partners ☐ workspaces."
+Story,SPARK-PDTL-G03,SPARK-PDTL-G03 · attachment + item attachments + category subCategories,,ProductDetails → plm-product DGS migration,G,Medium,3,dgs-migration,productDetails,field-resolver,SPARK-PDTL-A04,"**Current Behaviour:** `ProductDetails.attachment` → (🔴 search) `searchAttachments([humanId||id])`, find
+`relatedResources.length<=2`; `ProductDetailsItem.attachment` → `searchAttachments([templateId])[0]||{}`;
+`constructionSetAttachments` → `searchAttachments([id]).content||[]`; `CategoryWithSection.subCategories`
+→ (internal `specificationsTemplate`) `getProductDetailsCategorySection()` find by `code`. **Target:** shared search helper + internal master-data call. **Acceptance:** 1. each field resolves to the right source. 2. `attachment` length-≤2 filter preserved. **Tests:** ☐ set attachment ☐ item attachments ☐ subCategories."
+Story,SPARK-PDTL-G04,"SPARK-PDTL-G04 · Tests, parity harness",,ProductDetails → plm-product DGS migration,G,Medium,3,dgs-migration,productDetails,tests,"SPARK-PDTL-B01, SPARK-PDTL-E01, SPARK-PDTL-G01","**Target:** ≥80% unit coverage; parity fixtures (incl. the multi-step `updateProductDetailsSet`, the
+create error-contract, attachment-by-search fields); contract test (schema diff intentional-only). **Acceptance:** 1. unit ≥80%. 2. parity fixtures green. 3. schema-diff intentional-only. **Tests:** ☐ parity ☐ contract.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|------|-----------|--------|------------|-------|
+| `updateProductDetailsSet` multi-step partial failure (E01) | Medium | High | Saga / compensation — PO decision | Tech Lead + PO |
+| `updateProductDetailComponentStatus` no auth token (D05) | Low | Medium | Confirm backend-enforced | PO |
+| Attachment-by-search field perf (G03) | Low | Medium | Shared helper; batch | Backend Eng |
+| `getProductDetailsElastic.types` schema drift (C01) | Low | Low | Drop or add to schema | Backend Eng |
+
+## 5. Summary
+- **Stories:** 17 (A:4 · B:1 · C:1 · D:5 · E:1 · F:1 · G:4).
+- **Critical path:** A01→A02/A04→E01→G01→G04.
+- **Highest risk:** `updateProductDetailsSet` (E01).
+- **Co-located:** productDetails is in the `plm-product` monorepo; `Product.productDetails` resolves internally.
+
+---
+**Phase Completed:** Phase 4 — Migration Stories · **Domain:** `productDetails` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md."

@@ -1,0 +1,627 @@
+extend type Query {
+  getHubMaterial(id: ID!): SPARK_HubMaterialInterface
+  getHubMaterials(materialIds: [String]!): [SPARK_HubMaterialInterface]
+  getMaterialWithTemplate(id: ID!): SPARK_HubMaterialWrapper
+  getHubCodedOptions(type: String!): [SPARK_CodeDescription]
+  getHubMaterialTypes(searchCriteria: SPARK_HierarchySearchCriteriaInput): [String!]!
+  getMaterialTemplateTypes(searchCriteria: SPARK_HierarchySearchCriteriaInput): [String!]!
+  getMaterialTemplate(name: ID!, inheritAttributes: Boolean = true): SPARK_MaterialTemplate
+  getMaterialTemplateHierarchy: [SPARK_MaterialTemplate]
+  getHubUnitsOfMeasure: [SPARK_UnitOfMeasure]
+  getResourceLink(targetId: String!, sourceId: String!): SPARK_ResourceLink
+  searchResourceLinks(targetIds: [String], sourceIds: [String], sourceType: String, filterType: String): SPARK_ResourceLinkSearch
+  exportMaterials(exportSearchParams: SPARK_MaterialExportSearchParamsInput): SPARK_ExportResponse
+  searchMaterialsByCriteria(searchCriteria: SPARK_SearchMaterialQueryOptions): [SPARK_HubMaterialInterface]
+}
+
+extend type Mutation {
+  partialUpdateHubMaterial(id: ID!, partialMaterial: SPARK_HubMaterialPartialInput!): SPARK_HubMaterialInterface
+  updateTeams(id: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [String]
+  addMaterialTemplate(template: SPARK_MaterialTemplateInput): SPARK_MaterialTemplate
+  updateMaterialTemplate(template: SPARK_MaterialTemplateInput): SPARK_MaterialTemplate
+  addPaper(material: SPARK_PaperInput!): SPARK_Paper
+  updatePaper(material: SPARK_PaperInput!): SPARK_Paper
+  addWood(material: SPARK_WoodInput!): SPARK_Wood
+  updateWood(material: SPARK_WoodInput!): SPARK_Wood
+  createResourceLink(resourceLink: Spark_ResourceLinkInput!): SPARK_ResourceLink
+  deleteResourceLink(targetId: String, sourceId: String): SPARK_ResourceLink
+  validateMaterialUniqueness(
+    material: SPARK_NewHubMaterialInput!
+    page: Int = 0
+    size: Int = 10
+  ): SPARK_MaterialUniquenessResult
+  bulkValidateMaterialUniqueness(bulkValidateUniqueRequest: [SPARK_BulkValidateUniqueInput]): [SPARK_BulkValidateUniqueResponse]
+  bulkAddDeleteResourceLinks(bulkAddDeleteResourceLinksRequest: SPARK_BulkAddDeleteResourceLinksInput): [SPARK_ResourceLink]
+}
+
+### DO NOT USE. ONLY FOR SELECT SCENARIOS WHERE AN INTERFACE CANNOT BE USED SUCH AS IN A UNION (INTERFACES CANNOT BE USED IN UNION DEFINITIONS)
+type SPARK_HubMaterial {
+  humanId: String
+  type: String
+  classification: String
+  subType: SPARK_CodeDescription
+  baseMaterial: SPARK_BaseMaterial
+}
+
+interface SPARK_HubMaterialInterface {
+  humanId: String
+  type: String!
+  classification: String
+  baseMaterial: SPARK_BaseMaterial
+}
+
+input SPARK_HierarchySearchCriteriaInput {
+  hasParent: Boolean
+  statuses: [Int]
+  parent: String
+  baseAssetType: Boolean
+}
+
+interface SPARK_BaseMaterialCommonFields {
+  thumbnailId: String
+  designThumbnailId: String
+  description: String
+}
+
+type SPARK_BaseMaterial implements SPARK_BaseMaterialCommonFields {
+  description: String!
+  additionalInfo: String
+  notes: String
+  designCycles: [SPARK_Tag]
+  tags: [SPARK_Tag]
+  departments: [IG_Department]
+  countryOfOrigin: SPARK_Tag
+  status: SPARK_CodeDescription
+  businessPartners: [VMM_BusinessPartner]
+  teams: [SPARK_Team]
+  createdBy: SPARK_UserProfileAttributes!
+  createdAt: String
+  updatedBy: SPARK_UserProfileAttributes!
+  updatedAt: String
+  thumbnailId: String
+  files: [SPARK_Attachment]
+  recycledContent: Boolean @deprecated(reason: "No longer used")
+  relatedMaterialType: String
+  supplier: VMM_BusinessPartner @deprecated(reason: "Use fields within supplierInfo")
+  supplierMillArticleNumber: String @deprecated(reason: "Use fields within supplierInfo")
+  supplierInfo: SPARK_MaterialSupplier
+  designThumbnailId: String
+  composition: [SPARK_MaterialComposition]
+  measurement: SPARK_MaterialMeasurement
+  baseAssetType: Boolean
+  name: String
+  suppliers: [SPARK_MaterialSupplier]
+  colorways: [SPARK_Colorway]
+  inspiration: Boolean
+  parent: SPARK_MaterialResource
+  droppedPartnerIds: [ID]
+  connectedBoms: [SPARK_Bom]
+  developedBaseMaterials: [SPARK_HubMaterialInterface]
+  visualDescriptions: [SPARK_CodeDescription]
+  brands: [SPARK_CodeDescription]
+  visualDescriptionComment: String
+  productType: String
+}
+
+type SPARK_MaterialComposition {
+  humanId: String
+  material: SPARK_SingleResourceMapping
+  hubMaterial: SPARK_HubMaterial
+  template: SPARK_MaterialTemplate
+  contentPercentage: Float
+  quantity: Int
+  weight: SPARK_ValueWithUnit
+  origins: [SPARK_MaterialOrigin!]
+  certifications: [SPARK_CodeDescription]
+  size: SPARK_MaterialSize
+  countryOfOrigin: SPARK_Tag
+}
+
+type SPARK_MaterialSize {
+  value: String
+  unitOfMeasure: SPARK_CodeDescription
+}
+
+type SPARK_MaterialOrigin {
+  origin: SPARK_CodeDescription
+  percentage: Float
+}
+
+type SPARK_MaterialMeasurement {
+  weight: SPARK_ValueWithUnit
+  size: SPARK_MaterialSize
+}
+
+type SPARK_ValueWithUnit {
+  value: Float
+  unitOfMeasure: SPARK_CodeDescription
+}
+
+input SPARK_NewHubMaterialInput {
+  type: String
+  classification: String
+  baseMaterial: SPARK_BaseMaterialInput
+}
+
+type SPARK_MaterialUniquenessResult {
+  duplicatedIds: [String]
+  totalPages: Int
+  totalElements: Int
+  currentPage: Int
+  size: Int
+}
+
+type SPARK_HubMaterialWrapper {
+  material: SPARK_HubMaterialInterface
+  template: SPARK_MaterialTemplate
+}
+
+input SPARK_BaseMaterialInput {
+  description: String!
+  additionalInfo: String
+  notes: String
+  designCycles: [String]
+  tags: [String]
+  departments: [ID]
+  countryOfOrigin: String
+  status: Int
+  thumbnailId: String
+  files: [String]
+  teamsToAdd: [SPARK_TeamToAddInput]
+  recycledContent: Boolean @deprecated(reason: "No longer used")
+  supplier: ID @deprecated(reason: "Use fields within supplierInfo")
+  supplierMillArticleNumber: String @deprecated(reason: "Use fields within supplierInfo")
+  supplierInfo: SPARK_MaterialSupplierInput
+  designThumbnailId: String
+  composition: [SPARK_MaterialCompositionInput]
+  measurement: SPARK_MaterialMeasurementInput
+  baseAssetType: Boolean
+  name: String
+  suppliers: [SPARK_MaterialSupplierInput]
+  colorways: [SPARK_ColorwayInput]
+  inspiration: Boolean
+  parent: String
+  visualDescriptions: [Int]
+  brands: [Int]
+  visualDescriptionComment: String
+  productType: String
+}
+
+input SPARK_MaterialSupplierInput {
+  id: ID
+  materialId: String
+  facilities: [SPARK_MaterialFacilityInput]
+}
+
+type SPARK_MaterialSupplier {
+  id: ID
+  materialId: String
+  businessPartnerDetails: VMM_BusinessPartner @deprecated(reason: "use suppliers instead")
+  supplier: VMM_BusinessPartner
+  facilities: [SPARK_MaterialFacility]
+  dropped: Boolean
+}
+
+type SPARK_MaterialFacility {
+  facilityId: Int
+  facility: VMM_Location
+}
+
+input SPARK_MaterialFacilityInput {
+  facilityId: Int
+}
+
+input SPARK_MaterialCompositionInput {
+  material: String
+  contentPercentage: Float
+  quantity: Int
+  weight: SPARK_ValueWithUnitInput
+  origins: [SPARK_MaterialOriginInput!]
+  certifications: [Int]
+  size: SPARK_MaterialSizeInput
+  countryOfOrigin: String
+}
+
+input SPARK_MaterialSizeInput {
+  value: String
+  unitOfMeasure: Int
+}
+
+input SPARK_MaterialOriginInput {
+  origin: Int
+  percentage: Float
+}
+
+input SPARK_ValueWithUnitInput {
+  value: Float
+  unitOfMeasure: Int
+}
+
+input SPARK_MaterialMeasurementInput {
+  weight: SPARK_ValueWithUnitInput
+  size: SPARK_MaterialSizeInput
+}
+
+input SPARK_HubMaterialPartialInput {
+  type: String!
+  classification: String
+  thumbnailId: String
+  designThumbnailId: String
+  suppliers: [SPARK_MaterialSupplierInput]
+}
+
+type SPARK_MaterialTemplate {
+  name: String
+  parent: String
+  parentTemplate: SPARK_MaterialTemplate
+  notes: String
+  definedBaseAttributeConfigurations: SPARK_DefinedBaseAttributeConfigurationsRootAttribute
+  suppliers: SPARK_SupplierRootAttribute
+  permissions: SPARK_PermissionsRootAttribute
+  composition: SPARK_CompositionRootAttribute
+  certification: SPARK_CertificationRootAttribute
+  origin: SPARK_OriginRootAttribute
+  galleryTaxonomyMapping: SPARK_CodeDescription
+  attributes: [SPARK_MaterialTemplateAttribute]
+  version: Int
+  status: SPARK_CodeDescription
+}
+
+type SPARK_MaterialAttributeContext {
+  design: Boolean
+  technical: Boolean
+}
+
+type SPARK_MaterialTemplateAttribute {
+  type: String
+  name: String!
+  label: String
+  udfMaterialKey: String
+  required: Boolean
+  includeInDescription: Boolean
+  tooltip: SPARK_MaterialTemplateAttributeTooltip
+  # TODO refactor custom options to subtype
+  selectOptions: [SPARK_MaterialTemplateSelectOptions]
+  includeTolerance: Boolean
+  context: SPARK_MaterialAttributeContext
+}
+
+type SPARK_MaterialTemplateSubType {
+  name: String
+  required: Boolean
+  type: String
+  selectOptions: [SPARK_MaterialTemplateSelectOptions]
+}
+
+type SPARK_MaterialTemplateSelectOptions {
+  code: Int
+  description: String
+  name: String
+  deprecated: Boolean
+}
+
+input SPARK_MaterialTemplateInput {
+  name: String!
+  notes: String
+  parent: String
+  definedBaseAttributeConfigurations: SPARK_DefinedBaseAttributeConfigurationsRootAttributeInput
+  suppliers: SPARK_SupplierRootAttributeInput
+  permissions: SPARK_PermissionsRootAttributeInput
+  composition: SPARK_CompositionRootAttributeInput
+  certification: SPARK_CertificationRootAttributeInput
+  origin: SPARK_OriginRootAttributeInput
+  galleryTaxonomyMapping: Int
+  attributes: [SPARK_MaterialTemplateAttributeInput]
+  status: Int
+}
+
+input SPARK_MaterialTemplateSubTypeInput {
+  name: String
+  required: Boolean
+  type: String
+  selectOptions: [SPARK_MaterialTemplateSubTypeOptionsInput]
+}
+
+input SPARK_MaterialTemplateSelectOptionsInput {
+  code: Int
+  description: String
+  name: String
+  deprecated: Boolean
+}
+
+input SPARK_MaterialTemplateSubTypeOptionsInput {
+  description: String
+  name: String
+}
+
+input SPARK_MaterialAttributeContextInput {
+  design: Boolean
+  technical: Boolean
+}
+
+input SPARK_MaterialTemplateAttributeInput {
+  classification: String
+  type: String
+  name: String!
+  label: String
+  required: Boolean
+  includeInDescription: Boolean
+  tooltip: SPARK_MaterialTemplateAttributeTooltipInput
+  # TODO refactor custom options to subtype
+  selectOptions: [SPARK_MaterialTemplateSelectOptionsInput]
+  includeTolerance: Boolean
+  context: SPARK_MaterialAttributeContextInput
+}
+
+type SPARK_Paper implements SPARK_HubMaterialInterface {
+  humanId: String
+  type: String!
+  classification: String
+  baseMaterial: SPARK_BaseMaterial
+  subType: SPARK_CodeDescription!
+  template: SPARK_MaterialTemplate
+
+  bleaching: SPARK_CodeDescription
+  coating: SPARK_CodeDescription
+  pulpType: [SPARK_CodeDescription]
+  lamination: SPARK_CodeDescription
+  paperGrade: [SPARK_CodeDescription]
+  paperboardGrade: SPARK_CodeDescription
+  corrugateFluting: SPARK_CodeDescription
+  tissueGrade: SPARK_CodeDescription
+  dryingType: SPARK_CodeDescription
+  nonWoodFiberContent: Float
+}
+
+type SPARK_UserDefinedMaterial implements SPARK_HubMaterialInterface {
+  humanId: String
+  type: String!
+  baseMaterial: SPARK_BaseMaterial
+  classification: String
+  details: JSON
+  template: SPARK_MaterialTemplate
+}
+
+input SPARK_PaperInput {
+  humanId: ID
+  type: String
+  classification: String
+  baseMaterial: SPARK_BaseMaterialInput
+  subType: Int!
+
+  bleaching: Int
+  coating: Int
+  pulpType: [Int]
+  lamination: Int
+  paperGrade: [Int]
+  paperboardGrade: Int
+  corrugateFluting: Int
+  tissueGrade: Int
+  dryingType: Int
+  nonWoodFiberContent: Float
+}
+
+type SPARK_Wood implements SPARK_HubMaterialInterface {
+  humanId: String
+  type: String!
+  classification: String
+  subType: SPARK_CodeDescription!
+  baseMaterial: SPARK_BaseMaterial
+  template: SPARK_MaterialTemplate
+
+  species: SPARK_CodeDescription
+  finish: SPARK_CodeDescription
+  reclaimed: Boolean
+}
+
+input SPARK_WoodInput {
+  humanId: ID
+  type: String
+  classification: String
+  baseMaterial: SPARK_BaseMaterialInput
+  subType: Int!
+
+  species: Int
+  finish: Int
+  reclaimed: Boolean
+}
+
+type SPARK_MaterialTemplateAttributeTooltip {
+  enabled: Boolean
+  copy: String
+}
+
+input SPARK_MaterialTemplateAttributeTooltipInput {
+  enabled: Boolean
+  copy: String
+}
+
+type SPARK_DefinedBaseAttributeConfigurationsRootAttribute {
+  nameConfig: SPARK_RootAttributeConfig
+  additionalInformationConfig: SPARK_RootAttributeConfig
+  disableSubtypeInDescription: Boolean
+  disableMaterialContentInDescription: Boolean
+}
+
+input SPARK_DefinedBaseAttributeConfigurationsRootAttributeInput {
+  nameConfig: SPARK_RootAttributeConfigInput
+  additionalInformationConfig: SPARK_RootAttributeConfigInput
+  disableSubtypeInDescription: Boolean
+  disableMaterialContentInDescription: Boolean
+}
+
+type SPARK_RootAttributeConfig {
+  tooltip: SPARK_MaterialTemplateAttributeTooltip
+}
+
+input SPARK_RootAttributeConfigInput {
+  tooltip: SPARK_MaterialTemplateAttributeTooltipInput
+}
+
+type SPARK_SupplierRootAttribute {
+  active: Boolean
+  @deprecated(reason: "Do not use this field")
+  required: Boolean
+  @deprecated(reason: "Do not use this field")
+  includeInDescription: Boolean
+  allowedPartnerTypes: [Int!]
+  includeMaterialId: Boolean
+}
+
+input SPARK_SupplierRootAttributeInput {
+  active: Boolean
+  required: Boolean
+  includeInDescription: Boolean
+  allowedPartnerTypes: [Int!]
+  includeMaterialId: Boolean
+}
+
+input SPARK_SearchMaterialQueryOptions {
+  names: [String]
+  resourceId: String = null
+}
+
+type SPARK_PermissionsRootAttribute {
+  businessPartnerPermissions: SPARK_BusinessPartnerPermissions
+  merchandiseVendorPermissions: SPARK_MerchandiseVendorPermissions
+}
+
+type SPARK_BusinessPartnerPermissions {
+  canWrite: Boolean
+  allowedPartnerTypes: [Int!]
+  bpAssetPublic: Boolean
+}
+
+type SPARK_MerchandiseVendorPermissions {
+  canRead: Boolean
+}
+
+input SPARK_PermissionsRootAttributeInput {
+  businessPartnerPermissions: SPARK_BusinessPartnerPermissionsInput
+  merchandiseVendorPermissions: SPARK_MerchandiseVendorPermissionsInput
+}
+
+input SPARK_CompositionRootAttributeInput {
+  baseAssetType: Boolean
+    @deprecated(reason: "Base asset type is now determined at the asset level.")
+  totalWeightRequired: Boolean
+  hideWeightDetails: Boolean
+  hideSizeDetails: Boolean
+  minimumOneBaseAssetRequired: Boolean
+}
+
+type SPARK_CompositionRootAttribute {
+  baseAssetType: Boolean
+    @deprecated(reason: "Base asset type is now determined at the asset level.")
+  totalWeightRequired: Boolean
+  hideWeightDetails: Boolean
+  hideSizeDetails: Boolean
+  minimumOneBaseAssetRequired: Boolean
+}
+
+input SPARK_OriginRootAttributeInput {
+  allowedOriginTypes: [Int!]
+}
+
+type SPARK_OriginRootAttribute {
+  allowedOriginTypes: [Int!]
+  originTypes: [SPARK_CodeDescription]
+}
+
+input SPARK_CertificationRootAttributeInput {
+  allowedCertificationTypes: [Int!]
+}
+
+type SPARK_CertificationRootAttribute {
+  allowedCertificationTypes: [Int!]
+  certificationTypes: [SPARK_CodeDescription]
+}
+
+input SPARK_BusinessPartnerPermissionsInput {
+  canWrite: Boolean
+  allowedPartnerTypes: [Int!]
+  bpAssetPublic: Boolean
+}
+
+input SPARK_MerchandiseVendorPermissionsInput {
+  canRead: Boolean
+}
+
+type SPARK_UnitOfMeasure {
+  name: String
+  description: String
+  symbol: String
+  code: Int
+  measurementCategories: [String]
+}
+
+input Spark_ResourceLinkInput {
+  target: String
+  source: String
+  reason: String
+}
+
+input SPARK_ResourceLinkDeleteInput {
+  target: String
+  source: String
+}
+
+input SPARK_BulkAddDeleteResourceLinksInput {
+  resourceLinksToAdd: [Spark_ResourceLinkInput]
+  resourceLinksToDelete: [SPARK_ResourceLinkDeleteInput]
+}
+
+type SPARK_ResourceLink {
+  reason: String
+  archived: Boolean
+  createdBy: SPARK_UserProfileAttributes!
+  createdAt: String
+  updatedBy: SPARK_UserProfileAttributes!
+  updatedAt: String
+  sourceMaterial: SPARK_ServiceMaterial
+  targetMaterial: SPARK_ServiceMaterial
+}
+
+type SPARK_ResourceLinkSearch {
+  resourceLinks: [SPARK_ResourceLink]
+  materials: [SPARK_ServiceMaterial]
+}
+
+input SPARK_MaterialExportStringSearchParamInput {
+  values: [String]
+  intersection: Boolean
+}
+
+input SPARK_MaterialExportIntSearchParamInput {
+  values: [Int]
+  intersection: Boolean
+}
+
+input SPARK_MaterialExportBooleanSearchParamInput {
+  values: [Boolean]
+  intersection: Boolean
+}
+
+input SPARK_MaterialExportSearchParamsInput {
+  query: String
+  types: SPARK_MaterialExportStringSearchParamInput
+  statuses: SPARK_MaterialExportIntSearchParamInput
+  designCycles: SPARK_MaterialExportStringSearchParamInput
+  tags: SPARK_MaterialExportStringSearchParamInput
+  departments: SPARK_MaterialExportStringSearchParamInput
+  createdBy: SPARK_MaterialExportStringSearchParamInput
+  createdByPartnerId: SPARK_MaterialExportStringSearchParamInput
+  relatedBomIds: SPARK_MaterialExportBooleanSearchParamInput
+  visualDescriptions: SPARK_MaterialExportIntSearchParamInput
+  inspiration: Boolean
+}
+
+input SPARK_BulkValidateUniqueInput {
+  requestId: Int
+  newMaterial: SPARK_NewHubMaterialInput
+}
+
+type SPARK_BulkValidateUniqueResponse {
+  requestId: Int
+  duplicatedIds: [String]
+}

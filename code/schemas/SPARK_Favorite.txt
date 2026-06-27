@@ -1,0 +1,65 @@
+extend type Query {
+  getFavorites(
+    type: String!
+    page: Int = 0
+    size: Int = 20
+  ): SPARK_FavoritePaged
+  # TODO: these are temporary until federated GQL
+  getFavoritesByTypes(
+    types: [String]!
+    page: Int = 0
+    size: Int = 20
+  ): SPARK_FavoritePaged
+  getFavoriteTypesForCurrentUser: [String]
+  isFavorite(resource: SPARK_FavoriteResourceInput!): SPARK_Favorite
+}
+
+extend type Mutation {
+  addFavorite(resource: SPARK_FavoriteResourceInput!): SPARK_Favorite
+  deleteFavorite(type: String!, id: ID!): ID
+    @deprecated(reason: "Use deleteFavorite")
+  deleteFavoriteById(id: ID!): ID
+  deleteFavoritesByBusinessPartner(
+    resourceType: String!
+    resourceId: ID!
+    partnerId: ID!
+  ): ID
+  updateFavoritesOrder(favoriteIds: [String]): ID
+}
+
+type SPARK_Favorite {
+  id: ID!
+  userProfileId: String!
+  resource: SPARK_FavoriteResource!
+  order: Int
+  color: SPARK_Color
+  wash: SPARK_Wash
+  palette: SPARK_Palette
+  artwork: SPARK_Artwork
+  fabric: SPARK_Fabric
+  fabricSpecification: SPARK_FabricSpecification
+  trim: SPARK_Trim
+  combination: SPARK_Combination
+  team: SPARK_Team
+  product: SPARK_Product
+  workspace: SPARK_WorkspaceV2
+  # TODO: Switch to v2
+  color_archroma: SPARK_ColorArchroma
+  hubMaterial: SPARK_HubMaterialInterface
+  baseMaterial: SPARK_ServiceMaterial
+}
+
+type SPARK_FavoritePaged {
+  content: [SPARK_Favorite]
+  paging: SPARK_Paging
+}
+
+input SPARK_FavoriteResourceInput {
+  id: String!
+  type: String!
+}
+
+type SPARK_FavoriteResource {
+  id: String!
+  type: String!
+}

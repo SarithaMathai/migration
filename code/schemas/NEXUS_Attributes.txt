@@ -1,0 +1,28 @@
+extend type Query {
+  searchSizes(
+    nameFilter: String
+    page: Int = 0
+    size: Int = 50
+  ): NEXUS_AttributesPaged
+  getSizes(
+    sizeIds: [Int]
+  ): [NEXUS_Attribute]
+  getExternalClaims: [NEXUS_Claim]
+}
+
+type NEXUS_AttributesPaged {
+  content: [NEXUS_Attribute]
+}
+
+type NEXUS_Attribute {
+  id: ID
+  name: String
+  status: String
+  synonyms: [String]
+}
+
+type NEXUS_Claim {
+  id: String
+  name: String
+  description: String
+}

@@ -1,0 +1,11 @@
+type SPARK_ProductVariation {
+  id: String
+  sizeId: String
+  size: String
+  impressionId: String
+  impression: String
+  status: SPARK_CodeDescription
+  parentResource: String
+  businessPartnerIds: [Int]
+  workspaceContext: [String]
+}

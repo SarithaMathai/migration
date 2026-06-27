@@ -1,0 +1,23 @@
+extend type Query {
+  getClazzes(department: ID!): [IG_Clazz]
+  getClazzesByMultipleDepartments(departments: [ID!]): [IG_Clazz]
+  getClazz(department: ID!, id: ID!): IG_Clazz
+  getByClassByDeptId(department: ID!, id: ID!): IG_Clazz_Filter
+}
+
+type IG_Clazz {
+  id: ID
+  #Below field will not be cached client-side, use above for cache
+  classId: Int
+  name: String
+  displayText: String
+  department: IG_Department
+}
+
+type IG_Clazz_Filter implements SPARK_Categories {
+  id: ID
+  name: String
+  classId: Int
+  departmentId: String
+  departmentName: String
+}

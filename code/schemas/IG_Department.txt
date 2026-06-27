@@ -1,0 +1,15 @@
+extend type Query {
+  getDepartments(query: String!): [IG_Department]
+  getAllDepartments: [IG_Department]
+  getDepartment(id: ID!): IG_Department
+  getDepartmentsByDivision(divisionId: ID!, query: String!): [IG_Department]
+}
+
+type IG_Department implements SPARK_Categories {
+  id: ID
+  name: String
+  divisionId: ID
+  divisionName: String
+  displayText: String
+  clazzes: [IG_Clazz]
+}

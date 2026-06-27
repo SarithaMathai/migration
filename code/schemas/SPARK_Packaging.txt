@@ -1,0 +1,454 @@
+extend type Mutation {
+  addPackaging(sparkPackaging: SPARK_PackagingInput): SPARK_Packaging
+  updatePackaging(packagingId: String!, sparkPackaging: SPARK_PackagingInput): SPARK_Packaging
+  evaluateDieline(dielineId: String!, dielineEvaluation: SPARK_DielineEvaluationInput): SPARK_Dieline
+  bulkAddPackagings(bulkPackagingInput: SPARK_PackagingBulkInput!): SPARK_PackagingBulk
+  bulkUpdatePackagings(bulkPackagingInput: SPARK_PackagingBulkInput!): SPARK_PackagingBulk
+  exportPackaging(workspaceId: String!, workspaceDescription: String!, ids: [String]): String
+  lockPackaging (packagingId: String!): SPARK_Packaging
+  unlockPackaging (packagingId: String!): SPARK_Packaging
+  cloneFilesForDielines(attachmentIds: [String!], cloneReferences: [DielineAttachmentCloneRef!]): [SPARK_Attachment]
+  updatePackagingComponentStatus(productId: String!, ids: [String]!, status: SPARK_ComponentStatusInput): SPARK_PackagingPagedForStatus
+}
+
+extend type Query {
+  getPackagings(
+    page: Int = 0,
+    size: Int = 10000,
+    packagingIds: [String],
+    parentIds: [String],
+    workspaceIds: [String],
+    partnerIds: [String],
+    statusIds: [Int]
+  ): SPARK_PackagingPaged
+  getPackagingElastic(parentHumanId:String): [SPARK_Packaging]
+  getPackagingById(
+    packagingId: String!,
+  ): SPARK_Packaging
+  getPackagingFieldValuesByType(type: String!, ids: [Int]): [SPARK_PackagingFieldValues]
+  getDielines(
+    page: Int = 0,
+    size: Int = 10000,
+    packagingIds: [String],
+    parentIds: [String],
+    printerIds: [String],
+    statusIds: [Int]
+  ): [SPARK_Dieline]
+  getDielineEvaluationStatuses: [SPARK_CodeDescription]
+  getCountries(codes: [String]): [SPARK_Countries]
+}
+
+type SPARK_PackagingPaged {
+  content: [SPARK_Packaging]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_PackagingPagedForStatus {
+  content: [SPARK_Packaging]
+}
+
+input SPARK_PackagingInput {
+    humanId: String
+    placeholderId: String
+    parentId: String!
+    description: String
+    promoDescription: String
+    wave: String
+    projectType: Int
+    projectItemType: Int
+    projectLevel: Int
+    group: Int
+    creativePath: Int
+    @deprecated
+    retailPrice: Float
+    requiresSuggestedRetailPrice: Boolean
+    archived: Boolean
+    dielineEvaluators: [String]
+    dielineDueDate: String!
+    handoffDueDate: String
+    workspaceIds: [String!]
+    statusId: Int!
+    businessPartner: SPARK_PackagingPartnerInput!
+    photoRequired: Boolean
+    illustrationRequired: Boolean
+    notes: String
+    selectedComponents: [Int!]
+    contactInformation: SPARK_ContactInformationInput
+    warningsAndCautions: SPARK_WarningsAndCautionsInput
+    warningsAndCautionsList: [SPARK_WarningsAndCautionsInput]
+    copyWriterEditAndApproved: Boolean
+    packagingElements: [SPARK_PackagingElementInput]
+    packagingInternalData: SPARK_PackagingInternalDataInput
+    fulfillmentTypeId: Int
+    orderCode: String
+    participantDetails: SPARK_UserGroup_Participants_Input
+    statuses: [WorkspaceStatusPairInput]
+    attachmentsToRemove: [String]
+    attachmentsToAdd: [SPARK_PackagingAttachment]
+
+    # Claims Pass Through Fields
+    claimId: String
+    claimDetails: [SPARK_PackagingClaimInput]
+}
+
+input SPARK_PackagingClaimInput {
+  rowId: String
+  packagingCopy: SPARK_PackagingClaimCopyInput
+}
+
+input DielineAttachmentCloneRef {
+  resourceId: String!
+  businessPartner: SPARK_ProductPartnerInput!,
+  context: String,
+  relatedResources: [String]
+}
+
+input SPARK_PackagingClaimCopyInput {
+  packagingLocation: String
+  packagingVerbiage: String
+}
+
+input SPARK_PackagingAttachment {
+  documentId: String
+  relatedResources: [String]
+}
+
+input SPARK_PackagingBulkInput {
+  packaging: [SPARK_PackagingInput]
+}
+
+input SPARK_PackagingPartnerInput {
+  partnerId: ID
+  partnerType: Int
+  systemTeamId: String
+}
+
+input SPARK_ContactInformationInput {
+  companyName: String
+  email: String
+  phone: String
+  address: String
+  softproofing: [SPARK_SoftproofingInput]
+}
+
+input SPARK_ShippingDestinationInput {
+  shippingCompanyName: String
+  shippingContactName: String
+  shippingEmail: String
+  streetAddress: String
+  phoneNumber: String
+  @deprecated(reason: "Use fileDeliveryEmailList instead")
+  fileDeliveryEmail: String
+}
+
+input SPARK_WarningsAndCautionsInput {
+  countryOfOrigin: String
+  front: String
+  back: String
+  sizing: String
+  netQuantity: String
+  comparedToCopy: String
+  additionalMiscCopy: String
+  copywriterNotes: String
+  reservedDpcis: [SPARK_DielineReservedDpciInput]
+  descriptor: String
+  warningCaution: String
+}
+
+input SPARK_SoftproofingInput {
+  name: String
+  email: String
+}
+
+input SPARK_PackagingElementInput {
+  id: String
+  selectedComponentId: Int
+  printers: [SPARK_PrinterDielineInput]
+  packagingLibrary: SPARK_PackagingLibrary_Input
+}
+
+input SPARK_PackagingLibrary_Input {
+  id: String!
+}
+
+input SPARK_PrinterDielineInput {
+  printerId: String
+  sizeIds: [String]
+  dielineContactName: String
+  dielineEmail: String
+  printerCompanyName: String
+  printerContactEmail: String
+  printerPhoneNumber: String
+  printerCode: String
+  printerAddress: String
+  printerCountry: String
+  printerCity: String
+  printerState: String
+  printerZipcode: String
+  printerLocationId: Int
+  reservedDpcis: [SPARK_DielineReservedDpciInput]
+  dielines: [SPARK_DielineInput]
+  printingProcess: SPARK_PrintingProcessInput
+  printerSoftproofing: [SPARK_SoftproofingInput]
+  shippingDestination: SPARK_ShippingDestinationInput
+  fileDeliveryEmailList: [String]
+  isPrintInformationReviewed: Boolean
+  shippingAddressSameAsPrinterAddress: Boolean
+  attachmentIds: [String]
+}
+
+input SPARK_DielineReservedDpciInput {
+  dpci: String
+}
+
+input SPARK_DielineInput {
+  humanId: String
+  newDieline: Boolean
+  statusId: Int
+  deleteDieline: Boolean
+  reservedDpcis: [SPARK_DielineReservedDpciInput]
+  attachmentId: String
+}
+
+input SPARK_DielineEvaluationInput {
+  dielineDueDate: String
+  statusId: Int!
+  evalFailedReasonIds: [Int]
+  comments: String
+  workspaceIds: [String]!
+}
+
+input SPARK_PrintingProcessInput {
+  substrate: SPARK_PrintingProcessSubstrateInput
+  substrateColorId: Int
+  printProcessId: Int
+  printOrientationId: Int
+  quotedInkStation: String
+  iccProfile: String
+  internalPrintingProcessNotes: String
+}
+
+input SPARK_PackagingInternalDataInput {
+  internalNotes: String
+  attachmentIds: [String]
+}
+
+input SPARK_PrintingProcessSubstrateInput {
+  substrateId: Int
+  freeText: String
+}
+
+type SPARK_SuggestedRetailPriceByDPCI {
+  dpci: String
+  suggestedRetailPrice: Float
+}
+
+type SPARK_Packaging {
+    humanId: String
+    placeholderId: String
+    parentId: String
+    description: String
+    promoDescription: String
+    descriptionDisplayText: String
+    wave: String
+    waveDescription: String
+    @deprecated
+    retailPrice: Float
+    requiresSuggestedRetailPrice: Boolean
+    suggestedRetailPriceByDPCI: [SPARK_SuggestedRetailPriceByDPCI]
+    projectType: Int
+    projectTypeName: String
+    projectItemType: Int
+    projectItemTypeName: String
+    projectLevel: Int
+    projectLevelName: String
+    group: Int
+    groupName: String
+    creativePath: Int
+    creativePathName: String
+    archived: Boolean
+    dielineEvaluators: [SPARK_UserProfileAttributes]
+    dielineDueDate: String
+    handoffDueDate: String
+    workspaceIds: [String]
+    photoRequired: Boolean
+    illustrationRequired: Boolean
+    notes: String
+    status: SPARK_CodeDescription
+    businessPartner: VMM_BusinessPartner
+    selectedComponents: [Int]
+    resolvedSelectedComponents: [SPARK_CodeDescription]
+    version: Int
+    createdAt: DateTime
+    createdBy: SPARK_UserProfileAttributes
+    updatedAt: DateTime
+    updatedBy: SPARK_UserProfileAttributes
+    product: SPARK_Product
+    workspaces: [SPARK_WorkspaceV2]
+    contactInformation: SPARK_ContactInformation
+    warningsAndCautions: SPARK_WarningsAndCautions
+    warningsAndCautionsList: [SPARK_WarningsAndCautions]
+    copyWriterEditAndApproved: Boolean
+    packagingElements: [SPARK_PackagingElement]
+    packagingInternalData: SPARK_PackagingInternalData
+    fulfillmentTypeId: Int
+    fulfillmentTypeName: String
+    orderCode: String
+    attachments: [SPARK_SearchAttachment]
+    participantDetails: SPARK_UserGroup_Participants
+    access: SPARK_AccessControl
+    statuses: [ProductComponentStatus]
+    manualLock: Boolean
+}
+
+type SPARK_PackagingBulk {
+  packaging: [SPARK_Packaging]
+}
+
+type SPARK_PackagingFieldValues {
+  code: Int
+  description: String
+  shortDescription: String
+  resourceType: String @deprecated
+}
+
+type SPARK_ContactInformation {
+  companyName: String
+  email: String
+  phone: String
+  address: String
+  softproofing: [SPARK_Softproofing]
+}
+
+type SPARK_ShippingDestination {
+  shippingCompanyName: String
+  shippingContactName: String
+  shippingEmail: String
+  streetAddress: String
+  phoneNumber: String
+  @deprecated(reason: "Use fileDeliveryEmailList instead")
+  fileDeliveryEmail: String
+}
+
+type SPARK_Softproofing {
+  name: String
+  email: String
+}
+
+type SPARK_WarningsAndCautions {
+  countryOfOrigin: String
+  countryOfOriginName: String
+  front: String
+  back: String
+  sizing: String
+  netQuantity: String
+  comparedToCopy: String
+  additionalMiscCopy: String
+  copywriterNotes: String
+  reservedDpcis: [SPARK_DielineReservedDpci]
+  descriptor: String
+  warningCaution: String
+}
+
+type SPARK_PackagingElement {
+  id: String
+  selectedComponentId: Int
+  selectedComponentName: String
+  printers: [SPARK_PrinterDieline]
+  packagingLibrary: SPARK_SpgFileLibrary
+}
+
+type SPARK_PackagingInternalData {
+  internalNotes: String
+  attachmentIds: [String]
+}
+
+type SPARK_PrinterDieline {
+  printerId: String
+  sizeIds: [String]
+  dielineContactName: String
+  dielineEmail: String
+  printerCompanyName: String
+  printerContactEmail: String
+  printerPhoneNumber: String
+  printerCode: String
+  printerAddress: String
+  printerCountry: String
+  printerCountryName: String
+  printerCity: String
+  printerState: String
+  printerZipcode: String
+  printerLocationId: Int
+  dielines(statusIdFilter: [String]): [SPARK_Dieline]
+  reservedDpcis: [SPARK_DielineReservedDpci]
+  printingProcess: SPARK_PrintingProcess
+  printerSoftproofing: [SPARK_Softproofing]
+  shippingDestination: SPARK_ShippingDestination
+  fileDeliveryEmailList: [String]
+  isPrintInformationReviewed: Boolean
+  shippingAddressSameAsPrinterAddress: Boolean
+  attachmentIds: [String]
+}
+
+type SPARK_DielineReservedDpci {
+  dpci: String
+}
+
+type SPARK_Dieline {
+    humanId: String
+    printerId: String
+    parentId: String
+    reservedDpcis: [SPARK_DielineReservedDpci]
+    dielineDueDate: String
+    sizeIds: [String]
+    dielineContactName: String
+    dielineEmail: String
+    printerCompanyName: String
+    printerContactEmail: String
+    printerCode: String
+    printerAddress: String
+    printerCountry: String
+    printerCountryName: String
+    printerCity: String
+    printerState: String
+    printerZipcode: String
+    printerLocationId: Int
+    evalFailedReasons: [SPARK_PackagingFieldValues]
+    statusId: Int
+    statusName: String
+    round: SPARK_Dieline_Round
+    evaluatedBy: SPARK_UserProfileAttributes
+    evaluatedDate: String
+    comments: String
+    version: Int
+    attachmentId: String
+    attachment: SPARK_Attachment
+    attachments: [SPARK_SearchAttachment] @deprecated
+}
+
+type SPARK_Dieline_Round {
+  originDielineId: String
+  roundNumber: Int
+  isParent: Boolean
+}
+
+type SPARK_PrintingProcess {
+    substrate: SPARK_PrintingProcessSubstrate
+    substrateColorId: Int
+    substrateColorName: String
+    printProcessId: Int
+    printProcessName: String
+    printOrientationId: Int
+    printOrientationName: String
+    quotedInkStation: String
+    iccProfile: String
+    internalPrintingProcessNotes: String
+}
+
+type SPARK_PrintingProcessSubstrate {
+  substrateId: Int
+  substrateName: String
+  substrateShortName: String
+  freeText: String
+}

@@ -1,0 +1,4 @@
+type SPARK_Status implements SPARK_Categories {
+  id: ID!
+  name: String!
+}

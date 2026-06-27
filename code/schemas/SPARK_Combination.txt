@@ -1,0 +1,268 @@
+extend type Query {
+  getMerchTypesByDepartmentId(departmentId: ID!, materialCategory: String!): [String]
+  getCombination(id: ID!): SPARK_Combination
+  getCombinationByIds(ids: [ID!]): [SPARK_Combination]
+  getImpressionIntentBucketsByComboId(id: ID!): [SPARK_ImpressionIntentBucket]
+  searchFabricSpecCombos(q: String!, page: Int, size: Int): SPARK_SearchFabricSpecCombosPaged
+  getFabricSpecCombosByComboId(id: ID!): SPARK_SearchFabricSpecCombosPaged
+  getFabricSpecComboById(id: ID!): SPARK_FabricSpecCombo
+  exportCombination(q: String ="*", workspaceId: ID!, isThumbnailRequired: Boolean): SPARK_ExportCombination
+  getBulkCombinations(q: String, page: Int = 0, size: Int = 20): SPARK_CombinationSourcePaged
+  exportComboICSReport(q: String ="*", workspaceId: ID!): SPARK_ExportCombination
+}
+
+extend type Mutation {
+  addCombination(combination: SPARK_CombinationInput!): SPARK_Combination
+  updateCombination(combination: SPARK_UpdateCombinationInput!, isFabricChanged: Boolean =false, updateImpressionIntentLineDtoList: [SPARK_UpdateImpressionIntentLineInput]): SPARK_Combination
+  bulkUpdateCombination(bulkCombinationUpdates: SPARK_BulkUpdateCombinationInput!): [String]
+  deleteCombination(humanId: ID!): Int
+  addImpressionIntentBucket(impressionIntentBucket: SPARK_ImpressionIntentBucketInput!): SPARK_ImpressionIntentBucket
+  updateImpressionIntentBucket(impressionIntentBucket: SPARK_UpdateImpressionIntentBucketInput!): SPARK_ImpressionIntentBucket
+  deleteImpressionIntentBucket(humanId: ID!): Int
+  addMaterialsToCombination(parentComboId: ID!, materialImpressionIntentList: [SPARK_ComboRelatedMaterialsInput]): [SPARK_ImpressionIntentBucket]
+  bulkAddMerchVendorsToBuckets(parentComboId: ID!, impressionIntentLine: SPARK_ImpressionIntentLineInput): [SPARK_ImpressionIntentBucket]
+  addImpressionIntentLine(intentHumanId: ID!, impressionIntentLine: SPARK_ImpressionIntentLineInput): SPARK_ImpressionIntentBucket
+  updateImpressionIntentLine(lineHumanId: ID!, impressionIntentLine: SPARK_UpdateImpressionIntentLineInput): SPARK_ImpressionIntentBucket
+  updateImpressionIntentLineStatus(lineHumanId: ID!, impressionIntentLineStatus: SPARK_UpdateImpressionIntentLineStatusInput): SPARK_ImpressionIntentBucket
+  deleteImpressionIntentLine(humanId: ID!): SPARK_ImpressionIntentBucket
+  updateCombinationTeams(humanId: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [String]
+  createFabricSpecCombos(humanId: ID!): [String]
+  archiveFabricSpecCombo(fabricSpecComboId: ID!): SPARK_FabricSpecCombo
+}
+
+type SPARK_Combination {
+  humanId: String
+  status: String
+  workspaceIds: [ID]
+  description: String
+  notes: String
+  designCycles: [SPARK_Tag]
+  department: IG_Department
+  division: IG_Division
+  clazz: IG_Clazz
+  merchType: String
+  tags: [SPARK_Tag]
+  brands: [VMM_Brand]
+  fabricRecordHumanId: ID
+  fabricRecord: SPARK_Fabric
+  top20RelatedMaterials: SPARK_MaterialsPaged
+  impressionIntentBucketList: [SPARK_ImpressionIntentBucket]
+  fabricSpecCombos: SPARK_SearchFabricSpecCombosPaged
+  files: [SPARK_Attachment]
+  teams: [SPARK_Team]
+  droppedPartnerIds: [ID]
+  businessPartners: [VMM_BusinessPartner]
+  sampleYardage: SPARK_SampleYardage
+  materialCategory: SPARK_Tag
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+  createdByPartnerId: ID
+  dpPartnerIds: [ID]
+}
+
+type SPARK_CombinationSourcePaged {
+  content: [SPARK_Combination],
+  paging: SPARK_Paging
+}
+
+type SPARK_ImpressionIntentBucket {
+  humanId: ID
+  parentComboId: String
+  impressionIntent: SPARK_CodeDescription
+  impressionIntentLines: [SPARK_ImpressionIntentLine]
+  relatedMaterialIds: [String]
+  relatedMaterials: SPARK_MaterialsPaged
+  proxyRelatedMaterials: SPARK_MaterialsPaged
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+}
+
+type SPARK_ImpressionIntentLine {
+  humanId: ID
+  merchVendorTeamId: String
+  merchVendorTeam: SPARK_TeamV2
+  proxyMerchVendorTeam: SPARK_TeamV2
+  countryOfProduction: SPARK_Tag
+  fabricSpecHumanId: String
+  fabricSpec: SPARK_FabricSpecification
+  readyToSample: SPARK_CodeDescription
+  fabricSupplierTeam: SPARK_TeamV2
+}
+
+type SPARK_ExportCombination {
+  workspaceId: String
+  requestId: String
+}
+
+type SPARK_SearchFabricSpecCombosPaged {
+  content: [SPARK_FabricSpecCombo]
+  paging: SPARK_Paging
+}
+
+type SPARK_FabricSpecCombo {
+  humanId: String
+  id: String
+  parentComboId: String
+  parentComboDescription: String
+  fabricId: String
+  fabricSpecId: String
+  fabricSpec: SPARK_FabricSpecification
+  fabricSpecForBom: SPARK_FabricSpecification
+  intentLineIds: [String]
+  status: String
+  sentToFpf: Boolean
+  createdBy: SPARK_UserProfileAttributes
+  updatedBy: SPARK_UserProfileAttributes
+  createdAt: String
+  updatedAt: String
+  relatedMaterials: SPARK_MaterialsPaged
+  asapColorApprovals: [Spark_AsapEvaluation]
+  proxyRelatedMaterials: SPARK_MaterialsPaged
+  parentCombo: SPARK_Combination
+  merchVendors: [VMM_BusinessPartner]
+  merchVendorTeams: [SPARK_TeamV2]
+  proxyMerchVendorTeams: [SPARK_TeamV2]
+  fabricSupplier: VMM_BusinessPartner
+  samples(query: String, page: Int, size: Int): SPARK_SearchSamplesPaged
+}
+
+type SPARK_SampleYardage {
+  numSamples: Int
+  fabricSpec: SPARK_FabricSpecification
+  material: SPARK_MaterialsPaged
+  proxyMaterial: SPARK_MaterialsPaged
+  merchVendors: [VMM_BusinessPartner]
+  notes: String
+}
+
+input SPARK_CombinationInput {
+  workspaceIds: [ID]
+  description: String
+  notes: String
+  designCycles: [ID]
+  department: SPARK_IdNameObject
+  division: SPARK_IdNameObject
+  clazz: SPARK_IdNameObject
+  tags: [ID]
+  brands: [SPARK_IdNameObject]
+  merchType: String
+  fabricRecordHumanId: ID
+  relatedMaterials: [SPARK_ComboRelatedMaterialsInput]
+  materialCategory: SPARK_IdNameObject
+  files: [ID]
+  teamsToAdd: [SPARK_TeamToAddInput]
+  teamsToRemove: [ID]
+  createdBy: ID
+  createdAt: String
+  impressionIntents: [Int]
+  fabricStatusId: Int
+}
+
+input SPARK_IdNameObject {
+  id: String
+  name: String
+}
+
+
+
+input SPARK_ComboRelatedMaterialsInput {
+  impressionIntent: Int
+  resourceId: String
+}
+
+input SPARK_UpdateCombinationInput {
+  workspaceIds: [ID]
+  humanId: ID!
+  description: String
+  status: String
+  notes: String
+  designCycles: [ID]
+  department: SPARK_IdNameObject
+  division: SPARK_IdNameObject
+  clazz: SPARK_IdNameObject
+  merchType: String
+  tags: [ID]
+  brands: [SPARK_IdNameObject]
+  materialCategory: SPARK_IdNameObject
+  teamsToAdd: [SPARK_TeamToAddInput]
+  sampleYardage: SPARK_SampleYardageInput
+  fabricRecordHumanId: ID
+  impressionIntents: [Int]
+  fabricStatusId: Int
+}
+
+input SPARK_UpdateCombinationInputBulk {
+  comboId: ID!
+  workspaceIds: [ID]
+  description: String
+  status: String
+  notes: String
+  designCycles: [ID]
+  department: SPARK_IdNameObject
+  division: SPARK_IdNameObject
+  clazz: SPARK_IdNameObject
+  merchType: String
+  tags: [ID]
+  brands: [SPARK_IdNameObject]
+  materialCategory: SPARK_IdNameObject
+  teamsToAdd: [SPARK_TeamToAddInput]
+  sampleYardage: SPARK_SampleYardageInput
+  impressionIntents: [Int]
+}
+
+input SPARK_BulkUpdateCombinationInput {
+  updateCombinationDtoList: [SPARK_UpdateCombinationInputBulk]
+  createImpressionIntentBucketDtoList: [SPARK_ImpressionIntentBucketInput]
+  updateImpressionIntentLineDtoList: [SPARK_UpdateImpressionIntentLineInput]
+}
+
+input SPARK_ImpressionIntentBucketInput {
+  parentComboId: String!
+  impressionIntent: Int!
+  relatedMaterials: [String]
+  createImpressionIntentLineDto: [SPARK_ImpressionIntentLineInput]
+}
+
+input SPARK_UpdateImpressionIntentBucketInput {
+  humanId: ID!
+  addMaterials: [String]
+  removeMaterials: [String]
+  teamsToAdd: [SPARK_TeamToAddInput]
+  teamsToRemove: [String]
+}
+
+input SPARK_ImpressionIntentLineInput {
+  merchVendorTeam: SPARK_TeamToAddInput
+  countryOfProduction: String
+  merchVendorId: ID
+  fabricSpecHumanId: String
+  fabricSupplierTeam: SPARK_TeamToAddInput
+  fabricSupplierId: ID
+}
+
+input SPARK_UpdateImpressionIntentLineInput {
+  lineHumanId: String
+  fabricSpecHumanId: String
+  merchVendorId: ID
+  fabricSupplierId: ID
+  countryOfProduction: String
+  fabricSupplierTeam: SPARK_TeamToAddInput
+  merchVendorTeam: SPARK_TeamToAddInput
+}
+
+input SPARK_UpdateImpressionIntentLineStatusInput {
+  readyToSample: Int
+}
+
+input SPARK_SampleYardageInput {
+  numSamples: Int
+  fabricSpec: String
+  material: String
+  merchVendors: [ID]
+  fabricSupplierId: ID
+  notes: String
+}

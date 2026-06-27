@@ -1,0 +1,80 @@
+
+
+extend type Query {
+  getUserGroups(ids: [String]!): [SPARK_UserGroup]
+  getUserGroup(id: String!): SPARK_UserGroup
+}
+
+extend type Mutation {
+  addUserGroup( userGroup:SPARK_UserGroupInput!):SPARK_UserGroup
+  updateUserGroup(userGroup:SPARK_UserGroupInput!):SPARK_UserGroup
+  updateUserGroups(userGroups:[SPARK_UserGroupInput!]):[SPARK_UserGroup]
+  addUserGroups(userGroups:[SPARK_UserGroupInput!]):[SPARK_UserGroup]
+}
+
+type SPARK_UserGroup {
+  resourceId: String
+  participantDetails: SPARK_UserGroup_Participants
+  createdBy: String
+  lastUpdatedBy: String
+  createdTS: String
+  updateTS: String
+}
+
+type SPARK_UserGroup_Participants {
+  teams: [SPARK_UserGroup_Team]
+  users: [SPARK_UserGroup_User]
+}
+
+type SPARK_UserGroup_Team {
+  teamId: String
+  edited: Boolean
+  teamName: String
+  partnerType: Int
+  businessPartner: VMM_BusinessPartner
+  usersInfo: [SPARK_UserGroup_User]
+}
+
+type SPARK_UserGroup_User {
+  roles: [Int]
+  userId: String
+  partnerId: ID
+  partnerType: Int
+  userDetails: SPARK_UserProfileAttributes
+  systemUser: Boolean
+}
+
+input SPARK_UserGroupInput {
+  resourceId: String
+  participantDetails: SPARK_UserGroup_Participants_Input
+  category: String
+  relatedResources: [String]
+}
+
+input SPARK_UserGroup_Participants_Input {
+  partnerId: [ID]
+  designPartnerId: [ID]
+  teams: [SPARK_UserGroup_Team_Input]
+  users: [SPARK_UserGroup_User_Input]
+}
+
+input SPARK_UserGroup_Team_Input {
+  teamId: String
+  edited: Boolean
+  teamName: String
+  isupdate: Boolean
+  usersInfo: [SPARK_UserGroup_User_Input]
+  businessPartnerId: ID
+  partnerType: Int
+}
+
+input SPARK_UserGroup_User_Input {
+  roles: [Int]
+  userId: String
+  partnerId: ID
+  partnerType: Int
+  systemUser: Boolean
+}
+
+
+

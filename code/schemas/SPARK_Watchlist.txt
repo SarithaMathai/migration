@@ -1,0 +1,98 @@
+extend type Query {
+  getWatchlistReasons: [SPARK_CodeDescription]
+  getWatchlistInspectionActions: [SPARK_WatchlistInspectionAction]
+  getWatchlistByIds(ids:[String!]): [SPARK_Watchlist]
+  getWatchlistByFilter(
+    q: String,
+    filter: [String],
+    workspaceId: ID!,
+    page: Int = 0,
+    size: Int = 100,
+  ): [SPARK_Watchlist]
+}
+
+extend type Mutation {
+  createWatchlistEntries(watchlistEntries: [SPARK_WatchlistInput!]!): [SPARK_Watchlist]
+  updateWatchlistEntries(watchlistEntries: [SPARK_WatchlistInput!]!): [SPARK_Watchlist]
+  cloneFilesForWatchlist(attachmentIds: [String], cloneReference: [WatchlistAttachmentCloneRef]): [SPARK_Attachment]
+}
+
+input WatchlistAttachmentCloneRef {
+  relatedResources: [String]
+  context: String
+}
+
+
+type SPARK_WatchlistInspectionAction {
+  code: Int!
+  description: String!
+  types: [String!]!
+}
+
+type SPARK_Watchlist {
+  humanId: String!
+  parentId: String!
+  workspaceContext: String
+  businessPartners: [SPARK_WatchlistPartner]
+  statusId: Int
+  reasonIds: [Int]
+  statusName: String
+  reasons: [String!]
+  otherReason: String
+  notes: String
+  inspections: [SPARK_WatchlistInspection]
+  attachments: [SPARK_SearchAttachment]
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  version: Int
+  workspaces: [SPARK_WorkspaceV2]
+  product: SPARK_Product
+  participantDetails: SPARK_UserGroup_Participants
+}
+
+type SPARK_WatchlistPartner {
+  partnerId: ID
+  partnerName: String
+  partnerType: Int
+  systemTeamId: String
+}
+
+type SPARK_WatchlistInspection {
+  id: String
+  actionId: Int
+  action: String!
+  type: String
+  instructions: String
+}
+
+input SPARK_WatchlistInput {
+  humanId: String
+  parentId: String!
+  workspaceContext: String
+  businessPartners: [SPARK_WatchlistPartnerInput]
+  statusId: Int
+  reasonIds: [Int]
+  otherReason: String
+  notes: String
+  inspections: [SPARK_WatchlistInspectionInput]
+  attachmentIds: [String!]
+  removedAttachmentIds: [String!]
+  participantDetails: SPARK_UserGroup_Participants_Input
+  relatedResources: [String!]
+}
+
+input SPARK_WatchlistPartnerInput {
+  partnerId: ID
+  partnerType: Int
+  systemTeamId: String
+}
+
+input SPARK_WatchlistInspectionInput {
+  id: String
+  actionId: Int
+  type: String
+  instructions: String
+  attachmentIds: [String!]
+}

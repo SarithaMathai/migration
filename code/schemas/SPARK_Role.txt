@@ -1,0 +1,12 @@
+extend type Query {
+  getRoles: SPARK_Roles
+}
+
+type SPARK_Roles {
+  roles: [SPARK_Role]
+}
+
+type SPARK_Role {
+  id: Int!
+  value: String!
+}

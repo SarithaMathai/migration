@@ -1,0 +1,42 @@
+extend type Query {
+  getAllRFIDDevices: [RFID_Device]
+  getAllRFIDSampleTags: [RFID_Tag]
+  getSampleLocationByRFIDorHumanId(sampleId: String, rfidId: String, locationDescription: String, deviceHostName: String): SPARK_SearchLocationsPaged
+}
+
+type SPARK_RFIDLastSeenLocation {
+  epc: String
+  locationDescription: String
+  lastSeen: String
+}
+
+type RFID_Device {
+  description: String
+  enabled: Boolean
+  hostName: String
+  lastClaimedAt:  String
+  lastClaimedBy: String
+  antennas: [RFID_Antenna]
+}
+
+type RFID_Tag {
+  antennaId: Int
+  deviceHostname: String
+  epc: String
+  lastSeen: String
+  locationDescription: String
+  createdAt: String
+  sampleDescription: String
+  relatedResources: [String]
+  sample: SPARK_SampleV2
+}
+
+type RFID_Antenna {
+  antennaId: Int
+  antennaDescription: String
+}
+
+type SPARK_SearchLocationsPaged {
+  content: [RFID_Tag]
+  paging: SPARK_Paging
+}

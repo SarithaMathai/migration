@@ -1,0 +1,7 @@
+extend type Query {
+  getRequestDetails: SPARK_RequestDetails
+}
+
+type SPARK_RequestDetails {
+  apiId: String
+}

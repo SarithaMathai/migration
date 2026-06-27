@@ -1,0 +1,70 @@
+extend type Query {
+    getBannerTypes: [SPARK_CodeDescription]
+    getBannerScopes: [SPARK_CodeDescription]
+    getActiveBanners: [SPARK_Banner]
+    searchBanners(ids: [String], levels: [String], platforms: [String], archived: Boolean, size: Int =200, page: Int): SPARK_Banner_Paged
+}
+
+extend type Mutation {
+    addSparkBanner(bannerInput: SPARK_BannerInput) : SPARK_Banner
+    updateSparkBanner(bannerInput: SPARK_BannerInput) : SPARK_Banner
+    archiveSparkBanner(id: ID!) : SPARK_Banner
+}
+
+type SPARK_Banner_Paged {
+    content: [SPARK_Banner]
+    paging: SPARK_Paging
+    pageable: SPARK_Pageable
+}
+type SPARK_Banner {
+  id: ID
+  level: SPARK_CodeDescription
+  scope: SPARK_CodeDescription
+  order: Int
+  header: String
+  message: String
+  metadata: SPARK_BannerMetadata
+  adminNotes: String
+  startAt: DateTime
+  endAt: DateTime
+  archived: Boolean
+  version: Int
+  platform: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedBy: SPARK_UserProfileAttributes
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type SPARK_BannerMetadata {
+  styles: [SPARK_KeyValue]
+}
+
+type SPARK_KeyValue {
+  key: String
+  value: String
+}
+
+input SPARK_BannerInput {
+  id: ID
+  level: Int!
+  scope: Int!
+  order: Int = 1
+  header: String
+  message: String
+  metadata: SPARK_BannerMetadataInput
+  adminNotes: String
+  startAt: DateTime!
+  endAt: DateTime
+  platform: String
+  archived: Boolean
+}
+
+input SPARK_BannerMetadataInput {
+  styles: [SPARK_KeyValueInput]
+}
+
+input SPARK_KeyValueInput {
+  key: String!
+  value: String!
+}

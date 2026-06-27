@@ -1,0 +1,74 @@
+extend type Query {
+  getSpecificationTemplates( page: Int!, size: Int!): SPARK_SpecificationTemplatesPaged
+  getSpecificationMasterData(type: String): [SPARK_CodeDescription]
+  getSpecificationTemplateById( id: ID!): SPARK_SpecificationTemplates
+  getProductDetailsCategorySection: [SPARK_ProductDetailsCategory]
+  getProductDetailsStatus: [SPARK_CodeDescription]
+
+}
+
+extend type Mutation {
+  createSpecificationTemplate(templateData: SPARK_SpecificationTemplateInput): SPARK_SpecificationTemplates
+  updateSpecificationTemplate(templateData: SPARK_SpecificationTemplateInput): SPARK_SpecificationTemplates
+  createCategoryAndSection(categorySectionInput: [SPARK_CategorySectionInput]): [SPARK_CategorySection]
+}
+
+type SPARK_SpecificationTemplatesPaged {
+  content: [SPARK_SpecificationTemplates]
+  pageable: SPARK_Pageable
+  paging: SPARK_Paging
+}
+
+type SPARK_ProductDetailsCategory {
+  code: Int
+  description: String
+  subCategories: [SPARK_CodeDescription]
+}
+
+type SPARK_CategorySection{
+  category: SPARK_Category
+}
+type SPARK_Category{
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  code: Int
+  description: String
+  subCategories: [SPARK_CodeDescription]
+}
+
+type SPARK_SpecificationTemplates {
+  category: SPARK_CodeDescription
+  status: SPARK_CodeDescription
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  critical: Boolean
+  detail: String
+  humanId: ID
+  subCategory: SPARK_CodeDescription
+  specialInstructions: String
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  version: Int
+  attachment: SPARK_Attachment
+}
+
+input SPARK_SpecificationTemplateInput {
+  categoryId: Int,
+  critical: Boolean,
+  detail: String,
+  subCategoryId: Int,
+  specialInstructions: String,
+  status: Int
+  humanId: ID
+  attachmentIds: [String]
+  deleteAttachmentIds: [String]
+}
+
+input SPARK_CategorySectionInput {
+  categoryName: String
+  subCategoryName: String
+  categoryId: String
+}
+

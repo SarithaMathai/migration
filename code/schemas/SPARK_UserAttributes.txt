@@ -1,0 +1,369 @@
+extend type Query {
+  getUserAttributes(id: ID!): SPARK_UserProfileAttributes
+  getUsers(
+    partnerId: [ID],
+    excludeIds: [String],
+    page: Int = 0,
+    size: Int = 20,
+    userProfileId: String,
+    uuid: [String],
+    name: String,
+    accreditation: [String],
+    onlyInternal: Boolean,
+    dpSecurity: Boolean
+    excludeInactive: Boolean
+    lanIds: [String]
+    ): SPARK_UserProfileAttributes_Paged
+  getAccreditationTypes(userType: String!): SPARK_AccreditationTypes
+  getUsersElasticSearch(
+    partnerId: [ID],
+    excludeIds: [String],
+    page: Int = 0,
+    size: Int = 20,
+    userProfileId: String,
+    q: String,
+    accreditation: [String]
+    accreditations: [String]
+    onlyInternal: Boolean
+    dpSecurity: Boolean
+    excludeInactive: Boolean
+    ): SPARK_UserProfileAttributes_Paged
+  getPartnersFromUserProfileBackup(
+    partnerIds: [ID]
+  ): [SPARK_BackupBusinessPartner]
+  getUserSettings: SPARK_User_Settings
+  getInsightsFavorites: SPARK_InsightsFavorites
+  getUserViews(ids: [String], resourceType: String): [SPARK_UserView]
+}
+
+extend type Mutation {
+  updateUserAttributes(
+    userAttributes: SPARK_UserProfileAttributesInput!
+  ): SPARK_UserProfileAttributes
+
+  deleteAllUserProfileDataForAPartner(
+    partnerId: ID!
+    resourceId: ID!
+    resourceType: String!
+    discussionIds: [ID]
+    sampleIds: [ID]
+  ): Boolean
+  addAccreditation( accreditationRoles:SPARK_AccreditationInput!
+  ):SPARK_UserProfileAttributes
+  updateDefaultPartnerAttributes(userDefaultPartnerAttributes: SPARK_UserDefaultPartnerAttributes!):SPARK_UserProfileAttributes
+  addUserSettings(userSettings: SPARK_User_Settings_Input!): SPARK_User_Settings
+  addInsightsFavorite(cardId: String!): SPARK_InsightsFavorites
+  deleteInsightsFavorite(cardId: String!): SPARK_InsightsFavorites
+  createUserView(userView: SPARK_UserViewInput!): SPARK_UserView
+  updateUserView(userView: SPARK_UserViewInput!): SPARK_UserView
+  manageUserViews(views: [SPARK_ManageUserViewInput]!, resourceType: String!): [SPARK_UserView]
+}
+
+input SPARK_UserViewColumnInput {
+  id: String,
+  enabled: Boolean
+}
+
+input SPARK_UserViewInput {
+  id: String,
+  resourceType: String,
+  order: Int,
+  name: String,
+  userProfileId: String,
+  columns: [SPARK_UserViewColumnInput]
+}
+
+input SPARK_ManageUserViewInput{
+  id: String,
+  name: String,
+  order: Int,
+  delete: Boolean
+}
+
+input SPARK_AccreditationInput {
+  userProfileId: String!,
+  accreditation: [String],
+  accreditations:[SPARK_Accreditations]
+}
+
+input SPARK_Accreditations {
+  type: String,
+  status: String,
+}
+
+input SPARK_UserDefaultPartnerAttributes {
+  currentVMMRole: Int
+  defaultRoleStatusDisabled: Boolean
+}
+
+input SPARK_UserProfileAttributesInput {
+  mailingAddress: String
+  primaryRole: Int
+  userProfileId: ID
+  accreditation:[String]
+  outOfOfficeAttributes: SPARK_UserOutOfOfficeAttributesInput
+  notificationAttributes: SPARK_UserNotificationAttributesInput
+  active: Boolean
+}
+
+input SPARK_UserOutOfOfficeAttributesInput {
+  oooFromDate: String
+  oooMessage: String
+  oooToDate: String
+  userOutOfOffice: Boolean
+}
+
+input SPARK_UserNotificationAttributesInput {
+  optedBatching: Boolean
+  optedOutNotifications: [String]
+}
+
+type SPARK_UserCodeDescription {
+  code: String
+  description: String
+  status: String
+}
+
+type SPARK_BackupBusinessPartner {
+  id: ID
+  name: String
+  partnerTypes: [SPARK_BackupBusinessPartnerType]
+}
+
+type SPARK_BackupBusinessPartnerType {
+  code: Int
+  description: String
+}
+
+type SPARK_UserViewColumn {
+  id: String,
+  enabled: Boolean
+}
+
+type SPARK_UserView {
+  id:  String,
+  resourceType: String,
+  name: String,
+  userProfileId: String,
+  columns: [SPARK_UserViewColumn]
+}
+
+type SPARK_UserProfileAttributes {
+  id: ID
+  userProfileId: ID
+  createdBy: String
+  lastUpdatedBy: String
+  createdDate: String
+  lastUpdatedDate: String
+  lanId: String
+  firstName: String
+  lastName: String
+  betaTester: Boolean
+  email: String
+  isInternal: Boolean
+  companyName: String
+  #Temporary Bandaid for UI, this Can Removed
+  #Deprecated
+  partnerId: ID
+  businessPartner: VMM_BusinessPartner
+  secondaryRoles: [Int]
+  roles:[SPARK_Role]
+  accreditation: [SPARK_UserCodeDescription] @deprecated(reason: "accreditation is deprecated. Use accreditations instead.")
+  accreditations: [SPARK_UserCodeDescription]
+  mailingAddress: String
+  primaryRole: Int
+  outOfOfficeAttributes: SPARK_UserOutOfOfficeAttributes
+  notificationAttributes: SPARK_UserNotificationAttributes
+  currentVMMRole: Int
+  defaultRoleStatusDisabled: Boolean
+  defaultPartnerTypeDetails: SPARK_UserCodeDescription
+  active: Boolean
+  activeInVmm: Boolean
+  notificationTypes: [String]
+  systemUser: Boolean
+}
+
+type SPARK_AccreditationTypes {
+  accredTypes: [SPARK_Accreditation]
+}
+
+type SPARK_Accreditation {
+  code: String
+  description: String
+  info: [String]
+}
+
+type SPARK_UserOutOfOfficeAttributes {
+  fromDate: String
+  message: String
+  toDate: String
+  userOutOfOffice: Boolean
+}
+
+type SPARK_UserNotificationAttributes {
+  optedOutNotifications: [String]
+  optedBatching: Boolean
+}
+
+type SPARK_UserProfileAttributes_Paged{
+  content:[SPARK_UserProfileAttributes]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_Participants {
+  teams: [SPARK_Snapshot_Team]
+  # no TeamId on users
+  # roles is now now in UserProfileAttributes
+  users: [SPARK_UserProfileAttributes]
+}
+
+type SPARK_Snapshot_Team {
+  teamId: String
+  edited: Boolean
+  teamName: String
+  partnerType: Int
+  businessPartner: VMM_BusinessPartner
+  users: [SPARK_UserProfileAttributes]
+}
+
+type SPARK_User_Settings {
+  userProfileId: String
+  filters: [SPARK_User_Filter_Category]
+  favoriteMaterialTypes: [String]
+  materialListCardView: Boolean
+  materialListView: MaterialTypeView
+  userDefaults: [SPARK_UserDefaults]
+  theme: String
+  betaTester: Boolean
+}
+
+type SPARK_UserDefaults {
+  category: String!
+  defaultOption: SPARK_UserDefaultOption
+}
+
+type SPARK_UserDefaultOption {
+  roleId: Int
+  sampleTypeId: Int
+  sampleFormatId: Int
+  sampleEvaluationPurposeIds: [Int!]
+}
+
+type SPARK_User_Filter_Category {
+  category: String!
+  name: String
+ filterOptions: Spark_User_Filters
+}
+
+type Spark_User_Filters {
+  divisions:[SPARK_User_Filter_Id_Label]
+  departments:[SPARK_User_Filter_Id_Label]
+  brands:[SPARK_User_Filter_Id_Label]
+  cycles:[SPARK_User_Filter_Id_Label]
+  dueDates:[SPARK_User_Filter_Id_Label]
+  workspaces: [SPARK_User_Filter_Id_Label]
+  tags:[SPARK_User_Filter_Id_Label]
+  businessPartners:[SPARK_User_Filter_Id_Label]
+  classes:[SPARK_User_Filter_Id_Label]
+  sampleTypes:[SPARK_User_Filter_Id_Label]
+  sampleFormats:[SPARK_User_Filter_Id_Label]
+  materialSampleTypes:[SPARK_User_Filter_Id_Label]
+  materialTypes:[SPARK_User_Filter_Id_Label]
+  suppliers:[SPARK_User_Filter_Id_Label]
+  materialDesignCycles:[SPARK_User_Filter_Id_Label]
+  materialBrands:[SPARK_User_Filter_Id_Label]
+  materialDepartments:[SPARK_User_Filter_Id_Label]
+  materialDivisions:[SPARK_User_Filter_Id_Label]
+  merchVendors:[SPARK_User_Filter_Id_Label]
+  pyramids:[SPARK_User_Filter_Id_Label]
+}
+
+type SPARK_User_Filter_Id_Label {
+  id: String
+  label: String
+  additionalFilters : [Spark_Insights_Additional_Filter_Params]
+}
+
+type Spark_Insights_Additional_Filter_Params {
+  id: String
+  label: [String]
+}
+
+type SPARK_InsightsFavorites {
+  cardIds: [String]
+}
+
+input SPARK_Participants_Input {
+  teams: [SPARK_Snapshot_Team_Input]
+  users: [SPARK_User_Input]
+}
+
+input SPARK_Snapshot_Team_Input {
+  teamId: String
+  edited: Boolean
+  teamName: String
+  isupdate: Boolean
+  businessPartnerId: ID
+  partnerType: Int
+  users: [SPARK_User_Input]
+  usersInfo: [SPARK_User_Input]
+}
+
+input SPARK_User_Input {
+  roles: [Int]
+  userId: String
+  partnerId: ID
+  partnerType: Int
+}
+
+input SPARK_User_Settings_Input {
+  filters: [SPARK_User_Filter_Category_Input]
+  favoriteMaterialTypes: [String]
+  materialListCardView: Boolean
+  materialListView: MaterialTypeView
+  theme: String
+  betaTester: Boolean
+}
+
+input SPARK_User_Filter_Category_Input {
+  category: String!
+  name: String
+  filterOptions: Spark_User_Filters_Input
+}
+
+input Spark_User_Filters_Input {
+  divisions:[SPARK_User_Filter_Id_Label_Input]
+  departments:[SPARK_User_Filter_Id_Label_Input]
+  brands:[SPARK_User_Filter_Id_Label_Input]
+  cycles:[SPARK_User_Filter_Id_Label_Input]
+  dueDates:[SPARK_User_Filter_Id_Label_Input]
+  workspaces: [SPARK_User_Filter_Id_Label_Input]
+  tags:[SPARK_User_Filter_Id_Label_Input]
+  businessPartners:[SPARK_User_Filter_Id_Label_Input]
+  classes:[SPARK_User_Filter_Id_Label_Input]
+  sampleTypes: [SPARK_User_Filter_Id_Label_Input]
+  sampleFormats: [SPARK_User_Filter_Id_Label_Input]
+  materialSampleTypes: [SPARK_User_Filter_Id_Label_Input]
+  materialTypes: [SPARK_User_Filter_Id_Label_Input]
+  suppliers:[SPARK_User_Filter_Id_Label_Input]
+  materialDesignCycles:[SPARK_User_Filter_Id_Label_Input]
+  materialBrands:[SPARK_User_Filter_Id_Label_Input]
+  materialDepartments:[SPARK_User_Filter_Id_Label_Input]
+  materialDivisions:[SPARK_User_Filter_Id_Label_Input]
+  merchVendors:[SPARK_User_Filter_Id_Label_Input]
+  pyramids:[SPARK_User_Filter_Id_Label_Input]
+}
+
+input SPARK_User_Filter_Id_Label_Input {
+  id: String!
+  label: String!
+  additionalFilters : [Spark_Greenfield_Additional_Filter_Params]
+}
+
+enum MaterialTypeView {
+  LIST,
+  SMALL_CARD,
+  EXTRA_SMALL_CARD
+  LARGE_CARD
+}

@@ -1,0 +1,66 @@
+# Program-level machine-readable index — all domains. Pipeline 2.0 · generated 2026-06-26.
+# Points at each domain's per-story index. Feed to Jira MCP (epics + stories) / Confluence rollup.
+program: "Spark GraphQL → Federated GraphQL migration"
+target_dgs: plm-product
+pipeline_version: "2.0"
+source_of_truth: "../code (schema SDL in code/schemas/SPARK_{Domain}.txt + resolver + service + utils; no context.js config)"
+acl_policy: "ACL ignored in implementation; current-impl ACL usage noted as context only"
+estimates: "AI-estimated; confirm in refinement. Stories carry complexity only (no day-ranges)."
+domains:
+  - key: impression
+    epic: "Impression → plm-product DGS migration"
+    stories: 11
+    index: impression/04-stories-index.yaml
+    risk: lowest
+    recommended_order: 1
+  - key: productDetails
+    epic: "ProductDetails → plm-product DGS migration"
+    stories: 17
+    index: productDetails/04-stories-index.yaml
+    risk: mid-low (one multi-step write)
+    recommended_order: 2
+  - key: measurement
+    epic: "Measurement → plm-product DGS migration"
+    stories: 24
+    index: measurement/04-stories-index.yaml
+    risk: mid-low
+    recommended_order: 3
+  - key: claims
+    epic: "Claims → claims DGS migration"
+    stories: 24
+    index: claims/04-stories-index.yaml
+    target_dgs: spark-claims
+    risk: mid (separate subgraph; proxy-ACL update)
+    recommended_order: 4
+  - key: packaging
+    epic: "Packaging → plm-product DGS migration"
+    stories: 28
+    index: packaging/04-stories-index.yaml
+    risk: mid (wide schema; multi-step write + pricing chain)
+    recommended_order: 5
+  - key: bom
+    epic: "BOM → plm-product DGS migration"
+    stories: 42
+    index: bom/04-stories-index.yaml
+    risk: mid (polymorphism + 3-step write)
+    recommended_order: 6
+  - key: product
+    epic: "Product → plm-product DGS migration"
+    stories: 72
+    index: product/04-stories-index.yaml
+    risk: highest (TechPack + host DGS)
+    recommended_order: 7
+totals:
+  domains: 7
+  stories: 218
+  by_complexity: { Low: 121, Medium: 78, High: 13, "Very High": 6 }
+artifacts_per_domain:
+  - 01-schema-inventory.md      # tech lead
+  - 02-resolver-analysis.md     # engineers (implementation spec)
+  - 03-schema.graphql           # architects (derived target schema)
+  - 03-schema-analysis.md       # architects + Confluence approach page
+  - 04-stories.md               # engineers (Jira-ready, junior-executable)
+  - 04-stories-index.yaml       # Jira MCP bulk-create
+  - 04-po-summary.md            # PO sprint plan (Confluence)
+  - 05-attribute-inventory.md   # field-level inventory (Confluence)
+scripts: scripts/   # updated framework (snapshot-adapted; one-op-per-story; YAML+index; complexity-only; ACL-context)

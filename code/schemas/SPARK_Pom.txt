@@ -1,0 +1,49 @@
+extend type Query {
+  getPomByIds(ids:[SPARK_VersionableIdInput]!): [SPARK_Pom]
+  getPoms(page:Int!,size:Int!, q: String, sort: String): SPARK_PomsPaged
+  getSections: [SPARK_SectionCodeDescription]
+  getPomStatus: [SPARK_CodeDescription]
+}
+
+extend type Mutation{
+  addPom(pomInput:SPARK_PomInput): SPARK_Pom
+  updatePom(pomInput:SPARK_PomInput): SPARK_Pom
+}
+
+input SPARK_PomInput {
+  #Dont make this is as Required as backend doesnt need this value
+  pomId:ID
+  critical:Boolean
+  pomName: String
+  referenceId: String
+  sectionId: Int
+  specialInstructions:String
+  statusId: Int
+  version: Int
+}
+
+type SPARK_PomsPaged{
+  content:[SPARK_Pom]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_Pom {
+  createdAt:DateTime
+  createdBy: SPARK_UserProfileAttributes
+  critical: Boolean
+  pomId: ID
+  pomName: String
+  referenceId: String
+  section: SPARK_CodeDescription
+  specialInstructions: String
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  version: Int
+  status: SPARK_CodeDescription
+}
+
+type SPARK_SectionCodeDescription {
+  code: Int!
+  description: String
+}

@@ -1,0 +1,155 @@
+extend type Query {
+  searchAssortmentPlanByDeptId(deptId: ID!): [APEX_Product_Plan]
+  searchPotentialItemByPlanId(planId: ID!): ASSORTMENT_LINES
+  searchItemsFromApex(searchRequest: APEX_ItemsSearchRequestInput!): APEX_ITEMS_PAGE
+}
+
+input APEX_ItemsSearchRequestInput {
+  bpId: [Int]
+  page: Int
+  perPage: Int
+  sortRequest: [APEX_ItemsSortRequestInput]
+  filterRequest: [APEX_ItemsFilterRequestInput]
+}
+
+input APEX_ItemsSortRequestInput {
+  field: String!
+  direction: String!
+}
+
+input APEX_ItemsFilterRequestInput {
+  field: String!
+  operator: String!
+  values: [JSON]
+}
+
+type APEX_Product_Plan {
+  count: Int
+  name : String
+  planId: String
+}
+type ASSORTMENT_LINES {
+  count: Int
+  page: Int
+  perPage: Int
+  values : [ASSORTMENT_POTENTIAL_ITEMS]
+}
+
+type APEX_ITEMS_PAGE {
+  count: Int
+  page: Int
+  perPage: Int
+  values: [APEX_ITEMS_VALUE]
+}
+
+type APEX_ITEMS_VALUE {
+  item: ASSORTMENT_SECTION_ITEM
+}
+
+type ASSORTMENT_POTENTIAL_ITEMS {
+  planId: String
+  planName: String
+  id : ID
+  apexId: String
+  deleted: Boolean
+  sectionData: ASSORTMENT_SECTION
+}
+
+type ASSORTMENT_SECTION {
+  item:ASSORTMENT_SECTION_ITEM
+}
+
+type ASSORTMENT_SECTION_ITEM {
+  pid: String
+  dept: Int
+  dpci: String
+  item: Int
+  size: String
+  tcin: Int
+  brand: String
+  clazz: Int
+  color: String
+  bundles: String
+  pattern: String
+  quarter: Int
+  sizeId: Int
+  brandId: Int
+  colorId: Int
+  comments: String
+  indexing: String
+  subclass: Int
+  deptName: String
+  ownedDvs: String
+  vapColor: String
+  brandType: String
+  cmsNumber: String
+  patternId: Int
+  pyramidId: Int
+  description: String
+  masterDpci: String
+  streetDate: String
+  subtypeMta: String
+  colorFamily: String
+  itemTypeId: Int
+  programName: String
+  programWeek: String
+  prop65Flag: String
+  pyramidName: String
+  vapGroupId: String
+  barCodeType: String
+  merchTypeId: Int
+  noImpression: Int
+  productTitle: String
+  returnMethod: String
+  salesRanking: String
+  sellableDpci: String
+  sizeTableId: String
+  sourcingMode: String
+  subclassName: String
+  effectiveDate: String
+  itemTypeName: String
+  likeItemDpci: String
+  likeItemTcin: Int
+  patternFamily: String
+  storeSetDate: String
+  subtypeMtaId: String
+  assortmentType: String
+  colorFamilyId: Int
+  impressionName: String
+  likeItemClass: Int
+  merchTypeName: String
+  numberOfSizes: Int
+  sellingChannel: String
+  upcOrBarCode: String
+  variationParent: Int
+  developmentCycle: Int
+  impressionIntent: String
+  itemStatusValue: String
+  lineReviewNotes: String
+  maxPreOrderQty: Int
+  patternFamilyId: Int
+  presentationType: String
+  subtypeMtaValue: String
+  masterGroupingId: String
+  vendorDescription: String
+  availableShipDate: String
+  digitalLaunchDate: String
+  vendorStyleNumber: String
+  assortedGroupingId: String
+  brandClassification: String
+  guestPurchaseLimit: Int
+  likeItemDepartment: Int
+  subtypeMtaValueId: String
+  likeItemDescription: String
+  likeItemItemNumber: Int
+  nonRetailDisplayId: String
+  storeNumberOfWeeks: Int
+  productClassification: String
+  digitalNumberOfWeeks: Int
+  nonRetailDisplayName: String
+  storeEstMarkdownDate: String
+  digitalEstMarkdownDate: String
+  purchaseLimitStartDate: String
+  enterpriseNumberOfWeeks: Int
+  masterGroupingDescription: String
+}

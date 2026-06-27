@@ -1,0 +1,988 @@
+extend type Query {
+  getBomByIds(ids:[String!]): [SPARK_Bom]
+  getBomDataV2(ids:[String!]): [SPARK_Bom_Unified]
+  getBomStatus: [SPARK_CodeDescription]
+  getBomByParentId(parentId:String!): SPARK_BomPaged
+  getBomMaterialTypes(ids: [String]): [SPARK_BomMaterialType]
+  getBomPackagingMaterialTypes: [SPARK_BomMaterialType]
+  getBomPackagingSubstrates: [SPARK_BomPackagingSubstrate]
+  getBomPackagingUnitOfMeasure: [SPARK_UnitsOfMeasure]
+  getBomElastic(q: String!): [SPARK_Bom]
+  searchMaterialsBom(searchString: String,
+    materialType: String,
+    partnerIds: [ID],
+    internalOnly: Boolean,
+    excludedTypes: [String],
+    size: Int = 20,
+    sortField: String
+    sortDirection: SPARK_SortDirection
+    nestedSearchFilters: [SPARK_MaterialNestedSearchFilter]
+  ): SPARK_BomMaterialSearch
+  getComboSupplierForBom(comboId: String, partnerIds: [ID]): [SPARK_BomComboSupplier]
+  getValidTrimSuppliersForBom(merchVendorIds: [ID]): [Int]
+  getValidRawMaterialSuppliersForBom(merchVendorIds: [ID]): [Int]
+}
+
+extend type Mutation {
+  addBom(sparkBom: SPARK_BomInput): SPARK_Bom
+  updateBom(sparkBom: SPARK_UpdateBomInput): SPARK_Bom
+  manageBomWorkspaces(bomId: ID, workspacesToAdd: [ID], workspacesToRemove: [ID]): SPARK_Bom
+  lockBom(bomId: String!): SPARK_Bom
+  unlockBom(bomId: String!): SPARK_Bom
+  updateBomComponentStatus(productId: String!, ids: [String], status: SPARK_ComponentStatusInput): SPARK_BomPaged
+}
+
+type SPARK_BomPaged {
+  content: [SPARK_Bom]
+}
+
+type SPARK_Bom {
+  access: SPARK_AccessControl
+  businessPartners: [VMM_BusinessPartner]
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  humanId: String
+  parentId: String
+  product: SPARK_Product
+  name: String
+  notes: String
+  status: SPARK_CodeDescription
+  statuses: [ProductComponentStatus]
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  currentUserPermissions: SPARK_ResourcePermissions
+  groupMode: SPARK_CodeDescription
+  sections: [SPARK_BomSection]
+  materials: [SPARK_BomMaterialInterface]
+  workspaces: [SPARK_WorkspaceV2]
+  workspaceContext: [ID]
+  libraryLinked: Boolean
+  manualLock: Boolean
+  version: Int
+  participantDetails: SPARK_UserGroup_Participants
+  selectedProductImpressionIds: [String]
+  archived: Boolean
+  bomType: Int
+  type: SPARK_CodeDescription
+  bomBaseType: SPARK_Bom_Type
+}
+
+type SPARK_Bom_Type {
+  type: Int
+}
+
+type SPARK_Bom_Unified {
+  access: SPARK_AccessControl
+  businessPartners: [VMM_BusinessPartner]
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  humanId: String
+  parentId: String
+  product: SPARK_Product
+  name: String
+  notes: String
+  status: SPARK_CodeDescription
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  currentUserPermissions: SPARK_ResourcePermissions
+  groupMode: SPARK_CodeDescription
+  sections: [SPARK_BomSection]
+  workspaces: [SPARK_WorkspaceV2]
+  workspaceContext: [ID]
+  libraryLinked: Boolean
+  manualLock: Boolean
+  version: Int
+  materials: [SPARK_BomMaterial_Unified]
+  participantDetails: SPARK_UserGroup_Participants
+}
+
+type SPARK_BomMaterial_Unified {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  supplierName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  recycledContent: Float
+  genericMaterialType: String
+  libraryResourceId: String
+  libraryResource: SPARK_BomMaterial_Library_Unified
+  impressionDetails: [SPARK_BomImpressionDetails_Unified]
+
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+
+  laundryId: String
+  laundryName: String
+
+  supplierId: String
+  facilityId: String
+  facilityName: String
+  librarySizeId: Int
+
+  trimType: SPARK_CodeDescription
+  trimSubType: [SPARK_CodeDescription]
+  materialLibraryUom: SPARK_CodeDescription
+  sizeValue: String
+  sizeCaption: SPARK_BomSizeCaption
+
+  substrateType: SPARK_CodeDescription
+  packagingFormat: SPARK_CodeDescription
+  orderCode: String
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  emptyPackageWeight: Float
+  postIndustrialRecycledContentPercentage: Float
+}
+
+type SPARK_BomMaterial_Library_Unified {
+  humanId: String
+  description: String
+
+  trimSizes: [SPARK_TrimSize]
+  thumbnailId: String
+
+  # Color and Finish Section
+  colors: [SPARK_TrimColorRow]
+  finishes: [SPARK_TrimFinishRow]
+
+  # Supplier tab
+  suppliers: [SPARK_TrimSupplier]
+  recycledContent: Boolean
+}
+
+type SPARK_BomImpressionDetails_Unified {
+  id: String
+  type: Int
+  libraryResource(ids:[String!]): SPARK_Material
+  description: String
+
+  # trim impression fields
+  finishId: Int
+  finishRowId: String
+  colorRowId: String
+  rowId: String
+  dyedToMatch: Boolean
+
+  # trim label impression fields
+  groundColor: SPARK_Material
+  textColor: SPARK_Material
+  textColorDyedToMatch: Boolean
+  groundColorDyedToMatch: Boolean
+  groundColorAvailable: Boolean
+  textColorAvailable: Boolean
+
+  # trim zipper impression fields
+  sliderColorRowId: String
+  sliderFinishRowId: String
+  tapeColorRowId: String
+  teethColorRowId: String
+  teethFinishRowId: String
+  sliderColorDyedToMatch: Boolean
+  tapeColorDyedToMatch: Boolean
+  teethColorDyedToMatch: Boolean
+  sliderColor: SPARK_Material
+  tapeColor: SPARK_Material
+  teethColor: SPARK_Material
+  sliderColorAvailable: Boolean
+  tapeColorAvailable: Boolean
+  teethColorAvailable: Boolean
+  libraryResourceAvailable: Boolean
+
+  # wash impression fields
+  applies: Boolean
+}
+
+input SPARK_BomInput {
+  name: String!
+  notes: String
+  parentId: String!
+  groupModeId: Int
+  sections: [SPARK_BomSectionInput]
+  materials: [SPARK_BomMaterialInput]
+  businessPartners: [SPARK_BomPartnerInput]
+  workspaceContext: [ID]
+  participantDetails: SPARK_UserGroup_Participants_Input
+  selectedProductImpressionIds: [String]
+  bomType: Int
+  bomBaseType: SPARK_BomBaseTypeInput
+}
+
+type SPARK_BomComboSupplier {
+  fabricSupplier: SPARK_BomComboFabricSupplier
+  fabricSpecCombo: SPARK_FabricSpecCombo
+}
+
+type SPARK_BomComboFabricSupplier {
+  id: String
+  name: String
+}
+
+input SPARK_BomBaseTypeInput {
+  type: Int
+}
+
+input SPARK_UpdateBomInput {
+  humanId: String
+  name: String!
+  notes: String
+  groupModeId: Int
+  sections: [SPARK_BomSectionInput]
+  materials: [SPARK_BomMaterialInput]
+  statusId: Int
+  businessPartners: [SPARK_BomPartnerInput]
+  workspaceContext: SPARK_PartialWorkspaceAssociationsInput
+  selectedProductImpressionIds: [String]
+  statuses: [WorkspaceStatusPairInput]
+  bomType: Int
+}
+
+input SPARK_BomPartnerInput {
+  partnerId: ID
+  partnerType: Int
+  systemTeamId: String
+}
+
+input SPARK_BomSectionInput {
+  id: String
+  description: String
+}
+
+type SPARK_BomSection {
+  id: String
+  description: String
+}
+
+type SPARK_TcinDpci {
+  tcin: String
+  dpci: String
+}
+
+input SPARK_TcinDpciInput {
+  tcin: String
+  dpci: String
+}
+
+input SPARK_BomMaterialInput {
+  rowId: String
+  description: String!
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUomId: Int
+  supplierName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  librarySizeId: Int
+  sizeUomId: Int
+  materialLibraryUomId: Int
+  sectionId: String
+  sectionName: String
+  materialCategoryId: Int
+  impressionDetails: [SPARK_BomImpressionDetailsInput]
+  libraryResource: SPARK_MaterialLibraryInput
+  recycledContent: Float
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+  yieldConsumption: Float
+  yieldConsumptionUomId: Int
+  cuttableWidth: Float
+  parentRowId: String
+  isParent: Boolean
+  parentLibraryResourceId: String
+  level: Int
+
+  #trim fields
+  supplierId: ID
+  facilityId: String
+  facilityName: String
+
+  #wash fields
+  laundryId: String
+  laundryName: String
+
+  #generic fields
+  genericMaterialType: String
+  origins: [SPARK_MaterialOriginInput!]
+  certifications: [Int]
+  originsUserOverride: Boolean
+  certificationsUserOverride: Boolean
+  weightUserOverride: Boolean
+  sizeUserOverride: Boolean
+
+  substrateTypeId: Int
+  packagingFormatId: Int
+  orderCode: String
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpciInput]
+  emptyPackageWeight: Float
+  postIndustrialRecycledContentPercentage: Float
+  countryOfOriginIds: [String]
+
+  weight: Float
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+}
+
+interface SPARK_BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  supplierId: String
+  supplierName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  recycledContent: Float
+  genericMaterialType: String
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+  isParent: Boolean
+  parentRowId: String
+  level: Int
+  countryOfOrigin: [SPARK_Tag]
+
+  weight: SPARK_ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: SPARK_CodeDescription
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: SPARK_CodeDescription
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: SPARK_CodeDescription
+}
+
+type SPARK_BomMaterial implements SPARK_BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  supplierId: String
+  supplierName: String
+  facilityId: String
+  facilityName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  genericMaterialType: String
+  impressionDetails: [SPARK_BomImpressionDetailsInterface]
+  recycledContent: Float
+  libraryResourceId: String
+  libraryResource: SPARK_HubMaterialInterface
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+
+  yieldConsumption: Float
+  yieldConsumptionUom: SPARK_CodeDescription
+  cuttableWidth: Float
+  weightUserOverride: Boolean
+  sizeUnitOfMeasure: SPARK_UnitOfMeasure
+  sizeUserOverride: Boolean
+  origins: [SPARK_MaterialOrigin!]
+  certifications: [SPARK_CodeDescription]
+  originsUserOverride: Boolean
+  certificationsUserOverride: Boolean
+  parentRowId: String
+  isParent: Boolean
+  parentLibraryResourceId: String
+  level: Int
+  countryOfOrigin: [SPARK_Tag]
+
+  weight: SPARK_ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: SPARK_CodeDescription
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: SPARK_CodeDescription
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: SPARK_CodeDescription
+}
+
+type SPARK_BomFabricMaterial implements SPARK_BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  supplierId: String
+  supplierName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  genericMaterialType: String
+  impressionDetails: [SPARK_BomImpressionDetailsInterface]
+  recycledContent: Float
+  # fabric specific fields
+  libraryResourceId: String
+  libraryResource: SPARK_FabricSpecCombo
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+  yieldConsumption: Float
+  yieldConsumptionUom: SPARK_CodeDescription
+  cuttableWidth: Float
+  parentRowId: String
+  isParent: Boolean
+  level: Int
+  countryOfOrigin: [SPARK_Tag]
+
+  weight: SPARK_ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: SPARK_CodeDescription
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: SPARK_CodeDescription
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: SPARK_CodeDescription
+}
+
+type SPARK_BomFabricSpecMaterial implements SPARK_BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  componentLocation: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  genericMaterialType: String
+  recycledContent: Float
+  supplierId: String
+  supplierName: String
+  supplierArticleNumber: String
+  impressionDetails: [SPARK_BomBaseImpressionDetails]
+  # combo specific fields
+  libraryResourceId: String
+  libraryResource: SPARK_FabricSpecification
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+  yieldConsumption: Float
+  yieldConsumptionUom: SPARK_CodeDescription
+  cuttableWidth: Float
+  parentRowId: String
+  isParent: Boolean
+  level: Int
+  countryOfOrigin: [SPARK_Tag]
+
+  weight: SPARK_ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: SPARK_CodeDescription
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: SPARK_CodeDescription
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: SPARK_CodeDescription
+}
+
+type SPARK_BomCombinationMaterial implements SPARK_BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  componentLocation: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  genericMaterialType: String
+  recycledContent: Float
+  supplierId: String
+  supplierName: String
+  supplierArticleNumber: String
+  # combo specific fields
+  libraryResourceId: String
+  libraryResource: SPARK_Combination
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+  yieldConsumption: Float
+  yieldConsumptionUom: SPARK_CodeDescription
+  cuttableWidth: Float
+  parentRowId: String
+  isParent: Boolean
+  level: Int
+  countryOfOrigin: [SPARK_Tag]
+
+  weight: SPARK_ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: SPARK_CodeDescription
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: SPARK_CodeDescription
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: SPARK_CodeDescription
+}
+
+type SPARK_BomTrimMaterial implements SPARK_BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  supplierId: String
+  supplierName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  genericMaterialType: String
+  impressionDetails: [SPARK_BomImpressionDetailsInterface]
+  recycledContent: Float
+  # trim specific fields
+  libraryResourceId: String
+  libraryResource: SPARK_Trim
+  materialLibraryUom: SPARK_CodeDescription
+  facilityId: String
+  facilityName: String
+  librarySizeId: Int
+  sizeValue: String
+  sizeCaption: SPARK_BomSizeCaption
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+
+  yieldConsumption: Float
+  yieldConsumptionUom: SPARK_CodeDescription
+  cuttableWidth: Float
+  parentRowId: String
+  isParent: Boolean
+  level: Int
+  countryOfOrigin: [SPARK_Tag]
+
+  weight: SPARK_ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: SPARK_CodeDescription
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: SPARK_CodeDescription
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: SPARK_CodeDescription
+}
+
+type SPARK_BomSizeCaption {
+  edit: String
+  view: String
+}
+
+type SPARK_BomWashMaterial implements SPARK_BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  supplierId: String
+  supplierName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  materialLibraryUom: SPARK_CodeDescription
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  genericMaterialType: String
+  impressionDetails: [SPARK_BomImpressionDetailsInterface]
+  recycledContent: Float
+  # wash specific fields
+  libraryResourceId: String
+  libraryResource: SPARK_Wash
+  laundryId: String
+  laundryName: String
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+  yieldConsumption: Float
+  yieldConsumptionUom: SPARK_CodeDescription
+  cuttableWidth: Float
+  parentRowId: String
+  isParent: Boolean
+  level: Int
+  countryOfOrigin: [SPARK_Tag]
+
+  weight: SPARK_ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: SPARK_CodeDescription
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: SPARK_CodeDescription
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: SPARK_CodeDescription
+}
+
+type SPARK_BomPackagingMaterial implements SPARK_BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: SPARK_UnitsOfMeasure
+  supplierId: String
+  supplierName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  sizeUom: SPARK_UnitsOfMeasure
+  sectionId: String
+  materialCategory: SPARK_BomMaterialType
+  sectionName: String
+  recycledContent: Float
+  genericMaterialType: String
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+  defaultTcin: Boolean
+  impressionDetails: [SPARK_BomImpressionDetailsInterface]
+
+  # packaging specific fields
+  substrateType: SPARK_CodeDescription
+  packagingFormat: SPARK_CodeDescription
+  orderCode: String
+  tcinIds: [String]
+  tcinDpcis: [SPARK_TcinDpci]
+  emptyPackageWeight: Float
+  postIndustrialRecycledContentPercentage: Float
+  parentRowId: String
+  isParent: Boolean
+  level: Int
+  countryOfOrigin: [SPARK_Tag]
+
+  weight: SPARK_ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: SPARK_CodeDescription
+
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: SPARK_CodeDescription
+
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: SPARK_CodeDescription
+}
+
+input SPARK_BomImpressionDetailsInput {
+  id: String
+  type: Int
+  libraryResource: SPARK_MaterialLibraryInput
+  description: String
+
+  # trim impression fields
+  finishId: Int
+  finishRowId: String
+  colorRowId: String
+  rowId: String
+  dyedToMatch: Boolean
+
+  # trim label impression fields
+  groundColor: SPARK_MaterialLibraryInput
+  textColor: SPARK_MaterialLibraryInput
+  textColorDyedToMatch: Boolean
+  groundColorDyedToMatch: Boolean
+  groundColorAvailable: Boolean
+  textColorAvailable: Boolean
+  groundFinishRowId: String
+  groundColorRowId: String
+  textFinishRowId: String
+  textColorRowId: String
+
+  # trim zipper impression fields
+  sliderColorRowId: String
+  sliderFinishRowId: String
+  tapeColorRowId: String
+  teethColorRowId: String
+  teethFinishRowId: String
+  sliderColorDyedToMatch: Boolean
+  tapeColorDyedToMatch: Boolean
+  teethColorDyedToMatch: Boolean
+  sliderColor: SPARK_MaterialLibraryInput
+  tapeColor: SPARK_MaterialLibraryInput
+  teethColor: SPARK_MaterialLibraryInput
+  sliderColorAvailable: Boolean
+  tapeColorAvailable: Boolean
+  teethColorAvailable: Boolean
+  libraryResourceAvailable: Boolean
+
+  # wash impression fields
+  applies: Boolean
+}
+
+interface SPARK_BomImpressionDetailsInterface {
+  id: String
+  type: Int
+}
+
+type SPARK_BomBaseImpressionDetails implements SPARK_BomImpressionDetailsInterface {
+  id: String
+  type: Int
+  description: String
+}
+
+type SPARK_BomFabricLibraryImpressionDetails implements SPARK_BomImpressionDetailsInterface {
+  id: String
+  type: Int
+  libraryResource(ids:[String!]): SPARK_Material
+  description: String
+}
+
+type SPARK_BomTrimLibraryImpressionDetails implements SPARK_BomImpressionDetailsInterface {
+  id: String
+  type: Int
+  libraryResource(ids:[String!]): SPARK_Material
+  finishId: Int
+  finishRowId: String
+  colorRowId: String
+  rowId: String
+  dyedToMatch: Boolean
+  groundFinishRowId: String
+  groundColorRowId: String
+  textFinishRowId: String
+  textColorRowId: String
+  textColor: SPARK_Material
+  groundColor: SPARK_Material
+  textColorDyedToMatch: Boolean
+  groundColorDyedToMatch: Boolean
+  groundColorAvailable: Boolean
+  textColorAvailable: Boolean
+}
+
+type SPARK_BomTrimZipperLibraryImpressionDetails implements SPARK_BomImpressionDetailsInterface {
+  id: String
+  type: Int
+  sliderColorRowId: String
+  sliderFinishRowId: String
+  tapeColorRowId: String
+  teethColorRowId: String
+  teethFinishRowId: String
+  sliderColorDyedToMatch: Boolean
+  tapeColorDyedToMatch: Boolean
+  teethColorDyedToMatch: Boolean
+  sliderColor: SPARK_Material
+  tapeColor: SPARK_Material
+  teethColor: SPARK_Material
+  sliderColorAvailable: Boolean
+  tapeColorAvailable: Boolean
+  teethColorAvailable: Boolean
+  libraryResourceAvailable: Boolean
+}
+
+type SPARK_BomWashLibraryImpressionDetails implements SPARK_BomImpressionDetailsInterface {
+  id: String
+  type: Int
+  applies: Boolean
+}
+
+input SPARK_MaterialLibraryInput {
+  id: String
+}
+
+type SPARK_LibraryMaterial {
+  id: String
+}
+
+type SPARK_BomMaterialType {
+  id: String
+  code: Int
+  bomType: SPARK_CodeDescription
+  description: String
+  libraryLink: Boolean
+  freeText: Boolean
+}
+
+type SPARK_BomPackagingSubstrate {
+  description: String
+  code: Int
+  materialType: SPARK_BomMaterialType
+}
+
+type SPARK_BomMaterialSearch {
+  content: [SPARK_BomMaterialSearchResult]
+  paging: SPARK_Paging
+}
+
+type SPARK_BomMaterialSearchResult {
+  id: String
+  type: String
+  description: String
+  thumbnailId: String
+  status: String
+
+  # trim
+  tgtCode: String
+  targetSourced: Boolean
+  targetBranded: Boolean
+  longLeadTime: Boolean
+  trimType: SPARK_CodeDescription
+  brand: SPARK_CodeDescription
+  additionalInfo: String
+  trimSubType: [Int]
+  gvs: Boolean
+
+  # Hub Material Fields
+  baseMaterial: SPARK_BaseMaterial
+
+  # fabric spec combo
+  fabricId: String
+  fabricSpecId: String
+  parentComboId: String
+  parentComboDescription: String
+  fabricSpec: SPARK_FabricSpecification
+  relatedMaterials: SPARK_MaterialsPaged
+  fabric: SPARK_Fabric
+
+  #fabric spec
+  parentHumanId: String
+}

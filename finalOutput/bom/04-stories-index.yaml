@@ -1,0 +1,56 @@
+# Machine-readable story index for BOM — feed to Jira MCP (bulk create) / Confluence rollup.
+# One entry per story in 04-stories.md. complexity = Low|Medium|High|Very High (no day-ranges).
+domain: bom
+target_dgs: plm-product
+epic: "BOM → plm-product DGS migration"
+labels_common: [dgs-migration, bom]
+generated: 2026-06-26
+pipeline_version: "2.0"
+acl_policy: "ACL ignored in implementation; current-impl ACL usage noted as context only"
+stories:
+  - { id: SPARK-BOM-A01, summary: "Schema skeleton + DGS module + DateTime scalar", phase: A, category: CAT-1, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-A02, summary: "Define all owned BOM types + inputs", phase: A, category: CAT-1, complexity: Medium, depends_on: [SPARK-BOM-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-A03, summary: "Add external stubs (platform + sibling DGS)", phase: A, category: CAT-1, complexity: Low, depends_on: [SPARK-BOM-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-A04, summary: "@DgsTypeResolver for the 2 BOM interfaces (7+5 impls)", phase: A, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A02], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-A05, summary: "BomService Kotlin port (17 REST methods)", phase: A, category: CAT-3, complexity: Medium, depends_on: [SPARK-BOM-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-B01, summary: "getBomByIds data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A02, SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-B02, summary: "getBomDataV2 data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A02, SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-B03, summary: "getBomStatus (cacheable master data)", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-B04, summary: "getBomByParentId data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-B05, summary: "getBomMaterialTypes (merge with Material Hub)", phase: B, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A05], ext_services: [{key: materialHub, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-BOM-B06, summary: "getBomPackagingMaterialTypes (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-B07, summary: "getBomPackagingSubstrates (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-B08, summary: "getBomPackagingUnitOfMeasure (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-C01, summary: "getBomElastic data fetcher", phase: C, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-BOM-C02, summary: "searchMaterialsBom data fetcher", phase: C, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A05], ext_services: [{key: search, severity: RED}, {key: vmm, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-BOM-C03, summary: "getComboSupplierForBom data fetcher", phase: C, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A05], ext_services: [{key: combination, severity: YELLOW}, {key: vmm, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-BOM-C04, summary: "getValidTrimSuppliersForBom data fetcher", phase: C, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [{key: vmm, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-BOM-C05, summary: "getValidRawMaterialSuppliersForBom data fetcher", phase: C, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [{key: vmm, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-BOM-D01, summary: "addBom mutation", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-D02, summary: "manageBomWorkspaces mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [{key: workspaceV2, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-BOM-D03, summary: "lockBom mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-D04, summary: "unlockBom mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-D05, summary: "updateBomComponentStatus mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-E01, summary: "updateBom — 3-step orchestrated write", phase: E, category: CAT-2, complexity: Very High, depends_on: [SPARK-BOM-A05, SPARK-BOM-D02], ext_services: [{key: workspaceV2, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-BOM-F01, summary: "Implement Product.productBoms/boms/packagingBoms (internal, same subgraph)", phase: F, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A05], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-F02, summary: "Fill ResourcesCount.bomsCount (internal, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A05], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-BOM-G01, summary: "Bom + Bom_Unified field resolvers (9 shared)", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A02, SPARK-BOM-A05], ext_services: [{key: workspaceV2, severity: YELLOW}, {key: tag, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-BOM-G02, summary: "BomMaterial_Unified field resolvers (3)", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: materialHub, severity: YELLOW}, {key: trim, severity: YELLOW}, {key: wash, severity: YELLOW}, {key: fabric, severity: RED}], blocked_by: none }
+  - { id: SPARK-BOM-G03, summary: "BomMaterial field resolvers (8)", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: materialHub, severity: YELLOW}, {key: tag, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-BOM-G04, summary: "BomPackagingMaterial field resolvers (2)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: tag, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-BOM-G05, summary: "BomFabricMaterial field resolvers (4)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: search, severity: RED}, {key: tag, severity: BLUE}, {key: materialHub, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-BOM-G06, summary: "BomFabricSpecMaterial field resolvers (4)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: fabric, severity: YELLOW}, {key: tag, severity: BLUE}, {key: materialHub, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-BOM-G07, summary: "BomCombinationMaterial field resolvers (4)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: combination, severity: YELLOW}, {key: tag, severity: BLUE}, {key: materialHub, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-BOM-G08, summary: "BomTrimMaterial field resolvers (7) — trim size dispatchers", phase: G, category: CAT-2, complexity: High, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: trim, severity: YELLOW}, {key: location, severity: BLUE}, {key: tag, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-BOM-G09, summary: "BomWashMaterial field resolvers (4)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: wash, severity: YELLOW}, {key: tag, severity: BLUE}, {key: materialHub, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-BOM-G10, summary: "BomImpressionDetails_Unified field resolvers (6) — internal/external branch", phase: G, category: CAT-2, complexity: High, depends_on: [SPARK-BOM-A04, SPARK-BOM-A05], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-BOM-G11, summary: "BomFabricLibraryImpressionDetails.libraryResource", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-G10], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-BOM-G12, summary: "BomTrimLibraryImpressionDetails field resolvers (3)", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-G10], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-BOM-G13, summary: "BomTrimZipperLibraryImpressionDetails field resolvers (3 colors)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-G10], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-BOM-G14, summary: "Trivial pass-through fields (bundle)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-BOM-A02], ext_services: [], blocked_by: none }
+  - { id: SPARK-BOM-G15, summary: "BomMaterialSearchResult field resolvers (5)", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-BOM-A05, SPARK-BOM-C02], ext_services: [{key: fabric, severity: YELLOW}, {key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-BOM-G16, summary: "Test coverage & parity harness", phase: G, category: CAT-5, complexity: Medium, depends_on: [SPARK-BOM-B01, SPARK-BOM-E01, SPARK-BOM-G08, SPARK-BOM-G10], ext_services: [], blocked_by: none }
+totals:
+  story_count: 42
+  by_complexity: { Low: 24, Medium: 15, High: 2, "Very High": 1 }
+  by_phase: { A: 5, B: 8, C: 5, D: 5, E: 1, F: 2, G: 16 }

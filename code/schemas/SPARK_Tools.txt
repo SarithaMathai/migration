@@ -1,0 +1,19 @@
+extend type Query {
+  megaSearch(
+    q: String
+  ): SPARK_MegaSearchPaged
+}
+
+type SPARK_MegaSearchPaged {
+  content: [SPARK_MegaSearchResult]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_MegaSearchResult {
+  id: String
+  description: String
+  resourceType: String
+  parentId: String
+  relatedResources: [String]
+}

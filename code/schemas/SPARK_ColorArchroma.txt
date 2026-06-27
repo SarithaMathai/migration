@@ -1,0 +1,83 @@
+extend type Query {
+  getColorArchroma(id: ID!, proxyIds: [String]): SPARK_ColorArchroma
+  getColorArchromas(ids: [ID]!): [SPARK_ColorArchroma]
+  exportArchromaColor(q: String, nestedQueryList: [SPARK_NestedQueryInput]): SPARK_ExportResponse
+  getColorForAll: [SPARK_CodeDescription]
+}
+
+extend type Mutation {
+  addColorArchroma(
+    colorArchroma: SPARK_ColorArchromaInput!
+  ): SPARK_ColorArchroma
+  deleteColorArchroma(id: ID!): SPARK_HumanId
+  updateColorArchroma(
+    colorArchroma: SPARK_ColorArchromaInput!
+  ): SPARK_ColorArchroma
+}
+
+type SPARK_ColorArchroma {
+  humanId: ID
+  archromaId: String @deprecated(reason: "Use providerId")
+  name: String
+  category: String
+  sku: String
+  red: Int
+  green: Int
+  blue: Int
+  externalStatus: SPARK_CodeDescription
+  substrate: SPARK_CodeDescription
+  notes: String
+  pantoneEquivalent: String
+  targetStandard: Boolean
+  providerName: String
+  tags: [SPARK_Tag]
+  files: [SPARK_Attachment]
+  colorHistoryItems: [SPARK_ColorHistoryItem]
+  colorHistoryNotes: String
+  icsPoly: String
+  icsNylon: String
+  icsCotton: String
+  fromFeed: Boolean
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+  businessPartners: [VMM_BusinessPartner]
+  providerId: String
+  colorTeamLibraryBoard: String
+  bestMatchColorReference: String
+  status: SPARK_CodeDescription
+  colorForAll: [SPARK_CodeDescription]
+  colorLinks: [SPARK_ColorLink]
+}
+
+input SPARK_ColorArchromaInput {
+  humanId: ID
+  archromaId: String
+  name: String
+  category: String
+  sku: String
+  red: Int
+  green: Int
+  blue: Int
+  externalStatus: Int
+  substrate: Int
+  notes: String
+  pantoneEquivalent: String
+  targetStandard: Boolean
+  providerName: String
+  tags: [String]
+  files: [String]
+  colorHistoryItemsToAdd: [SPARK_ColorHistoryItemInput]
+  colorHistoryItemsToRemove: [SPARK_ColorHistoryItemInput]
+  colorHistoryNotes: String
+  icsPoly: String
+  icsNylon: String
+  icsCotton: String
+  fromFeed: Boolean
+  providerId: String
+  colorTeamLibraryBoard: String
+  bestMatchColorReference: String
+  colorForAll: [Int]
+  colorLinks: [SPARK_ColorLinkInput]
+}

@@ -1,0 +1,81 @@
+extend type Query {
+  getTeams(page: Int = 0, size: Int = 20, teamIds: [String]): SPARK_TeamPaged
+  getTeam(id: ID!): SPARK_Team
+  getTeamCommonBPs: [VMM_BusinessPartner]
+}
+
+extend type Mutation {
+  addTeam(sparkTeam: SPARK_TeamInput!): SPARK_Team
+  updateTeam(sparkTeam: SPARK_TeamInput!): SPARK_Team
+}
+
+type SPARK_TeamPaged {
+  content: [SPARK_Team]
+  paging: SPARK_Paging
+}
+#Just Resorting the Order to Understand the difference between the Old and New.
+type SPARK_Team {
+  id: String
+  name: String
+  accessControlGroupIds: [String]
+  members: [SPARK_TeamMember]
+  partner_id: String
+  partner_name: String
+  business_partner: VMM_BusinessPartner
+  resources: SPARK_ResourceMapping
+  status_id: Int
+  status_name: String
+  status: SPARK_TeamStatus!
+  created_at: String!
+  created_by: SPARK_UserProfileAttributes!
+  updated_at: String!
+  updated_by: SPARK_UserProfileAttributes!
+  users: [SPARK_TeamUser]
+  #New Attributes Part of V2 Schema.
+  partnerType: SPARK_CodeDescription
+  teamType: String
+  purpose: String
+  version: Int
+}
+
+type SPARK_TeamMember {
+  user_profile_id: String
+  roles: [Int]
+  memberDetails: SPARK_UserProfileAttributes
+}
+
+type SPARK_TeamStatus {
+  id: Int
+  description: String!
+}
+
+type SPARK_TeamUser {
+  first_name: String
+  last_name: String
+  internal: Boolean
+  company_name: String
+  partner_id: Int
+  user_profile_id: String
+}
+
+input SPARK_TeamInput {
+  members: [SPARK_TeamMemberInput]!
+  teamName: String
+  internal: Boolean
+  businessPartnerId: ID
+  businessPartnerName: String
+  resources: SPARK_ResourceMappingInput
+  statusId: Int
+  status: SPARK_TeamStatusInput
+  teamId: String
+}
+
+input SPARK_TeamStatusInput{
+  id: Int
+  description: String
+}
+
+input SPARK_TeamMemberInput {
+  userProfileId: String
+  roles: [Int]
+}

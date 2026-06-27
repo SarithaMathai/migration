@@ -1,0 +1,8 @@
+extend type Query {
+  getImageById(id: ID!): LDAP_ProfileImage
+}
+
+type LDAP_ProfileImage {
+  id: ID
+  thumbnailPhoto: String
+}

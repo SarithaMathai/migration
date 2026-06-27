@@ -1,0 +1,14 @@
+extend type Query {
+  getBusinessPartners(query: String!, bpRoleIds: [String]): [VMM_BusinessPartner] @deprecated(reason: "Use Spark Business Partners")
+  getBusinessPartner(id: String!): VMM_BusinessPartner
+  getBusinessPartnersByIds(ids: [String]!): [VMM_BusinessPartner]
+  getBusinessPartnersByType(type: Int): [VMM_BusinessPartner]
+  getBusinessPartnersByTypeAndQuery(type: Int, query: String): [VMM_BusinessPartner]
+  getBusinessPartnersByUser(userLanId: String!): [VMM_BusinessPartner] @deprecated(reason: "Use Spark Business Partners")
+  getRelatedFabricSuppliers(merchVendorId: String!): [String]
+  getRelatedFabricSuppliersByMerchVendors(merchVendorIds: [String]!): [String]
+  getBusinessPartnerByGmsVendorId(id: String!): VMM_BusinessPartner
+  getBusinessPartnersByGmsVendorIds(ids: [String]!): [VMM_BusinessPartner]
+  getBusinessPartnerUsers(id: String!): VMM_BusinessPartnerUsers
+  getRelatedTrimSuppliers(merchVendorId: String!): [String]
+}

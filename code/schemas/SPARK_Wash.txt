@@ -1,0 +1,132 @@
+extend type Query {
+  getWash(id: ID!): SPARK_Wash
+  getAllWashByIds(ids: [ID]!): [SPARK_Wash]
+  getWashStatus: [SPARK_CodeDescription]
+  getWashTypes: [SPARK_CodeDescription]
+  getSustainabilities: [SPARK_CodeDescription]
+  getWashProcess: [SPARK_CodeDescription]
+  getGarmentDye: [SPARK_CodeDescription]
+  getTargetRecipe: [SPARK_CodeDescription]
+  exportWash(q: String, nestedQueryList: [SPARK_NestedQueryInput], isThumbnailsRequired: Boolean): SPARK_ExportResponse
+}
+
+extend type Mutation {
+  addWash(wash: SPARK_WashInput!): SPARK_Wash
+  updateWash(updateWash: SPARK_WashInput!): SPARK_Wash
+  updateWashTeams(humanId: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [Int]
+}
+
+type SPARK_Wash {
+  humanId: String
+  washDescription: String
+  thumbnailId: String
+  washNameOrColor: String
+  isTargetRecipe: Boolean
+  recipe: SPARK_CodeDescription
+  brand: VMM_Brand
+  departments: [IG_Department]
+  trackingNumber: String
+  etaDate: String
+  vendor: VMM_BusinessPartner
+  laundry: [VMM_Location]
+  fabricRecordInfo: SPARK_Fabric
+  washType: SPARK_CodeDescription
+  sustainability: [SPARK_CodeDescription]
+  washProcesses: [SPARK_CodeDescription]
+  garmentDye: [SPARK_CodeDescription]
+  color: [SPARK_ServiceMaterial]
+  manualColors: [String]
+  reasonForDeviation: String
+  totalLiquorRatio: Float
+  fabricSpec: SPARK_FabricSpecification
+  status: SPARK_CodeDescription
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+  designCycles: [SPARK_Tag]
+  tags: [SPARK_Tag]
+  notes: String
+  vendorWashCode: String
+  waterUse: Int
+  chemicalUse: Int
+  powerUse: Int
+  laborUse: Int
+  totalScore: Int
+  isDevelopmentSample: Boolean
+  isBulkProduction: Boolean
+  teams: [SPARK_Team]
+  businessPartners: [VMM_BusinessPartner]
+  droppedPartnerIds: [ID]
+  silhouette: String
+  isYarnDrivenProduct: Boolean
+  # Files
+  files: [SPARK_Attachment]
+  designThumbnailId: String
+  energyUsed: Float
+  waterSavingPercent: Int
+  coTwoSavingPercent: Int
+}
+
+input SPARK_WashInput {
+  humanId: ID
+  washDescription: String
+  washNameOrColor: String
+  brand: String
+  departments: [ID]
+  trackingNumber: String
+  etaDate: String
+  laundryName: [String]
+  vendorName: String
+  fabricDetails: Spark_Wash_FabricDetailsInput
+  isTargetRecipe: Boolean
+  isYarnDrivenProduct: Boolean
+  recipe: Int
+  washDetails: Spark_WashDetailsInput
+  additionalInfo: Spark_WashDetailsAdditionalInfoInput
+  status: Int
+  teamsToAdd: [SPARK_TeamToAddInput]
+  eimScore: Spark_Wash_EimScore
+  silhouette: String
+  energyUsed: Float
+  waterSavingPercent: Int
+  coTwoSavingPercent: Int
+
+  # Files
+  files: [String]
+  thumbnailId: String
+  designThumbnailId: String
+}
+
+input Spark_Wash_EimScore {
+  waterUse: Int
+  chemicalUse: Int
+  powerUse: Int
+  laborUse: Int
+  totalScore: Int
+  isDevelopmentSample: Boolean
+  isBulkProduction: Boolean
+}
+
+input Spark_Wash_FabricDetailsInput {
+  fabricId: String
+  fabricSpecificationIds: [String]
+}
+
+input Spark_WashDetailsInput {
+  washType: Int
+  sustainability: [Int]
+  washProcess: [Int]
+  garmentDye: [Int]
+  colors: [String]
+  manualColors: [String]
+  reasonForDeviation: String
+  totalLiquorRatio: Float
+}
+
+input Spark_WashDetailsAdditionalInfoInput {
+  designCycles: [String]
+  tags: [String]
+  notes: String
+  vendorWashCode: String
+}

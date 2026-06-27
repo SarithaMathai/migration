@@ -1,0 +1,219 @@
+extend type Query {
+  getMeasurementByIds(ids:[String], calculated: Boolean): SPARK_MeasurementsPaged
+  getUnitsOfMeasure(ids: [String]): [SPARK_UnitsOfMeasure]
+  getThicknessUnitsOfMeasure: [SPARK_UnitsOfMeasure]
+  getMeasurements(resourceId:String, calculated: Boolean, businessPartnerIds: [String], mustHaveRows: Boolean): SPARK_MeasurementsPaged
+  getMeasurementSetStatus: [SPARK_CodeDescription]
+  getMeasurementsElastic(resourceId:String): SPARK_MeasurementsPaged
+  getSampleMeasurement(sampleId: String): SPARK_SampleMeasurementSet
+}
+
+extend type Mutation{
+  addMeasurement(sparkMeasurement: SPARK_MeasurementsInput): SPARK_Measurements,
+  updateMeasurement(sparkMeasurement: SPARK_MeasurementsUpdateInput): SPARK_Measurements
+  updateMeasurementAccess(measurementSetId: ID!, systemTeamIds: [String], systemTeamDto: SPARK_SystemTeamsWithType): SPARK_Measurements
+  lockMeasurementSet(measurementSetId: ID!): SPARK_Measurements
+  unlockMeasurementSet(measurementSetId: ID!): SPARK_Measurements
+  putSampleMeasurementSet(sampleMeasurementSet: SPARK_SampleMeasurementSetInput!): SPARK_SampleMeasurementSet
+  deleteSampleMeasurementSet(sampleId: String!): String
+  updateMeasurementComponentStatus(productId: String!, ids: [String]!, status: SPARK_ComponentStatusInput): SPARK_MeasurementsPaged
+}
+
+type SPARK_MeasurementsPaged {
+  content:[SPARK_Measurements]
+}
+
+type SPARK_UnitsOfMeasure {
+  name: String
+  description: String
+  shortDescription: String
+  code: Int
+}
+
+type SPARK_MeasurementBaseType {
+  type: Int
+}
+
+input SPARK_MeasurementBaseTypeInput {
+  type: Int
+}
+
+type SPARK_Measurements {
+  access: SPARK_AccessControl
+  businessPartners: [VMM_BusinessPartner]
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  humanId: String
+  @deprecated(reason: "Use parentId")
+  resourceId: String
+  parentId: String
+  product: SPARK_Product
+  rows: [SPARK_MeasurementRow]
+  name: String
+  notes: String
+  coreSizes: [SPARK_MeasurementSetCoreSizes]
+  toleranceSet: SPARK_CodeDescription
+  status: SPARK_CodeDescription
+  statuses: [ProductComponentStatus]
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  updatedFromResource: SPARK_SampleV2
+  currentUserPermissions: SPARK_ResourcePermissions
+  type: String
+  measurementTemplates: [SPARK_MeasurementTemplate]
+  sizeTemplate: SPARK_SizeTemplate
+  tightFitTemplate: SPARK_TightFit
+  manualLock: Boolean
+  defaultUnitOfMeasure: SPARK_UnitsOfMeasure
+  workspaces: [SPARK_WorkspaceV2]
+  workspaceContext: [String]
+  version: Int
+  participantDetails: SPARK_UserGroup_Participants
+  baseType: SPARK_MeasurementBaseType
+}
+
+type SPARK_MeasurementRow {
+  rowId: String
+  critical: Boolean
+  sizeValues: [SPARK_PomSizes]
+  notes: String
+  pointOfMeasure: SPARK_Pom
+  toleranceOver: String
+  toleranceUnder: String
+  baseSizeValue: Float
+  unitOfMeasure: SPARK_UnitsOfMeasure
+}
+
+type SPARK_PomSizes {
+  code: String
+  description: String
+  diffFromNeighbor: Float
+  manualValue: Float
+  calculatedValue: Float
+  displayValue: Float
+}
+
+type SPARK_SampleMeasurementSet {
+  sampleId: String
+  measurementSetId: String
+  measurementSetName: String
+  measurementSetType: String
+  measurementSizeId: String
+  measurementSize: SPARK_SizeCodeDescription
+  measurementSetVersion: Int
+  rows: [SPARK_SampleMeasurementSetRow]
+  version: Int
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+}
+
+input SPARK_SampleMeasurementSetInput {
+  sampleId: String
+  measurementSetId: String
+  measurementSizeId: String
+  measurementSetVersion: Int
+  rows: [SPARK_SampleMeasurementSetRowInput]
+}
+
+input SPARK_SampleMeasurementSetRowInput {
+    rowId: String
+    measurementNew: Float
+    measurementPartner: Float
+    measurementTarget: Float
+    requestedSampleSize: Float
+    notes: String
+    updateParentMeasurementSet: Boolean
+}
+
+type SPARK_SampleMeasurementSetRow {
+    rowId: String
+    measurementNew: Float
+    measurementPartner: Float
+    measurementTarget: Float
+    measurementSetCritical: Boolean
+    requestedSampleSize: Float
+    pointOfMeasure: SPARK_Pom
+    unitOfMeasure: SPARK_UnitsOfMeasure
+    toleranceOver: String
+    toleranceUnder: String
+    notes: String
+}
+
+input SPARK_MeasurementsInput {
+  rows: [Spark_MeasurementRowInput]
+  name: String!
+  notes: String
+  coreSizes: [SPARK_MeasurementSetCoreSizesInput]
+  toleranceSetId: Int
+  defaultUnitOfMeasureId: Int
+  statusId: Int
+  resourceId: String
+  systemTeamIds: [String]
+  type: String
+  baseType: SPARK_MeasurementBaseTypeInput #Template - 101, Product - 100
+  sizeTemplate: SPARK_VersionableIdInput
+  measurementTemplates: [SPARK_VersionableIdInput]
+  tightFitTemplate: SPARK_VersionableIdInput
+  workspaceContext: [ID]
+  systemTeamDto: SPARK_SystemTeamsWithType
+  participantDetails: SPARK_UserGroup_Participants_Input
+}
+
+input SPARK_SystemTeamsWithType {
+  mvTeams: [String]
+  dpTeams: [String]
+}
+
+input SPARK_MeasurementsUpdateInput {
+  rows: [Spark_MeasurementRowInput]
+  name: String
+  notes: String
+  coreSizes: [SPARK_MeasurementSetCoreSizesInput]
+  toleranceSetId: Int
+  defaultUnitOfMeasureId: Int
+  statusId: Int
+  humanId: String
+  resourceId: String
+  baseType: SPARK_MeasurementBaseTypeInput #Template - 101, Product - 100
+  type: String
+  sizeTemplate: SPARK_VersionableIdInput #can only have size template
+  measurementTemplates: [SPARK_VersionableIdInput] # can have multiple
+  tightFitTemplate: SPARK_VersionableIdInput
+  updateWorkspaceAssociations: SPARK_PartialWorkspaceAssociationsInput # can have multiple
+  systemTeamDto: SPARK_SystemTeamsWithType
+  statuses: [WorkspaceStatusPairInput]
+}
+
+input Spark_MeasurementRowInput {
+  rowId: String
+  critical: Boolean
+  sizeValues: [SPARK_PomSizesInput]
+  notes: String
+  pointOfMeasure: SPARK_PomInput
+  toleranceOver: String
+  toleranceUnder: String
+  baseSizeValue: Float
+  unitOfMeasureId: Int
+}
+
+input SPARK_PomSizesInput{
+  code: String
+  description: String
+  diffFromNeighbor: Float
+  manualValue: Float
+  calculatedValue: Float
+}
+
+type SPARK_MeasurementSetCoreSizes {
+  coreSizeId: ID
+  baseSize: SPARK_SizeCodeDescription
+  sizeGroupId: ID
+  sizes: [SPARK_SizeCodeDescription]
+}
+
+input SPARK_MeasurementSetCoreSizesInput {
+  coreSizeId: ID
+  baseSize: SPARK_SizeCodeDescriptionInput
+  sizeGroupId: ID
+  sizes: [SPARK_SizeCodeDescriptionInput]
+}

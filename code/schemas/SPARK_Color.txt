@@ -1,0 +1,176 @@
+extend type Query {
+  getColor(id: ID!, proxyIds: [String]): SPARK_Color
+  getImpressionIntentColor: [SPARK_CodeDescription]
+  getColors(ids: [ID]!): [SPARK_Color]
+  getColorPantone(id: ID!, proxyId: String): SPARK_ColorPantone
+  getColorPantones(ids: [ID]!): [SPARK_ColorPantone]
+  getColorStatuses: [SPARK_CodeDescription]
+  getColorSubstrates: [SPARK_CodeDescription]
+  validateColorName(name: String): Boolean
+  exportColor(q: String, nestedQueryList: [SPARK_NestedQueryInput], isColorSampleReport: Boolean = false): SPARK_ExportResponse
+  exportColorOnPalette(q: String, nestedQueryList: [SPARK_NestedQueryInput], paletteId: ID!): SPARK_ExportResponse
+}
+
+extend type Mutation {
+  addColor(sparkColor: SPARK_ColorInput!): SPARK_Color
+  deleteColor(id: String!): SPARK_HumanId
+  updateColor(sparkColor: SPARK_ColorUpdateInput!): SPARK_Color
+  updateColorTeams(
+    humanId: ID!
+    teamsToUpdate: SPARK_TeamsToUpdateInput
+  ): SPARK_Color
+}
+
+# TODO: Integrate this into other color types
+# interface SPARK_BaseColor {
+#   humanId: ID
+#   name: String
+#
+#   red: Int
+#   green: Int
+#   blue: Int
+#
+#   thumbnailId: String
+#   tags: [SPARK_Tag]
+#   files: [SPARK_Attachment]
+#   status: SPARK_CodeDescription
+#   notes: String
+#
+#   createdAt: String
+#   createdBy: SPARK_UserProfileAttributes
+#   updatedAt: String
+#   updatedBy: SPARK_UserProfileAttributes
+#   designThumbnailId: String
+# }
+
+input SPARK_ColorInput {
+  createdAt: String
+  updatedAt: String
+  humanId: String
+  name: String!
+  status: Int
+  oneSideDye: String
+  notes: String
+  tags: [String]
+  providerName: String!
+  targetStandard: Boolean!
+  files: [String]
+  pantoneProvider: String
+  pantoneEquivalent: String
+  impressionIntents: [Int]
+  location: String
+  referenceId: String
+  thumbnailId: String
+  teamsToAdd: [SPARK_TeamToAddInput]
+  red: Int
+  green: Int
+  blue: Int
+  colorLinks: [SPARK_ColorLinkInput]
+  designThumbnailId: String
+}
+
+input SPARK_ColorHistoryItemInput {
+  humanId: String
+  relationship: String
+}
+
+input SPARK_ColorUpdateInput {
+  humanId: String!
+  name: String
+  status: Int
+  oneSideDye: String
+  notes: String
+  tags: [String]
+  providerName: String
+  targetStandard: Boolean
+  impressionIntents: [Int]
+  files: [String]
+  pantoneProvider: String
+  pantoneEquivalent: String
+  location: String
+  referenceId: String
+  thumbnailId: String
+  teamsToAdd: [SPARK_TeamToAddInput]
+  red: Int
+  green: Int
+  blue: Int
+  colorLinks: [SPARK_ColorLinkInput]
+  designThumbnailId: String
+}
+
+type SPARK_ColorHistoryItem {
+  humanId: String
+  name: String
+  status: SPARK_CodeDescription
+  relationship: String
+  thumbnailId: String
+  red: Int
+  green: Int
+  blue: Int
+  referenceId: String
+  designThumbnailId: String
+}
+
+type SPARK_Color {
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+  humanId: ID
+  name: String
+  status: SPARK_CodeDescription
+  oneSideDye: String
+  notes: String
+  tags: [SPARK_Tag]
+  providerName: String
+  targetStandard: Boolean
+  pantoneProvider: String
+  pantoneEquivalent: String
+  files: [SPARK_Attachment]
+  impressionIntents: SPARK_CodeDescription
+  location: String
+  referenceId: String
+  teams: [SPARK_Team]
+  droppedPartnerIds: [ID]
+  businessPartners: [VMM_BusinessPartner]
+  thumbnailId: String
+  red: Int
+  green: Int
+  blue: Int
+  colorLinks: [SPARK_ColorLink]
+  designThumbnailId: String
+  substrate: SPARK_CodeDescription
+  icsPoly: String
+  icsNylon: String
+  icsCotton: String
+}
+
+type SPARK_ColorPantone {
+  humanId: ID
+  name: String
+  providerName: String
+  referenceId: String
+  substrate: SPARK_CodeDescription
+  red: Int
+  green: Int
+  blue: Int
+  targetStandard: Boolean
+  colorLinks: [SPARK_ColorLink]
+  createdBy: SPARK_UserProfileAttributes
+}
+
+input SPARK_ColorLinkInput {
+  humanId: String!
+  linkType: String!
+}
+
+type SPARK_ColorLink {
+  humanId: String!
+  color: SPARK_Color
+  linkType: String!
+  metadata: SPARK_ColorLinkMetadata
+}
+
+type SPARK_ColorLinkMetadata {
+  isBestCanDoMatchToArchroma: Boolean
+}

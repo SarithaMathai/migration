@@ -1,0 +1,213 @@
+extend type Mutation {
+  createAccessGroupInternal(
+    accessGroupInternal: SPARK_AccessGroupInternal
+  ): SPARK_AccessGroup
+  createAccessGroupAD(accessGroupAD: SPARK_AccessGroupAD): SPARK_AccessGroup
+  createAccessGroupID(accessGroupID: SPARK_AccessGroupID): SPARK_AccessGroup
+  createAccessGroupBP(accessGroupBP: SPARK_AccessGroupBP): SPARK_AccessGroup
+  addAccessGroupIds(
+    addAccessGroupIds: SPARK_AddAccessGroupIds
+  ): SPARK_AccessGroupList
+  deleteAccessGroupIds(
+    deleteAccessGroupIds: SPARK_DeleteAccessGroupIds
+  ): SPARK_AccessGroupList
+  createAccessControl(
+    createAccessControl: SPARK_CreateAccessControl
+  ): SPARK_AccessControl
+  deleteAccessControl(resourceId: String): Boolean
+  addAccessControlPermission(
+    addAccessControl: SPARK_AddAccessControl
+    resourceId: String
+  ): SPARK_AccessControl
+  deleteAccessControlPermission(
+    deleteAccessControl: SPARK_DeleteAccessControl
+    resourceId: String
+  ): SPARK_AccessControl
+  lockResource(resourceId: String, locked: Boolean): SPARK_AccessControl
+  dropPartnerFromResources(
+    toBeDroppedPermissionsList: [SPARK_DropPermissionsList]!
+  ): [SPARK_AccessControl]
+  unDropPartnerFromResources(
+    toBeUnDroppedPermissionsList: [SPARK_DropPermissionsList]!
+  ): [SPARK_AccessControl]
+  updateAccessControlGroups(groupId: ID!, userIdsToAdd: [String], userIdsToRemove: [String]) : SPARK_AccessGroupListResponse
+}
+
+extend type Query {
+  getPermissions(resourceIds: [String]): [SPARK_AccessControl]
+  getPermissionsByTag(
+    resourceIds: [String]!
+    tag: String!
+  ): [SPARK_AccessControl]
+  getUserAccess(resourceIds: [String]): String
+  getUserAccessByIds(ids: [ID]): String
+  getUserAccessUnencoded(resourceIds: [ID]): SPARK_ResourcePermissionsGrouping
+  getUserProxyAccessUnencoded(resourceIds: [ID], proxyIds: [String]): SPARK_ResourcePermissionsGrouping
+  getUserAccessByProxy(resourceId: String!, proxyId: String!): String
+  getAccessControlGroups(groupIds: [ID], userProfileIds: [String]): SPARK_AccessGroupListResponse
+}
+
+type SPARK_AccessGroup {
+  id: ID!
+  type: String!
+  adGroup: String
+  grantees: [String]
+  referenceCount: Int!
+  deleteNoReferences: Boolean!
+  createdBy: String!
+  updatedBy: String!
+  createdAt: Date!
+  updatedAt: Date!
+  tag: String
+  dropped: Boolean
+}
+
+type SPARK_AccessGroupList {
+  groups: [SPARK_AccessGroup]
+}
+
+type SPARK_AccessControl {
+  accessControlId: String
+  resourceId: String
+  locked: Boolean
+  permissions: [SPARK_AccessControlPermission]
+  proxyPermissions: [SPARK_AccessControlProxyPermission]
+}
+
+type SPARK_AccessGroupListResponse {
+  accessGroups: [SPARK_AccessGroupResponse]
+}
+
+type SPARK_AccessGroupResponse {
+  id: ID
+  groupName: String
+  users: [SPARK_UserProfileAttributes]
+  accreditations: [String]
+  userCount: Int
+}
+
+type SPARK_AccessControlPermission {
+  id: String
+  permission: String
+  abstractAccessGroup: SPARK_AccessGroup
+  droppedIds: [String]
+}
+
+type SPARK_AccessControlProxyPermission {
+  proxyResourceId: String
+  permission: String
+}
+
+type SPARK_ResourcePermissionsGrouping {
+  resourcePermissions: [SPARK_ResourcePermissions]
+  userId: String
+  atHash: String
+}
+
+type SPARK_ResourcePermissions {
+  resourceId: String
+  permissions: [String]
+}
+
+type SPARK_DeletePermissions {
+  groupIds: [ID]
+  resourceId: ID
+}
+
+type SPARK_UpdateACLGrantees {
+  bps: [SPARK_UpdateAccessPermission]
+  resourceId: ID
+}
+
+type SPARK_UpdateAccessPermission {
+  grantees: [String]
+  permissionLevel: String
+}
+
+input SPARK_AccessGroupInternal {
+  id: ID!
+}
+
+input SPARK_AccessGroupAD {
+  id: ID!
+  adGroup: String!
+}
+
+input SPARK_AccessGroupID {
+  id: ID!
+  grantees: [String]!
+  ownerId: String
+}
+
+input SPARK_AccessGroupBP {
+  id: ID!
+  grantees: [String]!
+  ownerId: String
+}
+
+input SPARK_AddAccessGroupIds {
+  bpIds: [SPARK_AccessGroupGrantIds]
+  userIds: [SPARK_AccessGroupGrantIds]
+}
+
+input SPARK_DeleteAccessControl {
+  groupIds: [String]
+  tags: [String]
+}
+
+input SPARK_DeleteAccessGroupIds {
+  bpIds: [SPARK_AccessGroupRevokeIds]
+  userIds: [SPARK_AccessGroupRevokeIds]
+}
+
+input SPARK_AccessGroupGrantIds {
+  groupId: String
+  grantees: [String]
+}
+
+input SPARK_AccessGroupRevokeIds {
+  groupId: String
+  revokees: [String]
+}
+
+input SPARK_CreateAccessControl {
+  existing: [SPARK_AccessPermission]
+  ids: [SPARK_CreateAccessControlId]
+  bps: [SPARK_CreateAccessControlId]
+  resourceId: String!
+}
+
+input SPARK_AddAccessControl {
+  existing: [SPARK_AccessPermission]
+  ids: [SPARK_CreateAccessControlId]
+  bps: [SPARK_CreateAccessControlId]
+  fab_suppliers: [SPARK_CreateAccessControlId]
+}
+
+input SPARK_AccessPermission {
+  groupId: String
+  permissionLevel: String
+}
+
+input SPARK_CreateAccessControlId {
+  grantees: [String]
+  permissionLevel: String
+  tag: String
+}
+
+input SPARK_DropPermissionsList {
+  resourceId: ID!
+  dropAccessControlGroupPermissions: [SPARK_DropAccessControlGroupPermissions]
+}
+
+input SPARK_DropAccessControlGroupPermissions {
+  groupId: String!
+  permission: String!
+  droppedUserId: [String]
+}
+
+input SPARK_DeleteBulkPermissionInput {
+  groupIds: [String]
+  resourceId: String
+  tags: [String]
+}

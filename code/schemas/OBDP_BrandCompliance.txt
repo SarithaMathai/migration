@@ -1,0 +1,55 @@
+extend type Query {
+  getBrandComplianceProductRecordById(id:String!): BrandComplianceProductRecord
+  getBrandComplianceProductRecordByIds(ids:[String!]): BrandComplianceProductRecordBulk
+  getBrandComplianceProductValidationsByIds(ids:[String]!): BrandComplianceValidationResult
+}
+
+extend type Mutation {
+  bulkImportBrandComplianceProductsByIds(brandComplianceBulkInput: BrandComplianceBulkInput): BrandComplianceBulkImport
+}
+
+input BrandComplianceBulkInput {
+  ids: [String]
+  workspaceId: String
+  designCycle: String
+  brandId: String
+  teams: [WorkspaceTeamPair]
+  businessPartners: [BrandComplianceBusinessPartnerInput]
+}
+
+input BrandComplianceBusinessPartnerInput {
+  id: ID!,
+  name: String, 
+  associatedPartnerType: Int
+}
+
+type BrandComplianceProductError {
+  message: String
+  id: String
+}
+
+type BrandComplianceBulkImport {
+  products: [SPARK_Product]
+  errors: [BrandComplianceProductError]
+}
+
+type BrandComplianceValidationResult {
+  validBrandComplianceIds: [String]
+  invalidBrandComplianceIds: [String]
+  archivedBrandComplianceIds: [String]
+}
+
+type BrandComplianceProductRecord {
+  brandComplianceProductId: Int
+  brandComplianceProductName: String
+  brandComplianceProductStatus: String
+  dpci: String
+  supplierId: String
+  isDeletedInBrandCompliance: Boolean
+  netQuantity: String
+}
+
+type BrandComplianceProductRecordBulk {
+  brandComplianceProductRecords: [BrandComplianceProductRecord]
+  invalidIds: [String]
+}

@@ -1,0 +1,139 @@
+extend type Query {
+  getProductDetailsById(ids: [String]): [SPARK_ProductDetails]
+  getProductDetailsElastic(resourceId:String): SPARK_ProductDetailsPaged
+}
+
+extend type Mutation {
+    createProductDetailsSet(productDetails: productDetailSetInput): SPARK_ProductDetails
+    updateProductDetailAccess(updateAccessPermissions: SPARK_ProductDetailsManagePermissionInput): [SPARK_ProductDetails]
+    productDetailLockUnlock(constructionSetId:ID!, isLock:Boolean):SPARK_ProductDetails
+    updateProductDetailsSet(productDetailsId: ID!, productDetails: productDetailSetUpdateInput): SPARK_ProductDetails
+    cloneFilesForProductDetails(attachmentIds: [String], cloneReference: [PDTLAttachmentCloneRef]): [SPARK_Attachment]
+    updateProductDetailComponentStatus(productId: String!, ids: [String]!, status: SPARK_ComponentStatusInput): SPARK_ProductDetailsPaged
+}
+
+input PDTLAttachmentCloneRef {
+  relatedResources: [String]
+  context: String
+}
+
+type SPARK_ProductDetailsPaged {
+  content:[SPARK_ProductDetails]
+}
+
+type SPARK_ProductDetails {
+    access: SPARK_AccessControl
+    currentUserPermissions: SPARK_ResourcePermissions
+    humanId: String
+    id: String
+    version: Int
+    status: SPARK_CodeDescription
+    statuses: [ProductComponentStatus]
+    notes: String
+    name: String
+    parentId: String
+    rows: [SPARK_ProductDetailsItem]
+    workspaces: [SPARK_WorkspaceV2]
+    businessPartners: [VMM_BusinessPartner]
+    constructionTemplate: [SPARK_VersionableId]
+    createdBy: SPARK_UserProfileAttributes
+    updatedBy: SPARK_UserProfileAttributes
+    createdAt: DateTime,
+    updatedAt: DateTime,
+    archived: Boolean,
+    relatedResources: [String]
+    manualLock: Boolean
+    workspaceContext: [String]
+    product: SPARK_Product
+    attachment: SPARK_Attachment
+    participantDetails: SPARK_UserGroup_Participants
+    type: Int
+}
+
+
+type SPARK_ProductDetailsItem {
+    section: String
+    category: SPARK_ProductDetailsCategoryWithSection
+    subCategory:SPARK_CodeDescription
+    detail: String
+    critical: Boolean
+    templateId: String
+    specialInstructions: String
+    criticalFromLibrary: Boolean
+    attachment: SPARK_Attachment
+    constructionSetAttachments: [SPARK_Attachment]
+    id: String
+}
+
+type SPARK_ProductDetailsCategoryWithSection {
+  code: Int
+  description: String
+  subCategories: [SPARK_CodeDescription]
+}
+
+input productDetailSetInput {
+  status: Int
+  notes: String
+  name: String
+  parentId: String
+  rows: [SPARK_ProductDetailsItemInput]
+  workspaceContext: [String]
+  businessPartners: [SPARK_ProductDetailPartnerInput]
+  archived: Boolean,
+  relatedResources: [String]
+  attachmentIds: [String]
+  deleteAttachmentIds: [String]
+  participantDetails: SPARK_UserGroup_Participants_Input
+  type: Int
+  statuses: [WorkspaceStatusPairInput]
+}
+
+input productDetailSetUpdateInput {
+  status: Int
+  notes: String
+  name: String
+  parentId: String
+  rows: [SPARK_ProductDetailsItemInput]
+  workspaceContext: SPARK_PartialWorkspaceAssociationsInput
+  businessPartners: [SPARK_ProductDetailPartnerInput]
+  archived: Boolean,
+  relatedResources: [String]
+  attachmentIds: [String]
+  deleteAttachmentIds: [String]
+  participantDetails: SPARK_UserGroup_Participants_Input
+  type: Int
+  statuses: [WorkspaceStatusPairInput]
+}
+
+input SPARK_ProductDetailPartnerInput {
+  partnerId: ID
+  partnerType: Int
+  systemTeamId: String
+}
+
+input SPARK_ProductDetailsItemInput {
+    templateId: String
+    section: String
+    category: SPARK_CodeDescriptionInput
+    subCategory: SPARK_CodeDescriptionInput
+    detail: String
+    critical: Boolean
+    specialInstructions: String
+    criticalFromLibrary: Boolean
+    id: String
+    attachmentIds: [String]
+}
+
+input SPARK_CodeDescriptionInput {
+    code: Int
+    description: String
+}
+
+input SPARK_ProductDetailsManagePermissionInput {
+  managePermissionsRequest: [SPARK_ProductDetailsManageAccessRequest]
+}
+
+input SPARK_ProductDetailsManageAccessRequest {
+  resourceId: ID!
+  businessPartners: [SPARK_ProductDetailPartnerInput]
+}

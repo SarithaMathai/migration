@@ -1,0 +1,27 @@
+extend type Query {
+  getColorEvalBySpecIdAndColorIds(fabricSpecId: String, colorIds: [String]): [Spark_AsapEvaluation]
+}
+
+type Spark_AsapEvaluation {
+  id: String
+  fabricSpecId: String
+  dateRequestCreated: String
+  requestStatus: String
+  sampleId: String
+  colors: [Spark_AsapEvaluatedColor]
+  dateRequestUpdates: String
+  impressionIntent: SPARK_CodeDescription
+}
+
+type Spark_AsapEvaluatedColor {
+  color: SPARK_AsapColor
+  requestStatus: String
+  notes: String
+  fsrr: String
+}
+
+type SPARK_AsapColor {
+  id: String
+  name: String
+  dyedGround: Boolean
+}

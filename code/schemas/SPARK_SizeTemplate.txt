@@ -1,0 +1,137 @@
+extend type Mutation {
+  addSizeTemplate(sizeTemplate: SPARK_SizeTemplateInput!): SPARK_SizeTemplate
+  updateSizeTemplate(sizeTemplate: SPARK_SizeTemplateUpdateInput!): SPARK_SizeTemplate
+}
+
+extend type Query {
+  getSizeTemplates(ids: [SPARK_VersionableIdInput]!): [SPARK_SizeTemplate]
+  getSizeCategories(ids: [String]): [SPARK_CodeDescription]
+  getMaterialTypes(ids: [String]): [SPARK_CodeDescription]
+}
+
+input SPARK_SizeTemplateInput {
+  id: ID
+  categoryId: Int
+  coreSizes: [SPARK_SizeTemplateCoreSizes]
+  name: String
+  rows: [SPARK_GradeInput]
+  toleranceSetIds: [Int]
+  unitOfMeasureId: Int
+}
+
+input SPARK_SizeTemplateUpdateInput {
+  id: ID
+  categoryId: Int
+  coreSizes: [SPARK_SizeTemplateCoreSizes]
+  name: String
+  rows: [SPARK_GradeInput]
+  toleranceSetIds: [Int]
+  unitOfMeasureId: Int
+  statusId: Int
+}
+
+input SPARK_SizeTemplateToleranceInput {
+  materialTypeId: Int
+  toleranceOver: String
+  toleranceUnder: String
+}
+
+input SPARK_SizeGroupsInput {
+  id: ID
+  name: String
+  baseSize: SPARK_SizeCodeDescriptionInput
+  sizes: [SPARK_SizeCodeDescriptionInput]
+}
+
+input SPARK_SizeTemplateCoreSizes {
+  coreSizeId: ID
+  baseSize: SPARK_SizeCodeDescriptionInput
+  sizeGroups: [SPARK_SizeGroupsInput]
+  sizes: [SPARK_SizeCodeDescriptionInput]
+}
+
+input SPARK_GradeInput {
+  pointOfMeasure: SPARK_PomInput
+  sizeValues: [SPARK_SizeValuesInput]
+  toleranceSet: [SPARK_SizeTemplateToleranceInput]
+  unitOfMeasureId: Int
+}
+
+input SPARK_SizeValuesInput {
+  diffFromNeighbor: Float
+  code: String
+  description: String
+}
+
+input SPARK_SizeCodeDescriptionInput {
+  code: String
+  description: String
+  source: String
+  enabled: Boolean
+  hidden: Boolean
+}
+
+type SPARK_SizeCodeDescription {
+  code: String
+  description: String
+  enabled: Boolean
+  hidden: Boolean
+  source: String
+}
+
+type SPARK_RowTolerance {
+  materialType: SPARK_CodeDescription
+  toleranceOver: String
+  toleranceUnder: String
+}
+
+type SPARK_GradeInfo {
+  pointOfMeasure: SPARK_Pom
+  sizeValues: [SPARK_SizeValues]
+  toleranceSet: [SPARK_RowTolerance]
+  unitOfMeasure: SPARK_Unit_Of_Measure
+}
+
+type SPARK_SizeValues {
+  diffFromNeighbor: Float
+  code: String
+  description: String
+}
+
+type SPARK_Unit_Of_Measure {
+  code: Int
+  description: String
+  name: String
+  shortDescription: String
+}
+
+type SPARK_SizeGroup {
+  id: ID
+  name: String
+  baseSize: SPARK_SizeCodeDescription
+  sizes: [SPARK_SizeCodeDescription]
+}
+
+type SPARK_CoreSizes {
+  coreSizeId: ID
+  baseSize: SPARK_SizeCodeDescription
+  sizeGroups: [SPARK_SizeGroup]
+  sizes: [SPARK_SizeCodeDescription]
+}
+
+type SPARK_SizeTemplate {
+  coreSizes: [SPARK_CoreSizes]
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  humanId: String
+  name: String
+  rows: [SPARK_GradeInfo]
+  toleranceSet: [SPARK_CodeDescription]
+  sizeCategory: SPARK_CodeDescription
+  status: SPARK_CodeDescription
+  updatedBy: SPARK_UserProfileAttributes
+  updatedAt: DateTime
+  categoryId: Int
+  version: Int
+  unitOfMeasure: SPARK_Unit_Of_Measure
+}

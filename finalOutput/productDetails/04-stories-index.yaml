@@ -1,0 +1,31 @@
+# Machine-readable story index for ProductDetails — feed to Jira (bulk create) / Confluence rollup.
+# One entry per story in 04-stories.md. complexity = Low|Medium|High|Very High (no day-ranges).
+domain: productDetails
+target_dgs: plm-product
+epic: "ProductDetails → plm-product DGS migration"
+labels_common: [dgs-migration, productDetails]
+generated: 2026-06-27
+pipeline_version: "2.0"
+acl_policy: "ACL ignored in implementation; current-impl ACL usage noted as context only"
+stories:
+  - { id: SPARK-PDTL-A01, summary: "Schema skeleton + DateTime scalar", phase: A, category: CAT-1, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-A02, summary: "Owned types + inputs", phase: A, category: CAT-1, complexity: Medium, depends_on: [SPARK-PDTL-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-A03, summary: "External stubs (platform + sibling DGS)", phase: A, category: CAT-1, complexity: Low, depends_on: [SPARK-PDTL-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-A04, summary: "ProductDetailsService port (construction/v1)", phase: A, category: CAT-3, complexity: Medium, depends_on: [SPARK-PDTL-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-B01, summary: "getProductDetailsById", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-PDTL-A02, SPARK-PDTL-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-C01, summary: "getProductDetailsElastic", phase: C, category: CAT-2, complexity: Medium, depends_on: [SPARK-PDTL-A04], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PDTL-D01, summary: "createProductDetailsSet (throws on validationErrors)", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-PDTL-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-D02, summary: "updateProductDetailAccess", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PDTL-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-D03, summary: "productDetailLockUnlock", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PDTL-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-D04, summary: "cloneFilesForProductDetails", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-PDTL-A04], ext_services: [{key: attachment, severity: RED}], blocked_by: none }
+  - { id: SPARK-PDTL-D05, summary: "updateProductDetailComponentStatus (no JWT — confirm)", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-PDTL-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-E01, summary: "updateProductDetailsSet (multi-step, non-atomic)", phase: E, category: CAT-2, complexity: High, depends_on: [SPARK-PDTL-A04], ext_services: [{key: attachment, severity: RED}, {key: workspaceV2, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-PDTL-F01, summary: "Product.productDetails (INTERNAL, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [SPARK-PDTL-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-PDTL-G01, summary: "access + currentUserPermissions + participantDetails", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PDTL-A02, SPARK-PDTL-A04], ext_services: [{key: userGroup, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PDTL-G02, summary: "product + createdBy + updatedBy + businessPartners + workspaces", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PDTL-A04], ext_services: [{key: userAttributes, severity: YELLOW}, {key: workspaceV2, severity: YELLOW}, {key: vmm, severity: BLUE}], blocked_by: none }
+  - { id: SPARK-PDTL-G03, summary: "attachment + item attachments + category subCategories", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-PDTL-A04], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-PDTL-G04, summary: "Tests, parity harness", phase: G, category: CAT-5, complexity: Medium, depends_on: [SPARK-PDTL-B01, SPARK-PDTL-E01, SPARK-PDTL-G01], ext_services: [], blocked_by: none }
+totals:
+  story_count: 17
+  by_complexity: { Low: 7, Medium: 9, High: 1, "Very High": 0 }
+  by_phase: { A: 4, B: 1, C: 1, D: 5, E: 1, F: 1, G: 4 }

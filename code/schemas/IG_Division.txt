@@ -1,0 +1,10 @@
+extend type Query {
+  getDivisions: [IG_Division]
+  getDivision(id: ID!): IG_Division
+}
+
+type IG_Division implements SPARK_Categories {
+  id: ID
+  name: String
+  displayText: String
+}

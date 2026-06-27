@@ -1,0 +1,11 @@
+extend type Query {
+  searchSparkSizes(
+    nameFilter: String
+    size: Int = 50): [SPARK_Sizes]
+}
+
+type SPARK_Sizes {
+  id: ID
+  name: String
+  source: String
+}

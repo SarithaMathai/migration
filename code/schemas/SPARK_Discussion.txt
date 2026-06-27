@@ -1,0 +1,334 @@
+extend type Query {
+  getDiscussionsCount(
+    resourceId: String!
+    resourceType: String!
+  ): [SPARK_ResourceCount]
+  getDiscussionV2(id: ID!): SPARK_FullDiscussion
+  coreGetDiscussionV2(id: ID!): SPARK_FullDiscussion
+  getDiscussionByIdsV2(ids: [String]): [SPARK_FullDiscussion]
+  getDiscussionsV2(
+    resourceId: String!
+    resourceType: String!
+    partnerId: ID
+  ): SPARK_DiscussionElastic
+  getUnsentDiscussions: SPARK_UnsentDiscussions
+  getSampleDiscussion(
+    resourceId: String!
+    resourceType: String!
+    partnerId: ID
+  ): [SPARK_Discussion]
+  getDiscussionOnResource(
+    resourceId: String!
+  ): [SPARK_Discussion]
+  getDiscussionsByThread(
+    id: ID!
+  ): [SPARK_Discussion]
+}
+
+extend type Mutation {
+  addDiscussionV2(
+    sparkDiscussion: SPARK_DiscussionInput!
+    attachments: [SPARK_BulkAttachmentInput]
+  ): SPARK_Discussion
+  addDiscussionReplyV2(
+    sparkDiscussionReply: SPARK_DiscussionReplyInput!
+    attachments: [SPARK_BulkAttachmentInput]
+    isAttachmentsV3: Boolean = false
+  ): SPARK_DiscussionReply
+  updateDiscussionV2(
+    id: ID!
+    sparkDiscussion: SPARK_UpdateDiscussionInput
+  ): SPARK_Discussion
+  deleteDiscussionV2(resourceId: ID, id: ID!): ID
+  updateParticipantsV2(
+    id: ID!
+    participants: SPARK_AddParticipantInput
+  ): SPARK_Discussion
+  deleteParticipantV2(
+    id: ID!
+    teamId: ID!
+    userId: ID
+    partnerId: ID
+  ): SPARK_Discussion
+  deleteDiscussionPartnersV2(id: ID, partnerIds: [Int]): ID
+  updateDiscussionReplyV2(
+    sparkDiscussionReply: SPARK_DiscussionReplyInput!
+    attachments: [SPARK_BulkAttachmentInput]
+    isAttachmentsV3: Boolean = false
+  ): SPARK_DiscussionReply
+  deleteDiscussionReplyV2(id: ID!, replyId: ID!): ID
+  addSampleDiscussionV2(
+    sparkSampleDiscussion: SPARK_DiscussionInput!
+  ): SPARK_SampleDiscussion
+  addSampleDiscussionV3(
+    sparkSampleDiscussion: SPARK_SampleDiscussionInput!
+  ): SPARK_SampleDiscussion
+  bulkAddSampleDiscussions(sparkBulkSampleDiscussion: [SPARK_SampleDiscussionInput]): [SPARK_SampleDiscussion]
+  dropPartnerFromDiscussionIds(ids: [ID!], partnerIds: [ID!]): SPARK_Discussion
+  unDropPartnerFromDiscussionIds(ids: [ID!], partnerIds: [ID!]): SPARK_Discussion
+  updateAsCritical (criticalObject:  SPARK_DiscussionAsCritical): SPARK_DiscussionReply
+  updateDiscussionEditable (discussionEditableObject: SPARK_DiscussionAsCritical): SPARK_DiscussionReply
+  updateTagExisting (tagUpdateObject: SPARK_DiscussionAsCritical): SPARK_DiscussionReply
+}
+
+type SPARK_SampleDiscussion {
+  discussionId: String
+  discussionThreadId: String
+}
+
+type SPARK_DiscussionPaged {
+  content: [SPARK_Discussion]
+}
+
+type SPARK_DiscussionElastic {
+  content: [SPARK_DiscussionContent]
+  pageable: SPARK_Pageable
+}
+
+type SPARK_DiscussionContent {
+  discussionDto: SPARK_Discussion
+}
+
+type SPARK_FullDiscussion {
+  discussions: SPARK_Discussion
+  attachments: [SPARK_Attachment]
+  attachmentsV2: [SPARK_Attachment]
+}
+
+union SPARK_Resource = SPARK_Product
+| SPARK_WorkspaceV2
+| SPARK_SampleV2
+| SPARK_Palette
+| SPARK_Artwork
+| SPARK_Trim
+| SPARK_Wash
+| SPARK_Fabric
+| SPARK_Color
+| SPARK_ColorArchroma
+| SPARK_Combination
+| SPARK_FabricSpecification
+| SPARK_HubMaterial
+| SPARK_Bom
+| SPARK_ProductDetails
+| SPARK_Measurements
+| SPARK_Claims
+| SPARK_Packaging
+
+type SPARK_Discussion {
+  id: ID
+  threadId: String
+  authorName: String
+  repliesCount: Int
+  draftReplyCount: Int
+  draftEditors: [String]
+  createdTS: String
+  updateTS: String
+  createdUser: SPARK_UserProfileAttributes
+  updatedUser: SPARK_UserProfileAttributes
+  subject: String
+  participant: SPARK_UserProfileAttributes_Paged
+  comment: String
+  draft: Boolean
+  edited: Boolean
+  replies: [SPARK_DiscussionReply]
+  repliesV2: [SPARK_DiscussionReply]
+  discussionTitle: String
+  partnerId: [ID]
+  designPartnerId: [ID]
+  businessPartner: [VMM_BusinessPartner]
+  droppedPartners: [VMM_BusinessPartner]
+  participantDetails: SPARK_Discussion_Participants
+  participants: SPARK_Participants
+  announcement: Boolean
+  isSampleDiscussion: Boolean
+  resources: SPARK_ResourceMapping
+  resource: SPARK_Resource
+  relatedResources: [String]
+  lastReplyBy: SPARK_UserProfileAttributes
+  lastReplyAt: String
+  editable: Boolean
+  critical: Boolean
+  notificationStatus: SPARK_NotificationStatus
+  designPartners: [VMM_BusinessPartner],
+  tags: [SPARK_Tag]
+  readByUserList: [String]
+  associations: [String]
+}
+
+type SPARK_Discussion_Participants {
+  teams: [SPARK_Discussion_Team]
+  users: [SPARK_Discussion_User]
+}
+type SPARK_Discussion_Team {
+  teamId: String
+  edited: Boolean
+  teamName: String
+  partnerType: Int
+  businessPartner: VMM_BusinessPartner
+  usersInfo: [SPARK_Discussion_Participant]
+}
+type SPARK_Discussion_User {
+  teamId: String
+  usersInfo: [SPARK_Discussion_Participant]
+}
+type SPARK_Discussion_Participant {
+  roles: [Int]
+  userId: String
+  userDetails: SPARK_UserProfileAttributes
+  systemUser: Boolean
+}
+
+type SPARK_NotificationStatus {
+  sent: Boolean
+  sentTime: Date
+  recipients: [String]
+}
+
+input SPARK_DiscussionInput {
+  discussionId: ID
+  attachmentId: [String]
+  discussionTitle: String
+  comment: String
+  resources: SPARK_ResourceMappingInput
+  participantDetails: SPARK_Discussion_ParticipantsInput
+  subject: String!
+  draft: Boolean
+  edited: Boolean
+  repliesCount: Int
+  createdTS: String
+  partnerId: [ID]
+  designPartnerId: [ID]
+  announcement: Boolean
+  createdUser: String
+  resourceType: String
+  resourceId: ID
+}
+
+input SPARK_SampleDiscussionInput {
+  subject: String!
+  comment: String!
+  draft: Boolean
+  resourceId: ID!
+  discussionThreadId: String!
+  partnerId: ID!
+  designPartnerId: [ID]
+  attachmentIds: [String]
+  relatedResources: [ID]
+  critical: Boolean
+  sampleTypeCode: Int
+  sampleFormatCode: Int
+}
+
+input SPARK_Discussion_ParticipantsInput {
+  partnerId: [ID]
+  designPartnerId: [ID]
+  teams: [SPARK_Discussion_TeamInput]
+  users: [SPARK_Discussion_UserInput]
+}
+
+input SPARK_Discussion_TeamInput {
+  teamId: String
+  edited: Boolean
+  teamName: String
+  isupdate: Boolean
+  usersInfo: [SPARK_Discussion_ParticipantInput]
+  businessPartnerId: ID
+}
+
+input SPARK_Discussion_ParticipantInput {
+  roles: [Int]
+  userId: String
+  partnerId: ID
+  designPartnerId: [ID]
+  systemUser: Boolean
+}
+
+input SPARK_Discussion_UserInput {
+  teamId: String
+  usersInfo: [SPARK_Discussion_ParticipantInput]
+}
+
+type SPARK_DiscussionReply {
+  id: ID
+  discussionId: ID
+  comment: String
+  discussionTitle: String
+  draft: Boolean
+  draftEditors: [String]
+  edited: Boolean
+  createdUser: SPARK_UserProfileAttributes
+  updatedUser: SPARK_UserProfileAttributes
+  createdTS: String
+  updateTS: String
+  attachments: [SPARK_Attachment]
+  attachmentsV2: [SPARK_Attachment]
+  discussionHead: SPARK_Discussion
+  editable: Boolean
+  critical: Boolean
+  notificationStatus: SPARK_NotificationStatus
+  readByUserList: [String]
+  associations: [String]
+}
+
+input SPARK_DiscussionReplyInput {
+  id: ID
+  discussionId: String!
+  comment: String!
+  discussionTitle: String
+  draft: Boolean
+  edited: Boolean
+  createdTS: String
+  attachmentId: [String]
+  authorName: String
+  discussionThreadId: ID
+  createdUser: ID
+  isDraftToPost: Boolean
+  relatedResources: [ID]
+  sampleTypeCode: Int
+  sampleFormatCode: Int
+}
+
+input SPARK_AddParticipantInput {
+  partnerId: [ID]
+  designPartnerId: [ID]
+  participantDetails: SPARK_Discussion_ParticipantsInput
+}
+
+input SPARK_UpdateDiscussionInput {
+  discussion: SPARK_UpdateDiscussionMessageInput
+  removedFiles: [String]
+  participants: SPARK_AddParticipantInput
+  deletedTeams: [ID]
+  deletedUsers: [ID]
+  deletedPartnersId: [ID]
+  droppedPartners: [ID]
+  attachments: [SPARK_BulkAttachmentInput]
+  revokeDocumentIds: [String]
+}
+
+input SPARK_UpdateDiscussionMessageInput {
+  discussionId: ID
+  comment: String
+  resources: SPARK_ResourceMappingInput
+  subject: String!
+  draft: Boolean
+  edited: Boolean
+  announcement: Boolean
+  isDraftToPost: Boolean
+  tags: [ID]
+  isCritical: Boolean
+}
+
+input SPARK_DiscussionAsCritical {
+  editable: Boolean
+  critical: Boolean
+  discussionId: ID!
+  discussionThreadId: ID
+  tags: [ID]
+  associations: [String]
+}
+
+type SPARK_UnsentDiscussions {
+  discussions: [SPARK_Discussion]
+  discussionThreads: [SPARK_DiscussionReply]
+}

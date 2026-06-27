@@ -1,0 +1,803 @@
+extend type Query {
+  getProducts(
+    page: Int = 0
+    size: Int = 10000
+    q: String
+    filter: [String]
+    resourceType: String
+    resourceId: String
+    includeBoms: Boolean
+    includeClaims: Boolean
+    includeMeasurementSets: Boolean
+    includeProductDetails: Boolean
+  ): SPARK_ProductsPaged
+  getProductTemplates(
+    page: Int = 0
+    size: Int = 10000
+    q: String
+    resourceId: String
+    resourceType: String
+    filter: [String]
+    types: [Int]
+    includeBoms: Boolean = false
+    includeClaims: Boolean = false
+    includeMeasurementSets: Boolean = false
+    includeProductDetails: Boolean = false
+    includeClaimTemplates: Boolean = false
+    includeMeasurementSetTemplates: Boolean = false
+    includeProductDetailTemplates: Boolean = false
+    includeProductComponentsCount: Boolean = false
+    includeBomTemplates: Boolean = false
+  ): SPARK_ProductTemplatesList
+  getProduct(id: ID!): SPARK_Product
+  getCopyStatus(id: ID!): SPARK_ProductCopy
+  # getProductByHumanID(humanID: String!): SPARK_Product
+  getCategories(
+    type: String!
+    resourceId: String
+    resourceType: String,
+    productType: Int
+  ): SPARK_ProductsCategories
+  getProductsByIds(ids: [ID]!): SPARK_ProductsPaged
+  getProductStatus: [SPARK_MasterProductStatus]
+  getProductTechPackCountV1(productId: ID!, partnerId: ID, workspaceContext: String, parentProductId: ID): SPARK_ResourcesCount
+  getProductTechPackBulkCountV1(bulkTechPackCountResource: [SPARK_ProductTechPackCountInput]): [SPARK_ResourcesCount]
+  getProductVersions(id: ID!): SPARK_ProductsPaged
+  getRatingByTcin(tcin: String): SPARK_Rating
+  getProductRules: [SPARK_ProductRules]
+  getProductRulesById(id: ID!): SPARK_ProductRules
+  getAllAvailableRules: [SPARK_AvailableRules]
+  getProductDeptRules(
+    productIds: [String]
+    departmentIds: [Int]
+    activeOnly: Boolean
+  ): [SPARK_ProductRules]
+  getProductBPRules(
+    productIds: [String]
+    businessPartnerIds: [Int]
+    activeOnly: Boolean
+  ): [SPARK_ProductRules]
+  searchProductRules(
+    productIds: [String]
+    departmentIds: [Int]
+    businessPartnerIds: [Int]
+    activeOnly: Boolean
+  ): [SPARK_ProductRules]
+  getProductTemplateById(id: ID!): SPARK_Product
+}
+
+extend type Mutation {
+  addProduct(workspaceId: ID, sparkProduct: SPARK_ProductInput, copyProduct: SPARK_CopyProductInput): SPARK_Product
+  updateProduct(input: SPARK_ProductUpdateInput!, copyProduct: SPARK_CopyProductInput): SPARK_Product
+  carryForwardProduct(productId: String, carryForwardProductInput: CarryForwardProductInput): SPARK_Product
+  bulkUpdateProducts(
+    products: [SPARK_ProductUpdateInput]!
+  ): SPARK_ProductBulkType
+  addProducts(
+    workspaceId: ID!
+    products: [SPARK_ProductInput]
+  ): SPARK_ProductBulkType
+  addTeamsToProduct(
+    productId: String!,
+    teamIds: [String],
+    workspaceIds: [String],
+    newPartners: [SPARK_ProductPartnerInput]
+  ): SPARK_Product
+  addBusinessPartnersToProductWithType(productId: ID!, partners: [SPARK_ProductPartnerInput]): SPARK_Product
+  removeProductResources(productId: ID!, resourceIds: [ID]): SPARK_Product
+  removeProductBusinessPartner(productId: ID!, partnerId: ID!): SPARK_Product
+  updateBusinessPartnerStatuses(productId: String!, statusInput: [SPARK_ProductPartnerStatusInput]!): SPARK_Product
+  productBusinessPartnerActions(
+    actionType: String!
+    values: SPARK_ProductPartnerActionInput
+  ): SPARK_Product
+  updateViewToggle(toggleInput: SPARK_ToggleInput): SPARK_Product
+  updateWorkspaceAttributes(productId: ID!, workspaceAttributesInput: SPARK_ProductWorkspaceAttributesInput): SPARK_Product
+  dropProductBusinessPartner(productId: ID!, partnerId: ID!): SPARK_Product
+  unDropProductBusinessPartner(productId: ID!, partnerId: ID!): SPARK_Product
+  updateProductTeamsWorkspaceContext(
+    productId: ID!
+    teamWorkspacesToAdd: [WorkspaceTeamPair]
+    teamWorkspacesToRemove: [WorkspaceTeamPair]
+  ): SPARK_Product
+  linkProduct(
+    parentProductId: String!
+    childProductId: String!
+  ): SPARK_Product
+  unlinkProduct(
+    parentProductId: String!
+    childProductId: String!
+  ): SPARK_Product
+  addProductRule(rule: SPARK_ProductRuleCreateInput): SPARK_ProductRules
+  updateProductRule(rule: SPARK_ProductRuleUpdateInput): SPARK_ProductRules
+  deleteProductRule(ruleId: ID!): Boolean
+  updateComponentStatus(productComponents: [ProductComponentStatusUpdateInput]): SPARK_Product
+  updateComponentStatuses(productId: String!, ids: SPARK_ComponentIdsInput!, status: SPARK_ComponentStatusInput): SPARK_Product
+}
+
+input SPARK_ComponentStatusInput {
+  workspaceId: String!,
+  type: String,
+  statusId: Int
+}
+
+input SPARK_ComponentIdsInput {
+  bomIds: [String],
+  claimIds: [String],
+  constructionSetIds: [String],
+  measurementSetIds: [String],
+  packagingIds: [String]
+}
+
+input ProductComponentStatusUpdateInput {
+  workspaceId: String,
+  statusId: Int,
+  productId: String,
+  bomIds: [String],
+  claimIds: [String],
+  constructionSetIds: [String],
+  measurementSetIds: [String],
+  packagingIds: [String]
+}
+
+type ProductComponentStatus {
+  workspaceId: String,
+  type: String,
+  status: SPARK_CodeDescriptionOrder
+  overallStatus: SPARK_CodeDescriptionOrder
+  updatedAt: DateTime!
+  updatedBy: SPARK_UserProfileAttributes
+}
+
+input WorkspaceTeamContextInput {
+  teamWorkspacesToAdd: [WorkspaceTeamPair]
+  teamWorkspacesToRemove: [WorkspaceTeamPair]
+}
+
+input WorkspaceStatusPairInput {
+  workspaceId: String
+  statusId: String
+  type: String
+}
+
+input WorkspaceTeamPair {
+  workspaceId: String
+  teamId: String!
+}
+
+input SPARK_CopyProductInput {
+  targetProductId: String
+  sourceProductId: String
+  attachmentIds: [String]
+  claimIds: [String]
+  bomIds: [String]
+  measurementSetIds: [String]
+  constructionSetIds: [String]
+  packagingIds: [String]
+  boms: [SPARK_BombsWithMaterialInput]
+  productTeams: [SPARK_ProductTeamInput]
+}
+
+input SPARK_ProductTeamInput {
+  teamId: ID
+  teamName: String
+  businessPartner: SPARK_ProductPartnerInput
+}
+
+input SPARK_BombsWithMaterialInput {
+  bomId:String
+  bomMaterialDtos: [Spark_bomMaterialDtosInput]
+  partners: [SPARK_ProductPartnerInput]
+}
+input Spark_bomMaterialDtosInput {
+  humanId:String
+  rowId:String
+  categoryId:Int
+  partners:[SPARK_ProductPartnerInput]
+}
+input SPARK_ToggleInput {
+  productId: ID!
+  workspaceId: ID!
+  hidden: Boolean
+}
+
+type ProductVendorAttributes {
+  partnerId: ID
+  partnerType: Int
+  name: String
+  status: SPARK_CarryForwardProductStatus
+  statusCount: Int
+  allStatuses: [SPARK_CarryForwardProductAllStatus]
+}
+
+type SPARK_Product {
+  id: ID
+  type: Int #100 FOR PRODUCT, 101 FOR TEMPLATE, 102 FOR BRAND_COMPLIANCE
+  owningPartnerType: Int
+  createdAt: DateTime!
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: DateTime!
+  updatedBy: SPARK_UserProfileAttributes
+  humanId: String
+  description: String
+  comments: String
+  status (workspaceIdFilter: String, partnerIdFilter: String): SPARK_ProductStatus
+  vendorAttributes (workspaceIdFilter: String): [ProductVendorAttributes]
+  vendorStyleNumber: String
+  businessPartners(workspaceIdFilter: String): [VMM_BusinessPartner]
+  droppedPartners: [VMM_BusinessPartner]
+  notRemovablePartnerIds: [ID]
+  droppedPartnerIds: [ID]
+  elasticSamplesList(query: String, page: Int, size: Int): SPARK_SearchSamplesPaged
+  samples: [SPARK_SampleV2]
+  hasSamplesUpcomingDue: Boolean
+  archived: Boolean
+  hasNotEvaluatedReceivedSamples: Boolean
+  receivedNotEvaluatedCount: Int
+  department: IG_Department
+  departments: [DopplerDepartment]
+  division: IG_Division
+  clazz: IG_Clazz
+  brand: VMM_Brand
+  brandComplianceRecordId: String
+  internalNotes: String
+  productWorkspaceAttributes(
+    elasticVerify: Boolean # Will verify workspaces are attached correctly with elastic. Product API keeps old workspaces around, this fixes it
+    ): [SPARK_ProductWorkspaceAttributes]
+  productWorkspaceInfo: [SPARK_ProductWorkspaceInfo]
+  primaryMaterial: String
+  secondaryMaterial: String
+  thumbnailId: String
+  resources: SPARK_ResourceMapping
+  teams (partnerId: String, workspaceId: String): SPARK_TeamPaged
+  teamsV2: SPARK_TeamPagedV2
+  movable: Boolean
+  discussionsCount: Int
+  tags: [SPARK_Tag]
+  workspaces: SPARK_WorkspacesPagedV2
+  editable: Boolean
+  sampleIds: [ID]
+  attachments: [SPARK_Attachment]
+  attachmentsWithMetaData: [SPARK_Attachment_With_Meta_Data],
+  discussionsV2(partnerId: ID): SPARK_DiscussionElastic
+  numberOfPieces: Int
+  developmentCost: String
+  measurementSets(calculated: Boolean, includeMeasurements: Boolean): SPARK_MeasurementsPaged
+  claims(partnerIds:[String], includeClaims: Boolean): [SPARK_Claims]
+  productDetails: [SPARK_ProductDetails]
+  bom(includeBoms: Boolean): SPARK_BomPaged
+  productBom(includeBoms: Boolean): SPARK_BomPaged
+  packagingBom(includeBoms: Boolean): SPARK_BomPaged
+  version: Int
+  presentationDimensions: String
+  presentationHeight: String
+  presentationWidth: String
+  presentationDepth: String
+  copyId: String
+  copyProductRequest: String
+  copyProductResources: [SPARK_ProductCopyResources]
+  attachmentsV3(partnerId: ID, type: String, tags: [String], onlyProductPacketFiles: Boolean): SPARK_SearchAttachmentsPaged
+  attachmentSummary: SPARK_AttachmentSummary
+  components(workspaceId: String, partnerId: ID, type: String, tags: [String], archived: Boolean, types: [Int]): SPARK_SearchComponentsPaged
+  notRemovableWorkspaceIds: [String]
+  unDroppablePartners(isDesignPartner: Boolean): [ID]
+  designPartnerId: [ID]
+  tcins: [SPARK_PartnerTcins]
+  reservedDpcis: [SPARK_PartnerReservedDpci]
+  versionCreatedAt: DateTime
+  versionCreatedBy: SPARK_UserProfileAttributes
+  ancestryProducts: [SPARK_AncestryProducts]
+  childProducts: [SPARK_ChildProducts]
+  parentProductId: String
+  rating: SPARK_Rating
+  parentTcins: [String]
+  divisions: [IG_Division]
+  brands: [VMM_Brand]
+  productTemplateDepartments: [IG_Department] # for ProductTemplate
+  productTemplateStatus: SPARK_ProductTemplateStatus # for ProductTemplate
+  attachmentsData: SPARK_ProductTemplateAttachments # for ProductTemplate
+  productComponentsCounts: [SPARK_ProductComponentsCounts]
+  productMaterials: [SPARK_ProductMaterials]
+  packagingAttributes: [SPARK_PackagingAttribute]
+  preferredStyle: Boolean
+  fbDpci: String
+  variations(partnerId: String, workspaceId: String) : [SPARK_ProductVariation]
+  associateProductsAsks(workspaceIdFilter: String): [SPARK_ProductAsk]
+}
+
+type SPARK_Rating {
+  averageRating: Float
+  reviewCount: Int
+}
+
+type SPARK_ChildProducts {
+  id: String!
+  removable: Boolean
+}
+
+type SPARK_AncestryProducts {
+  id: String!
+  removable: Boolean
+  description: String!
+  thumbnailId: String
+  type: String
+}
+
+type SPARK_PartnerTcins {
+  partnerId: ID
+  tcin: [SPARK_Tcin]
+}
+
+type SPARK_PartnerReservedDpci {
+  partnerId: ID
+  reservedDpcis: [SPARK_ReservedDpci]
+}
+
+type CORONA_ItemDetails {
+  launchDateTime: DateTime
+  primaryImage: String
+  description: String
+  alternateImages: [String]
+  colorName: String
+  colorFamily: String
+  color: String
+  size: String
+  onlineUrl: String
+}
+
+type SPARK_Tcin {
+  tcinId: String
+  dpci: String
+  createdAt: DateTime
+  launchedAt: DateTime
+  relationshipType: SPARK_CodeName
+  parentTcins: [String]
+  itemDetails: CORONA_ItemDetails
+  purchaseOrders : [SPARK_PurchaseOrderDetails]
+}
+
+type SPARK_ReservedDpci {
+  apexId: String
+  apexDescription: String
+  dpci: String
+  dpciStatus: String
+  dept: Int
+  clazz: Int
+  subClass: Int
+  tcin: String
+}
+
+type SPARK_CodeName {
+  code: String
+  name: String
+}
+
+type SPARK_ProductMaterials {
+  name: String
+  primary: Boolean
+  libraryResource: SPARK_ProductLibraryResource
+}
+
+type SPARK_ProductLibraryResource {
+  id: String
+}
+
+type SPARK_PackagingAttribute {
+  formatId: Int
+  formatName: String
+  spgLibraryId: String
+  spgStatus: SPARK_CodeDescription
+  spg: SPARK_SpgFileLibrary
+}
+
+input SPARK_ProductPartnerActionInput {
+  productId: ID
+  resourceType: String
+  partnerId: ID
+  teamIds: [ID]
+  workspaceId: ID
+  partnerType:Int
+  dropped: Boolean
+}
+
+input CarryForwardProductInput {
+  bomIds: [String]
+  claimIds: [String]
+  impressionIds: [String]
+  measurementSetIds: [String]
+  constructionSetIds: [String]
+  departmentIds: [Int]
+  teams: [SPARK_WorkspaceTeamInput]
+  designCycle: String,
+  carryForwardReason: String
+  protoApprovalDueDate: String
+  setDates: [String]
+  workspaceId: String
+  fromWorkspaceId: String
+  departmentId: Int
+  componentsInProgress: [String]
+  businessPartners: [BusinessPartnerInput]
+  initiatedFromPlan: Boolean
+  initiatedBy: SPARK_InitiatedByInput
+  boms: [SPARK_BombsWithMaterialInput]
+}
+
+input BusinessPartnerInput {
+  partnerId: ID,
+  partnerType: Int,
+}
+
+input SPARK_InitiatedByInput {
+    userProfileId: String
+    internal: Boolean
+    partnerId: ID
+    systemTeamId: String
+    currentVmmRole: Int
+    approvedVmmRoles: [Int]
+    roles: [String]
+}
+
+input Bulk_CarryForwardProductInput {
+  teamIds: [String],
+  designCycle: String,
+  carryForwardReason: String
+  protoApprovalDueDate: String
+  setDates: [String]
+  toWorkspaceId: String
+  fromWorkspaceId: String
+  departmentIds: [Int]
+}
+
+type SPARK_ProductCopy {
+  copyId: String
+  requestId: String
+  resources: [SPARK_ProductCopyResources]
+}
+
+type SPARK_ProductCopyResources {
+  resourceType: String
+  count: Int
+}
+
+type VMM_BusinessPartnerCategory implements SPARK_Categories{
+  id: ID
+  name: String
+  role: [VMM_BusinessPartner_Roles]
+  relationship: [VMM_BusinessPartner_Relationship]
+  associatedPartnerType: Int
+}
+
+type SPARK_ProductStatus implements SPARK_Categories {
+  id: ID
+  name: String
+}
+
+type SPARK_CarryForwardProductStatus {
+  id: ID
+  name: String
+  workspaceId: String
+}
+type SPARK_CarryForwardProductAllStatus {
+  statusId: ID
+  statusName: String
+  workspaceId: String
+}
+
+type SPARK_MasterProductStatus {
+  id: ID
+  name: String
+}
+
+input SPARK_ProductPartnerStatusInput {
+  statusId: String
+  workspaceId: String
+  partnerId: ID
+}
+
+input SPARK_ProductInput {
+  description: String
+  departmentId: ID
+  divisionId: ID
+  classId: ID
+  brandId: ID
+  departments: [DopplerDepartmentInput]
+  primaryMaterial: String
+  secondaryMaterial: String
+  vendorStyleNumber: String
+  comments: String
+  internalNotes: String
+  tags: [String]
+  businessPartners: [SPARK_ProductPartnerInput]
+  productWorkspaceAttributes: [SPARK_ProductWorkspaceAttributesInput]
+  productWorkspaceInfo: [SPARK_ProductWorkspaceInfoInput]
+  resources: SPARK_ResourceMappingInput
+  attachmentId: String
+  numberOfPieces: Int
+  developmentCost: String
+  presentationDimensions: String
+  presentationHeight: String #Number field, using string to prevent precision loss with type conversion
+  presentationWidth: String #Number field, using string to prevent precision loss with type conversion
+  presentationDepth: String #Number field, using string to prevent precision loss with type conversion
+  teams: WorkspaceTeamContextInput #BULK ONLY
+  type: Int #100 FOR PRODUCT, 101 FOR TEMPLATE, 102 FOR BRAND_COMPLIANCE
+  template: Boolean #TEMPLATE ONLY
+  status: Int #TEMPLATE ONLY
+  divisionIds: [ID] #TEMPLATE ONLY
+  brandIds: [ID] #TEMPLATE ONLY
+  departmentIds: [String] #TEMPLATE ONLY
+  attachmentIds: [String] #TEMPLATE ONLY
+  productMaterials: [SPARK_ProductMaterialsInput]
+  packagingAttributes: [SPARK_PackagingAttributeInput]
+  preferredStyle: Boolean
+  fbDpci: String
+  brandComplianceRecordId: Int
+  askId: String
+}
+
+input SPARK_ProductPartnerInput {
+  partnerId: ID!
+  partnerType: Int
+}
+
+input SPARK_ProductUpdateInput {
+  id: ID!
+  description: String
+  departmentId: ID
+  divisionId: ID
+  classId: ID
+  brandId: ID
+  departments: [DopplerDepartmentInput]
+  primaryMaterial: String
+  secondaryMaterial: String
+  vendorStyleNumber: String
+  comments: String
+  internalNotes: String
+  tags: [String]
+  numberOfPieces: Int
+  developmentCost: String
+  presentationDimensions: String
+  presentationHeight: String
+  presentationWidth: String
+  presentationDepth: String
+  productWorkspaceAttributes: [SPARK_ProductWorkspaceAttributesInput]
+  productWorkspaceInfo: [SPARK_ProductWorkspaceInfoInput]
+  newBusinessPartners: [SPARK_ProductPartnerInput]
+  statuses: [SPARK_VendorAttributeInput]
+  newResources: SPARK_ResourceMappingInput
+  thumbnailId: String
+  teams: WorkspaceTeamContextInput #BULK ONLY
+  carryForwardProduct: Bulk_CarryForwardProductInput #BULK ONLY
+  type: Int #100 FOR PRODUCT & 101 FOR TEMPLATE
+  template: Boolean #TEMPLATE ONLY
+  status: Int #TEMPLATE ONLY
+  divisionIds: [ID] #TEMPLATE ONLY
+  brandIds: [ID] #TEMPLATE ONLY
+  departmentIds: [String] #TEMPLATE ONLY
+  attachmentIds: [String] #TEMPLATE ONLY
+  removedProductTemplateAttachments: [SPARK_ProductTemplateRemovedAttachments] #TEMPLATE ONLY
+  productMaterials: [SPARK_ProductMaterialsInput]
+  packagingAttributes: [SPARK_PackagingAttributeInput]
+  preferredStyle: Boolean
+  fbDpci: String
+}
+
+input SPARK_ProductMaterialsInput {
+  name: String
+  primary: Boolean
+  libraryResource: SPARK_ProductLibraryResourceInput
+}
+
+input SPARK_ProductLibraryResourceInput {
+  id: String
+}
+
+input SPARK_PackagingAttributeInput {
+  formatId: Int
+  spgLibraryId: String
+  spgStatusId: Int
+  formatName: String
+}
+
+input SPARK_ProductTemplateRemovedAttachments {
+  humanId: String
+  documentId: String
+}
+
+input SPARK_VendorAttributeInput {
+  partnerId: ID!
+  statusId: ID!
+  workspaceId: String!
+}
+
+input SPARK_ProductTechPackCountInput {
+  productId: ID!
+  partnerId: ID
+  parentProductId: ID
+  workspaceContext: String
+}
+
+type SPARK_ProductBulkType {
+  products: [SPARK_Product]
+}
+
+input SPARK_ProductWorkspaceAttributesInput {
+  humanId: String!
+  designCycle: String
+  setDates: [String]
+  hidden: Boolean
+  protoApprovalDueDate: String
+  carryForwardReason: String
+}
+
+input SPARK_ProductWorkspaceInfoInput {
+  humanId: String!
+  designCycle: String
+  setDates: [String]
+  hidden: Boolean
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  businessPartners: [SPARK_WorkspaceInfoPartnerInput]
+}
+
+type SPARK_WorkspaceInfoPartner {
+  partnerId: ID,
+  partnerType: Int,
+  status: Int,
+  preProdStatusAt: String,
+  prodStatusAt: String,
+  archived: Boolean,
+  statusName: String
+  preferred: Boolean
+}
+
+input SPARK_WorkspaceInfoPartnerInput {
+  partnerId: ID,
+  partnerType: Int,
+  status: Int,
+  preProdStatusAt: String,
+  prodStatusAt: String,
+  archived: Boolean,
+  statusName: String
+}
+
+type SPARK_ProductWorkspaceAttributes {
+  humanId: String
+  #Below field will not be cached client-side, use above for cache
+  workspaceId: String
+  designCycle: SPARK_Tag
+  setDates: [String]
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  isHidden: Boolean
+  teams: [String]
+  archived: Boolean
+  linkedAttributes: [String]
+}
+
+type SPARK_ProductWorkspaceInfo {
+  humanId: String
+  workspaceId: String
+  designCycle: SPARK_Tag
+  setDates: [String]
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  isHidden: Boolean
+  teams: [String]
+  archived: Boolean
+  linkedAttributes: [String]
+  businessPartners: [SPARK_WorkspaceInfoPartner]
+}
+
+type SPARK_ProductsPaged {
+  content: [SPARK_Product]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_ProductsCategories {
+  categories(type: String): [SPARK_Categories]
+  categoryIds: [ID]
+  count: Int
+}
+
+type SPARK_ResourcesCount {
+  productId: ID
+  partnerId: ID
+  productThumbnailId: String
+  workspaceContext: String
+  boms: [ID]
+  productBoms: [ID]
+  packagingBoms: [ID]
+  claims: [ID]
+  constructions: [ID]
+  measurementSets: [ID]
+  productAttachments: [ID]
+  discussionAttachments: [ID]
+  sample: [ID]
+  discussions: [ID]
+  watchlists: [ID]
+}
+
+type SPARK_AttachmentSummary {
+  isThumbnailPreviewable: Boolean
+  totalAttachmentCount: Int
+}
+
+type SPARK_ProductRules {
+  id: ID
+  active: Boolean
+  departments: [IG_Department]
+  businessPartners: [VMM_BusinessPartner]
+  @deprecated(reason: "use rule attribute")
+  rules: [Int]
+  insightsClassExclusion: [IG_Clazz]
+  productId: String
+  rule: SPARK_CodeDescription
+}
+
+input SPARK_ProductRuleCreateInput {
+  active: Boolean!
+  departments: [Int]
+  businessPartners: [ID]
+  rules: [Int]!
+}
+
+input SPARK_ProductRuleUpdateInput {
+  id: ID!
+  active: Boolean!
+  departments: [Int]
+  businessPartners: [ID]
+  rules: [Int]!
+}
+
+type SPARK_AvailableRules {
+  id: Int
+  name: String
+}
+
+input DopplerDepartmentInput {
+  id: Int
+  divisionId: Int
+  classIds: [Int]
+  primaryCapacityTypeId: Int
+  secondaryCapacityTypeId: Int
+}
+
+type DopplerDepartment {
+  id: Int
+  divisionId: Int
+  classIds: [Int]
+  department: IG_Department
+  division: IG_Division
+  clazzes: [IG_Clazz]
+  primaryCapacityTypeId: Int
+  primaryCapacityTypeName: String
+  secondaryCapacityTypeId: Int
+  secondaryCapacityTypeName: String
+}
+
+type  SPARK_ProductTemplatesList {
+  content: [SPARK_Product]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_ProductTemplateAttachments {
+  attachmentIds: [String]
+  attachments: [SPARK_Attachment]
+}
+
+type SPARK_ProductTemplateStatus {
+  code: Int
+  description: String
+}
+
+type SPARK_ProductComponentsCounts {
+  name: String
+  count: Int
+}
+
+type SPARK_PurchaseOrderDetails {
+  purchaseOrderNumber : String
+  orderUnits : Int
+}

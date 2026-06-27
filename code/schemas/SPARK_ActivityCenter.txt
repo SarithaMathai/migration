@@ -1,0 +1,116 @@
+extend type Query {
+  searchActivityEvents(
+    streamResourceId: String!
+    streamResourceType: SPARK_ResourceType!
+    resourceType: [SPARK_ResourceType]
+    eventType: [SPARK_ActivityEventType]
+    subEventType: [SPARK_ActivitySubEventType]
+    page: Int = 0
+    size: Int = 1000
+    linkedStreams: [String]
+  ): SPARK_ActivityEventPage
+  countActivityEvents(
+    streamResourceId: String!
+    streamResourceType: SPARK_ResourceType!
+    resourceType: [SPARK_ResourceType]
+    eventType: [SPARK_ActivityEventType]
+    groupBy: String
+  ): SPARK_EventCountList
+}
+
+type SPARK_Activity_parentResourceInfo {
+  linkGenartionPath: String
+  linkGenerationVariables: JSON
+  linkPath: String
+}
+
+type SPARK_ActivityModifiedData_resourceUpdated {
+  text: String
+  resourceDescription: String
+  resourceType: String
+  resourceId: String
+  parentResourceInfo: SPARK_Activity_parentResourceInfo
+}
+
+type SPARK_ActivityModifiedData_userInfo {
+  linkText: String
+  userId: String
+}
+
+type SPARK_ActivityModifiedData {
+  attributeUpdateText: String
+  resourceUpdated: SPARK_ActivityModifiedData_resourceUpdated
+  resourceChangeTypeText: String
+  oldValues: [String]
+  newValues: [String]
+  attributeName: String
+  eventType: String
+  isSingleValueUpdate: Boolean
+}
+
+type SPARK_ActivityModifiedData_Old {
+  attributeName: String
+  oldValues: [String]
+  newValues: [String]
+}
+
+type SPARK_ActivityEvent {
+  id: ID!
+  resourceId: String
+  resourceType: SPARK_ResourceType
+  eventType: String
+  eventSubType: String
+  eventDate: DateTime
+  user: SPARK_UserProfileAttributes
+  eventSummary: JSON
+  eventStreams: JSON
+  businessPartners: [VMM_BusinessPartner]
+  modifiedData: [SPARK_ActivityModifiedData_Old]
+  activityModifiedData(streamResourceId: String): [SPARK_ActivityModifiedData]
+  userInfo: SPARK_ActivityModifiedData_userInfo
+}
+
+type SPARK_ActivityEventPage {
+  content: [SPARK_ActivityEvent]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_EventCount {
+  count: Int!
+  group: String!
+}
+
+type SPARK_EventCountList {
+  counts: [SPARK_EventCount]
+  totalCounts: Int!
+}
+
+enum SPARK_ActivityEventType {
+  DELETE
+  CREATE
+  UPDATE
+  REFRESH
+  RELEASE
+  RELEASE_FAIL
+  CREATE_REPLY
+  UPDATE_REPLY
+  MILESTONE_CREATE
+  MILESTONE_UPDATE
+}
+
+enum SPARK_ActivitySubEventType {
+  PRODUCT_CREATE,
+  PRODUCT_UPDATE_CONTENT,
+  PRODUCT_ADD_BUSINESS_PARTNER,
+  PRODUCT_REMOVE_BUSINESS_PARTNER,
+  PRODUCT_ADD_TEAMS,
+  PRODUCT_REMOVE_TEAMS,
+  PRODUCT_DROP_UNDROP_BUSINESS_PARTNER,
+  PRODUCT_UPDATE_WORKSPACE_TEAMS,
+  PRODUCT_UPDATE_STATUS,
+  PRODUCT_ADD_LINK,
+  PRODUCT_REMOVE_LINK,
+  WATCHLIST_CREATE,
+  WATCHLIST_UPDATE_CONTENT
+}

@@ -1,0 +1,45 @@
+extend type Query {
+  getAllRecentlyViewed(
+    type: String
+    sort: String
+    page: Int
+    size: Int
+  ): SPARK_RecentlyViewedPaged
+}
+
+extend type Mutation {
+  deleteRecentlyViewedByPartner(
+    resourceType: String!
+    partnerId: ID!
+    resourceIds: [ID]
+  ): ID
+  addRecentlyViewed(
+    recentlyViewed: SPARK_RecentlyViewedInput
+  ): SPARK_RecentlyViewedResource
+}
+
+type SPARK_RecentlyViewed {
+  id: ID!
+  userProfileId: String!
+  resource: SPARK_RecentlyViewedResource!
+  viewed: String!
+  partnerId: ID
+  sample: SPARK_SampleV2
+  product: SPARK_Product
+}
+
+type SPARK_RecentlyViewedResource {
+  id: String!
+  type: String!
+}
+
+type SPARK_RecentlyViewedPaged {
+  content: [SPARK_RecentlyViewed]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+input SPARK_RecentlyViewedInput {
+  id: String!
+  type: String
+}

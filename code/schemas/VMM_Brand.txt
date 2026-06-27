@@ -1,0 +1,5 @@
+extend type Query {
+  getBrands(query:String!, includeNationalBrands:Boolean): [VMM_Brand]
+  getBrand(id:String!): VMM_Brand
+}
+

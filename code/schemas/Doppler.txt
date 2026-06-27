@@ -1,0 +1,11 @@
+extend type Query {
+  getCapacityTypes(departmentId: ID!): [DopplerCapacity]
+  getCapacityTypesByDepartmentAndPrimaryId(departmentId: ID!, capacityTypePrimaryId: ID!): [DopplerCapacity]
+}
+
+type DopplerCapacity {
+  capacityTypePrimaryId: Int
+  capacityTypePrimaryName: String
+  capacityTypeSecondaryId: Int
+  capacityTypeSecondaryName: String
+}

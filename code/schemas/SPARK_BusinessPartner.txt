@@ -1,0 +1,28 @@
+extend type Query {
+    getBusinessPartnersByTypesAndQuery(query: String!, bpRoleIds: [Int]): [SPARK_BusinessPartner]
+    getBusinessPartnersByUserLanId(userLanId: String!): [SPARK_BusinessPartner]
+    getBusinessPartnerById(bpId: String!): SPARK_BusinessPartner
+}
+
+type SPARK_BusinessPartner {
+    name: String
+    id: ID
+    roles: [SPARK_BusinessPartnerRole]
+    relationships: [SPARK_BusinessPartner_Relationship]
+}
+
+type SPARK_BusinessPartnerRole {
+    id: Int,
+    name: String
+}
+
+type SPARK_BusinessPartner_Relationship {
+    relatedBpId: ID
+    relatedBpName: String
+    type: SPARK_BusinessPartner_Relationship_Type
+}
+
+type SPARK_BusinessPartner_Relationship_Type{
+    bpRole: SPARK_BusinessPartnerRole
+    relatedBpRole: SPARK_BusinessPartnerRole
+}

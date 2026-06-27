@@ -1,0 +1,326 @@
+type Query {
+  getCoreAttributes(coreAttributesQuery: SPARK_CoreAttributesQuery): SPARK_CoreAttributes
+}
+
+type Mutation {
+  notImplemented: String
+}
+
+scalar Date
+
+scalar DateTime
+
+scalar JSON
+
+type VMM_BusinessPartner_RoleStatus {
+  name: String
+  id: Int
+}
+
+type SPARK_ResolvedPartner {
+  partnerName: String
+  partnerId: ID
+}
+
+type VMM_BusinessPartner_Roles {
+  bpRoleName: String
+  bpRoleId: Int
+  roleCategory: Int
+  status: [VMM_BusinessPartner_RoleStatus]
+  vendor: [VMM_Vendor]
+}
+
+type VMM_BusinessPartner_Relationship_Roles {
+  bpRoleName: String
+  bpRoleId: Int
+  roleCategory: String
+  status: [VMM_BusinessPartner_RoleStatus]
+}
+
+type VMM_Vendor {
+  gmsVendorNumber: Int
+}
+
+type VMM_BusinessPartner_Relationship_Type{
+  bpRole: VMM_BusinessPartner_Relationship_Roles
+  relatedBpRole: VMM_BusinessPartner_Relationship_Roles
+}
+
+type VMM_BusinessPartner_Relationship {
+  relatedBpId: Int
+  relatedBpName: String
+  relatedBpStatusId: Int
+  relatedBpStatusName: String
+  type: VMM_BusinessPartner_Relationship_Type
+}
+
+type VMM_BusinessPartner {
+  id: ID
+  name: String
+  role: [VMM_BusinessPartner_Roles]
+  relationship: [VMM_BusinessPartner_Relationship]
+  associatedPartnerType: Int
+}
+
+type VMM_Location {
+  id: ID
+  name: String
+  countryOfOrigin: String
+  status: String
+  authorized: Boolean
+  capabilityTypes: [String]
+  circuitBroken: Boolean
+  address: VMM_Location_Address
+}
+
+type VMM_Location_Address {
+    countryCode: String
+    countryName: String
+    city: String
+    line1: String
+    line2: String
+    postalCode: String
+    subdivisionCode: String
+    subdivisionName: String
+}
+
+type VMM_BusinessPartnerUsers {
+  id: ID
+  name: String
+  users: [VMM_User]
+}
+
+type VMM_User {
+  id: ID
+  first_name: String
+  last_name: String
+  lan_id: String
+  email: String
+  user_active: Boolean
+  system_access_flag: Boolean
+}
+
+# type VMM_Brand implements VMM_Item  {}
+
+type SPARK_Paging {
+  totalPages: Int
+  totalElements: Int
+  first: Boolean!
+  numberOfElements: Int
+  page: Int
+  size: Int!
+  number: Int
+  last: Boolean!
+  sort: SPARK_Sort
+}
+interface SPARK_Categories {
+  name: String
+  id: ID
+}
+
+type SPARK_Pageable {
+  sort: SPARK_Sort
+  pageSize: Int!
+  pageNumber: Int!
+  offset: Int!
+  paged: Boolean!
+  unpaged: Boolean!
+}
+
+type SPARK_Sort {
+  unsorted: Boolean
+  sorted: Boolean
+}
+
+type VMM_Brand implements SPARK_Categories {
+  name: String
+  id: ID
+  brandTypes: [VMM_Brand_Type]
+  brandClassifications: [VMM_Brand_Classification]
+  isTargetOwned: Boolean
+}
+
+type VMM_Brand_Classification {
+  code: String
+  name: String
+}
+
+type VMM_Brand_Type {
+  code: String
+  name: String
+}
+
+#This will be temporary once the SPARK_Tag chnages their id from String to ID field the below schema can be deleted.
+type SPARK_Tag_Elastic implements SPARK_Categories {
+  id: ID
+  name: String!
+  type: [String]!
+}
+
+type SPARK_Packaging_Field implements SPARK_Categories {
+  id: ID
+  name: String!
+  type: [String]!
+}
+
+type SPARK_SingleResourceMapping {
+  type: String
+  id: String
+}
+
+type SPARK_ResourceMapping {
+  mappings: ResourceMapping
+}
+
+type ResourceMapping {
+  colors: [String]
+  artworks: [String]
+  trim: [String]
+  product: [String]
+  discussion: [String]
+  workspace: [String]
+  sample: [String]
+  team: [String]
+  fabric: [String]
+  combination: [String]
+  specification: [String]
+  wash: [String]
+  palette: [String]
+  bill_of_materials: [String]
+  @deprecated
+  packaging_bill_of_materials: [String]
+  packaging_bom: [String]
+  measurement_set: [String]
+  claim: [String]
+  construction_set: [String]
+  packaging: [String]
+  spg: [String]
+}
+
+type SPARK_ResourceCount {
+  resourceId: String!
+  count: Int!
+}
+
+#*********************
+input SPARK_SingleResourceMappingInput {
+  type: String
+  id: ID
+}
+
+input SPARK_ResourceMappingInput {
+  mappings: SPARK_MappingInput
+}
+
+input SPARK_MappingInput {
+  colors: [String]
+  target_colors: [String]
+  reference_colors: [String]
+  colors_archroma: [String]
+  target_colors_archroma: [String]
+  reference_colors_archroma: [String]
+  artworks: [String]
+  trim: [String]
+  product: [String]
+  discussion: [String]
+  workspace: [String]
+  sample: [String]
+  team: [String]
+  fabric: [String]
+  specification: [String]
+  combination: [String]
+  wash: [String]
+  palette: [String]
+  material: [String]
+  bill_of_materials: [String]
+  @deprecated
+  packaging_bill_of_materials: [String]
+  packaging_bom: [String]
+  measurement_set: [String]
+  claim: [String]
+  construction_set: [String]
+  packaging: [String]
+  spg: [String]
+}
+
+enum SPARK_ResourceType {
+  ARTWORKS
+  TRIM
+  DISCUSSION
+  PRODUCT
+  SAMPLE
+  WORKSPACE
+  TEAM
+  FABRIC
+  COMBINATION
+  SPECIFICATION
+  MEASUREMENT
+  BOM
+  PACKAGING_BOM
+  CLAIM
+  WASH
+  PRODUCTDETAIL
+  PALETTE
+  PRODUCT_WATCHLIST
+  PDTL
+  PRODUCT_TEMPLATE
+  PACKAGING
+  COLORS
+  TARGET_COLORS
+  TARGET_COLORS_ARCHROMA
+  TARGET_COLORS_COLORO
+  TARGET_COLORS_PANTONE
+  REFERENCE_COLORS
+  REFERENCE_COLORS_ARCHROMA
+  REFERENCE_COLORS_COLORO
+  REFERENCE_COLORS_PANTONE
+  COLORS_ARCHROMA
+  COLORS_COLORO
+  COLORS_PANTONE
+  MATERIAL
+  FABRIC_SPEC
+}
+
+type SPARK_Filter_SetDates implements SPARK_Categories {
+  name: String
+  id: ID
+}
+
+type SPARK_CodeDescription {
+  code: Int
+  description: String
+}
+
+type SPARK_CodeDescriptionOrder {
+  code: Int
+  description: String
+  order: Int
+}
+
+input SPARK_VersionableIdInput {
+  id: ID
+  version: Int
+}
+
+type SPARK_VersionableId {
+  id: ID
+  version: Int
+}
+
+input SPARK_CoreAttributesQuery {
+  tagIds: [String]
+  designCycleIds: [String]
+  departmentIds: [String]
+}
+
+type SPARK_CoreAttributes {
+  tags: [SPARK_Tag]
+  designCycles: [SPARK_Tag]
+  departments: [IG_Department]
+}
+
+type SPARK_Countries {
+  code: String
+  shortDescription: String
+  description: String
+}

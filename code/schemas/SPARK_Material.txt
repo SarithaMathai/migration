@@ -1,0 +1,118 @@
+extend type Query {
+  getMaterialByIdFromService(id: ID!, proxyIds: [String]): SPARK_ServiceMaterial
+  getMaterialByIdsFromService(ids: [ID]): [SPARK_ServiceMaterial]
+  validateMaterialName(name: String!, type: String!): Boolean
+}
+
+extend type Mutation {
+  updateMaterialTeamsByIdFromService(id: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [String]
+  bulkUpdateTeams(teamsToUpdate: [SPARK_TeamsToUpdateInput]): Boolean
+}
+
+type SPARK_ServiceMaterial {
+  humanId: ID
+  id: ID
+  baseMaterial: SPARK_BaseMaterial
+  referenceId: String
+  name: String
+  description: String
+  status: SPARK_CodeDescription
+  externalStatus: SPARK_CodeDescription
+  thumbnailId: String
+  businessPartners: [VMM_BusinessPartner]
+  droppedPartnerIds: [ID]
+  red: String
+  green: String
+  blue: String
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+  type: String
+  teams: [SPARK_Team]
+  samples: [SPARK_SampleV2]
+  relatedBoms: SPARK_BomsPaged
+  relatedPalettes: [SPARK_Palette]
+  targetStandard: Boolean
+  designThumbnailId: String
+  colorways: [SPARK_Colorway]
+  additionalDescription: String
+  claims: [SPARK_Claims]
+  mechanicalFinishes: [SPARK_CodeDescription]
+  chemicalFinishes: [SPARK_CodeDescription]
+  trimType: SPARK_CodeDescription
+  trimSubType: [SPARK_CodeDescription]
+  trimShapes: [SPARK_CodeDescription]
+  trimConstruction: SPARK_CodeDescription
+  fiberDetails: [SPARK_TrimFiberDetail]
+  recycledContent: Float
+}
+
+type SPARK_BomsPaged {
+  content: [SPARK_Bom]
+  paging: SPARK_Paging
+}
+
+type SPARK_BaseMaterialResource implements SPARK_BaseMaterialCommonFields {
+  thumbnailId: String
+  designThumbnailId: String
+  description: String
+}
+
+type SPARK_MaterialResource {
+  humanId: ID
+  type: String
+  baseMaterial: SPARK_BaseMaterialResource
+}
+
+input SPARK_TeamToAddInput {
+  teamId: String
+  teamType: String
+  accessControlGroupIds: [String]
+  partnerId: ID
+  partnerType: Int
+}
+
+input SPARK_TeamsToUpdateInput {
+  resourceId: String
+  teamsToAdd: [SPARK_TeamToAddInput]
+  teamsToRemove: [SPARK_TeamToAddInput]
+  bpsToDrop: [ID]
+  bpsToUndrop: [ID]
+}
+
+type SPARK_ExportResponse {
+  requestId: String
+}
+
+type SPARK_HumanId {
+  humanId: String
+}
+
+input SPARK_ColorwayInput {
+  name: String
+  libraryColors: [String]
+  otherColors: [String]
+  additionalInformation: String
+  thumbnailId: String
+  humanId: String
+  files: [String]
+  tags: [String]
+  designThumbnailId: String
+  status: Int
+  archived: Boolean
+}
+
+type SPARK_Colorway {
+  humanId: ID
+  name: String
+  otherColors: [String]
+  tags: [SPARK_Tag]
+  libraryColors: [SPARK_ServiceMaterial]
+  additionalInformation: String
+  thumbnailId: String
+  files: [SPARK_Attachment]
+  designThumbnailId: String
+  status: SPARK_CodeDescription
+  archived: Boolean
+}

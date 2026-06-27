@@ -1,0 +1,137 @@
+extend type Query {
+	getByoTemplates(userAttributes: SPARK_UserProfileAttributesInput): [SPARK_ByoTemplate]
+	getByoTemplateById(id: ID!): SPARK_ByoTemplate
+}
+
+extend type Mutation {
+	addByoTemplate(sparkByoTemplate: SPARK_ByoTemplateInput): SPARK_ByoTemplate
+	updateByoTemplate(id: ID!, sparkByoTemplate: SPARK_ByoTemplateInput): SPARK_ByoTemplate
+	shareByoTemplate(id: ID!, userProfileIds: [String]): [SPARK_ByoTemplate]
+	deleteByoTemplate(id: ID!): Boolean
+}
+
+input SPARK_ByoTemplateInput {
+	name: String!
+	resourceType: String!
+	connectedProducts: Boolean
+	rowResource: String
+	filters: SPARK_ByoFilterInput
+	fields: [SPARK_ByoGridFieldsInput]
+	gridFilters: [SPARK_ByoGridFilterInput]
+	grouping: [String]
+}
+
+input SPARK_ByoGridFieldsInput {
+	colId: String,
+	hide: Boolean,
+	sort: String,
+	sortIndex: String,
+	rowGroup: Boolean,
+	rowGroupIndex: String,
+}
+input SPARK_ByoGridFilterInput {
+	key: String
+	value: SPARK_ByoGridFilterValue
+}
+input SPARK_ByoGridFilterValue {
+	filterType: String,
+	type: String,
+	filter: String,
+	operator: String,
+	condition1: SPARK_GridFilterType
+	condition2: SPARK_GridFilterType
+}
+
+input SPARK_GridFilterType {
+	filterType: String
+	type: String
+	filter: String
+}
+
+type SPARK_ByoGridFilter {
+	key: String
+	value: SPARK_ByoGridFiltersValue
+}
+type SPARK_ByoGridFiltersValue {
+	filterType: String,
+	type: String,
+	filter: String,
+	operator: String,
+	condition1: SPARK_GridFiltersType
+	condition2: SPARK_GridFiltersType
+}
+
+type SPARK_GridFiltersType {
+	filterType: String
+	type: String
+	filter: String
+}
+
+input SPARK_ByoFilterInput {
+	#add all available filters here
+	materialTypes: [BYO_CodeDescriptionInput]
+	cycles: [BYO_CodeDescriptionInput],
+	divisions: [BYO_CodeDescriptionInput],
+	departments: [BYO_CodeDescriptionInput],
+	brands: [BYO_CodeDescriptionInput],
+	merchVendors: [BYO_CodeDescriptionInput],
+	suppliers: [BYO_CodeDescriptionInput],
+	materialDesignCycles: [BYO_CodeDescriptionInput],
+}
+
+input BYO_CodeDescriptionInput {
+  code: String
+  description: String
+}
+
+type BYO_CodeDescription {
+  code: String
+  description: String
+}
+
+type SPARK_ByoGridFields {
+  colId: String,
+  hide: Boolean,
+  sort: String,
+  sortIndex: String,
+  rowGroup: Boolean,
+  rowGroupIndex: Int,
+}
+
+type SPARK_ByoTemplate {
+	id: ID!
+	userProfileId: String!
+	name: String
+	resourceType: String
+	connectedProducts: Boolean
+	rowResource: String
+	filters: SPARK_ByoFilter
+	gridFilters: [SPARK_ByoGridFilter]
+	fields: [SPARK_ByoGridFields]
+	grouping: [String]
+	refreshDetail: SPARK_TemplateRefreshDetail
+	version: Int
+	createdBy: SPARK_UserProfileAttributes
+	updatedBy: SPARK_UserProfileAttributes
+	createdAt: String
+	updatedAt: String
+}
+
+type SPARK_ByoFilter {
+	#add all available filters here
+	materialTypes: [BYO_CodeDescription]
+	cycles: [BYO_CodeDescription],
+	divisions: [BYO_CodeDescription],
+	departments: [BYO_CodeDescription],
+	brands: [BYO_CodeDescription],
+	merchVendors: [BYO_CodeDescription],
+	suppliers: [BYO_CodeDescription],
+	materialDesignCycles: [BYO_CodeDescription],
+}
+
+type SPARK_TemplateRefreshDetail {
+	gfReportId: String
+	reportStatus: String
+	lastRefreshTS: String
+	lastRefreshCompletedTS: String
+}

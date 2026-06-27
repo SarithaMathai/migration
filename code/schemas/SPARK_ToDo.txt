@@ -1,0 +1,34 @@
+extend type Query {
+  getToDos: [SPARK_ToDo]
+}
+
+extend type Mutation {
+  deleteToDoByBusinessPartner(
+    resourceType: String!
+    partnerId: ID!
+    resourceIds: [ID]
+  ): ID
+  addToDo(toDo: SPARK_ToDoInput!): SPARK_ToDo
+  deleteToDo(toDoId: ID!): ID
+}
+
+type SPARK_ToDo {
+  id: ID!
+  description: String!
+  userProfileId: String!
+  resource: SPARK_ToDoResource
+  partnerId: ID
+}
+
+type SPARK_ToDoResource {
+  id: ID!
+  type: String!
+  resourceDescription: String!
+  thumbnailId: String
+  relatedResource: String
+}
+
+input SPARK_ToDoInput {
+  description: String!
+  resource: SPARK_SingleResourceMappingInput
+}

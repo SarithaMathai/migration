@@ -1,0 +1,59 @@
+extend type Query {
+  searchImpressionsByProductId(
+    id: ID,
+    partnerIds: [ID],
+    workspaceIds: [ID],
+    enableWorkspaceContextFiltering: Boolean,
+  ): [SPARK_Impression]
+  getImpressionCountsByProductId(id: ID): SPARK_ImpressionCount
+}
+
+extend type Mutation {
+  updateImpressions(
+    productId: ID,
+    productImpression: SPARK_ProductImpressionInput,
+  ): [SPARK_Impression]
+}
+
+type SPARK_ImpressionCount {
+  counts: [SPARK_CountsByBp]
+}
+
+input SPARK_ProductImpressionInput {
+  impressionsToDelete: [String]
+  impressionsToUpdate: [SPARK_ImpressionInput]
+}
+
+input SPARK_ImpressionInput {
+  id: String
+  name: String
+  partnerIds: [ID]
+  businessPartners: [SPARK_ProductPartnerInput]
+  workspacesToAdd: [String]
+  workspacesToRemove: [String]
+  attachmentId: String
+  relatedResources: [ID]
+  sortOrder: Int
+}
+
+type SPARK_Impression {
+  id: String
+  name: String
+  parentId: ID
+  version: Int
+  businessPartners: [VMM_BusinessPartner]
+  owningBusinessPartner: VMM_BusinessPartner
+  owningPartnerId: ID
+  owningPartnerType: Int
+  workspaceContext: [ID]
+  workspaces: [SPARK_WorkspaceV2]
+  deletable: Boolean
+  associatedBomIds: [String]
+  attachmentId: String
+  relatedResources: [ID]
+  sortOrder: Int
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+}

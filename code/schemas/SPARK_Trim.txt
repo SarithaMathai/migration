@@ -1,0 +1,515 @@
+extend type Query {
+  getTrim(id: ID!): SPARK_Trim
+  getTrims(ids: [ID]!): [SPARK_Trim]
+  getAdjacencies: [SPARK_CodeDescription]
+  getFiberContents: [SPARK_CodeDescription]
+  getFiberContentsByType(typeCode: Int): [SPARK_CodeDescription]
+  getStatuses: [SPARK_CodeDescription]
+  getTrimBrands: [SPARK_CodeDescription]
+  getPyramids: [SPARK_CodeDescription]
+  getTrimTypes: [SPARK_CodeDescription]
+  getTrimSubTypes: [SPARK_CodeDescription]
+  getTrimSubTypesByType(typeCode: Int): [SPARK_CodeDescription]
+  getTrimFurtherSubTypes: [SPARK_CodeDescription]
+  getTrimFurtherSubTypesFiltered(typeCode: Int, subTypeCode: Int): [SPARK_CodeDescription]
+  getTrimFinishes: [SPARK_CodeDescription]
+  getTrimCoatings: [SPARK_CodeDescription]
+  getTrimInitiatedBys: [SPARK_CodeDescription]
+  getTrimUnitOfMeasures: [SPARK_CodeDescription]
+  getTrimUnitOfMeasuresByType(typeCode: Int): [SPARK_CodeDescription]
+  getTrimConstructions: [SPARK_CodeDescription]
+  getTrimConstructionsByType(typeCode: Int): [SPARK_CodeDescription]
+  getTrimShapes: [SPARK_CodeDescription]
+  getTrimShapesByType(typeCode: Int): [SPARK_CodeDescription]
+  getTrimUsagesByType(typeCode: Int): [SPARK_CodeDescription]
+  getTrimApplicationMethodsByType(typeCode: Int): [SPARK_CodeDescription]
+  getTrimUnderpartsSpecifications: [SPARK_CodeDescription]
+  getTrimWeights: [SPARK_CodeDescription]
+  getHandFeels: [SPARK_CodeDescription]
+  getTrimLabelTypes: [SPARK_CodeDescription]
+  getTrimLabelTypesBySubtype(subTypeCode: Int): [SPARK_CodeDescription]
+  getTrimTapingConstructionsFiltered(typeCode: Int, subTypeCode: Int): [SPARK_CodeDescription]
+  getTrimEdgeFinishes(subTypeCode: Int): [SPARK_CodeDescription]
+  getTrimBackConstructions(typeCode: Int): [SPARK_CodeDescription]
+  getTrimFixedSizes: [SPARK_CodeDescription]
+  getWeightUnitOfMeasuresByType(typeCode: Int): [SPARK_CodeDescription]
+  getSliderTypesByType(typeCode: Int): [SPARK_CodeDescription]
+  getSliderMaterialsByType(typeCode: Int): [SPARK_CodeDescription]
+  getPuller(typeCode: Int): [SPARK_CodeDescription]
+  getPullerAttachmentMaterialByType(typeCode: Int): [SPARK_CodeDescription]
+  getCompatibleSizesByType(typeCode: Int): [SPARK_CodeDescription]
+  getCompatibleSizeUnitOfMeasuresByType(typeCode: Int): [SPARK_CodeDescription]
+  getFiberContentsByTypeAndSubtype(typeCode: Int, subTypeCode: Int): [SPARK_CodeDescription]
+  exportTrim(q: String, nestedQueryList: [SPARK_NestedQueryInput], isThumbnailsRequired: Boolean): SPARK_ExportResponse
+  getTrimColorTypes(typeCode: Int, subTypeCode: Int): [SPARK_CodeDescription]
+  getTrimFinishTypes(typeCode: Int, subTypeCode: Int): [SPARK_CodeDescription]
+}
+
+extend type Mutation {
+  validateUniqueness(sparkTrim: SPARK_TrimInput!): TrimUniqunessResult
+  addTrim(sparkTrim: SPARK_TrimInput!): SPARK_Trim
+  updateTrim(sparkTrim: SPARK_TrimInput!): SPARK_Trim
+  updateTrimTeams(humanId: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [String]
+  updateTrimVariations(sparkTrimVariations: SPARK_TrimVariationsInput!): SPARK_Trim
+}
+
+type TrimUniqunessResult {
+  duplicateTrimIds: [String]
+}
+
+input SPARK_TrimInput {
+  humanId: ID
+  flexId: String
+  description: String
+  additionalInfo: String
+  tgtCode: String
+  pyramid: [Int]
+  status: Int
+  brand: Int
+  targetBranded: Boolean
+  targetSourced: Boolean
+  longLeadTime: Boolean
+  adjacency: [Int]
+  trimType: Int
+  vendorSourced: Boolean
+
+  # Trim Details
+  trimSubType: [Int]
+  trimFurtherSubType: [Int]
+  trimShapes: [Int]
+  trimConstruction: Int
+  fiberDetails: [SPARK_TrimFiberDetailInput]
+  trimSizes: [SPARK_TrimSizeInput]
+  teamsToAdd: [SPARK_TeamToAddInput]
+  usage: [Int]
+  applicationMethod: Int
+  underpartsSpecifications: [Int]
+  trimWeight: [Int]
+  handFeel: [Int]
+  flameResistant: Boolean
+  doNotUseOnTreatedGarments: Boolean
+  trimLabelTypes: [Int]
+  backConstructions: [Int]
+  tapingConstructions: [Int]
+  edgeFinishes: [Int]
+  coated: Boolean
+  recycledContent: String
+  puller: Int
+  pullMaterial: Int
+  sliderType: Int
+  sliderMaterial: Int
+  pullerAttachmentMaterials: [Int]
+
+  # Files
+  files: [String]
+  thumbnailId: String
+  designThumbnailId: String
+
+  # Additional Info Form Section
+  designCycle: SPARK_TrimCodeDescriptionInput
+  setDate: String
+  projectName: String
+  initiatedBy: Int
+  developmentHandOffDate: String
+  handedOffDate: String
+  approvalDueDate: String
+  approvedDate: String
+  releaseToMatrixDueDate: String
+  releasedToMatrixDate: String
+  department: SPARK_TrimCodeDescriptionInput
+  tags: [String]
+  notes: String
+
+  # Color and Finish Section
+  trimColors: [SPARK_TrimColorInput] @deprecated(reason: "Use `colors`.")
+  colors: [SPARK_TrimColorRowInput]
+  trimFinishes: [SPARK_TrimFinishInput] @deprecated(reason: "Use `finishes`.")
+  finishes: [SPARK_TrimFinishRowInput]
+
+  # Supplier Tab
+  suppliers: [SPARK_TrimSupplierInput]
+}
+
+type SPARK_TrimBomSizeOption {
+  id: Int
+  label: String
+  value: Int
+  uom: SPARK_CodeDescription
+}
+
+type SPARK_TrimBomUomOption {
+  id: Int
+  label: String
+  value: Int
+}
+
+input SPARK_TrimSupplierInput {
+  supplierId: ID
+  supplierItemCode: String
+  developmentSupplier: Boolean
+  facilities: [SPARK_TrimFacilityInput]
+}
+
+input SPARK_TrimFacilityInput {
+  facilityId: String
+  sizes: [SPARK_TrimFacilitySizesInput]
+  approvedColorRows: [SPARK_TrimFacilityColorsAndFinishesInput]
+  approvedFinishRows: [SPARK_TrimFacilityColorsAndFinishesInput]
+  sizeIds: [Int] @deprecated(reason: "Use `sizes which are now an Object`.")
+  approvedColorRowIds: [String] @deprecated(reason: "Use `approvedColorRows which are now an Object`.")
+  approvedFinishRowIds: [String] @deprecated(reason: "Use `approvedFinishRows which are now an Object`.")
+  colorSequences: [Int] @deprecated(reason: "Use `approvedColorRowIds which are now a String`.")
+  finishIds: [Int] @deprecated(reason: "Use `approvedFinishRowIds which are now a String`.")
+  notes: String
+}
+
+input SPARK_TrimFacilitySizesInput {
+  id: Int
+  approvedDate: String
+  approvedBy: String
+}
+
+input SPARK_TrimFacilityColorsAndFinishesInput {
+  id: String
+  approvedDate: String
+  approvedBy: String
+}
+
+input SPARK_TrimSizeInput {
+  sizeId: Int
+  innerWidth: Float
+  width: Float
+  height: String
+  outsideEdge: Float
+  size: Float
+  uom: Int
+  thickness: Float
+  thicknessUom: Int
+  elongation: String
+  lengthModulus: String
+  length: String
+  weight: String
+  weightUom: Int
+  finishedLength: Float
+  finishedWidth: Float
+  finishedUom: Int
+  flatWidth: Float
+  flatLength: Float
+  flatUom: Int
+  lengthRepeat: String
+  denier: String
+  filament: String
+  machineGauge: String
+  fixedSize: Int
+  printHeight: Float
+  printHeightUom: Int
+  printHeightPpu: Float
+  printHeightTpu: Float
+  coursesAndWales: String
+  filamentLuster: String
+  compatibleSizes: [Int]
+  compatibleSizeUom: Int
+}
+
+input SPARK_TrimFiberDetailInput {
+  fiberContent: Int
+  percentage: Int
+}
+
+input SPARK_TrimColorInput {
+  colorSequence: Int
+  colorId: String
+  dyeToMatch: Boolean
+  groundColor: String
+  groundDyeToMatch: Boolean
+  textColors: [String]
+  textDyeToMatch: Boolean
+  sliderColorId: String
+  sliderDyeToMatch: Boolean
+  tapeColorId: String
+  tapeDyeToMatch: Boolean
+  teethColorId: String
+  teethDyeToMatch: Boolean
+  pullerColorId: String
+  pullerDyeToMatch: Boolean
+}
+
+input SPARK_TrimColorRowInput {
+  colorId: String
+  dyedToMatch: Boolean
+  rowId: String
+  colorType: Int
+}
+
+input SPARK_TrimFinishInput {
+  finishId: Int
+  finish: Int
+  coating: Int
+  colorForCoatingId: String
+  coatingDyeToMatch: Boolean
+  pullerFinish: Int
+  pullerCoating: Int
+  pullerColorForCoating: String
+  pullerCoatingDyeToMatch: Boolean
+  sliderFinish: Int
+  sliderCoating: Int
+  sliderColorForCoating: String
+  sliderCoatingDyeToMatch: Boolean
+  teethFinish: Int
+  teethCoating: Int
+}
+
+input SPARK_TrimFinishRowInput {
+  rowId: String
+  finishType: Int
+  coating: SPARK_TrimFinishCoatingInput
+  finishOption: Int
+}
+
+input SPARK_TrimFinishCoatingInput {
+  color: SPARK_TrimColorRowInput
+  coatingType: Int
+}
+
+input SPARK_TrimCodeDescriptionInput {
+  code: String
+  description: String
+}
+
+input SPARK_TrimVariationsInput {
+  humanId: ID
+  trimSizes: [SPARK_TrimSizeInput]
+  colors: [SPARK_TrimColorRowInput]
+  finishes: [SPARK_TrimFinishRowInput]
+}
+
+type SPARK_Trim {
+  humanId: String
+  flexId: String
+  description: String
+  tgtCode: String
+  additionalInfo: String
+  pyramid: [SPARK_CodeDescription]
+  status: SPARK_CodeDescription
+  brand: SPARK_TrimBrandType
+  targetBranded: Boolean
+  targetSourced: Boolean
+  longLeadTime: Boolean
+  adjacency: [SPARK_CodeDescription]
+  trimType: SPARK_CodeDescription
+
+  # Trim Details
+  trimSubType: [SPARK_CodeDescription]
+  trimFurtherSubType: [SPARK_CodeDescription]
+  trimShapes: [SPARK_CodeDescription]
+  trimConstruction: SPARK_CodeDescription
+  fiberDetails: [SPARK_TrimFiberDetail]
+  trimSizes: [SPARK_TrimSize]
+  createdBy: SPARK_UserProfileAttributes!
+  createdAt: String
+  updatedBy: SPARK_UserProfileAttributes!
+  updatedAt: String
+  teams: [SPARK_Team]
+  businessPartners: [VMM_BusinessPartner]
+  droppedPartnerIds: [ID]
+  usage: [SPARK_CodeDescription]
+  applicationMethod: SPARK_CodeDescription
+  underpartsSpecifications: [SPARK_CodeDescription]
+  trimWeight: [SPARK_CodeDescription]
+  handFeel: [SPARK_CodeDescription]
+  flameResistant: Boolean
+  doNotUseOnTreatedGarments: Boolean
+  trimLabelTypes: [SPARK_CodeDescription]
+  backConstructions: [SPARK_CodeDescription]
+  tapingConstructions: [SPARK_CodeDescription]
+  edgeFinishes: [SPARK_CodeDescription]
+  coated: Boolean
+  recycledContent: String
+  puller: SPARK_CodeDescription
+  pullMaterial: SPARK_CodeDescription
+  sliderType: SPARK_CodeDescription
+  sliderMaterial: SPARK_CodeDescription
+  pullerAttachmentMaterials: [SPARK_CodeDescription]
+
+  # Files
+  files: [SPARK_Attachment]
+  thumbnailId: String
+  designThumbnailId: String
+
+  # Additional Info Section
+  designCycle: SPARK_Tag
+  setDate: String
+  projectName: String
+  initiatedBy: SPARK_CodeDescription
+  developmentHandOffDate: String
+  handedOffDate: String
+  approvalDueDate: String
+  approvedDate: String
+  releaseToMatrixDueDate: String
+  releasedToMatrixDate: String
+  department: SPARK_TrimCodeDescription
+  tags: [SPARK_Tag]
+  notes: String
+
+  # Color and Finish Section
+  trimColors: [SPARK_TrimColor] @deprecated(reason: "Use `colors`.")
+  colors: [SPARK_TrimColorRow]
+  trimFinishes: [SPARK_TrimFinish] @deprecated(reason: "Use `finishes`.")
+  finishes: [SPARK_TrimFinishRow]
+
+  # Supplier tab
+  suppliers: [SPARK_TrimSupplier]
+  gvs: Boolean
+
+  # BOM Fields
+  bomSizeOptions: [SPARK_TrimBomSizeOption]
+  bomUomOptions: [SPARK_TrimBomUomOption]
+  baseSizeCaption: SPARK_BomSizeCaption
+}
+
+type SPARK_TrimFiberDetail {
+  fiberContent: SPARK_CodeDescription
+  percentage: Int
+}
+
+type SPARK_TrimSupplier {
+  supplierId: ID
+  supplier: VMM_BusinessPartner
+  developmentSupplier: Boolean
+  supplierItemCode: String
+  facilities: [SPARK_TrimFacility]
+  dropped: Boolean
+}
+
+type SPARK_TrimFacility {
+  facilityId: String
+  facility: VMM_Location
+  sizes: [SPARK_TrimFacilitySizes]
+  approvedColorRows: [SPARK_TrimFacilityRow]
+  approvedFinishRows: [SPARK_TrimFacilityRow]
+  sizeIds: [Int] @deprecated(reason: "Use `sizes which are now an Object`.")
+  approvedColorRowIds: [String] @deprecated(reason: "Use `approvedColorRows which are now an Object`.")
+  approvedFinishRowIds: [String] @deprecated(reason: "Use `approvedFinishRows which are now an Object`.")
+  colorSequences: [Int] @deprecated(reason: "Use `approvedColorRowIds which are now a String`.")
+  finishIds: [Int] @deprecated(reason: "Use `approvedFinishRowIds which are now a String`.")
+  notes: String
+}
+
+type SPARK_TrimFacilitySizes {
+  id: Int
+  approvedDate: String
+  approvedBy: SPARK_UserProfileAttributes
+}
+
+type SPARK_TrimFacilityRow {
+  id: String
+  approvedDate: String
+  approvedBy: SPARK_UserProfileAttributes
+}
+
+type SPARK_TrimSize {
+  sizeId: Int
+  innerWidth: Float
+  width: Float
+  height: String
+  outsideEdge: Float
+  size: Float
+  uom: SPARK_CodeDescription
+  thickness: Float
+  thicknessUom: SPARK_CodeDescription
+  elongation: String
+  lengthModulus: String
+  length: String
+  weight: String
+  weightUom: SPARK_CodeDescription
+  finishedLength: Float
+  finishedWidth: Float
+  finishedUom: SPARK_CodeDescription
+  flatWidth: Float
+  flatLength: Float
+  flatUom: SPARK_CodeDescription
+  lengthRepeat: String
+  denier: String
+  filament: String
+  machineGauge: String
+  fixedSize: SPARK_CodeDescription
+  printHeight: Float
+  printHeightUom: SPARK_CodeDescription
+  printHeightPpu: Float
+  printHeightTpu: Float
+  coursesAndWales: String
+  filamentLuster: String
+  compatibleSizes: [SPARK_CodeDescription]
+  compatibleSizeUom: SPARK_CodeDescription
+}
+
+type SPARK_TrimColor {
+  colorSequence: Int
+  colorId: String
+  color: SPARK_ServiceMaterial
+  dyeToMatch: Boolean
+  groundColor: SPARK_ServiceMaterial
+  groundDyeToMatch: Boolean
+  textColors: [SPARK_ServiceMaterial]
+  textDyeToMatch: Boolean
+  sliderColor: SPARK_ServiceMaterial
+  sliderDyeToMatch: Boolean
+  tapeColor: SPARK_ServiceMaterial
+  tapeDyeToMatch: Boolean
+  teethColor: SPARK_ServiceMaterial
+  teethDyeToMatch: Boolean
+  pullerColor: SPARK_ServiceMaterial
+  pullerDyeToMatch: Boolean
+}
+
+type SPARK_TrimColorRow {
+  colorId: String
+  color: SPARK_ServiceMaterial
+  dyedToMatch: Boolean
+  rowId: String
+  colorType: SPARK_CodeDescription
+}
+
+type SPARK_TrimFinish {
+  finishId: Int
+  finish: SPARK_CodeDescription
+  coating: SPARK_CodeDescription
+  colorForCoatingId: String
+  colorForCoating: SPARK_ServiceMaterial
+  coatingDyeToMatch: Boolean
+  pullerFinish: SPARK_CodeDescription
+  pullerCoating: SPARK_CodeDescription
+  pullerColorForCoating: SPARK_ServiceMaterial
+  pullerCoatingDyeToMatch: Boolean
+  sliderFinish: SPARK_CodeDescription
+  sliderCoating: SPARK_CodeDescription
+  sliderColorForCoating: SPARK_ServiceMaterial
+  sliderCoatingDyeToMatch: Boolean
+  teethFinish: SPARK_CodeDescription
+  teethCoating: SPARK_CodeDescription
+}
+
+type SPARK_TrimFinishRow {
+  rowId: String
+  finishType: SPARK_CodeDescription
+  coating: SPARK_TrimFinishCoating
+  finishOption: SPARK_CodeDescription
+  oldFinishId: Int
+}
+
+type SPARK_TrimFinishCoating {
+  color: SPARK_TrimColorRow
+  coatingType: SPARK_CodeDescription
+}
+
+type SPARK_TrimCodeDescription {
+  code: String
+  description: String
+}
+
+type SPARK_TrimBrandType {
+  id: Int
+  code: Int
+  name: String
+  description: String
+}

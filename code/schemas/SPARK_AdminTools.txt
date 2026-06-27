@@ -1,0 +1,143 @@
+extend type Mutation {
+  refreshProduct(id: ID!): String
+  refreshProducts(product_ids: RefreshProductIds): String
+  refreshWorkspace(id: ID!): String
+  refreshWorkspaces(product_ids: RefreshWorkspaceIds): String
+  refreshSample(ids: [String]): String
+  refreshAllProducts: String
+  refreshAllWorkspaces: String
+  refreshAllSamples: String
+  resendDiscussion(id: ID!, isReply: Boolean): String
+  deleteTeam(teamId: ID!): String
+  refreshTeams(ids: [ID]!): String
+  deleteWorkspace(workspaceId:ID!):String
+  deleteProduct(productId:ID!):String
+  expireRedisCacheKey(key: String): Int
+  vendorMerge(vendorMergeData: [SPARK_VendorMergeInput]) : [SPARK_VendorMergeOutput]
+  impersonateUser(userId: String, profile: String): SPARK_ImpersonateUserResponse
+}
+
+extend type Query {
+  getTeamsESDiffs(ids: [String], refreshNeeded: Boolean = false): DiffResponse
+  getProductSummary(product_ids: [String], refreshNeeded: Boolean = false): DiffResponse
+  getWorkspaceSummary(workspace_ids: [String], refreshNeeded: Boolean = false): DiffResponse
+  getWorkspacesByType(workspace_ids: [String], type: Int): WorkspaceSummaryList
+  getSampleSummary(sample_ids: [String], refreshNeeded: Boolean = false): DiffResponse
+
+  searchTeamsES(q: String, page: Int = 0, size: Int = 100): SPARK_TeamPaged
+  searchProductsES(q: String, page: Int = 0, size: Int = 100): SPARK_ProductsPaged
+  searchWorkspacesES(q: String, page: Int = 0, size: Int = 100): SPARK_WorkspacesPagedV3
+  searchSamplesES(q: String, page: Int = 0, size: Int = 100): SPARK_SearchSamplesPaged
+  getRedisCacheKey(key: String): String
+  getComponentsCountByPartnerId(partnerId: String): [SPARK_ComponentCountObject]
+  getVendorMergeStatus(requestId: String, size: Int = 10, page: Int = 0): SPARK_VendorMergeData
+}
+
+input SPARK_TeamRequestList {
+  parentResource: String,
+  replaceTeamPartnerId: ID
+  replaceTeamPartnerType: Int
+  deleteTeamId: String,
+  addTeamId: String,
+}
+
+input SPARK_BPRequestList {
+  resourceId: String,
+  oldBusinessPartner: SPARK_BusinessPartnerDetails,
+  newBusinessPartner: SPARK_BusinessPartnerDetails,
+}
+
+input SPARK_BusinessPartnerDetails {
+  partnerId: ID
+  partnerType: Int
+  systemTeamId: String
+  systemTeamGroupIds: [String]
+}
+
+type SPARK_ImpersonateUserResponse {
+  token: String
+  user: String
+}
+
+type WorkspaceSummaryList {
+  workspaceIds: [WorkspaceSummary]
+}
+
+type WorkspaceSummary {
+  humanId: String!
+  version: Int
+  resources: SPARK_ResourceMapping
+}
+
+type DiffResponse {
+  totalFetched: Int
+  missingCount: Int
+  missingIds: [String]
+  refreshDetails: RefreshReceipt
+}
+
+input RefreshProductIds {
+  product_ids: [String]
+}
+input RefreshWorkspaceIds {
+  product_ids: [String]
+}
+
+type RefreshReceipt {
+  hostname: String
+  requestId: String
+}
+
+input SPARK_VendorMerge_ResourceInfo {
+  resourceId: String
+  resourceDescription: String
+}
+
+input SPARK_VendorMergeInput {
+  businessPartnerReplaceRequestDtolist: [SPARK_BPRequestList]
+  teamReplaceRequestDtolist: [SPARK_TeamRequestList]
+  partnersReplace: SPARK_BPRequestList
+  resourceInfo: SPARK_VendorMerge_ResourceInfo
+}
+
+type SPARK_ComponentCountObject {
+  index: String
+  count: Int
+}
+
+type SPARK_VendorMergeOutput {
+  vendorMergeId: String
+  resourceId: String
+  resourceDescription: String
+}
+
+type SPARK_VendorMergeResourceStatus {
+  resourceType: String
+  resourceIds: [String]
+  sourceId: String
+  sourceCount: Int
+  targetId: String
+  targetCount: Int
+  status: String
+  replaceType: String
+}
+
+type SPARK_VendorMerge_BpTeamInfo {
+  oldName: String
+  newName: String
+}
+
+type SPARK_VendorMergeStatus {
+  requestId: String
+  vendorMergeBpInfo: [SPARK_VendorMerge_BpTeamInfo]
+  vendorMergeTeamInfo: [SPARK_VendorMerge_BpTeamInfo]
+  status: String
+  resourceInfo: SPARK_VendorMergeOutput
+  createdBy: String
+  resourcesStatus: [SPARK_VendorMergeResourceStatus]
+}
+
+type SPARK_VendorMergeData {
+  content: [SPARK_VendorMergeStatus]
+  totalCount: Int
+}

@@ -1,0 +1,121 @@
+extend type Query {
+  getArtwork(id: ID!, proxyIds: [String]): SPARK_Artwork
+  getArtworks(ids: [ID]!): [SPARK_Artwork]
+  getStatus: [SPARK_CodeDescription]
+  getApplicationTechnique: [SPARK_CodeDescription]
+  getStyleClassification: [SPARK_CodeDescription]
+}
+
+extend type Mutation {
+  addArtwork(sparkArtwork: SPARK_ArtworkCreate!): SPARK_Artwork
+  addBulkArtwork(sparkArtworks: [SPARK_ArtworkCreate!]): [SPARK_Artwork]
+  addColorway(sparkColorway: SPARK_ArtworkUpdate!): SPARK_Artwork
+  cloneArtwork(
+    sparkArtwork: SPARK_ArtworkCreate!
+    filesToCopy: [String]
+  ): SPARK_Artwork
+  updateArtwork(sparkArtwork: SPARK_ArtworkUpdate!): SPARK_Artwork
+  deleteArtwork(humanId: ID!): SPARK_HumanId
+  addTeamsToArtwork(humanId: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput!): SPARK_Artwork
+  updateArtworkTeams(humanId: ID!, teamsToUpdate: SPARK_TeamsToUpdateInput): [String]
+  replaceColorways(colorwayInput: SPARK_ColorwaysInput): SPARK_Artwork
+}
+
+input SPARK_ArtworkCreate {
+  name: String!
+  status: Int
+  styleClassification: [Int]
+  applicationTechnique: [Int]
+  placed: Boolean
+  brands: [String]
+  designCycle: [String]
+  division: [String]
+  departments: [ID]
+  notes: String
+  tags: [String]
+  acquisitionMethod: String
+  thumbnailId: String
+  files: [String]
+  additionalReferenceId: String
+  designHouse: String
+  linkedArtsToAdd: [String]
+  type: Int
+  teamsToAdd: [SPARK_TeamToAddInput]
+  gvs: Boolean
+  designThumbnailId: String
+  parent: String
+  colorways: [SPARK_ColorwayInput]
+  disableColorwayAutomation: Boolean
+}
+
+input SPARK_ArtworkUpdate {
+  humanId: String!
+  name: String
+  status: Int
+  styleClassification: [Int]
+  applicationTechnique: [Int]
+  placed: Boolean
+  brands: [String]
+  designCycle: [String]
+  division: [String]
+  departments: [ID]
+  notes: String
+  tags: [String]
+  acquisitionMethod: String
+  thumbnailId: String
+  files: [String]
+  additionalReferenceId: String
+  designHouse: String
+  linkedArtsToAdd: [String]
+  linkedArtsToRemove: [String]
+  colorways: [SPARK_ColorwayInput]
+  type: Int
+  teamsToAdd: [SPARK_TeamToAddInput]
+  otherColors: [String]
+  libraryColors: [String]
+  designThumbnailId: String
+  disableColorwayAutomation: Boolean
+}
+
+type SPARK_Artwork {
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: String
+  updatedBy: SPARK_UserProfileAttributes
+  humanId: ID
+  gvs: Boolean
+  name: String
+  status: SPARK_CodeDescription
+  styleClassification: [SPARK_CodeDescription]
+  applicationTechnique: [SPARK_CodeDescription]
+  placed: Boolean
+  designCycle: [SPARK_Tag]
+  division: [IG_Division]
+  departments: [IG_Department]
+  brands: [VMM_Brand]
+  notes: String
+  teams: [SPARK_Team]
+  tags: [SPARK_Tag]
+  acquisitionMethod: String
+  biDirectionalLinkedArtworks: [SPARK_Artwork]
+  linkedArtworks: [SPARK_Artwork]
+  thumbnailId: String
+  additionalReferenceId: String
+  files: [SPARK_Attachment]
+  designHouse: String
+  droppedPartnerIds: [ID]
+  businessPartners: [VMM_BusinessPartner]
+  resources: SPARK_ResourceMapping
+    @deprecated(reason: "we need to know addition and removal`.")
+  colorways: [SPARK_Colorway]
+  type: SPARK_CodeDescription
+  designThumbnailId: String
+  parent: SPARK_MaterialResource
+  disableColorwayAutomation: Boolean
+}
+
+input SPARK_ColorwaysInput {
+  artworkId: String
+  colorways: [SPARK_ColorwayInput]
+}
+

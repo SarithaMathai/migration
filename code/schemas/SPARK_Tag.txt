@@ -1,0 +1,95 @@
+extend type Query {
+  getTags(
+    page: Int = 0
+    size: Int = 20
+    tagIds: [String]
+    type: String
+    archived: Boolean
+  ): SPARK_TagPaged
+  getTag(id: ID!): SPARK_Tag
+  getAllTags(page: Int, size: Int) : SPARK_TagPaged
+  searchTags(type: [String], archived: [Boolean], page: Int, size: Int, search: String):SPARK_TagPaged
+  getAllTagTypes: [String]
+  getTrainingTopics: SPARK_TrainingTopics
+}
+
+extend type Mutation {
+  addTag(tag: SPARK_TagInput): SPARK_Tag
+  updateTag(tag: SPARK_TagUpdateInput): SPARK_Tag
+  deleteTag(id: ID!): SPARK_Tag
+  setTrainingTopics(topics: [SPARK_TrainingTopicsInput]): SPARK_TrainingTopics
+  sendResourceNotifications(notificationDetails: [SPARK_ResourceNotificationDetails]): [String]
+}
+
+type SPARK_TagPaged {
+  content: [SPARK_Tag]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_Tag {
+  id: String!
+  name: String!
+  type: [String]!
+  typeAdd: Boolean
+  updatedTimestamp: String
+  createdTimestamp: String
+  updatedUser: ID
+  createdUser: ID!
+  archived: Boolean
+  createdBy: SPARK_UserProfileAttributes
+  updatedBy: SPARK_UserProfileAttributes
+}
+
+type SPARK_TrainingTopics {
+  entities: [SPARK_TrainingLabels]
+}
+
+type SPARK_TrainingLabels {
+  entityType: String
+  values: [String]
+  documents: [SPARK_TrainingDocuments]
+}
+
+type SPARK_TrainingDocuments {
+  name: String
+  childDocuments: [String]
+}
+
+input SPARK_TrainingTopicsInput {
+  entityType: String
+  autoUpdate: Boolean
+  values: [String]
+  documents: [SPARK_TrainingDocumentsInput]
+}
+
+input SPARK_TrainingDocumentsInput {
+  name: String
+  childDocuments: [String]
+}
+
+input SPARK_TagInput {
+  name: String!
+  type: [String]
+  archived: Boolean
+  isTypeAdd: Boolean
+}
+
+input SPARK_TagUpdateInput {
+  id: ID!
+  name: String
+  type: [String]
+  archived: Boolean
+  isTypeAdd: Boolean
+}
+
+input SPARK_ResourceNotificationDetails {
+  id: ID
+  topic: String
+  title: String
+  authorName: String
+  content: String
+  verificationGroup: String
+  tags: [String]
+}
+

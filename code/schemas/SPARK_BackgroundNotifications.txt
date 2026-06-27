@@ -1,0 +1,48 @@
+extend type Query {
+  getBackgroundActivityNotifications: SPARK_BackgroundNotificationsPaged
+}
+
+extend type Mutation {
+  updateBackgroundNotificationsByIds(notificationsUpdateInput: SPARK_Notifications_Update_Input):[SPARK_BackgroundNotification]
+  archiveAllCompletedNotifications:Int
+}
+
+type SPARK_BackgroundNotificationsPaged{
+  content:[SPARK_BackgroundNotification]
+  paging: SPARK_Paging
+  pageable: SPARK_Pageable
+}
+
+type SPARK_BackgroundNotification{
+  id: String
+  originatorId: String
+  description: String
+  progressPercentage: Int
+  category: String
+  action: String
+  status: String
+  type: String
+  docSize: String
+  owner: ID
+  archived: Boolean
+  visited: Boolean
+  createdAt: DateTime
+  notificationMessageList: [Notification_Message_List]
+}
+
+type Notification_Message_List {
+  notificationStatus: String
+  title: String
+  comment: String
+  url: String
+}
+
+input SPARK_Notifications_Update_Input{
+  updateNotificationDtos: [SPARK_Notification_Update_Dto]!
+}
+
+input SPARK_Notification_Update_Dto {
+  archived: Boolean
+  visited: Boolean
+  humanId: ID!
+}

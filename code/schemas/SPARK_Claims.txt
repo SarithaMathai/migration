@@ -1,0 +1,157 @@
+extend type Query {
+  getClaims(parentHumanId:String, claimHumanIds:[String], partnerIds:[String]): [SPARK_Claims]
+  getClaimByIds(claimHumanIds:[String]) : [SPARK_Claims]
+  searchGuestFacing(queryParam:String) : [SPARK_Guest_Facing]
+  getCommunicationChannels: [SPARK_CommunicationChannel]
+  getAllClaimsAbout: [SPARK_CodeDescription]
+  getClaimsElastic(parentHumanId:String): [SPARK_Claims]
+  getClaimExports: [SPARK_ClaimExport]
+}
+extend type Mutation {
+  createClaim(sparkClaim: SPARK_ClaimsInput) : [SPARK_Claims]
+  updateClaim(sparkClaim: SPARK_ClaimsUpdateInput): SPARK_Claims
+  bulkUpdateClaim(sparkClaim: SPARK_BulkClaimsUpdateInput): [SPARK_Claims]
+  requestClaimExport: String
+  lockClaim(claimId: String!): SPARK_Claims
+  unlockClaim(claimId: String!): SPARK_Claims
+}
+
+type SPARK_CommunicationChannel {
+    code: Int
+    description: String
+    info: String
+}
+type SPARK_Claims {
+  access: SPARK_AccessControl
+  currentUserPermissions: SPARK_ResourcePermissions
+  humanId: String
+  parentId: String
+  claimName: String
+  claimDetails: [SPARK_ClaimDetails]
+  createdAt: String
+  createdBy: SPARK_UserProfileAttributes
+  partners: [VMM_BusinessPartner]
+  businessPartner: VMM_BusinessPartner
+  designPartner: VMM_BusinessPartner
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  additionalInfo: String
+  claimNotes: String
+  version: Int
+  status: SPARK_CodeDescription
+  statuses: [ProductComponentStatus]
+  parentDetails: SPARK_ParentDetails
+  workspaceContext: [String]
+  workspaces: [SPARK_WorkspaceV2]
+  product: SPARK_Product
+  participantDetails: SPARK_UserGroup_Participants
+  manualLock: Boolean
+  subjectiveStatements: [String]
+}
+
+type SPARK_ParentDetails {
+  otherClaimBps: [Int]
+  systemTeams: SPARK_TeamPaged
+  droppedPartnerIds: [Int]
+}
+
+type SPARK_ClaimDetails {
+  id: String!
+  claimCategory: String
+  technicalClaim: String
+  claimId: String
+  claimName: String
+  claimDescription: String
+  guestFacingClaim: String
+  guestFacingClaimId: ID
+  appliesTo: String
+  vendorSubstantiate: SPARK_ClaimSubstantiate
+  status: SPARK_CodeDescription
+  communicationChannel: SPARK_CodeDescription
+  shareWithGuests: Boolean
+  claimsAbout: SPARK_CodeDescription
+  packagingCopy: SPARK_ClaimPackagingCopy
+}
+
+type SPARK_ClaimPackagingCopy {
+  packagingLocation: String
+  packagingVerbiage: String
+  descriptor: String
+  warningsAndCaution: String
+}
+
+type SPARK_ClaimSubstantiate {
+  substantiated: Boolean
+  substantiatedAt: String
+  substantiatedBy: SPARK_UserProfileAttributes
+}
+
+type SPARK_ClaimExport {
+  id: String
+  requestId: String
+  createdAt: String
+  status: String
+}
+
+type SPARK_Guest_Facing{
+  id: ID
+  name: String
+}
+input SPARK_BulkClaimsUpdateInput {
+  updateClaimDtoList: [SPARK_ClaimsUpdateInput]
+}
+input SPARK_ClaimsInput {
+  additionalInfo: String
+  claimNotes: String
+  parentId: String
+  humanId: String
+  partners: [SPARK_PartnerDetails]
+  claimDetails: [SPARK_ClaimDetailsInput]
+  status: String
+  workspaceContext: [ID]
+  inheritSecurityFromParent: Boolean
+  participantDetails: SPARK_UserGroup_Participants_Input
+  claimName: String # TEMPLATE ONLY
+  type: Int # TEMPLATE ONLY
+  subjectiveStatements: [String]
+}
+
+input SPARK_ClaimsUpdateInput {
+  additionalInfo: String
+  claimNotes: String
+  parentId: String
+  humanId: String
+  partner: SPARK_PartnerDetails
+  dpPartner: SPARK_PartnerDetails
+  claimDetails: [SPARK_ClaimDetailsInput]
+  status: String
+  workspaceContext: SPARK_PartialWorkspaceAssociationsInput
+  claimName: String # TEMPLATE ONLY
+  subjectiveStatements: [String]
+  statuses: [ProductComponentStatusUpdateInput]
+}
+
+input SPARK_PartnerDetails {
+  id: ID
+  name: String
+  accessControlGroupId: String
+  type: Int
+}
+input SPARK_ClaimDetailsInput {
+  id: ID
+  claimCategory: String
+  technicalClaim: String
+  claimId: String
+  guestFacingClaim: String
+  guestFacingClaimId: ID
+  appliesTo: String
+  vendorSubstantiate: SPARK_ClaimSubstantiateInput
+  status: ID
+  communicationChannel: ID
+  shareWithGuests: Boolean
+  claimsAbout: ID
+}
+
+input SPARK_ClaimSubstantiateInput {
+  substantiated: Boolean
+}

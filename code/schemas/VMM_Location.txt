@@ -1,0 +1,11 @@
+extend type Query {
+  getFabricFacilities(query: String): [VMM_Location]
+  getLocationById(id: ID): VMM_Location
+  getFabricFacilityByIdWithCircuitBreaker(id: ID): VMM_Location
+  getFabricFacilitiesByBpId(id: ID): [VMM_Location]
+  getFabricFacilitiesByBpIds(ids: [ID]!): [VMM_Location]
+  getLocationsByBpIdAndLocation(id: ID, query: String): [VMM_Location]
+  getWashFacilitiesByBpId(id: ID): [VMM_Location]
+  getTrimFacilitiesByBpId(id: ID): [VMM_Location]
+  getFacilityByCapTypesAndBpId(id: ID, query: String, impression: String): [VMM_Location]
+}

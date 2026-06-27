@@ -1,0 +1,13 @@
+extend type Query {
+  getMerchTypes(department_id: ID!): [IG_MerchType]
+  getMerchTypeById(merchandise_type_id: ID!): IG_MerchType
+}
+
+type IG_MerchType implements SPARK_Categories {
+  id: ID
+  name: String
+  productSubtypeId: ID,
+  productSubtypeName: String
+  productSubtypeDisplayText: String
+  displayText: String
+}
