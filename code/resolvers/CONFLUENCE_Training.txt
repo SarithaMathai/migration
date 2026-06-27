@@ -1,0 +1,134 @@
+import { getDocumentsOnly, getTrainingLabelsFromType } from '../utils/confluenceTrainingUtils'
+import moment from 'moment'
+
+export default {
+  Query: {
+    getTrainingLabels: (parent, {}, ctx) => {
+      return ctx.loaders.training.getLabels.load()
+    },
+    searchTrainingDocuments: (parent, { topics }, ctx) => {
+      const params = {
+        documentsSpace: ctx.keys.confluenceSpaceId,
+        page: 0,
+        perPage: 1000,
+        contents: ['attachments', 'labels', 'version', 'storage', 'history', 'view', 'space'],
+        labels: topics,
+      }
+      return ctx.loaders.training.searchDocuments.load(params, { key: ctx.keys.confluenceKey })
+    },
+    getAllTrainingDocuments: async (parent, {}, ctx) => {
+      const params = {
+        documentsSpace: ctx.keys.confluenceSpaceId,
+        page: 0,
+        perPage: 1000,
+        contents: ['labels'],
+      }
+      const documentLabels = await ctx.loaders.training.getLabels.load(params, { key: ctx.keys.confluenceKey })
+      return documentLabels
+    },
+    getImage: (parent, { imageId, imageName, imageType, attachmentType }, ctx) => {
+      return ctx.loaders.training.getImage.load({ imageId, imageName, imageType, attachmentType })
+    },
+    getVideo: (parent, { videoId, videoName, type }, ctx) => {
+      return ctx.loaders.training.getVideo.load({ videoId, videoName, type })
+    },
+    getTrainingDocumentById: async (parent, { documentId }, ctx) => {
+      const params = {
+        documentsSpace: ctx.keys.confluenceSpaceId,
+        page: 0,
+        perPage: 1000,
+        contents: ['attachments', 'labels', 'version', 'storage', 'history', 'view', 'space'],
+
+      }
+      return ctx.loaders.training.getDocument.load(params, { key: ctx.keys.confluenceKey, documentId })
+    },
+  },
+
+  CONFLUENCE_Training_Documents_AND_Labels: {
+    labels: labels => labels.metadata.labels.labels,
+    documents: async (labels, args, ctx) => {
+      const labelNames = labels.metadata.labels.labels.map(label => label.name)
+      const topics = labelNames.filter(label => label.startsWith('topics_') === true)
+      const params = {
+        documentsSpace: ctx.keys.confluenceSpaceId,
+        page: 0,
+        perPage: 1000,
+        contents: ['labels', 'version', 'storage', 'history', 'view', 'space'],
+        labels: topics,
+      }
+      const documents = await ctx.loaders.training.searchDocuments.load(params, { key: ctx.keys.confluenceKey })
+      if (args) {
+        return getDocumentsOnly(documents, args.userType)
+      }
+      return false
+    },
+  },
+
+  CONFLUENCE_Documents: {
+    id: document => document.content.id,
+    title: document => document.content.title,
+    createdBy: document => document.content.history.createdBy,
+    createdDate: document => document.content.history.createdDate,
+    updatedDate: document => document.lastModified || (
+      document && document.content &&
+      document.content.version && document.content.version.when &&
+      moment(document.content.version.when).format('MMM D, YYYY')
+    ),
+    attachments: async (document, args, ctx) => {
+      const result = await ctx.loaders.training.getDocumentAttachments.load(document.content.id)
+
+      return result.attachments ? result.attachments : []
+    },
+    content: document => {
+      if (document.content.body && document.content.body.storage && document.content.body.storage.value) {
+        return document.content.body.storage.value
+      } else {
+        return document.excerpt
+      }
+    },
+    updatedBy: document => document.content.version ? document.content.version.updatedBy : document.content.history.createdBy,
+    labels: document => document.content.metadata && document.content.metadata.labels ? document.content.metadata.labels.results : [],
+    verificationGroup: document => {
+      if (!document.content.metadata && !document.content.metadata.labels) {
+        return []
+      }
+
+      const users = getTrainingLabelsFromType(document.content.metadata.labels.labels, 'users')
+      return users
+    },
+    topics: document => {
+      if (!document.content.metadata && !document.content.metadata.labels) {
+        return []
+      }
+
+      const topics = getTrainingLabelsFromType(document.content.metadata.labels.labels, 'topics')
+      return topics
+    },
+    tags: document => {
+      if (!document.content.metadata && !document.content.metadata.labels) {
+        return []
+      }
+
+      const tags = getTrainingLabelsFromType(document.content.metadata.labels.labels, 'tags')
+      return tags
+    },
+    contentTypes: document => {
+      if (!document.content.metadata && !document.content.metadata.labels) {
+        return []
+      }
+
+      const contentTypes = getTrainingLabelsFromType(document.content.metadata.labels.labels, 'contentTypes')
+      return contentTypes
+    },
+  },
+  CONFLUENCE_UserDetails: {
+    firstName: userDetails => userDetails.displayName.split('.')[0],
+    lastName: userDetails => userDetails.displayName.split('.')[1],
+    isInternal: () => true,
+  },
+
+  CONFLUENCE_DocumentTopics: {
+    name: topics => topics.toString(),
+    isIgnore: topics => topics.length > 1,
+  },
+}

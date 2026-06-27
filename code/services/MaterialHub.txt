@@ -1,0 +1,308 @@
+import { deepToCamelCase, deepToSnakeCase, transformKeyValues } from '../utils/convertFunctions'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import deleteOne from '../utils/deleteOne'
+import SparkService from './SparkService'
+import loadListing from '../utils/loadListing'
+import qs from 'querystring'
+
+/**
+ * We need to access the material human id when resolving some fields such as `baseMaterial.files` so this function
+ * puts the materials human id in the baseMaterial object which will allow us to access it easily
+ * within the baseMaterial.files resolver
+ */
+const applyMaterialHumanIdToBaseMaterial = (material) => {
+  if (material) {
+    const formatted = {
+      ...material,
+      baseMaterial: {
+        humanId: material.humanId,
+        ...material.baseMaterial || {},
+      },
+    }
+
+    return formatted
+  } else return null
+}
+
+export default class MaterialHubService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}`
+    this.headers = headers
+
+    this.getHubMaterial = permissionJWT => loadOne(
+      id => `${this.endpoint}/materials/${id}`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: (id, material) => [applyMaterialHumanIdToBaseMaterial(deepToCamelCase(material))],
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.getHubCodedOptions = loadListing(
+      type => `${this.endpoint}/codedOptions/${type}`,
+      this.headers,
+      {
+        transform: types => transformKeyValues(types),
+      },
+      this.logContext,
+    )
+
+    this.getHubMaterialTypes = loadListing(
+      (searchCriteria) => `${this.endpoint}/materials/types?${qs.stringify(searchCriteria)}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.addHubMaterial = postOne(
+      `${this.endpoint}/materials`,
+      this.headers,
+      {
+        transform: material => deepToCamelCase(material),
+        transformRequest: material => deepToSnakeCase(material),
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+
+    this.updateHubMaterial = permissionJWT => putOne(
+      material => `${this.endpoint}/materials/${material.humanId}`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: material => deepToCamelCase(material),
+        transformRequest: material => deepToSnakeCase(material),
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+
+    this.partialUpdateHubMaterial = (id, permissionJWT) => postOne(
+      () => `${this.endpoint}/materials/${id}`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        fetchOptions: { method: 'PATCH' },
+        transform: material => deepToCamelCase(material),
+        transformRequest: material => deepToSnakeCase(material),
+      },
+      this.logContext,
+    )
+
+    this.updateTeams = permissionJWT => postOne(
+      ({ id }) => `${this.endpoint}/materials/${id}/teams`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+        skipJsonParse: true,
+      },
+      logContext,
+    )
+
+    this.bulkUpdateTeams = (permissionJWT) => postOne(
+      () => `${this.endpoint}/materials/bulkUpdate/teams`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+        skipJsonParse: true,
+      },
+      logContext,
+    )
+
+    this.addMaterialTemplate = postOne(
+      `${this.endpoint}/templates`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: template => deepToCamelCase(template),
+        transformRequest: template => deepToSnakeCase(template),
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+
+    this.updateMaterialTemplate = putOne(
+      template => `${this.endpoint}/templates/${template.name}`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: template => deepToCamelCase(template),
+        transformRequest: template => deepToSnakeCase(template),
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+
+    this.getMaterialTemplate = (inheritAttributes) => loadOne(
+      (name) => inheritAttributes
+        ? `${this.endpoint}/templates/${name}?exclude_inherited_attributes=false`
+        : `${this.endpoint}/templates/${name}?exclude_inherited_attributes=true`,
+      this.headers,
+      {
+        batch: false,
+        transform: (id, template) => [deepToCamelCase(template)],
+      },
+      this.logContext,
+    )
+
+    this.getMaterialTemplateHierarchy = loadListing(
+      `${this.endpoint}/templates/hierarchy`,
+      this.headers,
+      {
+        transform: templates => deepToCamelCase(templates),
+      },
+      this.logContext,
+    )
+
+    this.getMaterialTemplateTypes = loadListing(
+      (searchCriteria) => `${this.endpoint}/templates/types?${qs.stringify(searchCriteria)}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getMaterialTemplateByMaterialId = loadOne(
+      (id) => `${this.endpoint}/materials/${id}/template`,
+      this.headers,
+      {
+        batch: false,
+        transform: (id, template) => [deepToCamelCase(template)],
+      },
+      this.logContext,
+    )
+
+    this.getHubMaterials = permissionJWT => loadListing(
+      `${this.endpoint}/materials`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: materials => deepToCamelCase(materials).map(it => applyMaterialHumanIdToBaseMaterial(it)),
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.getHubUnitsOfMeasure = loadListing(
+      () => `${this.endpoint}/unitsOfMeasure`,
+      this.headers,
+      {
+        transform: results => results?.values && deepToCamelCase(results.values),
+      },
+      this.logContext,
+    )
+
+    this.getResourceLink = loadListing(
+      `${this.endpoint}/resourceLinks`,
+      this.headers,
+      {
+        transform: resourceLink => resourceLink && deepToCamelCase(resourceLink),
+      },
+      this.logContext,
+    )
+
+    this.searchResourceLinks = loadListing(
+      `${this.endpoint}/searchResourceLinks`,
+      this.headers,
+      {
+        transform: resourceLink => resourceLink && deepToCamelCase(resourceLink),
+      },
+      this.logContext,
+    )
+
+    this.bulkAddDeleteResourceLinks = postOne(
+      `${this.endpoint}/bulkAddDeleteResourceLinks`,
+      this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+
+    this.createResourceLink = postOne(
+      `${this.endpoint}/resourceLinks`,
+      this.headers,
+      {
+        transform: resourceLink => deepToCamelCase(resourceLink),
+        transformRequest: resourceLink => deepToSnakeCase(resourceLink),
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+
+    this.deleteResourceLink = deleteOne(
+      ({ targetId, sourceId }) => `${this.endpoint}/resourceLinks?targetId=${targetId}&sourceId=${sourceId}`,
+      this.headers,
+      {
+        transform: resourceLink => deepToCamelCase(resourceLink),
+        transformRequest: resourceLink => deepToSnakeCase(resourceLink),
+      },
+      this.logContext,
+    )
+
+    this.validateMaterialUniqueness = (material, page, size) => postOne(
+      () => `${this.endpoint}/materials/validateUnique?page=${page}&size=${size}`,
+      this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+
+    this.searchMaterialsByCriteria = postOne(
+      () => `${this.endpoint}/materials/search`,
+      this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+
+    this.getMaterialWithTemplate = permissionJWT => loadOne(
+      id => `${this.endpoint}/materials/${id}/wrapper`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: (ids, wrapper) => [deepToCamelCase(wrapper)],
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.bulkValidateMaterialUniqueness = postOne(
+      `${this.endpoint}/materials/bulk/validateUnique`,
+      this.headers,
+      {
+        transform: bulkValidateUniqueRequest => deepToCamelCase(bulkValidateUniqueRequest),
+        transformRequest: bulkValidateUniqueResponse => deepToSnakeCase(bulkValidateUniqueResponse),
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+  }
+}

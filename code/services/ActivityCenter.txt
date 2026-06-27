@@ -1,0 +1,47 @@
+import { deepToCamelCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import postOne from '../utils/postOne'
+
+import SparkService from './SparkService'
+
+export default class ActivityCenterService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+    this.searchEvents = loadListing(
+      this.endpoint,
+      this.headers,
+      { transform: obj => deepToCamelCase(obj) },
+      this.logContext,
+    )
+    this.searchAskEvents = ({page, size, ids, startDate, sortBy, sortOrder}) => {
+      const params = {
+        type: 'PRODUCT_ASK',
+          page: page || 0,
+          size: size || 20,
+        }
+        if(startDate) {
+          params.start_date = startDate
+        }
+        if(sortBy) {
+          params.sort_by = sortBy
+        }
+        if(sortOrder) {
+          params.sort_order = sortOrder
+        }
+    return postOne(
+      `${this.endpoint}?${new URLSearchParams(params)}`,
+      this.headers,
+      { transform: obj => deepToCamelCase(obj) },
+      this.logContext,
+    ).load(ids)
+  },
+    this.countEvents = loadListing(
+      `${this.endpoint}/counts`,
+      this.headers,
+      { transform: obj => deepToCamelCase(obj) },
+      this.logContext,
+    )
+  }
+}

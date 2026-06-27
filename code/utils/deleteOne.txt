@@ -1,0 +1,62 @@
+import { Agent } from 'https'
+import { performance } from 'perf_hooks'
+
+import fetch from 'node-fetch'
+
+import { logger } from './../utils/logger'
+import { generateBasicLogContextFromHeaders } from './logging/generateBasicLogContextFromHeaders'
+
+export default function deleteOne (
+  baseURL,
+  headers,
+  options = {},
+  logContext = {},
+) {
+  const { transform, fetchOptions, skipJsonParse } = options
+  const { logContext: defaultLogContext } = generateBasicLogContextFromHeaders(headers)
+  const finalLogContext = { ...logContext, ...defaultLogContext }
+
+  return {
+    load: async id => {
+      const url = typeof baseURL === 'function' ? baseURL(id) : baseURL
+
+      const started = performance.now()
+      const response = await fetch(url, {
+        agent: /^https:\/\//.test(url)
+          ? new Agent({
+            rejectUnauthorized: false,
+          })
+          : undefined,
+        method: 'DELETE',
+        headers: {
+          ...headers,
+          'content-type': 'application/json',
+        },
+        ...fetchOptions,
+      })
+      const text = await response.text()
+      logger.logResponse(
+        url,
+        'DELETE',
+        response.status,
+        text,
+        finalLogContext,
+        Math.round(performance.now() - started),
+      )
+
+      if (skipJsonParse) {
+        return text
+      }
+      if (text) {
+        const json = JSON.parse(text)
+        let item = json
+
+        if (transform) {
+          item = transform(json)
+        }
+
+        return item
+      }
+    },
+  }
+}

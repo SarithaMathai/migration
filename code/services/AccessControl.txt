@@ -1,0 +1,287 @@
+import qs from 'querystring'
+
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+
+import SparkService from './SparkService'
+
+export default class AccessControlService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}/enterprise_product_development_access_control/v1`
+    this.endpointV2 = `${endpoint}/enterprise_product_development_access_control/v2`
+    this.groupEndpoint = `${this.endpoint}/group`
+    this.headers = headers
+
+    const transform = {
+      transform: accessControl => deepToCamelCase(accessControl),
+      transformRequest: accessControl => deepToSnakeCase(accessControl),
+    }
+
+    this.createAccessGroupInternal = postOne(
+      () => `${this.groupEndpoint}/access/internal`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.createAccessGroupAD = postOne(
+      () => `${this.groupEndpoint}/access/ad`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.createAccessGroupID = postOne(
+      () => `${this.groupEndpoint}/access/ids`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.createAccessGroupBP = postOne(
+      () => `${this.groupEndpoint}/access/bps`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.addAccessGroupIds = putOne(
+      () => `${this.groupEndpoint}/access/grant`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.deleteAccessGroupIds = putOne(
+      () => `${this.groupEndpoint}/access/revoke`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.createAccessControl = postOne(
+      () => this.endpoint,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.createBulkAccessControl = postOne(
+      () => `${this.endpoint}/bulk`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.deleteAccessControl = deleteOne(
+      resourceId => `${this.endpoint}/${resourceId}`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.getPermissions = loadListing(
+      `${this.endpoint}/permissions`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.getPermissionsByTag = loadListing(
+      ({ resourceIds, tag }) =>
+        `${this.endpoint}/permissions/tags/${tag}?${qs.stringify({
+          resourceIds,
+        })}`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.getAccessControlGroups = loadListing(
+      ({ groupIds, userProfileIds }) => {
+        const params = {}
+        if (groupIds) params.groupIds = groupIds
+        if (userProfileIds) params.userProfileIds = userProfileIds
+
+        const query = Object.keys(params).length > 0 ? qs.stringify(params) : ''
+
+        return `${this.endpoint}/admin/id_groups${query ? `?${query}` : ''}`
+      },
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.updateAccessControlGroups = putOne(
+      () => `${this.endpoint}/admin/id_groups`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.getUserAccessByPost = postOne(
+      () => {
+        return `${this.endpoint}/permissions/user/current`
+      },
+      this.headers,
+      {
+        skipJsonParse: true,
+        batch: false,
+      },
+      logContext,
+    )
+
+    this.getUserAccess = loadOne(
+      resourceIdsContainer => {
+        const resourceIds = resourceIdsContainer[0]
+        return `${this.endpoint}/permissions/user/current?${qs.stringify({
+          resourceIds,
+        })}`
+      },
+      this.headers,
+      {
+        skipJsonParse: true,
+        batch: false,
+      },
+      logContext,
+    )
+
+    this.getUserAccessUnencoded = loadOne(
+      resourceIdsContainer => {
+        const resourceIds = resourceIdsContainer[0]
+        return `${this.endpoint}/permissions/user/current?${qs.stringify({
+          resourceIds,
+        })}&encode=false`
+      },
+      this.headers,
+      {
+        batch: false,
+        transform: (ids, response) => [deepToCamelCase(response)],
+      },
+      logContext,
+    )
+
+    this.addAccessControlPermission = putOne(
+      ({ resourceId }) => `${this.endpoint}/${resourceId}/grant`,
+      this.headers,
+      {
+        transformRequest: request => deepToSnakeCase(request.addAccessControl),
+        transform: response => deepToCamelCase(response),
+      },
+      logContext,
+    )
+
+    this.deleteAccessControlPermission = putOne(
+      ({ resourceId }) => `${this.endpoint}/${resourceId}/revoke`,
+      this.headers,
+      {
+        transformRequest: request =>
+          deepToSnakeCase(request.deleteAccessControl),
+        transform: response => deepToCamelCase(response),
+      },
+      logContext,
+    )
+
+    this.lockResource = putOne(
+      ({ resourceId, locked }) =>
+        `${this.endpoint}/${resourceId}/lock/${locked}`,
+      this.headers,
+      {
+        transform: response => deepToCamelCase(response),
+      },
+      logContext,
+    )
+    this.updateAccessControl = postOne(
+      () => `${this.endpoint}/resources/grant`,
+      this.headers,
+      transform,
+      logContext,
+    )
+
+    this.dropPartnerFromResources = postOne(
+      () => `${this.endpointV2}/drop-partner`,
+      this.headers,
+      {
+        transform: response => deepToCamelCase(response),
+      },
+      logContext,
+    )
+
+    this.unDropPartnerFromResources = postOne(
+      () => `${this.endpointV2}/undrop-partner`,
+      this.headers,
+      {
+        transform: response => deepToCamelCase(response),
+      },
+      logContext,
+    )
+
+    this.bulkUpdateAttachmentPermissions = postOne(
+      () => `${this.endpoint}/resources/bulk-grant-revoke`,
+      this.headers,
+      {
+        transformRequest: request => deepToSnakeCase(request),
+        transform: response => deepToCamelCase(response),
+      },
+      logContext,
+    )
+
+    this.getUserAccessByProxy = loadOne(queryParams =>
+      `${this.endpoint}/permissions/user/proxy?${queryParams[0]}`,
+    this.headers,
+    {
+      skipJsonParse: true,
+      batch: false,
+    },
+    logContext,
+    )
+
+    this.getUserAccessByProxyUnencoded = loadOne(queryParams =>
+      `${this.endpoint}/permissions/user/proxy?${queryParams[0]}`,
+    this.headers,
+    {
+      batch: false,
+      transform: (ids, response) => [deepToCamelCase(response)],
+    },
+    logContext,
+    )
+
+    /**
+     * For fetching a single resource, batchable
+     */
+    this.getPermissionsForResource = loadOne(
+      resourceIds => `${this.endpoint}/permissions?resourceIds=${resourceIds}`,
+      this.headers,
+      {
+        transform: (ids, accessControl) =>
+          ids.map(id => (accessControl ? accessControl.find(acl => acl.resource_id === id) : [])).map(ac => deepToCamelCase(ac)),
+      },
+    )
+
+    // Identical to getPermissionsForResource but has dpSecurity=false, separated to prevent mixing batched cache results
+    this.getPermissionsForResourceNoDpSecurity = loadOne(resourceIds => `${this.endpoint}/permissions?resourceIds=${resourceIds}&dpSecurity=false`,
+      this.headers,
+      {
+        transform: (ids, accessControl) =>
+          ids.map(id => (accessControl ? accessControl.find(acl => acl.resource_id === id) : [])).map(ac => deepToCamelCase(ac)),
+      },
+    )
+
+    this.getPermissionsByPost = postOne(
+      () => {
+        return `${this.endpoint}/permissions`
+      },
+      this.headers,
+      {
+        batch: false,
+        transform: (response) => deepToCamelCase(response),
+      },
+      logContext,
+    )
+  }
+}

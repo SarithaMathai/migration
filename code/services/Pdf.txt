@@ -1,0 +1,88 @@
+import {deepToCamelCase, deepToSnakeCase} from '../utils/convertFunctions'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+
+import SparkService from './SparkService'
+import loadListing from '../utils/loadListing'
+
+export default class PdfService extends SparkService {
+  constructor(endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.generateCoreTechPack = postOne(
+      `${endpoint}/api/techpack`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+
+    this.generateCoreTechPacksBulk = postOne(
+      `${endpoint}/api/techpack/bulk-generate`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+
+    this.abortGeneratePdf = putOne(
+      ({ids}) => `${this.endpoint}/api/techpack/archive?ids=${ids}`,
+      this.headers,
+      {
+        transform: techpack => techpack && deepToCamelCase(techpack),
+      },
+      this.logContext,
+    )
+
+    this.retryPdfGeneration = postOne(
+      (reportId) => `${this.endpoint}/api/techpack/retry/${reportId}`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+      },
+      this.logContext,
+    )
+
+    this.history =
+      loadListing(
+        ({
+           productId,
+           workspaceId,
+           partnerId,
+         }) => `${this.endpoint}/api/techpack/history?productId=${productId}&workspaceId=${workspaceId}&partnerId=${partnerId}`,
+        this.headers,
+        {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        },
+        this.logContext,
+      )
+
+    this.bulkReleaseHistory = postOne(
+      `${endpoint}/api/techpack/bulk-history`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+
+    this.reports =
+      loadListing(
+        () => `${this.endpoint}/api/techpack/reports`,
+        this.headers,
+        {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        },
+        this.logContext,
+      )
+  }
+}

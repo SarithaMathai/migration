@@ -1,0 +1,77 @@
+import {
+  deepToCamelCase,
+  deepToSnakeCase,
+} from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import postOne from '../utils/postOne'
+import SparkService from './SparkService'
+import putOne from '../utils/putOne'
+
+export default class PomService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint + '/enterprise_product_development_products/pom/v1'
+    this.sectionEndpoint = endpoint + '/enterprise_product_development_products/sections/v1'
+    this.statusEndpoint = endpoint + '/masterData?name=PomStatus'
+    this.headers = headers
+
+    this.create = permissionJWT => postOne(this.endpoint,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: pom => deepToCamelCase(pom),
+        transformRequest: pom => deepToSnakeCase(pom),
+      },
+      this.logContext,
+    )
+
+    this.getPomByIds = permissionJWT =>
+      postOne(
+        `${this.endpoint}/search`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: pom => deepToCamelCase(pom),
+        },
+        this.logContext,
+      )
+
+    this.getSections =
+      loadListing(
+        this.sectionEndpoint,
+        this.headers,
+        {
+          transform: sectionObject => sectionObject.sections,
+        },
+        this.logContext,
+      )
+
+    this.getPomStatus =
+      loadListing(
+        this.statusEndpoint,
+        this.headers,
+        {
+          transform: status => Object.keys(status).map(key => {
+            return { code: key, description: status[key] }
+          }),
+        },
+        this.logContext,
+      )
+
+    this.update = permissionJWT => putOne(pom => `${this.endpoint}/${pom.pomId}`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: pom => deepToCamelCase(pom),
+        transformRequest: pom => deepToSnakeCase(pom),
+      },
+      this.logContext,
+    )
+  }
+}

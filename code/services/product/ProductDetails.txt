@@ -1,0 +1,102 @@
+import postOne from '../../utils/postOne'
+import putOne from '../../utils/putOne'
+import loadListing from '../../utils/loadListing'
+import loadOne from '../../utils/loadOne'
+
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+
+export default class ProductDetailsService {
+  constructor (endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/construction/v1`
+
+    this.getProductDetailsById = (permissionJWT, id) => {
+      return loadListing(`${this.endpoint}?ids=${id}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: details => deepToCamelCase(details),
+        }, logContext).load()
+    }
+
+    this.getProductDetailVersionsById = (permissionJWT, id) => {
+      return loadListing(
+        `${this.endpoint}/${id}/versions`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: measurements => deepToCamelCase(measurements),
+        }, logContext,
+      ).load()
+    }
+
+    this.getProductDetailVersion = (params) => {
+      return loadOne(
+        () => `${this.endpoint}/${params.id}/versions/${params.version}`,
+        this.headers,
+        {
+          transform: (ids, json) => [deepToCamelCase(json)],
+          fetchAclToken: true,
+          batch: false,
+          aclIds: [params.id],
+        },
+        this.logContext,
+      )
+    }
+
+    this.createProductDetailsSet = (permissionJWT, productDetails) => {
+      return postOne(`${this.endpoint}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: productDetails => deepToSnakeCase(productDetails),
+        }, logContext).load(productDetails)
+    }
+
+    this.updateProductDetailsSet = (permissionJWT, productDetailId, productDetails) => {
+      return putOne(`${this.endpoint}/${productDetailId}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: productDetails => deepToSnakeCase(productDetails),
+        }, logContext).load(productDetails)
+    }
+
+    this.manageWorkspaceAssociations = (permissionJwt, productDetailId) => {
+      const endpoint = `${this.endpoint}/${productDetailId}/workspace_associations`
+      return putOne(
+        endpoint,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJwt },
+        {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: requestData => deepToSnakeCase(requestData),
+          omitParamsInBody: true,
+        },
+        logContext,
+      )
+    }
+
+    this.updateProductDetailAccess = (permissionJWT, updateAccessPermissions) =>
+      putOne(`${this.endpoint}/manage-permissions`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+          primeKey: productDetail => productDetail && productDetail.humanId,
+        }, logContext).load(updateAccessPermissions)
+
+    this.productDetailLockUnlock = (permissionJWT, constructionSetId, isLock) => {
+      return putOne(`${this.endpoint}/${constructionSetId}/${isLock ? 'lock' : 'unlock'}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: productDetails => deepToSnakeCase(productDetails),
+        }, logContext).load()
+    }
+    this.updateProductDetailComponentStatus = (statusInput) => putOne(
+    `${this.endpoint}/component_status_update`,
+    this.headers,
+    {
+      transform: (result) => {
+        return {content: deepToCamelCase(result)}
+      },
+      transformRequest: (data) => deepToSnakeCase(data),
+    },
+    this.logContext,
+  ).load(statusInput) 
+  }
+}

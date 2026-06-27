@@ -1,0 +1,232 @@
+import { resolvePaging } from './../utils/resolvePaging'
+import _, { cloneDeep } from 'lodash'
+import { findRolesById } from './../utils/convertFunctions'
+import { GREENFIELD_CARD_ID_INVERT, GREENFIELD_CARD_IDS } from '../utils/constants'
+import { systemUser } from '../utils/userAttributesUtils'
+
+export default {
+  Query: {
+    getUserAttributes: (parent, { id }, ctx) =>
+      ctx.loaders.userAttributes.getByID.load(id),
+    getUsers: (parent, params, ctx) =>
+      ctx.loaders.userAttributes.getUsers.load({
+        ...params,
+        partnerId: params.partnerId && params.partnerId.join(','),
+      }),
+    getAccreditationTypes: (parent, { userType }, ctx) => ctx.loaders.userAttributes.getAccreditationTypes.load(userType),
+    getUsersElasticSearch: (parent, { q, page, size, accreditation, accreditations, dpSecurity, excludeInactive = false, partnerId }, ctx) =>
+      ctx.loaders.search.getUserSearch.load({ q, page, size, accreditation, accreditations, dpSecurity, excludeInactive, partnerId }),
+    searchUsersSuggestions: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.getUsersSuggestions.load({ q, page, size }),
+    getPartnersFromUserProfileBackup: (parent, { partnerIds }, ctx) =>
+      ctx.loaders.userAttributes.getPartnersFromUserProfileBackup.load(partnerIds),
+    getUserSettings: async (parent, { }, ctx) => {
+      const response = await ctx.loaders.userAttributes.getUserSettings.load({})
+      const { userDefaults } = response || {}
+      const newUserDefaults = []
+      for (const userSettings of (userDefaults || [])) {
+        const { category } = userSettings
+        if (category === 'SAMPLE') {
+          const newUserSampleDefaults = cloneDeep(userSettings)
+          const sampleDefaults = await ctx.loaders.userAttributes.getUserSampleDefaults.load('')
+          if (sampleDefaults && sampleDefaults.sampleTypeId) newUserSampleDefaults.defaultOption = sampleDefaults
+          newUserDefaults.push(newUserSampleDefaults)
+        } else {
+          newUserDefaults.push(userSettings)
+        }
+      }
+      if (response) response.userDefaults = newUserDefaults
+      return response
+    },
+    getInsightsFavorites: (parent, {}, ctx) =>
+      ctx.loaders.userAttributes.getInsightsFavorites.load(),
+    getUserViews: async (parent, { ids, resourceType }, ctx) => {
+      const searchParams = {
+        ids: ids,
+        resourceType: resourceType,
+
+      }
+      return ctx.loaders.userAttributes.getUserViews(searchParams)
+    },
+  },
+  Mutation: {
+    updateUserAttributes: (parent, { userAttributes }, ctx) =>
+      ctx.loaders.userAttributes.update.load(userAttributes),
+
+    deleteAllUserProfileDataForAPartner: (
+      parent,
+      { partnerId, resourceId, resourceType, discussionIds, sampleIds },
+      ctx,
+    ) => {
+      const toDobulkResourceDtoList = []
+      if (resourceType === 'product') {
+        toDobulkResourceDtoList.push({ resourceType: resourceType, resourceIds: [resourceId] })
+      }
+
+      if (discussionIds && discussionIds.length > 0) {
+        toDobulkResourceDtoList.push({ resourceType: 'discussion', resourceIds: discussionIds })
+      }
+
+      const toDoDeleteBulk = { bulkResourceDtoList: toDobulkResourceDtoList }
+
+      const recentlyViewedBulkResourceDtoList = []
+      if (resourceType === 'product') {
+        recentlyViewedBulkResourceDtoList.push({ resourceType: resourceType, resourceIds: [resourceId] })
+      }
+
+      if (sampleIds && sampleIds.length > 0) {
+        recentlyViewedBulkResourceDtoList.push({ resourceType: 'sample', resourceIds: sampleIds })
+      }
+
+      const recentlyViewedBulk = { bulkResourceDtoList: recentlyViewedBulkResourceDtoList }
+
+      const favDeleteBulk = {
+        bulkResourceDtoList: [
+          { resourceType: resourceType, resourceIds: [resourceId] },
+        ],
+      }
+      const requestBody = {
+        favDeleteBulk: favDeleteBulk,
+        toDoDeleteBulk: toDoDeleteBulk,
+        recentlyViewedBulk: recentlyViewedBulk,
+      }
+      ctx.loaders.userAttributes.deleteAllUserProfileDataForAPartner.load(
+        requestBody,
+        {
+          partnerId,
+        },
+      )
+    },
+    addAccreditation: (parent, { accreditationRoles }, ctx) =>
+      ctx.loaders.userAttributes.addAccreditation.load(accreditationRoles),
+    updateDefaultPartnerAttributes: (parent, { userDefaultPartnerAttributes }, ctx) =>
+      ctx.loaders.userAttributes.updateDefaultPartnerType.load(userDefaultPartnerAttributes),
+    addUserSettings: (parent, { userSettings }, ctx) =>
+      ctx.loaders.userAttributes.addUserSettings.load(userSettings),
+    addInsightsFavorite: (parent, { cardId }, ctx) =>
+      ctx.loaders.userAttributes.addInsightsFavorite.load({
+        gfCardId: `${GREENFIELD_CARD_IDS[cardId]}`,
+      }),
+    deleteInsightsFavorite: (parent, { cardId }, ctx) =>
+      ctx.loaders.userAttributes.deleteInsightsFavorite.load(GREENFIELD_CARD_IDS[cardId]),
+    createUserView: (parent, { userView }, ctx) =>
+      ctx.loaders.userAttributes.createUserView(userView),
+    updateUserView: async (parent, { userView }, ctx) => {
+      return ctx.loaders.userAttributes.updateUserView(userView)
+    },
+    manageUserViews: async (parent, manageInput, ctx) =>
+      ctx.loaders.userAttributes.manageUserViews(manageInput),
+  },
+
+  SPARK_AccreditationTypes: {
+    accredTypes: accredTypes => accredTypes,
+  },
+
+  SPARK_UserProfileAttributes_Paged: {
+    paging: resolvePaging,
+  },
+
+  SPARK_Participants: {
+    teams: participants => {
+      return participants.teams
+    },
+    users: async (participants, arg, ctx) => {
+      const initialUserInfo = _.get(participants, 'users[0].usersInfo') ? _.get(participants, 'users[0].usersInfo') : _.get(participants, 'users', {})
+
+      const users = _.reduce(initialUserInfo, (result, user) => {
+        if (user.systemUser) {
+          result.push(systemUser(user.userId))
+        } else {
+          result.push(ctx.loaders.userAttributes.getUserByID.load(user.userId))
+        }
+        return result
+      }, [])
+
+      const resolvedUsers = await Promise.all(users)
+
+      const usersWithRoles = resolvedUsers.map(async (user) => {
+        const roles = (_.find(initialUserInfo, (userInfo) => {
+          return userInfo.userId === user.userProfileId
+        }) || {}).roles
+        const selectRoles = await findRolesById(roles, ctx)
+        const newUser = {
+          ...user,
+          systemUser: !!user?.systemUser,
+          roles: selectRoles,
+        }
+
+        return newUser
+      })
+      const resolvedUsersWithRoles = await Promise.all(usersWithRoles)
+
+      return resolvedUsersWithRoles
+    },
+  },
+  SPARK_UserView: {
+    id: team => team.viewId,
+  },
+  SPARK_Snapshot_Team: {
+    teamId: team => team.teamId,
+    teamName: team => team.teamName,
+    edited: team => team.edited,
+    businessPartner: async (team, args, ctx) => {
+      if (team.businessPartnerId === 0 || team.businessPartnerId === null) {
+        return { bpId: 0, bpName: 'Target' }
+      } else {
+        const businessPartner = await ctx.loaders.vmm.getByID.load(
+          team.businessPartnerId,
+        )
+        return businessPartner
+      }
+    },
+    users: async (team, args, ctx) => {
+      const userInfos = team.usersInfo ? team.usersInfo : team.users
+      const users = _.reduce(userInfos, (result, user) => {
+        result.push(ctx.loaders.userAttributes.getUserByID.load(user.userId))
+        return result
+      }, [])
+      await Promise.all(users)
+      const usersWithRoles = _.reduce(users, (result, user) => {
+        result.push(user.then(async prom => {
+          const roles = (_.find(userInfos, (userInfo) => userInfo.userId === prom.userProfileId) || {}).roles
+          const selectRoles = await findRolesById(roles, ctx)
+          const newProm = {
+            ...prom,
+            overrideId: `${team.teamId}: ${prom.userProfileId}`,
+            systemUser: !!user?.systemUser,
+            roles: selectRoles,
+          }
+          return newProm
+        }))
+        return result
+      }, [])
+      return usersWithRoles
+    },
+  },
+
+  SPARK_UserProfileAttributes: {
+    id: userProfile => userProfile.overrideId || userProfile.userProfileId,
+    isInternal: userProfile => userProfile.internal,
+    businessPartner: (userProfile, args, ctx) =>
+      userProfile.partnerId
+        ? ctx.loaders.vmm.getByID.load(userProfile.partnerId)
+        : { id: '0', name: 'Target' },
+    notificationTypes: async (userProfile, args, ctx) =>
+      ctx.loaders.userAttributes.getUserNotificationTypes.load({}),
+
+  },
+  SPARK_UserOutOfOfficeAttributes: {
+    fromDate: outOfOfficeAttributes => outOfOfficeAttributes.oooFromDate,
+    message: outOfOfficeAttributes => outOfOfficeAttributes.oooMessage,
+    toDate: outOfOfficeAttributes => outOfOfficeAttributes.oooToDate,
+    userOutOfOffice: outOfOfficeAttributes =>
+      outOfOfficeAttributes.userOutOfOffice,
+  },
+  SPARK_UserNotificationAttributes: {
+    optedOutNotifications: notificationAttributes => notificationAttributes.optedOutNotifications,
+    optedBatching: notificationAttributes => notificationAttributes.optedBatching,
+  },
+  SPARK_InsightsFavorites: {
+    cardIds: favorites => _.compact(_.map(favorites, favorite => favorite && GREENFIELD_CARD_ID_INVERT[favorite.gfCardId])),
+  },
+}

@@ -1,0 +1,278 @@
+import {
+  getUserPermissionsJWT,
+  getUserPermissionsJWTByProxy,
+} from '../utils/commonLoaders'
+import { getMasterId } from '../utils/variantIdFunctions'
+import { RESOURCE_TYPES_PREFIXES, RESOURCE_TYPES } from '../config/constants'
+import { loadBusinessPartners, loadDroppedBusinessPartners, loadTeams } from './commonResolvers/Teams'
+import { resolveBaseMaterial } from './material/SPARK_BaseMaterialCommonFields'
+import { CONNECTIONS_PER_PAGE, NO_RESULTS } from '../utils/resolvePaging'
+import { searchClaimsForParentResource } from './SPARK_Fabric'
+import { getUser } from '../utils/userAttributesUtils'
+
+export default {
+  Query: {
+    getMaterialByIdFromService: async (parent, { id, proxyIds }, ctx) => {
+      const transformedId = getMasterId(id)
+      let permissionJWT
+      if (proxyIds && proxyIds.length > 0) {
+        permissionJWT = await getUserPermissionsJWTByProxy({ id: transformedId, proxyIds: proxyIds }, ctx)
+      } else {
+        permissionJWT = await getUserPermissionsJWT(transformedId, ctx)
+      }
+      const prefix = id.split('-')[0]
+
+      if (prefix === RESOURCE_TYPES_PREFIXES.Artworks) {
+        const artworkResult = await ctx.loaders.artwork.getByID(permissionJWT).load(transformedId)
+        return {
+          originalRequestedHumanId: id,
+          ...artworkResult,
+        }
+      } else if (
+        prefix === RESOURCE_TYPES_PREFIXES.Colors ||
+        prefix === RESOURCE_TYPES_PREFIXES.ColorColoro ||
+        prefix === RESOURCE_TYPES_PREFIXES.ColorPantone ||
+        prefix === RESOURCE_TYPES_PREFIXES.TargetColors ||
+        prefix === RESOURCE_TYPES_PREFIXES.TargetColorColoro ||
+        prefix === RESOURCE_TYPES_PREFIXES.TargetColorPantone ||
+        prefix === RESOURCE_TYPES_PREFIXES.ReferenceColors ||
+        prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorColoro ||
+        prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorPantone
+      ) {
+        return ctx.loaders.color.getByID(permissionJWT).load(id)
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.ColorArchroma ||
+        prefix === RESOURCE_TYPES_PREFIXES.TargetColorArchroma ||
+        prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorArchroma) {
+        return ctx.loaders.colorArchroma.getByID(permissionJWT).load(id)
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Fabrics) {
+        return ctx.loaders.fabric.getByID(permissionJWT).load(id)
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.FabricSpecification) {
+        return ctx.loaders.fabric.getSpecificationByID.load(id)
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Trim) {
+        return ctx.loaders.trim.getTrim(permissionJWT).load(id)
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Wash) {
+        return ctx.loaders.wash.getWash(permissionJWT).load(id)
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.HubMaterial) {
+        const permissionJWT = await getUserPermissionsJWT(id, ctx)
+        return ctx.loaders.materialHub.getHubMaterial(permissionJWT).load(id)
+      } else {
+        throw new Error('getMaterialByIdFromService not implemented for material type')
+      }
+    },
+    getMaterialByIdsFromService: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      if (ids !== null && ids.length > 0) {
+        const prefix = ids[0].split('-')[0]
+
+        if (prefix === RESOURCE_TYPES_PREFIXES.Fabrics) {
+          return ctx.loaders.fabric.getByIDs(permissionJWT).load({ ids: ids })
+        } else if (prefix === RESOURCE_TYPES_PREFIXES.Trim) {
+          return ctx.loaders.trim.getTrims(permissionJWT).load(ids)
+        } else if (prefix === RESOURCE_TYPES_PREFIXES.Wash) {
+          return ctx.loaders.wash.getAllWashByIds(permissionJWT).load(ids)
+        } else if (prefix === RESOURCE_TYPES_PREFIXES.HubMaterial) {
+          return ctx.loaders.materialHub.getHubMaterials(permissionJWT).load({ materialIds: ids.join(',') })
+        } else {
+          throw new Error('getMaterialByIdsFromService not implemented for material type')
+        }
+      } else {
+        return []
+      }
+    },
+    validateMaterialName: async (parent, { name, type }, ctx) => {
+      let result
+      if (RESOURCE_TYPES.Artworks === type) {
+        result = await ctx.loaders.artwork.validateName.load(name)
+      } else {
+        throw new Error('validateMaterialName not implemented for material type')
+      }
+
+      return result === 'true'
+    },
+  },
+
+  Mutation: {
+    updateMaterialTeamsByIdFromService: async (parent, { id, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      const prefix = id.split('-')[0]
+
+      if (prefix === RESOURCE_TYPES_PREFIXES.Artworks) {
+        return ctx.loaders.artwork.updateArtworkTeams(permissionJWT, id).load(teamsToUpdate)
+      } else if (
+        prefix === RESOURCE_TYPES_PREFIXES.Colors ||
+        prefix === RESOURCE_TYPES_PREFIXES.ColorColoro ||
+        prefix === RESOURCE_TYPES_PREFIXES.ColorPantone ||
+        prefix === RESOURCE_TYPES_PREFIXES.TargetColors ||
+        prefix === RESOURCE_TYPES_PREFIXES.TargetColorColoro ||
+        prefix === RESOURCE_TYPES_PREFIXES.TargetColorPantone ||
+        prefix === RESOURCE_TYPES_PREFIXES.ReferenceColors ||
+        prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorColoro ||
+        prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorPantone ||
+        prefix === RESOURCE_TYPES_PREFIXES.ColorArchroma ||
+        prefix === RESOURCE_TYPES_PREFIXES.TargetColorArchroma ||
+        prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorArchroma
+      ) {
+        return ctx.loaders.color.updateColorTeams(permissionJWT).load(teamsToUpdate, { humanId: id })
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Fabrics) {
+        return ctx.loaders.fabric.updateFabricTeams(permissionJWT).load(teamsToUpdate, { humanId: id })
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Trim) {
+        return ctx.loaders.trim.updateTrimTeams(permissionJWT).load(teamsToUpdate, { humanId: id })
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Wash) {
+        return ctx.loaders.wash.updateWashTeams(permissionJWT).load(teamsToUpdate, { humanId: id })
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.HubMaterial) {
+        const updateTeamsPayload = {
+          resourceId: id,
+          ...teamsToUpdate,
+        }
+        return ctx.loaders.materialHub.updateTeams(permissionJWT).load(updateTeamsPayload, { id: id })
+      } else {
+        throw new Error('updateMaterialTeamsByIdFromService not implemented for material type')
+      }
+    },
+    bulkUpdateTeams: async (parent, { teamsToUpdate }, ctx) => {
+      teamsToUpdate.map(async team => {
+        const resourceId = team.resourceId
+        const prefix = resourceId.split('-')[0]
+        const permissionJWT = await getUserPermissionsJWT(resourceId, ctx)
+
+        if (prefix === RESOURCE_TYPES_PREFIXES.Artworks) {
+          return ctx.loaders.artwork.bulkUpdateTeams(permissionJWT).load(teamsToUpdate, { humanIds: resourceId })
+        } else if (prefix === RESOURCE_TYPES_PREFIXES.Colors ||
+          prefix === RESOURCE_TYPES_PREFIXES.ColorColoro ||
+          prefix === RESOURCE_TYPES_PREFIXES.ColorPantone ||
+          prefix === RESOURCE_TYPES_PREFIXES.TargetColors ||
+          prefix === RESOURCE_TYPES_PREFIXES.TargetColorColoro ||
+          prefix === RESOURCE_TYPES_PREFIXES.TargetColorPantone ||
+          prefix === RESOURCE_TYPES_PREFIXES.ReferenceColors ||
+          prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorColoro ||
+          prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorPantone ||
+          prefix === RESOURCE_TYPES_PREFIXES.ColorArchroma ||
+          prefix === RESOURCE_TYPES_PREFIXES.TargetColorArchroma ||
+          prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorArchroma) {
+          return ctx.loaders.color.bulkUpdateTeams(permissionJWT).load(teamsToUpdate, { humanIds: resourceId })
+        } else if (prefix === RESOURCE_TYPES_PREFIXES.Fabrics) {
+          return ctx.loaders.fabric.bulkUpdateTeams(permissionJWT).load(teamsToUpdate, { humanIds: resourceId })
+        } else if (prefix === RESOURCE_TYPES_PREFIXES.Trim) {
+          return ctx.loaders.trim.bulkUpdateTeams(permissionJWT).load(teamsToUpdate, { humanIds: resourceId })
+        } else if (prefix === RESOURCE_TYPES_PREFIXES.Wash) {
+          return ctx.loaders.wash.bulkUpdateTeams(permissionJWT).load(teamsToUpdate, { humanIds: resourceId })
+        } else if (prefix === RESOURCE_TYPES_PREFIXES.HubMaterial) {
+          return ctx.loaders.materialHub.bulkUpdateTeams(permissionJWT).load(teamsToUpdate)
+        } else {
+          throw new Error('bulkUpdateTeams not implemented for material type')
+        }
+      })
+    },
+  },
+
+  SPARK_ServiceMaterial: {
+    id: (mat) => mat.humanId,
+    type: (mat) => {
+      const prefix = mat.humanId.split('-')[0]
+
+      if (prefix === RESOURCE_TYPES_PREFIXES.Artworks) {
+        return RESOURCE_TYPES.Artworks
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Colors) {
+        return RESOURCE_TYPES.Colors
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.ColorColoro) {
+        return RESOURCE_TYPES.ColorColoro
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.ColorPantone) {
+        return RESOURCE_TYPES.ColorPantone
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.ColorArchroma) {
+        return RESOURCE_TYPES.ColorArchroma
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Fabrics) {
+        return RESOURCE_TYPES.Fabrics
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.FabricSpecification) {
+        return RESOURCE_TYPES.FabricSpecification
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Trim) {
+        return RESOURCE_TYPES.Trim
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.TargetColors) {
+        return RESOURCE_TYPES.TargetColors
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.ReferenceColors) {
+        return RESOURCE_TYPES.ReferenceColors
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.TargetColorColoro) {
+        return RESOURCE_TYPES.TargetColorColoro
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorColoro) {
+        return RESOURCE_TYPES.ReferenceColorColoro
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.TargetColorPantone) {
+        return RESOURCE_TYPES.TargetColorPantone
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorPantone) {
+        return RESOURCE_TYPES.ReferenceColorPantone
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.TargetColorArchroma) {
+        return RESOURCE_TYPES.TargetColorArchroma
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorArchroma) {
+        return RESOURCE_TYPES.ReferenceColorArchroma
+      } else if (prefix === RESOURCE_TYPES_PREFIXES.Wash) {
+        return RESOURCE_TYPES.Wash
+      } else {
+        throw new Error('Unable to return type field for ' + mat.humanId)
+      }
+    },
+    businessPartners: (mat, args, ctx) => loadBusinessPartners(mat.humanId, ctx),
+    droppedPartnerIds: (mat, args, ctx) => loadDroppedBusinessPartners(mat.humanId, ctx),
+    createdBy: (mat, args, ctx) => getUser(mat.createdBy, ctx),
+    updatedBy: (mat, args, ctx) => getUser(mat.updatedBy, ctx),
+    teams: (mat, args, ctx) => loadTeams(mat.humanId, ctx),
+    samples: async (mat, args, ctx) => {
+      const relationship = await ctx.loaders.relationship.whereUsedSearch.load({
+        id: mat.originalRequestedHumanId || mat.humanId,
+        type: 'sample',
+      })
+
+      if (relationship && relationship.nodes && relationship.nodes.length > 0) {
+        const sampleIds = relationship.nodes.map(node => node.id)
+        const permissionJWT = await getUserPermissionsJWT(sampleIds, ctx)
+        const samples = await ctx.loaders.sampleV2.getSamplesByIdsV2(permissionJWT).load(sampleIds)
+        return samples
+      }
+      return []
+    },
+    relatedBoms: async (mat, args, ctx) => {
+      const relationship = await ctx.loaders.relationship.whereUsedSearch.load({
+        id: mat.originalRequestedHumanId || mat.humanId,
+        includeNodeTypes: ['bill_of_materials', 'packaging_bom'],
+        includeBranches: 'fabric_spec_combo',
+      })
+
+      if (relationship?.[0]?.nodes?.length) {
+        const totalCount = relationship[0].nodes.length
+        const paging = {
+          page: 0,
+          totalElements: totalCount,
+          last: totalCount <= CONNECTIONS_PER_PAGE,
+          totalPages: Math.ceil(totalCount / CONNECTIONS_PER_PAGE),
+          size: CONNECTIONS_PER_PAGE,
+        }
+        const bomIds = relationship[0].nodes.map(node => node.id).slice(0, CONNECTIONS_PER_PAGE)
+
+        const permissionJWT = await getUserPermissionsJWT(bomIds, ctx)
+        const content = await ctx.loaders.bom.getBomByIds(permissionJWT, bomIds)
+        return {
+          paging: paging,
+          content: content,
+        }
+      }
+      return {
+        content: [],
+        paging: NO_RESULTS,
+      }
+    },
+    relatedPalettes: async (mat, args, ctx) => {
+      const relationship = await ctx.loaders.relationship.whereUsedSearch.load({
+        id: mat.originalRequestedHumanId || mat.humanId,
+        includeNodeTypes: 'palette',
+        maxDepth: 0,
+      })
+
+      if (relationship && relationship[0] && relationship[0].nodes && relationship[0].nodes.length > 0) {
+        const paletteIds = relationship[0].nodes.map(node => node.id)
+
+        const permissionJWT = await getUserPermissionsJWT(paletteIds, ctx)
+        return ctx.loaders.palette.getPalettesByIds(permissionJWT).load({ humanIds: paletteIds })
+      }
+      return []
+    },
+    baseMaterial: (material) => resolveBaseMaterial(material),
+    claims: (material, args, ctx) => searchClaimsForParentResource(material.humanId, ctx),
+  },
+}

@@ -1,0 +1,512 @@
+import _ from 'lodash'
+
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import deleteOne from '../utils/deleteOne'
+
+import SparkService from './SparkService'
+
+export default class FabricService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+    this.adminEndPoint = process.env.FABRIC_ENDPOINT_ADMIN
+    this.integrationEndPoint = process.env.INTEGRATION_ENDPOINT
+    this.codeValuesTransform = values => {
+      let formattedValues = []
+      _.values(values).forEach(val => {
+        formattedValues = formattedValues.concat(val)
+      })
+      return deepToCamelCase(formattedValues)
+    }
+
+    this.keyValuesTransform = values => {
+      const formattedValues = []
+      for (var key in values) {
+        if (Object.prototype.hasOwnProperty.call(values, key)) {
+          formattedValues.push({
+            code: key,
+            description: values[key],
+          })
+        }
+      }
+      return formattedValues
+    }
+
+    this.joinedListStringOrEmptyString = (values) => {
+      return values ? values.join(',') : ''
+    }
+
+    this.snakeCaseTransform = value => deepToSnakeCase(value)
+
+    this.getByID = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, fabric) => [deepToCamelCase(fabric)],
+          batch: false,
+        },
+        this.logContext,
+      )
+
+    this.getByIDs = permissionJWT =>
+      loadListing(
+        this.endpoint,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: fabric => deepToCamelCase(fabric),
+        },
+        logContext,
+      )
+
+    this.update = permissionJWT =>
+      putOne(
+        sparkFabric => `${this.endpoint}/${sparkFabric.humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: fabric => deepToCamelCase(fabric),
+          transformRequest: this.snakeCaseTransform,
+          getDataLoader: () => this.getByID,
+        },
+        this.logContext,
+      )
+
+    this.updateFabricThumbnail = (permissionJWT, humanId) =>
+      putOne(
+        () =>
+          `${this.endpoint}/${humanId}/thumbnail`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: fabric =>
+            deepToCamelCase(fabric),
+          transformRequest: this.snakeCaseTransform,
+          getDataLoader: () => this.getById,
+        },
+        this.logContext,
+      )
+
+    this.create = postOne(
+      this.endpoint,
+      this.headers,
+      {
+        transform: fabric => deepToCamelCase(fabric),
+        transformRequest: this.snakeCaseTransform,
+      },
+      this.logContext,
+    )
+
+    this.delete = permissionJWT =>
+      deleteOne(
+        humanId => `${this.endpoint}/${humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {},
+        logContext,
+      )
+
+    this.getFabricSuppliers = loadListing(
+      () => `${this.endpoint}/specification/fabric_suppliers`,
+      this.headers,
+      {
+        transform: suppliers => deepToCamelCase(suppliers),
+      },
+      this.logContext,
+    )
+
+    this.getFabricSpecificationAestheticStatus = loadListing(
+      () => `${this.endpoint}/specification/aestheticStatus`,
+      this.headers,
+      {
+        transform: types => this.codeValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getFabricSpecificationTestingStatus = loadListing(
+      () => `${this.endpoint}/specification/testingStatus`,
+      this.headers,
+      {
+        transform: types => this.codeValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getFiberContent = loadListing(
+      () => `${this.endpoint}/code_value/fiber_content`,
+      this.headers,
+      {
+        transform: types => this.transformFiberContent(types),
+      },
+      this.logContext,
+    )
+
+    this.getImpressionIntent = loadListing(
+      () => `${this.endpoint}/code_value/impression_intent`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getIronInstructions = loadListing(
+      () => `${this.endpoint}/code_value/iron_instruction`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getBleachInstructions = loadListing(
+      () => `${this.endpoint}/code_value/bleach_instruction`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getDryCleanInstructions = loadListing(
+      () => `${this.endpoint}/code_value/dryclean_instruction`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getMechanicalFinishes = loadListing(
+      () => `${this.endpoint}/code_value/mechanical_finish`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getChemicalFinishes = loadListing(
+      () => `${this.endpoint}/code_value/chemical_finish`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getFacilityTypes = loadListing(
+      () => `${this.endpoint}/code_value/facility_type`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getFabricStatus = loadListing(
+      () => `${this.endpoint}/code_value/fabric_status`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getFabricBrands = loadListing(
+      () => `${this.endpoint}/code_value/brands`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.createSpecification = permissionJWT => postOne(
+      `${this.endpoint}/specification`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: spec => deepToCamelCase(spec),
+        transformRequest: this.snakeCaseTransform,
+      },
+      this.logContext,
+    )
+
+    this.updateSpecification = permissionJWT =>
+      putOne(
+        sparkFabricSpecification =>
+          `${this.endpoint}/specification/${sparkFabricSpecification.humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: fabricSpecification =>
+            deepToCamelCase(fabricSpecification),
+          transformRequest: this.snakeCaseTransform,
+          getDataLoader: () => this.getSpecificationByID,
+        },
+        this.logContext,
+      )
+
+    this.updateSpecificationThumbnail = (permissionJWT, specificationHumanId) =>
+      putOne(
+        () =>
+          `${this.endpoint}/specification/${specificationHumanId}/thumbnail`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: evaluation =>
+            deepToCamelCase(evaluation),
+          transformRequest: this.snakeCaseTransform,
+          getDataLoader: () => this.getSpecificationByID,
+        },
+        this.logContext,
+      )
+
+    this.updateSpecificationEvaluation = (permissionJWT, specificationHumanId) =>
+      putOne(
+        () =>
+          `${this.endpoint}/specification/evaluation/${specificationHumanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: evaluation =>
+            deepToCamelCase(evaluation),
+          transformRequest: this.snakeCaseTransform,
+          getDataLoader: () => this.getSpecificationByID,
+        },
+        this.logContext,
+      )
+
+    this.developFabricSpecification = (permissionJWT) => putOne(
+      (specificationHumanId) => `${this.endpoint}/specification/${specificationHumanId}/developTrend`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: evaluation => deepToCamelCase(evaluation),
+      },
+      this.logContext,
+    )
+
+    this.getSpecificationByID = loadOne(
+      id => `${this.endpoint}/specification?ids=${id}`,
+      this.headers,
+      {
+        transform: (ids, json) =>
+          deepToCamelCase(ids.map(human_id => _.find(json, { human_id }) || null)),
+        fetchAclToken: true,
+      },
+      this.logContext,
+    )
+
+    this.getSpecificationsByIDs = permissionJWT =>
+      loadListing(
+        ids => `${this.endpoint}/specification?ids=${ids}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: spec => deepToCamelCase(spec),
+        },
+        this.logContext,
+      )
+    this.validateReferenceId = loadOne(
+      referenceId => `${this.endpoint}/specification/validate_reference_id?id=${referenceId}`,
+      this.headers,
+      { skipJsonParse: true },
+      this.logContext,
+    )
+    this.deleteSpecification = permissionJWT =>
+      deleteOne(
+        humanId => `${this.endpoint}/specification/${humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {},
+        logContext,
+      )
+
+    this.updateFabricTeams = permissionJWT => postOne(
+      ({ humanId }) => `${this.endpoint}/${humanId}/teams`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+        skipJsonParse: true,
+      },
+      logContext,
+    )
+    this.bulkUpdateTeams = (permissionJWT) =>
+      postOne(
+        `${this.endpoint}/bulkUpdateTeams`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+          skipJsonParse: true,
+        },
+        logContext,
+      )
+
+    this.bulkUpdateFabricSpecifications = permissionJWT =>
+      putOne(
+        `${this.endpoint}/specification`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: fabricSpecifications => deepToCamelCase(fabricSpecifications),
+          transformRequest: this.snakeCaseTransform,
+        },
+        this.logContext,
+      )
+
+    this.getAllFabricSpecByDesignCycle = loadListing(
+      ids => `${this.adminEndPoint}?ids=${ids}`,
+      this.headers,
+      {
+        transform: fabricSpec => deepToCamelCase(fabricSpec),
+      },
+      this.logContext,
+    )
+    this.addFabricCosting = postOne(
+      `${this.endpoint}/costing`,
+      this.headers,
+      {
+        transform: fabricCosting => deepToCamelCase(fabricCosting),
+        transformRequest: this.snakeCaseTransform,
+      },
+      this.logContext,
+    )
+
+    this.updateFabricCosting = permissionJWT =>
+      putOne(
+        sparkFabricCosting => `${this.endpoint}/costing/${sparkFabricCosting.fabricCostingId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: fabricCosting => deepToCamelCase(fabricCosting),
+          transformRequest: this.snakeCaseTransform,
+          getDataLoader: () => this.getByID,
+        },
+        this.logContext,
+      )
+    this.getFabricCostingsBySearchFilters = loadListing(
+      fabricCostingSearchFilters => {
+        const designCycleIds = this.joinedListStringOrEmptyString(fabricCostingSearchFilters.designCycleIds)
+        const fabricSpecIds = this.joinedListStringOrEmptyString(fabricCostingSearchFilters.fabricSpecIds)
+        return `${this.endpoint}/costing/search?design_cycle_ids=${designCycleIds}&fabric_spec_ids=${fabricSpecIds}`
+      },
+      this.headers,
+      {
+        transform: fabricCostings => deepToCamelCase(fabricCostings),
+      },
+      this.logContext,
+    )
+    this.getFabricCostingById = permissionJWT =>
+      loadListing(
+        fabricCostingId => `${this.endpoint}/costing/${fabricCostingId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: fabricCosting => deepToCamelCase(fabricCosting),
+        },
+        this.logContext,
+      )
+
+    this.getFabricSpecificationsByParentId =
+        loadListing(
+          parentId => `${this.endpoint}/specification?parentFabricHumanId=${parentId}`,
+          {
+            ...this.headers,
+          },
+          {
+            transform: fabric => deepToCamelCase(fabric),
+          },
+          logContext,
+        )
+
+    this.getFabricDevelopmentReasons = loadListing(
+      () => `${this.endpoint}/code_value/development_reason`,
+      this.headers,
+      {
+        transform: fabricValues => this.keyValuesTransform(fabricValues),
+      },
+      this.logContext,
+    )
+
+    this.transformFiberContent = enumValues => {
+      const formattedValues = []
+      if (enumValues && enumValues?.length > 0) {
+        enumValues.forEach(value => {
+          if (value) {
+            formattedValues.push({
+              code: value.code,
+              description: value.description,
+              type: value.type,
+            })
+          }
+        })
+      }
+      return formattedValues
+    }
+    this.addSwatchAssetToSpec = permissionJWT => postOne(
+      () => `${this.integrationEndPoint}/swatchbook`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: newAssetRequest => deepToCamelCase(newAssetRequest),
+        transformRequest: this.snakeCaseTransform,
+      },
+      this.logContext,
+    )
+    this.getSwatchNameById =
+      loadListing(
+        id => `${this.integrationEndPoint}/swatchbook/${id}`,
+        this.headers,
+        { skipJsonParse: true },
+        this.logContext,
+      )
+  }
+}

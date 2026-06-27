@@ -1,0 +1,738 @@
+import { associateAttachmentResourcesV3, getUserPermissionsJWT, loadTags } from '../utils/commonLoaders'
+import { loadFiles, loadFilesTreeWithMetadata } from './commonResolvers/Files'
+import { loadBusinessPartners, loadDroppedBusinessPartners, loadTeams } from './commonResolvers/Teams'
+import _ from 'lodash'
+import { logger } from '../utils/logger'
+import { emptySearchResponse } from '../utils/search/searchConstants'
+import { isColorId } from '../utils/materials/colorUtils'
+import { RESOURCE_TYPES_PREFIXES } from '../config/constants'
+import { loadParentMaterial } from './material/SPARK_BaseMaterialCommonFields'
+import { materialHasFiles } from '../utils/materials/materialHasFiles'
+import { materialHasColorways } from '../utils/materials/materialHasColorways'
+import { isEmptyList } from '../utils/isEmptyList'
+import { getFilesOrEmptyList } from '../utils/materials/getFilesOrEmptyList'
+import { getHumanIdsFromResourcesList } from '../utils/getHumanIdsFromResourcesList'
+import { getAttachmentsAndVariantAttachments } from '../utils/getAttachmentsAndVariantAttachments'
+import { createResourceLink, RESOURCE_LINK_REASONS } from '../utils/materials/resourceLinkUtils'
+import SPARK_MaterialHub from './SPARK_MaterialHub'
+import { CONNECTIONS_PER_PAGE, NO_RESULTS } from '../utils/resolvePaging'
+import { getUser } from '../utils/userAttributesUtils'
+
+export const checkForFacility = async (specification) => {
+  const impressions = specification.impressions
+  let dyeingAndFinishingFacilities = []
+  if (impressions && impressions.length > 0) {
+    impressions.forEach(async impression => {
+      if (impression.facilities && impression.facilities.length > 0) {
+        impression.facilities.forEach(async fac => {
+          if (_.get(fac, 'type.code', null) === 877) {
+            if (fac.facilityId) {
+              dyeingAndFinishingFacilities.push(fac.facilityId)
+            }
+          }
+        })
+      }
+    })
+  }
+  return dyeingAndFinishingFacilities.length > 0
+}
+
+export const bulkAssociateColorwayFilesWithTeams = async (sparkFabricInput, bulkAttachmentIds, createdFabric, ctx, associateAttachmentTeamDtoT) => {
+  const associateAttachmentTeamDto = _.cloneDeep(associateAttachmentTeamDtoT)
+
+  let bulkAssociateAttachmentDto = []
+  bulkAssociateAttachmentDto = createdFabric.colorways.map(colorway => {
+    const inputColorway = _.find(sparkFabricInput.colorways, (item) => {
+      return item.name === colorway.name || item.thumbnailId === colorway.thumbnailId
+    })
+
+    if (!inputColorway) {
+      return null
+    }
+
+    bulkAttachmentIds.push(...inputColorway.files)
+    return {
+      teamsToUpdateDto: { teamsToAdd: inputColorway.teamsToAdd },
+      parentId: colorway.humanId,
+      relatedResourceIds: [createdFabric.humanId],
+      humanIds: inputColorway.files,
+    }
+  }).filter(it => !!it)
+
+  if (bulkAttachmentIds.length > 0) {
+    const attachmentsPermissionJWT = await getUserPermissionsJWT(bulkAttachmentIds, ctx)
+
+    let associatedBulkList = bulkAssociateAttachmentDto
+    if (associateAttachmentTeamDto) {
+      bulkAssociateAttachmentDto.push(associateAttachmentTeamDto)
+    }
+    const bulkAttachmentWrapper = {
+      humanIds: bulkAttachmentIds,
+      associatedBulkList,
+    }
+    await ctx.loaders.attachment.bulkAssociateAttachmentTeams(attachmentsPermissionJWT).load(bulkAttachmentWrapper)
+  }
+}
+
+export const getFabricReportCSV = async (specification, ctx) => {
+  const impressions = specification && specification.impressions
+  let dyeingAndFinishingFacilities = []
+  if (impressions && impressions.length > 0) {
+    impressions.forEach(async impression => {
+      if (impression.facilities && impression.facilities.length > 0) {
+        impression.facilities.forEach(async fac => {
+          if (_.get(fac, 'type.code', null) === 877) {
+            if (fac.facilityId) {
+              dyeingAndFinishingFacilities.push(fac.facilityId)
+            }
+          }
+        })
+      }
+    })
+  }
+  const resolvedFacilities = []
+  if (dyeingAndFinishingFacilities.length > 0) {
+    await Promise.all(
+      dyeingAndFinishingFacilities.map(async facilityId => {
+        await ctx.loaders.location.getLocationById(facilityId).load()
+          .then(res => {
+            logger.info(`Completed Data Fetch for facilityId: ${facilityId}`, ctx.logContext)
+            resolvedFacilities.push(res)
+          })
+      }),
+    )
+  }
+
+  if (resolvedFacilities.length > 0) {
+    const resolvedFacility = resolvedFacilities.map(fac => fac.countryOfOrigin).join(', ') || ''
+    const isGVSorInternal = specification.gvs ? 'Gvs' : 'Internal'
+    logger.info(`Completed Data Fetch for specification.parentHumanId: ${specification.parentHumanId} ,${specification.humanId},${isGVSorInternal},${resolvedFacility}`, ctx.logContext)
+
+    return `${specification.parentHumanId},${specification.humanId},${isGVSorInternal},${resolvedFacility}`
+  } else {
+    return ''
+  }
+}
+
+export const searchClaimsForParentResource = async (parentId, ctx) => {
+  const permissionJWT = await getUserPermissionsJWT(parentId, ctx)
+  const pagedClaims = await ctx.loaders.search.searchClaimsByProxyIds(permissionJWT).load({ q: `parentId:"${parentId}"`, proxyIds: [parentId], page: 0, size: 100 })
+  return pagedClaims.content
+}
+
+const removeAttachments = async ({ fileHumanIds, ctx }) => {
+  const permission = await getUserPermissionsJWT(fileHumanIds, ctx)
+  const archiveAttachmentPromises = fileHumanIds?.map(it => ctx.loaders.attachment.archiveAttachmentV3(permission).load(it))
+  await Promise.all(archiveAttachmentPromises)
+}
+
+export const buildUpdatedColorwaysForNewAttachments = (colorways, attachments, copiedIdToSourceParentMap) => {
+  if (isEmptyList(colorways) || isEmptyList(attachments)) {
+    return colorways || []
+  }
+
+  if (!copiedIdToSourceParentMap || typeof copiedIdToSourceParentMap !== 'object') {
+    return colorways || []
+  }
+
+
+  const clonedColorways = _.cloneDeep(colorways)
+
+  return clonedColorways.map(colorway => {
+    const matchingAttachmentIds = attachments
+      .filter(attachment => {
+        const sourceParentId = copiedIdToSourceParentMap[attachment.humanId]
+        return sourceParentId === colorway.humanId
+      })
+      .map(attachment => attachment.humanId)
+      .filter(it => !!it)
+
+    return {
+      ...colorway,
+      files: matchingAttachmentIds,
+      thumbnailId: matchingAttachmentIds[0],
+    }
+  })
+}
+
+export const bulkAssociateMaterialFilesAndColorwayFiles = async ({ inputMaterial, createdMaterial, ctx }) => {
+  if (materialHasFiles(inputMaterial)) {
+    const associateAttachmentTeamDto = {
+      teamsToUpdateDto: { teamsToAdd: inputMaterial.teamsToAdd },
+      parentId: createdMaterial.humanId,
+      humanIds: inputMaterial.files,
+      relatedResourceIds: [],
+    }
+    if (materialHasColorways(inputMaterial)) {
+      const bulkAttachmentIds = inputMaterial.files || []
+      await bulkAssociateColorwayFilesWithTeams(inputMaterial, bulkAttachmentIds, createdMaterial, ctx, associateAttachmentTeamDto)
+    } else {
+      const attachmentPermissionJWT = await getUserPermissionsJWT(inputMaterial.files, ctx)
+      await ctx.loaders.attachment.associateAttachmentTeams(attachmentPermissionJWT).load(associateAttachmentTeamDto, { humanId: createdMaterial.humanId })
+    }
+  } else if (materialHasColorways(inputMaterial)) {
+    const bulkAttachmentIds = []
+    await bulkAssociateColorwayFilesWithTeams(inputMaterial, bulkAttachmentIds, createdMaterial, ctx, null)
+  }
+}
+
+export default {
+  Query: {
+    getFabric: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.fabric.getByID(permissionJWT).load(id)
+    },
+    getFabrics: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.fabric.getByIDs(permissionJWT).load({ ids })
+    },
+    getFabricSpecification: async (parent, { id }, ctx) => {
+      return ctx.loaders.fabric.getSpecificationByID.load(id)
+    },
+    getFabricSpecifications: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      const fabric = await ctx.loaders.fabric
+        .getSpecificationsByIDs(permissionJWT)
+        .load(ids)
+      return fabric
+    },
+    getFabricSpecificationsByParentId: async (parent, { parentId }, ctx) =>
+      ctx.loaders.fabric.getFabricSpecificationsByParentId.load(parentId),
+    getFabricSuppliers: async (parent, {}, ctx) => {
+      const supplierIds = await ctx.loaders.fabric.getFabricSuppliers.load()
+
+      const supplierDetails = []
+      if (supplierIds.length > 0) {
+        await Promise.all(
+          supplierIds.map(async supplierId => {
+            await ctx.loaders.vmm.getByID.load(supplierId)
+              .then(res => {
+                supplierDetails.push(res)
+              })
+          }),
+        )
+      }
+
+      return supplierDetails.filter(supplier => supplier.bpId !== undefined)
+    },
+    exportFabric: async (parent, { q, nestedQueryList, isThumbnailRequired, isFacilityRequired, format, contextIds, options }, ctx) => {
+      await ctx.loaders.search.exportFabric.load({ q, nestedQueryList, isThumbnailRequired, isFacilityRequired, format, contextIds, options })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+    exportFabricsOnPalette: async (parent, { q, nestedQueryList, isThumbnailRequired, paletteId, isFacilityRequired, format }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(paletteId, ctx)
+      const palette = await ctx.loaders.palette.getPalette(permissionJWT).load(paletteId)
+      const contextIds = (palette && palette.relatedMaterials && palette.relatedMaterials.join(',')) || undefined
+      if (!contextIds) return { ...emptySearchResponse(0), counts: {} }
+      await ctx.loaders.search.exportFabric.load({ q, nestedQueryList, isThumbnailRequired, contextIds, isFacilityRequired, format })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+    exportFabricCosting: async (parent, { q, nestedQueryList }, ctx) => {
+      await ctx.loaders.search.exportFabricCosting.load({ q, nestedQueryList })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+    exportFabricCostingOnPalette: async (parent, { q, nestedQueryList, paletteId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(paletteId, ctx)
+      const palette = await ctx.loaders.palette.getPalette(permissionJWT).load(paletteId)
+      const contextIds = (palette && palette.relatedMaterials && palette.relatedMaterials.join(',')) || undefined
+      if (!contextIds) return { ...emptySearchResponse(0), counts: {} }
+      await ctx.loaders.search.exportFabricCosting.load({ q, nestedQueryList, contextIds })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+    getFabricCostingById: async (parent, { fabricCostingId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(fabricCostingId, ctx)
+      return ctx.loaders.fabric
+        .getFabricCostingById(permissionJWT)
+        .load(fabricCostingId)
+    },
+    getAllFabricSpecByDesignCycle: async (parent, { ids }, ctx) => {
+      const resolvedRows = []
+      const fabricSpec = await ctx.loaders.fabric.getAllFabricSpecByDesignCycle.load(ids)
+      const filteredSpec = fabricSpec && fabricSpec.filter(spec => checkForFacility(spec))
+      return filteredSpec && filteredSpec.map(async specification => {
+        return getFabricReportCSV(specification, ctx, resolvedRows)
+      })
+    },
+    getFabricSpecificationAestheticStatus: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getFabricSpecificationAestheticStatus.load(),
+    getFabricSpecificationTestingStatus: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getFabricSpecificationTestingStatus.load(),
+    getFiberContent: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getFiberContent.load(),
+    getImpressionIntent: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getImpressionIntent.load(),
+    getMechanicalFinishes: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getMechanicalFinishes.load(),
+    getChemicalFinishes: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getChemicalFinishes.load(),
+    getIronInstructions: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getIronInstructions.load(),
+    getBleachInstructions: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getBleachInstructions.load(),
+    getDryCleanInstructions: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getDryCleanInstructions.load(),
+    getFacilityTypes: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getFacilityTypes.load(),
+    getFabricStatus: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getFabricStatus.load(),
+    getFabricBrands: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getFabricBrands.load(),
+    validateReferenceId: async (parent, { referenceId }, ctx) => {
+      const encodedReferenceId = Buffer.from(referenceId).toString('base64')
+      const value = await ctx.loaders.fabric.validateReferenceId.load(encodedReferenceId)
+      return value === 'true'
+    },
+    getFabricCostingsBySearchFilters: async (parent, { fabricCostingSearchFilters }, ctx) =>
+      ctx.loaders.fabric.getFabricCostingsBySearchFilters
+        .load(fabricCostingSearchFilters),
+    getFabricDevelopmentReasons: (parent, {}, ctx) =>
+      ctx.loaders.fabric.getFabricDevelopmentReasons.load(),
+    getSwatchNameById: async (parent, { id }, ctx) => ctx.loaders.fabric.getSwatchNameById.load(id),
+  },
+
+  Mutation: {
+    addFabric: async (parent, { sparkFabric }, ctx) => {
+      const fabric = await ctx.loaders.fabric.create.load(sparkFabric)
+
+      // Setup relationships
+      await bulkAssociateMaterialFilesAndColorwayFiles({
+        inputMaterial: sparkFabric,
+        createdMaterial: fabric,
+        ctx,
+      })
+      return fabric
+    },
+    addFabricCosting: async (parent, { sparkFabricCosting }, ctx) => ctx.loaders.fabric.addFabricCosting.load(sparkFabricCosting),
+    updateFabricCosting: async (parent, { sparkFabricCosting }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sparkFabricCosting.fabricCostingId, ctx)
+      const fabricCosting = await ctx.loaders.fabric.updateFabricCosting(permissionJWT).load(
+        sparkFabricCosting,
+      )
+      return fabricCosting
+    },
+    cloneFabric: async (parent, { sparkFabric, filesToCopy }, ctx) => {
+      let newThumbnailId
+      let newDesignThumbnailId
+      let attachmentResponse = {}
+      if (filesToCopy.length > 0) {
+        const permissionJWT = await getUserPermissionsJWT(filesToCopy, ctx)
+        attachmentResponse = await ctx.loaders.attachment
+          .copyAttachmentsV3(permissionJWT)
+          .load({
+            thumbnailId: sparkFabric.thumbnailId,
+            humanIds: filesToCopy,
+          })
+        newThumbnailId = attachmentResponse.thumbnailId
+        newDesignThumbnailId = attachmentResponse.designThumbnailId
+      }
+      // Update necessary fields with newly copied attachments
+      const { attachments: copiedFabricAttachments, variantAttachments: copiedColorwayAttachments, copiedIdToSourceParentMap } = getAttachmentsAndVariantAttachments(attachmentResponse.attachments, attachmentResponse.copiedAttachmentResponse)
+      sparkFabric.files = getFilesOrEmptyList(sparkFabric).concat(getHumanIdsFromResourcesList(copiedFabricAttachments))
+      sparkFabric.thumbnailId = newThumbnailId || materialHasFiles(sparkFabric) ? sparkFabric.files[0] : ''
+      sparkFabric.designThumbnailId = newDesignThumbnailId || ''
+      sparkFabric.colorways = buildUpdatedColorwaysForNewAttachments(sparkFabric.colorways, copiedColorwayAttachments, copiedIdToSourceParentMap)
+
+      const fabric = await ctx.loaders.fabric.create.load(sparkFabric)
+      if (sparkFabric.parent) {
+        await createResourceLink({
+          sourceHumanId: sparkFabric.parent,
+          targetHumanId: fabric.humanId,
+          reason: RESOURCE_LINK_REASONS.developedFrom,
+          ctx,
+        })
+      }
+      // Associate new attachments with new fabric and colorways
+      await bulkAssociateMaterialFilesAndColorwayFiles({ inputMaterial: sparkFabric, createdMaterial: fabric, ctx })
+
+      return fabric
+    },
+    updateFabric: async (parent, { sparkFabric, filesToRemove }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        sparkFabric.humanId,
+        ctx,
+      )
+
+      if (filesToRemove && filesToRemove.length > 0) {
+        await removeAttachments({ fileHumanIds: filesToRemove, ctx })
+      }
+
+      const updatedFabric = await ctx.loaders.fabric.update(permissionJWT).load(sparkFabric)
+      if (sparkFabric.colorways && sparkFabric.colorways.length > 0) {
+        const bulkAttachmentIds = []
+        await bulkAssociateColorwayFilesWithTeams(sparkFabric, bulkAttachmentIds, updatedFabric, ctx, null)
+      }
+
+      return updatedFabric
+    },
+    deleteFabric: async (parent, { humanId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.fabric.delete(permissionJWT).load(humanId)
+    },
+    addTeamsToFabric: async (parent, { humanId, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.fabric.updateFabricTeams(permissionJWT).load(teamsToUpdate, { humanId })
+    },
+
+    setFabricThumbnail: async (parent, { humanId, thumbnailId, designThumbnailId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.fabric.updateFabricThumbnail(permissionJWT, humanId).load({ thumbnailValue: thumbnailId, designThumbnailValue: designThumbnailId })
+    },
+
+    setSpecificationThumbnail: async (parent, { humanId, thumbnailId, designThumbnailId, technicalFaceId, technicalBackId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.fabric.updateSpecificationThumbnail(permissionJWT, humanId).load({
+        thumbnailValue: thumbnailId,
+        designThumbnailValue: designThumbnailId,
+        technicalFaceId: technicalFaceId,
+        technicalBackId: technicalBackId,
+      })
+    },
+
+    // Fabric Service does not have partial update.
+    // As a result this mutation is used to handle a decent approximation of partial update.
+    updateFabricFromSpec: async (parent, { humanId, sparkFabric, fabricSpecificationHumanId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      const fabric = await ctx.loaders.fabric
+        .getByID(permissionJWT)
+        .load(humanId)
+      fabric.status = fabric.status ? fabric.status.code : null
+      fabric.name = sparkFabric.name
+      fabric.additionalDescription = sparkFabric.additionalDescription
+      fabric.layers = sparkFabric.layers
+      fabric.chemicalFinishes = sparkFabric.chemicalFinishes
+      fabric.mechanicalFinishes = sparkFabric.mechanicalFinishes
+      fabric.additionalInfoFinishes = sparkFabric.additionalInfoFinishes
+      fabric.adoptedDigitalFabric = sparkFabric.digital
+      fabric.parent = fabric.parent ? fabric.parent.id : null
+      fabric.brands = sparkFabric.brands
+      // Don't want to Delete this data from DB and still Backend expects as Code till we cleanup DTO layers in backend
+      fabric.brand = fabric.brand && fabric.brand.code
+      fabric.developmentReason = sparkFabric.developmentReason
+      fabric.inspiration = (sparkFabric && sparkFabric.inspiration) || false
+
+      const updatedFabric = await ctx.loaders.fabric.update(permissionJWT).load(fabric)
+      const fabricSpecPermissionJWT = await getUserPermissionsJWT(fabricSpecificationHumanId, ctx)
+      await ctx.loaders.fabric.developFabricSpecification(fabricSpecPermissionJWT).load(fabricSpecificationHumanId)
+
+      return updatedFabric
+    },
+
+    addFabricSpecification: async (
+      parent,
+      { sparkFabricSpecification, parentFabricId },
+      ctx,
+    ) => {
+      const permissionJWT = await getUserPermissionsJWT(parentFabricId, ctx)
+      const spec = await ctx.loaders.fabric.createSpecification(permissionJWT).load(
+        sparkFabricSpecification,
+      )
+
+      if (parentFabricId && sparkFabricSpecification.files && sparkFabricSpecification.files.length > 0) {
+        await associateAttachmentResourcesV3({
+          humanIds: sparkFabricSpecification.files,
+          parentId: spec.humanId,
+          relatedResourceIds: [parentFabricId],
+          ctx,
+        })
+      }
+
+      return spec
+    },
+    updateFabricSpecification: async (
+      parent,
+      { sparkFabricSpecification },
+      ctx,
+    ) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        sparkFabricSpecification.humanId,
+        ctx,
+      )
+
+      return ctx.loaders.fabric
+        .updateSpecification(permissionJWT)
+        .load(sparkFabricSpecification)
+    },
+
+    updateFabricSpecificationEvaluation: async (
+      parent,
+      { humanId, sparkFabricEvaluation },
+      ctx,
+    ) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.fabric
+        .updateSpecificationEvaluation(permissionJWT, humanId)
+        .load(sparkFabricEvaluation)
+    },
+    deleteFabricSpecification: async (parent, { humanId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.fabric.deleteSpecification(permissionJWT).load(humanId)
+    },
+    updateFabricTeams: async (parent, { humanId, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.fabric.updateFabricTeams(permissionJWT).load(teamsToUpdate, { humanId })
+    },
+    bulkUpdateFabricSpecifications: async (parent, { bulkUpdateFabricSpecs }, ctx) => {
+      if (bulkUpdateFabricSpecs.length > 0) {
+        const humanIds = bulkUpdateFabricSpecs.map(fabricSpec => fabricSpec.humanId)
+        const permissionJWT = await getUserPermissionsJWT(humanIds, ctx)
+        return ctx.loaders.fabric.bulkUpdateFabricSpecifications(permissionJWT).load(bulkUpdateFabricSpecs)
+      }
+    },
+    addSwatchAssetToSpec: async (parent, { swatchInput }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(swatchInput.parentResourceId, ctx)
+      return ctx.loaders.fabric.addSwatchAssetToSpec(permissionJWT).load(swatchInput)
+    },
+  },
+
+  SPARK_Fabric: {
+    createdBy: (fabric, args, ctx) => getUser(fabric.createdBy, ctx),
+    updatedBy: (fabric, args, ctx) => getUser(fabric.updatedBy, ctx),
+    teams: (fabric, args, ctx) => loadTeams(fabric.humanId, ctx),
+    connectedBoms: async (fabric, args, ctx) => {
+      const fabricSpecs = await
+      ctx.loaders.relationship.searchByIds.load({
+        id: fabric.humanId,
+        maxDepth: 0,
+        includeNodeTypes: ['fabric_spec'],
+      })
+
+      const fabricSpecsWithNodes = fabricSpecs.flat().filter(fabricSpec => fabricSpec?.nodes)
+      const bomRelationships = await Promise.all(fabricSpecsWithNodes.flatMap(async fabricSpec => {
+        const nodes = fabricSpec.nodes
+        const fabricSpecInBoms = await Promise.all(nodes.map(async (node) =>
+          ctx.loaders.relationship.whereUsedSearch.load({
+            id: node.id,
+            maxDepth: 1,
+            includeNodeTypes: ['bill_of_materials', 'packaging_bom'],
+          }),
+        ))
+        const flattenedFabricSpecInBoms = fabricSpecInBoms.flat()
+        return flattenedFabricSpecInBoms.filter(fabricSpec => fabricSpec?.nodes)
+      }))
+
+      const flattenedBomRelationships = bomRelationships.flat()
+      const connectedBoms = flattenedBomRelationships.flatMap(flatConnectedBom => flatConnectedBom.nodes)
+      const bomIds = connectedBoms.map(connectedBom => connectedBom.id)
+      if (bomIds.length > 0) {
+        const permissionJWTForBom = await getUserPermissionsJWT(bomIds, ctx)
+        return ctx.loaders.bom.getBomByIds(permissionJWTForBom, bomIds)
+      }
+      return []
+    },
+    developedFabrics: async (fabric, args, ctx) => {
+      const relationship = await ctx.loaders.relationship.getByID.load({
+        id: fabric.humanId,
+        type: 'fabric',
+        maxDepth: 0,
+      })
+      if (relationship && relationship.nodes && relationship.nodes.length > 0) {
+        const fabricIds = relationship.nodes.map(node => node.id)
+        const permissionJWT = await getUserPermissionsJWT(fabricIds, ctx)
+        return ctx.loaders.fabric.getByIDs(permissionJWT).load({ ids: fabricIds })
+      }
+      return []
+    },
+    developedArtworks: async (fabric, args, ctx) => {
+      const relationship = await ctx.loaders.relationship.getByID.load({
+        id: fabric.humanId,
+        type: 'artworks',
+        maxDepth: 0,
+      })
+      if (relationship && relationship.nodes && relationship.nodes.length > 0) {
+        const artworkIds = relationship.nodes.map(node => node.id)
+        const permissionJWT = await getUserPermissionsJWT(artworkIds, ctx)
+        return ctx.loaders.artwork.getByIDs(permissionJWT).load({ ids: artworkIds })
+      }
+      return []
+    },
+    businessPartners: (fabric, args, ctx) => loadBusinessPartners(fabric.humanId, ctx),
+    droppedPartnerIds: (fabric, args, ctx) => loadDroppedBusinessPartners(fabric.humanId, ctx),
+    files: async (fabric, args, ctx) => loadFilesTreeWithMetadata(fabric.humanId, ctx),
+    claims: (fabric, args, ctx) => searchClaimsForParentResource(fabric.humanId, ctx),
+    parent: loadParentMaterial,
+    linkedFabrics: async (fabric, args, ctx) => SPARK_MaterialHub.Query.searchResourceLinks(
+      null,
+      { sourceIds: [fabric.humanId], targetIds: [fabric.humanId], filterType: 'fabric' }
+      , ctx,
+    ),
+  },
+
+  SPARK_FabricSpecification: {
+    files: async (spec, args, ctx) => loadFiles(spec.humanId, ctx),
+    createdBy: (spec, args, ctx) => getUser(spec.createdBy, ctx),
+    updatedBy: (spec, args, ctx) => getUser(spec.updatedBy, ctx),
+    supplierName: async (spec, args, ctx) => {
+      if (spec.supplierId) {
+        const bp = await ctx.loaders.vmm.getByID.load(spec.supplierId)
+        return bp ? bp.bpName : null
+      } else {
+        return null
+      }
+    },
+    parentRecord: async (spec, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(spec.parentHumanId, ctx)
+      return ctx.loaders.fabric.getByID(permissionJWT).load(spec.parentHumanId)
+    },
+    claims: (spec, args, ctx) => searchClaimsForParentResource(spec.humanId, ctx),
+    colorSamples: async (spec, args, ctx) => {
+      const relationship = await ctx.loaders.relationship.getWhereUsedByID.load({
+        id: spec.humanId,
+        type: 'sample',
+      })
+
+      if (relationship?.nodes?.length) {
+        const totalCount = relationship.nodes.length
+        const paging = {
+          page: 0,
+          totalElement: totalCount,
+          last: totalCount <= CONNECTIONS_PER_PAGE,
+          totalPages: Math.ceil(totalCount / CONNECTIONS_PER_PAGE),
+          size: CONNECTIONS_PER_PAGE,
+        }
+        const sampleIds = relationship?.nodes?.map(node => node.id).slice(0, CONNECTIONS_PER_PAGE)
+
+        const permissionJWT = await getUserPermissionsJWT(sampleIds, ctx)
+        const samples = await ctx.loaders.sampleV2.getSamplesByIdsV2(permissionJWT).load(sampleIds)
+        const colorSamples = samples.filter(sample => isColorId(sample.assetHumanId))
+
+        return {
+          content: colorSamples,
+          paging: paging,
+        }
+      }
+      return {
+        content: [],
+        paging: NO_RESULTS,
+      }
+    },
+    artworkSamples: async (spec, args, ctx) => {
+      const relationship = await ctx.loaders.relationship.getWhereUsedByID.load({
+        id: spec.humanId,
+        type: 'sample',
+      })
+
+      if (relationship.nodes.length) {
+        const totalCount = relationship.nodes.length
+        const paging = {
+          page: 0,
+          totalElement: totalCount,
+          last: totalCount <= CONNECTIONS_PER_PAGE,
+          totalPages: Math.ceil(totalCount / CONNECTIONS_PER_PAGE),
+          size: CONNECTIONS_PER_PAGE,
+        }
+        const sampleIds = relationship.nodes.map(node => node.id).slice(0, CONNECTIONS_PER_PAGE)
+
+        const permissionJWT = await getUserPermissionsJWT(sampleIds, ctx)
+        const samples = await ctx.loaders.sampleV2.getSamplesByIdsV2(permissionJWT).load(sampleIds)
+        const artworkSamples = samples.filter(sample => sample.assetHumanId && sample.assetHumanId.startsWith(RESOURCE_TYPES_PREFIXES.Artworks))
+
+        return {
+          paging: paging,
+          content: artworkSamples,
+        }
+      }
+        return {
+          content: [],
+          paging: NO_RESULTS,
+      }
+    },
+    evaluation: async (spec) => {
+      if (spec && spec.evaluation) {
+        return spec.evaluation
+      } else {
+        return null
+      }
+    },
+    assignees: (spec, args, ctx) => spec?.assignees?.map(assignee => ctx.loaders.userAttributes.getUserByID.load(assignee)) || [],
+  },
+
+  SPARK_FabricAdditionalInfo: {
+    designCycle: async (fabric, args, ctx) =>
+      fabric && fabric.designCycle ? loadTags(fabric.designCycle, ctx) : [],
+    tags: async (fabric, args, ctx) =>
+      fabric && fabric.tags ? loadTags(fabric.tags, ctx) : [],
+  },
+
+  SPARK_FabricFacility: {
+    facility: async (facility, args, ctx) => {
+      const facilityId = facility && facility.facilityId
+      if (facilityId) {
+        return await ctx.loaders.location.getLocationById(facilityId).load()
+      } else {
+        return null
+      }
+    },
+  },
+
+  SPARK_FabricAdditionalInfoSpecification: {
+    designCycle: async (fabric, args, ctx) =>
+      fabric && fabric.designCycle ? loadTags(fabric.designCycle, ctx) : [],
+    tags: async (spec, args, ctx) =>
+      spec && spec.tags ? loadTags(spec.tags, ctx) : [],
+  },
+
+  SPARK_FabricFiberDetail: {
+    fiberCountryOfOrigin: async (fabric, args, ctx) => {
+      if (fabric.fiberCountryOfOrigin) {
+        return ctx.loaders.tag.getTag.load(fabric.fiberCountryOfOrigin)
+      } else {
+        return null
+      }
+    },
+  },
+
+  SPARK_FabricYarn: {
+    spinningCountryOfOrigin: async (fabric, args, ctx) => {
+      if (fabric.spinningCountryOfOrigin) {
+        return ctx.loaders.tag.getTag.load(fabric.spinningCountryOfOrigin)
+      } else {
+        return null
+      }
+    },
+    yarnCountryOfOrigin: async (fabric, args, ctx) => {
+      if (fabric.yarnCountryOfOrigin) {
+        return ctx.loaders.tag.getTag.load(fabric.yarnCountryOfOrigin)
+      } else {
+        return null
+      }
+    },
+  },
+  SPARK_FabricCosting: {
+    designCycle: async (fabricCosting, args, ctx) => {
+      if (fabricCosting && fabricCosting.designCycle) {
+        const designCycles = await loadTags([fabricCosting.designCycle], ctx)
+        return designCycles[0]
+      }
+      return {}
+    },
+    fabricSpec: async (fabricCosting, args, ctx) => {
+      return ctx.loaders.fabric.getSpecificationByID.load(fabricCosting.fabricSpecId)
+    },
+  },
+  SPARK_FabricEvaluation: {
+    approvedBy: async (evaluation, args, ctx) => {
+      return (evaluation && evaluation.approvedBy)
+        ? ctx.loaders.userAttributes.getUserByID.load(evaluation.approvedBy) : null
+    },
+    aestheticApprovedBy: async (evaluation, args, ctx) => {
+      return (evaluation && evaluation.aestheticApprovedBy)
+        ? ctx.loaders.userAttributes.getUserByID.load(evaluation.aestheticApprovedBy) : null
+    },
+    testingApprovedBy: async (evaluation, args, ctx) => {
+      return (evaluation && evaluation.testingApprovedBy)
+        ? ctx.loaders.userAttributes.getUserByID.load(evaluation.testingApprovedBy) : null
+    },
+  },
+}

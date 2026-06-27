@@ -1,0 +1,46 @@
+import _ from 'lodash'
+import { calculateDpciStatus } from '../Product/getReservedDpcisFromApex'
+
+export const getRetailPriceByDpci = async ({ dpcis, bpId, productId, ctx }) => {
+    if (dpcis.length) {
+        const apexResponse = await ctx.loaders.apex.searchItemsFromApex.load({
+            bpId: [bpId],
+            sortRequest: [
+                {
+                    field: 'create_time',
+                    direction: 'DESC',
+                },
+            ],
+            filterRequest: [
+                {
+                    field: 'section_data.item.dpci',
+                    operator: 'equals',
+                    values: dpcis,
+                },
+            ],
+        })
+        const resultsByDpci = apexResponse?.values?.reduce((dpciMap, item) => {
+            const dpci = item.sectionData?.item?.dpci
+            if (dpciMap[dpci]) {
+                const newStatus = calculateDpciStatus(item, productId)
+                const existingStatus = dpciMap[dpci].status
+                if (newStatus && existingStatus !== 'locked' && newStatus === 'locked') {
+                    dpciMap[dpci].status = newStatus
+                    dpciMap[dpci].suggestedRetailPrice = item.sectionData?.usCost?.suggUnitRetail
+                }
+            } else {
+                dpciMap[dpci] = {
+                    dpci: item.sectionData?.item?.dpci,
+                    status: calculateDpciStatus(item, productId),
+                    suggestedRetailPrice: item.sectionData?.usCost?.suggUnitRetail,
+                }
+            }
+            return dpciMap
+        }, {})
+        return _.map(resultsByDpci, (value) => ({
+            dpci: value.dpci,
+            suggestedRetailPrice: value.suggestedRetailPrice,
+        }))
+    }
+    return []
+}

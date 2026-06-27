@@ -1,0 +1,116 @@
+import _ from 'lodash'
+import { decode } from 'html-entities'
+
+export const calculateDpciStatus = (item, productId) => {
+    /**
+     * <p>
+     *     Message with below attributes is considered the DPCI as “Reserved”.
+     *     1. "systemStatus" having value "New"
+     *     2. “sections.item.dpci” is not null
+     *     3. “itemSetup” is "false”
+     *     4. “sections.item.spark_pids” is present and valid values.
+     *     5. "bpId" is present and valid value
+     * <p>
+     *     Message with below attributes is considered the DPCI as “Locked”.
+     *     1. If “itemSetup” is “true” then item setup was complete for that item, and DPCI is considered locked.
+     * <p>
+     *     Note:
+     *     During reserved time, the apex users can change the pid values from one to another.
+     *     You need to handle that logic.
+     *     Also the key attribute to differentiate items is “apexId” in the messages.
+     */
+    const commonFieldsCheck = item.sectionData?.item?.dpci && item.sectionData?.item?.sparkPids?.includes(productId) && item.apexId
+    const isReserved = item.systemStatusValue === 'New' && !item.itemSetup && commonFieldsCheck
+    const isLocked = item.itemSetup && commonFieldsCheck
+    if (!isReserved && !isLocked) {
+        // return null as we don't want the dpci if its not reserved or locked
+        return null
+    }
+    if (isReserved) {
+        return 'reserved'
+    }
+    if (isLocked) {
+        return 'locked'
+    }
+}
+
+export const getReservedDpcisFromApex = async (product, ctx) => {
+    if (product.businessPartners && product.businessPartners.length) {
+        const apexResponse = await ctx.loaders.apex.searchItemsFromApex.load({
+            bpId: product.businessPartners.map(bp => bp.partnerId),
+            sortRequest: [
+                {
+                    field: 'create_time',
+                    direction: 'DESC',
+                },
+            ],
+            filterRequest: [
+                {
+                    field: 'section_data.item.spark_pids',
+                    operator: 'equals',
+                    values: [product.productId],
+                },
+            ],
+        })
+        const reservedDpcis = apexResponse?.values.reduce((currentValue, item) => {
+            const bpId = item.bpId.toString()
+            const dpciStatus = calculateDpciStatus(item, product.productId)
+            if (dpciStatus === null) {
+                return currentValue
+            }
+            if (currentValue[bpId]) {
+                if (currentValue[bpId].reservedDpcis[item.sectionData.item.dpci]) {
+                    if (currentValue[bpId].reservedDpcis[item.sectionData.item.dpci].dpciStatus !== 'locked' && dpciStatus === 'locked') {
+                        currentValue[bpId].reservedDpcis[item.sectionData.item.dpci].dpciStatus = dpciStatus
+                    }
+                } else {
+                    currentValue[bpId].reservedDpcis[item.sectionData.item.dpci] = {
+                        apexId: item.apexId,
+                        dpci: item.sectionData.item.dpci,
+                        dpciStatus: dpciStatus,
+                        dept: item.sectionData.item.dept,
+                        clazz: item.sectionData.item.clazz,
+                        subClass: item.sectionData.item.subclass,
+                        tcin: item.sectionData.item.tcin,
+                        apexDescription: item.sectionData.item.description,
+                    }
+                }
+            } else {
+                currentValue[bpId] = {
+                    partnerId: bpId,
+                    reservedDpcis: {
+                        [item.sectionData.item.dpci]: {
+                            apexId: item.apexId,
+                            dpci: item.sectionData.item.dpci,
+                            dpciStatus: dpciStatus,
+                            dept: item.sectionData.item.dept,
+                            clazz: item.sectionData.item.clazz,
+                            subClass: item.sectionData.item.subclass,
+                            tcin: item.sectionData.item.tcin,
+                            apexDescription: item.sectionData.item.description,
+                        },
+                    },
+                }
+            }
+            return currentValue
+        }, {})
+        return _.map(reservedDpcis, (value) => {
+            return {
+                partnerId: value.partnerId,
+                reservedDpcis: _.map(value.reservedDpcis, (dpci) => {
+                    return {
+                        apexId: dpci.apexId,
+                        dpci: dpci.dpci,
+                        dpciStatus: dpci.dpciStatus,
+                        dept: dpci.dept,
+                        clazz: dpci.clazz,
+                        subClass: dpci.subClass,
+                        tcin: dpci.tcin,
+                        apexDescription: dpci.apexDescription ? decode(dpci.apexDescription) : undefined,
+                    }
+                }),
+            }
+        })
+    }
+    return []
+}

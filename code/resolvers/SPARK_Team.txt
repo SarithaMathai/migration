@@ -1,0 +1,108 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import _ from 'lodash'
+
+export const teamRolesBandaid = member => {
+  return (
+    (member && member.roles
+      ? member.roles && member.roles.map(role => role.code)
+      : member.roleIds && member.roleIds.map(role => role.code)) || []
+  )
+}
+
+export default {
+  Query: {
+    // Changes as per V2
+    // We need the Force the Team Id Contract Otherwise the Security Will Fail.
+    getTeams: async (parent, { teamIds }, ctx) => {
+      const jwt = await getUserPermissionsJWT(teamIds, ctx)
+      const teams = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: teamIds })
+      return {
+        content: teams,
+        paging: {},
+      }
+    },
+    // Changes as per V2
+    getTeam: async (parent, { id }, ctx) => {
+      const jwt = await getUserPermissionsJWT(id, ctx)
+      const teams = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: [id] })
+      return teams.length > 0 ? teams[0] : {}
+    },
+    getTeamCommonBPs: async (parent, {}, ctx) => {
+      const systemTeams = await ctx.loaders.search.searchTeams.load({ page: 0, size: 10000, q: `(teamType:SYSTEM)` })
+      const bpDetails = _.uniqBy((systemTeams.content || []), 'businessPartner.partnerId').map(async team => {
+        const id = team.businessPartner.partnerId
+        if (id && id !== '0') {
+          return ctx.loaders.vmm.getByID.load(id)
+        }
+      })
+      return [...await Promise.all(bpDetails), { bpId: 0, bpName: 'Target' }]
+    },
+    searchTeamsSuggestions: (parent, { q, page, size }, ctx) => {
+      return ctx.loaders.search.getTeamsSuggessions.load({ q, page, size })
+    },
+
+  },
+  Mutation: {
+    addTeam: (parent, { sparkTeam }, ctx) =>
+      ctx.loaders.team.create.load(sparkTeam),
+    updateTeam: async (parent, { sparkTeam }, ctx) =>
+      ctx.loaders.team.update.load(sparkTeam),
+  },
+
+  SPARK_TeamPaged: {
+    paging: team => team.paging || team,
+  },
+
+  SPARK_Team: {
+    id: team => team.teamId,
+    name: team => team.teamName,
+    partner_id: team => (team.businessPartner && team.businessPartner.partnerId) || team.businessPartnerId || 0,
+    partner_name: async (team, args, ctx) => {
+      const vmmPartnerId = (team.businessPartner && team.businessPartner.partnerId) || team.businessPartnerId || 0
+      if (!vmmPartnerId) {
+        return 'Target'
+      } else {
+        const { bpName: name } = await ctx.loaders.vmm.getByID.load(vmmPartnerId)
+        return name
+      }
+    },
+    business_partner: async (team, args, ctx) => {
+      const vmmPartnerId = (team.businessPartner && team.businessPartner.partnerId) || team.businessPartnerId || 0
+      if (!vmmPartnerId) {
+        return { bpId: 0, bpName: 'Target' }
+      } else {
+        return ctx.loaders.vmm.getByID.load(vmmPartnerId)
+      }
+    },
+    status_id: team => team.status && (team.status.id || team.status.code),
+    status_name: team => team.status && team.status.description,
+    created_at: team => new Date(team.createdAt || team.createdDate).toDateString(),
+    created_by: (team, args, ctx) =>
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(team.createdBy || team.createdByProfileId),
+    updated_at: team => new Date(team.lastUpdatedDate || team.updatedAt).toDateString(),
+    updated_by: (team, args, ctx) =>
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(team.updatedBy || team.lastUpdatedByProfileId),
+    status: (team) => {
+      return {
+        id: team.status.code || team.status.id,
+        description: team.status.description,
+      }
+    },
+    members: (team) => team.members || [],
+  },
+
+  SPARK_TeamMember: {
+    user_profile_id: member => member.userProfileId,
+    memberDetails: (member, args, ctx) =>
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(member.userProfileId),
+    roles: member => teamRolesBandaid(member),
+  },
+  SPARK_TeamUser: {
+    first_name: user => user.firstName,
+    last_name: user => user.lastName,
+    internal: user => user.internal,
+    company_name: user => user.companyName,
+    partner_id: user => user.partnerId,
+    user_profile_id: user => user.userProfileId,
+  },
+}

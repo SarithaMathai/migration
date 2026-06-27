@@ -1,0 +1,131 @@
+import { RESOURCE_TYPES_PREFIXES, RESOURCE_TYPES, COLOR_RESOURCE_TYPE_PREFIXES } from '../../config/constants'
+import SPARK_Material from '../SPARK_Material'
+
+const getParentIdFromLegacyMaterial = (material) => material && material.parent && material.parent.id
+const getParentIdFromHubMaterial = (material) => material && material.baseMaterial && material.baseMaterial.parent && material.baseMaterial.parent.id
+
+export const loadParentMaterial = async (material, args, ctx) => {
+  const parentId = getParentIdFromLegacyMaterial(material) || getParentIdFromHubMaterial(material)
+  if (parentId) {
+    return loadCommonMaterial(parentId, args, ctx)
+  }
+
+  return null
+}
+
+export const loadCommonMaterial = async (materialId, args, ctx) => {
+  const materialFromService = await SPARK_Material.Query.getMaterialByIdFromService(null, { id: materialId }, ctx)
+  return materialFromService ? mapMaterialToCommonMaterial(materialFromService) : null
+}
+
+export const resolveBaseMaterial = (material) => {
+  if (material.baseMaterial) {
+    return material.baseMaterial
+  }
+
+  const mappedMaterial = mapMaterialToCommonMaterial({
+    humanId: material.id,
+    ...material,
+  })
+
+  if (mappedMaterial) {
+    return mappedMaterial.baseMaterial
+  } else {
+    return null
+  }
+}
+
+export const mapMaterialToCommonMaterial = (material) => {
+  const prefix = material.humanId.split('-')[0]
+
+  const isAnyColorPrefix = Object.values(COLOR_RESOURCE_TYPE_PREFIXES).some(colorPrefix => colorPrefix === prefix)
+  if (prefix === RESOURCE_TYPES_PREFIXES.Artworks) {
+    return mapArtworkToCommonMaterial(material)
+  } else if (isAnyColorPrefix) {
+    return mapColorToCommonMaterial(material)
+  } else if (prefix === RESOURCE_TYPES_PREFIXES.Fabrics) {
+    return mapFabricToCommonMaterial(material)
+  } else if (prefix === RESOURCE_TYPES_PREFIXES.FabricSpecification) {
+    return mapFabricSpecToCommonMaterial(material)
+  } else if (prefix === RESOURCE_TYPES_PREFIXES.HubMaterial) {
+    return material
+  } else if (prefix === RESOURCE_TYPES_PREFIXES.Trim) {
+    return mapTrimToCommonMaterial(material)
+  } else if (prefix === RESOURCE_TYPES_PREFIXES.Wash) {
+    return mapWashToCommonMaterial(material)
+  } else {
+    return null
+  }
+}
+
+const mapTrimToCommonMaterial = (trim) => ({
+  humanId: trim.humanId,
+  type: RESOURCE_TYPES.Trim,
+  baseMaterial: {
+    ...trim,
+    designCycles: trim.designCycle ? [trim.designCycle] : [],
+    brands: trim.brand ? [trim.brand] : [],
+    departments: trim.department ? [trim.department] : [],
+  },
+})
+
+const mapFabricToCommonMaterial = (fabric) => ({
+  humanId: fabric.humanId,
+  type: RESOURCE_TYPES.Fabrics,
+  baseMaterial: {
+    ...fabric,
+    description: fabric.name ? fabric.name : '',
+    additionalInfo: fabric.additionalDescription ? fabric.additionalDescription : '',
+    designCycles: fabric.additionalInfo && fabric.additionalInfo.designCycle ? fabric.additionalInfo.designCycle : [],
+    tags: fabric.additionalInfo && fabric.additionalInfo.tags ? fabric.additionalInfo.tags : [],
+    notes: fabric.additionalInfo && fabric.additionalInfo.notes ? fabric.additionalInfo.notes : [],
+  },
+})
+
+const mapFabricSpecToCommonMaterial = (fabricSpec) => ({
+  humanId: fabricSpec.humanId,
+  type: RESOURCE_TYPES.FabricSpecification,
+  baseMaterial: {
+    ...fabricSpec,
+    description: fabricSpec.name ? fabricSpec.name : '',
+  },
+})  
+
+const mapArtworkToCommonMaterial = (artwork) => ({
+  humanId: artwork.humanId,
+  type: RESOURCE_TYPES.Artworks,
+  baseMaterial: {
+    ...artwork,
+    description: artwork.name ? artwork.name : '',
+  },
+})
+
+const mapColorToCommonMaterial = (color) => ({
+  humanId: color.humanId,
+  type: Object.keys(COLOR_RESOURCE_TYPE_PREFIXES).find(key => COLOR_RESOURCE_TYPE_PREFIXES[key] === color.humanId.split('-')[0]),
+  baseMaterial: {
+    ...color,
+    description: color.name ? color.name : '',
+  },
+})  
+
+const mapWashToCommonMaterial = (wash) => ({
+  humanId: wash.humanId,
+  type: RESOURCE_TYPES.Wash,
+  baseMaterial: {
+    ...wash,
+    description: wash.washDescription ? wash.washDescription : '',
+  },
+})
+
+export default {
+  SPARK_BaseMaterialCommonFields: {
+    __resolveType: (material) => {
+      if (material.baseMaterial) {
+        return 'SPARK_BaseMaterial'
+      } else {
+        return 'SPARK_BaseMaterialResource'
+      }
+    },
+  },
+}

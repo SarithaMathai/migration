@@ -1,0 +1,12 @@
+import _ from 'lodash'
+
+export const getParticipantsByUserGroup = async (resourceId, ctx) => {
+  if (resourceId) {
+    const { userGroups } = await ctx.loaders.userGroup.getUserGroupsByIds.load([resourceId])
+    if (userGroups.length && !_.isEmpty(userGroups[0].participantDetails)) {
+      return { users: [{ usersInfo: userGroups[0].participantDetails.users }], teams: userGroups[0].participantDetails.teams }
+    } else {
+      return { teams: [], users: [] }
+    }
+  }
+}

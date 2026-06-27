@@ -1,0 +1,60 @@
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import loadListing from '../../utils/loadListing'
+import postOne from '../../utils/postOne'
+import putOne from '../../utils/putOne'
+import deleteOne from '../../utils/deleteOne'
+import loadOne from '../../utils/loadOne'
+import SparkService from '../SparkService'
+
+export default class ByoTemplateService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = `${endpoint}/insights_templates/v1`
+
+    this.getByoTemplates = loadListing(
+      `${this.endpoint}`,
+      this.headers,
+      {
+        transformRequest: data => deepToSnakeCase(data),
+        transform: template => deepToCamelCase(template.templates),
+      },
+      this.logContext,
+    )
+
+    this.getByoTemplateById = loadOne(
+      id => `${this.endpoint}/${id}`,
+      this.headers,
+      {
+        transform: (id, data) => data && [deepToCamelCase(data)],
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.addByoTemplate = (byoTemplate) => postOne(`${this.endpoint}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+      getDataLoader: (byoTemplate) => byoTemplate && byoTemplate.id && this.getByoTemplateById([byoTemplate.id]),
+      primeKey: byoTemplate => byoTemplate && byoTemplate.id,
+    }, this.logContext).load(byoTemplate)
+
+    this.updateByoTemplate = (id, byoTemplate) => putOne(`${this.endpoint}/${id}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+      getDataLoader: (byoTemplate) => byoTemplate && byoTemplate.id && this.getByoTemplateById([byoTemplate.id]),
+      primeKey: byoTemplate => byoTemplate && byoTemplate.id,
+    }, this.logContext).load(byoTemplate)
+
+    this.shareByoTemplate = (id, userProfileIds) => postOne(`${this.endpoint}/share/${id}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: userProfileIds => deepToSnakeCase(userProfileIds),
+    }, this.logContext).load(userProfileIds)
+
+    this.deleteByoTemplate = deleteOne(
+      ({ id }) => `${this.endpoint}/${id}`,
+      this.headers,
+      {},
+      this.logContext)
+  }
+}

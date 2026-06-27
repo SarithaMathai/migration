@@ -1,0 +1,220 @@
+export const mockApiData = {
+  'data': {
+    'id': 'bd773785-1b66-4e56-a1a2-84dc97e210d2',
+    'source_id': 'SMP-61XKRL',
+    'source': 'spark-dev',
+    'avatar': 'Newborn',
+    'silhouette': 'BODYSUIT',
+    'planned_retail_price': null,
+    'created_by': 'Aaron Peloquin',
+    'created_at': '2021-04-30T15:28:38.778683',
+    'updated_at': '2021-04-30T15:28:38.778683',
+    'original_assessment': {
+      'id': 'bd773785-1b66-4e56-a1a2-84dc97e210d2',
+      'name': 'Original',
+      'favorite': null,
+      'primary_fabric': 'FAB-99Z8',
+      'original': true,
+      'created_at': '2021-04-30T15:28:38.778683',
+      'updated_at': '2021-04-30T15:28:38.778683',
+      'fabric_type_costing': [
+        {
+          'id': '4d8618b2-1fbe-41af-88a5-8456313b02d8',
+          'name': 'ENGINEER_STRIPE',
+          'imu': null,
+          'fabric_cost': 1.38818,
+          'trim_cost': 0.17,
+          'production_processing_cost': 0.3772,
+          'vendor_overhead_cost': 0.03772,
+          'supply_chain_packaging_cost': 0.031,
+          'retail_packaging_cost': 0.15,
+          'total_viability_fob_cost': 2.1541,
+          'fabrics': [
+            {
+              'id': 'd39aa02e-5387-4d0b-99bb-5ed727f270a1',
+              'requirement_id': 'FAB-99Z8',
+              'material_category': 'KNIT',
+              'cost': 1.38818,
+              'patterns': [
+                {
+                  'id': 'c75d4f6b-a3eb-4778-aef7-db6aa17aeebb',
+                  'pattern': '3D-SLEEVE_2',
+                  'cost': 0.20237,
+                },
+                {
+                  'id': '0e3f1d00-e905-441c-8ce3-b995d1a8bbbb',
+                  'pattern': '3D-SLEEVE_1',
+                  'cost': 0.20237,
+                },
+                {
+                  'id': 'ae726300-dea0-4be4-bfa3-81bc932252f7',
+                  'pattern': '3D-BINDING_4',
+                  'cost': 0.14712,
+                },
+                {
+                  'id': '1ab68afa-0e4a-44a7-9d6d-841f1cbca7d0',
+                  'pattern': '3D-FRONT',
+                  'cost': 0.32451,
+                },
+                {
+                  'id': 'ca271b0f-f45f-4e25-975f-9e3f09040bbb',
+                  'pattern': '3D-BACK',
+                  'cost': 0.38664,
+                },
+                {
+                  'id': '168e7ad0-b2b0-42fd-8a18-efe5b57bc252',
+                  'pattern': '3D-POCKET',
+                  'cost': 0.02482,
+                },
+                {
+                  'id': '0afea5ea-63f8-4cc5-8940-9e8f3fee8158',
+                  'pattern': '3D-NECK BINDING-B',
+                  'cost': 0.05172,
+                },
+                {
+                  'id': '010e7067-57b2-4fab-b1d9-c54558eb347c',
+                  'pattern': '3D-NECK BINDING',
+                  'cost': 0.04863,
+                },
+              ],
+              'is_resolved': true,
+              'is_mock_fabric': false,
+            },
+          ],
+        },
+        {
+          'id': '1b539ca7-b7ed-4430-b95f-43e6d77098c4',
+          'name': 'FEEDER_STRIPE',
+          'imu': null,
+          'fabric_cost': 0.90922,
+          'trim_cost': 0.17,
+          'production_processing_cost': 0.3772,
+          'vendor_overhead_cost': 0.03772,
+          'supply_chain_packaging_cost': 0.031,
+          'retail_packaging_cost': 0.15,
+          'total_viability_fob_cost': 1.67514,
+          'fabrics': [
+            {
+              'id': 'd39aa02e-5387-4d0b-99bb-5ed727f270a1',
+              'requirement_id': 'FAB-99Z8',
+              'material_category': 'KNIT',
+              'cost': 0.90922,
+              'patterns': [
+                {
+                  'id': 'c75d4f6b-a3eb-4778-aef7-db6aa17aeebb',
+                  'pattern': '3D-SLEEVE_2',
+                  'cost': 0.13255,
+                },
+                {
+                  'id': '0e3f1d00-e905-441c-8ce3-b995d1a8bbbb',
+                  'pattern': '3D-SLEEVE_1',
+                  'cost': 0.13255,
+                },
+                {
+                  'id': 'ae726300-dea0-4be4-bfa3-81bc932252f7',
+                  'pattern': '3D-BINDING_4',
+                  'cost': 0.09636,
+                },
+                {
+                  'id': '1ab68afa-0e4a-44a7-9d6d-841f1cbca7d0',
+                  'pattern': '3D-FRONT',
+                  'cost': 0.21254,
+                },
+                {
+                  'id': 'ca271b0f-f45f-4e25-975f-9e3f09040bbb',
+                  'pattern': '3D-BACK',
+                  'cost': 0.25324,
+                },
+                {
+                  'id': '168e7ad0-b2b0-42fd-8a18-efe5b57bc252',
+                  'pattern': '3D-POCKET',
+                  'cost': 0.01626,
+                },
+                {
+                  'id': '0afea5ea-63f8-4cc5-8940-9e8f3fee8158',
+                  'pattern': '3D-NECK BINDING-B',
+                  'cost': 0.03387,
+                },
+                {
+                  'id': '010e7067-57b2-4fab-b1d9-c54558eb347c',
+                  'pattern': '3D-NECK BINDING',
+                  'cost': 0.03185,
+                },
+              ],
+              'is_resolved': true,
+              'is_mock_fabric': false,
+            },
+          ],
+        },
+        {
+          'id': 'c12a7b1a-f277-4f7c-a8ad-a43edd93119c',
+          'name': 'SOLID_AVG',
+          'imu': null,
+          'fabric_cost': 0.58991,
+          'trim_cost': 0.17,
+          'production_processing_cost': 0.3772,
+          'vendor_overhead_cost': 0.03772,
+          'supply_chain_packaging_cost': 0.031,
+          'retail_packaging_cost': 0.15,
+          'total_viability_fob_cost': 1.35583,
+          'fabrics': [
+            {
+              'id': 'd39aa02e-5387-4d0b-99bb-5ed727f270a1',
+              'requirement_id': 'FAB-99Z8',
+              'material_category': 'KNIT',
+              'cost': 0.58991,
+              'patterns': [
+                {
+                  'id': 'c75d4f6b-a3eb-4778-aef7-db6aa17aeebb',
+                  'pattern': '3D-SLEEVE_2',
+                  'cost': 0.086,
+                },
+                {
+                  'id': '0e3f1d00-e905-441c-8ce3-b995d1a8bbbb',
+                  'pattern': '3D-SLEEVE_1',
+                  'cost': 0.086,
+                },
+                {
+                  'id': 'ae726300-dea0-4be4-bfa3-81bc932252f7',
+                  'pattern': '3D-BINDING_4',
+                  'cost': 0.06252,
+                },
+                {
+                  'id': '1ab68afa-0e4a-44a7-9d6d-841f1cbca7d0',
+                  'pattern': '3D-FRONT',
+                  'cost': 0.1379,
+                },
+                {
+                  'id': 'ca271b0f-f45f-4e25-975f-9e3f09040bbb',
+                  'pattern': '3D-BACK',
+                  'cost': 0.1643,
+                },
+                {
+                  'id': '168e7ad0-b2b0-42fd-8a18-efe5b57bc252',
+                  'pattern': '3D-POCKET',
+                  'cost': 0.01055,
+                },
+                {
+                  'id': '0afea5ea-63f8-4cc5-8940-9e8f3fee8158',
+                  'pattern': '3D-NECK BINDING-B',
+                  'cost': 0.02198,
+                },
+                {
+                  'id': '010e7067-57b2-4fab-b1d9-c54558eb347c',
+                  'pattern': '3D-NECK BINDING',
+                  'cost': 0.02066,
+                },
+              ],
+              'is_resolved': true,
+              'is_mock_fabric': false,
+            },
+          ],
+        },
+      ],
+    },
+    'scenario_assessments': [
+
+    ],
+  },
+  'message': 'Success!',
+}

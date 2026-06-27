@@ -1,0 +1,82 @@
+// We're using their prod by default in all environments, since it has the most data
+import loadOne from '../utils/loadOne'
+import SparkService from './SparkService'
+import { SPARK_GATEWAY_API_KEY } from '../config/constants'
+import _ from 'lodash'
+import { deepToCamelCase } from '../utils/convertFunctions'
+import { decode } from 'html-entities'
+
+const defaultEndpoint = process.env.CORONA_ENDPOINT
+// Currently this default selection is generated from this query:
+// https://api-internal.target.com/items/v4/graphiql/?query=query%7B%0A%20%20item(tcin%3A%2284642530%22)%20%7B%0A%20%20%20%20description%20%7B%0A%20%20%20%20%20%20title%0A%20%20%20%20%20%20short%0A%20%20%20%20%7D%0A%20%20%20%20digitalAssets%20%7B%0A%20%20%20%20%20%20images%20%7B%0A%20%20%20%20%20%20%20%20primaryImage%0A%20%20%20%20%20%20%20%20alternateImages%0A%20%20%20%20%20%20%20%20baseUrl%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20launchDateTime%0A%20%20%20%20variations%20%7B%0A%20%20%20%20%20%20themes%20%7B%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%20%20value%0A%20%20%20%20%20%20%20%20swatchImage%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20merchandising%20%7B%0A%20%20%20%20%20%20merchandiseTypeAttributes%20%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%20%20values%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%20%20%20%20unitOfMeasure%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20commerce%20%7B%0A%20%20%20%20%20%20onlineURL%0A%20%20%20%20%7D%0A%20%20%20%20lifecycleState%0A%20%20%7D%0A%7D
+const selection = process.env.CORONA_SELECTION || 'AF8BAAAAT2NggAAOBmygoYgBO2BhYmBQ4McQlgEA'
+const selectionForVendorData = process.env.CORONA_SELECTION || 'AEEBAAAASxNgIAk4QGkWhAgTA8MBdiCDCQA='
+
+const emptyDetails = {
+  description: null,
+  launchDateTime: null,
+  primaryImage: null,
+  alternateImages: [],
+  color: null,
+  size: null,
+  onlineUrl: null,
+}
+
+export default class CoronaItemService extends SparkService {
+  constructor (endpoint, logContext) {
+    super(logContext)
+    this.coronaEndpoint = endpoint || defaultEndpoint
+    this.apiKey = SPARK_GATEWAY_API_KEY
+  }
+
+  getItemDetails (tcin) {
+    return loadOne(
+      (tcin) => `${this.coronaEndpoint}?key=${this.apiKey}&tcin=${tcin}&selection=${selection}`,
+      {},
+      {
+        batch: false,
+        transform: (id, result) => [convertToOurSchema(result.data && result.data.item)],
+      },
+      this.logContext,
+    ).load(tcin)
+  }
+
+  getItemDetailsForRefresh (tcin) {
+    return loadOne(
+      (tcin) => `${this.coronaEndpoint}?key=HRdTOxE6r8QWugo2UA5RRlsBhAvnw2O8&tcin=${tcin}&selection=${selectionForVendorData}`,
+      {},
+      {
+          transform: (id, artwork) => [deepToCamelCase(artwork)],          
+          batch: false,
+      },
+      this.logContext,
+    ).load(tcin)
+  }
+}
+
+const convertToOurSchema = (coronaResponse) => {
+  if (!coronaResponse || ['DELETED'].includes(coronaResponse.lifecycleState)) {
+    return emptyDetails
+  }
+  const isAvailable = _.get(coronaResponse, 'lifecycleState') === 'READY_FOR_LAUNCH'
+  const baseImageUrl = _.get(coronaResponse, 'digitalAssets.images.baseUrl') && `https:${_.get(coronaResponse, 'digitalAssets.images.baseUrl')}`
+  const primaryImageId = _.get(coronaResponse, 'digitalAssets.images.primaryImage')
+  const alternateImageIds = _.get(coronaResponse, 'digitalAssets.images.alternateImages') || []
+  const merchandiseTypeAttributes = _.get(coronaResponse, 'merchandising.merchandiseTypeAttributes') || []
+  const description = _.get(coronaResponse, 'description.title')
+  const colorFamily = merchandiseTypeAttributes.find(attribute => attribute.name === 'Color Family')
+  const colorName = merchandiseTypeAttributes.find(attribute => attribute.name === 'Color Name')
+  const productSize = merchandiseTypeAttributes.find(attribute => attribute.name === 'Product Size')
+
+  return {
+    launchDateTime: coronaResponse.launchDateTime,
+    description: description ? decode(description) : description,
+    primaryImage: baseImageUrl && primaryImageId && `${baseImageUrl}${primaryImageId}`,
+    alternateImages: baseImageUrl && alternateImageIds && alternateImageIds.map(id => `${baseImageUrl}${id}`),
+    color: (colorFamily && colorFamily.values && colorFamily.values.length > 0 && colorFamily.values[0].name) || null,
+    colorFamily: (colorFamily && colorFamily.values && colorFamily.values.length > 0 && colorFamily.values[0].name) || null,
+    colorName: (colorName && colorName.values && colorName.values.length > 0 && colorName.values[0].name) || null,
+    size: (productSize && productSize.values && productSize.values.length > 0 && productSize.values[0].name) || null,
+    onlineUrl: isAvailable ? _.get(coronaResponse, 'commerce.onlineURL') : null,
+  }
+}

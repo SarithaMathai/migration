@@ -1,0 +1,13 @@
+export default {
+  Query: {
+    getRoles: (parent, args, ctx) => ctx.loaders.role.getPage.load(args),
+  },
+
+  SPARK_Roles: {
+    roles: roles =>
+      Object.keys(roles).reduce(
+        (roleArr, roleId) => [...roleArr, { id: roleId, value: roles[roleId] }],
+        [],
+      ),
+  },
+}

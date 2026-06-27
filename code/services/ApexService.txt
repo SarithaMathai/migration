@@ -1,0 +1,48 @@
+import SparkService from './SparkService'
+import loadListing from '../utils/loadListing'
+import postOne from '../utils/postOne'
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import { SPARK_GATEWAY_API_KEY } from '../config/constants'
+
+export default class ApexService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.apexKey = SPARK_GATEWAY_API_KEY
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    }
+    this.searchAssortmentPlanByDeptId = loadListing(
+      deptId => `${this.endpoint}/assortment_plans/v1/plans_search?departments=${deptId}&key=${this.apexKey}`,
+      this.headers,
+      {
+        transform: async (plans) => {
+          const assortmentModel = deepToCamelCase(plans)
+          return assortmentModel?.plans || []
+        },
+      },
+      logContext,
+    )
+
+    this.searchPotentialItemByPlanId = (planId) => postOne(
+      () => `${this.endpoint}/potential_items/v1/search?key=${this.apexKey}&plan_id=${planId}`,
+      this.headers,
+      {
+        transform: plans => plans && deepToCamelCase(plans),
+        transformRequest: (plans) => deepToSnakeCase(plans),
+      },
+      logContext,
+    )
+
+    this.searchItemsFromApex = postOne(
+      () => `${this.endpoint}/potential_items/v1/bps_search?key=${this.apexKey}`,
+      this.headers,
+      {
+        transform: items => items && deepToCamelCase(items),
+        transformRequest: (searchRequest) => deepToSnakeCase(searchRequest),
+      },
+      logContext,
+    )
+  }
+}

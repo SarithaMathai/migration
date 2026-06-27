@@ -1,0 +1,30 @@
+import { isEmpty, get, find } from 'lodash'
+
+export const filterTeamsByPartnerOrWorkspaceId = (teams = [], product, args) => {
+  if (isEmpty(args)) {
+    return teams
+  }
+  const { workspaceId, partnerId } = args
+  return teams.filter(team => {
+    if (workspaceId) {
+      let workspaceAttributes = find(product.productWorkspaceAttributes, { humanId: workspaceId }) || {}
+      const workspaceTeams = workspaceAttributes.teams || []
+      if (!(workspaceTeams.includes(team.teamId))) {
+        return false
+      }
+    }
+    if (partnerId) {
+      if (partnerId === 'targetOnly') {
+        if (team.businessPartner) {
+          return false
+        }
+      } else if (get(team, 'businessPartner.partnerId') !== partnerId) {
+        return false
+      }
+    }
+    return true
+  })
+}
+export default {
+  filterTeamsByPartnerOrWorkspaceId,
+}

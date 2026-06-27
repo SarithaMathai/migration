@@ -1,0 +1,127 @@
+import SPARK_Search from '../SPARK_Search'
+import SPARK_SampleV2 from '../SPARK_SampleV2'
+
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import { is3DFileValid, latestPairedAttachment } from '../../utils/ValueAssessment/latestPairedAttachment'
+import { parseAssessmentFromApiToUi } from '../../utils/ValueAssessment/parseAssessmentFromApiToUi'
+import { logger } from '../../utils/logger'
+import { VASearchResultsAdapter } from '../../utils/ValueAssessment/materialSearchAdapter'
+
+const EXTENSION_PAIRS = {
+  zprj: ['xml'],
+  bw: ['json'],
+}
+
+const SAMPLE_TYPE_PROTOTYPE = 200
+const SAMPLE_FORMAT_3D = 100
+
+export default {
+  Query: {
+    getSampleValueAssessment: async (parent, { sampleId }, ctx) => {
+      const querySamplesAttachments = `relatedResources:"${sampleId}" AND documentType:("xml" OR "zprj" OR "json" OR "bw")`
+      const sampleAttachments = await SPARK_Search.Query.searchAttachments(null, { q: querySamplesAttachments }, ctx)
+      let infoMessage = `No value assessment detected in ${sampleAttachments && sampleAttachments.totalElements ? sampleAttachments.totalElements : 0} possible attachment pairs`
+      const latestPairedBomAttachment = latestPairedAttachment(sampleAttachments.content, EXTENSION_PAIRS)
+      const latestAttachment = latestPairedBomAttachment.attachment
+      if (latestPairedBomAttachment && latestAttachment) {
+        const latestAttachmentId = latestAttachment.id
+        let vaData = null
+        const { valueAssessmentDetails, sampleType, sampleFormat } = await SPARK_SampleV2.Query.getSampleById(null, { id: sampleId }, ctx)
+        const isVASupported = (sampleType.code === SAMPLE_TYPE_PROTOTYPE && sampleFormat.code === SAMPLE_FORMAT_3D)
+
+        if (isVASupported && valueAssessmentDetails && valueAssessmentDetails.attachmentId === latestAttachmentId) {
+          // latest attachment is current attachment, call VA GET endpoint to load data
+          vaData = await (ctx.loaders.valueAssessment).getValueAssessment.load(latestAttachmentId)
+          infoMessage = `No value assessment was loaded for latest attachment, ${latestAttachmentId} (${latestAttachment.name})`
+        } else if (isVASupported && is3DFileValid(latestPairedBomAttachment)) {
+          // latest attachment is NOT current attachment, call VA PUT endpoint to create and load data
+          // get presigned attachment URL for the VA service to use
+          const permissionJWT = await getUserPermissionsJWT([latestAttachmentId], ctx)
+          const presignedURLs = await ctx.loaders.attachment.getPreSignedURLs(permissionJWT).load([latestAttachmentId])
+          if (presignedURLs.length) {
+            const presignedXmlDownloadLink = presignedURLs[0].download_url
+            const vaServiceArgs = {
+              resourceId: latestAttachmentId,
+              downloadBomUrl: presignedXmlDownloadLink,
+            }
+            logger.info(`Creating value assessment for latest attachment, `, vaServiceArgs)
+            vaData = await ctx.loaders.valueAssessment.putValueAssessment.load(vaServiceArgs)
+            logger.info(`Response Data for latest Va`, vaData)
+          }
+          infoMessage = `No value assessment was created for latest attachment, ${latestAttachmentId} (${latestAttachment.name}), presigned url ${presignedURLs.length ? 'was' : 'not'} generated`
+        } else {
+          if (isVASupported) {
+            infoMessage = `No value assessment was created for latest attachment, ${latestAttachmentId} (${latestAttachment.name}) with native 3d (${latestPairedBomAttachment.native3DAttachment.name}), it not supported in this sample type (${sampleType.description}) and format (${sampleFormat.description})`
+          } else {
+            infoMessage = `No value assessment was created for latest attachment, ${latestAttachmentId} (${latestAttachment.name}) with native 3d (${latestPairedBomAttachment.native3DAttachment.name}), has failed validations }`
+          }
+        }
+
+        if (vaData) {
+          // if we got a response from VA, always update sample service's metadata then return the VA response
+          const scenarioIds = vaData.data && vaData.data.scenarioAssessments && vaData.data.scenarioAssessments.map(scenario => scenario.id)
+          const hasErrors = !!vaData.code
+          const newAttachmentId = hasErrors ? null : latestAttachmentId
+          const currentValueAssessmentData = {
+            attachmentId: newAttachmentId,
+            scenarioIds,
+            valueAssessmentId: vaData.data && vaData.data.id,
+          }
+          const permissionJWT = await getUserPermissionsJWT([sampleId], ctx)
+          ctx.loaders.sampleV2.updateSampleValueAssessmentData(permissionJWT, sampleId).load(currentValueAssessmentData)
+          return vaData
+        }
+      }
+      logger.info(infoMessage, ctx.logContext)
+      return { message: infoMessage }
+    },
+    getValueAssessmentCategories: (parent, {}, ctx) => ctx.loaders.valueAssessment.getValueAssessmentCategories.load(),
+    searchValueAssessmentMaterials: async (parent, { valueAssessmentId, q }, ctx) => {
+      // this function searches Spark material data as well as the va fabric data
+      const vaResult = await ctx.loaders.valueAssessment.searchValueAssessmentFabrics.load({ vaId: valueAssessmentId, q })
+      const vaFabrics = VASearchResultsAdapter(vaResult?.data, 'va')
+      const materialsResult = await ctx.loaders.search.getPage.load({ q: `${q}*`, sortField: 'type' }) // searchMaterials
+      const materialFabrics = VASearchResultsAdapter(materialsResult?.content.filter(material => material.type === 'fabric' || material.type === 'fabric_spec'))
+      return { data: [...materialFabrics, ...vaFabrics] }
+    },
+    searchValueAssessmentFabrics: async (parent, { valueAssessmentId, q }, ctx) => ctx.loaders.valueAssessment.searchValueAssessmentFabrics.load({ vaId: valueAssessmentId, q }),
+    getAssessmentDetails: async (parent, { assessmentId }, ctx) => {
+      const assessmentData = await ctx.loaders.valueAssessment.getAssessmentDetails.load(assessmentId)
+      if (assessmentData.data) {
+        assessmentData.data = parseAssessmentFromApiToUi(assessmentData.data)
+      }
+      return assessmentData
+    },
+  },
+  Mutation: {
+    createScenario: async (parent, { valueAssessmentId, name }, ctx) => {
+      const scenario = await ctx.loaders.valueAssessment.createScenario({ name, valueAssessmentId })
+      if (scenario && scenario.data) {
+        return parseAssessmentFromApiToUi(scenario.data)
+      }
+    },
+    createValueAssessmentMockFabric: async (parent, mockFabricPayload, ctx) => {
+      const mockFabric = await ctx.loaders.valueAssessment.createMockFabric(mockFabricPayload)
+      return mockFabric
+    },
+    updateScenarioReplaceFabric: async (parent, { scenarioAssessmentId, fabricId, newFabricId }, ctx) => {
+      const scenario = await ctx.loaders.valueAssessment.updateScenarioReplaceFabric.load({ scenarioAssessmentId, fabricId, newFabricId })
+      if (scenario && scenario.data) {
+        scenario.data = parseAssessmentFromApiToUi(scenario.data)
+      }
+      return scenario
+    },
+    includeOrExcludePattern: async (parent, { scenarioAssessmentId, patternId, action }, ctx) => {
+      const scenario = await ctx.loaders.valueAssessment.includeOrExcludePattern.load([{ scenarioAssessmentId, patternId, action }])
+      if (scenario && scenario.data) {
+        scenario.data = parseAssessmentFromApiToUi(scenario.data)
+      }
+      return scenario
+    },
+  },
+
+  SPARK_ValueAssessment: {
+    originalAssessment: ({ originalAssessment }) => parseAssessmentFromApiToUi(originalAssessment),
+    scenarioAssessments: ({ scenarioAssessments }) => scenarioAssessments.map(assessment => parseAssessmentFromApiToUi(assessment)),
+  },
+}

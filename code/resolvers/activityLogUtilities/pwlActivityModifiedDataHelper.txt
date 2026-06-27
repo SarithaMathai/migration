@@ -1,0 +1,131 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import { loadBps } from '../../utils/vmmUtils'
+
+const pwlActivityModifiedDataHelper = async (activity, streamResourceId, ctx) => {
+  if (!ctx) return []
+  const {
+    loaders: {
+      watchlist: {
+        getWatchlistReasons,
+        getWatchlistInspectionActions = {},
+        getWatchlistByIds,
+      } = {},
+    } = {},
+  } = ctx
+
+  const {
+    resourceType = '',
+    eventType = 'UPDATE',
+    eventSummary: { humanId = '', description = '', modifiedAttributes = [] } = {},
+  } = activity || {}
+
+  const permissionJWT = await getUserPermissionsJWT([humanId], ctx)
+  const watchlistData = await getWatchlistByIds(permissionJWT).load(humanId)
+
+  const productId = watchlistData?.[0]?.parentId
+  const workspaceId = watchlistData?.[0]?.workspaceContext
+
+  const parentResourceInfo = {
+    linkGenerationVariables: { watchlistId: humanId, productId, ...(workspaceId && { workspaceId }) },
+  }
+
+  if (!modifiedAttributes || !modifiedAttributes.length) {
+    const attributeUpdateText = eventType === 'RELEASE_FAIL' ? 'Release failed for' : ''
+    const resourceChangeTypeText = eventType === 'RELEASE_FAIL' ? 'which was released by' : ''
+    return [{
+      attributeUpdateText,
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId: humanId,
+        parentResourceInfo,
+      },
+      resourceChangeTypeText,
+    }]
+  }
+
+  return modifiedAttributes.map(async (attr) => {
+    const { attributeName: initialAttributeName = '', attributeNewValue = [], attributeOldValue = [] } = attr || {}
+    let attributeName = initialAttributeName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/_/g, ' ')
+
+    let isSingleValueUpdate = false
+    let resourceId = humanId
+
+    let oldValues = []
+    let newValues = []
+
+    if (attributeName.includes('business') && attributeName.includes('partners')) {
+      if (attributeNewValue && attributeNewValue.length > 0 && attributeNewValue[0].partnerId) {
+        const bps = await loadBps(ctx, [attributeNewValue[0].partnerId])
+        newValues = [...bps].map((bp) => bp.bpName)
+      }
+    } else if (attributeName === 'status' && attributeNewValue) {
+      newValues = [attributeNewValue === 501 ? 'Active' : 'Inactive']
+      isSingleValueUpdate = true
+    } else if (attributeName.includes('reasons')) {
+      const reasons = await getWatchlistReasons.load()
+      if (reasons && reasons.length && attributeNewValue && attributeNewValue.length > 0) {
+        const reasonDescriptions = []
+        reasons.forEach((reason) => {
+          if (reason && reason.code && attributeNewValue.includes(reason.code)) {
+            reasonDescriptions.push(reason.description)
+          }
+        })
+        newValues = reasonDescriptions
+      }
+      if (attributeOldValue && attributeOldValue.length > 0) {
+        const reasonDescriptions = []
+        reasons.forEach((reason) => {
+          if (reason && reason.code && attributeOldValue.includes(reason.code)) {
+            reasonDescriptions.push(reason.description)
+          }
+        })
+        oldValues = reasonDescriptions
+      }
+    } else if (attributeName.includes('inspections')) {
+      const inspections = await getWatchlistInspectionActions.load()
+      if (inspections && inspections.length && attributeNewValue && attributeNewValue.length > 0) {
+        const inspectionActionCodes = attributeNewValue.map((val) => val.actionId)
+        const inspectionDescriptions = []
+        inspections.forEach((inspection) => {
+          if (inspection && inspection.code && inspectionActionCodes.includes(inspection.code) && inspection.description) {
+            const newValIdx = inspectionActionCodes.indexOf(inspection.code)
+            const descriptionString = inspection.description +
+              ((newValIdx !== -1 && attributeNewValue[newValIdx] && attributeNewValue[newValIdx].type)
+                ? (' - ' + attributeNewValue[newValIdx].type.replace(/_/g, ' ')) : '')
+            inspectionDescriptions.push(descriptionString)
+          }
+        })
+        newValues = inspectionDescriptions
+      }
+      if (attributeOldValue && attributeOldValue.length > 0) {
+        const inspectionActionCodes = attributeOldValue.map((val) => val.actionId)
+        const inspectionDescriptions = []
+        inspections.forEach((inspection) => {
+          if (inspection && inspection.code && inspectionActionCodes.includes(inspection.code) && inspection.description) {
+            const newValIdx = inspectionActionCodes.indexOf(inspection.code)
+            const descriptionString = inspection.description +
+              ((newValIdx !== -1 && attributeOldValue[newValIdx] && attributeOldValue[newValIdx].type)
+                ? (' - ' + attributeOldValue[newValIdx].type.replace(/_/g, ' ')) : '')
+            inspectionDescriptions.push(descriptionString)
+          }
+        })
+        oldValues = inspectionDescriptions
+      }
+    }
+    return {
+      oldValues,
+      newValues,
+      attributeName,
+      eventType,
+      isSingleValueUpdate,
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId,
+        resourceDescription: description,
+        parentResourceInfo,
+      },
+    }
+  })
+}
+
+export default pwlActivityModifiedDataHelper

@@ -1,0 +1,82 @@
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import SparkService from './SparkService'
+import { buildCommaSeparatedString, deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+
+export default class UserGroupService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = `${endpoint}/usergroups/v1`
+
+    this.getUserGroupsByIds = loadListing(
+      ids => `${this.endpoint}?ids=${buildCommaSeparatedString(ids)}`,
+      this.headers,
+      {
+        transform: ug => deepToCamelCase(ug),
+      },
+      this.logContext,
+    )
+
+    this.getUserGroupById = loadOne(
+      id => `${this.endpoint}?ids=${id}`,
+      this.headers,
+      {
+        transform: (id, ug) => [deepToCamelCase(ug)],
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.addUserGroup = postOne(
+      `${this.endpoint}`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: ug => deepToCamelCase(ug),
+        transformRequest: ug => deepToSnakeCase(ug),
+      },
+      this.logContext,
+    )
+
+    this.updateUserGroup = permissionJWT =>
+      putOne(
+        ug => `${this.endpoint}/${ug.resourceId}`,
+        {
+          ...this.headers, 'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: ug => deepToCamelCase(ug),
+          transformRequest: ug => deepToSnakeCase(ug),
+        },
+        this.logContext,
+      )
+
+    this.updateUserGroups = putOne(
+      `${this.endpoint}/bulk`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: ug => deepToCamelCase(ug),
+        transformRequest: ug => deepToSnakeCase(ug),
+      },
+      this.logContext,
+    )
+
+    this.addUserGroups = postOne(
+      `${this.endpoint}/bulk`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: ug => deepToCamelCase(ug),
+        transformRequest: ug => deepToSnakeCase(ug),
+      },
+      this.logContext,
+    )
+  }
+}

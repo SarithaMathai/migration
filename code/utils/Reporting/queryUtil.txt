@@ -1,0 +1,451 @@
+ 
+import { get, uniq, flatten } from 'lodash'
+import { DUE_DATE_REF_IDS, MERCH_VENDOR_IDS, SUPPLIER_REF_IDS, MATERIAL_DESIGN_CYCLE_IDS, MATERIAL_CARDS_FOR_BRAND_FILTER, FABRIC_MATERIAL_CARDS, COMBO_CARDS_TO_USE_FIELD_VS_COLUMN, GREENFIELD_CARD_IDS } from '../../utils/constants'
+
+const getFilterValues = data => data.map(({ value }) => value)
+const getRefIds = id => DUE_DATE_REF_IDS[id] || 'j1fc7qp2skn'
+const getSupplierRefIds = id => SUPPLIER_REF_IDS[id] || 'dkoujl1fyjv'
+const getMerchVendorIds = id => MERCH_VENDOR_IDS[id] || 'o4k5not815f'
+const getMaterialDesignCycleId = id => MATERIAL_DESIGN_CYCLE_IDS[id]
+
+export const buildFiltersArrayForGreenfield = (filtersInput, id) => {
+  const departmentFilter = get(filtersInput, 'departments', [])
+  const divisionFilter = get(filtersInput, 'divisions', [])
+  const brandFilter = get(filtersInput, 'brands', [])
+  const cycleFilter = get(filtersInput, 'cycles', [])
+  const dueDatesFilter = get(filtersInput, 'dueDates', [])
+  const workspacesFilter = get(filtersInput, 'workspaces', [])
+  const tagsFilter = get(filtersInput, 'tags', [])
+  const bpFilter = get(filtersInput, 'businessPartners', [])
+  const classFilter = get(filtersInput, 'classes', [])
+  const productPartnerWorkspaceStatus = get(filtersInput, 'productPartnerWorkspaceStatus', [])
+  const sampleTypeFilter = get(filtersInput, 'sampleTypes', [])
+  const sampleFormatFilter = get(filtersInput, 'sampleFormats', [])
+  const pyramidFilter = get(filtersInput, 'pyramids', [])
+  const merchVendorsFilter = get(filtersInput, 'merchVendors', [])
+  const suppliersFilter = get(filtersInput, 'suppliers', [])
+  const designFilter = get(filtersInput, 'sampleEvaluationPurposeDesignFlag', [])
+  const technicalFilter = get(filtersInput, 'sampleEvaluationPurposeTechnicalFlag', [])
+  const evaluatedInternalUserFilter = get(filtersInput, 'sampleEvaluatedUserInternal', [])
+  const createdInternalUserFilter = get(filtersInput, 'sampleCreatedUserInternal', [])
+  const sampleEvaluationRole = get(filtersInput, 'sampleEvaluationRole', [])
+  const sampleRequestedRole = get(filtersInput, 'sampleRequestedRole', [])
+  const dielineDueDatesFilter = get(filtersInput, 'dielineDueDates', [])
+  const dielineEvaluatorFilter = get(filtersInput, 'dielineEvaluator', [])
+  const dielineStatusFilter = get(filtersInput, 'dielineStatus', [])
+  const dielineAttachmentIdFilter = get(filtersInput, 'dielineAttachmentId', [])
+  const materialDepartmentFilter = get(filtersInput, 'materialDepartments', [])
+  const materialBrandFilter = get(filtersInput, 'materialBrands', [])
+  const materialDesignCycleFilter = get(filtersInput, 'materialDesignCycles', [])
+  const materialDivisionFilter = get(filtersInput, 'materialDivisions', [])
+  const fabricCreatedByFilter = get(filtersInput, 'fabricCreatedBy', [])
+  const fabricBrandFilter = get(filtersInput, 'fabricBrands', [])
+  const fabricCreatedByInternalFilter = get(filtersInput, 'fabricCreatedByInternal', [])
+  const fabricCreatedByRoleFilter = get(filtersInput, 'fabricCreatorPrimaryRoleName', [])
+  const fabricSupplierNFilter = get(filtersInput, 'fabricSupplierN', [])
+
+  const filtersArray = []
+
+  dueDatesFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'sample_due_d',
+    display_name: 'sample_due_d',
+    obj_type: 'column',
+    ref_id: getRefIds(id),
+    pattern: getFilterValues(dueDatesFilter),
+  })
+
+  departmentFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'product_department_id',
+    display_name: 'department_id',
+    obj_type: 'field',
+    pattern: getFilterValues(departmentFilter),
+  })
+
+  divisionFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'division_n',
+    display_name: 'division_n',
+    obj_type: 'field',
+    pattern: getFilterValues(divisionFilter),
+  })
+  if (MATERIAL_CARDS_FOR_BRAND_FILTER.includes(id)) {
+    brandFilter.length && filtersArray.push({
+      type: 'in',
+      dimension: 'brand_id',
+      display_name: 'brand_id',
+      obj_type: 'field',
+      pattern: getFilterValues(brandFilter),
+    })
+  } else {
+    brandFilter.length && filtersArray.push({
+      type: 'in',
+      dimension: 'product_brand_id',
+      display_name: 'product_brand_id',
+      obj_type: 'field',
+      pattern: getFilterValues(brandFilter),
+    })
+  }
+
+  if (FABRIC_MATERIAL_CARDS.includes(id)) {
+    suppliersFilter.length && filtersArray.push({
+      type: 'in',
+      dimension: 'supplier_id',
+      display_name: 'Supplier ID',
+      obj_type: 'field',
+      pattern: getFilterValues(suppliersFilter),
+    })
+  } else {
+    suppliersFilter.length && filtersArray.push({
+      type: 'in',
+      dimension: 'supplier_id',
+      display_name: 'Supplier ID',
+      obj_type: 'column',
+      pattern: getFilterValues(suppliersFilter),
+      ref_id: getSupplierRefIds(id),
+    })
+  }
+
+  cycleFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'design_cycle_n',
+    display_name: 'design_cycle_n',
+    obj_type: 'field',
+    pattern: getFilterValues(cycleFilter),
+  })
+
+  workspacesFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'workspace_id',
+    display_name: 'workspace_id',
+    obj_type: 'field',
+    pattern: getFilterValues(workspacesFilter),
+  })
+
+  tagsFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'tag_id_lookup',
+    display_name: 'tag_id_lookup',
+    obj_type: 'field',
+    pattern: getFilterValues(tagsFilter),
+  })
+
+  bpFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'business_partner_id',
+    display_name: 'business_partner_id',
+    obj_type: 'field',
+    pattern: getFilterValues(bpFilter),
+  })
+
+  classFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'class_n',
+    display_name: 'class_n',
+    obj_type: 'field',
+    pattern: getFilterValues(classFilter),
+  })
+
+  productPartnerWorkspaceStatus.length && filtersArray.push({
+    type: 'in',
+    dimension: 'product_partner_workspace_status_n',
+    display_name: 'product_partner_workspace_status_n',
+    obj_type: 'field',
+    pattern: getFilterValues(productPartnerWorkspaceStatus),
+  })
+
+  sampleTypeFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'sample_type_desc',
+    display_name: 'sample_type_desc',
+    obj_type: 'field',
+    pattern: getFilterValues(sampleTypeFilter),
+  })
+
+  sampleFormatFilter.length && filtersArray.push({
+    'type': 'in',
+    'dimension': 'sample_format_c',
+    'display_name': 'sample_format_c',
+    'obj_type': 'field',
+    pattern: getFilterValues(sampleFormatFilter),
+  })
+
+  pyramidFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'group_n',
+    display_name: 'group_n',
+    obj_type: 'field',
+    pattern: getFilterValues(pyramidFilter),
+  })
+
+  if (merchVendorsFilter.length) {
+    const isComboCard = COMBO_CARDS_TO_USE_FIELD_VS_COLUMN.includes(id)
+    const isPWLBYO = id === GREENFIELD_CARD_IDS.PWL_BYO
+    const isPkgBYO = id === GREENFIELD_CARD_IDS.PACKAGING_COMPONENT
+  
+    let dimension, display_name
+    if (isPWLBYO) {
+      dimension = 'pwl_partner_id'
+      display_name = 'pwl_partner_id'
+    } else if (isPkgBYO) {
+      dimension = 'packaging_business_partner_id'
+      display_name = 'Vendor Business Partner ID'
+    } else {
+      dimension = 'partner_id'
+      display_name = 'Business Partner ID'
+    }
+  
+    const filter = {
+        type: 'in',
+        dimension,
+        display_name,
+        obj_type: isComboCard ? 'field' : 'column',
+        pattern: getFilterValues(merchVendorsFilter),
+    }
+  
+    if (!isComboCard) {
+      filter.ref_id = getMerchVendorIds(id)
+    }
+    
+    filtersArray.push(filter)
+  }
+
+  designFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'sample_evaluation_purpose_design_f',
+    display_name: 'sample_evaluation_purpose_design_f',
+    obj_type: 'field',
+    pattern: getFilterValues(designFilter),
+  })
+
+  technicalFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'sample_evaluation_purpose_technical_f',
+    display_name: 'sample_evaluation_purpose_technical_f',
+    obj_type: 'field',
+    pattern: getFilterValues(technicalFilter),
+  })
+
+  evaluatedInternalUserFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'sample_evaluated_user_internal_f',
+    display_name: 'sample_evaluated_user_internal_f',
+    obj_type: 'column',
+    pattern: getFilterValues(evaluatedInternalUserFilter),
+    ref_id: '7hb4h9e7dp',
+  })
+
+  sampleEvaluationRole.length && filtersArray.push({
+    type: 'in',
+    dimension: 'sample_evaluated_by_primary_role_n',
+    display_name: 'sample_evaluated_by_primary_role_n',
+    obj_type: 'field',
+    pattern: getFilterValues(sampleEvaluationRole),
+  })
+
+  sampleRequestedRole.length && filtersArray.push({
+    type: 'in',
+    dimension: 'sample_created_by_primary_role_n',
+    display_name: 'sample_created_by_primary_role_n',
+    obj_type: 'field',
+    pattern: getFilterValues(sampleRequestedRole),
+  })
+
+  createdInternalUserFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'sample_created_user_internal_f',
+    display_name: 'sample_created_user_internal_f',
+    obj_type: 'column',
+    pattern: getFilterValues(createdInternalUserFilter),
+    ref_id: '7hb4h9e7dp',
+  })
+
+  dielineDueDatesFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'dieline_due_date',
+    display_name: 'dieline_due_date',
+    obj_type: 'field',
+    pattern: getFilterValues(dielineDueDatesFilter),
+  })
+
+  dielineEvaluatorFilter.length && filtersArray.push({
+    'type': 'in',
+    'dimension': 'dieline_evaluator',
+    'display_name': 'dieline_evaluator',
+    'obj_type': 'field',
+    'pattern': getFilterValues(dielineEvaluatorFilter),
+  })
+
+  dielineStatusFilter.length && filtersArray.push({
+    'type': 'in',
+    'dimension': 'dieline_status_id',
+    'display_name': 'dieline_status_id',
+    'obj_type': 'field',
+    'pattern': getFilterValues(dielineStatusFilter),
+  })
+
+  dielineAttachmentIdFilter.length && filtersArray.push({
+    'type': 'in',
+    'dimension': 'dieline_attachment_id',
+    'display_name': 'dieline_attachment_id',
+    'obj_type': 'field',
+    'pattern': getFilterValues(dielineAttachmentIdFilter),
+  })
+
+  fabricCreatedByFilter.length && filtersArray.push({
+    'type': 'in',
+    'dimension': 'fabric_created_by_n',
+    'display_name': 'fabric_created_by_n',
+    'obj_type': 'field',
+    'pattern': getFilterValues(fabricCreatedByFilter),
+  })
+
+  fabricBrandFilter.length && filtersArray.push({
+    'type': 'in',
+    'dimension': 'material_brand_n',
+    'display_name': 'material_brand_n',
+    'obj_type': 'field',
+    'pattern': getFilterValues(fabricBrandFilter),
+  })
+
+  materialDepartmentFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'material_department_id',
+    display_name: 'material_department_id',
+    obj_type: 'field',
+    pattern: getFilterValues(materialDepartmentFilter),
+  })
+
+  materialBrandFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'material_brand_id',
+    display_name: 'material_brand_id',
+    obj_type: 'field',
+    pattern: getFilterValues(materialBrandFilter),
+  })
+
+  if (getMaterialDesignCycleId(id)?.ref_id) {
+    materialDesignCycleFilter.length && filtersArray.push({
+      type: 'in',
+      dimension: getMaterialDesignCycleId(id).dimension,
+      display_name: getMaterialDesignCycleId(id).dimension,
+      obj_type: 'column',
+      pattern: getFilterValues(materialDesignCycleFilter),
+      ref_id: getMaterialDesignCycleId(id).ref_id,
+    })
+  } else {
+    materialDesignCycleFilter.length && filtersArray.push({
+      type: 'in',
+      dimension: 'material_design_cycle_n',
+      display_name: 'material_design_cycle_n',
+      obj_type: 'field',
+      pattern: getFilterValues(materialDesignCycleFilter),
+    })
+  }
+  materialDivisionFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'material_division_n',
+    display_name: 'material_division_n',
+    obj_type: 'field',
+    pattern: getFilterValues(materialDivisionFilter),
+  })
+  if (['FABRIC_DEVELOPMENT_BY_ROLE'].includes(id)) {
+    fabricCreatedByInternalFilter.length && filtersArray.push({
+      type: 'in',
+      dimension: 'fabric_created_by_internal',
+      display_name: 'fabric_created_by_internal',
+      obj_type: 'column',
+      pattern: getFilterValues(fabricCreatedByInternalFilter),
+      ref_id: 'rhvzp1qge4a',
+    })
+  } else {
+    fabricCreatedByInternalFilter.length && filtersArray.push({
+      type: 'in',
+      dimension: 'fabric_created_by_internal',
+      display_name: 'fabric_created_by_internal',
+      obj_type: 'field',
+      pattern: getFilterValues(fabricCreatedByInternalFilter),
+    })
+  }
+  fabricCreatedByRoleFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'fabric_creator_primary_role_name',
+    display_name: 'fabric_creator_primary_role_name',
+    obj_type: 'field',
+    pattern: getFilterValues(fabricCreatedByRoleFilter),
+  })
+  fabricSupplierNFilter.length && filtersArray.push({
+    type: 'in',
+    dimension: 'fabric_supplier_n',
+    display_name: 'fabric_supplier_n',
+    obj_type: 'field',
+    pattern: getFilterValues(fabricSupplierNFilter),
+  })
+
+  return filtersArray
+}
+
+export const buildPOSTBodyForGreenfield = (filtersInput, id) => {
+  return {
+    drill: [],
+    filters: buildFiltersArrayForGreenfield(filtersInput, id),
+    time_period: {
+      interval: 'last segment',
+      type: 'relative',
+      calendar_type: 'Fiscal',
+    },
+    swap_drill_column: {
+    },
+    result_form: {
+      date: '${raw}||${formatted}',
+    },
+
+  }
+}
+
+export const buildPOSTBodyForGreenfieldExport = (filtersInput, id, exportType) => {
+  return {
+    filters: buildFiltersArrayForGreenfield(filtersInput, id),
+    request_label: exportType,
+    time_period: {
+      interval: 'last segment',
+      type: 'relative',
+    },
+  }
+}
+
+export const getQueryForConnectedBOMSearch = filtersInput => {
+  const departmentFilter = get(filtersInput, 'departments', [])
+  const brandFilter = get(filtersInput, 'brands', [])
+  const dueDatesFilter = get(filtersInput, 'dueDates', [])
+  const workspacesFilter = get(filtersInput, 'workspaces', [])
+  const bpFilter = get(filtersInput, 'businessPartners', [])
+
+  const additionalFilters = {}
+
+  filtersInput && Object.keys(filtersInput).forEach(key => {
+    const additionalFilterParams = flatten(filtersInput[key].map(({ additionalFilters }) => additionalFilters))
+    additionalFilterParams && additionalFilterParams.filter(value => value).forEach(({ id, label }) => {
+      if (id in additionalFilters && additionalFilters[id]) {
+        additionalFilters[id] = uniq([...additionalFilters[id], ...label])
+      } else {
+        additionalFilters[id] = label
+      }
+    })
+  })
+
+  return {
+    partnerId: getFilterValues(bpFilter),
+    classId: get(additionalFilters, 'productClassId', []),
+    brandId: getFilterValues(brandFilter),
+    departmentId: [...getFilterValues(departmentFilter), ...get(additionalFilters, 'productDepartmentId', [])],
+    divisionId: get(additionalFilters, 'productDivisionId', []),
+    status: [
+      '101', '103',
+    ],
+    designCycle: get(additionalFilters, 'tagDesignCycleId', []),
+    workspaceId: getFilterValues(workspacesFilter),
+    setDates: getFilterValues(dueDatesFilter),
+  }
+}

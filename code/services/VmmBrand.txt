@@ -1,0 +1,58 @@
+import cache from '../utils/cache'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import {
+  TARGET_EXCLUSIVE_BRAND_TYPE,
+  TARGET_OWNED_BRAND_TYPE,
+  EXCLUSIVE_BRAND_CLASSIFICATION,
+} from '../config/constants'
+
+import { SPARK_GATEWAY_API_KEY } from '../config/constants'
+import SparkService from './SparkService'
+
+export default class VmmBrandService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.ibpKey = SPARK_GATEWAY_API_KEY
+
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    }
+
+    this.ibpKey = SPARK_GATEWAY_API_KEY
+
+    this.getBrands = cache(
+      'SM_Brands_getBrands',
+      loadListing(
+        ({ query }) =>
+          `${this.endpoint}/brands/v1/search?key=${this.ibpKey}&query=${query}&include_national_brands=true`,
+        this.headers,
+        { 
+          transform: brands => brands?.filter(brand => {
+            const typeCodes = brand.brandTypes?.map(type => type.code) || []
+            const classificationCodes = brand.brandClassifications?.map(classification => classification.code) || []
+
+            return typeCodes.includes(TARGET_EXCLUSIVE_BRAND_TYPE) ||
+              typeCodes.includes(TARGET_OWNED_BRAND_TYPE) ||
+              classificationCodes.includes(EXCLUSIVE_BRAND_CLASSIFICATION)
+          }),
+        },
+        this.logContext,
+      )),
+
+    this.getBrand = cache(
+      'VMM_Brands_getBrand',
+      loadOne(
+        id => `${this.endpoint}/brands/v1/${id}?key=${this.ibpKey}`,
+        this.headers,
+        {
+          transform: (id, brands) => brands.brand,
+          batch: false,
+        },
+        this.logContext,
+      ),
+    )
+  }
+}

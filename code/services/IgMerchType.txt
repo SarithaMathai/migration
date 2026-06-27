@@ -1,0 +1,38 @@
+import { IG_MERCHTYPE_PATH, SPARK_GATEWAY_API_KEY } from '../config/constants'
+import loadListing from '../utils/loadListing'
+
+import SparkService from './SparkService'
+
+export default class IgMerchTypeService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.igKey = SPARK_GATEWAY_API_KEY
+
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: `application/json`,
+    }
+
+    this.getByID = loadListing(
+      id =>
+        `${this.endpoint}/${IG_MERCHTYPE_PATH}?key=${this.igKey}&department_id=${id}&per_page=50`,
+      this.headers,
+      {
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.getByMerchTypeId = loadListing(
+      id =>
+        `${this.endpoint}/${IG_MERCHTYPE_PATH}?key=${this.igKey}&merchandise_type_id=${id}`,
+      this.headers,
+      {
+        transform: merchType => merchType && merchType[0],
+        batch: false,
+      },
+      this.logContext,
+    )
+  }
+}

@@ -1,0 +1,24 @@
+import loadListing from '../utils/loadListing'
+
+import SparkService from './SparkService'
+import cache from '../utils/cache'
+
+export default class RoleService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}/userprofile`
+    this.headers = headers
+
+    this.getPage = cache(
+      'RoleService_getPage',
+      loadListing(
+        `${this.endpoint}/v1/roles/types`,
+        this.headers,
+        {
+          getDataLoader: () => this.getByID,
+        },
+        this.logContext,
+      ),
+    )
+  }
+}

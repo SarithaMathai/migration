@@ -1,0 +1,330 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import { loadBps } from '../utils/vmmUtils'
+import bomActivityModifiedDataHelper from './activityLogUtilities/bomActivityModifiedDataHelper'
+import claimActivityModifiedDataHelper from './activityLogUtilities/claimActivityModifiedDataHelper'
+import discussionActivityModifiedDataHelper from './activityLogUtilities/discussionActivityModifiedDataHelper'
+import pdtlActivityModifiedDataHelper from './activityLogUtilities/pdtlActivityModifiedDataHelper'
+import productActivityModifiedDataHelper from './activityLogUtilities/productActivityModifiedDataHelper'
+import pwlActivityModifiedDataHelper from './activityLogUtilities/pwlActivityModifiedDataHelper'
+import sampleActivityModifiedDataHelper from './activityLogUtilities/sampleActivityModifiedDataHelper'
+import measurementsActivityModifiedDataHelper from './activityLogUtilities/measurementsActivityModifiedDataHelper'
+import productTemplateActivityModifiedDataHelper from './activityLogUtilities/productTemplateActivityModifiedDataHelper'
+import { MaterialsActivityDataHelper } from './activityLogUtilities/MaterialsActivityDataHelper'
+
+export default {
+  Query: {
+    searchActivityEvents: (
+      parent,
+      {
+        streamResourceId,
+        streamResourceType,
+        resourceType,
+        eventType,
+        subEventType,
+        page,
+        size,
+        linkedStreams,
+      },
+      ctx,
+    ) =>
+      ctx.loaders.activity.searchEvents.load({
+        streamResourceId,
+        streamResourceType,
+        resourceType,
+        eventType,
+        subEventType,
+        page,
+        size,
+        linkedStreams,
+      }),
+    countActivityEvents: (
+      parent,
+      {
+        streamResourceId,
+        streamResourceType,
+        eventType,
+        groupBy,
+        resourceType,
+      },
+      ctx,
+    ) =>
+      ctx.loaders.activity.countEvents.load({
+        streamResourceId,
+        streamResourceType,
+        resourceType,
+        eventType,
+        groupBy,
+      }),
+  },
+
+  SPARK_ActivityEvent: {
+    id: activity => activity.id,
+    resourceId: activity => activity.resourceId,
+    resourceType: activity => activity.resourceType,
+    eventDate: activity => activity.eventDate && new Date(activity.eventDate),
+    eventType: activity => activity.eventType,
+    eventSubType: activity => activity.subEventType,
+    user: async (activity, args, ctx) => {
+      if ((!activity.userId) || (String(activity.userId).startsWith('00000000-0000-0000-0000'))) {
+        return { firstName: 'SPARK', lastName: 'SYSTEM' }
+      }
+      const userResponse =
+        activity.userId &&
+        (await ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(activity.userId))
+
+      if (!userResponse) {
+        return null
+      }
+      return userResponse
+    },
+    eventSummary: activity => activity.eventSummary,
+    eventStreams: activity => activity.eventStreams,
+    businessPartners: async (activity, args, ctx) =>
+      (await activity.businessPartnerIds) &&
+      Promise.all(
+        activity.businessPartnerIds.filter(Boolean).map(partnerId =>
+          ctx.loaders.vmm.getByID.load(partnerId),
+        ),
+      ),
+    activityModifiedData: async (activity, { streamResourceId }, ctx) => {
+      const { resourceType } = activity || {}
+      if (resourceType === 'PRODUCT') {
+        return productActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else if (resourceType === 'PRODUCT_WATCHLIST') {
+        return pwlActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else if (resourceType === 'BOM') {
+        return bomActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else if (resourceType === 'SAMPLE') {
+        return sampleActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else if (resourceType === 'CLAIM') {
+        return claimActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else if (resourceType === 'PDTL') {
+        return pdtlActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else if (resourceType === 'DISCUSSION') {
+        return discussionActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else if (resourceType === 'MEASUREMENT') {
+        return measurementsActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else if (resourceType === 'PRODUCT_TEMPLATE') {
+        return productTemplateActivityModifiedDataHelper(activity, streamResourceId, ctx)
+      } else {
+        return MaterialsActivityDataHelper(streamResourceId, resourceType, activity, ctx)
+      }
+    },
+    userInfo: async (activity, _, ctx) => {
+      const { userId } = activity
+      const {
+        currentUser: { userProfileId: currentUserId } = {},
+        loaders: {
+          userAttributes: { getByID: getUserInfo } = {},
+        } = {},
+      } = ctx
+      let userToLinkText = ''
+      if (userId === currentUserId) {
+        userToLinkText = 'you'
+      } else if (userId) {
+        const userInfo = await getUserInfo.load(userId)
+        const { firstName, lastName } = userInfo || {}
+        if (firstName && lastName) userToLinkText = `${firstName} ${lastName}`
+        else if (firstName) userToLinkText = firstName
+        else if (lastName) userToLinkText = lastName
+      }
+      return {
+        linkText: userToLinkText,
+        userId: userId,
+      }
+    },
+    modifiedData: async (activity, _, ctx) => {
+      let data = []
+      if (activity && activity.eventSummary && activity.eventSummary.modifiedAttributes && activity.eventSummary.modifiedAttributes.length > 0) {
+        data = await activity.eventSummary.modifiedAttributes.map(async (attr) => {
+          const { attributeName: attributeInitialValue = '', attributeNewValue = [], attributeOldValue = [] } = attr || {}
+          let attributeName = attributeInitialValue.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/_/g, ' ')
+          let oldValues = []
+          let newValues = []
+          let valueChangeType = 1
+          if (attributeName.includes('add remove') && attributeName.includes('business partner')) {
+            if (attributeNewValue) {
+              const bps = await loadBps(ctx, [ ...Object.keys(attributeNewValue) ])
+              newValues = [ ...bps ].map((bp) => bp.bpName)
+            }
+            if (attributeOldValue) {
+              const bps = await loadBps(ctx, [ ...Object.keys(attributeOldValue) ])
+              oldValues = [ ...bps ].map((bp) => bp.bpName)
+            }
+          } else if (attributeName.includes('drop undrop') && attributeName.includes('business partner')) {
+            if (attributeNewValue) {
+              const bps = await loadBps(ctx, [ ...attributeNewValue ])
+              newValues = [ ...bps ].map((bp) => bp.bpName)
+            }
+            if (attributeOldValue) {
+              const bps = await loadBps(ctx, [ attributeOldValue ])
+              oldValues = [ ...bps ].map((bp) => bp.bpName)
+            }
+          } else if (activity && (activity.subEventType === 'PRODUCT_REMOVE_LINK' || activity.subEventType === 'PRODUCT_ADD_LINK')) {
+            const { linkedChildProductId, linkedParentProductId } = attributeNewValue || {}
+            if (activity.eventSummary && (linkedChildProductId || linkedParentProductId)) {
+              newValues = [linkedChildProductId]
+              oldValues = [linkedParentProductId || (attributeOldValue && attributeOldValue.linkedParentProductId)]
+            }
+          } else if (activity && activity.resourceType === 'PRODUCT_WATCHLIST') {
+            if (attributeName.includes('business partners') && attributeNewValue && attributeNewValue.length > 0 && attributeNewValue[0].partnerId) {
+              const bps = await loadBps(ctx, [ attributeNewValue[0].partnerId ])
+              newValues = [ ...bps ].map((bp) => bp.bpName)
+            }
+            if (attributeName === 'status' && attributeNewValue) {
+              newValues = [attributeNewValue === 501 ? 'Active' : 'Inactive']
+              valueChangeType = 2
+            }
+            if (attributeName.includes('reasons')) {
+              const reasons = await ctx.loaders.watchlist.getWatchlistReasons.load()
+              if (reasons && reasons.length && attributeNewValue && attributeNewValue.length > 0) {
+                const reasonDescriptions = []
+                reasons.forEach((reason) => {
+                  if (reason && reason.code && attributeNewValue.includes(reason.code)) {
+                    reasonDescriptions.push(reason.description)
+                  }
+                })
+                newValues = reasonDescriptions
+              }
+              if (attributeOldValue && attributeOldValue.length > 0) {
+                const reasonDescriptions = []
+                reasons.forEach((reason) => {
+                  if (reason && reason.code && attributeOldValue.includes(reason.code)) {
+                    reasonDescriptions.push(reason.description)
+                  }
+                })
+                oldValues = reasonDescriptions
+              }
+            }
+            if (attributeName.includes('inspections')) {
+              const inspections = await ctx.loaders.watchlist.getWatchlistInspectionActions.load()
+              if (inspections && inspections.length && attributeNewValue && attributeNewValue.length > 0) {
+                const inspectionActionCodes = attributeNewValue.map((val) => val.actionId)
+                const inspectionDescriptions = []
+                inspections.forEach((inspection) => {
+                  if (inspection && inspection.code && inspectionActionCodes.includes(inspection.code) && inspection.description) {
+                    const newValIdx = inspectionActionCodes.indexOf(inspection.code)
+                    const descriptionString = inspection.description +
+                      ((newValIdx !== -1 && attributeNewValue[newValIdx] && attributeNewValue[newValIdx].type)
+                        ? (' - ' + attributeNewValue[newValIdx].type.replace(/_/g, ' ')) : '')
+                    inspectionDescriptions.push(descriptionString)
+                  }
+                })
+                newValues = inspectionDescriptions
+              }
+              if (attributeOldValue && attributeOldValue.length > 0) {
+                const inspectionActionCodes = attributeOldValue.map((val) => val.actionId)
+                const inspectionDescriptions = []
+                inspections.forEach((inspection) => {
+                  if (inspection && inspection.code && inspectionActionCodes.includes(inspection.code) && inspection.description) {
+                    const newValIdx = inspectionActionCodes.indexOf(inspection.code)
+                    const descriptionString = inspection.description +
+                      ((newValIdx !== -1 && attributeOldValue[newValIdx] && attributeOldValue[newValIdx].type)
+                        ? (' - ' + attributeOldValue[newValIdx].type.replace(/_/g, ' ')) : '')
+                    inspectionDescriptions.push(descriptionString)
+                  }
+                })
+                oldValues = inspectionDescriptions
+              }
+            }
+          } else if (attributeName.includes('add remove') && (attributeName.includes('product teams') || attributeName.includes('product workspace teams'))) {
+            if (attributeNewValue && attributeNewValue.length > 0) {
+              const jwt = await getUserPermissionsJWT([...attributeNewValue], ctx)
+              const teams = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: [...attributeNewValue] })
+              newValues = [ ...teams ].map((team) => team.teamName)
+            }
+            if (attributeOldValue && attributeOldValue.length > 0) {
+              const jwt = await getUserPermissionsJWT([...attributeOldValue], ctx)
+              const teams = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: [...attributeOldValue] })
+              oldValues = [ ...teams ].map((team) => team.teamName)
+            }
+          } else if (attributeName.includes('product status') && attributeNewValue && attributeNewValue.length > 0 && attributeNewValue[0].statusName) {
+            if (attributeNewValue[0].businessPartnerId) {
+              const bp = await ctx.loaders.vmm.getByID.load(attributeNewValue[0].businessPartnerId)
+              newValues = [attributeNewValue[0].statusName + ((bp && bp.bpName && ('|' + bp.bpName)) || '')]
+            } else {
+              newValues = [attributeNewValue[0].statusName]
+              valueChangeType = 2
+            }
+          } else if (attributeName === 'brand' && attributeNewValue) {
+            const brandInfo = await ctx.loaders.brand.getBrand.load(attributeNewValue)
+            if (brandInfo && brandInfo.brandName) {
+              newValues = [brandInfo.brandName]
+              valueChangeType = 2
+            }
+          } else if (attributeName === 'department' && attributeNewValue && attributeNewValue !== -1) {
+            const departmentInfo = await ctx.loaders.ig.department.getByID.load(attributeNewValue)
+            if (departmentInfo && departmentInfo.departmentName) {
+              newValues = [departmentInfo.departmentName]
+              valueChangeType = 2
+            }
+          } else if (attributeName === 'class') {
+            newValues = []
+          } else if (attributeName === 'tags') {
+            if (attributeNewValue && attributeNewValue.length) {
+              const tags = await ctx.loaders.tag.getTags.load({
+                page: 0,
+                size: 10000,
+                ids: [ ...attributeNewValue ],
+              })
+              newValues = [ ...(tags && tags.content) ].map((tag) => tag.name)
+            }
+            if (attributeOldValue && attributeOldValue.length) {
+              const tags = await ctx.loaders.tag.getTags.load({
+                page: 0,
+                size: 10000,
+                ids: [ ...attributeOldValue ],
+              })
+              oldValues = [ ...(tags && tags.content) ].map((tag) => tag.name)
+            }
+          } else if (typeof attributeNewValue === 'string' && attributeNewValue.length <= 50) {
+            newValues = [attributeNewValue]
+            valueChangeType = 2
+          }
+          return ({
+            attributeName: valueChangeType + '|' + attributeName,
+            oldValues,
+            newValues,
+          })
+        })
+      }
+      return data
+    },
+  },
+  SPARK_ActivityEventPage: {
+    content: activity => activity.content,
+    paging: activity => {
+      return {
+        totalPages: activity.totalPages,
+        totalElements: activity.totalElements,
+        first: activity.first,
+        numberOfElements: activity.numberOfElements,
+        page: activity.page ? activity.page : 0,
+        size: activity.size,
+        number: activity.number,
+        last: activity.last,
+        sort: activity.sort,
+      }
+    },
+    pageable: activity => {
+      return {
+        sort: activity.pageable.sort,
+        pageSize: activity.pageable.pageSize,
+        pageNumber: activity.pageable.pageNumber
+          ? activity.pageable.pageNumber
+          : 0,
+        offset: activity.pageable.offset,
+        paged: activity.pageable.paged,
+        unpaged: activity.pageable.unpaged,
+      }
+    },
+  },
+  SPARK_EventCount: {
+    count: activity => activity.count,
+    group: activity => activity.group,
+  },
+  SPARK_EventCountList: {
+    counts: activity => activity.counts,
+    totalCounts: activity => activity.totalCounts,
+  },
+}

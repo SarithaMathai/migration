@@ -1,0 +1,54 @@
+import qs from 'querystring'
+import loadListing from '../../utils/loadListing'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import postOne from '../../utils/postOne'
+import putOne from '../../utils/putOne'
+import loadOne from '../../utils/loadOne'
+
+export default class TightFitService {
+  constructor (endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/tightfit/v1`
+    this.masterDataEndpoint = `${endpoint}/masterData`
+
+    this.getTightFits = (ids, name, statusIds, brandIds, divisionIds, departmentIds) => {
+      return loadListing(`${this.endpoint}/search?${qs.stringify({
+        ids: ids,
+        name: name,
+        statusIds: statusIds,
+        brandIds: brandIds,
+        divisionIds: divisionIds,
+        departmentIds: departmentIds,
+      })}`,
+      this.headers, {
+        transform: (tightFits) => deepToCamelCase(tightFits),
+      }, logContext).load()
+    }
+
+    this.getTightFitByIdAndVersion = loadOne(
+      (vars) => {
+        const { id, version } = vars[0]
+        return `${this.endpoint}/${id}/versions/${version}`
+      },
+      this.headers,
+      { transform: (vars, tightFit) => [deepToCamelCase(tightFit)],
+        batch: false,
+      },
+      logContext,
+    )
+
+    this.addTightFit = (permissionJWT, tightFit) => postOne(`${this.endpoint}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        logContext,
+      }).load(tightFit)
+
+    this.updateTightFit = (permissionJWT, tightFit) => putOne(`${this.endpoint}/${tightFit.tightFitId}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        logContext,
+      }).load(tightFit)
+  }
+}

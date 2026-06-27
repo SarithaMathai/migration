@@ -1,0 +1,94 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import { loadBps } from '../utils/vmmUtils'
+
+export default {
+  Mutation: {
+    addRuleLibrary: async (parent, request, ctx) => {
+      const result = await ctx.loaders.ruleLibrary.addRuleLibrary(request.ruleLibrary)
+      if (result.statusCode) {
+        throw new Error(`${JSON.stringify(result)}`)
+      }
+      return result
+    },
+    updateRuleLibrary: async (parent, request, ctx) => {
+      const result = await ctx.loaders.ruleLibrary.updateRuleLibrary(request)
+      if (result.statusCode) {
+        throw new Error(`${JSON.stringify(result)}`)
+      }
+      return result
+    },
+    deleteRuleLibrary: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      ctx.loaders.ruleLibrary.deleteById(permissionJWT).load(id)
+      return `${id} Got Deleted Successfully`
+    },
+  },
+  Query: {
+    getAllRuleOptions: async (parent, { }, ctx) => {
+      const response = await ctx.loaders.ruleLibrary.getAllRuleOptions.load()
+      return response
+    },
+    getAllRuleLibraries: async (parent, { page, size }, ctx) => {
+      const response = await ctx.loaders.ruleLibrary.getAllRuleLibraries.load({ page, size })
+      return response
+    },
+    getRuleLibrary: async (parent, { id }, ctx) => {
+      const response = await ctx.loaders.ruleLibrary.getByID.load(id)
+      return response
+    },
+    searchRuleLibrary: async (parent, request, ctx) => {
+      const response = await ctx.loaders.ruleLibrary.searchRuleLibrary(request)
+      return response || []
+    },
+    searchRuleLibraryGroupedByPIDS: async (parent, request, ctx) => {
+      const { productIds, ...otherRequestParams } = request
+      const promises = productIds.map(async (productId) => {
+        const response = await ctx.loaders.ruleLibrary.searchRuleLibrary({ ...otherRequestParams, productIds: [productId] })
+        return { productId, rules: response || [] }
+      })
+      return Promise.all(promises)
+    },
+    searchRuleLibraryByResource: async (parent, request, ctx) => {
+      const response = await ctx.loaders.ruleLibrary.searchRuleLibraryByResource(request)
+      return response
+    },
+  },
+  SPARK_Rule: {
+    overriddenBy: (rule) => rule.overriddenBy || [],
+  },
+  SPARK_RuleLibrary: {
+    id: (ruleLibrary) => ruleLibrary.ruleId,
+    createdBy: (ruleLibrary, args, ctx) =>
+      ruleLibrary.createdBy && ctx.loaders.userAttributes.getUserByID.load(ruleLibrary.createdBy),
+    updatedBy: (ruleLibrary, args, ctx) =>
+      ruleLibrary.updatedBy && ctx.loaders.userAttributes.getUserByID.load(ruleLibrary.updatedBy),
+  },
+  SPARK_RuleCriteria: {
+    departmentClasses: (ruleCriteria) => {
+      return ruleCriteria.departments
+    },
+    businessPartners: async (ruleCriteria, args, ctx) => {
+      if (ruleCriteria.businessPartnerIds.length > 0) {
+        return loadBps(ctx, ruleCriteria.businessPartnerIds, ctx)
+      }
+      return []
+    },
+  },
+  SPARK_RuleDepartmentClass: {
+    department: async (departmentClass, args, ctx) => {
+      return ctx.loaders.ig.department.getByID.load(departmentClass.id) || null
+    },
+    clazzes: async (departmentClass, args, ctx) => {
+      if (departmentClass.id) {
+        const clazzes = await ctx.loaders.ig.clazz.getPage.load(departmentClass.id).catch(() => {
+          return []
+        })
+        return clazzes.filter((clazz) => departmentClass?.classIds.includes(clazz.classId))
+      }
+      return []
+    },
+    brandComplianceRule: async (departmentClass) => {
+      return departmentClass.brandComplianceRule
+    },
+  },
+}

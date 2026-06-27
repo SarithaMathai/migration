@@ -1,0 +1,44 @@
+import SparkService from '../SparkService'
+import putOne from '../../utils/putOne'
+import loadListing from '../../utils/loadListing'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+
+export default class ImpressionService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = endpoint + '/enterprise_product_development_products/impressions/product'
+
+    this.searchImpressionsByProductId = (permissionJWT, productId, partnerIds, workspaceIds) => {
+      let getEndpoint = `${this.endpoint}/${productId}?`
+
+      if (Array.isArray(workspaceIds)) {
+        workspaceIds.forEach(id => {
+          getEndpoint += `workspaceIds=${id}&`
+        })
+      }
+      if (Array.isArray(partnerIds)) {
+        partnerIds.forEach(id => {
+          getEndpoint += `partnerIds=${id}&`
+        })
+      }
+      return loadListing(
+        getEndpoint,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: impressions => deepToCamelCase(impressions),
+        },
+        logContext,
+      ).load()
+    }
+
+    this.updateImpressions = (permissionJWT, productId, productImpression) => putOne(`${this.endpoint}/${productId}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+      {
+        transform: productImpression => deepToCamelCase(productImpression),
+        transformRequest: productImpression => deepToSnakeCase(productImpression),
+      },
+      this.logContext,
+    ).load(productImpression)
+  }
+}

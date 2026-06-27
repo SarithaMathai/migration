@@ -1,0 +1,38 @@
+export const generateContextMap = (info) => {
+  const contextMap = { elapsedMillis: info.elapsedMillis, ...info[Symbol.for('splat')][0] }
+
+  // We can put whatever we want in the context map and it will go to elastic, but only these specially named fields are indexed,
+  // It's ok if they are duplicated, we might re-use these custom fields for different purposes depending on the log message
+
+  // first, match the user/request fields to the API
+  contextMap.customfield1 = contextMap.username
+  contextMap.customfield2 = contextMap.userId
+  contextMap['x-api-id'] = contextMap.requestId
+
+  // Now, GQL specific fields - the common fields that are logged when gql calls other services
+  // Feel free to add stuff like "contextMap.url || contextMap.otherThingy" if there are common log messages in another format
+  contextMap.customfield3 = contextMap.url || contextMap.performance
+  contextMap.customfield4 = contextMap.method
+  if (contextMap.logCounts) {
+    contextMap.customfield5 = classifyOutgoingCallCount(contextMap.logCounts)
+  }
+
+  const cleanContextMap = {}
+  for (const property in contextMap) {
+    if (contextMap[property] != null) {
+      cleanContextMap[property] = typeof contextMap[property] === 'object' ? JSON.stringify(contextMap[property]) : contextMap[property].toString()
+    }
+  }
+  return cleanContextMap
+}
+
+const classifyOutgoingCallCount = (count) => {
+  if (count > 1000) {
+    return 'OH_CRAP'
+  } else if (count > 100) {
+    return 'VERY_CHATTY'
+  } else if (count > 25) {
+    return 'NOT_IDEAL'
+  }
+  return 'OK'
+}

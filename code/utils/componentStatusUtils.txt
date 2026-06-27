@@ -1,0 +1,47 @@
+import _ from 'lodash'
+
+export function getCountByComponents (components) {
+  let countByComponent = []
+  if (components.length > 0) {
+    components.forEach(component => {
+      const componentIndex = _.findIndex(countByComponent, { type: component.type })
+      if (componentIndex !== -1) {
+        countByComponent[componentIndex].counts = (countByComponent[componentIndex].counts || 0) + 1
+        countByComponent[componentIndex].countByStatus = getCountByComponentStatus(component, countByComponent[componentIndex].countByStatus)
+      } else {
+        const countByStatus = getCountByComponentStatus(component, [])
+        countByComponent.push({ type: component.type, counts: 1, countByStatus: countByStatus })
+      }
+    })
+  }
+  return countByComponent
+}
+
+export function getCountByComponentStatus (component, initialCountsByStatus) {
+  let countByComponentStatus = initialCountsByStatus || []
+  if (component.statuses && component.statuses.length > 0) {
+    // AllContext counter should be incremented only once for one component
+    let incrementAllContextCounter = true
+    component.statuses.forEach(it => {
+      if (it.workspaceId) {
+        const workspaceIndex = _.findIndex(countByComponentStatus, { code: it.status.code, workspaceContext: it.workspaceId })
+        if (workspaceIndex !== -1) {
+          countByComponentStatus[workspaceIndex].counts = (countByComponentStatus[workspaceIndex].counts || 0) + 1
+        } else {
+          countByComponentStatus.push({ code: it.status.code, counts: 1, workspaceContext: it.workspaceId })
+        }
+      }
+
+      const viewAllIndex = _.findIndex(countByComponentStatus, { code: it.status.code, workspaceContext: 'ALL' })
+      if (viewAllIndex !== -1) {
+        if (incrementAllContextCounter) {
+          countByComponentStatus[viewAllIndex].counts = (countByComponentStatus[viewAllIndex].counts || 0) + 1
+        }
+      } else {
+        incrementAllContextCounter = false
+        countByComponentStatus.push({ code: it.status.code, counts: 1, workspaceContext: 'ALL' })
+      }
+    })
+  }
+  return countByComponentStatus
+}

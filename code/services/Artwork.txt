@@ -1,0 +1,191 @@
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+
+import SparkService from './SparkService'
+
+const COLORWAY_UPDATE = 101
+
+export default class ArtworkService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.keyValuesTransform = values => {
+      const formattedValues = []
+      for (var key in values) {
+        if (Object.prototype.hasOwnProperty.call(values, key)) {
+          formattedValues.push({
+            code: key,
+            description: values[key],
+          })
+        }
+      }
+      return formattedValues
+    }
+    this.getByID = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, artwork) => [deepToCamelCase(artwork)],
+          batch: false,
+        },
+        logContext,
+      )
+
+    this.getByIDs = permissionJWT =>
+      loadListing(
+        this.endpoint,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: artwork => deepToCamelCase(artwork),
+        },
+        logContext,
+      )
+
+    this.getStatus = loadListing(
+      () => `${this.endpoint}/code_value/status`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getApplicationTechnique = loadListing(
+      () => `${this.endpoint}/code_value/application_technique`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getStyleClassification = loadListing(
+      () => `${this.endpoint}/code_value/style_classification`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+    this.create = postOne(
+      this.endpoint,
+      this.headers,
+      {
+        transform: artwork => deepToCamelCase(artwork),
+        transformRequest: artwork => deepToSnakeCase(artwork),
+      },
+      logContext,
+    )
+    this.bulkCreate = postOne(
+      `${this.endpoint}/bulk`,
+      this.headers,
+      {
+        transform: artworks => deepToCamelCase(artworks),
+        transformRequest: artworks => deepToSnakeCase(artworks),
+      },
+      logContext,
+    )
+    this.update = permissionJWT =>
+      putOne(
+        sparkArtwork => `${this.endpoint}/${sparkArtwork.humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: artwork => deepToCamelCase(artwork),
+          transformRequest: artwork => deepToSnakeCase(artwork),
+          getDataLoader: () => this.getByID,
+        },
+        logContext,
+      )
+    this.replaceColorways = permissionJWT =>
+      putOne(
+        colorwayInput => `${this.endpoint}/replace/${colorwayInput.artworkId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: colorwayInput => deepToCamelCase(colorwayInput),
+          transformRequest: colorwayInput => {
+            colorwayInput.type = COLORWAY_UPDATE
+            return deepToSnakeCase(colorwayInput)
+          },
+        },
+        logContext,
+      )
+
+    this.updateArtworkTeams = (permissionJWT, humanId) =>
+      postOne(
+        `${this.endpoint}/${humanId}/teams`,
+        {
+          ...this.headers,
+        },
+        {
+          transform: artwork => deepToCamelCase(artwork),
+          transformRequest: artwork => deepToSnakeCase(artwork),
+          getDataLoader: () => this.getByID,
+          skipJsonParse: true,
+        },
+        logContext,
+      )
+    this.bulkUpdateTeams = (permissionJWT) =>
+      postOne(
+        ({ humanIds }) => `${this.endpoint}/bulkUpdate/teams?humanIDs=${humanIds}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+          skipJsonParse: true,
+        },
+        logContext,
+      )
+
+    this.delete = permissionJWT =>
+      deleteOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {},
+        logContext,
+      )
+
+    this.addDeleteTeams = permissionJWT => postOne(
+      ({ humanId }) => `${this.endpoint}/${humanId}/teams`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+        skipJsonParse: true,
+      },
+      logContext,
+    )
+
+    this.validateName = loadOne(
+      name => `${this.endpoint}/validate_artwork_name?name=${name}`,
+      this.headers,
+      { skipJsonParse: true },
+      logContext,
+    )
+  }
+}

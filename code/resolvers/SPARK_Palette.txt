@@ -1,0 +1,123 @@
+import {
+  getUserPermissionsJWT,
+  loadTags,
+} from '../utils/commonLoaders'
+import { loadTeams, loadBusinessPartners, loadDroppedBusinessPartners } from './commonResolvers/Teams'
+import { loadFiles } from './commonResolvers/Files'
+import { emptySearchResponse } from '../utils/search/searchConstants'
+import _ from 'lodash'
+import { getUser } from '../utils/userAttributesUtils'
+
+export default {
+  Query: {
+    getPalette: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.palette.getPalette(permissionJWT).load(id)
+    },
+    getPaletteTypes: (parent, {}, ctx) =>
+      ctx.loaders.palette.getPaletteTypes.load(),
+    getPaletteStatusOptions: (parent, {}, ctx) =>
+      ctx.loaders.palette.getPaletteStatusOptions.load(),
+    searchMaterialsForPalette: async (parent, { q, nestedQueryList, page, size, paletteId, sortField, sortDirection, options }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(paletteId, ctx)
+      const palette = await ctx.loaders.palette.getPalette(permissionJWT).load(paletteId)
+      const contextIds = (palette && palette.relatedMaterials && palette.relatedMaterials.join(',')) || undefined
+      if (!contextIds) return { ...emptySearchResponse(size), counts: {} }
+      const searchResults = await ctx.loaders.search.getPageNested.load({ q, nestedQueryList, contextIds, page, size, sortField, sortDirection, options })
+      const countResults = await ctx.loaders.search.getCounts.load({ contextIds })
+      return { ...searchResults, counts: countResults }
+    },
+  },
+
+  Mutation: {
+    addPalette: async (parent, { sparkPalette }, ctx) => {
+      const response = await ctx.loaders.palette.addPalette.load(sparkPalette)
+      // Associate files
+      if (sparkPalette.files && sparkPalette.files.length > 0) {
+        const associateAttachmentTeamDto = { 
+          teamsToUpdateDto: { teamsToAdd: sparkPalette.teamsToAdd }, 
+          parentId: response.humanId, 
+          humanIds: sparkPalette.files,
+          relatedResourceIds: [response.humanId],
+        }
+        const attachmentPermissionJWT = await getUserPermissionsJWT(sparkPalette.files, ctx)
+        await ctx.loaders.attachment.associateAttachmentTeams(attachmentPermissionJWT).load(associateAttachmentTeamDto, { humanId: response.humanId })
+      }
+      return response
+    },
+    updatePalette: async (parent, { sparkPalette }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sparkPalette.humanId, ctx)
+      return ctx.loaders.palette.updatePalette(permissionJWT).load(sparkPalette)
+    },
+    updatePaletteTeams: async (parent, { humanId, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.palette.updatePaletteTeams(permissionJWT).load(teamsToUpdate, { humanId })
+    },
+    deletePalette: async (parent, { humanId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.palette.deletePalette(permissionJWT).load(humanId)
+    },
+    addMaterialsToPalette: async (parent, { humanId, materialsToAdd }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      const palette = await ctx.loaders.palette.getPalette(permissionJWT).load(humanId)
+
+      let newMaterials = palette.relatedMaterials
+      newMaterials = _.uniq(newMaterials.concat(materialsToAdd))
+
+      return ctx.loaders.palette.updatePalette(permissionJWT).load({
+        humanId: humanId,
+        relatedMaterials: newMaterials,
+      })
+    },
+    removeMaterialsFromPalette: async (parent, { humanId, materialsToRemove }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      const palette = await ctx.loaders.palette.getPalette(permissionJWT).load(humanId)
+
+      let newMaterials = palette.relatedMaterials
+      newMaterials = _.uniq(_.difference(newMaterials, materialsToRemove))
+
+      return ctx.loaders.palette.updatePalette(permissionJWT).load({
+        humanId: humanId,
+        relatedMaterials: newMaterials,
+      })
+    },
+  },
+
+  SPARK_PalettePaged: {
+    paging: palette => palette,
+  },
+
+  SPARK_Palette: {
+    brands: (palette, args, ctx) =>
+      palette && palette.brands && palette.brands.length > 0
+        ? ctx.loaders.brand.getBrand.loadMany(palette.brands)
+        : [],
+    tags: async (palette, args, ctx) => palette && palette.tags ? loadTags(palette.tags, ctx) : [],
+    designCycles: async (palette, args, ctx) => palette && palette.designCycles ? loadTags(palette.designCycles, ctx) : [],
+    departments: async (palette, args, ctx) => {
+      if (palette && palette.departments && palette.departments.length > 0) {
+        const departments = []
+        await Promise.all(
+          palette.departments.map(async id => {
+            await ctx.loaders.ig.department.getByID.load(id)
+              .then(res => {
+                departments.push(res)
+              })
+          }),
+        )
+        return departments
+      }
+      return []
+    },
+    teams: (palette, args, ctx) => loadTeams(palette.humanId, ctx),
+    businessPartners: (palette, args, ctx) => loadBusinessPartners(palette.humanId, ctx),
+    droppedPartnerIds: (palette, args, ctx) => loadDroppedBusinessPartners(palette.humanId, ctx),
+    files: (palette, args, ctx) => loadFiles(palette.humanId, ctx),
+    createdBy: (palette, args, ctx) => getUser(palette.createdBy, ctx),
+    updatedBy: (palette, args, ctx) => getUser(palette.updatedBy, ctx),
+  },
+
+  SPARK_PaletteMaterialsPaged: {
+    paging: searchResults => searchResults,
+  },
+}

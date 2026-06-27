@@ -1,0 +1,1044 @@
+# =============================================================================
+# Product Domain — Derived DGS Schema (Target State)
+# Pipeline Version: 1.1
+# Generated: 2026-05-01
+# DGS Target: Green-field (no existing DGS schema)
+# Source:    spark-internal-graphql/packages/data-source-spark/src/schemas/SPARK_Product.graphql
+# Target:    plm-product/apps/app/src/main/resources/schema/product.graphqls
+#
+# Status Legend:
+#   ✅  Exists in DGS  |  🔜  Needs migration  |  ⏭  Deferred
+# =============================================================================
+
+# Federation header
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@extends", "@external", "@shareable"])
+
+# --- Scalars ---
+scalar DateTime
+
+# =============================================================================
+# --- External stubs ---
+# Types owned by other services; Product DGS returns key-only stubs.
+# Hive Gateway resolves the full type via federation stitching.
+# =============================================================================
+
+# VMM — Gateway Stitch
+type VMM_BusinessPartner @key(fields: "bpId") @extends {   # 🔜
+  bpId: ID! @external
+}
+
+type VMM_Brand @key(fields: "brandId") @extends {          # 🔜
+  brandId: ID! @external
+}
+
+# Item Groups — Gateway Stitch
+type IG_Department @key(fields: "id") @extends {           # 🔜
+  id: ID! @external
+}
+
+type IG_Division @key(fields: "id") @extends {             # 🔜
+  id: ID! @external
+}
+
+type IG_Clazz @key(fields: "id") @extends {                # 🔜
+  id: ID! @external
+}
+
+# Doppler — Gateway Stitch
+type DopplerCapacityType @key(fields: "id") @extends {     # 🔜
+  id: ID! @external
+}
+
+# APEX / Corona — Gateway Stitch
+type CoronaItem @key(fields: "tcinId") @extends {          # 🔜
+  tcinId: ID! @external
+}
+
+# Co-located domain stubs (same plm-product backend, separate DGS subgraph owners)
+type Attachment @key(fields: "id") @extends {              # 🔜
+  id: ID! @external
+}
+
+type SampleV2 @key(fields: "id") @extends {                # 🔜
+  id: ID! @external
+}
+
+type Tag @key(fields: "id") @extends {                     # 🔜
+  id: ID! @external
+}
+
+type WorkspaceV2 @key(fields: "id") @extends {             # 🔜
+  id: ID! @external
+}
+
+type TeamV2 @key(fields: "teamId") @extends {              # 🔜
+  teamId: ID! @external
+}
+
+type UserProfileAttributes @key(fields: "id") @extends {   # 🔜
+  id: ID! @external
+}
+
+# =============================================================================
+# --- Owned types ---
+# Types whose data originates from spark-product backend.
+# =============================================================================
+
+type Product @key(fields: "id") {                          # 🔜
+  id: ID
+  humanId: String
+  type: Int
+  owningPartnerType: Int
+  createdAt: DateTime!
+  createdBy: UserProfileAttributes
+  updatedAt: DateTime!
+  updatedBy: UserProfileAttributes
+  description: String
+  comments: String
+  internalNotes: String
+  vendorStyleNumber: String
+  primaryMaterial: String
+  secondaryMaterial: String
+  thumbnailId: String
+  version: Int
+  archived: Boolean
+  preferredStyle: Boolean
+  fbDpci: String
+  brandComplianceRecordId: String
+  parentProductId: String
+  copyId: String
+  copyProductRequest: String
+  presentationDimensions: String
+  presentationHeight: String
+  presentationWidth: String
+  presentationDepth: String
+  numberOfPieces: Int
+  developmentCost: String
+  movable: Boolean
+  editable: Boolean
+
+  # Status fields
+  status(workspaceIdFilter: String, partnerIdFilter: String): ProductStatus
+
+  # Partner/team fields
+  vendorAttributes(workspaceIdFilter: String): [ProductVendorAttributes]
+  businessPartners(workspaceIdFilter: String): [VMM_BusinessPartner]
+  droppedPartners: [VMM_BusinessPartner]
+  notRemovablePartnerIds: [ID]
+  droppedPartnerIds: [ID]
+  designPartnerId: [ID]
+  unDroppablePartners(isDesignPartner: Boolean): [ID]
+
+  # Workspace fields
+  productWorkspaceAttributes(elasticVerify: Boolean): [ProductWorkspaceAttributes]
+  productWorkspaceInfo: [ProductWorkspaceInfo]
+  notRemovableWorkspaceIds: [String]
+  workspaces: WorkspacesPagedV2
+
+  # Team fields
+  teams(partnerId: String, workspaceId: String): TeamPaged
+  teamsV2: TeamPagedV2
+
+  # IG/external lookups (gateway-stitched)
+  department: IG_Department
+  departments: [DopplerDepartment]
+  division: IG_Division
+  clazz: IG_Clazz
+  brand: VMM_Brand
+  brands: [VMM_Brand]
+  divisions: [IG_Division]
+
+  # Attachment fields
+  attachments: [Attachment]
+  attachmentsWithMetaData: [AttachmentWithMetaData]
+  attachmentsV3(partnerId: ID, type: String, tags: [String], onlyProductPacketFiles: Boolean): SearchAttachmentsPaged
+  attachmentSummary: AttachmentSummary
+
+  # Sample fields
+  samples: [SampleV2]
+  sampleIds: [ID]
+  elasticSamplesList(query: String, page: Int, size: Int): SearchSamplesPaged
+  hasSamplesUpcomingDue: Boolean
+  hasNotEvaluatedReceivedSamples: Boolean
+  receivedNotEvaluatedCount: Int
+
+  # Component fields (co-located domains)
+  measurementSets(calculated: Boolean, includeMeasurements: Boolean): MeasurementsPaged
+  claims(partnerIds: [String], includeClaims: Boolean): [Claim]
+  bom(includeBoms: Boolean): BomPaged
+  productBom(includeBoms: Boolean): BomPaged
+  packagingBom(includeBoms: Boolean): BomPaged
+  components(workspaceId: String, partnerId: ID, type: String, tags: [String], archived: Boolean, types: [Int]): SearchComponentsPaged
+
+  # Discussion fields
+  discussionsCount: Int
+  discussionsV2(partnerId: ID): DiscussionElastic
+
+  # Tags
+  tags: [Tag]
+
+  # Tcin / DPCI fields
+  tcins: [PartnerTcins]
+  reservedDpcis: [PartnerReservedDpci]
+  parentTcins: [String]
+  rating: Rating
+
+  # Relationship fields
+  ancestryProducts: [AncestryProducts]
+  childProducts: [ChildProducts]
+  copyProductResources: [ProductCopyResources]
+  versionCreatedAt: DateTime
+  versionCreatedBy: UserProfileAttributes
+
+  # Template fields (type=101 only)
+  productTemplateDepartments: [IG_Department]
+  productTemplateStatus: ProductTemplateStatus
+  attachmentsData: ProductTemplateAttachments
+  productComponentsCounts: [ProductComponentsCounts]
+  productMaterials: [ProductMaterials]
+  packagingAttributes: [PackagingAttribute]
+  variations(partnerId: String, workspaceId: String): [ProductVariation]
+  associateProductsAsks(workspaceIdFilter: String): [ProductAsk]
+
+  # Resources
+  resources: ResourceMapping
+}
+
+type ProductStatus {                                        # 🔜
+  id: ID
+  name: String
+}
+
+type MasterProductStatus {                                  # 🔜
+  id: ID
+  name: String
+}
+
+type ProductVendorAttributes {                             # 🔜
+  partnerId: ID
+  partnerType: Int
+  name: String
+  status: CarryForwardProductStatus
+  statusCount: Int
+  allStatuses: [CarryForwardProductAllStatus]
+}
+
+type CarryForwardProductStatus {                           # 🔜
+  id: ID
+  name: String
+  workspaceId: String
+}
+
+type CarryForwardProductAllStatus {                        # 🔜
+  statusId: ID
+  statusName: String
+  workspaceId: String
+}
+
+type ProductBulkType {                                     # 🔜
+  products: [Product]
+}
+
+type ProductsPaged {                                       # 🔜
+  content: [Product]
+  paging: Paging
+  pageable: Pageable
+}
+
+type ProductTemplatesList {                                # 🔜
+  content: [Product]
+  paging: Paging
+  pageable: Pageable
+}
+
+type ProductsCategories {                                  # 🔜
+  categories(type: String): [Categories]
+  categoryIds: [ID]
+  count: Int
+}
+
+type ResourcesCount {                                      # 🔜
+  productId: ID
+  partnerId: ID
+  productThumbnailId: String
+  workspaceContext: String
+  boms: [ID]
+  productBoms: [ID]
+  packagingBoms: [ID]
+  claims: [ID]
+  constructions: [ID]
+  measurementSets: [ID]
+  productAttachments: [ID]
+  discussionAttachments: [ID]
+  sample: [ID]
+  discussions: [ID]
+  watchlists: [ID]
+}
+
+type AttachmentSummary {                                   # 🔜
+  isThumbnailPreviewable: Boolean
+  totalAttachmentCount: Int
+}
+
+type ProductCopy {                                         # 🔜
+  copyId: String
+  requestId: String
+  resources: [ProductCopyResources]
+}
+
+type ProductCopyResources {                                # 🔜
+  resourceType: String
+  count: Int
+}
+
+type ProductWorkspaceAttributes {                          # 🔜
+  humanId: String
+  workspaceId: String
+  designCycle: Tag
+  setDates: [String]
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  isHidden: Boolean
+  teams: [String]
+  archived: Boolean
+  linkedAttributes: [String]
+}
+
+type ProductWorkspaceInfo {                                # 🔜
+  humanId: String
+  workspaceId: String
+  designCycle: Tag
+  setDates: [String]
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  isHidden: Boolean
+  teams: [String]
+  archived: Boolean
+  linkedAttributes: [String]
+  businessPartners: [WorkspaceInfoPartner]
+}
+
+type WorkspaceInfoPartner {                                # 🔜
+  partnerId: ID
+  partnerType: Int
+  status: Int
+  preProdStatusAt: String
+  prodStatusAt: String
+  archived: Boolean
+  statusName: String
+  preferred: Boolean
+}
+
+type Rating {                                              # 🔜
+  averageRating: Float
+  reviewCount: Int
+}
+
+type ChildProducts {                                       # 🔜
+  id: String!
+  removable: Boolean
+}
+
+type AncestryProducts {                                    # 🔜
+  id: String!
+  removable: Boolean
+  description: String!
+  thumbnailId: String
+  type: String
+}
+
+type PartnerTcins {                                        # 🔜
+  partnerId: ID
+  tcin: [Tcin]
+}
+
+type PartnerReservedDpci {                                 # 🔜
+  partnerId: ID
+  reservedDpcis: [ReservedDpci]
+}
+
+type Tcin {                                                # 🔜
+  tcinId: String
+  dpci: String
+  createdAt: DateTime
+  launchedAt: DateTime
+  relationshipType: CodeName
+  parentTcins: [String]
+  itemDetails: CoronaItemDetails
+  purchaseOrders: [PurchaseOrderDetails]
+}
+
+type CoronaItemDetails {                                   # 🔜
+  launchDateTime: DateTime
+  primaryImage: String
+  description: String
+  alternateImages: [String]
+  color: String
+  size: String
+  onlineUrl: String
+}
+
+type ReservedDpci {                                        # 🔜
+  apexId: String
+  apexDescription: String
+  dpci: String
+  dpciStatus: String
+  dept: Int
+  clazz: Int
+  subClass: Int
+  tcin: String
+}
+
+type CodeName {                                            # 🔜
+  code: String
+  name: String
+}
+
+type ProductMaterials {                                    # 🔜
+  name: String
+  primary: Boolean
+  libraryResource: ProductLibraryResource
+}
+
+type ProductLibraryResource {                              # 🔜
+  id: String
+}
+
+type PackagingAttribute {                                  # 🔜
+  formatId: Int
+  formatName: String
+  spgLibraryId: String
+  spgStatus: CodeDescription
+  spg: SpgFileLibrary
+}
+
+type ProductRules {                                        # 🔜
+  id: ID
+  active: Boolean
+  departments: [IG_Department]
+  businessPartners: [VMM_BusinessPartner]
+  rules: [Int] @deprecated(reason: "use rule attribute")
+  insightsClassExclusion: [IG_Clazz]
+  productId: String
+  rule: CodeDescription
+}
+
+type AvailableRules {                                      # 🔜
+  id: Int
+  name: String
+}
+
+type DopplerDepartment {                                   # 🔜
+  id: Int
+  divisionId: Int
+  classIds: [Int]
+  department: IG_Department
+  division: IG_Division
+  clazzes: [IG_Clazz]
+  primaryCapacityTypeId: Int
+  primaryCapacityTypeName: String
+  secondaryCapacityTypeId: Int
+  secondaryCapacityTypeName: String
+}
+
+type ProductTemplateAttachments {                          # 🔜
+  attachmentIds: [String]
+  attachments: [Attachment]
+}
+
+type ProductTemplateStatus {                               # 🔜
+  code: Int
+  description: String
+}
+
+type ProductComponentsCounts {                             # 🔜
+  name: String
+  count: Int
+}
+
+type PurchaseOrderDetails {                                # 🔜
+  purchaseOrderNumber: String
+  orderUnits: Int
+}
+
+type VMM_BusinessPartnerCategory {                         # 🔜
+  id: ID
+  name: String
+  role: [VMM_BusinessPartnerRole]
+  relationship: [VMM_BusinessPartnerRelationship]
+  associatedPartnerType: Int
+}
+
+type ProductComponentStatus {                              # 🔜
+  workspaceId: String
+  type: String
+  status: CodeDescriptionOrder
+  overallStatus: CodeDescriptionOrder
+  updatedAt: DateTime!
+  updatedBy: UserProfileAttributes
+}
+
+type AttachmentWithMetaData {                              # 🔜
+  attachment: Attachment
+  linkedResourceId: String
+  resourceTitle: String
+  isResourceCritical: Boolean
+  isResourceDraft: Boolean
+  isSampleDiscussion: Boolean
+  currentUserPermissions: AccessPermission
+}
+
+# =============================================================================
+# --- Embedded types (no @key — not independently fetchable) ---
+# =============================================================================
+
+type ResourceMapping {                                     # 🔜
+  mappings: ResourceMappings
+}
+
+type ResourceMappings {                                    # 🔜
+  team: [ID]
+  product: [ID]
+}
+
+type AccessPermission {                                    # 🔜
+  resourceId: String
+  permissions: [Permission]
+}
+
+type Permission {                                          # 🔜
+  abstractAccessGroup: AccessGroup
+}
+
+type AccessGroup {                                         # 🔜
+  grantees: [Int]
+  locked: Boolean
+  type: String
+}
+
+# =============================================================================
+# --- Shared types (@shareable — utility types used across domains) ---
+# =============================================================================
+
+type Paging @shareable {                                   # 🔜
+  totalElements: Int
+  totalPages: Int
+  page: Int
+  size: Int
+}
+
+type Pageable @shareable {                                 # 🔜
+  pageNumber: Int
+  pageSize: Int
+}
+
+type CodeDescription @shareable {                          # 🔜
+  code: Int
+  description: String
+}
+
+type CodeDescriptionOrder @shareable {                     # 🔜
+  code: Int
+  description: String
+  order: Int
+}
+
+# =============================================================================
+# --- Queries ---
+# =============================================================================
+
+extend type Query {
+  # 🔜 Needs migration — dual elastic+REST call; elastic for IDs, REST for hydration
+  getProducts(
+    page: Int = 0
+    size: Int = 10000
+    q: String
+    filter: [String]
+    resourceType: String
+    resourceId: String
+    includeBoms: Boolean
+    includeClaims: Boolean
+    includeMeasurementSets: Boolean
+    includeProductDetails: Boolean
+  ): ProductsPaged
+
+  # 🔜 Needs migration — elastic-only; returns products of type=101
+  getProductTemplates(
+    page: Int = 0
+    size: Int = 10000
+    q: String
+    resourceId: String
+    resourceType: String
+    filter: [String]
+    types: [Int]
+    includeBoms: Boolean = false
+    includeClaims: Boolean = false
+    includeMeasurementSets: Boolean = false
+    includeProductDetails: Boolean = false
+    includeClaimTemplates: Boolean = false
+    includeMeasurementSetTemplates: Boolean = false
+    includeProductDetailTemplates: Boolean = false
+    includeProductComponentsCount: Boolean = false
+    includeBomTemplates: Boolean = false
+  ): ProductTemplatesList
+
+  # 🔜 Needs migration — single DataLoader call; straightforward
+  getProduct(id: ID!): Product
+
+  # 🔜 Needs migration — single non-batched REST call
+  getCopyStatus(id: ID!): ProductCopy
+
+  # 🔜 Needs migration — elastic facet search; complex categories resolver with 16 switch cases
+  getCategories(
+    type: String!
+    resourceId: String
+    resourceType: String
+    productType: Int
+  ): ProductsCategories
+
+  # 🔜 Needs migration — batch REST call by ID list
+  getProductsByIds(ids: [ID]!): ProductsPaged
+
+  # 🔜 Needs migration — simple master data call
+  getProductStatus: [MasterProductStatus]
+
+  # 🔜 Needs migration — Very High complexity: 10+ parallel elastic queries + ACL filtering
+  getProductTechPackCountV1(
+    productId: ID!
+    partnerId: ID
+    workspaceContext: String
+    parentProductId: ID
+  ): ResourcesCount
+
+  # 🔜 Needs migration — Very High: parallel calls to Q8 logic per product
+  getProductTechPackBulkCountV1(
+    bulkTechPackCountResource: [ProductTechPackCountInput]
+  ): [ResourcesCount]
+
+  # 🔜 Needs migration — single REST call to versions endpoint
+  getProductVersions(id: ID!): ProductsPaged
+
+  # 🔜 Needs migration — Bazaarvoice external call; silent null on error
+  getRatingByTcin(tcin: String): Rating
+
+  # 🔜 Needs migration — GET all rules; simple listing
+  getProductRules: [ProductRules]
+
+  # 🔜 Needs migration — non-batched GET by ID
+  getProductRulesById(id: ID!): ProductRules
+
+  # 🔜 Needs migration — simple listing
+  getAllAvailableRules: [AvailableRules]
+
+  # 🔜 Needs migration — feature-flag: routes to RuleLibrary or Product API
+  getProductDeptRules(
+    productIds: [String]
+    departmentIds: [Int]
+    activeOnly: Boolean
+  ): [ProductRules]
+
+  # 🔜 Needs migration — same flag dispatch as getProductDeptRules
+  getProductBPRules(
+    productIds: [String]
+    businessPartnerIds: [Int]
+    activeOnly: Boolean
+  ): [ProductRules]
+
+  # 🔜 Needs migration — same flag dispatch; uses search_mapped endpoint
+  searchProductRules(
+    productIds: [String]
+    departmentIds: [Int]
+    businessPartnerIds: [Int]
+    activeOnly: Boolean
+  ): [ProductRules]
+
+  # 🔜 Needs migration — delegates to same DataLoader as getProduct
+  getProductTemplateById(id: ID!): Product
+}
+
+# =============================================================================
+# --- Mutations ---
+# =============================================================================
+
+extend type Mutation {
+  # 🔜 Create + workspace + optional copy
+  addProduct(workspaceId: ID, sparkProduct: ProductInput, copyProduct: CopyProductInput): Product
+
+  # 🔜 Update + archive attachments + optional copy
+  updateProduct(input: ProductUpdateInput!, copyProduct: CopyProductInput): Product
+
+  # 🔜 PUT carry_forward endpoint
+  carryForwardProduct(productId: String, carryForwardProductInput: CarryForwardProductInput): Product
+
+  # 🔜 Bulk PUT via mass_update
+  bulkUpdateProducts(products: [ProductUpdateInput]!): ProductBulkType
+
+  # 🔜 Bulk create + attachment linking + workspace add
+  addProducts(workspaceId: ID!, products: [ProductInput]): ProductBulkType
+
+  # 🔜 Add teams/partners + workspace context update
+  addTeamsToProduct(productId: String!, teamIds: [String], workspaceIds: [String], newPartners: [ProductPartnerInput]): Product
+
+  # 🔜 POST partners-add/bulk
+  addBusinessPartnersToProductWithType(productId: ID!, partners: [ProductPartnerInput]): Product
+
+  # 🔜 DELETE resources/bulk
+  removeProductResources(productId: ID!, resourceIds: [ID]): Product
+
+  # ⏭ Internal sub-operation of productBusinessPartnerActions — expose only via actionType=REMOVE_PARTNER
+  removeProductBusinessPartner(productId: ID!, partnerId: ID!): Product
+
+  # 🔜 PUT status_update/bulk
+  updateBusinessPartnerStatuses(productId: String!, statusInput: [ProductPartnerStatusInput]!): Product
+
+  # 🔜 Very High complexity: DROP_UNDROP relationship tree + ACL + sample side effects
+  productBusinessPartnerActions(actionType: String!, values: ProductPartnerActionInput): Product
+
+  # 🔜 PUT view toggle (hidden/visible)
+  updateViewToggle(toggleInput: ToggleInput): Product
+
+  # 🔜 PUT workspace attributes
+  updateWorkspaceAttributes(productId: ID!, workspaceAttributesInput: ProductWorkspaceAttributesInput): Product
+
+  # 🔜 POST partner drop
+  dropProductBusinessPartner(productId: ID!, partnerId: ID!): Product
+
+  # 🔜 POST partner undrop
+  unDropProductBusinessPartner(productId: ID!, partnerId: ID!): Product
+
+  # 🔜 Update team-workspace context associations
+  updateProductTeamsWorkspaceContext(productId: ID!, teamWorkspacesToAdd: [WorkspaceTeamPair], teamWorkspacesToRemove: [WorkspaceTeamPair]): Product
+
+  # 🔜 POST link child product to parent
+  linkProduct(parentProductId: String!, childProductId: String!): Product
+
+  # 🔜 POST unlink child product from parent
+  unlinkProduct(parentProductId: String!, childProductId: String!): Product
+
+  # 🔜 POST new rule
+  addProductRule(rule: ProductRuleCreateInput): ProductRules
+
+  # 🔜 PUT update rule
+  updateProductRule(rule: ProductRuleUpdateInput): ProductRules
+
+  # 🔜 DELETE rule by ID
+  deleteProductRule(ruleId: ID!): Boolean
+
+  # 🔜 Bulk component status update
+  updateComponentStatus(productComponents: [ProductComponentStatusUpdateInput]): Product
+
+  # 🔜 Component status update by component IDs
+  updateComponentStatuses(productId: String!, ids: ComponentIdsInput!, status: ComponentStatusInput): Product
+}
+
+# =============================================================================
+# --- Input types ---
+# =============================================================================
+
+input ProductInput {
+  description: String
+  departmentId: ID
+  divisionId: ID
+  classId: ID
+  brandId: ID
+  departments: [DopplerDepartmentInput]
+  primaryMaterial: String
+  secondaryMaterial: String
+  vendorStyleNumber: String
+  comments: String
+  internalNotes: String
+  tags: [String]
+  businessPartners: [ProductPartnerInput]
+  productWorkspaceAttributes: [ProductWorkspaceAttributesInput]
+  productWorkspaceInfo: [ProductWorkspaceInfoInput]
+  resources: ResourceMappingInput
+  attachmentId: String
+  numberOfPieces: Int
+  developmentCost: String
+  presentationDimensions: String
+  presentationHeight: String
+  presentationWidth: String
+  presentationDepth: String
+  teams: WorkspaceTeamContextInput
+  type: Int
+  template: Boolean
+  status: Int
+  divisionIds: [ID]
+  brandIds: [ID]
+  departmentIds: [String]
+  attachmentIds: [String]
+  productMaterials: [ProductMaterialsInput]
+  packagingAttributes: [PackagingAttributeInput]
+  preferredStyle: Boolean
+  fbDpci: String
+  brandComplianceRecordId: Int
+  askId: String
+}
+
+input ProductUpdateInput {
+  id: ID!
+  description: String
+  departmentId: ID
+  divisionId: ID
+  classId: ID
+  brandId: ID
+  departments: [DopplerDepartmentInput]
+  primaryMaterial: String
+  secondaryMaterial: String
+  vendorStyleNumber: String
+  comments: String
+  internalNotes: String
+  tags: [String]
+  numberOfPieces: Int
+  developmentCost: String
+  presentationDimensions: String
+  presentationHeight: String
+  presentationWidth: String
+  presentationDepth: String
+  productWorkspaceAttributes: [ProductWorkspaceAttributesInput]
+  productWorkspaceInfo: [ProductWorkspaceInfoInput]
+  newBusinessPartners: [ProductPartnerInput]
+  statuses: [VendorAttributeInput]
+  newResources: ResourceMappingInput
+  thumbnailId: String
+  teams: WorkspaceTeamContextInput
+  carryForwardProduct: BulkCarryForwardProductInput
+  type: Int
+  template: Boolean
+  status: Int
+  divisionIds: [ID]
+  brandIds: [ID]
+  departmentIds: [String]
+  attachmentIds: [String]
+  removedProductTemplateAttachments: [ProductTemplateRemovedAttachments]
+  productMaterials: [ProductMaterialsInput]
+  packagingAttributes: [PackagingAttributeInput]
+  preferredStyle: Boolean
+  fbDpci: String
+}
+
+input ProductPartnerInput {
+  partnerId: ID!
+  partnerType: Int
+}
+
+input ProductPartnerStatusInput {
+  statusId: String
+  workspaceId: String
+  partnerId: ID
+}
+
+input ProductPartnerActionInput {
+  productId: ID
+  resourceType: String
+  partnerId: ID
+  teamIds: [ID]
+  workspaceId: ID
+  partnerType: Int
+  dropped: Boolean
+}
+
+input CopyProductInput {
+  targetProductId: String
+  sourceProductId: String
+  attachmentIds: [String]
+  claimIds: [String]
+  bomIds: [String]
+  measurementSetIds: [String]
+  constructionSetIds: [String]
+  packagingIds: [String]
+  boms: [BombsWithMaterialInput]
+  productTeams: [ProductTeamInput]
+}
+
+input ProductTeamInput {
+  teamId: ID
+  teamName: String
+  businessPartner: ProductPartnerInput
+}
+
+input BombsWithMaterialInput {
+  bomId: String
+  bomMaterialDtos: [BomMaterialDtosInput]
+  partners: [ProductPartnerInput]
+}
+
+input BomMaterialDtosInput {
+  humanId: String
+  rowId: String
+  categoryId: Int
+  partners: [ProductPartnerInput]
+}
+
+input ToggleInput {
+  productId: ID!
+  workspaceId: ID!
+  hidden: Boolean
+}
+
+input CarryForwardProductInput {
+  bomIds: [String]
+  claimIds: [String]
+  impressionIds: [String]
+  measurementSetIds: [String]
+  constructionSetIds: [String]
+  departmentIds: [Int]
+  teams: [WorkspaceTeamInput]
+  designCycle: String
+  carryForwardReason: String
+  protoApprovalDueDate: String
+  setDates: [String]
+  workspaceId: String
+  fromWorkspaceId: String
+  departmentId: Int
+  componentsInProgress: [String]
+}
+
+input BulkCarryForwardProductInput {
+  teamIds: [String]
+  designCycle: String
+  carryForwardReason: String
+  protoApprovalDueDate: String
+  setDates: [String]
+  toWorkspaceId: String
+  fromWorkspaceId: String
+  departmentIds: [Int]
+}
+
+input VendorAttributeInput {
+  partnerId: ID!
+  statusId: ID!
+  workspaceId: String!
+}
+
+input ProductTechPackCountInput {
+  productId: ID!
+  partnerId: ID
+  parentProductId: ID
+  workspaceContext: String
+}
+
+input ProductWorkspaceAttributesInput {
+  humanId: String!
+  designCycle: String
+  setDates: [String]
+  hidden: Boolean
+  protoApprovalDueDate: String
+  carryForwardReason: String
+}
+
+input ProductWorkspaceInfoInput {
+  humanId: String!
+  designCycle: String
+  setDates: [String]
+  hidden: Boolean
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  businessPartners: [WorkspaceInfoPartnerInput]
+}
+
+input WorkspaceInfoPartnerInput {
+  partnerId: ID
+  partnerType: Int
+  status: Int
+  preProdStatusAt: String
+  prodStatusAt: String
+  archived: Boolean
+  statusName: String
+}
+
+input WorkspaceTeamPair {
+  workspaceId: String
+  teamId: String!
+}
+
+input WorkspaceTeamContextInput {
+  teamWorkspacesToAdd: [WorkspaceTeamPair]
+  teamWorkspacesToRemove: [WorkspaceTeamPair]
+}
+
+input WorkspaceStatusPairInput {
+  workspaceId: String
+  statusId: String
+  type: String
+}
+
+input DopplerDepartmentInput {
+  id: Int
+  divisionId: Int
+  classIds: [Int]
+  primaryCapacityTypeId: Int
+  secondaryCapacityTypeId: Int
+}
+
+input ProductRuleCreateInput {
+  active: Boolean!
+  departments: [Int]
+  businessPartners: [ID]
+  rules: [Int]!
+}
+
+input ProductRuleUpdateInput {
+  id: ID!
+  active: Boolean!
+  departments: [Int]
+  businessPartners: [ID]
+  rules: [Int]!
+}
+
+input ComponentStatusInput {
+  workspaceId: String!
+  type: String
+  statusId: Int
+}
+
+input ComponentIdsInput {
+  bomIds: [String]
+  claimIds: [String]
+  constructionSetIds: [String]
+  measurementSetIds: [String]
+  packagingIds: [String]
+}
+
+input ProductComponentStatusUpdateInput {
+  workspaceId: String
+  statusId: Int
+  productId: String
+  bomIds: [String]
+  claimIds: [String]
+  constructionSetIds: [String]
+  measurementSetIds: [String]
+  packagingIds: [String]
+}
+
+input ProductMaterialsInput {
+  name: String
+  primary: Boolean
+  libraryResource: ProductLibraryResourceInput
+}
+
+input ProductLibraryResourceInput {
+  id: String
+}
+
+input PackagingAttributeInput {
+  formatId: Int
+  spgLibraryId: String
+  spgStatusId: Int
+  formatName: String
+}
+
+input ProductTemplateRemovedAttachments {
+  humanId: String
+  documentId: String
+}
+
+input ResourceMappingInput {
+  mappings: ResourceMappingsInput
+}
+
+input ResourceMappingsInput {
+  team: [ID]
+  product: [ID]
+}

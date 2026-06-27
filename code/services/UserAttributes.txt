@@ -1,0 +1,216 @@
+import qs from 'querystring'
+
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import cache from '../utils/cache'
+
+import SparkService from './SparkService'
+import loadListing from '../utils/loadListing'
+import { buildFilterQueryParam, deepToCamelCase, deepToSnakeCase, toQueryString } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import { impersonateUser } from '../utils/impersonateUserUtils'
+
+export default class UserAttributesService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = `${endpoint}/userprofile`
+    this.usersV2Endpoint = `${endpoint}/userprofile/v2/users`
+    this.vmmFallbackEndpoint = `${endpoint}/enterprise_product_development/v1`
+    this.userViewEndpoint = `${endpoint}/user_views/v1`
+
+    this.getUserByID = loadOne(
+      id => `${this.endpoint}/v2/users/${id}`,
+      this.headers,
+      {
+        transform: (id, user) => [deepToCamelCase(user)],
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.getUserByIDOrNullIfNotFound = loadOne(
+      id => `${this.endpoint}/v2/users/${id}`,
+      this.headers,
+      {
+        transform: (id, user) => [deepToCamelCase(user)],
+        batch: false,
+        nonErrorStatusCodes: [404],
+      },
+      this.logContext,
+    )
+
+    this.getByID = loadOne(
+      ids => `${this.endpoint}/v2/users?uuid=${ids}`,
+      this.headers,
+      {
+        transform: (ids, users) =>
+          ids.map(id => (users ? users.find(u => u.userProfileId === id) : [])),
+      },
+      this.logContext,
+    )
+
+    this.deleteAllUserProfileDataForAPartner = postOne(
+      ({ partnerId }) => `${this.endpoint}/v1/remove/${partnerId}`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    this.update = putOne(
+      id => `${this.endpoint}/v2/users/${id.userProfileId}`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+    this.getUsers = loadListing(
+      ({ page, ...varArgs }) =>
+        `${this.usersV2Endpoint}/search?page=${page}&${
+          buildFilterQueryParam(varArgs)}`
+      ,
+      this.headers,
+      {},
+      this.logContext,
+    )
+    this.getAccreditationTypes = loadListing(
+      userType => `${this.endpoint}/v1/accreditation/types?userType=${userType}`,
+      this.headers,
+      {
+        transform: userProfile => deepToCamelCase(userProfile),
+      },
+      this.logContext,
+    )
+    this.addAccreditation = putOne(
+      ({ userProfileId }) => `${this.endpoint}/v2/users/${userProfileId}`,
+      this.headers,
+      {
+        transformRequest: workspace => deepToSnakeCase(workspace),
+        transform: workspace => deepToCamelCase(workspace),
+      },
+      this.logContext,
+    )
+    this.updateDefaultPartnerType = putOne(
+      () => `${this.usersV2Endpoint}/reserved-data`,
+      this.headers,
+      {
+        transform: userProfile => deepToCamelCase(userProfile),
+      },
+      this.logContext,
+    )
+    this.getPartnersFromUserProfileBackup = cache(
+      'UserAttributes_getPartnersFromUserProfileBackup',
+      loadListing(
+        (partnerIds) => `${this.vmmFallbackEndpoint}/business_partners?${qs.stringify({ ids: partnerIds })}`,
+        this.headers,
+        {
+          transform: partners => deepToCamelCase(partners),
+        },
+        this.logContext,
+      ))
+    this.addUserSettings = putOne(
+      () => `${this.endpoint}/v2/settings`,
+      this.headers,
+      {
+        transformRequest: userSettings => deepToSnakeCase(userSettings),
+        transform: response => deepToCamelCase(response),
+      },
+      this.logContext,
+    )
+    this.getUserSettings = loadOne(
+      () => `${this.endpoint}/v2/settings`,
+      this.headers,
+      {
+        transform: ({}, response) => [deepToCamelCase(response)],
+      },
+      this.logContext,
+    )
+    this.getUserSampleDefaults = loadOne(
+      (userProfileId) => `${this.endpoint}/v2/settings/user_sample_defaults${userProfileId ? `?userProfileId=${userProfileId}` : ''}`,
+      this.headers,
+      {
+        transform: ({}, response) => [deepToCamelCase(response)],
+      },
+      this.logContext,
+    )
+    this.getUserNotificationTypes = loadOne(
+      () => `${this.usersV2Endpoint}/user-notification-types`,
+      this.headers,
+      {
+        transform: ({}, response) => [deepToCamelCase(response)],
+      },
+      this.logContext,
+    )
+
+    this.getInsightsFavorites = loadListing(
+      () => `${endpoint}/favorites/insights`,
+      this.headers,
+      {
+        transform: resp => deepToCamelCase(resp).insightsFavorites,
+      },
+      this.logContext,
+    )
+
+    this.addInsightsFavorite = postOne(
+      () => `${endpoint}/favorites/insights`,
+      this.headers,
+      {
+        transformRequest: deepToSnakeCase,
+        transform: resp => deepToCamelCase(resp).insightsFavorites,
+      },
+      this.logContext,
+    )
+
+    this.deleteInsightsFavorite = deleteOne(
+      (gfCardId) => `${endpoint}/favorites/insights/${gfCardId}`,
+      this.headers,
+      {
+        transform: resp => deepToCamelCase(resp).insightsFavorites,
+      },
+      this.logContext,
+    )
+
+    this.createUserView = (viewData) =>
+      postOne(`${this.userViewEndpoint}`,
+        this.headers, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }).load(viewData)
+
+    this.updateUserView = (viewData) =>
+      putOne(`${this.userViewEndpoint}/${viewData.id}`,
+        this.headers, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }).load(viewData)
+
+    this.manageUserViews = (viewData) =>
+      postOne(`${this.userViewEndpoint}/manage_views`,
+        this.headers, {
+          transform: data => data && data.user_views && deepToCamelCase(data.user_views),
+          transformRequest: data => deepToSnakeCase(data),
+        }).load(viewData)
+
+    this.getUserViews = (searchParams) => {
+      return loadListing(
+        `${this.userViewEndpoint}?${toQueryString(searchParams)}`,
+        { ...this.headers },
+        {
+          transform: resp => (resp && resp.user_views && deepToCamelCase(resp.user_views)),
+        }, logContext,
+      ).load()
+    }
+
+    this.impersonateUser = async (userId, profile, ctx) => {
+      let userIdData
+      if (userId) {
+        userIdData = await this.getUserByID.load(userId)
+      }
+      return impersonateUser({ userIdData, profileName: profile, currentUserToken: this.headers['X-AUTH-TOKEN'], ctx })
+    }
+  }
+}

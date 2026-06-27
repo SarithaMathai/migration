@@ -1,0 +1,46 @@
+import { logger } from './../utils/logger'
+
+export default {
+  Query: {
+    getClazzes: (parentValue, { department }, ctx) =>
+      ctx.loaders.ig.clazz.getPage.load(department),
+    getClazzesByMultipleDepartments: async (
+      parentValue,
+      { departments },
+      ctx,
+    ) => {
+      const promiseArray = departments.reduce(
+        (promiseArray, departmentId) => [
+          ...promiseArray,
+          ctx.loaders.ig.clazz.getPage.load(departmentId).catch(e => {
+            logger.error(e)
+            return []
+          }),
+        ],
+        [],
+      )
+      const resultArray = await Promise.all(promiseArray)
+      return resultArray.reduce((result, clazzes) => result.concat(clazzes), [])
+    },
+    getClazz: (parentValue, { department, id }, ctx) =>
+      ctx.loaders.ig.clazz.getByID.load({ department, id }),
+    getByClassByDeptId: (parentValue, { department, id }, ctx) =>
+      ctx.loaders.ig.clazz.getByClassByDeptId.load({ department, id }),
+  },
+
+  IG_Clazz: {
+    id: clazz => clazz.classId,
+    classId: clazz => clazz.classId,
+    name: clazz => clazz.className,
+    displayText: clazz => `${clazz.classId}: ${clazz.className}`,
+    department: (clazz, args, ctx) =>
+      ctx.loaders.ig.department.getByID.load(clazz.departmentId),
+  },
+  // Because the Id the Key to Cache the information , graphql will not give right results because Classid wont be unique in IG Service
+  IG_Clazz_Filter: {
+    id: clazz => `${clazz.departmentId}:${clazz.classId}`,
+    name: clazz => clazz.className,
+    departmentId: clazz => clazz.departmentId,
+    departmentName: clazz => clazz.departmentName,
+  },
+}

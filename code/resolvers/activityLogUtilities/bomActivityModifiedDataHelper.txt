@@ -1,0 +1,31 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import componentStatusActivityHelper from './componentStatusActivityHelper'
+
+const bomActivityModifiedDataHelper = async (activity, streamResourceId, ctx) => {
+  if (!ctx) return []
+
+  const {
+    loaders: {
+      bom: { getBomByIds } = {},
+    } = {},
+  } = ctx
+
+  const {
+    eventSummary: { humanId = '' } = {},
+  } = activity || {}
+
+  const permissionJWT = await getUserPermissionsJWT([humanId], ctx)
+  const bomData = await getBomByIds(permissionJWT, [humanId])
+
+  const productId = bomData?.[0]?.parentId
+  const workspaceId = bomData?.[0]?.workspaceContext?.[0]
+
+  const parentResourceInfo = {
+    linkGenerationVariables: { bomId: humanId, productId, ...(workspaceId && { workspaceId }) },
+  }
+
+  return componentStatusActivityHelper(activity,
+    parentResourceInfo,
+    ctx)
+}
+export default bomActivityModifiedDataHelper

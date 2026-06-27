@@ -1,0 +1,74 @@
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import postOne from '../utils/postOne'
+import SparkService from './SparkService'
+import loadListing from '../utils/loadListing'
+import putOne from '../utils/putOne'
+
+export default class BannerService extends SparkService {
+    constructor (endpoint, headers, logContext) {
+        super(logContext)
+        this.endpoint = endpoint
+        this.headers = headers
+
+        this.getBannerTypes = loadListing(
+            `${this.endpoint}/banner/v1/admin/maintenance_levels`,
+            this.headers,
+            {
+                transform: banner => deepToCamelCase(banner),
+            },
+            this.logContext,
+        )
+
+        this.getBannerScopes = loadListing(
+            `${this.endpoint}/banner/v1/admin/scopes`,
+            this.headers,
+            {
+                transform: banner => deepToCamelCase(banner),
+            },
+            this.logContext,
+        )
+
+        this.getActiveBanners = loadListing(
+            `${this.endpoint}/banner/v1/active`,
+            this.headers,
+            {
+                transform: banner => deepToCamelCase(banner),
+            },
+            this.logContext,
+        )
+
+        this.searchBanners = loadListing(
+            `${this.endpoint}/banner/v1/admin/search`,
+            this.headers,
+            {
+                transform: banner => deepToCamelCase(banner),
+            },
+            this.logContext,
+        )
+
+        this.create = permissionJWT => postOne(
+            `${this.endpoint}/banner/v1/admin`,
+              {
+                ...this.headers,
+                'SPARK-Capability-Token': permissionJWT,
+              },
+              {
+                transform: banner => deepToCamelCase(banner),
+                transformRequest: banner => deepToSnakeCase(banner),
+              },
+              this.logContext,
+            )
+        this.update = permissionJWT => putOne(
+            (bannerInput) => `${this.endpoint}/banner/v1/admin/${bannerInput.id}`,
+            {
+                ...this.headers,
+                'SPARK-Capability-Token': permissionJWT,
+              },
+              {
+                transform: banner => deepToCamelCase(banner),
+                transformRequest: banner => deepToSnakeCase(banner),
+              },
+              this.logContext,
+            )
+    }
+}

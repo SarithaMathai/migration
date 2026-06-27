@@ -1,0 +1,47 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+
+function filterPayload (payload) {
+  return Object.fromEntries(
+    // eslint-disable-next-line no-unused-vars
+    Object.entries(payload).filter(([key, value]) => value != null),
+  )
+}
+
+export default {
+  Query: {
+    getAllRFIDDevices: async (parent, { }, ctx) => ctx.loaders.rfidLocation.getAllRFIDDevices.load(),
+    getAllRFIDSampleTags: async (parent, { }, ctx) => ctx.loaders.RFID.getAllRFIDSampleTags.load(),
+    getSampleLocationByRFIDorHumanId: async (parent, { sampleId, rfidId, locationDescription, deviceHostName }, ctx) => {
+      let tagId = rfidId
+      if (sampleId && !tagId) {
+        const permissionJWT = await getUserPermissionsJWT([sampleId], ctx)
+        const samples = await ctx.loaders.sampleV2
+          .getSamplesByIdsV2(permissionJWT)
+          .load([sampleId])
+        tagId = samples[0]?.rfidTagId
+      }
+      if (tagId) {
+        const payload = {
+          tagId: tagId,
+          locationDescription: locationDescription,
+          deviceHostName: deviceHostName,
+        }
+        const filteredPayload = filterPayload(payload)
+        return ctx.loaders.rfidLocation.getLocationBySearchParams.load(filteredPayload)
+      } else {
+        return []
+      }
+    },
+  },
+  RFID_Tag: {
+    sample: async (location, args, ctx) => {
+      const sampleIds = location?.relatedResources?.filter(resource => resource.startsWith('SMP'))
+      if (sampleIds.length > 0) {
+        const permissionJWT = await getUserPermissionsJWT(sampleIds, ctx)
+        const samples = await ctx.loaders.sampleV2.getSamplesByIdsV2(permissionJWT).load(sampleIds)
+        return samples.length > 0 ? samples[0] : []
+      }
+      return []
+    },
+  },
+}

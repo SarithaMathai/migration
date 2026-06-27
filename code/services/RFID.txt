@@ -1,0 +1,23 @@
+import { deepToCamelCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+
+import SparkService from './SparkService'
+
+export default class RFIDService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = endpoint
+
+    this.getAllRFIDSampleTags = loadListing(
+      this.endpoint + '/tags/samples',
+      {
+        ...this.headers,
+      },
+      {
+        transform: devices => deepToCamelCase(devices),
+      },
+      logContext,
+    )
+  }
+}

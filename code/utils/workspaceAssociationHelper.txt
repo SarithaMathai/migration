@@ -1,0 +1,77 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+
+export const ManageWorkspaceActions = {
+  ASSOCIATE: 'ASSOCIATE',
+  DISSOCIATE: 'DISSOCIATE',
+}
+
+export const ValidWorkspaceAssociationTypes = {
+  MEASUREMENT: 'MEASUREMENT',
+  BOM: 'BOM',
+  CLAIM: 'CLAIM',
+  PRODUCT_DETAIL: 'PRODUCTDETAIL',
+  PACKAGING: 'PACKAGING',
+}
+
+export const workspaceAssociationHelper = async (
+  type,
+  humanId,
+  addWorkspaces = [],
+  removeWorkspaces = [],
+  ctx,
+) => {
+  const allIds = [
+    humanId,
+    ...(addWorkspaces || []),
+    ...(removeWorkspaces || []),
+  ]
+  const permissionJWT = await getUserPermissionsJWT(allIds, ctx)
+  let manageFunction
+  switch (type) {
+    case ValidWorkspaceAssociationTypes.BOM:
+      manageFunction = ctx.loaders.bom.manageWorkspaceAssociations
+      break
+    case ValidWorkspaceAssociationTypes.MEASUREMENT:
+      manageFunction = ctx.loaders.measurement.manageWorkspaceAssociations
+      break
+    case ValidWorkspaceAssociationTypes.CLAIM:
+      manageFunction = ctx.loaders.claim.manageWorkspaceAssociations
+      break
+    case ValidWorkspaceAssociationTypes.PRODUCT_DETAIL:
+      manageFunction = ctx.loaders.ProductDetails.manageWorkspaceAssociations
+      break
+    case ValidWorkspaceAssociationTypes.PACKAGING:
+      manageFunction = ctx.loaders.packaging.manageWorkspaceAssociations
+      break
+    default:
+      throw new Error(
+        `Error associating workspaces for ${type} \n` +
+          JSON.stringify(addWorkspaces),
+      )
+  }
+
+  let returnValue = {}
+  if (type === ValidWorkspaceAssociationTypes.PRODUCT_DETAIL || type === ValidWorkspaceAssociationTypes.PACKAGING) {
+    const requestData = {
+      workspacesToAdd: addWorkspaces,
+      workspacesToRemove: removeWorkspaces,
+    }
+    returnValue = await manageFunction(permissionJWT, humanId, requestData).load(requestData)
+  } else {
+    if (addWorkspaces && addWorkspaces.length > 0) {
+      returnValue = await manageFunction(
+        humanId,
+        ManageWorkspaceActions.ASSOCIATE,
+        permissionJWT,
+      ).load([...addWorkspaces])
+    }
+    if (removeWorkspaces && removeWorkspaces.length > 0) {
+      returnValue = await manageFunction(
+        humanId,
+        ManageWorkspaceActions.DISSOCIATE,
+        permissionJWT,
+      ).load([...removeWorkspaces])
+    }
+  }
+  return returnValue
+}

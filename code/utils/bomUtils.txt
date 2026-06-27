@@ -1,0 +1,325 @@
+import _, { get } from 'lodash'
+import { TRIM_SUB_TYPES, TRIM_TYPES } from './materialsConstants'
+import {
+  getUserPermissionsJWT,
+} from './commonLoaders'
+import { MATERIAL_CATEGORY_ID } from '../resolvers/product/SPARK_Bom'
+import SPARK_WorkspaceV2 from '../resolvers/SPARK_WorkspaceV2'
+import { loadBusinessPartners } from '../resolvers/commonResolvers/Teams'
+import { getUserGroup } from '../utils/Product/userGroupUtils'
+import { getUser } from './userAttributesUtils'
+
+export const getSizeOptions = (trim) => {
+  const facilities = _.flatMap((trim && trim.suppliers) || [], supplier => supplier.facilities)
+  const approvedSizeIds = _.flatMap(facilities, facility => facility.sizes ? facility.sizes.map(size => size.id) : [])
+  const trimSubType = trim && trim.trimSubType && trim.trimSubType[0] && trim.trimSubType[0].code
+  return (trim && (trim.trimSizes || []))
+    .filter(trimSize => {
+      if (trim.gvs) {
+        return true
+      }
+      return approvedSizeIds.includes(trimSize && trimSize.sizeId)
+    })
+    .map(size => ({
+      id: size.sizeId,
+      value: size.sizeId,
+      label: getTrimSizeValue(trim.trimType.code, trimSubType, size, true),
+      uom: size.uom || size.finishedUom,
+    }))
+}
+
+export const getBomUomOptions = (trim) => {
+  const facilities = _.flatMap((trim && trim.suppliers) || [], supplier => supplier.facilities)
+  const approvedSizeIds = _.flatMap(facilities, facility => facility.sizes ? facility.sizes.map(size => size.id) : [])
+  return (trim.trimSizes || [])
+    .filter(size => (size.uom || size.finishedUom) && approvedSizeIds.includes(size && size.sizeId))
+    .map(size => {
+      const uom = size.uom || size.finishedUom
+      return {
+        id: uom.code,
+        value: uom.code,
+        label: uom.description,
+      }
+    })
+}
+
+export const getSuppliers = (trimSuppliers) => {
+  return (trimSuppliers || []).map(supplier => {
+    supplier.facilities.map(facility => {
+      facility.sizeIds = facility.sizes ? facility.sizes.map(size => size.id) : []
+      facility.approvedColorRowIds = facility.approvedColorRows ? facility.approvedColorRows.map(color => color.id) : []
+      facility.approvedFinishRowIds = facility.approvedFinishRows ? facility.approvedFinishRows.map(finish => finish.id) : []
+    })
+    return supplier
+  })
+}
+
+export const getTrimSizeValue = (trimType, trimSubType, size, includeHelperLabel = false) => {
+  const hasCompatibleSizes = size && size.compatibleSizes && size.compatibleSizes.length > 0
+  switch (trimType) {
+    case TRIM_TYPES.BUCKLE:
+      return `${size.innerWidth || ''}`
+    case TRIM_TYPES.EMBELLISHMENT:
+    case TRIM_TYPES.BUTTON:
+    case TRIM_TYPES.CLOSURE:
+    case TRIM_TYPES.HARDWARE:
+    case TRIM_TYPES.ZIPPER:
+      return `${size.size || ''}`
+    case TRIM_TYPES.THREAD:
+      return createThreadSizeOption(trimSubType, size)
+    case TRIM_TYPES.ZIPPER_PULLER:
+      return `${size.size || ''}${hasCompatibleSizes ? (' (' + (size.compatibleSizes || []).map(compatSize => compatSize.description).join(', ') + ')') : ''}`
+    case TRIM_TYPES.CONSTRUCTION_COMPONENT:
+    case TRIM_TYPES.CORD_PARTS:
+      return buildMultipleFieldLabel(size.size || '', null, size.width || '', includeHelperLabel && '(W)')
+    case TRIM_TYPES.PATCH:
+      return buildMultipleFieldLabel(size.width || '', includeHelperLabel && '(W)', size.length || '', includeHelperLabel && '(L)')
+    case TRIM_TYPES.ELASTIC:
+    case TRIM_TYPES.TAPE_RIBBON_CORDING:
+    case TRIM_TYPES.LACE_NARROW:
+    case TRIM_TYPES.INTERLINING:
+      return `${size.width || ''}${includeHelperLabel ? ' (W)' : ''}`
+    case TRIM_TYPES.LABEL:
+      return createLabelSizeOption(trimSubType, size, includeHelperLabel)
+  }
+}
+
+const createThreadSizeOption = (trimSubType, size) => {
+  const fixedSize = size && size.fixedSize && size.fixedSize.description
+  if (trimSubType === TRIM_SUB_TYPES.ELASTIC) {
+    return `${size.size || ''}`
+  } else {
+    return `${fixedSize || ''}`
+  }
+}
+
+const createLabelSizeOption = (trimSubType, size, includeHelperLabel) => {
+  if ((trimSubType === TRIM_SUB_TYPES.HEAT_TRANSFER) ||
+    (trimSubType === TRIM_SUB_TYPES.PAD_PRINT) ||
+    (trimSubType === TRIM_SUB_TYPES.SCREEN_PRINT)) {
+    return buildMultipleFieldLabel(size.width || '', includeHelperLabel && '(W)', size.height || '', includeHelperLabel && '(H)')
+  } else {
+    return buildMultipleFieldLabel(size.finishedLength || '', includeHelperLabel && '(L)', size.finishedWidth || '', includeHelperLabel && '(W)')
+  }
+}
+
+const buildMultipleFieldLabel = (size1, size1Label, size2, size2Label) => {
+  if (size1 && !size2) {
+    return `${size1 || ''}${size1Label ? ' ' + size1Label : ''}`
+  } else if (size2 && !size1) {
+    return `${size2 || ''}${size2Label ? ' ' + size2Label : ''}`
+  } else if (size1 && size2) {
+    return `${size1 || ''}${size1Label ? ' ' + size1Label : ''} x ${size2 || ''}${size2Label ? ' ' + size2Label : ''}`
+  }
+}
+
+export const getBomSizeCaption = (trim, chosenSize = {}) => {
+  const trimTypeCode = trim && trim.trimType && trim.trimType.code
+  const trimSubTypeCode = trim && trim.trimSubType && trim.trimSubType[0] && trim.trimSubType[0].code
+  const hasCompatibleSizes = chosenSize.compatibleSizes && chosenSize.compatibleSizes.length > 0
+  switch (trimTypeCode) {
+    case TRIM_TYPES.BUCKLE:
+      return {
+        edit: 'Inner Width',
+        view: 'Inner Width',
+      }
+    case TRIM_TYPES.EMBELLISHMENT:
+    case TRIM_TYPES.BUTTON:
+    case TRIM_TYPES.CLOSURE:
+    case TRIM_TYPES.HARDWARE:
+    case TRIM_TYPES.ZIPPER:
+      return {
+        edit: 'Size',
+        view: 'Size',
+      }
+    case TRIM_TYPES.THREAD:
+      return {
+        edit: trimSubTypeCode === TRIM_SUB_TYPES.ELASTIC ? 'Size' : 'Fixed Size',
+        view: trimSubTypeCode === TRIM_SUB_TYPES.ELASTIC ? 'Size' : 'Fixed Size',
+      }
+    case TRIM_TYPES.ZIPPER_PULLER:
+      return {
+        edit: `Size${hasCompatibleSizes ? (' (' + (chosenSize.compatibleSizes || []).map(compatSize => compatSize.description).join(', ') + ')') : ''}`,
+        view: `Size${hasCompatibleSizes ? (' (' + (chosenSize.compatibleSizes || []).map(compatSize => compatSize.description).join(', ') + ')') : ''}`,
+      }
+    case TRIM_TYPES.CONSTRUCTION_COMPONENT:
+    case TRIM_TYPES.CORD_PARTS:
+      return {
+        edit: 'Size x Width',
+        view: buildMultiFieldCaptionLabel(chosenSize.size, chosenSize.width, 'Size', 'Width'),
+      }
+    case TRIM_TYPES.PATCH:
+      return {
+        edit: 'Width x Length',
+        view: buildMultiFieldCaptionLabel(chosenSize.width, chosenSize.length, 'Size', 'Length'),
+      }
+    case TRIM_TYPES.ELASTIC:
+    case TRIM_TYPES.TAPE_RIBBON_CORDING:
+    case TRIM_TYPES.LACE_NARROW:
+    case TRIM_TYPES.INTERLINING:
+      return {
+        edit: 'Width',
+        view: 'Width',
+      }
+    case TRIM_TYPES.LABEL:
+      if ([TRIM_SUB_TYPES.HEAT_TRANSFER, TRIM_SUB_TYPES.PAD_PRINT, TRIM_SUB_TYPES.SCREEN_PRINT].includes(trimSubTypeCode)) {
+        return {
+          edit: 'Width x Height',
+          view: buildMultiFieldCaptionLabel(chosenSize.width, chosenSize.height, 'Width', 'Height'),
+        }
+      } else {
+        return {
+          edit: '(Finished) Size Length x Width',
+          view: `(Finished) ${buildMultiFieldCaptionLabel(chosenSize.finishedLength, chosenSize.finishedWidth, 'Length', 'Width')}`,
+        }
+      }
+  }
+}
+
+const buildMultiFieldCaptionLabel = (field1, field2, field1Label, field2Label) => {
+  if ((field1 && field2) || (!field1 && !field2)) {
+    return `${field1Label} x ${field2Label}`
+  } else if (field1) {
+    return field1Label
+  } else {
+    return field2Label
+  }
+}
+
+export const getBomAccess = async (bom, args, ctx) => {
+  // since we are only getting access for one bom, return the first element of the list returned from service
+  const perms = await ctx.loaders.accessControl.getPermissions.load({
+    resourceIds: [bom.humanId || bom.id],
+  })
+  return perms && perms.length > 0 ? perms[0] : null
+}
+
+export const getBusinessPartners = async (bom, args, ctx) => loadBusinessPartners((bom.humanId || bom.id), ctx)
+
+export const getCurrentUserPermissions = async (bom, args, ctx) => {
+  const { resourcePermissions: currentUserPermissions } = await ctx.loaders.accessControl.getUserAccessUnencoded.load(bom.humanId || bom.id)
+  return currentUserPermissions ? currentUserPermissions[0] : {}
+}
+
+export const getCreatedBy = async (bom, args, ctx) => {
+  if (bom.createdBy) {
+    return getUser(bom.createdBy, ctx)
+  }
+}
+
+export const getProduct = (bom, args, ctx) => {
+  if (bom.parentId && bom.parentId.startsWith('PID')) {
+    return ctx.loaders.product.getByID.load(bom.parentId)
+  }
+  return null
+}
+
+export const getWorkspaces = (bom, args, ctx) => {
+  const workspaceIds = bom.workspaceContext || []
+  if (workspaceIds.length) {
+    return SPARK_WorkspaceV2.Query.getWorkspacesByIdsV2({}, { ids: workspaceIds }, ctx)
+  }
+}
+export const getUpdatedBy = async (bom, args, ctx) => {
+  if (bom.updatedBy) {
+    return getUser(bom.updatedBy, ctx)
+  }
+}
+
+export const getParticipantDetails = async (bom, args, ctx) => getUserGroup(ctx, bom.humanId || bom.id)
+
+export const getBomMaterial = async (material, args, ctx) => {
+  switch (material.materialCategory.code) {
+    case MATERIAL_CATEGORY_ID.TRIM:
+      return getTrimMaterial(material, args, ctx)
+    case MATERIAL_CATEGORY_ID.WASH:
+      return getWashMaterial(material, args, ctx)
+    case MATERIAL_CATEGORY_ID.FABRIC:
+      return getFabricMaterial(material, args, ctx)
+    case MATERIAL_CATEGORY_ID.HUB:
+      return getHubMaterial(material, args, ctx)
+    default:
+      return null
+  }
+}
+
+export const getFabricMaterial = async (material, args, ctx) => {
+  const fscId = get(material, 'libraryResource.id') || null
+  if (fscId) {
+    const fabricSpecComboSearch = await ctx.loaders.search.searchFabricSpecCombos.load({ q: `id:${fscId}`, page: 0, size: 1 })
+    const fabricSpec = get(fabricSpecComboSearch, 'content[0]') || null
+    let fabricData = { humanId: fabricSpec.humanId, description: fabricSpec.parentComboDescription }
+    return fabricData
+  }
+}
+
+export const getTrimMaterial = async (material, args, ctx) => {
+  const trimId = get(material, 'libraryResource.id') || null
+  if (trimId) {
+    let trim = await ctx.loaders.trim.getTrimBatch.load(trimId)
+
+    let trimSize = getTrimSize(material, trim)
+    let trimSizeCaption = getSizeCaption(material, trim)
+    let trimData = { humanId: trim.humanId, description: trim.description, trimSizes: trim.trimSizes, thumbnailId: trim.thumbnailId, suppliers: trim.suppliers, bomSizeOptions: trim.bomSizeOptions, bomUomOptions: trim.bomUomOptions, baseSizeCaption: trim.baseSizeCaption, trimType: trim.trimType, trimSubType: trim.trimSubType, sizeValue: trimSize, sizeCaption: trimSizeCaption }
+    return trimData
+  }
+}
+
+export const getHubMaterial = async (material, args, ctx) => {
+  const matId = get(material, 'libraryResource.id') || null
+  if (matId) {
+    const permissionJWT = getUserPermissionsJWT(matId, ctx)
+    const materialHubData = await ctx.loaders.materialHub.getHubMaterial(permissionJWT).load(matId)
+    if (materialHubData.baseMaterial) {
+      let hubData = { humanId: materialHubData.humanId, description: materialHubData.baseMaterial.description, thumbnailId: materialHubData.baseMaterial.thumbnailId, recycledContent: materialHubData.baseMaterial.recycledContent }
+      return hubData
+    }
+  }
+}
+
+export const getWashMaterial = async (material, args, ctx) => {
+  const washId = get(material, 'libraryResource.id') || null
+  if (washId) {
+    const permissionJWT = await getUserPermissionsJWT(washId, ctx)
+    const wash = await ctx.loaders.wash.getWash(permissionJWT).load(washId)
+    let washData = { humanId: wash.humanId, description: wash.washDescription, thumbnailId: wash.thumbnailId, laundry: wash.laundry }
+    return washData
+  }
+}
+
+export const getTrimSize = (material, trim) => {
+  if (trim) {
+    const matchingSize = ((trim && trim.trimSizes) || []).find(size => size.sizeId === material.librarySizeId)
+    const trimType = trim && trim.trimType && trim.trimType.code
+    const trimSubType = trim && trim.trimSubType && trim.trimSubType[0] && trim.trimSubType[0].code
+    if (matchingSize) {
+      return getTrimSizeValue(trimType, trimSubType, matchingSize)
+    }
+  }
+}
+
+export const getSizeCaption = (material, trim) => {
+  if (trim) {
+    const matchingSize = ((trim && trim.trimSizes) || []).find(size => size.sizeId === material.librarySizeId)
+    return getBomSizeCaption(trim, matchingSize || {})
+  }
+}
+
+export const getMaterialLibraryUom = async (material, args, ctx) => {
+  if (material.materialLibraryUomId && material.materialCategory.code === MATERIAL_CATEGORY_ID.TRIM) {
+    const uoms = await ctx.loaders.trim.getTrimUnitOfMeasures.load()
+    return uoms && uoms.find(uom => uom.code === material.materialLibraryUomId)
+  }
+}
+
+export const getCountryOfOrigin = async (material, ctx) => {
+  const countryTagIds = material.countryOfOriginIds || []
+  if (countryTagIds.length) {
+    const countryTags = await ctx.loaders.tag.getTags.load({
+      ids: countryTagIds,
+    })
+    return countryTags?.content || []
+  } else {
+    return []
+  }
+}

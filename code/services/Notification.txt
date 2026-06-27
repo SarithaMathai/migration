@@ -1,0 +1,88 @@
+import SparkService from './SparkService'
+import loadListing from '../utils/loadListing'
+import { buildFilterQueryParam, deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import putOne from '../utils/putOne'
+import postOne from '../utils/postOne'
+
+export default class NotificationService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    const valuesMustBeDefined = value => typeof value !== 'undefined'
+
+    this.getNotifications = loadListing(
+      (varArgs) =>
+        `${this.endpoint}/api/email/history?${buildFilterQueryParam(varArgs, valuesMustBeDefined)}`,
+      this.headers, {
+        transform: notifications => deepToCamelCase(notifications),
+      },
+      this.logContext,
+    )
+    this.getNotificationGroups = loadListing(
+      (varArgs) =>
+        `${this.endpoint}/api/email/historyGroup?${buildFilterQueryParam(varArgs, valuesMustBeDefined)}`,
+      this.headers, {
+        transform: notifications => deepToCamelCase(notifications),
+      },
+      this.logContext,
+    )
+    this.getNotificationGroupStats = loadListing(
+      (varArgs) =>
+        `${this.endpoint}/api/email/historyGroup/stats?${buildFilterQueryParam(varArgs, valuesMustBeDefined)}`,
+      this.headers, {
+        transform: notifications => deepToCamelCase(notifications),
+      },
+      this.logContext,
+    )
+    this.updateNotificationStatus = putOne(
+      `${this.endpoint}/api/email/history`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+    this.updateNotificationGroups = postOne(
+      `${this.endpoint}/api/email/historyGroup`,
+      this.headers,
+      {
+        transformRequest: data => deepToSnakeCase(data),
+        skipJsonParse: true,
+      },
+      this.logContext,
+    )
+    this.getSampleNotificationErrors = loadListing(
+      `${this.endpoint}/api/admin/kafkaErrors`,
+      this.headers,
+      {
+        transform: response => response.content.map(apiError => {
+          return {
+            id: apiError.id,
+            initialFailureTime: new Date(apiError.initialFailureTime).toISOString(),
+            initialRequestId: apiError.initialRequestId,
+            resolved: apiError.resolved,
+            sampleId: apiError.payload.id,
+          }
+        }),
+      },
+      this.logContext,
+    )
+    this.retrySampleNotificationError = postOne((failedMessageId) =>
+      `${this.endpoint}/api/admin/kafkaErrors/${failedMessageId}/retry`,
+    this.headers,
+    {},
+    this.logContext,
+    )
+    this.retryAllSampleNotificationErrors = postOne(
+      `${this.endpoint}/api/admin/kafkaErrors/retryAll`,
+      this.headers,
+      {
+        transform: data => data.kafkaRetryResults,
+      },
+      this.logContext,
+    )
+  }
+}

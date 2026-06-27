@@ -1,0 +1,117 @@
+import lruCache from './lruCache'
+import { logger } from './logger'
+import { redisContext } from '../context'
+
+export const expireRedisCacheKey = async (key) => {
+  const deletedCount = await redisContext.client.del(key)
+  return deletedCount
+}
+
+export const getRedisCacheKey = async (key) => {
+  return new Promise((resolve) => {
+    if (redisContext.client && redisContext.client.connected) {
+      redisContext.client.get(key, async (err, res) => {
+        if (err) {
+          resolve(`Error getting cache key ${key}`)
+        } else if (!res) {
+          resolve(`No response for cache key ${key}`)
+        } else {
+          resolve(res)
+        }
+      })
+    } else {
+      resolve(`Error getting cache key ${key}: client not connected.`)
+    }
+  })
+}
+
+export const defaultOptions = {
+  memTtl: 1800, // 1,800 seconds = 30min
+  redisTtl: 86400, // 86,400 seconds = 1,440min (24hrs)
+  generateCacheKey: (key, args) => `${key}_${JSON.stringify(args)}`,
+}
+
+// Updates both the memory cache and the redis cache
+export const handleUpdateCaches = (key, value, settings) => {
+  try {
+    lruCache.set(key, value, (settings.memTtl * 1000))
+  } catch (e) {
+    logger.error(`Error putting data ${key} in LRU-Memory cache: ` + e, e)
+  }
+
+  try {
+    redisContext.client.set(key, value, 'EX', settings.redisTtl)
+  } catch (e) {
+    logger.error(`Error putting data ${key} in Redis cache: ` + e, e)
+  }
+}
+
+// Handles loading via the original loader. This will be hit if the cache doesn't have a result.
+// This will update the caches with the original loader's result.
+export const handleOriginalLoad = async (cacheKey, originalLoad, settings, args, logContext) => {
+  let newEntry = []
+  logger.debug(`Cache key ${cacheKey} loading/refreshing with original loader`)
+
+  try {
+    newEntry = await originalLoad(...args)
+    handleUpdateCaches(cacheKey, JSON.stringify(newEntry), settings)
+  } catch (e) {
+    logger.error(`Error fetching data for ${cacheKey}: ` + e, logContext, e)
+
+    if (settings.cache404As !== undefined && e.statusCode === 404) {
+      handleUpdateCaches(cacheKey, JSON.stringify(settings.cache404As), settings)
+    }
+  }
+
+  return newEntry
+}
+
+// Handles loading the cache data from redis.
+// If redis is connected it will check for the key in redis.
+// If the key is in redis it is returned, if not the original load is called.
+// If redis is not connected the original load is called.
+export const handleRedisLoad = async (cacheKey, originalLoad, settings, args, logContext) => {
+  return new Promise((resolve) => {
+    if (redisContext.client) {
+      redisContext.client.get(cacheKey, (err, res) => {
+        if (err) {
+          logger.error(`ERROR Loading ${cacheKey} from redis`, logContext)
+        }
+
+        if (!res || err) {
+          handleOriginalLoad(cacheKey, originalLoad, settings, args, logContext)
+            .then(resolve)
+        } else {
+          logger.debug(`Cache key ${cacheKey} found in Redis`, logContext)
+          resolve(JSON.parse(res))
+        }
+      })
+    } else {
+      handleOriginalLoad(cacheKey, originalLoad, settings, args, logContext)
+        .then(resolve)
+    }
+  })
+}
+
+export default function cache (key, loader, options = {}, logContext = {}) {
+  const settings = Object.assign({}, defaultOptions, options)
+
+  const originalLoad = loader.load.bind(loader)
+
+  loader.load = async (...args) => {
+    const cacheKey = settings.generateCacheKey(key, args)
+
+    const memoryEntry = lruCache.get(cacheKey)
+
+    if (memoryEntry) {
+      logger.debug(`Cache key ${cacheKey} found in LRU-Memory`, logContext)
+
+      return JSON.parse(memoryEntry)
+    } else {
+      const redisResult = await handleRedisLoad(cacheKey, originalLoad, settings, args, logContext)
+      return redisResult
+    }
+  }
+
+  return loader
+}

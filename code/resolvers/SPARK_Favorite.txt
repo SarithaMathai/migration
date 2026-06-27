@@ -1,0 +1,230 @@
+import createDebug from 'debug'
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import SPARK_Material from './SPARK_Material'
+import { resolveBaseMaterial } from './material/SPARK_BaseMaterialCommonFields'
+const logTrace = createDebug('spark-trace:load-one')
+
+export default {
+  Mutation: {
+    addFavorite: (parent, { resource }, ctx) => ctx.loaders.favorite.create.load({ resource }),
+    deleteFavorite: (parent, { id, type }, ctx) =>
+      ctx.loaders.favorite.delete.load({ id, type }),
+    deleteFavoriteById: (parent, { id }, ctx) =>
+      ctx.loaders.favorite.deleteById.load(id),
+    deleteFavoritesByBusinessPartner: (
+      parent,
+      { resourceType, resourceId, partnerId },
+      ctx,
+    ) =>
+      ctx.loaders.favorite.deleteFavoritesByBusinessPartner.load({
+        resourceType,
+        resourceId,
+        partnerId,
+      }),
+    updateFavoritesOrder: (parent, { favoriteIds }, ctx) => {
+      return ctx.loaders.favorite.updateFavoritesOrder(favoriteIds)
+    },
+  },
+
+  Query: {
+    getFavorites: (parent, { type, page, size }, ctx) =>
+      ctx.loaders.favorite.getPage.load({ page, size, type }),
+    // Temporary resolvers until we switch to federated schema, which will also have these queries with better backend support
+    getFavoritesByTypes: async (parent, { types, page, size }, ctx) => {
+      const promises = types.map(type =>
+        ctx.loaders.favorite.getPage.load({ page, size, type }),
+      )
+      const results = await Promise.all(promises)
+      return results.reduce((acc, result) => {
+        acc.content.push(...result.content)
+        acc.totalElements += result.totalElements
+        return acc
+      }, { content: [] })
+    },
+    getFavoriteTypesForCurrentUser: async (parent, {}, ctx) => {
+      // We have to load a page of favorites for each type and check if there are any results, since the backend doesn't have an endpoint to get all favorited types for a user
+      // This is changing for the federated schema, where the backend will have an endpoint to get all favorited types for a user, so we won't need to do this anymore
+      const types = [
+        'workspace',
+        'product',
+        'sample',
+        'colors',
+        'colors_archroma',
+        'colors_pantone',
+        'colors_coloro',
+        'fabric',
+        'fabric_spec',
+        'artworks',
+        'trim',
+        'combination',
+        'wash',
+        'palette',
+        'team',
+        'product_template',
+        'material',
+      ]
+      const promises = types.map(async type => {
+        const page = await ctx.loaders.favorite.getPage.load({ page: 0, size: 1, type })
+        return { page, type }
+      })
+      const results = await Promise.all(promises)
+      return results.filter(({ page }) => page.totalElements > 0).map(({ type }) => type)
+    },
+    isFavorite: async (parent, { resource }, ctx) => {
+      const type = resource.type
+      const id = resource.id
+      // We have to load a page of favorites and check if the resource is in there, since the backend doesn't have an endpoint to check if a specific resource is favorited
+      const results = await ctx.loaders.favorite.getPage.load({ page: 0, size: 1000, type })
+      const matchingFavorite = results.content.find(favorite => favorite.resource.id === id)
+      return matchingFavorite ? matchingFavorite : null
+    },
+  },
+
+  SPARK_FavoritePaged: {
+    paging: favorite => favorite,
+  },
+  SPARK_Favorite: {
+    color: async (favorite, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        favorite.resource.id,
+        ctx,
+      )
+      try {
+        return await ctx.loaders.color
+          .getByID(permissionJWT)
+          .load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    artwork: async (favorite, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        favorite.resource.id,
+        ctx,
+      )
+      try {
+        return await ctx.loaders.artwork
+          .getByID(permissionJWT)
+          .load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    fabric: async (favorite, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        favorite.resource.id,
+        ctx,
+      )
+      try {
+        return await ctx.loaders.fabric
+          .getByID(permissionJWT)
+          .load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    fabricSpecification: async (favorite, args, ctx) => {
+      try {
+        return await ctx.loaders.fabric
+          .getSpecificationByID
+          .load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    trim: async (favorite, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        favorite.resource.id,
+        ctx,
+      )
+      try {
+        return await ctx.loaders.trim
+          .getTrim(permissionJWT)
+          .load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    combination: async (favorite, args, ctx) => {
+      const combo = await ctx.loaders.combination
+        .getById
+        .load(favorite.resource.id)
+      return combo.humanId ? combo : null
+    },
+
+    color_archroma: async (favorite, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        favorite.resource.id,
+        ctx,
+      )
+      try {
+        return await ctx.loaders.colorArchroma
+          .getByID(permissionJWT)
+          .load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    team: async (favorite, args, ctx) => {
+      const team = await ctx.loaders.teamV2
+        .getById
+        .load(favorite.resource.id)
+      return team.teamId ? team : null
+    },
+    product: async (favorite, args, ctx) => {
+      const product = await ctx.loaders.product.getByID.load(favorite.resource.id)
+      return product.productId ? product : null
+    },
+    workspace: async (favorite, args, ctx) => {
+      const workspace = await ctx.loaders.workspaceV2.getWorkspaceByIdV2.load(favorite.resource.id)
+      return workspace.workspaceId ? workspace : null
+    },
+    wash: async (favorite, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        favorite.resource.id,
+        ctx,
+      )
+      try {
+        return await ctx.loaders.wash
+          .getWash(permissionJWT)
+          .load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    palette: async (favorite, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        favorite.resource.id,
+        ctx,
+      )
+      try {
+        return await ctx.loaders.palette
+          .getPalette(permissionJWT)
+          .load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    hubMaterial: async (favorite, args, ctx) => {
+      try {
+        const permissionJWT = await getUserPermissionsJWT(favorite.resource.id, ctx)
+        return ctx.loaders.materialHub.getHubMaterial(permissionJWT).load(favorite.resource.id)
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+      }
+    },
+    baseMaterial: async (favorite, args, ctx) => {
+      try {
+        const material = await SPARK_Material.Query.getMaterialByIdFromService(null, { id: favorite.resource.id }, ctx)
+        if (material) {
+          return resolveBaseMaterial(material)
+        } else {
+          return null
+        }
+      } catch (err) {
+        logTrace(JSON.stringify(err, null, '  '))
+        return null
+      }
+    },
+  },
+}

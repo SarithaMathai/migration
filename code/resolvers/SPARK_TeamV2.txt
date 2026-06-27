@@ -1,0 +1,42 @@
+import {
+  getUserPermissionsJWT,
+} from '../utils/commonLoaders'
+
+export default {
+  Query: {
+    getTeamV2: async (parent, { id }, ctx) => {
+      const jwt = await getUserPermissionsJWT(id, ctx)
+      const teams = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: [id] })
+      return teams[0]
+    },
+    getTeamsV2: async (parent, { ids }, ctx) => {
+      const jwt = await getUserPermissionsJWT(ids, ctx)
+      const teams = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: ids })
+      return teams
+    },
+    getTeamType: (parent, {}, ctx) =>
+      ctx.loaders.teamV2.getTeamType.load(),
+    getBusinessPartnerType: (parent, {}, ctx) =>
+      ctx.loaders.teamV2.getBusinessPartnerType.load(),
+  },
+
+  Mutation: {
+    createTeamV2: (parent, { teamInput }, ctx) =>
+      ctx.loaders.teamV2.create.load(teamInput),
+    updateTeamV2: async (parent, { teamInput }, ctx) => {
+      const jwt = await getUserPermissionsJWT(teamInput.teamId, ctx)
+      return ctx.loaders.teamV2.update(jwt).load(teamInput)
+    },
+  },
+
+  SPARK_TeamV2: {
+    id: team => team.teamId,
+    createdAt: team => new Date(team.createdAt).toDateString(),
+    createdBy: (team, args, ctx) =>
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(team.createdBy),
+    updatedAt: team => new Date(team.updatedAt).toDateString(),
+    updatedBy: (team, args, ctx) =>
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(team.updatedBy),
+    members: (team) => team.members || [],
+  },
+}

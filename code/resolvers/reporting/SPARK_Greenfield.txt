@@ -1,0 +1,115 @@
+
+import _ from 'lodash'
+import { buildPOSTBodyForGreenfield } from '../../utils/Reporting/queryUtil'
+import { GREENFIELD_CARD_IDS } from '../../utils/constants'
+import SPARK_SampleV2 from '../SPARK_SampleV2'
+import IG_Department from '../IG_Department'
+import VMM_Brand from '../VMM_Brand'
+import SPARK_WorkspaceV2 from '../SPARK_WorkspaceV2'
+import SPARK_UserAttributes from '../SPARK_UserAttributes'
+import { SPARK_GATEWAY_API_KEY } from '../../config/constants'
+
+export default {
+  Query: {
+    getCard: async (parent, { id, filtersInput }, ctx) => {
+      let formattedQuery = buildPOSTBodyForGreenfield(filtersInput, id)
+
+      const result = await ctx.loaders.greenfield.getCard().load(formattedQuery, { card_id: GREENFIELD_CARD_IDS[id], key: SPARK_GATEWAY_API_KEY })
+
+      return result
+    },
+  },
+  SPARK_Greenfield: {
+    queryBLOB: ({ queryResults }) => {
+      return queryResults
+    },
+  },
+  SPARK_Greenfield_Query_Results: {
+    businessPartners: async ({ businessPartnerId, businessPartners, samplePartnerId, partnerId }, args, ctx) => {
+      const id = businessPartnerId || businessPartners || samplePartnerId || partnerId
+      if (id) {
+        const businessPartner = await ctx.loaders.vmm.getByID.load(id)
+        return businessPartner
+      } else {
+        return null
+      }
+    },
+    sampleTypeDesc: async ({ sampleTypeC, sampleTypeDesc }, args, ctx) => {
+      if (sampleTypeC) {
+        const sampleTypes = await SPARK_SampleV2.Query.getSampleProductTypesV2({}, {}, ctx)
+        const sampleType = sampleTypes.find(({ code }) => parseInt(code) === parseInt(sampleTypeC))
+        return sampleType ? sampleType.description : null
+      } else {
+        return sampleTypeDesc || null
+      }
+    },
+    departmentNumberN: async ({ productDepartmentId, departmentId, materialDepartmentId }, args, ctx) => {
+      const id = productDepartmentId || departmentId || materialDepartmentId
+      if (id) {
+        try {
+          const department = await IG_Department.Query.getDepartment({}, { id }, ctx)
+          return department ? `${id}: ${department.department_name || ''}` : null
+        } catch {
+          return null
+        }
+      } else {
+        return null
+      }
+    },
+    brandN: async ({ productBrandId, brandId, brandCode, materialBrandId, materialBrandN }, args, ctx) => {
+      const id = productBrandId || brandId || brandCode || materialBrandId
+      if (materialBrandN) {
+        return materialBrandN
+      } else if (id) {
+        const brand = await VMM_Brand.Query.getBrand({}, { id }, ctx)
+        return brand ? brand.brandName : ''
+      } else {
+        return null
+      }
+    },
+    productBrandId: async ({ productBrandId, brandId, brandCode }) => {
+      return productBrandId || brandId || brandCode
+    },
+    designCycleN: async ({ designCycleN, designCycleName }) => {
+      return designCycleN || designCycleName
+    },
+    workspaceDesc: async ({ workspaceId, workspaceDesc }, args, ctx) => {
+      if (workspaceDesc) {
+        return workspaceDesc
+      } else if (workspaceId) {
+        const workspace = await SPARK_WorkspaceV2.Query.getWorkspaceV2({}, { id: workspaceId }, ctx)
+        return workspace ? workspace.description : ''
+      } else {
+        return null
+      }
+    },
+    tagDescription: async ({ tagDesignCycleId }, args, ctx) => {
+      if (tagDesignCycleId) {
+        const cycle = await ctx.loaders.tag.getTag.load(tagDesignCycleId)
+        return cycle ? cycle.name : ''
+      } else {
+        return null
+      }
+    },
+    user: async ({ sampleEvaluatedById }, args, ctx) => {
+      if (sampleEvaluatedById) {
+        const user = await SPARK_UserAttributes.Query.getUserAttributes({}, { id: sampleEvaluatedById }, ctx)
+        return user
+      } else {
+        return null
+      }
+    },
+    totalUniqueProductCount: ({ totalUniqueProductCount }) => _.round(totalUniqueProductCount),
+  },
+  SPARK_Greenfield_Card_Config: {
+    cardQueryAttribute: ({ cardQueryAttribute }) => {
+      return cardQueryAttribute
+    },
+  },
+  SPARK_Greenfield_Card_Query_Attributes: {
+    columns: ({ columns }) => {
+      return columns
+    },
+
+  },
+}

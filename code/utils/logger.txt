@@ -1,0 +1,127 @@
+import winston from 'winston'
+import { sparkSimpleLogFormat } from './logging/sparkSimpleLogFormat'
+import { generateContextMap } from './logging/generateContextMap'
+import Bottleneck from 'bottleneck'
+
+const { DEBUG_COMPLETE_REQUESTS = '' } = process.env
+
+const sparkLogFormat = () => {
+  if (process.env.LOG_MODE === 'simple') {
+    // Not currently much different - worth making this useful?
+    return winston.format.printf(info => {
+      const contextMap = generateContextMap(info)
+
+      return sparkSimpleLogFormat(info, contextMap)
+    })
+  }
+
+  return winston.format.printf(info => {
+    const contextMap = generateContextMap(info)
+    const loggerContext = {
+      timeMillis: new Date().getTime(),
+      message: info.message,
+      level: info.level.toUpperCase(),
+      contextMap: contextMap,
+    }
+    if (contextMap['x-api-id']) {
+      loggerContext['x-api-id'] = contextMap['x-api-id']
+      const traceId = {
+        id: contextMap['x-api-id'],
+      }
+      loggerContext['trace'] = traceId
+    }
+    if (contextMap['userId']) {
+      loggerContext['userId'] = contextMap['userId']
+    }
+    if (contextMap.status) {
+      loggerContext['responseStatus'] = contextMap.status
+    }
+    return JSON.stringify(loggerContext)
+  })
+}
+
+const winstonLogger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'debug',
+  transports: [new winston.transports.Console()],
+  format: winston.format.combine(
+    sparkLogFormat(),
+  ),
+})
+
+const bottleneck = new Bottleneck({})
+
+export const logger = {
+  logCounts: {
+    cleanUpIn: new Date(new Date().getTime() + 2 * 60000),
+  },
+  info: function (message, logContext = {}, additionalDetails = {}) {
+    const meta = { ...additionalDetails, ...logContext }
+    bottleneck.schedule({}, () => {
+      return Promise.resolve(
+        winstonLogger.info(message, meta),
+      )
+    })
+  },
+
+  error: function (message, logContext = {}, additionalDetails = {}) {
+    const meta = { ...additionalDetails, ...logContext }
+    bottleneck.schedule({}, () => {
+      return Promise.resolve(
+        winstonLogger.error(message, meta),
+      )
+    })
+  },
+  debug: function (message, logContext = {}, additionalDetails = {}) {
+    const meta = { ...additionalDetails, ...logContext }
+    bottleneck.schedule({}, () => {
+      return Promise.resolve(
+        winstonLogger.debug(message, meta),
+      )
+    })
+  },
+  warn: function (message, logContext = {}, additionalDetails = {}) {
+    const meta = { ...additionalDetails, ...logContext }
+    bottleneck.schedule({}, () => {
+      return Promise.resolve(
+        winstonLogger.warn(message, meta),
+      )
+    })
+  },
+  logResponse: function (
+    url,
+    method,
+    status,
+    body,
+    logContext = {},
+    elapsedMillis = 'unknown',
+  ) {
+    const now = new Date().getTime()
+    if (logger.logCounts.cleanUpIn < now) {
+      logger.logCounts = {
+        cleanUpIn: new Date(now + 2 * 60000),
+      }
+    }
+    if (logContext.requestId) {
+      logger.logCounts[logContext.requestId] = (logger.logCounts[logContext.requestId] || 0) + 1
+    }
+    const logDetails = {
+      url: url,
+      method: method,
+      status: status,
+      elapsedMillis: elapsedMillis,
+      logCounts: logger.logCounts,
+    }
+    if (status >= 500) {
+      logDetails.response = body
+      logger.error(`requestFailed - ${url}`, logContext, logDetails)
+    } else if (status >= 400) {
+      logDetails.response = body
+      logger.error(`requestFailed - ${url}`, logContext, logDetails)
+    } else {
+      if (DEBUG_COMPLETE_REQUESTS === 'true') {
+        logDetails.response = body
+      }
+      logger.info(`requestComplete - ${url}`, logContext, logDetails)
+    }
+  },
+}

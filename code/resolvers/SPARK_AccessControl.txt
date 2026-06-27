@@ -1,0 +1,149 @@
+import _ from 'lodash'
+import { getUserPermissionsJWTByProxy, getUserPermissionsJWTByProxyUnencoded } from '../utils/commonLoaders'
+import { findRolesById } from '../utils/convertFunctions'
+
+export default {
+  Mutation: {
+    createAccessGroupInternal: (parent, { accessGroupInternal }, ctx) =>
+      ctx.loaders.accessControl.createAccessGroupInternal.load(
+        accessGroupInternal,
+      ),
+    createAccessGroupAD: (parent, { accessGroupAD }, ctx) =>
+      ctx.loaders.accessControl.createAccessGroupAD.load(accessGroupAD),
+    createAccessGroupID: (parent, { accessGroupID }, ctx) =>
+      ctx.loaders.accessControl.createAccessGroupID.load(accessGroupID),
+    createAccessGroupBP: (parent, { accessGroupBP }, ctx) =>
+      ctx.loaders.accessControl.createAccessGroupBP.load(accessGroupBP),
+    addAccessGroupIds: (parent, { addAccessGroupIds }, ctx) =>
+      ctx.loaders.accessControl.addAccessGroupIds.load(addAccessGroupIds),
+    deleteAccessGroupIds: (parent, { deleteAccessGroupIds }, ctx) =>
+      ctx.loaders.accessControl.deleteAccessGroupIds.load(deleteAccessGroupIds),
+    createAccessControl: (parent, { createAccessControl }, ctx) =>
+      ctx.loaders.accessControl.createAccessControl.load(createAccessControl),
+    deleteAccessControl: (parent, { resourceId }, ctx) =>
+      ctx.loaders.accessControl.deleteAccessControl.load(resourceId),
+    addAccessControlPermission: (
+      parent,
+      { addAccessControl, resourceId },
+      ctx,
+    ) =>
+      ctx.loaders.accessControl.addAccessControlPermission.load({
+        addAccessControl,
+        resourceId,
+      }),
+    deleteAccessControlPermission: (
+      parent,
+      { deleteAccessControl, resourceId },
+      ctx,
+    ) =>
+      ctx.loaders.accessControl.deleteAccessControlPermission.load({
+        deleteAccessControl,
+        resourceId,
+      }),
+    lockResource: (parent, { resourceId, locked }, ctx) =>
+      ctx.loaders.accessControl.lockResource.load({
+        resourceId,
+        locked,
+      }),
+    dropPartnerFromResources: (
+      parent,
+      { toBeDroppedPermissionsList },
+      ctx,
+    ) => {
+      const emptyRequestBody = {}
+      const requestBody = toBeDroppedPermissionsList || emptyRequestBody
+
+      ctx.loaders.accessControl.dropPartnerFromResources.load(requestBody)
+    },
+    unDropPartnerFromResources: (
+      parent,
+      { toBeUnDroppedPermissionsList },
+      ctx,
+    ) => {
+      const emptyRequestBody = {}
+      const requestBody = toBeUnDroppedPermissionsList || emptyRequestBody
+
+      ctx.loaders.accessControl.unDropPartnerFromResources.load(requestBody)
+    },
+    updateAccessControlGroups: (
+      parent, 
+      { groupId, userIdsToAdd, userIdsToRemove }, 
+      ctx,
+    ) => ctx.loaders.accessControl.updateAccessControlGroups.load({ 
+      groupId, 
+      userIdsToAdd, 
+      userIdsToRemove, 
+    }),
+  },
+
+  Query: {
+    getUserAccess: (parent, { resourceIds }, ctx) =>
+      ctx.loaders.accessControl.getUserAccess.load(resourceIds),
+    getUserAccessByIds: (parent, { ids }, ctx) =>
+      ctx.loaders.accessControl.getUserAccess.load(ids),
+    getUserAccessByProxy: (parent, { resourceId, proxyId }, ctx) =>
+      getUserPermissionsJWTByProxy({ id: resourceId, proxyIds: [proxyId] }, ctx),
+    getUserAccessUnencoded: (parent, { resourceIds }, ctx) => {
+      if (!resourceIds || resourceIds.length === 0) {
+        // UI May send in nothing, don't bother querying and blowing up.
+        return { resourcePermissions: [] }
+      }
+      return ctx.loaders.accessControl.getUserAccessUnencoded.load(resourceIds)
+    },
+    getUserProxyAccessUnencoded: (parent, { resourceIds, proxyIds }, ctx) => {
+      return getUserPermissionsJWTByProxyUnencoded({ id: resourceIds, proxyIds: proxyIds, basePermissions: true }, ctx)
+    },
+    getPermissions: (parent, { resourceIds }, ctx) =>
+      ctx.loaders.accessControl.getPermissions.load({ resourceIds }),
+    getPermissionsByTag: (parent, { resourceIds, tag }, ctx) =>
+      ctx.loaders.accessControl.getPermissionsByTag.load({ resourceIds, tag }),
+    getAccessControlGroups: (parent, { groupIds, userProfileIds }, ctx) => 
+      ctx.loaders.accessControl.getAccessControlGroups.load({ groupIds, userProfileIds }),
+  },
+
+  SPARK_AccessGroup: {
+    id: accessGroup =>
+      _.get(accessGroup, 'abstractAccessGroup.id', accessGroup.id),
+    type: accessGroup =>
+      _.get(accessGroup, 'abstractAccessGroup.type', accessGroup.type),
+    adGroup: accessGroup =>
+      _.get(accessGroup, 'abstractAccessGroup.adGroup', accessGroup.adGroup),
+    grantees: accessGroup =>
+      _.get(accessGroup, 'abstractAccessGroup.grantees', accessGroup.grantees),
+    referenceCount: accessGroup =>
+      _.get(
+        accessGroup,
+        'abstractAccessGroup.referenceCount',
+        accessGroup.referenceCount,
+      ),
+    deleteNoReferences: accessGroup =>
+      _.get(
+        accessGroup,
+        'abstractAccessGroup.deleteNoReferences',
+        accessGroup.deleteNoReferences,
+      ),
+    createdBy: accessGroup =>
+      _.get(accessGroup, 'abstractAccessGroup.createdBy', accessGroup.createdBy),
+    updatedBy: accessGroup =>
+      _.get(accessGroup, 'abstractAccessGroup.updatedBy', accessGroup.updatedBy),
+    createdAt: accessGroup =>
+      _.get(accessGroup, 'abstractAccessGroup.createdAt', accessGroup.createdAt),
+    updatedAt: accessGroup =>
+      _.get(accessGroup, 'abstractAccessGroup.updatedAt', accessGroup.updatedAt),
+  },
+
+  SPARK_AccessGroupResponse: {
+    users: async (accessGroupResponse, args, ctx) => {
+      const userProfileIds = _.get(accessGroupResponse, 'userProfileIds', [])
+      const resolvedUsers = await Promise.all(
+        userProfileIds.map(id => ctx.loaders.userAttributes.getByID.load(id)),
+      )
+      return resolvedUsers
+        .filter(user => !!user)
+        .sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''))
+    },
+    accreditations: async (accessGroupResponse, args, ctx) => {
+      return _.get(accessGroupResponse, 'roles', [])
+    },
+  },
+}

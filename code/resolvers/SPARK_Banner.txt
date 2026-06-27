@@ -1,0 +1,50 @@
+import { getUserPermissionsJWT } from "../utils/commonLoaders"
+import { SPARK_BANNER_CREATE_MODIFY_TARGET_LIBRARY } from "../utils/constants"
+
+export default {
+    Query: {
+        getBannerTypes: async (parent, args, ctx) => {
+            return ctx.loaders.banner.getBannerTypes.load()
+        },
+        getBannerScopes: async (parent, args, ctx) => {
+            return ctx.loaders.banner.getBannerScopes.load()
+        },
+        getActiveBanners: async (parent, args, ctx) => {
+            return ctx.loaders.banner.getActiveBanners.load()
+        },
+        searchBanners: async (parent, args, ctx) => {
+            const augmentedArgs = {...args, sort: 'startAt,desc'}
+            return ctx.loaders.banner.searchBanners.load(augmentedArgs)
+        },
+    },
+    Mutation: {
+        addSparkBanner: async (parent, { bannerInput }, ctx) => {
+            const permissionJWT = await getUserPermissionsJWT(
+                SPARK_BANNER_CREATE_MODIFY_TARGET_LIBRARY,
+                ctx,
+            )
+            return ctx.loaders.banner
+                .create(permissionJWT)
+                .load(bannerInput)
+        },
+        updateSparkBanner: async (parent, { bannerInput }, ctx) => {
+            const permissionJWT = await getUserPermissionsJWT(
+                SPARK_BANNER_CREATE_MODIFY_TARGET_LIBRARY,
+                ctx,
+            )
+            return ctx.loaders.banner
+                .update(permissionJWT)
+                .load(bannerInput)
+        },
+        archiveSparkBanner: async (parent, { id }, ctx) => {
+            const bannerInput = { id: id, archived: true }
+            const permissionJWT = await getUserPermissionsJWT(
+                SPARK_BANNER_CREATE_MODIFY_TARGET_LIBRARY,
+                ctx,
+            )
+            return ctx.loaders.banner
+                .update(permissionJWT)
+                .load(bannerInput)
+        },
+    },
+}

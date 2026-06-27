@@ -1,0 +1,99 @@
+export default {
+  Query: {
+    getAssortmentItemByTcin: async (_, { tcin }, ctx) => {
+      try {
+        const response = await ctx.loaders.coronaItems.getItemDetailsForRefresh(tcin);
+        if (response?.data?.item) {
+          return response.data.item;
+        }
+
+        return null;
+      } catch (err) {
+        console.error("Error in getAssortmentItemByTcin:", err);
+        return null;
+      }
+    },
+
+    searchItemByProduct: async (_, { pid, from, size }, ctx) => {
+      const payload = {
+        itemSearchRequest: {
+          filterGroups: [
+            {
+              filterGroupType: 'OR',
+              filters: [
+                {
+                  filterType: 'SIMPLE_QUERY_STRING',
+                  values: [pid],
+                },
+              ],
+            },
+          ],
+          pagination: { from, size },
+        },
+      };
+
+      try {
+        const result = await ctx.loaders.assortmentItem.getItemsByPid.load(payload);
+        return result?.searchResults || [];
+      } catch (err) {
+        console.error("Error in searchItemByProduct:", err);
+      }
+    },
+  },
+
+  AssortmentItemDocument: {
+    tcinInfo: async (parent, args, ctx) => {
+      try {
+        const response = await ctx.loaders.coronaItems.getItemDetailsForRefresh(parent.tcin);
+        if (response?.data?.item) {
+          return response.data.item;
+        }
+
+        return null;
+      } catch (err) {
+        console.error("Error in AssortmentItemDocument.tcinInfo:", err);
+        return null;
+      }
+    },
+  },
+  AssortmentItemVendor: {
+    businessPartner: async (parent, args, ctx) => {
+      if (parent.id) {
+        const bp = await ctx.loaders.vmm.getBusinessPartnerByGmsVendorId.load(parent.id)
+        return bp
+      }
+
+      return null
+    },    
+  },
+  Corona_Tcin: {
+    dpci: (parent) => parent?.alternateIdentifiers?.dpci || null,
+
+    productIds: (parent) =>
+      parent?.merchandising?.assortmentPlanning?.pids || [],
+
+    vendorIds: (parent) =>
+      parent?.vendors?.map((v) => v.id) || [],
+
+    createTimestamp: (parent) =>
+      parent?.provenances?.find((p) => p.layer === 'APEX')?.sourceCreatedTimestamp || null,
+
+    codeNames: (parent) => {
+      const details = parent?.relationship?.details || [];
+      return details
+        .filter((detail) => detail?.type)
+        .map((detail) => ({
+          code: detail.type.code,
+          name: detail.type.name,
+        }));
+    },
+
+    parentTcins: (parent) => {
+      const details = parent?.relationship?.details || [];
+      const tcins = details
+        .flatMap((detail) => detail?.parentIdentifiers?.tcins || [])
+        .filter(Boolean);
+      return [...new Set(tcins)];
+    },
+  },
+};

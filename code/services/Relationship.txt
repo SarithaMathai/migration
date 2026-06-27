@@ -1,0 +1,160 @@
+import _ from 'lodash'
+import qs from 'querystring'
+
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+
+import SparkService from './SparkService'
+
+export default class RelationshipService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.getByID = loadOne(
+      ([{ id, type, maxDepth }]) => {
+        if (type && Number.isInteger(maxDepth)) {
+          return `${
+            this.endpoint
+          }/${id}?resourceType=${type}&maxDepth=${maxDepth}`
+        } else if (type) {
+          return `${this.endpoint}/${id}?resourceType=${type}`
+        } else if (Number.isInteger(maxDepth)) {
+          return `${this.endpoint}/${id}?maxDepth=${maxDepth}`
+        } else {
+          return `${this.endpoint}/${id}`
+        }
+      },
+      this.headers,
+      {
+        transform: (id, data) => deepToCamelCase(data),
+        batch: false,
+      },
+      this.logContext,
+    )
+    this.getWhereUsedByID = loadOne(
+      ([{ id, type, maxDepth }]) => {
+        if (type && Number.isInteger(maxDepth)) {
+          return `${
+            this.endpoint
+          }/where_used/${id}?resourceType=${type}&maxDepth=${maxDepth}`
+        } else if (type) {
+          return `${this.endpoint}/where_used/${id}?resourceType=${type}`
+        } else if (Number.isInteger(maxDepth)) {
+          return `${this.endpoint}/where_used/${id}?maxDepth=${maxDepth}`
+        } else {
+          return `${this.endpoint}/where_used/${id}`
+        }
+      },
+      this.headers,
+      {
+        transform: (id, data) => deepToCamelCase(data),
+        batch: false,
+      },
+      this.logContext,
+    )
+    this.create = postOne(
+      this.endpoint,
+      this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+    this.update = putOne(
+      ({ id }) => `${this.endpoint}/${id}`,
+      this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+        transformRequest: ({ removeRelationshipDto }) =>
+          deepToSnakeCase(removeRelationshipDto),
+        batch: false,
+      },
+      this.logContext,
+    )
+    this.delete = deleteOne(id => `${this.endpoint}/${id}`, this.headers)
+
+    this.createBulkRelationship = postOne(
+      `${this.endpoint}/bulk_create`,
+      this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    /**
+     * @param id - root resource ID to find node relationships for
+     * @param params - Optional query parameters {type, maxDepth, excludeTypeList, includeBranches, includeNodeTypes }
+     * @returns {Promise<*>} - a non null array of relationship nodes.
+     */
+    this.findRelationships = async (id, params) => {
+      const relationships = await loadListing(`${this.endpoint}/${id}`,
+        this.headers,
+        {
+          transform: data => deepToCamelCase(data),
+          batch: false,
+        },
+        this.logContext).load(params)
+      if (!relationships.length || _.isEmpty(relationships[0].nodes)) {
+        return []
+      }
+      return relationships[0].nodes
+    }
+
+    // Use findRelationships instead, or write tests for this!
+    this.searchByIds = loadListing(
+      ({ id, type, maxDepth, excludeTypeList, includeBranches, includeNodeTypes, includeMigratedV3Attachments }) => {
+        let relationShipQueryStr = type ? 'resourceType=' + type : ''
+
+        // TODO could we try to use qs.stringify here?
+        // Try to look at other examples in this repo or line 110
+        if (Number.isInteger(maxDepth)) {
+          if (relationShipQueryStr !== '') { relationShipQueryStr += '&' }
+          relationShipQueryStr += ('maxDepth=' + maxDepth)
+        }
+        if (excludeTypeList) {
+          if (relationShipQueryStr !== '') { relationShipQueryStr += '&' }
+          relationShipQueryStr += ('excludeTypeList=' + excludeTypeList)
+        }
+        if (includeMigratedV3Attachments === true) {
+          if (relationShipQueryStr !== '') { relationShipQueryStr += '&' }
+          relationShipQueryStr += ('migrated=true')
+        }
+
+        const includeParams = {
+          ...(includeBranches && { includeBranches: includeBranches.join(',') }),
+          ...(includeNodeTypes && { includeNodeTypes: includeNodeTypes.join(',') }),
+        }
+
+        return `${this.endpoint}/${id}?${relationShipQueryStr}&${qs.stringify(includeParams)}`
+      },
+      this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.whereUsedSearch = loadListing(
+      ({ id, ...queryParams }) => {
+        return `${this.endpoint}/where_used/${id}?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+        batch: false,
+      },
+      this.logContext)
+  }
+}

@@ -1,0 +1,125 @@
+import SparkService from '../SparkService'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import loadListing from '../../utils/loadListing'
+import loadOne from '../../utils/loadOne'
+import putOne from '../../utils/putOne'
+import postOne from '../../utils/postOne'
+
+export default class ProductAskService extends SparkService {
+  constructor(endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/product_ask/v1`
+
+    this.getByID = () =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+        },
+        {
+          transform: (id, productAsk) => [deepToCamelCase(productAsk)],
+          batch: false,
+        },
+        logContext,
+      )
+    this.searchProductAsks = loadListing(
+      ({ from, to, page, size, classIds, departmentIds, productIds, sortBy = undefined, sortOrder = undefined }) => {
+        const params = {
+          from,
+          to,
+          page: page || 0,
+          size: size || 200,
+          class_ids: classIds && classIds.length ? classIds : [],
+          department_ids: departmentIds && departmentIds.length ? departmentIds : [],
+        }
+        // no need to send undefined params
+        if (sortBy !== undefined) {
+          params.sort_by = sortBy;
+        }
+        if (sortOrder !== undefined) {
+          params.sort_order = sortOrder;
+        }
+        if (productIds && productIds.length) {
+          params.product_ids = productIds;
+        }
+        return `${this.endpoint}/search?${new URLSearchParams(params)}`;
+      },
+      this.headers,
+      {
+        transform: productAsks => deepToCamelCase(productAsks),
+      },
+      this.logContext,
+    )
+
+    this.associateProductAsk = (askId) => putOne(
+      `${this.endpoint}/${askId}/associate_products`,
+      this.headers,
+      {
+        transform: response => deepToCamelCase(response),
+        transformRequest: request => request,
+      },
+      this.logContext,
+    )
+
+    this.getAssociateProductAsks = (permissionJWT, productId) => {
+      return loadListing(
+        () => `${this.endpoint}/byProductId/${productId}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: ask => deepToCamelCase(ask),
+        },
+        logContext,
+      ).load()
+    };
+    this.updateRecommendationStatus = (statusInput) => postOne(
+      `${this.endpoint}/update-recommendation-status`,
+      this.headers,
+      {
+        transform: response => deepToCamelCase(response),
+        transformRequest: request => {
+          return deepToSnakeCase(request)
+        },
+      },
+      this.logContext,
+    ).load(statusInput)
+    this.compareAskVersions = (askIds, startDate, endDate) => postOne(
+      `${this.endpoint}/versions/compare`,
+      this.headers,
+      {
+        transform: rawResponse => {
+        const response = deepToCamelCase(rawResponse)
+          const formattedContent = response?.map(version => {
+            const fieldChanges = version.fieldChanges?.map(change => ({
+              ...change,
+              // fields can be of many types, stringify all and allow the UI to format
+              oldValue: JSON.stringify(change.oldValue),
+              newValue: JSON.stringify(response.newValue),
+            }))
+            return {...version, fieldChanges}
+          }) 
+          return formattedContent
+        },
+        transformRequest: request => {
+          return deepToSnakeCase(request)
+        },
+      },
+    ).load({askIds, startDate, endDate})
+    this.moveProductsTo = (fromAskId, toAskId, productIds) => putOne(
+      `${this.endpoint}/${fromAskId}/move_products_to/${toAskId}`,
+      this.headers,
+      {
+        transform: res => deepToCamelCase(res),
+        transformRequest: req => deepToSnakeCase(req),
+      },
+    ).load(productIds)
+    this.removeProductsFromAsk = (fromAskId, productIds) => putOne(
+      `${this.endpoint}/${fromAskId}/remove_products`,
+      this.headers,
+      {
+        transform: res => deepToCamelCase(res),
+        transformRequest: req => deepToSnakeCase(req),
+      },
+    ).load(productIds)
+  }
+}

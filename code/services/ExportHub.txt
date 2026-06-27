@@ -1,0 +1,26 @@
+import {
+  deepToCamelCase,
+  deepToSnakeCase,
+} from '../utils/convertFunctions'
+
+import postOne from '../utils/postOne'
+import SparkService from './SparkService'
+
+export default class ExportHubService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = process.env.EXPORT_HUB_ENDPOINT || endpoint
+    this.endpointv1 = this.endpoint + '/enterprise_product_development_export/v1'
+
+    this.exportWorkspaceExcel = postOne(
+      () => `${this.endpointv1}/workspace`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => data && deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+  }
+}

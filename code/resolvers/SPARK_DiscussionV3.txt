@@ -1,0 +1,543 @@
+import _ from 'lodash'
+import {
+  getUserPermissionsJWT,
+  removeRelationship,
+  addBulkRelationShip,
+} from '../utils/commonLoaders'
+import { canHaveOnlySingleDiscussion, createDiscussionThreadRelationshipHelper } from '../utils/discussionUtils'
+import SPARK_UserGroup from './SPARK_UserGroup'
+import SPARK_SampleV2 from './SPARK_SampleV2'
+
+export default {
+  Query: {
+    getVersionedDiscussions: async (parent, { id }, ctx) => {
+      const token = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.discussionV3.getVersionedDiscussions(token).load(id)
+    },
+    getVersionedDiscussionThreads: async (parent, { id }, ctx) => {
+      const token = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.discussionV3.getVersionedDiscussionThreads(token).load(id)
+    },
+  },
+
+  Mutation: {
+    addDiscussionV3: async (parent, { sparkDiscussion, attachments }, ctx) => {
+      await createDiscussion(sparkDiscussion, attachments, ctx)
+      const discussion = await ctx.loaders.discussionV3.createV3.load(
+        sparkDiscussion,
+      )
+
+      if (discussion.validationErrors || discussion.message) {
+        throw new Error('Error creating discussion \n' + JSON.stringify(discussion))
+      }
+
+      return discussion
+    },
+
+    coreAddDiscussionV3: async (parent, { sparkDiscussion, attachments }, ctx) => {
+      await createDiscussion(sparkDiscussion, attachments, ctx, true)
+      const discussion = await ctx.loaders.discussionV3.createV3.load(
+        sparkDiscussion,
+      )
+      if (discussion.validationErrors || discussion.message) {
+        throw new Error('Error creating discussion \n' + JSON.stringify(discussion))
+      }
+      return discussion
+    },
+
+    addBulkDiscussionV3: async (parent, { sparkDiscussions, attachments }, ctx) => {
+      await Promise.all(sparkDiscussions.discussionDtoList.map(async sparkDiscussion => {
+        return createDiscussion(sparkDiscussion, attachments, ctx)
+      }))
+
+      return ctx.loaders.discussionV3.createBulkV3.load(
+        sparkDiscussions,
+      )
+    },
+
+    deleteParticipantV3: async (
+      parent,
+      { id, teamId, userId, partnerId, designPartnerId },
+      ctx,
+    ) => {
+      const aclPermissionJWT = await getUserPermissionsJWT(id, ctx)
+      let deleteParticipants = {}
+      if (!teamId || teamId === 'users') {
+        deleteParticipants.users = [userId]
+        if (partnerId) {
+          deleteParticipants.partners = [partnerId]
+        } else if (!_.isEmpty(designPartnerId)) {
+          deleteParticipants.designPartners = [designPartnerId]
+        }
+      } else {
+        const deletedTeamsList = []
+        if (userId) {
+          deletedTeamsList.push({ teamId: teamId, users: [userId] })
+        } else {
+          deletedTeamsList.push({ teamId: teamId })
+        }
+        deleteParticipants.teams = deletedTeamsList
+        if (partnerId) {
+          deleteParticipants.partners = [partnerId]
+        } else if (!_.isEmpty(designPartnerId)) {
+          deleteParticipants.designPartners = [designPartnerId]
+        }
+      }
+      deleteParticipants = { ...deleteParticipants, enableAcl: true }
+      const removedParticipant = await ctx.loaders.discussion
+        .deleteParticipantsV2(aclPermissionJWT)
+        .load(deleteParticipants, { id })
+      return removedParticipant
+    },
+
+    updateDiscussionV3: async (parent, { id, sparkDiscussion }, ctx) => {
+      const aclPermissionJWT = await getUserPermissionsJWT(id, ctx)
+      const deleteNodes = []
+      const isCritical = _.get(sparkDiscussion, 'discussion.isCritical', false)
+      sparkDiscussion.partnerIds = sparkDiscussion.partnerIds.filter(Number)
+
+      const deleteAttachmentList = []
+      if (!_.isEmpty(sparkDiscussion.removedFiles)) {
+        const attachmentPermissionJWT = await getUserPermissionsJWT(
+          sparkDiscussion.removedFiles,
+          ctx,
+        )
+        _.forEach(sparkDiscussion.removedFiles, document => {
+          deleteAttachmentList.push({
+            documentId: document,
+          })
+          deleteNodes.push({
+            id: document,
+          })
+        })
+        const bulkAttachmentDeleteDTO = { attachments: deleteAttachmentList }
+        await ctx.loaders.attachment
+          .archiveAttachmentBulkV2(attachmentPermissionJWT)
+          .load(bulkAttachmentDeleteDTO)
+        await removeRelationship({
+          ctx,
+          rootId: id,
+          nodes: deleteNodes,
+        })
+      }
+      const deleteParticipants = {}
+      if (!_.isEmpty(sparkDiscussion.deletedTeams)) {
+        const deletedTeamsList = []
+        sparkDiscussion.deletedTeams.map(team => {
+          deletedTeamsList.push({ teamId: team })
+        })
+        deleteParticipants.teams = deletedTeamsList
+      }
+      if (!_.isEmpty(sparkDiscussion.deletedUsers)) {
+        deleteParticipants.users = sparkDiscussion.deletedUsers
+      }
+      if (!_.isEmpty(sparkDiscussion.deletedPartnersId)) {
+        deleteParticipants.partners = sparkDiscussion.deletedPartnersId
+        deleteParticipants.enableAcl = ctx.featureConfig.true
+      }
+      if (!_.isEmpty(deleteParticipants)) {
+        await ctx.loaders.discussion
+          .deleteParticipantsV2(aclPermissionJWT)
+          .load(deleteParticipants, { id })
+      }
+      if (!_.isEmpty(sparkDiscussion.attachments)) {
+        const relationshipNodes = [
+          {
+            newRelationshipRootDTO: {
+              root: sparkDiscussion.discussion.discussionId,
+              rootResourceType: 'discussions',
+            },
+            newRelationshipNodeDTO: sparkDiscussion.attachments.map(file => {
+              return {
+                node: file.documentId,
+                nodeResourceType: 'attachments',
+              }
+            }),
+          },
+        ]
+        const relationship = await addBulkRelationShip(ctx, relationshipNodes)
+        if (relationship.status && relationship.status >= 400) {
+          return Promise.reject(relationship.error)
+        }
+        const permissionJWT = await getUserPermissionsJWT(
+          [...sparkDiscussion.attachments.map(attachment => attachment.documentId), ...sparkDiscussion.existingAttachmentIds],
+          ctx,
+        )
+        const productPacketPropsForNewfile = sparkDiscussion.attachments.map(att => ({ documentId: att.documentId, productPacketProps: sparkDiscussion.partnerIds.map(id => ({ partnerId: id, critical: isCritical })) }))
+        const productPacketPropsForOldfile = sparkDiscussion.existingAttachmentIds ? sparkDiscussion.existingAttachmentIds.map(att => ({ documentId: att, productPacketProps: sparkDiscussion.partnerIds.map(id => ({ partnerId: id, critical: isCritical })) })) : []
+        const productPacketProps = [...productPacketPropsForNewfile, ...productPacketPropsForOldfile]
+
+        await ctx.loaders.attachment.bulkUpdateAttributes(permissionJWT).load({ attachments: productPacketProps })
+      } else if (sparkDiscussion.deletedPartnersId && sparkDiscussion.existingAttachmentIds.length) {
+        const permissionJWT = await getUserPermissionsJWT(
+          sparkDiscussion.existingAttachmentIds,
+          ctx,
+        )
+        const productPacketProps = sparkDiscussion.existingAttachmentIds.map(att => ({ documentId: att, productPacketProps: sparkDiscussion.partnerIds.map(id => ({ partnerId: id, critical: isCritical })) }))
+        await ctx.loaders.attachment.bulkUpdateAttributes(permissionJWT).load({ attachments: productPacketProps })
+      }
+      if (!_.isEmpty(sparkDiscussion.participants)) {
+        sparkDiscussion.participants = { ...sparkDiscussion.participants, enableAcl: true }
+        await ctx.loaders.discussionV3
+          .updateParticipantsV3(aclPermissionJWT)
+          .load(sparkDiscussion.participants, { id })
+      }
+      sparkDiscussion.discussion = { ...sparkDiscussion.discussion, partnerId: sparkDiscussion.partnerIds, enableAcl: true }
+      const discussionList = await ctx.loaders.discussionV3
+        .updateV3(aclPermissionJWT)
+        .load(sparkDiscussion.discussion)
+      return discussionList
+    },
+
+    coreUpdateDiscussionV3: async (parent, { id, sparkDiscussion }, ctx) => {
+      const aclPermissionJWT = await getUserPermissionsJWT(id, ctx)
+      const deleteNodes = []
+      const isCritical = _.get(sparkDiscussion, 'discussion.isCritical', false)
+      sparkDiscussion.partnerIds = sparkDiscussion.partnerIds.filter(Number)
+
+      const deleteAttachmentList = []
+      if (!_.isEmpty(sparkDiscussion.removedFiles)) {
+        const attachmentPermissionJWT = await getUserPermissionsJWT(
+          sparkDiscussion.removedFiles,
+          ctx,
+        )
+        _.forEach(sparkDiscussion.removedFiles, document => {
+          deleteAttachmentList.push({
+            documentId: document,
+          })
+          deleteNodes.push({
+            id: document,
+          })
+        })
+        const bulkAttachmentDeleteDTO = { attachments: deleteAttachmentList }
+        await ctx.loaders.attachment
+          .archiveAttachmentBulkV2(attachmentPermissionJWT)
+          .load(bulkAttachmentDeleteDTO)
+        await removeRelationship({
+          ctx,
+          rootId: id,
+          nodes: deleteNodes,
+        })
+      }
+
+      if (!_.isEmpty(sparkDiscussion.attachments)) {
+        const relationshipNodes = [
+          {
+            newRelationshipRootDTO: {
+              root: sparkDiscussion.discussion.discussionId,
+              rootResourceType: 'discussions',
+            },
+            newRelationshipNodeDTO: sparkDiscussion.attachments.map(file => {
+              return {
+                node: file.documentId,
+                nodeResourceType: 'attachments_v3',
+              }
+            }),
+          },
+        ]
+        const relationship = await addBulkRelationShip(ctx, relationshipNodes)
+        if (relationship.status && relationship.status >= 400) {
+          return Promise.reject(relationship.error)
+        }
+        const permissionJWT = await getUserPermissionsJWT(
+          [...sparkDiscussion.attachments.map(attachment => attachment.documentId), ...sparkDiscussion.existingAttachmentIds],
+          ctx,
+        )
+        const productPacketPropsForNewfile = sparkDiscussion.attachments.map(att => ({ humanId: att.documentId, productPacketProps: sparkDiscussion.partnerIds.map(id => ({ partnerId: id, critical: isCritical })) }))
+        const productPacketPropsForOldfile = sparkDiscussion.existingAttachmentIds ? sparkDiscussion.existingAttachmentIds.map(att => ({ humanId: att, productPacketProps: sparkDiscussion.partnerIds.map(id => ({ partnerId: id, critical: isCritical })) })) : []
+        const productPacketProps = [...productPacketPropsForNewfile, ...productPacketPropsForOldfile]
+
+        await ctx.loaders.attachment.bulkUpdateAttributes(permissionJWT).load({ attachments: productPacketProps })
+      } else if (sparkDiscussion.deletedPartnersId && sparkDiscussion.existingAttachmentIds.length) {
+        const permissionJWT = await getUserPermissionsJWT(
+          sparkDiscussion.existingAttachmentIds,
+          ctx,
+        )
+        const productPacketProps = sparkDiscussion.existingAttachmentIds.map(att => ({ humanId: att, productPacketProps: sparkDiscussion.partnerIds.map(id => ({ partnerId: id, critical: isCritical })) }))
+        await ctx.loaders.attachment.bulkUpdateAttributes(permissionJWT).load({ attachments: productPacketProps })
+      }
+      const updatedSparkDiscussion = { ...sparkDiscussion.discussion, ...sparkDiscussion }
+      delete updatedSparkDiscussion.discussion
+      const userGroupObject = getUserGroup(updatedSparkDiscussion)
+      const userGroup = await SPARK_UserGroup.Mutation.updateUserGroup(null, { userGroup: userGroupObject }, ctx)
+      if (userGroup.validationErrors || userGroup.message) {
+        throw new Error('Error Updating user group \n' + JSON.stringify(userGroup))
+      }
+
+      sparkDiscussion.discussion = { ...sparkDiscussion.discussion, partnerId: sparkDiscussion.partnerIds, enableAcl: true }
+      const discussionList = await ctx.loaders.discussionV3
+        .updateV3(aclPermissionJWT)
+        .load(sparkDiscussion.discussion)
+      if (discussionList.validationErrors || discussionList.message) {
+        throw new Error('Error Updating Discussions \n' + JSON.stringify(discussionList))
+      }
+      const newDiscussionObject = { ...discussionList, ...userGroup }
+      return newDiscussionObject
+    },
+
+    updateParticipantsV3: async (parent, { id, participants }, ctx) => {
+      const aclPermissionJWT = await getUserPermissionsJWT(id, ctx)
+      participants = { ...participants, enableAcl: true }
+      await ctx.loaders.discussionV3
+        .updateParticipantsV3(aclPermissionJWT)
+        .load(participants, {
+          id,
+        })
+    },
+
+    coreUpdateParticipantsV3: async (parent, { id, participants, relatedResources, resourceType }, ctx) => {
+      const participantObject = { discussionId: id, participants: participants, relatedResources: relatedResources, resourceType: resourceType }
+      const userGroupObject = getUserGroup(participantObject)
+      const userGroup = await SPARK_UserGroup.Mutation.updateUserGroup(null, { userGroup: userGroupObject }, ctx)
+      if (userGroup && (userGroup.validationErrors || userGroup.message)) {
+        throw new Error('Error Updating user group \n' + JSON.stringify(userGroup))
+      }
+
+      // Backend Compatible participants for PID,WRK,SMP TODO: Once the discussion core is live and thoroughly tested we may remove it
+      if (resourceType === 'sample') {
+        const teams = participants.teams.map(team => {
+          return {
+            ...team,
+            users: team.usersInfo,
+          }
+        })
+        const users = participants.users
+        const samples = {
+          updateSamples: [{
+            id,
+            discussionParticipants: {
+              users,
+              teams,
+            },
+          }],
+        }
+        await SPARK_SampleV2.Mutation.updateSamplesV2(null, { samples }, ctx)
+      }
+
+      if (resourceType === 'workspace' || resourceType === 'product') {
+        const teams = participants.teams.map(team => {
+          return {
+            ...team,
+            users: team.usersInfo,
+          }
+        })
+        const users = participants.users
+        const updateParticipants = { teams, users }
+        const aclPermissionJWT = await getUserPermissionsJWT(id, ctx)
+        participants = { ...updateParticipants, enableAcl: true }
+        await ctx.loaders.discussionV3
+          .updateParticipantsV3(aclPermissionJWT)
+          .load(participants, {
+            id,
+          })
+      }
+      return 'Updated Participants'
+    },
+
+    // After userGroup migration, there is no requirement for coreDeleteParticipantsV3, usergroup update can be achieved by coreUpdateParticipantsV3 endpoint
+    coreDeleteParticipantsV3: async (parent, { id, participants, relatedResources, resourceType, removedUserId, teamId, removedPartnerIds, removedDesignPartnerIds }, ctx) => {
+      const participantObject = { discussionId: id, participants: participants, relatedResources: relatedResources, resourceType: resourceType }
+      const userGroupObject = getUserGroup(participantObject)
+      const userGroup = await SPARK_UserGroup.Mutation.updateUserGroup(null, { userGroup: userGroupObject }, ctx)
+      if (userGroup && (userGroup.validationErrors || userGroup.message)) {
+        throw new Error('Error Updating user group \n' + JSON.stringify(userGroup))
+      }
+      // Backend Compatible participants for PID,WRK,SMP TODO: Once the discussion core is live and thoroughly tested we may remove it
+      if (resourceType === 'sample') {
+        const teams = participants.teams.map(team => {
+          return {
+            ...team,
+            users: team.usersInfo,
+          }
+        })
+        const users = participants.users
+        const samples = {
+          updateSamples: [{
+            id,
+            discussionParticipants: {
+              users,
+              teams,
+            },
+          }],
+        }
+        await SPARK_SampleV2.Mutation.updateSamplesV2(null, { samples }, ctx)
+      }
+
+      if (resourceType === 'workspace' || resourceType === 'product') {
+        const aclPermissionJWT = await getUserPermissionsJWT(id, ctx)
+        let deleteParticipants = {}
+
+        if (!teamId || teamId === 'users') {
+          deleteParticipants.users = [removedUserId]
+          if (removedPartnerIds && removedPartnerIds.length > 0) {
+            deleteParticipants.partners = removedPartnerIds
+          } else if (!_.isEmpty(removedDesignPartnerIds)) {
+            deleteParticipants.designPartners = [removedDesignPartnerIds]
+          }
+        } else {
+          const deletedTeamsList = []
+          if (removedUserId) {
+            deletedTeamsList.push({ teamId: teamId, users: [removedUserId] })
+          } else {
+            deletedTeamsList.push({ teamId: teamId })
+          }
+          deleteParticipants.teams = deletedTeamsList
+          if (removedPartnerIds && removedPartnerIds.length > 0) {
+            deleteParticipants.partners = removedPartnerIds
+          } else if (!_.isEmpty(removedDesignPartnerIds)) {
+            deleteParticipants.designPartners = [removedDesignPartnerIds]
+          }
+        }
+        deleteParticipants = { ...deleteParticipants, enableAcl: true }
+        const removedParticipant = await ctx.loaders.discussion
+          .deleteParticipantsV2(aclPermissionJWT)
+          .load(deleteParticipants, { id })
+        return removedParticipant
+      }
+      return 'Deleted Participant'
+    },
+
+    cloneFilesForBulkDiscussion: async (parent, { attachmentIds, cloneReferences }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(attachmentIds, ctx)
+
+      const response = await Promise.all(
+        attachmentIds.map(async (id) => {
+          const clones = await ctx.loaders.attachment.cloneAttachmentV3(permissionJWT)
+            .load({ cloneReferences }, id)
+          return clones
+        }))
+
+      return _.flatten(response)
+    },
+
+    discussionReadByUsers: async (parent, { discussionIds, discussionThreadIds, readByUserList }, ctx) => {
+      const aclPermissionJWT = await getUserPermissionsJWT([discussionIds, discussionThreadIds, readByUserList], ctx)
+      const readByusersResult = await ctx.loaders.discussion.discussionReadByUsers(aclPermissionJWT).load({
+        discussionIds: discussionIds,
+        discussionThreadIds: discussionThreadIds,
+        readByUserList: readByUserList,
+      })
+      if (readByusersResult.validationErrors || readByusersResult.message) {
+        throw new Error('Error on calling readByusers API \n' + JSON.stringify(readByusersResult))
+      }
+      return readByusersResult
+    },
+  },
+
+  SPARK_VersionedDiscussion: {
+    updatedBy: (discussion, args, ctx) =>
+      discussion.updatedBy && ctx.loaders.userAttributes.getUserByID.load(discussion.updatedBy),
+  },
+  SPARK_VersionedDiscussionThread: {
+    updatedBy: (reply, args, ctx) =>
+      reply.updatedUser && ctx.loaders.userAttributes.getUserByID.load(reply.updatedUser),
+    updatedAt: reply => reply && reply.updatedTs && new Date(reply.updatedTs).toISOString(),
+  },
+  SPARK_DiscussionReadByUsers: {
+    discussions: (result) => result.discussions,
+    discussionThreads: (result) => result.discussionThreads,
+  },
+}
+
+export function getUserGroup (sparkDiscussion) {
+  const participantsList = sparkDiscussion.participants
+  const discussionId = sparkDiscussion.discussionId
+  const partnerId = sparkDiscussion.partnerId
+  const designPartnerId = sparkDiscussion.designPartnerId
+  const relatedResources = sparkDiscussion.relatedResources
+  const teams = participantsList.teams ? participantsList.teams.map(team => {
+    const teamsObj = {
+      'teamId': team.teamId,
+      'teamName': team.teamName,
+      'businessPartnerId': team.businessPartnerId,
+      'partnerType': team.partnerType,
+      'edited': team.edited,
+      'usersInfo': team.users || team.usersInfo,
+    }
+    return teamsObj
+  }) : []
+
+  const userGroup = {
+    'resourceId': discussionId,
+    'participantDetails': {
+      'partnerId': partnerId,
+      'designPartnerId': designPartnerId,
+      'users': participantsList.users,
+      'teams': teams,
+    },
+    'relatedResources': relatedResources,
+  }
+  return userGroup
+}
+
+export async function createDiscussion (sparkDiscussion, attachments, ctx, isAttachmentsV3 = false) {
+  let relationshipNodes = []
+  const resourceType = sparkDiscussion.resourceType
+  const resourceId = sparkDiscussion.resourceId
+  let derivePartnerIds = true
+
+  let discussionType = 'discussions'
+  let discussionIdentifier = sparkDiscussion.discussionId
+  let criticalVal = false
+  if (canHaveOnlySingleDiscussion(resourceId)) {
+    relationshipNodes = createDiscussionThreadRelationshipHelper(sparkDiscussion.discussionId, sparkDiscussion.discussionThreadId)
+    discussionType = 'discussionThreads'
+    discussionIdentifier = sparkDiscussion.discussionThreadId
+    criticalVal = sparkDiscussion.critical
+    derivePartnerIds = false
+  }
+
+  relationshipNodes.push(
+    {
+      newRelationshipRootDTO: {
+        root: resourceId,
+        rootResourceType: resourceType,
+      },
+      newRelationshipNodeDTO: [
+        {
+          node: sparkDiscussion.discussionId,
+          nodeResourceType: 'discussions',
+        },
+      ],
+    },
+  )
+  if (!_.isEmpty(attachments)) {
+    relationshipNodes.push({
+      newRelationshipRootDTO: {
+        root: discussionIdentifier,
+        rootResourceType: discussionType,
+      },
+      newRelationshipNodeDTO: attachments.filter(attachment => attachment.resource.id === discussionIdentifier).map(file => {
+        return {
+          node: file.documentId,
+          nodeResourceType: isAttachmentsV3 ? 'attachments_v3' : 'attachments',
+        }
+      }),
+    })
+  }
+
+  if (!_.isEmpty(relationshipNodes)) {
+    const relationship = await addBulkRelationShip(ctx, relationshipNodes)
+    if (relationship.status && relationship.status >= 400) {
+      return Promise.reject(relationship.error)
+    }
+  }
+  // Create bulk attachment should happen only after creating relationships.
+  if (!_.isEmpty(attachments)) {
+    const permissionJWT = await getUserPermissionsJWT(
+      attachments.map(attachment => attachment.documentId),
+      ctx,
+    )
+    const productPacketProps = attachments.filter(attachment => attachment.resource.id === discussionIdentifier).map(att => ({
+      ...isAttachmentsV3 ? { humanId: att.documentId } : { documentId: att.documentId },
+      relatedResources: att.relatedResources,
+      productPacketProps: sparkDiscussion.partnerId.map(id => ({ partnerId: id, critical: criticalVal })),
+      draft: sparkDiscussion.draft,
+    }))
+    if (!_.isEmpty(productPacketProps)) {
+      await ctx.loaders.attachment.bulkUpdateAttributes(permissionJWT).load({ attachments: productPacketProps })
+    }
+    sparkDiscussion = { ...sparkDiscussion, enableAcl: true, derivePartnerIds: derivePartnerIds }
+  }
+  return 'Discussion Created'
+}

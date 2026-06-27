@@ -1,0 +1,52 @@
+import { IG_DEPARTMENT_PATH, SPARK_GATEWAY_API_KEY } from '../config/constants'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import SparkService from './SparkService'
+
+export default class IgDepartmentService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.igKey = SPARK_GATEWAY_API_KEY
+
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: `application/json`,
+    }
+
+    this.getPage = loadListing(
+      query =>
+        `${this.endpoint}/${IG_DEPARTMENT_PATH}?key=${this.igKey}&department_id=${query}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getAllDepartments = loadListing(
+      () =>
+        `${this.endpoint}/${IG_DEPARTMENT_PATH}?key=${this.igKey}&per_page=1000`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getDepartmentsByDivision = loadListing(
+      ({ divisionId, query }) =>
+        `${this.endpoint}/${IG_DEPARTMENT_PATH}?key=${this.igKey}&division_id=${divisionId}&department_id=${query}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getByID = loadOne(
+      id =>
+        `${this.endpoint}/${IG_DEPARTMENT_PATH}?key=${this.igKey}&department_id=${id}`,
+      this.headers,
+      {
+        transform: (ids, departments) => departments && departments.slice(0, 1),
+        batch: false,
+      },
+      this.logContext,
+    )
+  }
+}

@@ -1,0 +1,12 @@
+import { buildPOSTBodyForGreenfieldExport } from '../../utils/Reporting/queryUtil'
+import { GREENFIELD_CARD_IDS } from '../../utils/constants'
+
+export default {
+  Mutation: {
+    createExportRequest: async (parent, { id, exportType, filtersInput }, ctx) => {
+      const formattedQuery = buildPOSTBodyForGreenfieldExport(filtersInput, id, exportType)
+      const result = await ctx.loaders.insightsIntegration.createExportRequest().load(formattedQuery, { id: GREENFIELD_CARD_IDS[id], exportType })
+      return result
+    },
+  },
+}

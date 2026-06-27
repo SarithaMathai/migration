@@ -1,0 +1,79 @@
+import { SPARK_CAPABILITY_TOKEN_HEADER_KEY } from '../../config/constants'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import putOne from '../../utils/putOne'
+import postOne from '../../utils/postOne'
+import loadOne from '../../utils/loadOne'
+import loadListing from '../../utils/loadListing'
+
+export default class WatchlistService {
+  constructor (endpoint, headers, logContext) {
+    this.endpoint = `${endpoint}/enterprise_product_development_products/watchlist/v1`
+
+    this.getWatchlistReasons = loadListing(
+      `${this.endpoint}/watchlist_reasons`,
+      headers,
+      {},
+      logContext,
+    )
+
+    this.getWatchlistInspectionActions = loadListing(
+      `${this.endpoint}/watchlist_inspection_action_types`,
+      headers,
+      {},
+      logContext,
+    )
+
+    this.getWatchlistByIds = (permissionJWT) => loadListing(
+      ids => `${this.endpoint}?watchlistIds=${ids}`,
+      { ...headers, [SPARK_CAPABILITY_TOKEN_HEADER_KEY]: permissionJWT },
+      {
+        transform: boms => deepToCamelCase(boms),
+      },
+      logContext,
+    )
+
+    this.createWatchlistEntries = postOne(
+      this.endpoint,
+      headers,
+      {
+        transformRequest: data => deepToSnakeCase(data),
+        transform: data => data && deepToCamelCase(data),
+      },
+      logContext,
+    )
+
+    this.updateWatchlistEntries = putOne(
+      this.endpoint,
+      headers,
+      {
+        transformRequest: data => deepToSnakeCase(data),
+        transform: data => data && deepToCamelCase(data),
+      },
+      logContext,
+    )
+
+    this.getWatchlistVersionsById = (permissionJWT, id) => {
+      return loadListing(
+        `${this.endpoint}/${id}/versions`,
+        { ...headers, [SPARK_CAPABILITY_TOKEN_HEADER_KEY]: permissionJWT },
+        {
+          transform: watchlists => deepToCamelCase(watchlists),
+        }, logContext,
+      ).load()
+    }
+
+    this.getWatchlistVersion = (params) => {
+      return loadOne(
+        () => `${this.endpoint}/${params.id}/versions/${params.version}`,
+        headers,
+        {
+          transform: (ids, json) => [deepToCamelCase(json)],
+          fetchAclToken: true,
+          batch: false,
+          aclIds: [params.id],
+        },
+        this.logContext,
+      )
+    }
+  }
+}

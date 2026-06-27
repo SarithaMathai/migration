@@ -1,0 +1,44 @@
+export default {
+  Query: {
+    getReleasePacketHistory: async (parent, {productId, workspaceId, partnerId}, ctx) => {
+      return ctx.loaders.pdf.history.load({productId, workspaceId, partnerId})
+    },
+    getBulkReleasePacketHistory: async (parent, {releasePacketHistoryRequestDtos}, ctx) => {
+      const bulkReleaseHistory = await ctx.loaders.pdf.bulkReleaseHistory.load({releasePacketHistoryRequestDtos})
+      return (bulkReleaseHistory && bulkReleaseHistory.length > 0 && bulkReleaseHistory.filter((data) => !!(data && data.id))) || []
+    },
+    getProductPacketReports: async (parent, {}, ctx) => {
+      return ctx.loaders.pdf.reports.load()
+    },
+  },
+
+  Mutation: {
+    abortGeneratePdf: (parent, {ids}, ctx) =>
+      ctx.loaders.pdf.abortGeneratePdf.load({ids: ids}),
+    retryPdfGeneration: (parent, {reportId}, ctx) =>
+      ctx.loaders.pdf.retryPdfGeneration.load(null, reportId),
+    generateCoreTechPack: (parent, { sparkTechpackContent }, ctx) =>
+      ctx.loaders.pdf.generateCoreTechPack.load(sparkTechpackContent),
+    generateCoreTechPacksBulk: (parent, { sparkBulkTechpackContent }, ctx) =>
+      ctx.loaders.pdf.generateCoreTechPacksBulk.load(sparkBulkTechpackContent),
+  },
+
+  SPARK_TechPack: {
+    name: techpack => techpack.docName,
+    createdAt: techpack => techpack.createdAt && new Date(techpack.createdAt),
+    updatedAt: techpack => techpack.updatedAt && new Date(techpack.updatedAt),
+    ownerName: (techpack, args, ctx) => techpack.owner && ctx.loaders.userAttributes.getUserByID.load(techpack.owner),
+    productId: techpack => techpack.productId,
+    resourceId: techpack => techpack.resourceId,
+  },
+
+  SPARK_TechPackReports: {
+    ownerName: (techpack, args, ctx) => (techpack.owner && ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(techpack.owner)) || {},
+  },
+
+  SPARK_TechPackArchive: {
+    id: techpack => techpack.id,
+    name: techpack => techpack.docName,
+    status: techpack => techpack.status,
+  },
+}

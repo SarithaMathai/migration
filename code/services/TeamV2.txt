@@ -1,0 +1,67 @@
+import SparkService from './SparkService'
+import { deepToSnakeCase, deepToCamelCase } from '../utils/convertFunctions'
+import { find } from 'lodash'
+
+import loadListing from '../utils/loadListing'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import loadOne from '../utils/loadOne'
+
+export default class TeamServiceV2 extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}/enterprise_product_development_teams/v2`
+    this.headers = headers
+
+    this.create = postOne(this.endpoint,
+      this.headers, {
+        transformRequest: team => deepToSnakeCase(team),
+        transform: team => deepToCamelCase(team),
+        getDataLoader: () => this.getByID,
+      }, this.logContext)
+
+    this.update = permissionJWT => putOne(teamInput =>
+      `${this.endpoint}/${teamInput.teamId}`,
+    { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+    {
+      transformRequest: team => deepToSnakeCase(team),
+      transform: team => deepToCamelCase(team),
+    }, this.logContext)
+
+    this.getByIDs = permissionJWT => loadListing(this.endpoint,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+      { transform: teams => deepToCamelCase(teams) }, this.logContext,
+    )
+
+    this.getById = loadOne(
+      id => `${this.endpoint}?ids=${id}`,
+      this.headers,
+      {
+        transform: (ids, json) =>
+          deepToCamelCase(ids.map(team_id => find(json, { team_id }) || null)),
+        fetchAclToken: true,
+      },
+      this.logContext,
+    )
+
+    this.getTeamType =
+      loadListing(
+        `${this.endpoint}/teams/types`,
+        this.headers,
+        {
+          transform: types => deepToCamelCase(types).teamTypes,
+        },
+        this.logContext,
+      )
+
+    this.getBusinessPartnerType =
+      loadListing(
+        `${this.endpoint}/business_partner/types`,
+        this.headers,
+        {
+          transform: types => deepToCamelCase(types).bpTypes,
+        },
+        this.logContext,
+      )
+  }
+}

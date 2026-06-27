@@ -1,0 +1,273 @@
+import { loadBpsWithType } from '../../utils/vmmUtils'
+import SPARK_WorkspaceV2 from '../SPARK_WorkspaceV2'
+import { getUserGroup } from '../../utils/Product/userGroupUtils'
+import { getUser } from '../../utils/userAttributesUtils'
+import {
+  addBulkRelationShip,
+  removeRelationship,
+  getUserPermissionsJWT,
+} from '../../utils/commonLoaders'
+import _ from 'lodash'
+import { getRetailPriceByDpci } from '../../utils/packaging/getRetailPriceByDpci'
+
+
+export default {
+  Mutation: {
+    addPackaging: async (parent, { sparkPackaging }, ctx) => {
+      const packaging = await ctx.loaders.packaging.addPackaging(sparkPackaging)
+      if (packaging.validationErrors || packaging.message) {
+        throw new Error('Error creating packaging \n' + JSON.stringify(packaging))
+      }
+      return packaging
+    },
+
+    updatePackaging: async (parent, { packagingId, sparkPackaging }, ctx) => {
+      const permissionJWTforId = await getUserPermissionsJWT(packagingId, ctx)
+      sparkPackaging.humanId = packagingId
+      const packaging = await ctx.loaders.packaging.updatePackaging(permissionJWTforId, sparkPackaging)
+      // Attachment removal
+      const deleteNodes = []
+      const deleteAttachmentList = []
+      if (!_.isEmpty(sparkPackaging.attachmentsToRemove)) {
+        const attachmentPermissionJWT = await getUserPermissionsJWT(
+          sparkPackaging.attachmentsToRemove,
+          ctx,
+        )
+        _.forEach(sparkPackaging.attachmentsToRemove, document => {
+          deleteAttachmentList.push({
+            documentId: document,
+          })
+          deleteNodes.push({
+            id: document,
+          })
+        })
+        const bulkAttachmentDeleteDTO = { attachments: deleteAttachmentList }
+        await ctx.loaders.attachment
+          .archiveAttachmentBulkV2(attachmentPermissionJWT)
+          .load(bulkAttachmentDeleteDTO)
+        await removeRelationship({
+          ctx,
+          rootId: packagingId,
+          nodes: deleteNodes,
+        })
+      }
+      // attachment Adding
+      if (!_.isEmpty(sparkPackaging.attachmentsToAdd)) {
+        const relationshipNodes = []
+        relationshipNodes.push({
+          newRelationshipRootDTO: {
+            root: sparkPackaging.humanId,
+            rootResourceType: 'packaging',
+          },
+          newRelationshipNodeDTO: sparkPackaging.attachmentsToAdd.map(file => {
+            return {
+              node: file.documentId,
+              nodeResourceType: 'attachments',
+            }
+          }),
+        })
+        if (!_.isEmpty(relationshipNodes)) {
+          const relationship = await addBulkRelationShip(ctx, relationshipNodes)
+          if (relationship.status && relationship.status >= 400) {
+            return Promise.reject(relationship.error)
+          }
+        }
+        // Create bulk attachment should happen only after creating relationships.
+        const permissionJWT = await getUserPermissionsJWT(
+          sparkPackaging.attachmentsToAdd.map(attachment => attachment.documentId),
+          ctx,
+        )
+        await ctx.loaders.attachment.bulkUpdateAttributes(permissionJWT).load({ attachments: sparkPackaging.attachmentsToAdd })
+      }
+
+      if (packaging.validationErrors || packaging.message) {
+        throw new Error('Error updating packaging \n' + JSON.stringify(packaging))
+      }
+      return packaging
+    },
+    evaluateDieline: async (parent, { dielineId, dielineEvaluation }, ctx) => {
+      const dieline = await ctx.loaders.packaging.evaluateDieline(dielineId, dielineEvaluation)
+      return dieline
+    },
+    bulkAddPackagings: async (parent, { bulkPackagingInput }, ctx) => {
+      const bulkAddResult = await ctx.loaders.packaging.bulkAddPackagings(bulkPackagingInput)
+
+      if (bulkAddResult.validationErrors || bulkAddResult.message) {
+        throw new Error('Error bulk creating packagings \n' + JSON.stringify(bulkAddResult))
+      }
+      return bulkAddResult
+    },
+    bulkUpdatePackagings: async (parent, { bulkPackagingInput }, ctx) => {
+      const packagingIds = bulkPackagingInput.packaging.map(packaging => packaging.humanId)
+      const permissionJWT = await getUserPermissionsJWT(packagingIds, ctx)
+      const bulkUpdateResult = await ctx.loaders.packaging.bulkUpdatePackagings(permissionJWT, bulkPackagingInput)
+
+      if (bulkUpdateResult.validationErrors || bulkUpdateResult.message) {
+        throw new Error('Error bulk updating packagings \n' + JSON.stringify(bulkUpdateResult))
+      }
+      return bulkUpdateResult
+    },
+    exportPackaging: async (parent, { workspaceId, workspaceDescription, ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(workspaceId, ctx)
+      const exportRequestId = await ctx.loaders.packaging.requestPackagingExport(permissionJWT).load(
+        {
+          'workspace_id': workspaceId,
+          'workspace_description': workspaceDescription,
+          'product_ids': ids,
+        },
+      )
+      return exportRequestId
+    },
+    lockPackaging: async (parent, { packagingId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(packagingId, ctx)
+      return ctx.loaders.packaging.lockPackaging(permissionJWT, packagingId)
+    },
+    unlockPackaging: async (parent, { packagingId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(packagingId, ctx)
+      return ctx.loaders.packaging.unlockPackaging(permissionJWT, packagingId)
+    },
+    cloneFilesForDielines: async (parent, { attachmentIds, cloneReferences }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(attachmentIds, ctx)
+
+      const response = await Promise.all(
+        attachmentIds.map(async (id) => {
+          const clones = await ctx.loaders.attachment.cloneAttachmentV3(permissionJWT)
+            .load({ cloneReferences }, id)
+          return clones
+        }))
+
+      return _.flatten(response)
+    },
+    updatePackagingComponentStatus: (parent, { productId, ids, status }, ctx) =>
+      ctx.loaders.packaging.updatePackagingComponentStatus({productId, ids, status}),
+  },
+
+  Query: {
+    getPackagings: async (parent, { page, size, packagingIds, parentIds, workspaceIds, partnerIds, statusIds }, ctx) => {
+      return ctx.loaders.packaging.getPackagings().load({ page, size, packagingIds, parentIds, workspaceIds, partnerIds, statusIds })
+    },
+
+    getDielines: async (parent, { page, size, packagingIds, parentIds, printerIds, statusIds }, ctx) => {
+      const dielines = await ctx.loaders.packaging.getDielines.load({ page, size, packagingIds, parentIds, printerIds, statusIds })
+      return dielines.dielines
+    },
+
+    getPackagingById: async (parent, { packagingId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(packagingId, ctx)
+      const packaging = await ctx.loaders.packaging.getPackagingById(permissionJWT).load(packagingId)
+      return packaging
+    },
+    getPackagingFieldValuesByType: async (parent, { type, ids }, ctx) => {
+      return ctx.loaders.packaging.getPackagingFieldValuesByType(type, ids)
+    },
+    getDielineEvaluationStatuses: async (parent, args, ctx) => {
+      return ctx.loaders.packaging.getDielineEvaluationStatuses()
+    },
+    getCountries: async (parent, { codes }, ctx) => {
+      return ctx.loaders.packaging.getCountries(codes)
+    },
+    getPackagingElastic: async (parent, { parentHumanId }, ctx) => {
+      const { content } = await ctx.loaders.search.getPackagingElastic.load({ q: `parentId: ${parentHumanId}` })
+      return content
+    },
+  },
+
+  SPARK_Packaging: {
+    access: async (packaging, args, ctx) => {
+      // since we are only getting access for one measurement, return the first element of the list returned from service
+      const perms = await ctx.loaders.accessControl.getPermissions.load({
+        resourceIds: [ packaging.humanId ],
+      })
+      return perms && perms.length > 0 ? perms[0] : null
+    },
+    businessPartner: async (packaging, args, ctx) => {
+      const bps = await loadBpsWithType([packaging.businessPartner], ctx)
+      return bps[0]
+    },
+    // deprecated
+    retailPrice: () => 0,
+    suggestedRetailPriceByDPCI: async (packaging, args, ctx) => {
+      const bpId = packaging?.businessPartner?.partnerId || ''
+      if (bpId && packaging.requiresSuggestedRetailPrice) {
+        const allPrinterIds = _.uniq(
+          _.flattenDeep(packaging?.packagingElements?.map(element => element.printers.map(printer => printer.printerId)) || []),
+        )
+        if (allPrinterIds.length) {
+          const dielines = await ctx.loaders.packaging.getDielines.load({ printerIds: allPrinterIds })
+          const dpcis = _.uniq(
+            _.flattenDeep(dielines?.dielines.map(dieline => dieline.reservedDpcis.map((reservedDpci) => reservedDpci.dpci)) || []),
+          )
+          return getRetailPriceByDpci({ dpcis, bpId, productId: packaging.parentId, ctx })
+        }
+      }
+      return []
+    },
+    waveDescription: async (packaging, args, ctx) => {
+      if (packaging.wave) {
+        const hydratedWaveTag = await ctx.loaders.tag.getTag.load(packaging.wave)
+        return hydratedWaveTag ? hydratedWaveTag.name : null
+      } else {
+        return packaging.waveDescription || null
+      }
+    },
+    dielineEvaluators: (packaging, args, ctx) =>
+      packaging.dielineEvaluators?.map(evaluator => ctx.loaders.userAttributes.getUserByID.load(evaluator)) || [],
+    createdBy: (packaging, args, ctx) => packaging.createdBy && getUser(packaging.createdBy, ctx),
+    updatedBy: (packaging, args, ctx) => packaging.updatedBy && getUser(packaging.updatedBy, ctx),
+    product: (packaging, args, ctx) => {
+      if (packaging.parentId && packaging.parentId.indexOf('PID') === 0) {
+        return ctx.loaders.product.getByID.load(packaging.parentId)
+      }
+      return null
+    },
+    workspaces: async (packaging, args, ctx) => {
+      const workspaceIds = packaging.workspaceIds || []
+      if (workspaceIds.length) {
+        const worksapces = await ctx.loaders.search.getWorkspacesPagedV3.load({
+          size: workspaceIds.length,
+          page: 0,
+          q: `id:(${workspaceIds.join(' OR ')})`,
+        })
+        return worksapces.content
+      }
+      return null
+    },
+    attachments: async (packaging, args, ctx) => {
+      const attachments = await ctx.loaders.search.searchAttachmentsByRelatedResource.load(packaging.humanId)
+      return attachments
+    },
+    participantDetails: async (packaging, args, ctx) => getUserGroup(ctx, packaging.humanId || packaging.id),
+  },
+  SPARK_Dieline: {
+    evaluatedBy: (dieline, args, ctx) => {
+      const eva = dieline.evaluatedBy && ctx.loaders.userAttributes.getByID.load(dieline.evaluatedBy)
+      return eva
+    },
+    attachments: async (parent, args, ctx) => {
+      const attachments = parent.humanId && await ctx.loaders.search.searchAttachmentsByRelatedResource.load(parent.humanId)
+      return attachments
+    },
+    attachment: async (parent, args, ctx) => {
+      if (!parent.attachmentId) {
+        return null
+      }
+
+      const permissionJWT = await getUserPermissionsJWT([parent.attachmentId], ctx)
+      const attachments = await ctx.loaders.attachment.getAttachmentsV3(permissionJWT).load([parent.attachmentId])
+      return attachments[0] || null
+    },
+  },
+  SPARK_PrinterDieline: {
+    dielines: async (parent, args, ctx) => {
+      const printerId = parent && parent.printerId
+      const dielines = await ctx.loaders.packaging.getDielines.load({ printerIds: [printerId], statusIds: args.statusIdFilter })
+      return dielines.dielines
+    },
+  },
+  SPARK_PackagingElement: {
+    packagingLibrary: async (parent, args, ctx) => {
+      const spgId = parent?.packagingLibrary?.id
+      return spgId && ctx.loaders.fileLibrary.getPackageLibrary.load(spgId)
+    },
+  },
+}

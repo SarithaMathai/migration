@@ -1,0 +1,39 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+
+const claimActivityModifiedDataHelper = async (activity, streamResourceId, ctx) => {
+  if (!ctx) return []
+  const {
+    loaders: {
+      claim: { getClaimsByIds } = {},
+    } = {},
+  } = ctx
+
+  const {
+    resourceType = '',
+    eventType = 'UPDATE',
+    eventSummary: { humanId = '', description = '' } = {},
+  } = activity || {}
+
+  const permissionJWT = await getUserPermissionsJWT([humanId], ctx)
+  const claimData = await getClaimsByIds(permissionJWT, [humanId])
+
+  const productId = claimData?.[0]?.parentId
+  const workspaceId = claimData?.[0]?.workspaceContext?.[0]
+
+  const parentResourceInfo = {
+    linkGenerationVariables: { claimId: humanId, productId, ...(workspaceId && { workspaceId }) },
+  }
+
+  return [{
+    attributeUpdateText: '',
+    resourceUpdated: {
+      resourceType: resourceType,
+      resourceId: humanId,
+      resourceDescription: description,
+      parentResourceInfo,
+    },
+    resourceChangeTypeText: `was ${String(eventType).toLowerCase()}d by`,
+  }]
+}
+
+export default claimActivityModifiedDataHelper

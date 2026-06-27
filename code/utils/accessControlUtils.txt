@@ -1,0 +1,53 @@
+import { Agent } from 'https'
+import { performance } from 'perf_hooks'
+import fetch from 'node-fetch'
+import { logger } from './logger'
+import _ from 'lodash'
+
+/*
+Standalone helper to get an acl token, meant to be embedded in our loaders for batch fetching.
+ */
+export const getToken = async (ids, headers, logContext) => {
+  const serviceUrl = `${process.env.ACCESS_CONTROL_ENDPOINT}/enterprise_product_development_access_control/v1/permissions/user/current`
+
+  const started = performance.now()
+  const response = await fetch(serviceUrl, {
+    agent: /^https:\/\//.test(serviceUrl)
+      ? new Agent({
+        rejectUnauthorized: false,
+      })
+      : undefined,
+    method: 'POST',
+    body: JSON.stringify(ids),
+    headers: {
+      ...headers,
+      'content-type': 'application/json',
+    },
+  })
+
+  const result = await response.text()
+  logger.logResponse(
+    serviceUrl,
+    'GET',
+    response.status,
+    '<acl token>',
+    logContext,
+    Math.round(performance.now() - started),
+  )
+  return result
+}
+
+export const getAccessControlBatch = async (resourceIds, chunkSize, ctx) => {
+  let allPermissions = []
+  let index = 0
+
+  const chunks = _.chunk(resourceIds, chunkSize)
+  while (index < chunks.length) {
+    const permissions = (chunks[index].length === 0) ? '' : await ctx.loaders.accessControl.getPermissionsByPost.load(chunks[index])
+    if (permissions && permissions.length > 0) {
+      allPermissions = allPermissions.concat(permissions)
+    }
+    index++
+  }
+  return allPermissions
+}

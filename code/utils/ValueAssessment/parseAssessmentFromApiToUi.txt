@@ -1,0 +1,154 @@
+import _ from 'lodash'
+
+const generateSummaryRowsVar = (name, assessmentId) => {
+  const shortNameLength = name.indexOf(' ') > 0 ? name.indexOf(' ') : name.length
+  const shortName = name.substr(0, shortNameLength).toLowerCase()
+  return {
+    costGroup: [name],
+    costs: [],
+    id: `summary_${shortName}_${assessmentId}`,
+    type: 'summary',
+    uuid: null,
+  }
+}
+
+const generateFabricRow = (fabric, assessmentId) => {
+  return {
+    costGroup: ['Fabric', fabric.requirementId],
+    costs: [],
+    id: `fab_${fabric.requirementId}_${assessmentId}`,
+    isResolved: fabric.isResolved,
+    type: 'fabric',
+    uuid: fabric.id,
+  }
+}
+const generatePatternRow = (pattern, fabric, assessmentId) => {
+  return {
+    active: pattern.active || false,
+    costGroup: ['Fabric', fabric.requirementId, pattern.pattern],
+    costs: [],
+    id: `pat_${pattern.id}_${fabric.requirementId}_${assessmentId}`,
+    type: 'pattern',
+    uuid: pattern.id,
+  }
+}
+
+export const parseAssessmentFromApiToUi = (assessment) => {
+  if (!_.isEmpty(assessment)) {
+    const {
+      id,
+      name,
+      favorite,
+      original,
+      createdAt,
+      updatedAt,
+      fabricTypeCosting,
+      consumptionUnitType,
+    } = assessment
+
+    // iterate over all costing types (ie: Fabric, or Trim)
+    const columns = []
+    const fabricRows = []
+    const trimRows = []
+    const productionProcessingRows = []
+    const vendorRows = []
+    const supplyChainRows = []
+    const retailPackagingRows = []
+    const totalsRow = []
+    if (fabricTypeCosting && fabricTypeCosting.length) {
+      fabricRows.push(generateSummaryRowsVar('Fabric', id))
+      trimRows.push(generateSummaryRowsVar('Trim', id))
+      productionProcessingRows.push(generateSummaryRowsVar('Production & Processing', id))
+      vendorRows.push(generateSummaryRowsVar('Vendor Overhead', id))
+      supplyChainRows.push(generateSummaryRowsVar('Supply Chain Packaging', id))
+      retailPackagingRows.push(generateSummaryRowsVar('Retail Packaging', id))
+      totalsRow.push({
+        costGroup: ['Total Viability FOB Cost'],
+        costs: [],
+        id: `totals_${id}`,
+        type: 'total',
+        uuid: null,
+      })
+
+      fabricTypeCosting.forEach(fabricType => {
+        // setup our common base column ID, and deconstruct cost variables
+        const baseRow = { columnFieldId: fabricType.id }
+        const {
+          fabricCost,
+          fabricConsumption,
+          trimCost,
+          productionProcessingCost,
+          vendorOverheadCost,
+          supplyChainPackagingCost,
+          retailPackagingCost,
+          totalViabilityFobCost,
+        } = fabricType
+
+        // create column for this fabricType
+        columns.push({
+          headerName: fabricType.name,
+          field: fabricType.id,
+        })
+
+        // add summary pricing for this fabricType - these are the top level grouping row values
+        fabricRows[0].costs.push({ ...baseRow, cost: fabricCost, consumption: fabricConsumption })
+        trimRows[0].costs.push({ ...baseRow, cost: trimCost })
+        productionProcessingRows[0].costs.push({ ...baseRow, cost: productionProcessingCost })
+        vendorRows[0].costs.push({ ...baseRow, cost: vendorOverheadCost })
+        supplyChainRows[0].costs.push({ ...baseRow, cost: supplyChainPackagingCost })
+        retailPackagingRows[0].costs.push({ ...baseRow, cost: retailPackagingCost })
+        totalsRow[0].costs.push({ ...baseRow, cost: totalViabilityFobCost })
+
+        // iterate over all fabrics
+        if (fabricType.fabrics && fabricType.fabrics.length) {
+          fabricType.fabrics.forEach(fabric => {
+            // add fabric if it does not exist
+            if (!fabricRows[fabric.id]) {
+              fabricRows[fabric.id] = generateFabricRow(fabric, id)
+            }
+            fabricRows[fabric.id].costs.push({ columnFieldId: fabricType.id, cost: fabric.cost, consumption: fabric.consumption })
+
+            if (fabric.patterns && fabric.patterns.length) {
+              fabric.patterns.forEach(pattern => {
+                // add pattern if it does not exist
+                if (!fabricRows[pattern.id]) {
+                  fabricRows[pattern.id] = generatePatternRow(pattern, fabric, id)
+                }
+                fabricRows[pattern.id].costs.push({ columnFieldId: fabricType.id, cost: pattern.cost })
+              })
+            }
+          })
+        }
+      })
+    }
+
+    const rows = [
+      ...Object.values(fabricRows),
+      ...trimRows,
+      ...productionProcessingRows,
+      ...vendorRows,
+      ...supplyChainRows,
+      ...retailPackagingRows,
+      ...totalsRow,
+    ]
+
+    const response = {
+      id,
+      name,
+      isFavorite: favorite,
+      isOriginal: original,
+      createdAt,
+      updatedAt,
+      consumptionUnitType,
+    }
+
+    if (columns.length) {
+      response.columns = columns
+    }
+    if (rows.length) {
+      response.rows = rows
+    }
+
+    return response
+  }
+}

@@ -1,0 +1,51 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import { SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY } from '../../utils/constants'
+import { loadManyIncludeEmptyResponse } from '../../utils/vmmUtils'
+
+export default {
+  Query: {
+    getTightFits: async (parent, { ids, name, statusIds, brandIds, divisionIds, departmentIds }, ctx) => {
+      return ctx.loaders.tightFit.getTightFits(ids, name, statusIds, brandIds, divisionIds, departmentIds)
+    },
+    getTightFitByIdAndVersion: async (parent, { id, version }, ctx) => {
+      return ctx.loaders.tightFit.getTightFitByIdAndVersion.load({ id, version })
+    },
+  },
+
+  Mutation: {
+    addTightFit: async (parent, { tightFit }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY], ctx)
+      const template = await ctx.loaders.tightFit.addTightFit(permissionJWT, tightFit)
+      if (template.validationErrors || template.message) {
+        throw new Error('Error creating tight fit template \n' + JSON.stringify(template))
+      }
+      return template
+    },
+
+    updateTightFit: async (parent, { tightFit }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY], ctx)
+      const template = await ctx.loaders.tightFit.updateTightFit(permissionJWT, tightFit)
+      if (template.validationErrors || template.message) {
+        throw new Error('Error updating tight fit template \n' + JSON.stringify(template))
+      }
+      return template
+    },
+  },
+
+  SPARK_TightFit: {
+    departments: async (tightFit, args, ctx) =>
+      (tightFit.departmentIds &&
+        loadManyIncludeEmptyResponse(await ctx.loaders.ig.department.getByID, tightFit.departmentIds, ctx.logContext)) || null,
+    divisions: async (tightFit, args, ctx) =>
+      tightFit.divisionIds &&
+      (loadManyIncludeEmptyResponse(await ctx.loaders.ig.division.getByID, tightFit.divisionIds, ctx.logContext)),
+    brands: async (tightFit, args, ctx) =>
+      (tightFit.brandIds &&
+        tightFit.brandIds !== -1 &&
+        loadManyIncludeEmptyResponse(await ctx.loaders.brand.getBrand, tightFit.brandIds, ctx.logContext)) || null,
+    createdBy: (tightFit, args, ctx) =>
+      tightFit.createdBy && ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(tightFit.createdBy),
+    updatedBy: (tightFit, args, ctx) =>
+      tightFit.updatedBy && ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(tightFit.updatedBy),
+  },
+}

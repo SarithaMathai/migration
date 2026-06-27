@@ -1,0 +1,55 @@
+import loadListing from '../utils/loadListing'
+import {
+  CLAIMS_PER_PAGE,
+  NEXUS_CLAIM_ATTRIBUTE_ID,
+  NEXUS_SIZE_ATTRIBUTE_ID,
+  SPARK_GATEWAY_API_KEY,
+} from '../config/constants'
+import loadOne from '../utils/loadOne'
+import SparkService from './SparkService'
+import cache from '../utils/cache'
+import { deepToCamelCase } from '../utils/convertFunctions'
+
+export default class NexusAttributesService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.attributeValuesEndpoint = `${endpoint}/item_taxonomies/v2/attribute_values`
+
+    this.apiKey = SPARK_GATEWAY_API_KEY
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: `application/json`,
+    }
+
+    this.getPage = loadListing(
+      ({ nameFilter, size, page }) =>
+        `${this.attributeValuesEndpoint}?key=${this.apiKey}&attribute_id=${NEXUS_SIZE_ATTRIBUTE_ID}&name=${nameFilter || ''}&page=${page || 1}&per_page=${size}`,
+      this.headers,
+      { transform: (result) => deepToCamelCase(result) },
+      this.logContext,
+    )
+
+    this.getById = cache(
+      'NEXUS_Attributes_getSize',
+      loadOne(
+        id => `${this.attributeValuesEndpoint}/${id}?key=${this.apiKey}`,
+        this.headers,
+        {
+          transform: (id, size) => [deepToCamelCase(size)],
+          batch: false,
+        },
+        this.logContext,
+      ),
+    )
+
+    this.getClaims = cache(
+      'NEXUS_Attributes_getClaims',
+      loadListing(
+        page => `${this.attributeValuesEndpoint}?key=${this.apiKey}&attribute_id=${NEXUS_CLAIM_ATTRIBUTE_ID}&per_page=${CLAIMS_PER_PAGE}&page=${page}`,
+        this.headers,
+        { transform: (result) => deepToCamelCase(result) },
+        this.logContext,
+      ),
+    )
+  }
+}

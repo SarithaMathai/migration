@@ -1,0 +1,66 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import { logger } from '../../utils/logger'
+import { loadBp, loadBpsWithType } from '../../utils/vmmUtils'
+import SPARK_WorkspaceV2 from '../SPARK_WorkspaceV2'
+
+export default {
+  Query: {
+    searchImpressionsByProductId: async (parent, { id, partnerIds, workspaceIds, enableWorkspaceContextFiltering }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.impression.searchImpressionsByProductId(permissionJWT, id, partnerIds, workspaceIds, enableWorkspaceContextFiltering)
+    },
+
+    getImpressionCountsByProductId: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.impression.searchImpressionsByProductId(permissionJWT, id)
+    },
+  },
+
+  Mutation: {
+    updateImpressions: async (parent, { productId, productImpression }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(productId, ctx)
+      const impression = await ctx.loaders.impression.updateImpressions(permissionJWT, productId, productImpression)
+      if (impression.validationErrors || impression.message) {
+        throw new Error('Error updating impression set \n' + JSON.stringify(impression))
+      }
+      return impression
+    },
+  },
+
+  SPARK_Impression: {
+    businessPartners: async (impression, args, ctx) => impression.partnerIds && loadBpsWithType(impression.partnerIds.map(partnerId => ({ partnerId })), ctx),
+    owningBusinessPartner: async (impression, args, ctx) => impression.owningPartnerId && loadBp(ctx, impression.owningPartnerId),
+    workspaces: (impression, args, ctx) => {
+      const workspaceIds = impression.workspaceContext || []
+      if (workspaceIds.length > 0) {
+        return SPARK_WorkspaceV2.Query.getWorkspacesByIdsV2({}, { ids: workspaceIds }, ctx)
+      }
+      return []
+    },
+    createdBy: (impression, args, ctx) =>
+      impression.createdBy && ctx.loaders.userAttributes.getUserByID.load(impression.createdBy),
+    updatedBy: (impression, args, ctx) =>
+      impression.updatedBy && ctx.loaders.userAttributes.getUserByID.load(impression.updatedBy),
+  },
+
+  SPARK_ImpressionCount: {
+    counts: async (impressions, args, ctx) => {
+      try {
+        const parentId = impressions[0].parentId
+        const product = await ctx.loaders.product.getByID.load(parentId)
+        const partners = (product.businessPartners || []).map(partner => partner.partnerId)
+        const partnerCounts = partners.map(partnerId => ({
+          bpType: partnerId,
+          counts: impressions.filter(impression => impression.partnerIds.includes(partnerId)).length,
+        }))
+        return partnerCounts.concat({ bpType: 'totalCount', counts: impressions.length })
+      } catch (error) {
+        logger.error('error fetching product impression counts - returning dummy counts', ctx.logContext, { error })
+        return [{
+          bpType: 'totalCount',
+          counts: 0,
+        }]
+      }
+    },
+  },
+}

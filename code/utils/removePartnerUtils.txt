@@ -1,0 +1,107 @@
+import WorkspaceV2 from '../resolvers/SPARK_WorkspaceV2'
+import Product from '../resolvers/SPARK_Product'
+import { get, uniq } from 'lodash'
+import { getAccessControlBatch } from './accessControlUtils'
+
+export function getPartnersFromAccess (accesses = []) {
+  const filesAccess = accesses.filter(access => get(access, 'permissions', []).some((acc) =>
+    get(acc, 'abstractAccessGroup.grantees.length', false)))
+    .map(access => get(access, 'permissions'))
+
+  const extractedBps = filesAccess.reduce((filePartners, currentPermissionList) => {
+    return [
+      ...filePartners,
+      ...currentPermissionList.reduce((foundPartners, list) => {
+        const bps = (get(list, 'abstractAccessGroup.grantees') || [])
+        return [...foundPartners, ...bps]
+      }, []),
+    ]
+  }, [])
+  return extractedBps
+}
+
+export const getDiscussionPartners = (discussions) => {
+  const discussionPartners = []
+  discussions.forEach(({ partnerId, droppedPartnerIds, designPartnerId }) => {
+    if (partnerId && partnerId.length > 0) {
+      discussionPartners.push(...partnerId)
+    }
+    if (droppedPartnerIds && droppedPartnerIds.length > 0) {
+      discussionPartners.push(...droppedPartnerIds)
+    }
+    if (designPartnerId && designPartnerId.length > 0) {
+      discussionPartners.push(...designPartnerId)
+    }
+  })
+  return discussionPartners
+}
+export const getWorkspacePartnersNotRemovable = async (ctx, workspace) => {
+  const discussionsElasticData = (await WorkspaceV2.SPARK_WorkspaceV2.discussionsV2(workspace, {}, ctx)) || []
+  const attachments = (await WorkspaceV2.SPARK_WorkspaceV2.attachmentsWithMetaData(workspace, {}, ctx)) || []
+  const discussions = discussionsElasticData && discussionsElasticData.content ? discussionsElasticData.content.map(dis => dis.discussionDto) : []
+
+  const filePartners = []
+  if (attachments && attachments.length > 0) {
+    const resourceIds = attachments.map(({ attachment }) => attachment.document_id)
+    const perms = await getAccessControlBatch(resourceIds, 250, ctx)
+    filePartners.push(...getPartnersFromAccess(perms))
+  }
+  const discussionPartners = getDiscussionPartners(discussions)
+  const compiledPartners = [...filePartners, ...discussionPartners]
+  if (workspace.owningPartnerId) {
+    compiledPartners.push(workspace.owningPartnerId)
+  }
+  return uniq(compiledPartners)
+}
+
+export const getProductPartnersNotRemovable = async (ctx, product, info) => {
+  const discussionsElasticData = (await Product.SPARK_Product.discussionsV2(product, {}, ctx)) || []
+  const discussions = discussionsElasticData && discussionsElasticData.content ? discussionsElasticData.content.map(dis => dis.discussionDto) : []
+  const attachments = ((await Product.SPARK_Product.attachmentsV3(product, {}, ctx) || {}).content) || []
+  const components = ((await Product.SPARK_Product.components(product, {}, ctx)) || {}).content || []
+  const samples = (await Product.SPARK_Product.samples(product, {}, ctx, info)) || []
+
+  const watchListPartners = []
+  const workspaceId = product && ((product.productWorkspaceInfo &&
+    product.productWorkspaceInfo.length > 0 &&
+    product.productWorkspaceInfo[0].humanId) ||
+    (product.productWorkspaceAttributes &&
+      product.productWorkspaceAttributes.length > 0 &&
+      product.productWorkspaceAttributes[0].humanId)) || ''
+  if (workspaceId && product && product.productId) {
+    const queryString = `parentId: ${product.productId} AND workspaceContext: ${workspaceId} AND statusId: 501`
+    // get all watchlists assosiated to the product in a worksapce
+    const productWatchlistData = await ctx.loaders.search.searchWatchlist.load({ q: queryString }) || []
+
+    const watchlistIds = []
+    if (productWatchlistData && productWatchlistData.content && productWatchlistData.content.length > 0) {
+      productWatchlistData.content.forEach((watchlist) => {
+        if (watchlist && watchlist.id) {
+          watchlistIds.push(watchlist.id)
+        }
+      })
+    }
+    // get watchlists' info to get associated partners
+    if (watchlistIds && watchlistIds.length > 0) {
+      const watchlistPermissions = await getAccessControlBatch(watchlistIds, 250, ctx)
+      watchListPartners.push(...getPartnersFromAccess(watchlistPermissions))
+    }
+  }
+
+  const detailIds = [...components.map(({ id }) => id), ...attachments.map(attachment => attachment.documentId)]
+  const detailPartners = []
+  if (detailIds.length > 0) {
+    const perms = await getAccessControlBatch(detailIds, 250, ctx)
+    detailPartners.push(...getPartnersFromAccess(perms))
+  }
+
+  const samplePartners = samples.map(({ partnerId }) => partnerId)
+  const discussionPartners = getDiscussionPartners(discussions)
+  const compiledPartners = [...detailPartners, ...discussionPartners, ...samplePartners, ...watchListPartners]
+
+  if (product.owningPartnerId) {
+    compiledPartners.push(product.owningPartnerId)
+  }
+
+  return uniq(compiledPartners)
+}

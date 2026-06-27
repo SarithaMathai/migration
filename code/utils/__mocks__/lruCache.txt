@@ -1,0 +1,12 @@
+let cache = {}
+
+export default {
+  set: jest.fn((key, value) => (cache[key] = value)),
+  get: jest.fn(key => cache[key]),
+
+  // test utils
+  __reset: () => (cache = {}),
+  get __cache () {
+    return cache
+  },
+}

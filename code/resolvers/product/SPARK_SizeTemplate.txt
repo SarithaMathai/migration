@@ -1,0 +1,39 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import { SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY } from '../../utils/constants'
+export default {
+  Query: {
+    getSizeTemplates: (parent, { ids }, ctx) => ctx.loaders.sizeTemplate.getSizeTemplates(ids),
+    getSizeCategories: (parent, { ids }, ctx) => ctx.loaders.sizeTemplate.getSizeCategories(ids),
+    getMaterialTypes: (parent, { ids }, ctx) => ctx.loaders.sizeTemplate.getMaterialTypes(ids),
+  },
+
+  Mutation: {
+    addSizeTemplate: async (parent, { sizeTemplate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY], ctx)
+      const template = await ctx.loaders.sizeTemplate.addSizeTemplate(permissionJWT, sizeTemplate)
+      if (template.validationErrors || template.message) {
+        throw new Error('Error creating size template  \n' + JSON.stringify(template))
+      }
+      return template
+    },
+
+    updateSizeTemplate: async (parent, { sizeTemplate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY], ctx)
+      const template = await ctx.loaders.sizeTemplate.updateSizeTemplate(permissionJWT, sizeTemplate)
+      if (template.validationErrors || template.message) {
+        throw new Error('Error updating size template  \n' + JSON.stringify(template))
+      }
+      return template
+    },
+  },
+
+  SPARK_SizeTemplate: {
+    humanId: sizeTemplate => sizeTemplate.humanId || sizeTemplate.id,
+    createdBy: (sizeTemplate, args, ctx) =>
+      sizeTemplate.createdBy &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(sizeTemplate.createdBy),
+    updatedBy: (sizeTemplate, args, ctx) =>
+      sizeTemplate.updatedBy &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(sizeTemplate.updatedBy),
+  },
+}

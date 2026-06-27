@@ -1,0 +1,53 @@
+import postOne from '../utils/postOne'
+import loadListing from '../utils/loadListing'
+import qs from 'querystring'
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import putOne from '../utils/putOne'
+import deleteOne from '../utils/deleteOne'
+
+export default class MeasurementTemplateService {
+  constructor (endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/measurement/templates/v1`
+
+    this.getMeasurementTemplatesByIds = (ids) => {
+      return loadListing(`${this.endpoint}?ids=${ids}`,
+        { ...this.headers }, {
+          transform: statusResponse => deepToCamelCase(statusResponse),
+        }, logContext).load()
+    }
+
+    this.addMeasurementTemplate = (permissionJWT, measurementTemplate) => postOne(`${this.endpoint}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        logContext,
+      }).load(measurementTemplate)
+
+    this.updateMeasurementTemplate = (permissionJWT, measurementTemplate) => putOne(`${this.endpoint}/${measurementTemplate.templateId}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        logContext,
+      }).load(measurementTemplate)
+
+    this.getMeasurementTemplates = loadListing(
+      queryParams => `${this.endpoint}?${qs.stringify(queryParams)}&sort=createdAt,desc`,
+      this.headers,
+      {
+        transform: statusResponse =>
+          deepToCamelCase(statusResponse),
+      },
+      logContext,
+    )
+
+    this.deleteTemplates = deleteOne(
+      ids => `${endpoint}/purgeTestMeasurementTemplateData?ids=${ids}`,
+      {
+        ...this.headers,
+      },
+      {},
+      logContext,
+    )
+  }
+}

@@ -1,0 +1,34 @@
+import { deepToCamelCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import { SPARK_GATEWAY_API_KEY } from '../config/constants'
+import SparkService from './SparkService'
+
+export default class DopplerService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.apiKey = SPARK_GATEWAY_API_KEY
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    }
+
+    this.getCapacityTypesByDepartment = loadListing((id) => `${this.endpoint}/capacity_types?key=${this.apiKey}&department_id=${id}`,
+      this.headers,
+      {
+        transform: capacityTypes => deepToCamelCase(capacityTypes),
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.getCapacityTypesByDepartmentAndPrimaryId = loadListing(({ id, primaryCapacityId }) => `${this.endpoint}/capacity_types?key=${this.apiKey}&department_id=${id}&capacity_type_primary_id=${primaryCapacityId}`,
+      this.headers,
+      {
+        transform: capacityTypes => deepToCamelCase(capacityTypes),
+        batch: false,
+      },
+      this.logContext,
+    )
+  }
+}

@@ -1,0 +1,34 @@
+export const sparkSimpleLogFormat = (info, contextMap) => {
+  if (info.message === 'queryComplete') {
+    return `${contextMap.requestId} - ${contextMap.operationType.toUpperCase()} ${contextMap.operationName} complete in ${contextMap.elapsedMillis}ms with ${contextMap.logCounts} calls`
+  }
+  if (info.message === 'requestComplete') {
+    return `${contextMap.requestId} - ${contextMap.status} ----> to ${contextMap.method} ${contextMap.url} in ${contextMap.elapsedMillis}ms`
+  }
+  if (info.message === 'postBody') {
+    return `${contextMap.requestId} - Sent this post body ${contextMap.body}`
+  }
+
+  const loggerContext = {
+    timeMillis: new Date().getTime(),
+    message: info.message,
+    level: info.level.toUpperCase(),
+    contextMap: contextMap,
+  }
+  if (contextMap['x-api-id']) {
+    loggerContext['x-api-id'] = contextMap['x-api-id']
+
+    const traceId = {
+      id: contextMap['x-api-id'],
+    }
+    loggerContext['trace'] = traceId
+  }
+  if (contextMap['userId']) {
+    loggerContext['userId'] = contextMap['userId']
+  }
+  if (contextMap.status) {
+    loggerContext['status'] = contextMap.status
+  }
+
+  return JSON.stringify(loggerContext)
+}

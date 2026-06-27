@@ -1,0 +1,63 @@
+export default {
+  Mutation: {
+    deleteToDoByBusinessPartner: (
+      parent,
+      { resourceType, partnerId, resourceIds },
+      ctx,
+    ) =>
+      ctx.loaders.todo.deleteToDoByBusinessPartner.load({
+        resourceType,
+        partnerId,
+        resourceIds,
+      }),
+    addToDo: (parent, { toDo }, ctx) => ctx.loaders.todo.addToDo.load(toDo),
+    deleteToDo: (parent, { toDoId }, ctx) =>
+      ctx.loaders.todo.deleteToDo.load(toDoId),
+  },
+
+  Query: {
+    getToDos: (parent, {}, ctx) => ctx.loaders.todo.getPage.load({}),
+  },
+
+  SPARK_ToDo: {
+    resource: async (toDo, args, ctx) => {
+      if (toDo.resource) {
+        const toDoResource = {
+          id: toDo.resource.id,
+          type: toDo.resource.type,
+        }
+        if (toDo.resource.type === 'product') {
+          const product = await ctx.loaders.product.getByID.load(
+            toDo.resource.id,
+          )
+          return {
+            ...toDoResource,
+            thumbnailId: product.thumbnailId,
+            resourceDescription: product.description,
+          }
+        } else if (toDo.resource.type === 'discussion') {
+          const discussion = await ctx.loaders.discussion
+            .getByIDV2
+            .load(toDo.resource.id)
+          return {
+            ...toDoResource,
+            resourceDescription: discussion.subject,
+            relatedResource:
+              discussion.resources.mappings[Object.keys(discussion.resources.mappings)[0]][0],
+          }
+        } else if (toDo.resource.type === 'sample') {
+          const sample = await ctx.loaders.sampleV2
+            .getSampleById
+            .load(toDo.resource.id)
+          return {
+            ...toDoResource,
+            resourceDescription: sample.description || '',
+            relatedResource: sample.parentId,
+          }
+        }
+      } else {
+        return null
+      }
+    },
+  },
+}

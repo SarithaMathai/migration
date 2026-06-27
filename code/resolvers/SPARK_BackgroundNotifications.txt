@@ -1,0 +1,29 @@
+import _ from 'lodash'
+import { resolvePaging } from '../utils/resolvePaging'
+
+export default {
+  Query: {
+    getBackgroundActivityNotifications: (parent, args, ctx) => {
+      return ctx.loaders.backgroundNotifications.getBackgroundActivityNotifications.load()
+    },
+  },
+  Mutation: {
+    updateBackgroundNotificationsByIds: (parent, { notificationsUpdateInput }, ctx) => {
+      return ctx.loaders.backgroundNotifications.updateBackgroundNotificationsByIds.load(notificationsUpdateInput)
+    },
+    archiveAllCompletedNotifications: (parent, args, ctx) => {
+      return ctx.loaders.backgroundNotifications.archiveAllCompletedNotifications.load()
+    },
+  },
+  SPARK_BackgroundNotificationsPaged: {
+    paging: resolvePaging,
+  },
+  SPARK_BackgroundNotification: {
+    category: (backgroundNotification) => backgroundNotification.notificationCategory,
+    id: (backgroundNotification) => backgroundNotification.humanId,
+    action: (backgroundNotification) => backgroundNotification.notificationAction,
+    status: (backgroundNotification) => backgroundNotification.notificationStatus,
+    type: (backgroundNotification) => backgroundNotification.notificationType,
+    docSize: (backgroundNotification) => _.get(backgroundNotification, 'additionalProperties.docSize', 0),
+  },
+}

@@ -1,0 +1,5 @@
+export default {
+  Query: {
+    getRequestDetails: (parent, args, ctx) => { return { 'apiId': ctx.logContext.requestId } },
+  },
+}

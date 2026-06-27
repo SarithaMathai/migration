@@ -1,0 +1,24 @@
+
+export const CONNECTIONS_PER_PAGE = 200
+
+export const resolvePaging = (fields = {}) => ({
+  totalPages: fields.totalPages,
+  totalElements: fields.totalElements || fields.totalRecords,
+  first: fields.first,
+  numberOfElements: fields.numberOfElements,
+  size: fields.size,
+  number: fields.number,
+  last: fields.last,
+  sort: fields.sort,
+})
+
+export const NO_RESULTS = {
+  totalPages: 0,
+  totalElements: 0,
+  first: true,
+  numberOfElements: 0,
+  size: 0,
+  number: 0,
+  last: true,
+  sort: null,
+}

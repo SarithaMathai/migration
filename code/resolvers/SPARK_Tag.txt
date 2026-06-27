@@ -1,0 +1,39 @@
+import { resolvePaging } from './../utils/resolvePaging'
+
+export default {
+  Query: {
+    getTags: (parent, { page, size, ids, type, archived }, ctx) =>
+      ctx.loaders.tag.getTags.load({ ids, type, page, size, archived }),
+    getTag: (parent, { id }, ctx) => ctx.loaders.tag.getTag.load(id),
+    getAllTags: (parent, { page, size }, ctx) => ctx.loaders.tag.getPage.load({ page, size }),
+    searchTags: (parent, { type, archived, page, size, search = null }, ctx) => ctx.loaders.tag.search.load({ type, archived, page, size, search }),
+    getAllTagTypes: (parent, { }, ctx) => ctx.loaders.tag.getTypes.load(),
+    getTrainingTopics: (parent, { }, ctx) => ctx.loaders.tag.getTrainingTopicOrder.load(),
+  },
+
+  Mutation: {
+    addTag: async (parent, { tag }, ctx) => {
+      return ctx.loaders.tag.create.load(tag)
+    },
+    updateTag: async (parent, { tag }, ctx) => {
+      return ctx.loaders.tag.update.load(tag)
+    },
+    deleteTag: async (parent, { id }, ctx) => ctx.loaders.tag.delete.load(id),
+    setTrainingTopics: async (parent, { topics }, ctx) => ctx.loaders.tag.setTrainingTopicOrder.load(topics),
+    sendResourceNotifications: async (parent, { notificationDetails }, ctx) => ctx.loaders.tag.sendResourceNotifications.load(notificationDetails),
+  },
+
+  SPARK_TagPaged: {
+    paging: resolvePaging,
+    content: tagsPaged => tagsPaged.content,
+    pageable: tagsPaged => tagsPaged.pageable,
+  },
+
+  SPARK_Tag: {
+    updatedBy: (tag, args, ctx) => {
+      return ctx.loaders.userAttributes.getByID.load(tag.updatedUser)
+    },
+    createdBy: (tag, args, ctx) =>
+      ctx.loaders.userAttributes.getByID.load(tag.createdUser),
+  },
+}

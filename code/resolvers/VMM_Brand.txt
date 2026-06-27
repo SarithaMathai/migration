@@ -1,0 +1,15 @@
+export default {
+
+  Query: {
+    getBrands: (parent, { query, includeNationalBrands }, ctx) =>
+      ctx.loaders.brand.getBrands.load({ query, includeNationalBrands }),
+    getBrand: (parent, { id }, ctx) =>
+      ctx.loaders.brand.getBrand.load(id),
+  },
+
+  VMM_Brand: {
+    id: brand => brand.id,
+    name: brand => brand.name,
+  },
+
+}

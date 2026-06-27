@@ -1,0 +1,157 @@
+import {
+  getUserPermissionsJWT,
+  loadTags,
+  getUserPermissionsJWTByProxy,
+} from '../utils/commonLoaders'
+import {
+  SPARK_COLOR_CREATE_MODIFY_TARGET_LIBRARY,
+} from '../utils/materialsConstants'
+import { loadFiles } from './commonResolvers/Files'
+import { loadTeams, loadBusinessPartners, loadDroppedBusinessPartners } from './commonResolvers/Teams'
+import _ from 'lodash'
+import { emptySearchResponse } from '../utils/search/searchConstants'
+import { getUser } from '../utils/userAttributesUtils'
+
+export const loadColorLinks = async (color, args, ctx) => {
+  const colorLinks = (color && color.colorLinks) || []
+
+  if (colorLinks.length === 0) {
+    return []
+  }
+
+  // load colors listed in links
+  const colorIds = colorLinks.map(it => it.humanId).filter(it => !!it)
+  const permissionJWT = await getUserPermissionsJWT(colorIds, ctx)
+  const colors = await ctx.loaders.color.getByIDs(permissionJWT).load({ ids: colorIds })
+    .then(res => {
+      return res
+    }).catch(() => null)
+
+  // stitch together color links and colors
+  const fullColorLinkData = []
+  colorLinks.forEach(colorLink => {
+    const color = colors && colors.find(color => colorLink.humanId === color.humanId)
+    fullColorLinkData.push({
+      ...colorLink,
+      color: color || null,
+    })
+  })
+
+  return fullColorLinkData
+}
+
+export default {
+  Query: {
+    getColor: async (parent, { id, proxyIds }, ctx) => {
+      if (proxyIds && proxyIds.length > 0) {
+        const permissionJWT = await getUserPermissionsJWTByProxy({ id, proxyIds }, ctx)
+        return ctx.loaders.color.getByID(permissionJWT).load(id)
+      } else {
+        const permissionJWT = await getUserPermissionsJWT(id, ctx)
+        return ctx.loaders.color.getByID(permissionJWT).load(id)
+      }
+    },
+    getColors: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.color.getByIDs(permissionJWT).load({ ids })
+    },
+    getColorStatuses: async (parent, {}, ctx) =>
+      ctx.loaders.color.getColorStatuses.load(),
+    getColorSubstrates: async (parent, {}, ctx) =>
+      ctx.loaders.color.getColorSubstrates.load(),
+    getColorPantone: async (parent, { id, proxyIds }, ctx) => {
+      if (proxyIds && proxyIds.length > 0) {
+        const permissionJWT = await getUserPermissionsJWTByProxy({ id, proxyIds }, ctx)
+        return ctx.loaders.color.getByID(permissionJWT).load(id)
+      } else {
+        const permissionJWT = await getUserPermissionsJWT(id, ctx)
+        return ctx.loaders.color.getByID(permissionJWT).load(id)
+      }
+    },
+    getColorPantones: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.color.getByIDs(permissionJWT).load({ ids })
+    },
+    getImpressionIntentColor: async (parent, { }, ctx) => ctx.loaders.color.getImpressionIntent.load(),
+    validateColorName: async (parent, { name }, ctx) => {
+      const encodedName = Buffer.from(name).toString('base64')
+      const value = await ctx.loaders.color.validateColorName.load(encodedName)
+      return value === 'true'
+    },
+    exportColor: async (parent, { q, nestedQueryList, isColorSampleReport }, ctx) => {
+      await ctx.loaders.search.exportColor.load({ q, nestedQueryList, isColorSampleReport })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+    exportColorOnPalette: async (parent, { q, nestedQueryList, paletteId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(paletteId, ctx)
+      const palette = await ctx.loaders.palette.getPalette(permissionJWT).load(paletteId)
+      const contextIds = (palette && palette.relatedMaterials && palette.relatedMaterials.join(',')) || undefined
+      if (!contextIds) return { ...emptySearchResponse(0), counts: {} }
+      await ctx.loaders.search.exportColor.load({ q, nestedQueryList, contextIds })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+  },
+  Mutation: {
+    addColor: async (parent, { sparkColor }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        SPARK_COLOR_CREATE_MODIFY_TARGET_LIBRARY,
+        ctx,
+      )
+      const color = await ctx.loaders.color
+        .create(permissionJWT)
+        .load(sparkColor)
+      // Setup relationships
+      if (sparkColor.files && sparkColor.files.length > 0) {
+        const associateAttachmentTeamDto = { 
+          teamsToUpdateDto: { teamsToAdd: sparkColor.teamsToAdd }, 
+          parentId: color.humanId, 
+          humanIds: sparkColor.files,
+          relatedResourceIds: [color.humanId],
+        }
+        const attachmentPermissionJWT = await getUserPermissionsJWT(sparkColor.files, ctx)
+        await ctx.loaders.attachment.associateAttachmentTeams(attachmentPermissionJWT).load(associateAttachmentTeamDto, { humanId: color.humanId })
+      }
+      return color
+    },
+    deleteColor: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.color.delete(permissionJWT).load(id)
+    },
+    updateColor: async (parent, { sparkColor }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sparkColor.humanId, ctx)
+      return ctx.loaders.color.update(permissionJWT).load(sparkColor)
+    },
+    updateColorTeams: async (
+      parent,
+      { humanId, teamsToUpdate },
+      ctx,
+    ) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      await ctx.loaders.color.updateColorTeams(permissionJWT).load(teamsToUpdate, { humanId })
+      return ctx.loaders.color.getByID(permissionJWT).load(humanId)
+    },
+  },
+
+  SPARK_Color: {
+    files: async (color, args, ctx) => loadFiles(color.humanId, ctx),
+    teams: (color, args, ctx) => loadTeams(color.humanId, ctx),
+    businessPartners: (color, args, ctx) => loadBusinessPartners(color.humanId, ctx),
+    droppedPartnerIds: (color, args, ctx) => loadDroppedBusinessPartners(color.humanId, ctx),
+    createdBy: (color, args, ctx) => getUser(color.createdBy, ctx),
+    updatedBy: (color, args, ctx) => getUser(color.updatedBy, ctx),
+    impressionIntents: (color) => (color.impressionIntents && color.impressionIntents[0]) || {},
+    tags: async (color, args, ctx) => color && color.tags ? loadTags(color.tags, ctx) : [],
+    colorLinks: loadColorLinks,
+  },
+
+  SPARK_ColorPantone: {
+    colorLinks: loadColorLinks,
+    createdBy: (color, args, ctx) => getUser(color.createdBy, ctx),
+  },
+}

@@ -1,0 +1,87 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import { loadManyIncludeEmptyResponse } from '../utils/vmmUtils'
+import { SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY } from '../utils/constants'
+import _ from 'lodash'
+
+export default {
+  Query: {
+    getMeasurementTemplates: async (parent, searchParams, ctx) => {
+      const formattedParams = { ...searchParams }
+      _.without(Object.keys(searchParams), 'size', 'page', 'q').forEach(key => {
+        if (searchParams[key]) {
+          formattedParams[key] = searchParams[key].join(',')
+        }
+      })
+      return ctx.loaders.measurementTemplate.getMeasurementTemplates.load(
+        _.omitBy(formattedParams, param => !param && param !== 0),
+      )
+    },
+    getMeasurementTemplatesByIds: (parent, { ids }, ctx) =>
+      ctx.loaders.measurementTemplate.getMeasurementTemplatesByIds(ids),
+  },
+  Mutation: {
+    addMeasurementTemplate: async (parent, { measurementTemplate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY], ctx)
+      const template = await ctx.loaders.measurementTemplate.addMeasurementTemplate(permissionJWT, measurementTemplate)
+      if (template.validationErrors || template.message) {
+        throw new Error('Error creating measurement template  \n' + JSON.stringify(template))
+      }
+      return template
+    },
+    updateMeasurementTemplate: async (parent, { measurementTemplate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY], ctx)
+      const template = await ctx.loaders.measurementTemplate.updateMeasurementTemplate(permissionJWT, measurementTemplate)
+      if (template.validationErrors || template.message) {
+        throw new Error('Error updating measurement template  \n' + JSON.stringify(template))
+      }
+      return template
+    },
+    deleteMeasurementTemplate: async (parent, { ids }, ctx) => {
+      return ctx.loaders.measurementTemplate.deleteTemplates.load(ids)
+    },
+  },
+  SPARK_MeasurementTemplatesPaged: {
+    paging: measurementTemplates => {
+      return {
+        totalPages: measurementTemplates.totalPages,
+        totalElements: measurementTemplates.totalElements,
+        first: measurementTemplates.first,
+        numberOfElements: measurementTemplates.numberOfElements,
+        size: measurementTemplates.size,
+        number: measurementTemplates.number,
+        last: measurementTemplates.last,
+        sort: measurementTemplates.sort,
+      }
+    },
+    content: measurementTemplates => measurementTemplates.content,
+    pageable: measurementTemplates => measurementTemplates.pageable,
+  },
+
+  SPARK_MeasurementTemplate: {
+    createdBy: (measurementTemplate, args, ctx) =>
+      measurementTemplate.createdBy &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(measurementTemplate.createdBy),
+    updatedBy: (measurementTemplate, args, ctx) =>
+      measurementTemplate.updatedBy &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(measurementTemplate.updatedBy),
+    departments: async (measurementTemplate, args, ctx) =>
+      (measurementTemplate.departmentIds &&
+        loadManyIncludeEmptyResponse(
+          ctx.loaders.ig.department.getByID,
+          measurementTemplate.departmentIds,
+          ctx.logContext,
+        )) || null,
+    divisions: async (measurementTemplate, args, ctx) =>
+      measurementTemplate.divisionIds &&
+      (loadManyIncludeEmptyResponse(
+        ctx.loaders.ig.division.getByID,
+        measurementTemplate.divisionIds,
+        ctx.logContext,
+      )),
+    brands: async (measurementTemplate, args, ctx) =>
+      (measurementTemplate.brandIds &&
+        measurementTemplate.brandIds !== -1 &&
+        loadManyIncludeEmptyResponse(await ctx.loaders.brand.getBrand, measurementTemplate.brandIds, ctx.logContext)) ||
+      null,
+  },
+}

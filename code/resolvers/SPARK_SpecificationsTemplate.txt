@@ -1,0 +1,82 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import _ from 'lodash'
+
+export default {
+  Query: {
+    getSpecificationTemplates: (parent, searchParams, ctx) => {
+      const formattedParams = { ...searchParams }
+      _.without(Object.keys(searchParams), 'size', 'page', 'q').forEach(key => {
+        if (searchParams[key]) {
+          formattedParams[key] = searchParams[key].join(',')
+        }
+      })
+      return ctx.loaders.specificationsTemplate.getSpecificationTemplates(
+        _.omitBy(formattedParams, param => !param && param !== 0),
+      )
+    },
+    getSpecificationMasterData: (parent, { type }, ctx) => ctx.loaders.specificationsTemplate.getSpecificationMasterData(type),
+    getSpecificationTemplateById: (parent, { id }, ctx) => ctx.loaders.specificationsTemplate.getSpecificationTemplateById(id),
+    getProductDetailsCategorySection: (parent, {}, ctx) => ctx.loaders.specificationsTemplate.getProductDetailsCategorySection(),
+    getProductDetailsStatus: (parent, {}, ctx) => ctx.loaders.specificationsTemplate.getProductDetailsStatus(),
+  },
+  Mutation: {
+    createSpecificationTemplate: async (parent, { templateData }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(['SPARK-CONSTRUCTION-CREATE-MODIFY-TARGET-LIBRARY'], ctx)
+      const template = await ctx.loaders.specificationsTemplate.createSpecificationTemplate(permissionJWT, templateData)
+
+      if (template.validationErrors || template.message) {
+        throw new Error('Error creating construction details template  \n' + JSON.stringify(template))
+      }
+      return template
+    },
+    updateSpecificationTemplate: async (parent, { templateData }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(['SPARK-CONSTRUCTION-CREATE-MODIFY-TARGET-LIBRARY'], ctx)
+      if (!_.isEmpty(templateData.deleteAttachmentIds)) {
+        const attachmentPermissionJWT = await getUserPermissionsJWT(templateData.deleteAttachmentIds, ctx)
+        await ctx.loaders.attachment.archiveAttachmentV3(attachmentPermissionJWT).load(templateData.deleteAttachmentIds)
+      }
+      const template = await ctx.loaders.specificationsTemplate.UpdateSpecificationTemplate(permissionJWT, templateData)
+
+      if (template.validationErrors || template.message) {
+        throw new Error('Error creating construction details template  \n' + JSON.stringify(template))
+      }
+      return template
+    },
+    createCategoryAndSection: async (parent, { categorySectionInput }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(['SPARK-CONSTRUCTION-CREATE-MODIFY-TARGET-LIBRARY'], ctx)
+      const category = await ctx.loaders.specificationsTemplate.createCategorySection(permissionJWT, categorySectionInput)
+
+      if (category.validationErrors || category.message) {
+        throw new Error('Error creating construction details template  \n' + JSON.stringify(category))
+      }
+      return category
+    },
+  },
+  SPARK_SpecificationTemplatesPaged: {
+    paging: constructionTemplates => {
+      return {
+        totalPages: constructionTemplates.totalPages,
+        totalElements: constructionTemplates.totalElements,
+        first: constructionTemplates.first,
+        numberOfElements: constructionTemplates.numberOfElements,
+        size: constructionTemplates.size,
+        number: constructionTemplates.number,
+        last: constructionTemplates.last,
+        sort: constructionTemplates.sort,
+      }
+    },
+    content: constructionTemplates => constructionTemplates.content,
+    pageable: constructionTemplates => constructionTemplates.pageable,
+  },
+  SPARK_SpecificationTemplates: {
+    createdBy: (constructionTemplates, args, ctx) =>
+      constructionTemplates.createdBy && ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(constructionTemplates.createdBy),
+    updatedBy: (constructionTemplates, args, ctx) =>
+      constructionTemplates.updatedBy && ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(constructionTemplates.updatedBy),
+    attachment: async (constructionTemplates, args, ctx) => {
+      let attachmentQuery = { q: `(_index:attachments AND relatedResources:${constructionTemplates.humanId})` }
+      const attachmentData = await ctx.loaders.search.searchAttachments.load(attachmentQuery)
+      return attachmentData.content ? attachmentData.content[0] : {}
+    },
+  },
+}

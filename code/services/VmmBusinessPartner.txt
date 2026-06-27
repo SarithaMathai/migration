@@ -1,0 +1,254 @@
+import cache from '../utils/cache'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+
+import { SPARK_GATEWAY_API_KEY } from '../config/constants'
+import SparkService from './SparkService'
+import BusinessPartnerRole from '../config/businessPartner'
+
+const APPROVED_RELATIONSHIP_CODE = 2103
+export const APPROVED_ROLE_CODE = 5
+export const EXIT_IN_PROGRESS = 6
+const VMM_BUSINESS_PARTNER_REDIS_TTL = 3600
+export default class VmmBusinessPartnerService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    }
+
+    this.ibpKey = SPARK_GATEWAY_API_KEY
+    this.ibpFieldGroup = '&field_groups=bp_identifiers,bp_relationship,bp_comp_ovw'
+    this.typeFilter = '&bp_role_id='
+    this.searchFilter = '&per_page=100&bp_name='
+    this.partnerTypeFilter = `&per_page=100${this.typeFilter}`
+    this.pagination = '&per_page=100'
+
+    this.getPage = cache(
+      "VMM_BusinessPartner_getPage",
+      loadListing(
+        (query) =>
+          `${this.endpoint}/business_partners/v1/search?key=${this.ibpKey}${this.ibpFieldGroup}${this.pagination}${query}`,
+        this.headers,
+        {
+          transform: (partners) => partners.bp,
+        },
+        this.logContext,
+      ),
+      { redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getByID = cache(
+      "VMM_BusinessPartner_getById",
+      loadOne(
+        (id) =>
+          `${this.endpoint}/business_partners/v1/${id}?key=${this.ibpKey}${this.ibpFieldGroup}`,
+        this.headers,
+        {
+          transform: (id, partners) => partners.bp,
+          batch: false,
+        },
+        this.logContext,
+      ),
+      { cache404As: [], redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getBusinessPartnerById = cache(
+      "SPARK_BusinessPartner_getById",
+      loadOne(
+        (bpId) =>
+          `${this.endpoint}/business_partners/v1/${bpId}?key=${this.ibpKey}${this.ibpFieldGroup}`,
+        this.headers,
+        {
+          transform: (id, partners) => mapVMMPartnersToSpark(partners.bp),
+          batch: false,
+        },
+        this.logContext,
+      ),
+      { cache404As: [], redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getPartnerByType = cache(
+      "VMM_BusinessPartner_getPartnerByType",
+      loadListing(
+        (type) =>
+          `${this.endpoint}/business_partners/v1/search?key=${this.ibpKey}${this.ibpFieldGroup}${
+            this.partnerTypeFilter
+          }${type}`,
+        this.headers,
+        {
+          transform: (partners) => partners.bp,
+        },
+        this.logContext,
+      ),
+      { redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getPartnerByTypeAndQuery = cache(
+      "VMM_BusinessPartner_getPartnerByTypeAndQuery",
+      loadListing(
+        ({ type, query }) =>
+          `${this.endpoint}/business_partners/v1/search?key=${this.ibpKey}${this.ibpFieldGroup}${
+            this.searchFilter
+          }${query}${this.typeFilter}${type}`,
+        this.headers,
+        {
+          transform: (partners) => partners.bp,
+        },
+        this.logContext,
+      ),
+      { redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getPartnersByUser = cache(
+      "VMM_BusinessPartner_getByUser",
+      loadListing(
+        (lanId) =>
+          `${this.endpoint}/business_partners/v1/search?key=${this.ibpKey}${this.ibpFieldGroup}&user_id=${lanId}`,
+        this.headers,
+        {
+          transform: (partners) => partners.bp,
+        },
+        this.logContext,
+      ),
+      { redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getBusinessPartnerByGmsVendorId = cache(
+      "VMM_BusinessPartner_getBusinessPartnerByGmsVendorId",
+      loadOne(
+        (id) =>
+          `${this.endpoint}/business_partners/v1/search?key=${this.ibpKey}${this.ibpFieldGroup}&gms_vendor_number=${id}`,
+        this.headers,
+        {
+          transform: (id, partners) => partners.bp,
+          batch: false,
+        },
+        this.logContext,
+      ),
+      { cache404As: [], redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getUsers = cache(
+      "VMM_BusinessPartner_getUsers",
+      loadOne(
+        (id) =>
+          `${this.endpoint}/business_partner_contacts/v2/contacts/${id}?key=${this.ibpKey}`,
+        this.headers,
+        {
+          transform: (id, data) => data.bp,
+          batch: false,
+        },
+        this.logContext,
+      ),
+      { cache404As: [], redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getByPartnerTypesAndQuery = cache(
+      "SPARK_BusinessPartner_getPage",
+      loadListing(
+        ({ query, bpRoleIds }) =>
+          `${this.endpoint}/business_partners/v1/search?key=${this.ibpKey}${this.ibpFieldGroup}${this.buildSearchQueryByPartnerTypes(query, bpRoleIds)}`,
+        this.headers,
+        {
+          transform: (json, { bpRoleIds }) =>
+            mapVMMPartnersToSpark(json.bp, bpRoleIds),
+        },
+        this.logContext,
+      ),
+      { redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.getSparkPartnersByUser = cache(
+      "SPARK_BusinessPartner_getByUser",
+      loadListing(
+        (lanId) =>
+          `${this.endpoint}/business_partners/v1/search?key=${this.ibpKey}${this.ibpFieldGroup}&user_id=${lanId}`,
+        this.headers,
+        {
+          transform: (json) => mapVMMPartnersToSpark(json.bp),
+        },
+        this.logContext,
+      ),
+      { redisTtl: VMM_BUSINESS_PARTNER_REDIS_TTL },
+      this.logContext,
+    )
+
+    this.buildSearchQueryByPartnerTypes = (query, bpRoleIds) => {
+      let queryString = this.searchFilter + encodeURIComponent(query)
+      if (bpRoleIds && bpRoleIds.length > 0) {
+        queryString = queryString.concat(`${this.typeFilter}${mapSparkBpRolesToVmm(bpRoleIds).join(',')}`)
+        return queryString
+      } else {
+        return queryString
+      }
+    }
+
+    const mapSparkBpRolesToVmm = (bpRoleIds) => bpRoleIds
+      .map(it => typeof it === 'string' ? parseInt(it) : it)
+      .map(it => BusinessPartnerRole.getByCode(it))
+      .filter(Boolean)
+      .map(it => it.vmmPartnerTypeCode)
+
+    const mapVMMPartnersToSpark = (vmmPartners, requestedSparkPartnerIds) => vmmPartners.map(it => {
+      return {
+        name: it.bpName,
+        id: it.bpId,
+        roles: mapVMMRolesToSpark(it.role),
+        relationships: mapVMMRelationshipsToSpark(it.relationship),
+      }
+    }).filter(it => requestedSparkPartnerIds?.length ? it.roles.some(role => requestedSparkPartnerIds.includes(role.id)) : true)
+
+    const hasStatusCode = (role, statusCode) => role.status.some(status => status.id === statusCode)
+
+    const isApprovedRole = (role) => hasStatusCode(role, APPROVED_ROLE_CODE)
+    const isExitInProgressRole = (role) => hasStatusCode(role, EXIT_IN_PROGRESS)
+
+    const mapVMMRolesToSpark = (roles) => {
+      return (roles ? roles.filter(role => isApprovedRole(role) || isExitInProgressRole(role)) : [])
+        .map(role => {
+          const matrixPlacements = [role.matrixPlacementPrimaryId, role.matrixPlacementSecondaryId].filter(Boolean)
+          return BusinessPartnerRole.getByVMMPartnerTypeAndMatrixPlacement(role.bpRoleId, matrixPlacements)
+        })
+        .filter(Boolean)
+        .map(role => ({ id: role.code, name: role.description }))
+    }
+
+    const isApprovedRelationship = (vmmRelationship) => vmmRelationship.relatedBpStatusId === APPROVED_RELATIONSHIP_CODE
+
+    const mapVmmRoleToSparkRoles = (roleId) => BusinessPartnerRole.getSparkRolesByVMMPartnerType(roleId)?.map(sparkRole =>
+      ({ id: sparkRole.code, name: sparkRole.description }),
+    )
+
+    const mapVMMRelationshipsToSpark = (vmmRelationships) =>
+      (vmmRelationships ? vmmRelationships.filter(relationship => isApprovedRelationship(relationship)) : [])
+        .flatMap(it => mapVMMRelationshipToSparkRelationships(it)).filter(it => it.type.relatedBpRole && it.type.bpRole)
+
+    const mapVMMRelationshipToSparkRelationships = (vmmRelationship) => {
+      const bpRoles = mapVmmRoleToSparkRoles(vmmRelationship.type.bpRole.bpRoleId)
+      const relatedBpRoles = mapVmmRoleToSparkRoles(vmmRelationship.type.relatedBpRole.bpRoleId)
+
+      return bpRoles.flatMap(bpRole =>
+        relatedBpRoles.map(relatedBpRole => ({
+          relatedBpId: vmmRelationship.relatedBpId,
+          relatedBpName: vmmRelationship.relatedBpName,
+          type: {
+            bpRole,
+            relatedBpRole,
+          },
+        })),
+      )
+    }
+  }
+}

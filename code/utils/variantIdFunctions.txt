@@ -1,0 +1,15 @@
+import _ from 'lodash'
+
+export const isVariantId = (humanId) => {
+  return !!humanId &&
+  !_.isEmpty(humanId) &&
+  humanId.includes('.') &&
+  !!humanId.substring(humanId.indexOf('.') + 1).match(/^\d+$/)
+}
+
+export const getMasterId = (humanId) => {
+  if (humanId && isVariantId(humanId)) {
+    return humanId.substring(0, humanId.indexOf('.'))
+  }
+  return humanId
+}

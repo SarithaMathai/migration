@@ -1,0 +1,40 @@
+import { componentHistoryHelper, componentVersionHelper } from '../utils/componentHistoryHelper'
+import { workspaceAssociationHelper } from '../utils/workspaceAssociationHelper'
+
+export default {
+  Query: {
+    getComponentVersions: (parent, { id }, ctx) => {
+      return componentHistoryHelper(id, ctx)
+    },
+    getComponentVersion: (parent, args, ctx) => {
+      return componentVersionHelper(args, ctx)
+    },
+  },
+  Mutation: {
+    updateComponentWorkspaceAssociation: async (parent, { input }, ctx) => {
+      return workspaceAssociationHelper(input.type, input.id, input.addWorkspaces, input.removeWorkspaces, ctx)
+    },
+  },
+  SPARK_Component: {
+    __resolveType: async (resource) => {
+      if (resource.humanId.indexOf('MST') === 0) {
+        return 'SPARK_Measurements'
+      } else if (resource.humanId.indexOf('BOM') === 0 ||
+              resource.humanId.indexOf('PKGBOM') === 0 ||
+              resource.humanId.indexOf('PRDBOM') === 0
+      ) {
+        return 'SPARK_Bom'
+      } else if (resource.humanId.indexOf('CLM') === 0) {
+        return 'SPARK_Claims'
+      } else if (resource.humanId.indexOf('PDTL') === 0) {
+        return 'SPARK_ProductDetails'
+      } else if (resource.humanId.indexOf('PWL') === 0) {
+        return 'SPARK_Watchlist'
+      } else if (resource.humanId.indexOf('PKG') === 0) {
+        return 'SPARK_Packaging'
+      } else {
+        return ''
+      }
+    },
+  },
+}

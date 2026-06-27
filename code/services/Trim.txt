@@ -1,0 +1,518 @@
+import SparkService from './SparkService'
+import _ from 'lodash'
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import loadListing from '../utils/loadListing'
+
+export default class TrimService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}`
+    this.headers = headers
+
+    this.keyValuesTransform = values => {
+      const formattedValues = []
+      for (var key in values) {
+        if (Object.prototype.hasOwnProperty.call(values, key)) {
+          formattedValues.push({
+            code: key,
+            description: values[key],
+          })
+        }
+      }
+      return _.sortBy(formattedValues, ['description'])
+    }
+
+    this.getTrimBatch = loadOne(
+      id => `${this.endpoint}?humanIds=${id}`,
+      this.headers,
+      {
+        transform: (ids, json) =>
+          deepToCamelCase(ids.map(human_id => _.find(json, { human_id }) || null)),
+        fetchAclToken: true,
+      },
+      this.logContext,
+    )
+
+    this.getTrim = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, trim) => [deepToCamelCase(trim)],
+        },
+        this.logContext,
+      )
+
+    this.getTrims = permissionJWT =>
+      loadListing(
+        ids => `${this.endpoint}?humanIds=${ids}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        { transform: trim => deepToCamelCase(trim) },
+        logContext,
+      )
+
+    this.validateUniqueness = permissionJWT => postOne(
+      `${this.endpoint}/validate_uniqueness`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: response => deepToCamelCase(response),
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+
+    this.addTrim = permissionJWT => postOne(
+      this.endpoint,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: trim => deepToCamelCase(trim),
+        transformRequest: trim => deepToSnakeCase(trim),
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+
+    this.updateTrim = permissionJWT =>
+      putOne(
+        trim => `${this.endpoint}/${trim.humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: trim => deepToCamelCase(trim),
+          transformRequest: trim => deepToSnakeCase(trim),
+          throwOnError: true,
+        },
+        this.logContext,
+      )
+
+    this.updateTrimVariations = permissionJWT =>
+      putOne(
+        trim => `${this.endpoint}/${trim.humanId}/variations`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: trim => deepToCamelCase(trim),
+          transformRequest: trim => deepToSnakeCase(trim),
+          throwOnError: true,
+        },
+        this.logContext,
+      )
+
+    this.updateTrimTeams = permissionJWT => postOne(
+      ({ humanId }) => `${this.endpoint}/${humanId}/teams`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+        skipJsonParse: true,
+      },
+      logContext,
+    )
+
+    this.bulkUpdateTeams = (permissionJWT) =>
+      postOne(
+        ({ humanIds }) => `${this.endpoint}/bulkUpdate/teams?humanIDs=${humanIds}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+          skipJsonParse: true,
+        },
+        logContext,
+      )
+
+    this.getAdjacencies = loadListing(
+      () => `${this.endpoint}/code_value/adjacency`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getFiberContents = loadListing(
+      () => `${this.endpoint}/code_value/fiber_content`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getFiberContentsByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/fiber_content/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getStatuses = loadListing(
+      () => `${this.endpoint}/code_value/status`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getPyramids = loadListing(
+      () => `${this.endpoint}/code_value/pyramid`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimTypes = loadListing(
+      () => `${this.endpoint}/code_value/trim_type`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimSubTypes = loadListing(
+      () => `${this.endpoint}/code_value/trim_sub_type`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimSubTypesByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/trim_sub_type/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimFurtherSubTypes = loadListing(
+      () => `${this.endpoint}/code_value/trim_further_sub_type`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimFurtherSubTypesFiltered = postOne(
+      `${this.endpoint}/code_value/trim_further_sub_type`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+
+    this.getTrimFinishes = loadListing(
+      () => `${this.endpoint}/code_value/finish`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimCoatings = loadListing(
+      () => `${this.endpoint}/code_value/coating`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimInitiatedBys = loadListing(
+      () => `${this.endpoint}/code_value/initiatedBy`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimUnitOfMeasures = loadListing(
+      () => `${this.endpoint}/code_value/unit_of_measure`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimUnitOfMeasuresByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/unit_of_measure/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimConstructions = loadListing(
+      () => `${this.endpoint}/code_value/trim_construction`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimConstructionsByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/trim_construction/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimShapes = loadListing(
+      () => `${this.endpoint}/code_value/trim_shape`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimShapesByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/trim_shape/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimUsagesByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/usage/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimApplicationMethodsByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/application_method/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimUnderpartsSpecifications = loadListing(
+      () => `${this.endpoint}/code_value/underparts_specification`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimWeights = loadListing(
+      () => `${this.endpoint}/code_value/trim_weight`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getHandFeels = loadListing(
+      () => `${this.endpoint}/code_value/hand_feel`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimLabelTypesBySubtype = loadListing(
+      subTypeCode => `${this.endpoint}/code_value/trim_label_type/${subTypeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimEdgeFinishes = loadListing(
+      subTypeCode => `${this.endpoint}/code_value/edge_finishes/${subTypeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimBackConstructions = loadListing(
+      typeCode => `${this.endpoint}/code_value/back_constructions/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimFixedSizes = loadListing(
+      () => `${this.endpoint}/code_value/fixed_size`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getWeightUnitOfMeasuresByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/weight_unit_of_measure/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimTapingConstructionsFiltered = postOne(
+      `${this.endpoint}/code_value/taping_construction`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+
+    this.getSliderTypesByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/slider_type/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getSliderMaterialsByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/slider_material/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getPuller = loadListing(
+      typeCode => `${this.endpoint}/code_value/puller/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getPullerAttachmentMaterialByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/puller_attachment_material/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getCompatibleSizesByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/compatible_size/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getCompatibleSizeUnitOfMeasuresByType = loadListing(
+      typeCode => `${this.endpoint}/code_value/compatible_size_unit_of_measure/${typeCode}`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getFiberContentsByTypeAndSubtype = postOne(
+      `${this.endpoint}/code_value/trim_fiber_content`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+
+    this.getTrimBrands = loadListing(
+      () => `${this.endpoint}/code_value/brands`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimLabelTypes = loadListing(
+      `${this.endpoint}/code_value/trim_label_type`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getTrimColorTypes = postOne(
+      `${this.endpoint}/code_value/colors`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+
+    this.getTrimFinishTypes = postOne(
+      `${this.endpoint}/code_value/finishes`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+  }
+}

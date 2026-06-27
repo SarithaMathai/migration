@@ -1,0 +1,164 @@
+import { getUserPermissionsJWT, getUserPermissionsJWTByProxy } from '../../utils/commonLoaders'
+import { workspaceAssociationHelper, ValidWorkspaceAssociationTypes } from './../../utils/workspaceAssociationHelper'
+import SPARK_WorkspaceV2 from './../SPARK_WorkspaceV2'
+import { getUserGroup } from '../../utils/Product/userGroupUtils'
+import _ from 'lodash'
+
+export default {
+  Query: {
+    getClaims: async (parent, { parentHumanId, claimHumanIds, partnerIds }, ctx) => {
+      return ctx.loaders.claim.getClaims.load({ parentHumanId, claimHumanIds, partnerIds })
+    },
+    getClaimByIds: async (parent, { claimHumanIds }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(claimHumanIds, ctx)
+      return ctx.loaders.claim.getClaimsByIds(permissionJWT, claimHumanIds)
+    },
+    getCommunicationChannels: async (parent, args, ctx) => {
+      return ctx.loaders.claim.getCommunicationChannels.load()
+    },
+    getAllClaimsAbout: async (parent, args, ctx) => {
+      return ctx.loaders.claim.getAllClaimsAbout.load()
+    },
+    getClaimsElastic: async (parent, { parentHumanId }, ctx) => {
+      return ctx.loaders.search.getClaimsElastic.load({ q: `parentId: ${parentHumanId}` })
+    },
+    getClaimExports: (parent, {}, ctx) => ctx.loaders.claim.getClaimExports.load(),
+    searchGuestFacing: async (parent, { queryParam }, ctx) => {
+      return ctx.loaders.claim.searchGuestFacing.load({ query: queryParam })
+    },
+  },
+  Mutation: {
+    createClaim: async (parent, { sparkClaim }, ctx) => {
+      const claim = await ctx.loaders.claim.create.load(sparkClaim)
+      if (claim.validationErrors || claim.message) {
+        throw new Error('Error creating claim \n' + JSON.stringify(claim))
+      }
+      return claim
+    },
+    updateClaim: async (parent, { sparkClaim }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWTByProxy({
+        id: sparkClaim.humanId,
+        proxyIds: [sparkClaim.parentId],
+        basePermissions: true,
+      }, ctx)
+      if ((sparkClaim.workspaceContext && (sparkClaim.workspaceContext.addWorkspaces.length > 0 || sparkClaim.workspaceContext.removeWorkspaces.length > 0))) {
+        await workspaceAssociationHelper(ValidWorkspaceAssociationTypes.CLAIM, sparkClaim.humanId, sparkClaim.workspaceContext.addWorkspaces, sparkClaim.workspaceContext.removeWorkspaces, ctx)
+      }
+      const claim = await ctx.loaders.claim.updateClaim(permissionJWT, sparkClaim)
+      if (claim.validationErrors || claim.message) {
+        throw new Error('Error updating claim \n' + JSON.stringify(claim))
+      }
+      return claim
+    },
+    bulkUpdateClaim: async (parent, { sparkClaim }, ctx) => {
+      const claim = await ctx.loaders.claim.bulkUpdateClaim(sparkClaim)
+      if (_.isArray(claim)) {
+        return claim
+      } else if (claim.status_code > 400) {
+        throw new Error('Error updating claim \n' + JSON.stringify(claim))
+        // for if we get any other code 400 or less somthing else is wrong
+      } else {
+        throw new Error('Unhandled error updating claim \n' + JSON.stringify(claim))
+      }
+    },
+    requestClaimExport: (parent, {}, ctx) => ctx.loaders.claim.requestClaimExport.load(),
+    lockClaim: async (parent, { claimId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(claimId, ctx)
+      return ctx.loaders.claim.lockClaim(permissionJWT, claimId)
+    },
+    unlockClaim: async (parent, { claimId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(claimId, ctx)
+      return ctx.loaders.claim.unlockClaim(permissionJWT, claimId)
+    },
+  },
+
+  SPARK_Claims: {
+    access: async (claim, args, ctx) => {
+      // since we are only getting access for one claim, return the first element of the list returned from service
+      const perms = await ctx.loaders.accessControl.getPermissions.load({
+        resourceIds: [ claim.humanId ],
+      })
+      return perms && perms.length > 0 ? perms[0] : null
+    },
+    currentUserPermissions: async (claim, args, ctx) => {
+      const { resourcePermissions: currentUserPermissions } = await ctx.loaders.accessControl.getUserAccessUnencoded.load(claim.humanId)
+      return currentUserPermissions?.[0]
+    },
+    createdBy: (claim, args, ctx) => {
+      if (claim.createdBy) {
+        return ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(claim.createdBy)
+      }
+    },
+    updatedBy: (claim, args, ctx) => {
+      if (claim.updatedBy) {
+        return ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(claim.updatedBy)
+      }
+    },
+    parentDetails: (claim, args, ctx) => ctx.loaders.product.getByID.load(claim.parentId),
+    businessPartner: async (claim, args, ctx) => {
+      let vmmPartnerId
+      if (claim.partnerId) { // if partnerId is present then use it
+        vmmPartnerId = claim.partnerId
+      } else if (!claim.dpPartnerId) { // if partnerId and dpPartnerId is null then use 0
+        vmmPartnerId = 0
+      } else { // if partnerId is null but the dpPartnerId is not null then use dpPartnerId
+        vmmPartnerId = claim.dpPartnerId
+      }
+
+      if (!vmmPartnerId) {
+        return { bpId: 0, bpName: 'Target' }
+      } else {
+        return ctx.loaders.vmm.getByID.load(vmmPartnerId)
+      }
+    },
+    designPartner: async (claim, args, ctx) => {
+      const vmmPartnerId = claim.dpPartnerId
+      if (!vmmPartnerId) {
+        return { bpId: null, bpName: null }
+      } else {
+        return ctx.loaders.vmm.getByID.load(vmmPartnerId)
+      }
+    },
+    workspaces: (claim, args, ctx) => {
+      const workspaceIds = claim.workspaceContext || []
+      if (workspaceIds.length) {
+        return SPARK_WorkspaceV2.Query.getWorkspacesByIdsV2({}, { ids: workspaceIds }, ctx)
+      }
+      return null
+    },
+    participantDetails: async (claim, args, ctx) => getUserGroup(ctx, claim.humanId),
+    product: (claim, args, ctx) =>
+      (claim.parentId && claim.parentId.indexOf('PID') === 0)
+        ? ctx.loaders.product.getByID.load(claim.parentId)
+        : null,
+  },
+
+  SPARK_ParentDetails: {
+    otherClaimBps: async (product, args, ctx) => {
+      const claims = await ctx.loaders.search.getClaimsElastic.load({ q: `parentId: ${product.productId}` })
+      return claims.content.map(claim => claim.partnerId).filter(item => !!item)
+    },
+    droppedPartnerIds: (product) => product.droppedPartnerIds,
+    systemTeams: async (product, args, ctx) => {
+      const lookupIds = (product.businessPartners || []).map(bp => `${bp.partnerId}`).join(' OR businessPartner.partnerId:')
+      if (!lookupIds) {
+        return { content: [] }
+      }
+      const elasticTeamVars = `(partnerType.code:8) AND (teamType:SYSTEM) AND (businessPartner.partnerId:${lookupIds})`
+      const params = { page: 0, size: 100, q: elasticTeamVars }
+      return ctx.loaders.search.searchTeams.load(params)
+    },
+  },
+
+  SPARK_ClaimSubstantiate: {
+    substantiatedBy: (claim, args, ctx) => {
+      if (claim.substantiatedBy) {
+        return ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(claim.substantiatedBy)
+      }
+    },
+  },
+
+  SPARK_ClaimDetails: {
+    claimName: claimDetails => claimDetails.guestFacingClaim,
+  },
+}

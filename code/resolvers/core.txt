@@ -1,0 +1,40 @@
+import { loadTags } from '../utils/commonLoaders'
+
+export default {
+  Query: {
+    getCoreAttributes: async (_, { coreAttributesQuery }, ctx) => {
+      const {
+        tagIds = [],
+        designCycleIds = [],
+        departmentIds = [],
+      } = coreAttributesQuery
+
+      return {
+        tags: tagIds ? loadTags(tagIds, ctx) : [],
+        designCycles: designCycleIds ? loadTags(designCycleIds, ctx) : [],
+        departments: departmentIds ? ctx.loaders.ig.department.getByID.loadMany(departmentIds) : [],
+      }
+    },
+  },
+
+  ResourceMapping: {
+    __resolveType () {
+      return 'ResourceMapping'
+    },
+  },
+
+  SPARK_Paging: {},
+
+  SPARK_Sort: {},
+
+  VMM_BusinessPartner: {
+    id: businessPartner => businessPartner.bpId,
+    name: businessPartner => businessPartner.bpName,
+  },
+
+  VMM_Location: {},
+
+  SPARK_CodeDescription: {
+    code: codeDescription => codeDescription.statusCode || codeDescription.code,
+  },
+}

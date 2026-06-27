@@ -1,0 +1,39 @@
+import SparkService from './SparkService'
+import { deepToCamelCase } from '../utils/convertFunctions'
+import postOne from '../utils/postOne'
+
+export default class NegotiatorBids extends SparkService {
+  constructor(endpoint, token, logContext) {
+    super(logContext)
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+      'content-type': 'application/json',
+    }
+    this.endpoint = `${endpoint}/costing_edge/v1`
+
+    this.fetchProductBids = postOne(
+      () => `${this.endpoint}/bids/search`,
+      this.headers,
+      {
+        transform: bids => deepToCamelCase(bids),
+        transformRequest: ({ pids, workspaceId, askId }) => {
+          const requestBody = {
+          }
+          requestBody.pids = pids
+          requestBody.status = ["Validated", "Promoted"]
+          
+          if (askId) {
+            requestBody.source_ask_id = askId
+          }
+          
+          if (workspaceId) {
+            requestBody.workspace_id = workspaceId
+          }
+          return requestBody
+        },
+      },
+      this.logContext,
+    )
+  }
+}

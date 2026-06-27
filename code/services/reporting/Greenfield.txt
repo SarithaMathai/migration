@@ -1,0 +1,36 @@
+import { get, set } from 'lodash'
+import { deepToCamelCase, formatQueryResults } from '../../utils/convertFunctions'
+import postOne from '../../utils/postOne'
+import SparkService from '../SparkService'
+
+export default class GreenfieldService extends SparkService {
+  constructor (endpoint, vmmToken, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}`
+    this.getCard = () =>
+      postOne(
+        `${this.endpoint}`,
+        {
+          Authorization: `Bearer ${vmmToken}`,
+
+        },
+        {
+          transform: response => {
+            let attributeMapping = {}
+
+            const cardQueryAttributes = get(response, 'card_config.card_query_attribute.columns', [])
+            cardQueryAttributes.forEach(({ ref_id, column_display_name }) => {
+              set(attributeMapping, ref_id, column_display_name)
+            })
+            return deepToCamelCase({
+              ...response,
+              queryResults: formatQueryResults(response['query_results'], attributeMapping),
+              totalResults: get(formatQueryResults(response['total_results'], attributeMapping), '0', {}),
+              lastUpdatedTimeStamp: response['card_config']['card_attribute']['dataset_last_load_date'],
+            })
+          },
+        },
+        this.logContext,
+      )
+  }
+}

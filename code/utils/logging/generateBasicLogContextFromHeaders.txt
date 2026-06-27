@@ -1,0 +1,26 @@
+function parseJwt(token) {
+  if (!token) {
+    return {}
+  }
+  const jwtBody = token.split('.')[1]
+  if (!jwtBody) {
+    return {}
+  }
+  const encoded = jwtBody.replace(/-/g, '+').replace(/_/g, '/')
+  const outerToken = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8'))
+  return JSON.parse(outerToken.sub)
+}  
+ 
+export function generateBasicLogContextFromHeaders(headers) {
+  const userInfo = parseJwt(headers['X-AUTH-TOKEN'])
+
+  const logContext = {
+    requestId: headers['X-Api-Id'],
+    trace: {
+      id: headers['X-Api-Id'],
+    },
+    username: userInfo.email || 'unknown',
+    userId: userInfo.userProfileId || 'unknown',
+  }
+  return { logContext, userInfo }
+}

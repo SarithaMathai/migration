@@ -1,0 +1,93 @@
+import { deepToCamelCase, deepToSnakeCase, transformKeyValues } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+
+import SparkService from './SparkService'
+
+export default class ColorArchromaService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}`
+    this.headers = headers
+
+    this.getByID = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, color) => [deepToCamelCase(color)],
+          batch: false,
+        },
+        this.logContext,
+      )
+
+    this.getByIDs = permissionJWT =>
+      loadListing(
+        this.endpoint,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: color => deepToCamelCase(color),
+        },
+        this.logContext,
+      )
+
+    this.create = permissionJWT =>
+      postOne(
+        this.endpoint,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: color => deepToCamelCase(color),
+          transformRequest: color => deepToSnakeCase(color),
+        },
+        this.logContext,
+      )
+
+    this.delete = permissionJWT =>
+      deleteOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {},
+        this.logContext,
+      )
+
+    this.update = permissionJWT =>
+      putOne(
+        sparkColor => `${this.endpoint}/${sparkColor.humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: color => deepToCamelCase(color),
+          transformRequest: color => deepToSnakeCase(color),
+          getDataLoader: () => this.getByID,
+        },
+        this.logContext,
+      )
+
+    this.getColorForAll = loadListing(
+      `${this.endpoint}/code_value/color_for_all`,
+      this.headers,
+      {
+        transform: colorForAll =>
+          transformKeyValues(colorForAll),
+      },
+      logContext,
+    )
+  }
+}

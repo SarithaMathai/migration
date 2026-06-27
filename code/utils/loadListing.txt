@@ -1,0 +1,80 @@
+import { Agent } from 'https'
+import { performance } from 'perf_hooks'
+
+import fetch from 'node-fetch'
+
+import { logger } from './../utils/logger'
+import { resolveUrl } from './commonLoaders'
+import { generateBasicLogContextFromHeaders } from './logging/generateBasicLogContextFromHeaders'
+
+export function cacheKey (raw) {
+  return JSON.stringify(raw)
+}
+
+export default function loadListing (
+  baseURL,
+  headers,
+  options = {},
+  logContext = {},
+) {
+  const {
+    transform,
+    fetchOptions,
+  } = options
+  const { logContext: defaultLogContext } = generateBasicLogContextFromHeaders(headers)
+  const finalLogContext = { ...logContext, ...defaultLogContext }
+
+  let cache = {}
+
+  return {
+    get cache () {
+      return cache
+    },
+    clear: key => {
+      delete cache[key]
+    },
+    clearAll: () => {
+      cache = {}
+    },
+    prime: (key, value) => {
+      cache[key] = value
+    },
+    load: async params => {
+      const url = resolveUrl(baseURL, params)
+
+      const started = performance.now()
+      const response = await fetch(url, {
+        agent: /^https:\/\//.test(url)
+          ? new Agent({
+            rejectUnauthorized: false,
+          })
+          : undefined,
+        headers,
+        ...fetchOptions,
+      })
+
+      const json = await response.json()
+      logger.logResponse(
+        url,
+        'GET',
+        response.status,
+        json,
+        finalLogContext,
+        Math.round(performance.now() - started),
+      )
+
+      if (response.status >= 400) {
+        // This still gets printed with linebreaks, but we have everything we need in the above log statement
+        throw new Error(JSON.stringify(json, null, '  '))
+      }
+
+      let items = json
+
+      if (transform) {
+        items = transform(json, params)
+      }
+
+      return items
+    },
+  }
+}

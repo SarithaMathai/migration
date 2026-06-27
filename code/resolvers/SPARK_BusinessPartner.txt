@@ -1,0 +1,10 @@
+export default {
+  Query: {
+    getBusinessPartnersByTypesAndQuery: (parent, { query, bpRoleIds }, ctx) =>
+      ctx.loaders.vmm.getByPartnerTypesAndQuery.load({ query, bpRoleIds }),
+    getBusinessPartnersByUserLanId: (parent, { userLanId }, ctx) =>
+      ctx.loaders.vmm.getSparkPartnersByUser.load(userLanId),
+    getBusinessPartnerById: (parent, { bpId }, ctx) =>
+      ctx.loaders.vmm.getBusinessPartnerById.load(bpId),
+  },
+}

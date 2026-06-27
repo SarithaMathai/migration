@@ -1,0 +1,3 @@
+import { materialHasFiles } from './materialHasFiles'
+
+export const getFilesOrEmptyList = (material) => materialHasFiles(material) ? material.files : []

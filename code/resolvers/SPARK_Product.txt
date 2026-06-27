@@ -1,0 +1,2632 @@
+import _ from 'lodash'
+import moment from 'moment'
+import { SAMPLE_EVALUTION } from '../utils/constants'
+import {
+  getUserPermissionsJWT,
+  filterResourcesByPartner,
+  addBulkRelationShip,
+  getPermissionMapForBulkACLCall,
+  getFilteredResourceAndLevelWiseChildrenBasedOnPartnerACLPermission,
+  getUnDroppablePartners,
+} from '../utils/commonLoaders'
+import {
+  getStatusName,
+  getTrackingStatusName,
+  getEvalStatusName,
+} from '../utils/convertFunctions'
+import { resolvePaging } from './../utils/resolvePaging'
+import {
+  loadManyIncludeEmptyResponse,
+  loadBps,
+  loadBpsWithType,
+} from '../utils/vmmUtils'
+
+import SPARK_Measurement from './product/SPARK_Measurement'
+import SPARK_SampleV2 from './SPARK_SampleV2'
+import { getTagsBatched } from '../services/batchers/getTagsBatched'
+
+import { getWorkspaceResourceString } from './SPARK_WorkspaceV2'
+import UserProfileAttributes from './SPARK_UserAttributes'
+import { getProductPartnersNotRemovable } from '../utils/removePartnerUtils'
+import SPARK_Claims from './product/SPARK_Claims'
+import SPARK_Bom from './product/SPARK_Bom'
+import SPARK_ProductDetail from './product/SPARK_ProductDetail'
+import {
+  convertV2AccessToV3,
+  addPartnersToCountObject,
+  filterAttachmentsOrComponents,
+  orderComponentsByDate,
+  initialCountsByBp,
+  getProductOrWorkSpaceAttachments,
+} from '../utils/Product/attachmentUtils'
+import SPARK_Attachment from './SPARK_Attachment'
+import { getAccessControlBatch } from '../utils/accessControlUtils'
+import { logger } from '../utils/logger'
+import {
+  filterOutDesignPartners,
+  getFinalPartnerStatuses,
+  getProductStatus,
+} from '../utils/Product/partnerUtils'
+import { filterTeamsByPartnerOrWorkspaceId } from '../utils/Product/teamUtils'
+import { getNotRemovableWorkspaceIds } from '../utils/Product/productUtils'
+import SPARK_Packaging from './product/SPARK_Packaging'
+import { getCountByComponents } from '../utils/componentStatusUtils'
+import BusinessPartnerRole from '../config/businessPartner'
+import { CHUNK_SIZE, getDiscussionThreadsBatch, getDiscussionsBatch } from '../utils/discussionUtils'
+import { getReservedDpcisFromApex } from '../utils/Product/getReservedDpcisFromApex'
+import { getProductAsksForWorkspace } from '../utils/ProductAskUtils'
+
+const USE_NEW_RULES_API = process.env.USE_NEW_RULES_API === 'true'
+
+export const orderProductAttachments = attachmentsWithMetaData => {
+  const orderByResourceType = ({ attachment }) =>
+    ['product', 'discussion', 'sample'].indexOf(attachment.resource.type)
+  const orderByCreatedDate = ({ attachment }) =>
+    new Date(attachment.created_at)
+  return _.orderBy(
+    attachmentsWithMetaData,
+    [orderByResourceType, orderByCreatedDate],
+    ['asc', 'desc'],
+  )
+}
+
+const copyProductToProduct = async (copyProduct, ctx) => {
+  if (!_.isEmpty(copyProduct)) {
+    const userPermissionsCapabilityTokenJWT = await getUserPermissionsJWT(
+      copyProduct.targetProductId,
+      ctx,
+    )
+    const copyProductResponse = await ctx.loaders.product
+      .copyProduct(userPermissionsCapabilityTokenJWT)
+      .load(copyProduct)
+    return copyProductResponse
+  }
+}
+
+export const getTechPackResourceCountMap = async (
+  productId,
+  partnerId,
+  workspaceContext,
+  parentProductId,
+  ctx,
+) => {
+  let outputMap = {}
+  const inputMap = {
+    attachments: [0, 1, 2, 3],
+    attachments_v3: [0, 1, 2, 3],
+  }
+  let enhancedAttachments = []
+  let parentDiscussionAttachments = []
+  const partnerIdInt = parseInt(partnerId)
+  // NOTE: 'product' can not be added to includeBranches without absorbing all attachments from ABO linked Products.
+  const includeBranches = [
+    'sample',
+    'discussions',
+    'discussionThreads',
+    'bill_of_materials',
+    'packaging_bom',
+    'claim',
+    'measurement_set',
+    'construction_set',
+    'product_watchlist',
+  ]
+  const includeNodeTypes = [
+    'discussions',
+    'discussionThreads',
+    'attachments_v3',
+  ]
+  const commonLoaderOutputMaps = await getFilteredResourceAndLevelWiseChildrenBasedOnPartnerACLPermission(
+    ctx,
+    inputMap,
+    productId,
+    partnerIdInt,
+    includeBranches,
+    includeNodeTypes,
+    true,
+  )
+  const parentProductOutputMaps = parentProductId
+    ? await getFilteredResourceAndLevelWiseChildrenBasedOnPartnerACLPermission(
+      ctx,
+      inputMap,
+      parentProductId,
+      partnerIdInt,
+      includeBranches,
+      includeNodeTypes,
+      true,
+    )
+    : null
+
+  Object.keys(inputMap).forEach(key => {
+    inputMap[key].map(mapedValues => {
+      if (commonLoaderOutputMaps[key][mapedValues] === undefined) {
+        commonLoaderOutputMaps[key][mapedValues] = []
+      }
+      if (
+        parentProductOutputMaps &&
+        parentProductOutputMaps[key][mapedValues] === undefined
+      ) {
+        parentProductOutputMaps[key][mapedValues] = []
+      }
+    })
+  })
+
+  if (parentProductOutputMaps) {
+    parentDiscussionAttachments = [
+      ...Object.values(parentProductOutputMaps['attachments_v3'][1]),
+      ...Object.values(parentProductOutputMaps['attachments_v3'][2]),
+      ...Object.values(parentProductOutputMaps['attachments_v3'][3]),
+    ]
+  }
+
+  const commonLoaderAttachments = commonLoaderOutputMaps['attachments']
+  const commonLoaderAttachments_v3 = commonLoaderOutputMaps['attachments_v3']
+
+  let [productAttachments = [], ...discussionAttachments] = Object.values(
+    _.mergeWith(
+      commonLoaderAttachments,
+      commonLoaderAttachments_v3,
+      (attachments, attachments_v3) => attachments.concat(attachments_v3),
+    ),
+  )
+
+  discussionAttachments = [
+    ...parentDiscussionAttachments,
+    ...Object.values(commonLoaderOutputMaps['attachments_v3'][1]),
+    ...Object.values(commonLoaderOutputMaps['attachments_v3'][2]),
+    ...Object.values(commonLoaderOutputMaps['attachments_v3'][3]),
+  ]
+  let allAttachmentIds = [...productAttachments, ...discussionAttachments]
+
+  if (allAttachmentIds.length > 0) {
+    const permissionJWT = await getUserPermissionsJWT(allAttachmentIds, ctx)
+    enhancedAttachments = await ctx.loaders.attachment
+      .getAttachmentsV3(permissionJWT)
+      .load(allAttachmentIds)
+  }
+
+  let isProductPacketAttachments = attachmentId =>
+    enhancedAttachments.some(
+      enhancedAttachment =>
+        (enhancedAttachment?.document_id === attachmentId || enhancedAttachment?.human_id === attachmentId) &&
+        enhancedAttachment?.media_type !== '3D' &&
+        !!_.find(enhancedAttachment.product_packet_props || [], {
+          partner_id: partnerIdInt,
+          critical: true,
+        }),
+    )
+
+  let samplesQuery = `(((parentId: ${productId} OR parentId: ${parentProductId}) AND partnerId: ${partnerId}) AND (evaluationStatus.code: 101 OR evaluationStatus.code: 102))`
+  let { content: samples = [] } = await ctx.loaders.search.getSamplesPage.load({
+    q: samplesQuery,
+  })
+
+  let filteredSamples = samples && samples.filter(sample => sample.workspaceContext === workspaceContext || sample.sampleType.code === 200 || sample.sampleType.code === 135)
+
+  let criticalDiscussionsQuery = {
+    q: `((relatedResources:${productId} OR relatedResources: ${parentProductId}) AND (security.merchVendors: ${partnerId} OR security.bps: ${partnerId}) AND (critical:true))`,
+  }
+  let {
+    content: criticalDiscussions = [],
+  } = await ctx.loaders.search.searchDiscussionsElastic.load(
+    criticalDiscussionsQuery,
+  )
+  let workspaceContextQuery =
+    workspaceContext && workspaceContext !== ''
+      ? `AND (workspaceContext: ${workspaceContext}) `
+      : ''
+  let measurementSetsQuery = {
+    q: `((security.merchVendors: ${partnerId} OR security.bps: ${partnerId}) AND (parentId: ${productId}) ${workspaceContextQuery} AND (statusId:200))`,
+  }
+  let {
+    content: measurementSets = [],
+  } = await ctx.loaders.search.getMeasurementSets.load(measurementSetsQuery)
+  let claimsQuery = {
+    q: `((security.merchVendors: ${partnerId} OR security.bps: ${partnerId}) AND (parentId: ${productId}) ${workspaceContextQuery} AND (statusId:501))`,
+  }
+  let { content: claims = [] } = await ctx.loaders.search.getClaimsElastic.load(
+    claimsQuery,
+  )
+  let bomsQuery = {
+    q: `((security.merchVendors: ${partnerId} OR security.bps: ${partnerId}) AND (parentId: ${productId}) ${workspaceContextQuery} AND (statusId:501))`,
+  }
+  let { content: boms = [] } = await ctx.loaders.search.getBomElastic.load(
+    bomsQuery,
+  )
+  let constructionsQuery = {
+    q: `((security.merchVendors: ${partnerId} OR security.bps: ${partnerId}) AND (parentId: ${productId} ${workspaceContextQuery} AND archived:false))`,
+  }
+  let {
+    content: constructions = [],
+  } = await ctx.loaders.search.getProductDetailsElastic.load(
+    constructionsQuery,
+  )
+  let watchlistQuery = {
+    q: `((security.merchVendors: ${partnerId} OR security.bps: ${partnerId}) AND (parentId: ${productId}) ${workspaceContextQuery} AND (statusId:501))`,
+  }
+  let {
+    content: watchlists = [],
+  } = await ctx.loaders.search.searchWatchlist.load(watchlistQuery)
+
+  const { parentDiscussionIds, criticalDiscussionIds, criticalThreadIds } = criticalDiscussions.reduce(({ parentDiscussionIds, criticalDiscussionIds, criticalThreadIds }, discussions) => {
+    if (discussions.discussionDto && discussions.discussionDto.critical === true) {
+      criticalDiscussionIds.push(discussions.discussionDto.id)
+    }
+    if (discussions.discussionThreadDtos && discussions.discussionThreadDtos.length) {
+      discussions.discussionThreadDtos.map(thread => {
+        if (thread.critical) {
+          parentDiscussionIds.push(thread.parentId)
+          criticalThreadIds.push(thread.id)
+        }
+      })
+    }
+    return {
+      parentDiscussionIds: parentDiscussionIds.filter((id, index) => parentDiscussionIds.indexOf(id) === index),
+      criticalDiscussionIds: criticalDiscussionIds.filter((id, index) => criticalDiscussionIds.indexOf(id) === index),
+      criticalThreadIds: criticalThreadIds.filter((id, index) => criticalThreadIds.indexOf(id) === index),
+    }
+  }, { parentDiscussionIds: [], criticalDiscussionIds: [], criticalThreadIds: [] })
+
+  const allCriticalIds = [...criticalDiscussionIds, ...criticalThreadIds]
+  let criticalDiscussionAttachments
+  let criticalDiscussionAttachmentsIds = []
+  if (allCriticalIds.length > 0) {
+    criticalDiscussionAttachments = await ctx.loaders.search.searchAttachmentsByParentResources.load(allCriticalIds)
+    criticalDiscussionAttachmentsIds = (criticalDiscussionAttachments.content || [])
+      .filter(attachment => attachment?.media_type !== '3D')
+      .map(attachment => attachment.id)
+  }
+
+  const filteredProductPacketDiscussionAttachments = discussionAttachments.filter(isProductPacketAttachments)
+  outputMap = {
+    productId: productId,
+    partnerId: partnerId,
+    workspaceContext: workspaceContext,
+    productAttachments: productAttachments.filter(isProductPacketAttachments),
+    discussionAttachments: _.union(criticalDiscussionAttachmentsIds, filteredProductPacketDiscussionAttachments),
+    discussions: _.union(parentDiscussionIds, criticalDiscussionIds),
+    sample: filteredSamples.map(sample => sample.id) || [],
+    measurementSets: measurementSets.map(measurement => measurement.id) || [],
+    claims: claims.map(claim => claim.id) || [],
+    productBoms: boms.filter(bom => bom.type === 1).map(bom => bom.id) || [],
+    packagingBoms: boms.filter(bom => bom.type  === 2).map(bom => bom.id) || [],
+    constructions: constructions.map(construction => construction.id) || [],
+    watchlists: watchlists.map(watchlist => watchlist.id) || [],
+  }
+  return outputMap
+}
+
+export default {
+  Query: {
+    getProducts: async (
+      parent,
+      {
+        resourceType,
+        resourceId,
+        includeBoms,
+        includeClaims,
+        includeMeasurementSets,
+        includeProductDetails,
+        page,
+        size,
+        q,
+        filter,
+      },
+      ctx,
+    ) => {
+      const elasticResponse = await ctx.loaders.product.getFilteredProductsListing.load(
+        {
+          resourceType: resourceType || 'products',
+          resourceId: resourceId || '',
+          includeBoms: includeBoms || true,
+          includeClaims: includeClaims || true,
+          includeMeasurementSets: includeMeasurementSets || true,
+          includeProductDetails: includeProductDetails || true,
+          filter: filter || [],
+          q: q || '',
+          page: page,
+          size: size,
+        },
+      )
+
+      const productsPaged = await ctx.loaders.product.getPage.load({
+        products: (elasticResponse.content || []).map(
+          product => product.humanId,
+        ),
+        page: 0,
+        size: size,
+        additionalParams: '',
+      })
+
+      const elasticProducts =
+        elasticResponse &&
+        elasticResponse.content &&
+        elasticResponse.content.reduce((allProducts, product) => {
+          allProducts[product.humanId] = product
+          return allProducts
+        }, {})
+
+      return {
+        ...(elasticResponse || {}),
+        content: ((productsPaged || {}).content || []).map(product => {
+          const elasticProduct = elasticProducts[product.productId] || {}
+          return {
+            ...product,
+            boms: elasticProduct.boms || [],
+            productDetails: elasticProduct.productDetails || [],
+            claims: elasticProduct.claims || [],
+            measurementSets: elasticProduct.measurementSets || [],
+            samples: elasticProduct.samples || [],
+            sampleIds: (elasticProduct.samples || []).map(sample => {
+              return sample.humanId
+            }),
+            hasSamplesUpcomingDue: elasticProduct.hasSamplesUpcomingDue,
+            hasNotEvaluatedReceivedSamples:
+              elasticProduct.hasNotEvaluatedReceivedSamples,
+            receivedNotEvaluatedCount: elasticProduct.receivedNotEvaluatedCount,
+          }
+        }),
+      }
+    },
+    getProductTemplates: async (
+      parent,
+      {
+        page,
+        size,
+        q,
+        filter,
+        types,
+        resourceId,
+        resourceType,
+        includeProductComponentsCount,
+        includeBomTemplates,
+        includeClaimTemplates,
+        includeMeasurementSetTemplates,
+        includeProductDetailTemplates,
+        includeClaims,
+        includeMeasurementSets,
+      },
+      ctx,
+    ) => {
+      const elasticResponse = await ctx.loaders.product.getFilteredProductsListing.load(
+        {
+          resourceType: resourceType || 'product',
+          resourceId: resourceId || '',
+          includeBoms: false,
+          includeClaims: includeClaims || false,
+          includeMeasurementSets: includeMeasurementSets || false,
+          includeProductDetails: false,
+          filter: filter || [],
+          q: q || '',
+          page: page,
+          size: size,
+          types: types,
+          includeProductComponentsCount: includeProductComponentsCount || false,
+          includeBomTemplates: includeBomTemplates || false,
+          includeClaimTemplates: includeClaimTemplates || false,
+          includeMeasurementSetTemplates:
+            includeMeasurementSetTemplates || false,
+          includeProductDetailTemplates: includeProductDetailTemplates || false,
+        },
+      )
+      return elasticResponse || {}
+    },
+    getProduct: async (parent, { id }, ctx) => {
+      const product = await ctx.loaders.product.getByID.load(id)
+      return product
+    },
+    getCopyStatus: async (parent, { id }, ctx) => {
+      const copyStatus = await ctx.loaders.product.getCopyStatus.load(id)
+      return copyStatus
+    },
+    getCategories: (
+      parent,
+      { type, resourceId, resourceType, productType },
+      ctx,
+    ) =>
+      ctx.loaders.product.getProductCategories.load({
+        type,
+        resourceId,
+        resourceType,
+        productType: productType || 100,
+      }),
+    getProductsByIds: (parent, { ids }, ctx) =>
+      ctx.loaders.product.getByIdList.load(ids),
+    getProductStatus: (parent, { }, ctx) =>
+      ctx.loaders.product.getStatus.load(),
+    getProductTechPackCountV1: async (
+      parent,
+      { productId, partnerId, workspaceContext, parentProductId },
+      ctx,
+    ) => {
+      return getTechPackResourceCountMap(
+        productId,
+        partnerId,
+        workspaceContext,
+        parentProductId,
+        ctx,
+      )
+    },
+    getProductTechPackBulkCountV1: async (
+      parent,
+      { bulkTechPackCountResource },
+      ctx,
+    ) => {
+      let outputMapList = []
+      return Promise.all(
+        bulkTechPackCountResource.map(async productTechPackCountInput => {
+          outputMapList.push(
+            await getTechPackResourceCountMap(
+              productTechPackCountInput.productId,
+              productTechPackCountInput.partnerId,
+              productTechPackCountInput.workspaceContext,
+              productTechPackCountInput.parentProductId,
+              ctx,
+            ),
+          )
+        }, []),
+      ).then(function () {
+        return outputMapList
+      })
+    },
+    getProductVersions: (parent, { id }, ctx) =>
+      ctx.loaders.product.getVersions.load({ id }),
+    getRatingByTcin: async (parent, { tcin }, ctx) => {
+      const response = await ctx.loaders.product.getRatingByTcin.load(tcin)
+      try {
+        const parsedResponse = JSON.parse(response)
+        if (parsedResponse && parsedResponse.statistics) {
+          return {
+            averageRating: parsedResponse.statistics.rating
+              ? parsedResponse.statistics.rating.average
+              : 0.0,
+            reviewCount: parsedResponse.statistics.reviewCount || 0,
+          }
+        }
+      } catch {
+        // If ratings raturn 404 or other erros failing silently and return null
+        return null
+      }
+    },
+    getProductRules: (parent, {}, ctx) => {
+      return ctx.loaders.product.getAllRules.load()
+    },
+    getProductRulesById: (parent, { id }, ctx) => {
+      return ctx.loaders.product.getRuleById.load(id)
+    },
+    getAllAvailableRules: (parent, {}, ctx) => {
+      return ctx.loaders.product.getAvailableRules.load()
+    },
+    getProductDeptRules: (
+      parent,
+      { productIds = [], departmentIds = [], activeOnly = true },
+      ctx,
+    ) => {
+      const loader = USE_NEW_RULES_API ? ctx.loaders.ruleLibrary.searchRuleLibrary : ctx.loaders.product.searchProductDeptRules.load
+      return loader({
+        productIds,
+        departmentIds,
+        activeOnly,
+      })
+    },
+    getProductBPRules: (
+      parent,
+      { productIds = [], businessPartnerIds = [], activeOnly = true },
+      ctx,
+    ) => {
+      const loader = USE_NEW_RULES_API ? ctx.loaders.ruleLibrary.searchRuleLibrary : ctx.loaders.product.searchProductBPRules.load
+      return loader({
+        productIds,
+        businessPartnerIds,
+        activeOnly,
+      })
+    },
+    searchProductRules: (
+      parent,
+      { productIds = [], departmentIds = [], businessPartnerIds = [], activeOnly = true },
+      ctx,
+    ) => {
+      const loader = USE_NEW_RULES_API ? ctx.loaders.ruleLibrary.searchRuleLibrary : ctx.loaders.product.searchProductRules.load
+      return loader({
+        productIds,
+        departmentIds,
+        businessPartnerIds,
+        activeOnly,
+      })
+    },
+    getProductTemplateById: async (_, { id }, ctx) => {
+      const response = await ctx.loaders.product.getByID.load(id)
+      return response || {}
+    },
+  },
+  Mutation: {
+    addProducts: async (parent, { workspaceId, products }, ctx) => {
+      const workspaceResourcePermissionJWT = await getUserPermissionsJWT(
+        getWorkspaceResourceString(workspaceId),
+        ctx,
+      )
+
+      const productList = await ctx.loaders.product.createBulk.load(
+        products.map(product => ({
+          ...product,
+          thumbnailId: product.attachmentId,
+        })),
+      )
+
+      const attachmentList = []
+      const promiseList = []
+      const relationshipNodes = []
+      const attachmentAttributes = []
+
+      products.forEach(productInput => {
+        const product = _.find(productList.products, {
+          thumbnailId: productInput.attachmentId,
+        })
+
+        if (productInput.attachmentId) {
+          attachmentList.push({
+            documentId: productInput.attachmentId,
+            resource: {
+              id: product.productId,
+              type: 'product',
+            },
+          })
+
+          relationshipNodes.push({
+            newRelationshipRootDTO: {
+              root: product.productId,
+              rootResourceType: 'product',
+            },
+            newRelationshipNodeDTO: [
+              {
+                node: productInput.attachmentId,
+                nodeResourceType: 'attachments_v3',
+              },
+            ],
+          })
+
+          if (productInput.businessPartners.length) {
+            attachmentAttributes.push({
+              relatedResources: [product.productId],
+              documentId: productInput.attachmentId,
+              productPacketProps: productInput.businessPartners.map(bp => ({
+                partnerId: bp.partnerId,
+                critical: 'true',
+              })),
+              managePermissionsRequest: {
+                partnersToAdd: productInput.businessPartners.map(bp => ({
+                  partnerId: bp.partnerId,
+                  partnerType: bp.partnerType,
+                })),
+              },
+            })
+          } else {
+            attachmentAttributes.push({
+              relatedResources: [product.productId],
+              documentId: productInput.attachmentId,
+            })
+          }
+        }
+      })
+      if (attachmentAttributes.length) {
+        await SPARK_Attachment.Mutation.bulkUpdateAttachmentsV2(
+          null,
+          { attachments: attachmentAttributes },
+          ctx,
+        )
+      }
+      if (relationshipNodes.length > 0) {
+        const relationship = await addBulkRelationShip(ctx, relationshipNodes)
+        if (relationship.status && relationship.status >= 400) {
+          return Promise.reject(relationship.error)
+        }
+      }
+
+      await Promise.all(promiseList)
+      if (attachmentList.length > 0) {
+        const permissionJWT = await getUserPermissionsJWT(
+          attachmentList.map(attachment => attachment.documentId),
+          ctx,
+        )
+        ctx.loaders.attachment
+          .bulkUpdateResource(permissionJWT)
+          .load(attachmentList)
+      }
+
+      await ctx.loaders.workspaceV2
+        .addResourcesToWorkspaceV2(workspaceResourcePermissionJWT)
+        .load(productList.products.map(product => product.productId), {
+          workspaceId,
+        })
+      return productList
+    },
+    updateProductTeamsWorkspaceContext: (parent, body, ctx) =>
+      ctx.loaders.product.updateProductTeamsWorkspaceContext.load(body),
+    addBusinessPartnersToProductWithType: async (
+      parent,
+      { productId, partners },
+      ctx,
+    ) => {
+      const response = await ctx.loaders.product.addBusinessPartnersWithType.load(
+        partners,
+        {
+          productId,
+        },
+      )
+      if (response.product_id && !response.status_code) {
+        return response
+      } else {
+        logger.error('Error adding partner to product', ctx.logContext, {
+          error: response.message,
+          status_code: response.status_code,
+        })
+        return new Error(`Error adding partner to product
+         \n message: ${response.message},
+         \n status_code: ${response.status_code}`)
+      }
+    },
+    addProduct: async (
+      parent,
+      { workspaceId, sparkProduct, copyProduct },
+      ctx,
+    ) => {
+      const product = await ctx.loaders.product.addProduct.load(sparkProduct)
+      if (workspaceId) {
+        const workspaceResourcePermissionJWT = await getUserPermissionsJWT(
+          getWorkspaceResourceString(workspaceId),
+          ctx,
+        )
+        await ctx.loaders.workspaceV2
+          .addResourcesToWorkspaceV2(workspaceResourcePermissionJWT)
+          .load([product.productId], { workspaceId })
+      }
+      if (!_.isEmpty(copyProduct)) {
+        copyProduct.targetProductId = product.productId
+        const copyProductRedirect = await copyProductToProduct(
+          copyProduct,
+          ctx,
+        )
+        product.copyId = copyProductRedirect.copyId
+        product.copyProductRequest = copyProductRedirect.requestId
+        product.copyProductResources = copyProductRedirect.resources
+      }
+
+      return product
+    },
+    updateProduct: async (parent, { input, copyProduct }, ctx) => {
+      let product = {}
+      if (input && Object.keys(input).some(key => key !== 'id')) {
+        product = await ctx.loaders.product.updateProduct.load(input)
+      }
+      const copyProductRedirect = await copyProductToProduct(copyProduct, ctx)
+      if (copyProductRedirect) {
+        product.copyId = copyProductRedirect.copyId
+        product.copyProductRequest = copyProductRedirect.requestId
+        product.copyProductResources = copyProductRedirect.resources
+      }
+      if (
+        input &&
+        input.removedProductTemplateAttachments &&
+        input.removedProductTemplateAttachments.length
+      ) {
+        const v2Attachments = []
+        const v3Attachments = []
+        input.removedProductTemplateAttachments.forEach(attachment => {
+          if (attachment.humanId) {
+            v3Attachments.push(attachment)
+          } else if (attachment.documentId) {
+            v2Attachments.push(attachment)
+          }
+        })
+        if (v2Attachments.length) {
+          const permissionJWT = await getUserPermissionsJWT(
+            v2Attachments.map(attachment => attachment.documentId),
+            ctx,
+          )
+          await ctx.loaders.attachment
+            .archiveAttachmentBulkV2(permissionJWT)
+            .load({ attachments: v2Attachments })
+        }
+        if (v3Attachments.length) {
+          const permissionJWT = await getUserPermissionsJWT(
+            v3Attachments.map(attachment => attachment.humanId),
+            ctx,
+          )
+          await ctx.loaders.attachment
+            .archiveAttachmentBulkV3(permissionJWT)
+            .load({ attachments: v3Attachments })
+        }
+      }
+      return product
+    },
+    carryForwardProduct: async (
+      parent,
+      { productId, carryForwardProductInput },
+      ctx,
+    ) => {
+      const response = await ctx.loaders.product.carryForwardProduct.load({
+        ...carryForwardProductInput,
+        productId,
+      })
+
+      if (!response || response.statusCode) {
+        const message = response ? response.message : 'no response'
+        const code = response ? response.statusCode : null
+        logger.error('Error carrying forward product', ctx.logContext, {
+          error: message,
+          status_code: code,
+        })
+        return new Error(
+          `Error carrying forward product \n message: ${message}, \n status_code: ${code}`,
+        )
+      }
+      return response
+    },
+    bulkUpdateProducts: (parent, { products }, ctx) =>
+      ctx.loaders.product.bulkUpdate.load(products),
+    removeProductResources: (parent, { productId, resourceIds }, ctx) =>
+      ctx.loaders.product.removeProductResources.load({
+        productId,
+        resourceIds,
+      }),
+
+    updateBusinessPartnerStatuses: (parent, { productId, statusInput }, ctx) =>
+      ctx.loaders.product.updateBusinessPartnerStatuses.load({
+        productId,
+        statusInput,
+      }),
+    addTeamsToProduct: async (
+      parent,
+      { productId, workspaceIds, teamIds, newPartners },
+      ctx,
+    ) => {
+      if (newPartners && newPartners.length > 0) {
+        const response = await ctx.loaders.product.addBusinessPartnersWithType.load(
+          newPartners,
+          {
+            productId,
+          },
+        )
+        if (response.status_code) {
+          logger.error('Error adding partner to product', ctx.logContext, {
+            error: response.message,
+            status_code: response.status_code,
+          })
+          return new Error(
+            `Error adding partner to product \n message: ${
+              response.message
+            }, \n status_code: ${response.status_code}`,
+          )
+        }
+      }
+      const addTeamsResult = await ctx.loaders.product.addTeams.load(teamIds, {
+        productId,
+      })
+
+      if (workspaceIds && workspaceIds.length > 0) {
+        const teamWorkspacesToAdd = workspaceIds.reduce(
+          (teamWorkspacesToAdd, workspaceId) => {
+            const newEntries = teamIds.map(teamId => ({
+              workspaceId,
+              teamId,
+            }))
+            return [...teamWorkspacesToAdd, ...newEntries]
+          },
+          [],
+        )
+
+        return ctx.loaders.product.updateProductTeamsWorkspaceContext.load({
+          productId,
+          teamWorkspacesToAdd,
+        })
+      } else {
+        return addTeamsResult
+      }
+    },
+    productBusinessPartnerActions: async (
+      parent,
+      { actionType, values },
+      ctx,
+    ) => {
+      switch (actionType) {
+        case 'REMOVE_TEAM':
+          await ctx.loaders.product.removeProductResources.load({
+            productId: values.productId,
+            resourceIds: values.teamIds,
+          })
+          break
+        case 'REMOVE_PARTNER':
+          { await ctx.loaders.product.removeProductResources.load({
+            productId: values.productId,
+            resourceIds: values.teamIds,
+          })
+
+          await ctx.loaders.recentlyViewed.deleteRecentlyViewedByPartner.load({
+            resourceType: 'product',
+            partnerId: values.partnerId,
+            resourceIds: values.productId,
+          })
+
+          await ctx.loaders.todo.deleteToDoByBusinessPartner.load({
+            resourceType: 'product',
+            partnerId: values.partnerId,
+            resourceIds: values.productId,
+          })
+
+          await ctx.loaders.favorite.deleteFavoritesByBusinessPartner.load({
+            resourceType: 'product',
+            resourceId: values.productId,
+            partnerId: values.partnerId,
+          })
+          const userPermissionsCapabilityToken = await getUserPermissionsJWT(
+            values.productId,
+            ctx,
+          )
+          await ctx.loaders.product
+            .removeProductBusinessPartner(userPermissionsCapabilityToken)
+            .load({
+              productId: values.productId,
+              partnerId: values.partnerId,
+            })
+          break }
+        case 'DROP_UNDROP_PARTNER':
+          { const {
+            productId,
+            partnerId,
+            dropped,
+            partnerType,
+            workspaceId,
+          } = values
+          const dropUndropBody = {
+            partnerId,
+            dropped,
+            partnerType,
+            workspaceId,
+          }
+          let [allResourcePermissions, toBePermissionsMap, allIds] = [
+            {},
+            {},
+            [],
+          ]
+
+          const relationShip = await ctx.loaders.relationship.searchByIds.load({
+            id: productId,
+            includeBranches: [
+              'product',
+              'sample',
+              'discussions',
+              'discussionThreads',
+              'claim',
+            ],
+            includeNodeTypes: [
+              'attachments',
+              'sample',
+              'discussions',
+              'discussionThreads',
+              'attachments_v3',
+            ],
+
+          })
+          const relationShipMap =
+            relationShip && _.groupBy(relationShip[0].nodes, 'type')
+
+          const discussionList =
+            relationShipMap && relationShipMap.discussions
+              ? relationShipMap.discussions.map(({ id }) => id)
+              : []
+
+          const attachmentList =
+            relationShipMap && relationShipMap.attachments
+              ? relationShipMap.attachments.map(({ id }) => id)
+              : []
+
+          const discussionThreadsList =
+            relationShipMap && relationShipMap.discussionThreads
+              ? relationShipMap.discussionThreads.map(({ id }) => id)
+              : []
+
+          const sampleList =
+            relationShipMap && relationShipMap.sample
+              ? relationShipMap.sample.map(({ id }) => id)
+              : []
+
+          const claimList =
+            relationShipMap && relationShipMap.claim
+              ? relationShipMap.claim.map(({ id }) => id)
+              : []
+
+          allIds = [
+            ...discussionList,
+            ...attachmentList,
+            ...discussionThreadsList,
+            ...sampleList,
+            productId,
+            ...claimList,
+          ]
+
+          if (allIds.length > 0) {
+            allResourcePermissions = await filterResourcesByPartner(
+              ctx,
+              allIds,
+              parseInt(partnerId),
+              true,
+              !dropped,
+            )
+            _.remove(
+              discussionList,
+              discussionId =>
+                !(discussionId in allResourcePermissions) ||
+                allResourcePermissions[discussionId].permissions.length === 0,
+            )
+            _.remove(
+              attachmentList,
+              attachment =>
+                !(attachment in allResourcePermissions) ||
+                allResourcePermissions[attachment].permissions.length === 0,
+            )
+            _.remove(
+              discussionThreadsList,
+              discussionThread =>
+                !(discussionThread in allResourcePermissions) ||
+                allResourcePermissions[discussionThread].permissions.length ===
+                  0,
+            )
+            _.remove(
+              sampleList,
+              samples =>
+                !(samples in allResourcePermissions) ||
+                allResourcePermissions[samples].permissions.length === 0,
+            )
+            _.remove(
+              claimList,
+              claim =>
+                !(claim in allResourcePermissions) ||
+                allResourcePermissions[claim].permissions.length === 0,
+            )
+
+            toBePermissionsMap = getPermissionMapForBulkACLCall(
+              allResourcePermissions,
+              partnerId,
+            )
+          }
+
+          const capabilityToken = await getUserPermissionsJWT(
+            [
+              productId,
+              ...discussionList,
+              ...discussionThreadsList,
+              ...sampleList,
+              ...claimList,
+              SAMPLE_EVALUTION,
+            ],
+            ctx,
+          )
+          const sampleCallNeeded = sampleList && sampleList.length > 0
+          let sampleCall = false
+          if (
+            partnerType !== BusinessPartnerRole.DESIGN_PARTNER.code &&
+            sampleCallNeeded
+          ) {
+            sampleCall = !dropped
+              ? ctx.loaders.sampleV2
+                .unDropSamples(capabilityToken)
+                .load(sampleList, {})
+              : ctx.loaders.sampleV2
+                .dropSamples(capabilityToken)
+                .load(sampleList, {})
+          }
+          await Promise.all([
+            ctx.loaders.product
+              .dropUndropProductBusinessPartner(capabilityToken)
+              .load(dropUndropBody, { productId: productId }),
+            sampleCall,
+          ]).then(async () => {
+            dropped
+              ? await ctx.loaders.accessControl.dropPartnerFromResources.load(
+                toBePermissionsMap,
+              )
+              : await ctx.loaders.accessControl.unDropPartnerFromResources.load(
+                toBePermissionsMap,
+              )
+            dropped &&
+              (await UserProfileAttributes.Mutation.deleteAllUserProfileDataForAPartner(
+                null,
+                {
+                  partnerId: partnerId,
+                  resourceId: productId,
+                  resourceType: 'product',
+                  discussionIds: discussionList || [],
+                  sampleIds: sampleList || [],
+                },
+                ctx,
+              ))
+          })
+          break }
+      }
+    },
+    updateViewToggle: (parent, { toggleInput }, ctx) =>
+      ctx.loaders.product.updateViewToggle.load(toggleInput),
+    updateWorkspaceAttributes: (
+      parent,
+      { productId, workspaceAttributesInput },
+      ctx,
+    ) =>
+      ctx.loaders.product.updateWorkspaceAttributes.load({
+        productId,
+        workspaceAttributesInput,
+      }),
+    linkProduct: (parent, body, ctx) =>
+      ctx.loaders.product.linkProduct.load(body),
+    unlinkProduct: (parent, body, ctx) =>
+      ctx.loaders.product.unlinkProduct.load(body),
+    addProductRule: async (parent, body, ctx) => {
+      const result = await ctx.loaders.product.addRule.load(body.rule)
+      if (result.statusCode) {
+        throw new Error(`Error creating rule on request ${result.requestId}`)
+      }
+      return result
+    },
+    updateProductRule: async (parent, body, ctx) => {
+      const result = await ctx.loaders.product.updateRule.load(body.rule)
+      if (result.statusCode) {
+        throw new Error(`Error updating rule on request ${result.requestId}`)
+      }
+      return result
+    },
+    deleteProductRule: async (parent, body, ctx) => {
+      const result = await ctx.loaders.product.deleteRule.load(body.ruleId)
+      if (result) {
+        // We normally return nothing on success here
+        throw new Error(`Error deleting rule on request ${result.requestId}`)
+      }
+      return true
+    },
+    updateComponentStatus: (parent, { productComponents }, ctx) =>
+      ctx.loaders.product.updateComponentStatus.load({ productComponents }),
+    updateComponentStatuses: async (parent, { productId, ids, status }, ctx) => {
+      let promises = []
+      if(ids.bomIds?.length) promises.push(ctx.loaders.bom.updateBomComponentStatus({productId, ids: ids.bomIds, status: {...status, type: 'PRODUCT_BOM_STATUS'}}))
+      if(ids.measurementSetIds?.length) promises.push(ctx.loaders.measurement.updateMeasurementComponentStatus({productId, ids: ids.measurementSetIds, status}))
+      if(ids.constructionSetIds?.length) promises.push(ctx.loaders.ProductDetails.updateProductDetailComponentStatus({productId, ids: ids.constructionSetIds, status}))
+      if(ids.claimIds?.length) {
+        const sparkClaim = ids.claimIds.map((claimId, index) => {
+          return {
+            humanId: ids.claimIds[index],
+            statuses: [{
+              ...status,
+              claimIds: ids.claimIds,
+            }],
+            parentId: productId,
+          }
+        })
+        promises.push(ctx.loaders.claim.bulkUpdateClaim({ updateClaimDtoList: sparkClaim }))
+      }
+      if(ids.packagingIds?.length) promises.push(ctx.loaders.packaging.updatePackagingComponentStatus({productId, ids: ids.packagingIds, status}))
+      await Promise.all(promises)
+    },
+  },
+  SPARK_ResourcesCount: {
+    productThumbnailId: async (parent, args, ctx) => {
+      if (!parent.productId) return null
+
+      const product = await ctx.loaders.product.getByID.load(parent.productId)
+      return product?.thumbnailId ?? null
+    },
+  },
+  SPARK_Product: {
+    id: product => product.productId,
+    humanId: product => product.humanId,
+    createdAt: product => new Date(product.createdDate),
+    createdBy: (product, args, ctx) =>
+      (product.createdUser || product.createdBy) &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(
+        product.createdUser || product.createdBy,
+      ),
+    updatedAt: product => new Date(product.updatedDate),
+    updatedBy: (product, args, ctx) =>
+      product.updatedUser &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(product.updatedUser),
+    versionCreatedAt: product =>
+      product.versionCreatedAt && new Date(product.versionCreatedAt),
+    versionCreatedBy: (product, args, ctx) =>
+      product.versionCreatedBy &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(product.versionCreatedBy),
+    unDroppablePartners: async (product, args, ctx) => {
+      if (args.isDesignPartner) {
+        const partnerIds = await getUnDroppablePartners(ctx, product.productId)
+        return partnerIds
+      } else {
+        return []
+      }
+    },
+    status: (product, args) => getProductStatus(product, args),
+    vendorAttributes: async (product, args, ctx) => {
+      const { businessPartners } = product
+      const merchPartners =
+        (businessPartners || []).filter(filterOutDesignPartners) || []
+      const allStatuses = getFinalPartnerStatuses(product, args)
+      const allVmmData = await loadBpsWithType(merchPartners, ctx)
+
+      const combinedPartnerAttributes = merchPartners.map(
+        ({ partnerId, partnerType, partnerName }) => {
+          const partnerIdInteger = partnerId != null ? parseInt(partnerId) : null
+          const statusData = _.find(
+            allStatuses,
+            (status) => {
+              const statusPartnerId = status.partnerId != null ? parseInt(status.partnerId) : null
+              return statusPartnerId === partnerIdInteger
+            },
+          )
+          const vmm = partnerIdInteger != null
+            ? _.find(allVmmData, ({ bpId }) => parseInt(bpId) === partnerIdInteger)
+            : null
+          const name = (vmm || {}).bpName || partnerName || ''
+
+          return {
+            partnerId: partnerIdInteger,
+            partnerType,
+            name,
+            status: statusData?.status,
+            statusCount: statusData?.statusCount,
+            allStatuses: statusData?.allStatuses,
+          }
+        },
+      )
+      return combinedPartnerAttributes
+    },
+    businessPartners: async ({ businessPartners }, args, ctx) => {
+      if (args && args.workspaceIdFilter) {
+        const workspace = await ctx.loaders.workspaceV2.getWorkspaceByIdV2.load(
+          args.workspaceIdFilter,
+        )
+        const workspacePartners = businessPartners.filter(bp =>
+          _.find(workspace.businessPartners, { partnerId: bp.partnerId }),
+        )
+        return loadBpsWithType(workspacePartners, ctx)
+      }
+      return loadBpsWithType(businessPartners, ctx)
+    },
+    droppedPartners: async ({ droppedPartners }, args, ctx) =>
+      loadBpsWithType(droppedPartners, ctx),
+    notRemovablePartnerIds: (product, args, ctx, info) =>
+      getProductPartnersNotRemovable(ctx, product, info, args),
+    elasticSamplesList: async (product, args, ctx) => {
+      // rfidTagId not on sample in elastic so double network call
+      const samplesPaged = await ctx.loaders.search.searchSamplesByParentId.load(
+        {
+          parentIds: product.productId,
+          query: (args && args.query) || '*',
+          page: (args && args.page) || 0,
+          size: (args && args.size) || 20,
+        },
+      )
+      const elasticSamples = samplesPaged.content || []
+      if (elasticSamples.length === 0) {
+        return samplesPaged
+      }
+
+      const sampleIds = elasticSamples.map(sample => sample.id)
+      const samples = await SPARK_SampleV2.Query.getSamplesByIdsV2({}, { ids: sampleIds, recentlyViewed: false }, ctx)
+      const response = {
+        ...(samplesPaged || {}),
+        content:
+          samples.map(sample => {
+            const elasticSample = _.find(elasticSamples, { id: sample.id })
+            return {
+              ...elasticSample,
+              ...sample,
+            }
+          }) || [],
+      }
+      return response
+    },
+    samples: async (product, args, ctx, info) => {
+      const hasWorkspaceId =
+        info.variableValues.id && info.variableValues.id.startsWith('WRK')
+
+      if (
+        hasWorkspaceId ||
+        (info.variableValues.q && info.variableValues.filter)
+      ) {
+        const sampleIds = await ctx.loaders.product.getFilteredSamples.load({
+          resourceType: 'workspaces',
+          resourceId: info.variableValues.id,
+          filter: info.variableValues.filter || [],
+          q: info.variableValues.q,
+          productId: product.productId,
+        })
+        if (sampleIds && sampleIds.length > 0) {
+          const results = await SPARK_SampleV2.Query.getSamplesByIdsV2({}, { ids: sampleIds, recentlyViewed: false }, ctx)
+          return results || []
+        }
+        return []
+      } else {
+        const sampleRelationship = await ctx.loaders.relationship.getByID
+          .load({
+            id: product.productId,
+            type: 'sample',
+            maxDepth: 0,
+          })
+          .catch(() => {
+            // Supress 404 and return Empty Result
+            return []
+          })
+        if (sampleRelationship.nodes && sampleRelationship.nodes.length > 0) {
+          const sampleIds = sampleRelationship.nodes.map(sample => sample.id)
+          const results = await SPARK_SampleV2.Query.getSamplesByIdsV2({}, { ids: sampleIds, recentlyViewed: false }, ctx)
+          return results || []
+        }
+      }
+      return []
+    },
+    sampleIds: async (product, args, ctx, info) => {
+      if (product.sampleIds) {
+        return product.sampleIds
+      } else {
+        return ctx.loaders.product.getFilteredSamples.load({
+          resourceType: 'products',
+          resourceId: [product.productId],
+          filter: info.variableValues.filter,
+          q: info.variableValues.q,
+          productId: product.productId,
+        })
+      }
+    },
+    associateProductsAsks: async (product, args, ctx) => {
+      if (!product.productId) return [];
+
+      // If called with filter, use workspace filtering logic
+      if (args && args.workspaceIdFilter) {
+        const results = await getProductAsksForWorkspace(ctx, {
+          workspaceId: args.workspaceIdFilter,
+          productIds: [product.productId || product.id],
+          page: 0,
+          size: 50,
+        });
+        return results?.content || [];
+      }
+      else {
+        const permissionJWT = await getUserPermissionsJWT(product.productId, ctx)
+        const asks = await ctx.loaders.productAsk.getAssociateProductAsks(permissionJWT, product.productId)
+        return asks || [];
+      }
+    },
+    variations: async (product, args, ctx) => {
+      if (!product.productId) return []
+      const permissionJWT = await getUserPermissionsJWT(product.productId, ctx)
+      const result = await ctx.loaders.productVariation.getProductVariations(
+          permissionJWT,
+          product.productId,
+          'ACTIVE',
+          args.partnerId,
+          args.workspaceId,
+        ).load()
+        return result || []
+    },
+
+    designPartnerId: (product) =>
+      product.businessPartners
+        .filter(partner => partner.partnerType === 5)
+        .map(bp => bp.partnerId),
+    resources: product => {
+      return product.resources
+    },
+    department: (product, args, ctx) =>
+      (product.departmentId &&
+        product.departmentId !== -1 &&
+        ctx.loaders.ig.department.getByID.load(product.departmentId)) ||
+      null,
+    division: (product, args, ctx) =>
+      (product.departmentId &&
+        product.departmentId !== -1 &&
+        ctx.loaders.ig.department.getByID.load(product.departmentId)) ||
+      null,
+    clazz: async (product, args, ctx) =>
+      (await (product.classId &&
+        product.departmentId &&
+        +product.classId !== -1 &&
+        product.departmentId !== -1 &&
+        ctx.loaders.ig.clazz.getByClassByDeptId.load({
+          department: product.departmentId,
+          id: product.classId,
+        }))) || null,
+    brand: (product, args, ctx) =>
+      (product.brandId &&
+        product.brandId !== -1 &&
+        ctx.loaders.brand.getBrand.load(product.brandId)) ||
+      null,
+    primaryMaterial: product => product.primaryMaterial,
+    secondaryMaterial: product => product.secondaryMaterial,
+    vendorStyleNumber: product => product.vendorStyleNumber,
+    internalNotes: product => product.internalNotes,
+    thumbnailId: product => product.thumbnailId,
+    productWorkspaceAttributes: async (product, args, ctx) => {
+      const mapAttribute = attributes => {
+        return {
+          carryForwardReason: attributes.carryForwardReason,
+          humanId: attributes.humanId,
+          workspaceId: attributes.humanId,
+          isHidden: attributes.hidden,
+          teams: attributes.teams,
+          designCycle: async () => {
+            const tag =
+              attributes.designCycle &&
+              (await ctx.loaders.tag.getTag
+                .load(attributes.designCycle)
+                .catch(() => null))
+            if (!tag) {
+              return null
+            }
+            return tag
+          },
+          setDates: attributes.setDates,
+          protoApprovalDueDate: attributes.protoApprovalDueDate,
+          linkedAttributes: attributes.linkedAttributes,
+        }
+      }
+      if (args.elasticVerify) {
+        const {
+          content: workspaces,
+        } = await ctx.loaders.search.getWorkspacesPagedV3.load({
+          size: 10000,
+          page: 0,
+          q: `resources.mappings.product:${product.productId}`,
+        })
+
+        return (
+          product.productWorkspaceAttributes &&
+          product.productWorkspaceAttributes
+            .filter(({ archived }) => !archived)
+            .filter(({ humanId }) => _.find(workspaces, { humanId }))
+            .map(mapAttribute)
+        )
+      } else {
+        return (
+          product.productWorkspaceAttributes &&
+          product.productWorkspaceAttributes
+            .filter(({ archived }) => !archived)
+            .map(mapAttribute)
+        )
+      }
+    },
+    productWorkspaceInfo: async (product, args, ctx) => {
+      const mapAttribute = attributes => {
+        return {
+          carryForwardReason: attributes.carryForwardReason,
+          humanId: attributes.humanId,
+          workspaceId: attributes.humanId,
+          isHidden: attributes.hidden,
+          teams: attributes.teams,
+          businessPartners: attributes.businessPartners,
+          designCycle: async () => {
+            const tag =
+              attributes.designCycle &&
+              (await ctx.loaders.tag.getTag
+                .load(attributes.designCycle)
+                .catch(() => null))
+            if (!tag) {
+              return null
+            }
+            return tag
+          },
+          setDates: attributes.setDates,
+          protoApprovalDueDate: attributes.protoApprovalDueDate,
+          linkedAttributes: attributes.linkedAttributes,
+        }
+      }
+        const {
+          content: workspaces,
+        } = await ctx.loaders.search.getWorkspacesPagedV3.load({
+          size: 10000,
+          page: 0,
+          q: `resources.mappings.product:${product.productId}`,
+        })
+
+        return (
+          product.productWorkspaceInfo &&
+          product.productWorkspaceInfo
+            .filter(({ archived }) => !archived)
+            .filter(({ humanId }) => _.find(workspaces, { humanId }))
+            .map(mapAttribute)
+        )
+    },
+    teams: async (product, args, ctx) => {
+      const ids =
+        (product.resources &&
+          product.resources.mappings &&
+          product.resources.mappings.team) ||
+        []
+
+      if (ids.length) {
+        // All Fetch should come from the V2.
+        const jwt = await getUserPermissionsJWT(ids, ctx)
+        const teams = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: ids })
+
+        teams.sort((
+          a = {},
+          b = {}, // elastic will sort for us soon
+        ) =>
+          (a.teamName || '').toLowerCase() > (b.teamName || '').toLowerCase()
+            ? 1
+            : -1,
+        )
+
+        const content = filterTeamsByPartnerOrWorkspaceId(teams, product, args)
+
+        return {
+          content,
+          paging: {
+            totalElements: content.length,
+          },
+        }
+      } else {
+        return {
+          content: [],
+        }
+      }
+    },
+    discussionsV2: async (product, args, ctx) => {
+      let discussions = []
+      let discussionListQuery = {
+        q: `(relatedResources:${product.productId} AND _index:discussion)`,
+      }
+      discussions = await ctx.loaders.search.searchDiscussionsElastic.load(
+        discussionListQuery,
+      )
+      return discussions
+    },
+    discussionsCount: async (product, args, ctx) => {
+      const discussion = await ctx.loaders.discussion.getDiscussionsCount.load({
+        resourceId: product.productId,
+        resourceType: 'product',
+      })
+      return _.get(discussion, 'discussionsCount[0].discussionCount', 0)
+    },
+    tags: async (product, args, ctx) => getTagsBatched(ctx, product.tags),
+    workspaces: (product, args, ctx) =>
+      ctx.loaders.search.getWorkspacesPagedV3.load({
+        size: 10000,
+        page: 0,
+        q: `resources.mappings.product:${product.productId}`,
+      }),
+    attachments: async (product, args, ctx) => {
+      const resourceId = product.productId
+      let attachments = []
+      const attachmentsIds = await ctx.loaders.relationship.searchByIds.load({
+        id: resourceId,
+        includeNodeTypes: ['attachments', 'attachments_v3'],
+        maxDepth: 0,
+      })
+
+      if (attachmentsIds.length && !_.isEmpty(attachmentsIds[0].nodes)) {
+        const aclPermissionJWT = await ctx.loaders.accessControl.getUserAccessByPost.load(
+          attachmentsIds[0].nodes.map(node => node.id),
+        )
+        attachments = await ctx.loaders.attachment
+          .getAttachmentsByPost(aclPermissionJWT)
+          .load(attachmentsIds[0].nodes.map(node => node.id))
+      }
+      return attachments
+    },
+    attachmentsWithMetaData: async (product, args, ctx) => {
+      const relations = await ctx.loaders.relationship.searchByIds.load({
+        id: product.productId,
+        includeBranches: [
+          'product',
+          'sample',
+          'discussions',
+          'discussionThreads',
+          'bill_of_materials',
+          'packaging_bom',
+          'claim',
+          'measurement_set',
+          'construction_set',
+          'product_watchlist',
+        ],
+        includeNodeTypes: [
+          'attachments',
+          'sample',
+          'discussions',
+          'discussionThreads',
+          'attachments_v3',
+        ],
+      })
+
+      if (_.get(relations, '0.nodes.length')) {
+        const attachmentV2Ids = []
+        const attachmentV3Ids = []
+        const discussionIds = []
+        const discussionThreadIds = []
+        const sampleIds = []
+
+        relations[0].nodes.map(({ id, type }) => {
+          if (type === 'discussionThreads') {
+            discussionThreadIds.push(id)
+          } else if (type === 'discussions') {
+            discussionIds.push(id)
+          } else if (type === 'sample') {
+            sampleIds.push(id)
+          } else if (type === 'attachments') {
+            attachmentV2Ids.push(id)
+          } else if (type === 'attachments_v3') {
+            attachmentV3Ids.push(id)
+          }
+        })
+
+        if (_.isEmpty(attachmentV2Ids) && _.isEmpty(attachmentV3Ids)) {
+          return []
+        }
+
+        const attachmentIds = attachmentV2Ids.concat(attachmentV3Ids)
+        const attachmentsJWT = (attachmentIds.length === 0) ? '' : await ctx.loaders.accessControl.getUserAccessByPost.load(attachmentIds)
+        const samplesJWT = (sampleIds.length === 0) ? '' : await ctx.loaders.accessControl.getUserAccessByPost.load(sampleIds)
+
+        const attachments = await ctx.loaders.attachment
+          .getAttachmentsV3(attachmentsJWT)
+          .load(attachmentIds)
+        if (!attachments || !attachments.length) {
+          return []
+        }
+
+        const {
+          resourcePermissions: currentUserPermissions,
+        } = await ctx.loaders.accessControl.getUserAccessUnencoded.load(attachmentIds)
+        let discussions = []
+        let discussionThreads = []
+        let samples = []
+
+        if (discussionIds.length) {
+          discussions = await getDiscussionsBatch(discussionIds, CHUNK_SIZE, ctx)
+        }
+
+        if (discussionThreadIds.length) {
+          discussionThreads = await getDiscussionThreadsBatch(discussionThreadIds, CHUNK_SIZE, ctx)
+        }
+
+        if (sampleIds.length) {
+          samples = await ctx.loaders.sampleV2
+            .getSamplesByIdsV2(samplesJWT)
+            .load(sampleIds)
+        }
+        return orderProductAttachments(
+          attachments
+            .map(attachment => {
+              const relatedDiscussion = _.find(discussions, {
+                discussionId: attachment.resource.id,
+              })
+              const relatedDiscussionThread = _.find(discussionThreads, {
+                discussionThreadId: attachment.resource.id,
+              })
+              const relatedSample = _.find(samples, {
+                id: attachment.resource.id,
+              })
+
+              let relatedResource
+
+              if (relatedDiscussionThread) {
+                const mainDisc = _.find(discussions, {
+                  discussionId: relatedDiscussionThread.discussionId,
+                })
+                relatedResource = {
+                  linkedResourceId: mainDisc.sampleDiscussion
+                    ? _.get(mainDisc, 'resources.mappings.sample.0')
+                    : mainDisc.discussionId,
+                  resourceTitle: mainDisc.subject,
+                  isResourceCritical: relatedDiscussionThread.critical || false,
+                  isResourceDraft: relatedDiscussionThread.draft || false,
+                  isSampleDiscussion: mainDisc.sampleDiscussion,
+                }
+              } else if (relatedDiscussion) {
+                relatedResource = {
+                  linkedResourceId: relatedDiscussion.sampleDiscussion
+                    ? _.get(relatedDiscussion, 'resources.mappings.sample.0')
+                    : relatedDiscussion.discussionId,
+                  resourceTitle: relatedDiscussion.subject,
+                  isResourceCritical: relatedDiscussion.critical || false,
+                  isResourceDraft: relatedDiscussion.draft || false,
+                  isSampleDiscussion: relatedDiscussion.sampleDiscussion,
+                }
+              } else if (relatedSample) {
+                relatedResource = {
+                  linkedResourceId: relatedSample.id,
+                  isResourceCritical: relatedSample.critical || false,
+                  resourceTitle: relatedSample.description,
+                }
+              }
+
+              return {
+                attachment,
+                ...(relatedResource && { ...relatedResource }),
+                currentUserPermissions: _.find(currentUserPermissions, {
+                  resourceId: attachment.document_id,
+                }),
+              }
+            })
+            .filter(({ attachment, linkedResourceId, isResourceDraft }) => {
+              if (
+                attachment.resource.type === 'discussion' &&
+                (!linkedResourceId || isResourceDraft)
+              ) {
+                // TODO: ACL should bbe doing this
+                // User should not have access to this draft attachment
+                return false
+              }
+              return true
+            }),
+        )
+      } else {
+        return []
+      }
+    },
+    attachmentSummary: async (product, args, ctx) => {
+      const attachments = await ctx.loaders.search.searchAttachmentsByRelatedResource.load(
+        product.productId,
+      )
+      const primaryAttachment = _.find(attachments, {
+        id: product.thumbnailId,
+      }) || _.find(attachments, {
+        documentId: product.thumbnailId,
+      })
+
+      return {
+        isThumbnailPreviewable: primaryAttachment
+          ? primaryAttachment.previewable
+          : false,
+        totalAttachmentCount: attachments.length,
+      }
+    },
+    attachmentsV3: async (product, args, ctx) => {
+      const countsByBp = _.cloneDeep(initialCountsByBp)
+      _.forEach(product.businessPartners || [], ({ partnerId }) => {
+        countsByBp.push({ bpType: partnerId, counts: 0 })
+      })
+      const onlyProductPacketFiles = args && args.onlyProductPacketFiles
+      const attachments = await getProductOrWorkSpaceAttachments((product.productId || product.humanId), countsByBp, args, ctx, onlyProductPacketFiles, product.thumbnailId)
+      return {
+        content: attachments,
+        counts: countsByBp,
+      }
+    },
+    components: async (product, args, ctx) => {
+      // Component data may already be hydrated into products. For instance, products may already be pulled for a workspace
+      let boms = product.boms || []
+      let measurements = product.measurementSets || []
+      let claims = product.claims || []
+      let productDetails = product.productDetails || []
+      let packagingDetail = []
+
+      // If components are not set on the products, pull the data from elastic.
+      if (
+        !(
+          product.boms ||
+          product.measurementSets ||
+          product.claims ||
+          product.productDetails
+        )
+      ) {
+        let bomQuery = {
+          q: `parentId: ${product.productId}`,
+        }
+        const [
+          measurementElastic,
+          claimElastic,
+          bomElastic,
+          productDetailElastic,
+        ] = await Promise.all([
+          SPARK_Measurement.Query.getMeasurementsElastic(
+            product,
+            { resourceId: product.productId },
+            ctx,
+          ),
+          SPARK_Claims.Query.getClaimsElastic(
+            product,
+            { parentHumanId: product.productId },
+            ctx,
+          ),
+          SPARK_Bom.Query.getBomElastic(
+            product,
+            bomQuery,
+            ctx,
+          ),
+          SPARK_ProductDetail.Query.getProductDetailsElastic(
+            product,
+            { resourceId: product.productId, types: args?.types || [100] },
+            ctx,
+          ),
+        ])
+        if (bomElastic) {
+          boms = bomElastic
+        }
+
+        if (measurementElastic && measurementElastic.content) {
+          measurements = measurementElastic.content
+        }
+
+        if (claimElastic && claimElastic.content) {
+          claims = claimElastic.content
+        }
+
+        if (productDetailElastic && productDetailElastic.content) {
+          productDetails = productDetailElastic.content
+        }
+      }
+
+      const packagingElastic = await SPARK_Packaging.Query.getPackagingElastic(
+        product,
+        { parentHumanId: product.productId },
+        ctx,
+      )
+      if (packagingElastic) {
+        packagingDetail = packagingElastic?.map(detail => ({ ...detail, name: (detail.promoDescription ? detail.promoDescription + ' ' : '') + detail.description }))
+      }
+
+      if (claims && claims.length > 0) {
+        for (let i = 0; i < claims.length; i++) {
+          const {
+            resourcePermissions: currentUserPermissions,
+          } = await ctx.loaders.accessControl.getUserAccessUnencoded.load(
+            claims[i].id || claims[i].humanId,
+          ) || {}
+
+          if (currentUserPermissions && currentUserPermissions[0]) {
+            claims[i].currentUserClaimPermissions = currentUserPermissions[0].permissions || []
+          }
+        }
+      }
+
+      const countsByBp = _.cloneDeep(initialCountsByBp)
+      _.forEach(product.businessPartners || [], ({ partnerId }) => {
+        countsByBp.push({ bpType: partnerId, counts: 0 })
+      })
+
+      const allHumanIds = [
+        ...(measurements || []),
+        ...claims,
+        ...(boms || []),
+        ...(productDetails || []),
+        ...(packagingDetail || []),
+      ].map(component => component.id || component.humanId)
+
+      if (!allHumanIds.length) {
+        return {
+          content: [],
+          counts: countsByBp,
+          archivedCount: 0,
+        }
+      }
+
+      const permissions = await getAccessControlBatch(allHumanIds, 100, ctx)
+
+      const mapComponent = component => {
+        let isLocked = false
+        const componentId = component.id || component.humanId
+        let partners = []
+        if (componentId.startsWith('PKG-')) {
+          partners = [parseInt(component.businessPartner?.partnerId)]
+        } else {
+          const access = _.find(permissions, { resourceId: componentId })
+          if (!access) {
+            throw new Error(
+              `no permissions object found for resourceId: ${componentId}`,
+            )
+          }
+          access.permissions &&
+            access.permissions.forEach(perm => {
+              const grantees =
+                _.get(perm, 'abstractAccessGroup.grantees') || []
+              if (grantees.length) {
+                if (perm.abstractAccessGroup.locked) {
+                  isLocked = true
+                }
+                partners = _.uniq([...partners, ...grantees])
+              }
+            })
+        }
+        addPartnersToCountObject(partners, countsByBp)
+        return {
+          id: component.id || component.humanId,
+          name: component.name || component.claimName || component.description,
+          type: component.type,
+          createdBy: component.createdBy,
+          updatedBy: component.updatedBy,
+          createdAt: component.createdAt,
+          updatedAt: component.updatedAt,
+          parentResource: component.parentId,
+          additionalDescription: component.promoDescription,
+          relatedResources: [],
+          workspaceContext:
+            component.workspaceContext || component.workspaceIds || [],
+          access: convertV2AccessToV3(partners, isLocked),
+          archived: component.archived || false,
+          libraryLinked: component.libraryLinked,
+          materials: component.materials,
+          status: !component.status
+            ? {
+              code: component.statusId,
+              description: component.statusName,
+            }
+            : component.status,
+          statuses: component.statuses,
+          rows: component.rows,
+          ...(component.currentUserClaimPermissions && component.currentUserClaimPermissions.length > 0 && {
+            currentUserClaimPermissions: component.currentUserClaimPermissions,
+          }),
+        }
+      }
+
+      const components = [
+        ...(measurements || []).map(mst => ({ ...mst, type: 'measurement' })),
+        ...(claims || []).map(claim => ({ ...claim, type: 'claim' })),
+        ...(boms || []).map(bom => ({ ...bom, type: bom.type === 2 ? 'packagingBom' : 'bom' })),
+        ...(productDetails || []).map(productDetail => ({
+          ...productDetail,
+          type: 'productDetail',
+        })),
+        ...(packagingDetail || []).map(pkg => ({ ...pkg, type: 'packaging' })),
+      ].map(mapComponent)
+
+      const archivedCount = filterAttachmentsOrComponents(components, {
+        ...args,
+        archived: true,
+      }).length
+      const filteredComponents = filterAttachmentsOrComponents(
+        components,
+        args,
+      )
+
+      return {
+        content: orderComponentsByDate(filteredComponents),
+        counts: countsByBp,
+        archivedCount: archivedCount,
+        countByComponents: getCountByComponents(filteredComponents),
+      }
+    },
+    measurementSets: async (
+      product,
+      { businessPartnerIds, calculated, mustHaveRows, includeMeasurements },
+      ctx,
+    ) => {
+      const queryParams = {
+        businessPartnerIds,
+        calculated,
+        mustHaveRows,
+        resourceId: product.productId,
+      }
+      const measurementSets = SPARK_Measurement.Query.getMeasurements(
+        product,
+        queryParams,
+        ctx,
+      )
+      if (mustHaveRows) {
+        return measurementSets
+          ? measurementSets.filter(set => set.rows && set.rows.length)
+          : []
+      }
+      return includeMeasurements
+        ? { content: product.measurementSets || [] }
+        : measurementSets
+    },
+    claims: async (product, args, ctx) => {
+      return args.includeClaims
+        ? product.claims
+        : SPARK_Claims.Query.getClaims(
+          product,
+          { parentHumanId: product.productId, partnerIds: args.partnerIds },
+          ctx,
+        )
+    },
+    bom: async (product, args, ctx) => {
+      return args.includeBoms
+        ? { content: product.boms || [] }
+        : SPARK_Bom.Query.getBomByParentId(
+          product,
+          { parentId: product.productId },
+          ctx,
+        )
+    },
+    productBom: async (product, args, ctx) => {
+      return { content: product.productBoms || [] }
+    },
+    packagingBom: async (product, args, ctx) => {
+      return { content: product.packagingBoms || [] }
+    },
+    notRemovableWorkspaceIds: async (product, args, ctx) =>
+      getNotRemovableWorkspaceIds(product, args, ctx),
+    tcins: (product) =>
+      product.businessPartners.filter(bp => bp.tcin && bp.tcin.length > 0),
+    reservedDpcis: (product, _args, ctx) => getReservedDpcisFromApex(product, ctx),
+    parentProductId: (product) => product.parentProductId,
+    ancestryProducts: async (product, args, ctx) => {
+      const ids = []
+      const ancestryProductsResult = []
+      let parentProduct = null
+      // Prep Ids
+      if (product.parentProductId) {
+        parentProduct = await ctx.loaders.product.getByID.load(
+          product.parentProductId,
+        )
+        const augmentedProduct = { ...parentProduct, type: 'parent' }
+        delete augmentedProduct.childProducts
+        ancestryProductsResult.push(augmentedProduct)
+        if (!_.isEmpty(parentProduct.childProducts)) {
+          parentProduct.childProducts.forEach(childProduct => {
+            if (childProduct.id !== product.productId) {
+              ids.push(childProduct.id)
+            }
+          })
+        }
+      } else if (!_.isEmpty(product.childProducts)) {
+        product.childProducts.forEach(childProduct => {
+          ids.push(childProduct.id)
+        })
+      }
+      // get child products
+      if (ids.length > 0) {
+        const response = await ctx.loaders.product.getByIdList.load(ids)
+        if (parentProduct) {
+          response.content.forEach(otherChildProduct => {
+            const matchingChildProduct = parentProduct.childProducts.find(
+              childProductSnippet =>
+                otherChildProduct.productId === childProductSnippet.id,
+            )
+            if (matchingChildProduct) {
+              const augmentedOtherChildProduct = {
+                ...otherChildProduct,
+                removable: matchingChildProduct.removable,
+                type: 'otherChild',
+              }
+              ancestryProductsResult.push(augmentedOtherChildProduct)
+            }
+          })
+        } else {
+          // child products
+          response.content.forEach(childProduct => {
+            const matchingChildProduct = product.childProducts.find(
+              childProductSnippet =>
+                childProduct.productId === childProductSnippet.id,
+            )
+            if (matchingChildProduct) {
+              const augmentedProduct = {
+                ...childProduct,
+                removable: matchingChildProduct.removable,
+                type: 'child',
+              }
+              ancestryProductsResult.push(augmentedProduct)
+            }
+          })
+        }
+      }
+      return ancestryProductsResult
+    },
+    rating: async (product, args, ctx) => {
+      if (!_.isEmpty(product.parentTcins)) {
+        let statistics
+        for (const tcin of product.parentTcins) {
+          const response = await ctx.loaders.product.getRatingByTcin.load(tcin)
+          try {
+            const parsedResponse = JSON.parse(response)
+            if (parsedResponse && parsedResponse.statistics) {
+              statistics = parsedResponse.statistics
+              break // As soon as we find first tcin rating break the loop
+            }
+          } catch {
+            // If ratings raturn 404 or other erros failing silently and go for next tcin in list
+          }
+        }
+        if (statistics) {
+          return {
+            averageRating: statistics.rating ? statistics.rating.average : 0.0,
+            reviewCount: statistics.reviewCount || 0,
+          }
+        }
+      }
+    },
+    productTemplateDepartments: async (product, _, ctx) => {
+      if (
+        product &&
+        product.departmentIds &&
+        product.departmentIds.length > 0
+      ) {
+        const departmentPromises = product.departmentIds.map(department =>
+          ctx.loaders.ig.department.getByID.load(department),
+        )
+        const departments = await Promise.all(departmentPromises).then(list =>
+          list.filter(department => !!department),
+        )
+        return departments
+      }
+      return []
+    },
+    brands: async (productTemplate, _, ctx) => {
+      if (
+        productTemplate &&
+        productTemplate.brandIds &&
+        productTemplate.brandIds.length > 0
+      ) {
+        const brandPromises = productTemplate.brandIds.map(brandId =>
+          ctx.loaders.brand.getBrand.load(brandId),
+        )
+        return Promise.all(brandPromises).then(list =>
+          list.filter(brand => !!brand),
+        )
+      }
+      return []
+    }, // for product template
+    divisions: async (productTemplate, _, ctx) => {
+      if (
+        productTemplate &&
+        productTemplate.divisionIds &&
+        productTemplate.divisionIds.length > 0
+      ) {
+        const divisionPromises = productTemplate.divisionIds.map(divisionId =>
+          ctx.loaders.ig.division.getByID.load(divisionId),
+        )
+        return Promise.all(divisionPromises).then(list =>
+          list.filter(division => !!division),
+        )
+      }
+      return []
+    }, // for product template
+    productTemplateStatus: productTemplate =>
+      String(productTemplate.statusName || '').toLowerCase() === 'inactive'
+        ? { code: 502 }
+        : { code: 501 }, // for product template
+    description: productTemplate => productTemplate.description, // for product template
+    attachmentsData: async (productTemplate, _, ctx) => {
+      // TODO: SPARK-26829 relationship for attachments will be cleaned up
+      const relations = await ctx.loaders.relationship.searchByIds.load({
+        id: productTemplate.humanId,
+        includeNodeTypes: ['attachments', 'attachments_v3'],
+        maxDepth: 0,
+      })
+      if (
+        relations &&
+        relations.length > 0 &&
+        relations[0].nodes &&
+        relations[0].nodes.length > 0
+      ) {
+        const v2AttachmentIds = []
+        const v3AttachmentIds = []
+        relations[0].nodes.forEach(node => {
+          if (
+            node.type === 'attachments' &&
+            !String(node.id).includes('ATC-')
+          ) {
+            v2AttachmentIds.push(node.id)
+          } else {
+            v3AttachmentIds.push(node.id)
+          }
+        })
+        let attachmentsInfoV2 = []
+        let attachmentsInfoV3 = []
+        if (v2AttachmentIds.length) {
+          attachmentsInfoV2 = await SPARK_Attachment.Query.getAttachmentsV3(
+            _,
+            { ids: v2AttachmentIds },
+            ctx,
+          )
+        }
+        if (v3AttachmentIds.length) {
+          attachmentsInfoV3 = await SPARK_Attachment.Query.getAttachmentsV3(
+            _,
+            { ids: v3AttachmentIds },
+            ctx,
+          )
+        }
+        const finalAttachmentInfo = [
+          ...attachmentsInfoV3,
+          ...attachmentsInfoV2,
+        ]
+        return {
+          attachmentIds: finalAttachmentInfo.map(
+            attachment => attachment.human_id || attachment.document_id,
+          ),
+          attachments: finalAttachmentInfo,
+        }
+      }
+      return {}
+    }, // for product template
+  },
+
+  SPARK_AncestryProducts: {
+    id: response => response.productId,
+    removable: response => response.removable,
+    description: response => response.description,
+    thumbnailId: response => response.thumbnailId,
+  },
+
+  SPARK_ProductBulkType: {
+    products: response => response.products,
+  },
+
+  SPARK_ProductsPaged: {
+    paging: resolvePaging,
+    content: productsPaged => productsPaged.content,
+    pageable: productsPaged => productsPaged.pageable,
+  },
+
+  SPARK_ProductTemplatesList: {
+    paging: resolvePaging,
+    content: productsPaged => productsPaged.content,
+    pageable: productsPaged => productsPaged.pageable,
+  },
+
+  SPARK_ProductsCategories: {
+    count: data => data.count,
+    categories: async (productCategories, args, ctx) => {
+      switch (args.type) {
+        case 'brands':
+          { const brandIds = _.get(productCategories, 'brands', []).filter(
+            brandId => brandId > 0,
+          )
+          const brands = await loadManyIncludeEmptyResponse(
+            ctx.loaders.brand.getBrand,
+            brandIds,
+            ctx.logContext,
+          )
+          brands.map(brand => {
+            if (brand) {
+              brand.type = args.type
+            } else {
+              return null
+            }
+          })
+          return brands }
+        case 'brandIds':
+          { const templateBrandIds = _.get(
+            productCategories,
+            'brandIds',
+            [],
+          ).filter(brandId => brandId > 0)
+          const templateBrands = await loadManyIncludeEmptyResponse(
+            ctx.loaders.brand.getBrand,
+            templateBrandIds,
+            ctx.logContext,
+          )
+          templateBrands.map(brand => {
+            if (brand) {
+              brand.type = 'brands'
+            } else {
+              return null
+            }
+          })
+          return templateBrands }
+        case 'departments':
+          { const departmentIds = _.get(
+            productCategories,
+            'departments',
+            [],
+          ).filter(departmentId => departmentId > 0)
+          const departments =
+            (await departmentIds) &&
+            (await loadManyIncludeEmptyResponse(
+              ctx.loaders.ig.department.getByID,
+              departmentIds,
+              ctx.logContext,
+            ))
+          departments.map(department => {
+            if (department) {
+              department.type = args.type
+            } else {
+              return null
+            }
+          })
+          return departments }
+        case 'departmentIds':
+          { const templateDepartmentIds = _.get(
+            productCategories,
+            'departmentIds',
+            [],
+          ).filter(departmentId => departmentId > 0)
+          const templateDepartments =
+            (await templateDepartmentIds) &&
+            (await loadManyIncludeEmptyResponse(
+              ctx.loaders.ig.department.getByID,
+              templateDepartmentIds,
+              ctx.logContext,
+            ))
+          templateDepartments.map(department => {
+            if (department) {
+              department.type = 'departments'
+            } else {
+              return null
+            }
+          })
+          return templateDepartments }
+        case 'divisions':
+          { const divisionIds = _.get(productCategories, 'divisions', [])
+          const divisions =
+            (await divisionIds) &&
+            (await loadManyIncludeEmptyResponse(
+              ctx.loaders.ig.division.getByID,
+              divisionIds,
+              ctx.logContext,
+            ))
+          divisions.map(division => {
+            if (division) {
+              division.type = args.type
+            } else {
+              return null
+            }
+          })
+          return divisions }
+        case 'divisionIds':
+          { const templateDivisionIds = _.get(
+            productCategories,
+            'divisionIds',
+            [],
+          )
+          const templateDivisions =
+            (await templateDivisionIds) &&
+            (await loadManyIncludeEmptyResponse(
+              ctx.loaders.ig.division.getByID,
+              templateDivisionIds,
+              ctx.logContext,
+            ))
+          templateDivisions.map(division => {
+            if (division) {
+              division.type = 'divisions'
+            } else {
+              return null
+            }
+          })
+          return templateDivisions }
+        case 'clazz':
+          { const categoriesByDepartments = _.get(
+            productCategories,
+            'departments',
+            [],
+          )
+          const promiseResults = categoriesByDepartments.map(department => {
+            return department.classId.map(async classId => {
+              const result = await ctx.loaders.ig.clazz.getByClassByDeptId
+                .load({
+                  department: department.departmentId,
+                  id: classId,
+                })
+                .catch(() => {})
+              return result
+            })
+          })
+          const clazzCategoryResults = await Promise.all(
+            _.flatten(promiseResults),
+          )
+          return clazzCategoryResults
+            .filter(result => result && !Array.isArray(result))
+            .map(result => ({ ...result, type: 'clazz' })) }
+        case 'businessPartners':
+          { const partnerIds = _.get(productCategories, 'businessPartners', [])
+          const partners = await loadBps(ctx, partnerIds)
+          partners.map(partner => {
+            if (partner) {
+              partner.type = args.type
+            } else {
+              return null
+            }
+          })
+          return partners }
+        case 'setDates':
+          { const setDatesList = _.get(productCategories, 'setDates', [])
+          return (
+            setDatesList &&
+            setDatesList.map(date => {
+              const dateObject = moment(date).format('YYYY-MM-DD')
+              return {
+                id: dateObject,
+                name: dateObject,
+                type: args.type,
+              }
+            })
+          ) }
+        case 'productStatus':
+          { const statusIds = _.get(productCategories, 'productStatus', [])
+          const statusList =
+            statusIds && statusIds.map(id => getStatusName(id))
+          statusList.map(status => (status.type = args.type))
+          return statusList }
+        case 'trackingStatus':
+          { const trackingIds = _.get(productCategories, 'trackingStatus', [])
+          const trackingList =
+            trackingIds && trackingIds.map(id => getTrackingStatusName(id))
+          trackingList.map(status => (status.type = args.type))
+          return trackingList }
+        case 'evaluationStatus':
+          { const evalStatusIds = _.get(
+            productCategories,
+            'evaluationStatus',
+            [],
+          )
+          const evalStatusList =
+            evalStatusIds && evalStatusIds.map(id => getEvalStatusName(id))
+          evalStatusList.map(status => (status.type = args.type))
+          return evalStatusList }
+        case 'tags':
+          { const tagIds = _.get(productCategories, 'tags', [])
+          const tags =
+            (await tagIds) &&
+            (await ctx.loaders.tag.getTags.load({
+              page: 0,
+              size: 10000,
+              ids: tagIds,
+            }))
+
+          tags.content.map(tag => (tag.type = args.type))
+          return tags.content || [] }
+        case 'sampleType':
+          { const sampleTypeIds = _.get(productCategories, 'sampleType', [])
+          const sampleTypes = await SPARK_SampleV2.Query.getSampleProductTypesV2(
+            {},
+            {},
+            ctx,
+          )
+
+          const sampleTypeList =
+            sampleTypeIds &&
+            sampleTypeIds
+              .map(id => _.find(sampleTypes, type => `${type.code}` === id))
+              .filter(id => !!id)
+
+          const filters = sampleTypeList.map(sampleType => {
+            return {
+              type: args.type,
+              id: `${sampleType.code}`,
+              name: sampleType.description,
+            }
+          })
+          return filters }
+
+        case 'sampleFormat':
+          { const sampleFormatIds = _.get(productCategories, 'sampleFormat', [])
+          const sampleFormats = await SPARK_SampleV2.Query.getSampleFormats(
+            {},
+            {},
+            ctx,
+          )
+
+          const sampleFormatList =
+            sampleFormatIds &&
+            sampleFormatIds
+              .map(id => _.find(sampleFormats, type => `${type.code}` === id))
+              .filter(id => !!id)
+
+          return sampleFormatList.map(sampleFormat => {
+            return {
+              type: args.type,
+              id: `${sampleFormat.code}`,
+              name: sampleFormat.description,
+            }
+          }) }
+        case 'packagingFormat':
+          { const packagingFormatIds = _.get(productCategories, 'packagingFormat', [])
+          if (packagingFormatIds && packagingFormatIds.length > 0) {
+            const packagingFormatData = await ctx.loaders.packaging.getPackagingFieldValuesByType('PACKAGING_COMPONENTS', packagingFormatIds)
+            const packagingFormat = packagingFormatData.map(format => {
+              return {
+                id: format.code,
+                name: format.description,
+                type: args.type }
+            })
+            return packagingFormat
+          }
+          return [] }
+        case 'packagingGroup':
+          { const packagingGroupIds = _.get(productCategories, 'packagingGroup', [])
+          if (packagingGroupIds && packagingGroupIds.length > 0) {
+            const packagingGroupData = await ctx.loaders.packaging.getPackagingFieldValuesByType('PACKAGING_GROUP', packagingGroupIds)
+            const packagingGroup = packagingGroupData.map(group => {
+              return {
+                id: group.code,
+                name: group.description,
+                type: args.type }
+            })
+            return packagingGroup
+          }
+          return [] }
+        case 'packagingWave':
+          { const packagingWaveIds = await _.get(productCategories, 'packagingWave', [])
+          if (packagingWaveIds && packagingWaveIds.length > 0) {
+            const packagingWaves = packagingWaveIds &&
+              (await ctx.loaders.tag.getTags.load({
+                page: 0,
+                size: 1000,
+                ids: packagingWaveIds,
+              }))
+            packagingWaves.content.map(
+              packagingWave => (packagingWave.type = args.type),
+            )
+            return packagingWaves.content
+          }
+          return [] }
+        case 'fulfillmentType':
+          { const fulfillmentTypeIds = _.get(productCategories, 'fulfillmentType', [])
+          if (fulfillmentTypeIds && fulfillmentTypeIds.length > 0) {
+            const fulfillmentTypeData = await ctx.loaders.packaging.getPackagingFieldValuesByType('fulfillment_type', fulfillmentTypeIds)
+            const fulfillmentType = fulfillmentTypeData.map(fulfillmentType => {
+              return {
+                id: fulfillmentType.code,
+                name: fulfillmentType.description,
+                type: args.type }
+            })
+            return fulfillmentType
+          }
+          return [] }
+        case 'designCycle':
+          { const designCycleIds = _.get(productCategories, 'designCycle', [])
+          const designCycles =
+            (await designCycleIds) &&
+            (await ctx.loaders.tag.getTags.load({
+              page: 0,
+              size: 10000,
+              ids: designCycleIds,
+            }))
+
+          designCycles.content.map(
+            designCycle => (designCycle.type = args.type),
+          )
+          return designCycles.content || [] }
+      }
+    },
+  },
+
+  SPARK_Categories: {
+    __resolveType: category => {
+      switch (category.type) {
+        case 'brands':
+        case 'brandIds':
+          return 'VMM_Brand'
+        case 'departments':
+        case 'departmentIds':
+          return 'IG_Department'
+        case 'divisions':
+        case 'divisionIds':
+          return 'IG_Division'
+        case 'clazz':
+          return 'IG_Clazz_Filter'
+        case 'productStatus':
+          return 'SPARK_ProductStatus'
+        case 'businessPartners':
+          return 'VMM_BusinessPartnerCategory'
+        case 'tags':
+          return 'SPARK_Tag_Elastic'
+        case 'setDates':
+          return 'SPARK_Filter_SetDates'
+        case 'trackingStatus':
+          return 'SPARK_Status'
+        case 'evaluationStatus':
+          return 'SPARK_Status'
+        case 'sampleType':
+          return 'SPARK_FilterSampleType'
+        case 'sampleFormat':
+          return 'SPARK_FilterSampleFormat'
+        case 'designCycle':
+          return 'SPARK_Tag_Elastic'
+        case 'packagingFormat':
+        case 'packagingGroup':
+        case 'fulfillmentType':
+          return 'SPARK_Packaging_Field'
+        case 'packagingWave':
+          return 'SPARK_Tag_Elastic'
+        default:
+          return 'IG_Clazz_Filter'
+      }
+    },
+  },
+  SPARK_MasterProductStatus: {
+    id: status => status.statusCode,
+    name: status => status.description,
+  },
+  SPARK_Tcin: {
+    createdAt: parent => parent.createdAt && new Date(parent.createdAt),
+    itemDetails: (parent, args, ctx) =>
+      ctx.loaders.coronaItems.getItemDetails(parent.tcinId),
+  },
+  SPARK_ProductRules: {
+    id: parent => parent.ruleId,
+    active: parent => parent.active,
+    departments: (parent, args, ctx) =>
+      parent.criteria.departmentIds
+        ? parent.criteria.departmentIds.map(id =>
+          ctx.loaders.ig.department.getByID.load(id),
+        )
+        : [],
+    businessPartners: (parent, args, ctx) =>
+      parent.criteria.businessPartnerIds
+        ? loadBps(ctx, parent.criteria.businessPartnerIds)
+        : [],
+    rules: parent => parent.rules,
+    insightsClassExclusion: (parent, args, ctx) => {
+      return (
+        (parent.insightsClassExclusion &&
+          parent.insightsClassExclusion.departmentClass &&
+          parent.insightsClassExclusion.departmentClass
+            .map(pair =>
+              pair.classIds.map(id => {
+                return { d: pair.departmentId, c: id }
+              }),
+            )
+            .flat()
+            .map(pair =>
+              ctx.loaders.ig.clazz.getByClassByDeptId.load({
+                department: pair.d,
+                id: pair.c,
+              }),
+            )) ||
+        null
+      )
+    },
+  },
+  DopplerDepartment: {
+    department: async (parent, args, ctx) =>
+      (await (parent.id &&
+        parent.id !== -1 &&
+        ctx.loaders.ig.department.getByID.load(parent.id))) || null,
+    division: async (parent, args, ctx) =>
+      (await (parent.id &&
+        parent.id !== -1 &&
+        ctx.loaders.ig.department.getByID.load(parent.id))) || null,
+    clazzes: async (parent, args, ctx) => {
+      let clazzesForDepartment = []
+      if (parent.id && parent.id !== -1 && parent.classIds && parent.classIds.length > 0) {
+        // first filter to only real class ids (-1 means it is not an actual class)
+        const clazzIds = (parent.classIds || []).filter(classId => (classId && classId !== -1) || classId === 0)
+        // get classes for real class ids
+        clazzesForDepartment = clazzIds.map(async clazzId => {
+          const clazz = await ctx.loaders.ig.clazz.getByClassByDeptId.load({
+            department: parent.id,
+            id: clazzId,
+          })
+          return clazz
+        })
+      }
+      return clazzesForDepartment
+    },
+    primaryCapacityTypeName: async (parent, args, ctx) => {
+      const primaryCapacityTypeId = parent.primaryCapacityTypeId
+      if (primaryCapacityTypeId) {
+        const response = await ctx.loaders.doppler.getCapacityTypesByDepartmentAndPrimaryId.load({ id: parent.id, primaryCapacityId: primaryCapacityTypeId })
+        return response && Array.isArray(response) && response[0] ? response[0].capacityTypePrimaryName : ''
+      }
+      return ''
+    },
+    secondaryCapacityTypeName: async (parent, args, ctx) => {
+      const primaryCapacityTypeId = parent.primaryCapacityTypeId
+      if (primaryCapacityTypeId) {
+        const response = await ctx.loaders.doppler.getCapacityTypesByDepartmentAndPrimaryId.load({ id: parent.id, primaryCapacityId: primaryCapacityTypeId })
+        if (response && Array.isArray(response) && response.length > 0) {
+          const matchingCapacity = response.find(capacity => capacity.capacityTypeSecondaryId === parent.secondaryCapacityTypeId)
+          return matchingCapacity && matchingCapacity.capacityTypeSecondaryName
+        }
+      }
+      return ''
+    },
+  },
+  ProductComponentStatus: {
+    updatedAt: status => new Date(status.updatedAt),
+    updatedBy: (status, args, ctx) => {
+      return (
+        status.updatedBy &&
+        ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(status.updatedBy)
+      )
+    },
+  },
+
+  SPARK_PackagingAttribute: {
+    spg: async (parent, args, ctx) => {
+      const spgId = parent.spgLibraryId
+      if (spgId) {
+        try {
+          return await ctx.loaders.fileLibrary.getPackageLibrary.load(spgId)
+        } catch (error) {
+          logger.error(`Error fetching spg for packaging attribute ${spgId}`, ctx.logContext, {
+            error: error.message,
+          })
+        }
+      }
+      return null
+    },
+  },
+
+  VMM_BusinessPartnerCategory: {
+    id: businessPartner => businessPartner.bpId,
+    name: businessPartner => businessPartner.bpName,
+  },
+}

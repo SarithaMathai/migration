@@ -1,0 +1,17 @@
+import _ from 'lodash'
+
+export const batchParallelOperation = async ({ batchSize, operation, items }) => {
+    const chunks = _.chunk(items, batchSize)
+    const chunkResults = await Promise.all(chunks.map(chunk => operation(chunk)))
+    return _.flatten(chunkResults)
+}
+
+export const batchSequentialOperation = async ({ batchSize, operation, items }) => {
+    const chunks = _.chunk(items, batchSize)
+    const results = []
+    for (const chunk of chunks) {
+        const result = await operation(chunk)
+        results.push(result)
+    }
+    return _.flatten(results)
+}

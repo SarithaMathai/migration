@@ -1,0 +1,3 @@
+export function trainingResourceDocumentContentAdapter (response) {
+  return { content: response } // TODO:  this is a structural change in the smartAssistApi, we will be correctiing this in API side later
+}

@@ -1,0 +1,126 @@
+import _ from 'lodash'
+
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+
+import SparkService from './SparkService'
+
+export default class ValueAssessmentService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    const clientId = process.env.VALUE_ASSESSMENTS_CLIENT
+    const va1Endpoint = `${endpoint}/api/v1`
+    const va2Endpoint = `${endpoint}/api/v2`
+
+    this.vaControllerEndpoint = `${va2Endpoint}/fob/${clientId}`
+    this.materialEndpoint = `${va2Endpoint}/material_category`
+    this.scenarioEndpoint = `${va2Endpoint}/scenario`
+    this.fabricEndpoint = `${va1Endpoint}/fabric`
+    this.mockFabricEndpoint = `${va2Endpoint}/mock_fabric`
+    this.headers = headers
+
+    this.getValueAssessment = loadOne(
+      valueAssessmentId => `${this.vaControllerEndpoint}/${valueAssessmentId}`,
+      this.headers,
+      {
+        transform: (ids, scenario) => [deepToCamelCase(scenario)],
+        transformRequest: scenario => deepToSnakeCase(scenario),
+      },
+      this.logContext,
+    )
+
+    this.putValueAssessment = putOne(
+      ({ resourceId: itemId }) => `${this.vaControllerEndpoint}/${itemId}`,
+      this.headers,
+      {
+        transform: vaData => deepToCamelCase(vaData),
+        transformRequest: ({ downloadBomUrl }) => deepToSnakeCase({ downloadBomUrl }),
+      },
+      this.logContext,
+    )
+
+    this.createScenario = ({ valueAssessmentId, name }) => postOne(
+      `${this.scenarioEndpoint}/${valueAssessmentId}`,
+      this.headers,
+      {
+        transform: scenario => deepToCamelCase(scenario),
+        transformRequest: scenario => deepToSnakeCase(scenario),
+      },
+      this.logContext,
+    ).load({}, { name, vaId: valueAssessmentId })
+
+    this.createMockFabric = ({ valueAssessmentId, ...mockFabricArgs }) => postOne(
+      () => `${this.mockFabricEndpoint}/${valueAssessmentId}`,
+      this.headers,
+      {
+        transform: mockFabric => {
+          return deepToCamelCase(mockFabric)
+        },
+      },
+      this.logContext,
+    ).load(mockFabricArgs)
+
+    this.getAssessmentDetails = loadOne(
+      assessmentId => `${this.scenarioEndpoint}/${assessmentId}`,
+      this.headers,
+      {
+        transform: (ids, scenario) => [deepToCamelCase(scenario)],
+        transformRequest: scenario => deepToSnakeCase(scenario),
+      },
+      this.logContext,
+    )
+
+    this.getValueAssessmentCategories = loadListing(
+      `${this.materialEndpoint}/list`,
+      this.headers,
+      {
+        transform: categories => deepToCamelCase(categories),
+        transformRequest: args => deepToSnakeCase(args),
+      },
+      this.logContext,
+    )
+
+    this.searchValueAssessmentFabrics = loadOne(
+      args => {
+        const { vaId, q } = args[0]
+        return `${this.fabricEndpoint}?q=${q}&va_id=${vaId}`
+      },
+      this.headers,
+      {
+        transform: (ids, scenario) => [deepToCamelCase(scenario)],
+        transformRequest: () => {},
+      },
+      this.logContext,
+    )
+
+    this.updateScenarioReplaceFabric = putOne(
+      ({ scenarioAssessmentId }) => `${this.scenarioEndpoint}/${scenarioAssessmentId}/fabric/replace`,
+      this.headers,
+      {
+        fetchOptions: { method: 'PATCH' },
+        transform: scenario => deepToCamelCase(scenario),
+        transformRequest: scenario => deepToSnakeCase(_.pick(scenario, ['fabricId', 'newFabricId'])),
+      },
+      this.logContext,
+    )
+    this.includeOrExcludePattern = putOne(
+      (body) => `${this.scenarioEndpoint}/${body[0].scenarioAssessmentId}/pattern/include_or_exclude`,
+      this.headers,
+      {
+        fetchOptions: { method: 'PATCH' },
+        transform: scenario => deepToCamelCase(scenario),
+        transformRequest: body => {
+          if (body.length > 0 && body[0]) {
+            const newBody = [{ ...body[0] }]
+            delete newBody[0].scenarioAssessmentId
+            return deepToSnakeCase(newBody)
+          }
+        },
+      },
+      this.logContext,
+    )
+  }
+}

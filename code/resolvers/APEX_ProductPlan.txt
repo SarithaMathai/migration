@@ -1,0 +1,21 @@
+export default {
+  Query: {
+    searchAssortmentPlanByDeptId: async (parent, { deptId }, ctx) =>
+      ctx.loaders.apex.searchAssortmentPlanByDeptId.load(deptId),
+    searchPotentialItemByPlanId: async (parent, { planId }, ctx) =>
+      ctx.loaders.apex.searchPotentialItemByPlanId(planId).load({ sortAndFilterProductRequest: {} }),
+    searchItemsFromApex: async (parent, { searchRequest }, ctx) => {
+      const response = await ctx.loaders.apex.searchItemsFromApex.load(searchRequest || {})
+      const values = (response?.values || []).map(value => ({
+        item: value?.sectionData?.item || null,
+      }))
+
+      return {
+        page: response?.page,
+        count: response?.count,
+        perPage: response?.perPage,
+        values,
+      }
+    },
+  },
+}

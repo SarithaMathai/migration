@@ -1,0 +1,8 @@
+import LRU from 'lru-cache'
+
+const lruCache = new LRU({
+  max: process.env.MAX_CACHE_ITEMS || 50000,
+  length: n => n.length,
+})
+
+export default lruCache

@@ -1,0 +1,181 @@
+import qs from 'querystring'
+
+import loadListing from '../../utils/loadListing'
+import postOne from '../../utils/postOne'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import putOne from '../../utils/putOne'
+import deleteOne from '../../utils/deleteOne'
+import loadOne from '../../utils/loadOne'
+
+import { ManageWorkspaceActions } from '../../utils/workspaceAssociationHelper'
+
+export default class MeasurementService {
+  constructor (endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/measurements/v1`
+    this.masterDataEndpoint = `${endpoint}/masterData`
+
+    const unitsOfMeasureEndpoint = `${endpoint}/enterprise_product_development_products/master_data/unit_of_measure`
+    const thicknessUomEndpoint = `${endpoint}/enterprise_product_development_products/master_data/thickness_uom`
+
+    this.getMeasurementByIds = (permissionJWT, ids, calculated, businessPartnerIds, mustHaveRows) => {
+      return loadListing(`${this.endpoint}?${qs.stringify({
+        businessPartnerIds,
+        calculated: !!calculated,
+        ids,
+        mustHaveRows: !!mustHaveRows,
+      })}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: measurements => deepToCamelCase(measurements),
+      }, logContext).load()
+    }
+
+    this.getMeasurementSetVersionsById = (permissionJWT, id) => {
+      return loadListing(
+        `${this.endpoint}/${id}/versions`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: measurements => deepToCamelCase(measurements),
+        }, logContext,
+      ).load()
+    }
+
+    this.getMeasurementSetVersion = (params) => {
+      return loadOne(
+        () => `${this.endpoint}/${params.id}/versions/${params.version}`,
+        this.headers,
+        {
+          transform: (ids, json) => [deepToCamelCase(json)],
+          fetchAclToken: true,
+          batch: false,
+          aclIds: [params.id],
+        },
+        this.logContext,
+      )
+    }
+
+    this.getUnitsOfMeasure = (ids) => {
+      const endpoint = ids && ids.length ? `${unitsOfMeasureEndpoint}?ids=${ids}` : `${unitsOfMeasureEndpoint}`
+      const headers = {
+        ...this.headers,
+      }
+      const options = {
+        transform: measurements => {
+          return measurements ? deepToCamelCase(measurements.units_of_measure) : []
+        },
+      }
+      return loadListing(endpoint, headers, options, logContext).load()
+    }
+
+    this.getThicknessUnitsOfMeasure = () => {
+      const endpoint = `${thicknessUomEndpoint}`
+      const headers = {
+        ...this.headers,
+      }
+      const options = {
+        transform: measurements => {
+          return measurements ? deepToCamelCase(measurements.units_of_measure) : []
+        },
+      }
+      return loadListing(endpoint, headers, options, logContext).load()
+    }
+
+    this.getMeasurementSetStatus = () => {
+      const headers = {
+        ...this.headers,
+      }
+      const options = {
+        transform: status => Object.keys(status).map(key => {
+          return { code: key, description: status[key] }
+        }),
+      }
+      return loadListing(`${this.masterDataEndpoint}?name=MeasurementSetStatus`, headers, options, logContext).load()
+    }
+
+    this.getSampleMeasurement = (permissionJWT, sampleId) => {
+      return loadListing(`${this.endpoint}/sample/${sampleId}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: measurements => deepToCamelCase(measurements),
+        }, logContext).load()
+    }
+
+    this.addMeasurement = (measurement) => postOne(`${this.endpoint}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+      getDataLoader: (measurement) => measurement && measurement.humanId && this.getMeasurementByIds([measurement.humanId]),
+      primeKey: measurement => measurement && measurement.humanId,
+    }, logContext).load(measurement)
+
+    this.updateMeasurement = (permissionJWT, updatedMeasurement) => putOne(`${this.endpoint}/${updatedMeasurement.humanId}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        getDataLoader: (measurement) => measurement && measurement.humanId && this.getMeasurementByIds([measurement.humanId]),
+        primeKey: measurement => measurement && measurement.humanId,
+        omitParamsInBody: true,
+      }, logContext).load(updatedMeasurement)
+
+    this.putSampleMeasurementSet = (permissionJWT, measurement) => putOne(`${this.endpoint}/sample`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        primeKey: measurement => measurement && measurement.sampleId,
+      }, logContext).load(measurement)
+
+    this.deleteSampleMeasurementSet = (permissionJWT, sampleId) =>
+      deleteOne(`${this.endpoint}/sample/${sampleId}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }, logContext).load({ sampleId })
+
+    this.updateMeasurementAccess = (permissionJWT, measurementSetId, systemTeamIds, systemTeamDto) =>
+      putOne(`${this.endpoint}/${measurementSetId}/permission`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+          primeKey: measurement => measurement && measurement.humanId,
+        }, logContext).load(systemTeamIds ? { systemTeamIds } : { systemTeamDto })
+
+    this.lockMeasurementSet = (permissionJWT, measurementSetId) =>
+      putOne(`${this.endpoint}/${measurementSetId}/lock`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+          primeKey: measurement => measurement && measurement.humanId,
+        }, logContext).load({ measurementSetId })
+
+    this.unlockMeasurementSet = (permissionJWT, measurementSetId) =>
+      putOne(`${this.endpoint}/${measurementSetId}/unlock`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+          primeKey: measurement => measurement && measurement.humanId,
+        }, logContext).load({ measurementSetId })
+
+    this.manageWorkspaceAssociations = (measurementSetId, action, permissionJwt) => {
+      const endpoint = action === ManageWorkspaceActions.DISSOCIATE ? `${this.endpoint}/${measurementSetId}/dissociate_workspace` : `${this.endpoint}/${measurementSetId}/associate_workspace`
+      return putOne(
+        endpoint,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJwt },
+        {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+          omitParamsInBody: true,
+        },
+        logContext,
+      )
+    }
+    this.updateMeasurementComponentStatus = (statusInput) => putOne(
+      `${this.endpoint}/component_status_update`,
+      this.headers,
+      {
+       transform: (result) => {
+              return {content: deepToCamelCase(result)}
+            },
+        transformRequest: (data) => deepToSnakeCase(data),
+      },
+      this.logContext,
+    ).load(statusInput) 
+  }
+}

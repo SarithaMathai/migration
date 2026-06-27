@@ -1,0 +1,36 @@
+export const systemUser = (userId) => {
+  return { id: userId, userProfileId: userId, firstName: 'System', lastName: 'Spark', systemUser: true, internal: true, companyName: 'Target' }
+}
+
+export const externalSparkUser = (userId) => {
+  return { id: userId, userProfileId: userId, firstName: userId, lastName: 'External', systemUser: false, internal: true, companyName: 'Target' }
+}
+
+// https://stackoverflow.com/questions/7905929/how-to-test-valid-uuid-guid
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000006'
+export const isSystemUser = (userId) => userId === SYSTEM_USER_ID
+
+export const getUser = async (userId, ctx) => {
+  if (userId) {
+    if (isSystemUser(userId)) {
+      return systemUser(userId)
+    } else if (UUID_REGEX.test(userId)) {
+      try {
+        const user = await ctx.loaders.userAttributes.getUserByID.load(userId)
+        // in the event user is not found, fall back on the system user
+        return user || systemUser(SYSTEM_USER_ID)
+      } catch {
+        // in the event an error occurs, fall back on the system user
+        return systemUser(SYSTEM_USER_ID)
+      }
+    } else {
+      // assuming non UUID userIds are external Spark users such as zid or nuas
+      return externalSparkUser(userId)
+    }
+  } else {
+    // no userId provided, return system user
+    return systemUser(SYSTEM_USER_ID)
+  }
+}

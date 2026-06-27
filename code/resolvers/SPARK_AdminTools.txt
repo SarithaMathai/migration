@@ -1,0 +1,455 @@
+/* istanbul ignore file */
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import { flatten, xor } from 'lodash'
+import { expireRedisCacheKey, getRedisCacheKey } from '../utils/cache'
+import { v4 as uuidv4 } from 'uuid'
+
+const refreshTeams = (parent, { ids }, ctx) => {
+  return ctx.loaders.adminTools.refreshTeams.load(
+    {},
+    {
+      team_ids: ids.join(','),
+    },
+  )
+}
+
+const refreshProducts = (parent, { ids }, ctx) => {
+  return ctx.loaders.adminTools.refreshProducts.load(
+    {
+      product_ids: ids,
+    },
+    {},
+  )
+}
+
+const refreshWorkspaces = (parent, { ids }, ctx) => {
+  return ctx.loaders.adminTools.refreshWorkspace.load(
+    {
+      workspace_ids: ids,
+    },
+    {},
+  )
+}
+
+const refreshSample = (parent, { ids }, ctx) => {
+  return ctx.loaders.adminTools.refreshSample.load(
+    {},
+    { ids: ids.join(',') },
+  )
+}
+
+export default {
+  Query: {
+    getTeamsESDiffs: async (parent, { ids, refreshNeeded }, ctx) => {
+      const params = { ids: [ids] }
+
+      // fetch teams from mongo
+      const teamsResponse = await ctx.loaders.adminTools.getTeamsESDiffs.load(
+        params,
+      )
+
+      let sliceValue = 100
+      let index = 0
+      let idList = []
+      const missedTeams = []
+      let refreshResponse = {}
+      while (index < teamsResponse.teamIds.length) {
+        const teamSearchString = teamsResponse.teamIds
+          .slice(index, sliceValue + index)
+          .map(obj => {
+            idList.push(obj.humanId)
+            return `(id:${obj.humanId} AND version: ${obj.version})`
+          })
+          .join(' OR ')
+        index += sliceValue
+
+        // call elastic await
+        const esResponse = await ctx.loaders.adminTools.searchTeamsES.load({
+          q: `(${teamSearchString})`,
+        })
+
+        const esResponseTeamIds = esResponse.content.map(({ teamId }) => teamId)
+        missedTeams.push(xor(idList, esResponseTeamIds))
+        idList = []
+      }
+
+      // call refresh if asked for
+      if (refreshNeeded && flatten(missedTeams).length > 0) {
+        refreshResponse = await refreshTeams(
+          parent,
+          { ids: flatten(missedTeams) },
+          ctx,
+        )
+      }
+
+      return {
+        missingCount: flatten(missedTeams).length,
+        totalFetched: teamsResponse.count,
+        missingIds: flatten(missedTeams),
+        refreshDetails: {
+          hostname: refreshResponse.hostname,
+          requestId: refreshResponse.requestId,
+        },
+      }
+    },
+
+    getProductSummary: async (parent, { ids, refreshNeeded }, ctx) => {
+      const params = { product_ids: ids ? [ids] : [] }
+
+      // fetch products from mongo
+      const productsResponse = await ctx.loaders.adminTools.getProductSummary.load(
+        params,
+      )
+
+      let sliceValue = 100
+      let index = 0
+      let idList = []
+      const missedProducts = []
+      let refreshResponse = {}
+      while (index < productsResponse.products.length) {
+        const productsSearchString = productsResponse.products
+          .slice(index, sliceValue + index)
+          .map(obj => {
+            idList.push(obj.humanId)
+            return `(humanId:${obj.humanId} AND version: ${obj.version})`
+          })
+          .join(' OR ')
+        index += sliceValue
+
+        // call elastic await
+        const esResponse = await ctx.loaders.adminTools.searchProductsES.load({
+          q: `(${productsSearchString})`,
+        })
+
+        const esResponseProductIds = esResponse.content.map(
+          ({ humanId }) => humanId,
+        )
+        missedProducts.push(xor(idList, esResponseProductIds))
+        idList = []
+
+        // console.log(`TO_BE_REFRESHED_IDS: `, flatten(missedProducts))
+        // console.log(`Total Ids fetched: `, productsResponse.count)
+      }
+
+      // call refresh if asked for
+      if (refreshNeeded && flatten(missedProducts).length > 0) {
+        refreshResponse = await refreshProducts(
+          parent,
+          { ids: flatten(missedProducts) },
+          ctx,
+        )
+      }
+
+      return {
+        missingCount: flatten(missedProducts).length,
+        totalFetched: productsResponse.count,
+        missingIds: flatten(missedProducts),
+        refreshDetails: {
+          hostname: refreshResponse.hostname,
+          requestId: refreshResponse.requestId,
+        },
+      }
+    },
+    getWorkspaceSummary: async (parent, { ids, refreshNeeded }, ctx) => {
+      const params = { ids: [ids] }
+      // fetch products from mongo
+      const workspaceResponse = await ctx.loaders.adminTools.getWorkspaceSummary.load(
+        params,
+      )
+
+      let sliceValue = 100
+      let index = 0
+      let idList = []
+      const missedWorkspaces = []
+      let refreshResponse = {}
+
+      while (index < workspaceResponse.workspaceIds.length) {
+        const workspaceSearchString = workspaceResponse.workspaceIds
+          .slice(index, sliceValue + index)
+          .map(obj => {
+            idList.push(obj.humanId)
+            return `(id:${obj.humanId} AND version: ${obj.version})`
+          })
+          .join(' OR ')
+        index += sliceValue
+
+        // call elastic await
+        const esResponse = await ctx.loaders.adminTools.searchWorkspacesES.load({
+          q: `(${workspaceSearchString})`,
+        })
+
+        // console.log("esresponse", esResponse)
+
+        const esResponseWorkspaceIds = esResponse.content.map(
+          (response) => response.humanId,
+        )
+        missedWorkspaces.push(xor(idList, esResponseWorkspaceIds))
+        idList = []
+      }
+
+      // call refresh if asked for
+      const cleanedUpMissedWorkspaces = flatten(missedWorkspaces).filter(Boolean)
+      if (refreshNeeded && cleanedUpMissedWorkspaces.length > 0) {
+        refreshResponse = await refreshWorkspaces(
+          parent,
+          { ids: cleanedUpMissedWorkspaces },
+          ctx,
+        )
+      }
+
+      return {
+        missingCount: cleanedUpMissedWorkspaces.length,
+        totalFetched: workspaceResponse.count,
+        missingIds: cleanedUpMissedWorkspaces,
+        refreshDetails: {
+          hostname: refreshResponse.hostname,
+          requestId: refreshResponse.requestId,
+        },
+      }
+    },
+    getWorkspacesByType: async (parent, { ids, type }, ctx) => {
+      const params = { ids: [ids], type: type }
+      let response = await ctx.loaders.adminTools.getWorkspaceSummary.load(params)
+      return response
+    },
+    getSampleSummary: async (parent, { ids, refreshNeeded }, ctx) => {
+      const params = { sample_ids: ids ? [ids] : [] }
+      // fetch samples from mongo
+      const sampleResponse = await ctx.loaders.adminTools.getSampleSummary.load(
+        params,
+      )
+
+      let sliceValue = 100
+      let index = 0
+      let idList = []
+      const missedSamples = []
+      let refreshResponse = {}
+
+      while (index < sampleResponse.samples.length) {
+        const sampleSearchString = sampleResponse.samples
+          .slice(index, sliceValue + index)
+          .map(obj => {
+            idList.push(obj.humanId)
+            //  return `(id:${obj.humanId} AND version: ${obj.version})`
+            return `(id:${obj.humanId} AND version: ${obj.version})`
+          })
+          .join(' OR ')
+        index += sliceValue
+
+        // call elastic await
+        const esResponse = await ctx.loaders.adminTools.searchSamplesES.load({
+          q: `(${sampleSearchString})`,
+          page: 0,
+          size: idList.length,
+        })
+
+        const esResponseSampleIds = esResponse.content.map(
+          (response) => response.id,
+        )
+        // console.log("esresponseSampleIds",esResponseSampleIds)
+        missedSamples.push(xor(idList, esResponseSampleIds))
+        idList = []
+      }
+
+      // call refresh if asked for
+      const cleanedUpMissedSamples = flatten(missedSamples).filter(Boolean)
+      if (refreshNeeded && cleanedUpMissedSamples.length > 0) {
+        refreshResponse = await refreshSample(
+          parent,
+          { ids: cleanedUpMissedSamples },
+          ctx,
+        )
+      }
+
+      return {
+        missingCount: cleanedUpMissedSamples.length,
+        totalFetched: sampleResponse.count,
+        missingIds: cleanedUpMissedSamples,
+        refreshDetails: {
+          hostname: refreshResponse.hostname,
+          requestId: refreshResponse.requestId,
+        },
+      }
+    },
+    getRedisCacheKey: async (parent, { key }) => {
+      return getRedisCacheKey(key)
+    },
+    getComponentsCountByPartnerId: async (_, { partnerId }, ctx) => ctx.loaders.adminTools.getComponentsCountByPartnerId.load(partnerId),
+    getVendorMergeStatus: async (_, params, ctx) => {
+      const vendorMergeStatusData = await ctx.loaders.adminTools.getVendorMergeStatus.load(params)
+      if (vendorMergeStatusData && vendorMergeStatusData.content && vendorMergeStatusData.content.length) {
+        return vendorMergeStatusData
+      }
+      return []
+    },
+  },
+
+  Mutation: {
+    refreshProduct: (parent, { id }, ctx) =>
+      ctx.loaders.adminTools.refreshProduct.load({
+        product_ids: [id],
+      }),
+    refreshProducts: (parent, { id }, ctx) =>
+      ctx.loaders.adminTools.refreshProducts.load({
+        product_ids: [id],
+      }),
+    refreshWorkspace: (parent, { id }, ctx) =>
+      ctx.loaders.adminTools.refreshWorkspace.load({
+        workspace_ids: [id],
+      }),
+    refreshWorkspaces: refreshWorkspaces,
+    refreshSample: refreshSample,
+    refreshAllProducts: (parent, {}, ctx) =>
+      ctx.loaders.adminTools.refreshAllProducts.load(),
+    refreshAllWorkspaces: (parent, {}, ctx) =>
+      ctx.loaders.adminTools.refreshAllWorkspaces.load(),
+    refreshAllSamples: (parent, {}, ctx) =>
+      ctx.loaders.adminTools.refreshAllSamples.load(),
+    resendDiscussion: (parent, { id, isReply }, ctx) =>
+      ctx.loaders.adminTools.resendDiscussion.load(
+        [id],
+        {
+          id,
+          isReply,
+        },
+      ),
+    deleteTeam: (parent, { teamId }, ctx) => {
+      ctx.loaders.adminTools.deleteTeam.load({
+        teamId,
+      })
+      return `${teamId} Got Deleted Successfully`
+    },
+    refreshTeams: refreshTeams,
+    deleteWorkspace: async (parent, { workspaceId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(workspaceId, ctx)
+      ctx.loaders.adminTools.deleteWorkspace(permissionJWT).load({
+        workspaceId,
+      })
+      return `${workspaceId} Got Deleted Successfully`
+    },
+    deleteProduct: async (parent, { productId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(productId, ctx)
+      ctx.loaders.adminTools.deleteProduct(permissionJWT).load({
+        productId,
+      })
+      return `${productId} Got Deleted Successfully`
+    },
+    expireRedisCacheKey: async (parent, { key }) => {
+      return expireRedisCacheKey(key)
+    },
+    vendorMerge: async (parent, { vendorMergeData }, ctx) => {
+      if (vendorMergeData && vendorMergeData.length) {
+        const response = await Promise.all(vendorMergeData.map(async (data) => {
+          if (data) {
+            const { businessPartnerReplaceRequestDtolist, teamReplaceRequestDtolist, resourceInfo: { resourceId, resourceDescription } = {} } = data
+
+            const vendorMergeId = uuidv4()
+            const vendorMergeReplaceBP = await ctx.loaders.adminTools.vendorMergeReplaceBP.load({
+              vendorMergeId,
+              businessPartnerReplaceRequestDtolist: businessPartnerReplaceRequestDtolist,
+            })
+            const vendorMergeReplaceTeam = await ctx.loaders.adminTools.vendorMergeReplaceTeam.load({
+              vendorMergeId,
+              teamReplaceRequestDtolist: teamReplaceRequestDtolist,
+            })
+            return (vendorMergeReplaceBP && vendorMergeReplaceBP.requestId &&
+              vendorMergeReplaceTeam && vendorMergeReplaceTeam.requestId && { vendorMergeId, resourceId, resourceDescription }) || {}
+          }
+          return {}
+        }))
+        if (response && response.length) {
+          return response
+        }
+      }
+      return []
+    },
+    impersonateUser: async (parent, { userId, profile }, ctx) => {
+      return ctx.loaders.userAttributes.impersonateUser(userId, profile, ctx)
+    },
+  },
+
+  SPARK_VendorMergeStatus: {
+    requestId: (vendorMergeData) => vendorMergeData.requestId,
+    status: (vendorMergeData) => vendorMergeData.status,
+    vendorMergeBpInfo: async (vendorMergeData, _, ctx) => {
+      const vendorMergeBpInfo = []
+      const bpIds = []
+      const { resourcesStatus = [] } = vendorMergeData || {}
+      for (const resourceStatus of (resourcesStatus || [])) {
+        const { sourceId, targetId, replaceType } = resourceStatus
+        if (!sourceId || !targetId) continue
+        if (replaceType === 'BUSINESS_PARTNER_REPLACE') {
+          if (!bpIds.includes(sourceId) || !bpIds.includes(targetId)) {
+            bpIds.push(sourceId)
+            bpIds.push(targetId)
+
+            const bpInfo = {}
+            const sourceBpInfo = await ctx.loaders.vmm.getByID.load(sourceId)
+            if (sourceBpInfo && sourceBpInfo.bpName) bpInfo.oldName = sourceBpInfo.bpName
+            const targetBpInfo = await ctx.loaders.vmm.getByID.load(targetId)
+            if (targetBpInfo && targetBpInfo.bpName) bpInfo.newName = targetBpInfo.bpName
+
+            vendorMergeBpInfo.push(bpInfo)
+          }
+        }
+      }
+      return vendorMergeBpInfo
+    },
+    vendorMergeTeamInfo: async (vendorMergeData, _, ctx) => {
+      const vendorMergeTeamInfo = []
+      const teamIds = []
+      const { resourcesStatus = [] } = vendorMergeData || {}
+      for (const resourceStatus of (resourcesStatus || [])) {
+        const { sourceId, targetId, replaceType } = resourceStatus
+        if (!sourceId || !targetId) continue
+        if (replaceType === 'TEAM_REPLACE') {
+          if (!teamIds.includes(sourceId) || !teamIds.includes(targetId)) {
+            teamIds.push(sourceId)
+            teamIds.push(targetId)
+
+            const teamInfo = {}
+            const sourcejwt = await getUserPermissionsJWT(sourceId, ctx)
+            const sourceTeamInfo = await ctx.loaders.teamV2.getByIDs(sourcejwt).load({ ids: [sourceId] })
+            if (sourceTeamInfo && sourceTeamInfo.length && sourceTeamInfo[0].teamName) teamInfo.oldName = sourceTeamInfo[0].teamName
+            const targetjwt = await getUserPermissionsJWT(targetId, ctx)
+            const targetTeamInfo = await ctx.loaders.teamV2.getByIDs(targetjwt).load({ ids: [targetId] })
+            if (targetTeamInfo && targetTeamInfo.length && targetTeamInfo[0].teamName) teamInfo.newName = targetTeamInfo[0].teamName
+
+            vendorMergeTeamInfo.push(teamInfo)
+          }
+        }
+      }
+      return vendorMergeTeamInfo
+    },
+    resourceInfo: async (vendorMergeData, _, ctx) => {
+      const { resourcesStatus = [] } = vendorMergeData || {}
+      let resourceId = ''
+      for (const resourceStatus of (resourcesStatus || [])) {
+        const { resourceType, resourceIds } = resourceStatus
+        if (!resourceId && resourceType === 'product' && resourceIds && resourceIds.length) {
+          resourceId = resourceIds[0]
+          const product = await ctx.loaders.product.getByID.load(resourceId)
+          if (product && product.description) {
+            return ({ resourceId, resourceDescription: product.description })
+          }
+        }
+      }
+      return {}
+    },
+    createdBy: async (vendorMergeData, _, ctx) => {
+      if (vendorMergeData && vendorMergeData.createdBy) {
+        const userInfo = await ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(vendorMergeData.createdBy)
+        if (userInfo && userInfo.firstName) {
+          return `${userInfo.firstName} ${userInfo.lastName || ''}`
+        }
+      }
+      return ''
+    },
+    resourcesStatus: (vendorMergeData) => (vendorMergeData.resourcesStatus || []),
+  },
+
+  SPARK_VendorMergeData: {
+    content: (vendorMergeStatusData) => (vendorMergeStatusData.content || {}),
+    totalCount: (vendorMergeStatusData) => vendorMergeStatusData.totalElements,
+  },
+}

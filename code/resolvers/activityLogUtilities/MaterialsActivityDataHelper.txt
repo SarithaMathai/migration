@@ -1,0 +1,190 @@
+import {
+  getCodeValueAttributeUpdateText,
+  getOldAndNewTagValues,
+} from './commonUtilities'
+import { MATERIAL_ACTIVITY_COMMON_ATTRIBUTE } from '../../config/constants'
+import _ from 'lodash'
+
+const isCodedDescription = (obj) => {
+  if (Array.isArray(obj)) {
+    return obj.every(item => isCodedDescription(item))
+  } else if (obj && typeof obj === 'object') {
+    return 'code' in obj && 'description' in obj
+  }
+  return false
+}
+
+export const MaterialsActivityDataHelper = async (streamResourceId, streamResourceType, activity, ctx) => {
+  if (!ctx) return []
+
+  const {
+    resourceType = '',
+    eventType = '',
+    eventSummary: { humanId = '', description = '', modifiedAttributes = [] } = {},
+  } = activity || {}
+
+  const codeValueAttributes = ['washType', 'sustainability', 'washProcesses', 'garmentDye', 'status', 'recipe']
+
+  // This will be shared across when no modified attributes(create scenario)
+  if (!modifiedAttributes || !modifiedAttributes.length) {
+    if ((eventType && eventType === 'CREATE')) {
+      return [{
+        eventType,
+        resourceUpdated: {
+          resourceType: resourceType,
+          resourceId: humanId,
+          resourceDescription: description,
+        },
+      }]
+    }
+    return null
+  }
+
+  return modifiedAttributes.map(async (attr) => {
+    const { attributeName: initialAttributeName = '', attributeNewValue, attributeOldValue} = attr || {}
+    let attributeName = initialAttributeName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/_/g, ' ')
+    const shouldResolveAttributeData = _.values(MATERIAL_ACTIVITY_COMMON_ATTRIBUTE).some(it => it && it.values.includes(attr.attributeName))
+    let resourceId = humanId
+    let isSingleValueUpdate = false
+    let newValues = []
+    let oldValues = []
+
+    // Resolve common attributes i.e. brands, departments, tags, and locations
+    if (shouldResolveAttributeData) {
+      const {
+        newAttributeValues,
+        oldAttributeValues,
+      } = await getCommonAttributeResolvedUpdatedText(attr.attributeName, attributeName, attributeNewValue, attributeOldValue, ctx)
+      oldValues = oldAttributeValues
+      newValues = newAttributeValues
+    } else {
+      const shouldHandleCodedDescription = codeValueAttributes.includes(attr.attributeName) && (isCodedDescription(attributeNewValue) || isCodedDescription(attributeOldValue))
+      if (shouldHandleCodedDescription) {
+        const {
+          newAttributeValues,
+          oldAttributeValues,
+          isSingleValueUpdate: isSingleValueUpdateFlag,
+        } = getCodeValueAttributeUpdateText(attributeNewValue, attributeOldValue)
+        oldValues = oldAttributeValues
+        newValues = newAttributeValues
+        isSingleValueUpdate = isSingleValueUpdateFlag
+      } else if (typeof attributeNewValue === 'number' || typeof attributeNewValue === 'string' || typeof attributeNewValue === 'boolean') {
+        isSingleValueUpdate = true
+        newValues = [attributeNewValue]
+        oldValues = attributeOldValue != null ? [attributeOldValue] : []
+      } else if (
+        (_.isArray(attributeNewValue) && attributeNewValue.length && attributeNewValue.every((val) => (typeof val === 'string'))) ||
+        (_.isArray(attributeOldValue) && attributeOldValue.length && attributeOldValue.every((val) => (typeof val === 'string')))
+      ) {
+        oldValues = attributeOldValue
+        newValues = attributeNewValue
+        isSingleValueUpdate = (attributeNewValue.length === 1) && ((attributeOldValue.length === 1) || (attributeOldValue.length === 0))
+      }
+    }
+
+    return ({
+      oldValues,
+      newValues,
+      attributeName,
+      eventType,
+      isSingleValueUpdate,
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId,
+        resourceDescription: description,
+      },
+    })
+  })
+}
+
+export const getCommonAttributeResolvedUpdatedText = async (originalAttributeName, attributeName, attributeNewValue, attributeOldValue, ctx) => {
+  const {
+    loaders: {
+      location: { getLocationById: getFacilityInfo } = {},
+      brand: { getBrand: getBrandInfo } = {},
+      ig: { department: { getByID: getDepartmentInfo } = {} } = {},
+      tag: { getTags } = {},
+    } = {},
+  } = ctx
+
+  const attributeKey = _.values(MATERIAL_ACTIVITY_COMMON_ATTRIBUTE).filter(attr => attr.values.includes(originalAttributeName)).map(attr => attr.key)[0]
+  let newAttributeValues = []
+  let oldAttributeValues = []
+
+  switch (attributeKey) {
+    case MATERIAL_ACTIVITY_COMMON_ATTRIBUTE.TAG.key: {
+      const { oldTagValues, newTagValues } = await getOldAndNewTagValues(attributeOldValue, attributeNewValue, getTags)
+      oldAttributeValues = oldTagValues
+      newAttributeValues = newTagValues
+    }
+      break
+    case MATERIAL_ACTIVITY_COMMON_ATTRIBUTE.BRAND.key: {
+      const isNumeric = (val) => !isNaN(val) && val !== null && val !== ''
+      const newValIsNumeric = Array.isArray(attributeNewValue) ? attributeNewValue.every(isNumeric) : isNumeric(attributeNewValue)
+      const oldValIsNumeric = Array.isArray(attributeOldValue) ? attributeOldValue.every(isNumeric) : isNumeric(attributeOldValue)
+
+      // Fabric uses it own brand enum and don't need to resolve from VMM,
+      // so skip resolving and use the values directly.
+      if ((attributeNewValue && !newValIsNumeric) || (attributeOldValue && !oldValIsNumeric)) {
+        oldAttributeValues = attributeOldValue ? (Array.isArray(attributeOldValue) ? [...attributeOldValue] : [attributeOldValue]) : []
+        newAttributeValues = attributeNewValue ? (Array.isArray(attributeNewValue) ? [...attributeNewValue] : [attributeNewValue]) : []
+      } else {
+        const newBrandInfo = (attributeNewValue) ? await getBrandInfo.load(attributeNewValue) : {}
+        const oldBrandInfo = (attributeOldValue) ? await getBrandInfo.load(attributeOldValue) : {}
+        if (newBrandInfo && newBrandInfo.brandName) {
+          newAttributeValues.push(newBrandInfo.brandName)
+        }
+        if (oldBrandInfo && oldBrandInfo.brandName) {
+          oldAttributeValues.push(oldBrandInfo.brandName)
+        }
+        if (newAttributeValues.length || oldAttributeValues.length) {
+          oldAttributeValues = [...oldAttributeValues]
+          newAttributeValues = [...newAttributeValues]
+        }
+      }
+    }
+      break
+    case MATERIAL_ACTIVITY_COMMON_ATTRIBUTE.DEPARTMENT.key: {
+      let newDepartmentInfos = (attributeNewValue && attributeNewValue.length > 0) ? await getDepartmentInfo.loadMany(attributeNewValue) : []
+      let oldDepartmentInfos = (attributeOldValue && attributeOldValue.length > 0) ? await getDepartmentInfo.loadMany(attributeOldValue) : []
+      if (newDepartmentInfos && newDepartmentInfos.length > 0) {
+        newDepartmentInfos.map(departInfo => {
+          if (departInfo && departInfo.department_name) {
+            newAttributeValues.push(departInfo.department_name)
+          }
+        })
+      }
+      if (oldDepartmentInfos && oldDepartmentInfos.length > 0) {
+        oldDepartmentInfos.map(departInfo => {
+          if (departInfo && departInfo.department_name) {
+            oldAttributeValues.push(departInfo.department_name)
+          }
+        })
+      }
+      if (newAttributeValues.length || oldAttributeValues.length) {
+        oldAttributeValues = [...oldAttributeValues]
+        newAttributeValues = [...newAttributeValues]
+      }
+    }
+      break
+    case MATERIAL_ACTIVITY_COMMON_ATTRIBUTE.LOCATION.key: {
+      if (attributeName === 'laundry') {
+        const newFacilityInfo = (attributeNewValue && attributeNewValue.length > 0) ? await getFacilityInfo(attributeNewValue[0]).load() : {}
+        const oldFacilityInfo = (attributeOldValue && attributeOldValue.length > 0)
+          ? await getFacilityInfo(attributeOldValue[0]).load() : {}
+        if (newFacilityInfo && newFacilityInfo.name) {
+          newAttributeValues.push(newFacilityInfo.name)
+          if (oldFacilityInfo && oldFacilityInfo.name) {
+            oldAttributeValues.push(oldFacilityInfo.name)
+          }
+        }
+        if ((newAttributeValues && newAttributeValues.length > 0) || (oldAttributeValues && oldAttributeValues.length > 0)) {
+          oldAttributeValues = [...oldAttributeValues]
+          newAttributeValues = [...newAttributeValues]
+        }
+      }
+    }
+      break
+  }
+  return ({ newAttributeValues, oldAttributeValues })
+}

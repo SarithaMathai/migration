@@ -1,0 +1,188 @@
+import { getUser } from '../../utils/userAttributesUtils'
+import { loadBps } from '../../utils/vmmUtils'
+const { getProductAsksForWorkspace } = require('../../utils/ProductAskUtils')
+
+export default {
+  Mutation: {
+    addProductPlan: async (parent, { sparkProductPlan }, ctx) => {
+      const productPlan = await ctx.loaders.productPlan.addProductPlan(sparkProductPlan)
+
+      if (productPlan.validationErrors || productPlan.message) {
+        throw new Error('Error creating product plan \n' + JSON.stringify(productPlan))
+      }
+      return productPlan
+    },
+    updateProductPlan: async (parent, { id, sparkProductPlan }, ctx) => {
+      const productPlan = await ctx.loaders.productPlan.updateProductPlan(id, sparkProductPlan)
+
+      if (productPlan.validationErrors || productPlan.message) {
+        throw new Error('Error updating packaging \n' + JSON.stringify(productPlan))
+      }
+      return productPlan
+    },
+    associateProductsToAsk: async (parent, { askId, productIds }, ctx) => {
+      const response = await ctx.loaders.productAsk.associateProductAsk(askId).load(productIds)
+
+      if (response.validationErrors || response.message) {
+        throw new Error('Error associating products to ask \n' + JSON.stringify(response))
+      }
+      return response
+    },
+    updateRecommendationStatus: async (parent, { statusInput }, ctx) => {
+      const response = await ctx.loaders.productAsk.updateRecommendationStatus(statusInput)
+      if (response.validationErrors || response.message) {
+        throw new Error('Error updating recommendation status status \n' + JSON.stringify(response))
+      }
+      return true
+    },
+    compareAskVersions: async (parent, { askIds, startDate, endDate }, ctx) => {
+      const response = await ctx.loaders.productAsk.compareAskVersions(askIds, startDate, endDate)
+      const formattedContent = response?.map(async (compareVersion) => {
+        return {
+        ...compareVersion,
+        modifiedAttributes: compareVersion.modifiedAttributes.map(({attributeName, attributeNewValue, attributeOldValue}) => ({
+          attributeName,
+          attributeNewValue: JSON.stringify(attributeNewValue),
+          attributeOldValue: JSON.stringify(attributeOldValue),
+        })),
+      }})
+     if (response.validationErrors || response.message) {
+        throw new Error('Error comparing versions \n' + JSON.stringify(response))
+      }
+      return formattedContent
+    },
+    moveProductsTo: async (parent, {fromAskId, toAskId, productIds}, ctx) => {
+      const response = await ctx.loaders.productAsk.moveProductsTo(fromAskId, toAskId, productIds)
+      if (response.validationErrors || response.message) {
+        throw new Error('Error moving product \n' + JSON.stringify(response))
+      }
+      return response
+    },
+    removeProductsFromAsk: async (parent, {fromAskId, productIds}, ctx) => {
+      const response = await ctx.loaders.productAsk.removeProductsFromAsk(fromAskId, productIds)
+      if (response.validationErrors || response.message) {
+        throw new Error('Error removing product from ask \n' + JSON.stringify(response))
+      }
+      return response
+    },
+  },
+  Query: {
+    getProductPlanById: (parent, { id }, ctx) =>
+      ctx.loaders.productPlan.getByID().load(id),
+    searchProductPlans: (parent, { page, size, brandIds, divisionIds, deptIds }, ctx) =>
+      ctx.loaders.productPlan.searchProductPlans.load({ page, size, brandIds, divisionIds, deptIds }),
+    getWorkspaceProductPlan: async (parent, { from, to, page, size, classIds, departmentIds, sortOrder, sortBy }, ctx) => {
+      const results = await ctx.loaders.productAsk.searchProductAsks.load({ from, to, page, size, classIds, departmentIds, sortOrder, sortBy })
+      return results
+    },
+    getProductAsks: async (parent, { workspaceId, productIds, page, size }, ctx) => {
+      return getProductAsksForWorkspace(ctx, { workspaceId, productIds, page, size })
+    },
+    getProductAskById: (parent, { askId }, ctx) => ctx.loaders.productAsk.getByID().load(askId),
+    searchAskActivities: async (parent, {askIds, page, size, startDate, sortOrder, sortBy}, ctx) => {
+      const response = await ctx.loaders.activity.searchAskEvents({
+        ids: askIds,
+        page,
+        size,
+        startDate,
+        sortOrder,
+        sortBy,
+      })
+      const formattedContent = response.content?.map(async (event) => {
+        const user = event?.userId ? await ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(event.userId) : {}
+        return {
+        ...event,
+        user,
+        eventSummary: {
+          ...event.eventSummary, 
+          modifiedAttributes: event.eventSummary.modifiedAttributes.map(({attributeName,
+            attributeNewValue,
+            attributeOldValue}) => ({
+              attributeName,
+            attributeNewValue: JSON.stringify(attributeNewValue),
+            attributeOldValue: JSON.stringify(attributeOldValue),
+            })),
+        },
+      }
+      })
+      if (response.validationErrors || response.message) {
+        throw new Error('Error searching activity for asks \n' + JSON.stringify(response))
+      }
+      return {...response, content: formattedContent}
+    },
+  },
+  SPARK_ProductPlan: {
+    createdBy: (productPlan, args, ctx) => productPlan.createdBy && getUser(productPlan.createdBy, ctx),
+    updatedBy: (productPlan, args, ctx) => productPlan.updatedBy && getUser(productPlan.updatedBy, ctx),
+    brand: (productPlan, args, ctx) => {
+      if (productPlan.brandId && productPlan.brandId !== -1) {
+        return ctx.loaders.brand.getBrand.load(productPlan.brandId)
+      }
+      return null
+    },
+  },
+  SPARK_VendorLine: {
+    product: (vendorLine, args, ctx) => {
+      if (vendorLine?.pid) {
+        return ctx.loaders.product.getByID.load(vendorLine.pid)
+      }
+      return null
+    },
+    businessPartner: async (vendorLine, args, ctx) => {
+      if (vendorLine?.bpId) {
+        const bps = await loadBps(ctx, [vendorLine.bpId])
+        return bps[0]
+      }
+      return null
+    },
+  },
+  SPARK_ProductAsk: {
+    brand: (productAsk, args, ctx) => {
+      if (productAsk.brandId !== null) {
+        return ctx.loaders.brand.getBrand.load(productAsk.brandId)
+      }
+      return null
+    },
+    department: (productAsk, args, ctx) => {
+      if (productAsk.departmentId !== null) {
+        return ctx.loaders.ig.department.getByID.load(productAsk.departmentId)
+      }
+      return null
+    },
+    clazz: async (productAsk, args, ctx) => {
+      if (productAsk.classId !== null) {
+        return ctx.loaders.ig.clazz.getByClassByDeptId.load({
+          department: productAsk.departmentId,
+          id: productAsk.classId,
+        })
+      }
+      return null
+    },
+    bids: async (productAsk, args, ctx) => {
+      if (productAsk.associatedProducts && productAsk.associatedProducts.length > 0) {
+        const results = await ctx.loaders.negotiatorBids.fetchProductBids.load({ pids: productAsk.associatedProducts.map((item) => item.product) })
+        return results?.bids || []
+      }
+      return []
+    },
+  },
+
+  AskToProductAssociation: {
+    productId: (item) => item.product,
+    product: async (association, args, ctx) => {
+      if (!association.product) return null;
+      return ctx.loaders.product.getByID.load(association.product);
+    },
+  },
+
+  Negotiator_Spark_Data: {
+    description: async (sparkData, args, ctx) => {
+      const product = await ctx.loaders.product.getByID.load(sparkData.pid)
+      return product ? product.description : null
+    },
+    thumbnailId: async (sparkData, args, ctx) => {
+      const product = await ctx.loaders.product.getByID.load(sparkData.pid)
+      return product ? product.thumbnailId : null
+    },
+  },
+}

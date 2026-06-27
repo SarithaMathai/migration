@@ -1,0 +1,121 @@
+import BusinessPartnerRole from '../config/businessPartner'
+import { BRAND_COMPLIANCE_PRODUCT_TYPE } from '../config/constants'
+import { sanitizedProductDescription } from '../utils/Product/productUtils'
+import SPARK_Product from './SPARK_Product'
+import { uniq } from 'lodash'
+
+export default {
+  Query: {
+    getBrandComplianceProductRecordById: async (parent, { id }, ctx) => {
+      return ctx.loaders.brandCompliance.getBrandComplianceProductRecordById.load(id)
+    },
+    getBrandComplianceProductRecordByIds: async (parent, { ids }, ctx) => {
+      return ctx.loaders.brandCompliance.getBrandComplianceProductRecordByIds(ids)
+    },
+    getBrandComplianceProductValidationsByIds: async (parent, { ids }, ctx) => {
+      const validBrandComplianceIds = []
+      const invalidBrandComplianceIds = []
+      const archivedBrandComplianceIds = []
+      const promises = ids.map(async id => {
+        try {
+          const { isDeletedInBrandCompliance } = await ctx.loaders.brandCompliance.getBrandComplianceProductRecordById.load(id)
+          if (isDeletedInBrandCompliance) {
+            archivedBrandComplianceIds.push(id)
+          } else {
+            validBrandComplianceIds.push(id)
+          }
+        } catch {
+          invalidBrandComplianceIds.push(id)
+        }
+      })
+      await Promise.all(promises)
+
+      return {
+        validBrandComplianceIds,
+        invalidBrandComplianceIds,
+        archivedBrandComplianceIds,
+      }
+    },
+  },
+  Mutation: {
+    bulkImportBrandComplianceProductsByIds: async (parent, { brandComplianceBulkInput }, ctx) => {
+      const { ids, workspaceId, brandId, teams, designCycle, businessPartners : businessPartnersFromWorkspace } = brandComplianceBulkInput
+      const complianceProductPromises = ids.map(id => ctx.loaders.brandCompliance.getBrandComplianceProductRecordById.load(id))
+      const brandComplianceProducts = await Promise.all(complianceProductPromises) 
+
+      const supplierIdsFromCompliance = uniq(brandComplianceProducts.map(({ supplierId }) => supplierId))
+      const supplierPromises = supplierIdsFromCompliance.map((bpId) => ctx.loaders.vmm.getBusinessPartnerById.load(bpId))
+      const importedBusinessPartners = await Promise.all(supplierPromises)
+      const importedMerchVendors = importedBusinessPartners?.filter(({roles}) => !!roles.filter(role => role.id === BusinessPartnerRole.MERCHANDISE_VENDOR.code).length) || []
+      const merchVendorsFromWorkspace = (businessPartnersFromWorkspace || []).filter(({id, associatedPartnerType }) => associatedPartnerType === BusinessPartnerRole.MERCHANDISE_VENDOR.code && supplierIdsFromCompliance?.includes(id)) || []
+      const unsupportedProductIds = []
+      const products = brandComplianceProducts.map(({ supplierId, brandComplianceProductId, brandComplianceProductName, dpci }) => {
+        const sanitizedName = sanitizedProductDescription(brandComplianceProductName)
+        const [departmentId, classId] = dpci?.split('-') || ['', '']
+        const supplier = importedMerchVendors.find(vendor => vendor.id.toString() === supplierId.toString())
+        if (supplier) {
+          const businessPartners = [supplier, ...merchVendorsFromWorkspace].map(({id, supplierId}) => ({partnerId: Number(id || supplierId) , partnerType: BusinessPartnerRole.MERCHANDISE_VENDOR.code}))
+          return {
+            description: `${dpci} - ${sanitizedName}`,
+            fbDpci: dpci,
+            departments: [
+              {
+                id: departmentId,
+                classIds: [classId],
+              }, 
+            ],
+            brandId,
+            teams: {
+              teamWorkspacesToAdd: teams,
+              teamWorkspacesToRemove: [],
+            },
+            resources: {
+              mappings: {
+                team: teams.map(team => team.teamId),
+              },
+            },
+            // type must be BRAND_COMPLIANCE_PRODUCT_TYPE and must include brandComplianceRecordId
+            type: BRAND_COMPLIANCE_PRODUCT_TYPE,
+            brandComplianceRecordId: brandComplianceProductId.toString(),
+            businessPartners,
+            productWorkspaceAttributes: [
+              {
+                humanId: workspaceId,
+                designCycle,
+              },
+            ],
+            productWorkspaceInfo: [
+              {
+                humanId: workspaceId,
+                designCycle,
+                businessPartners: businessPartners.map(bp => ({...bp, status: 100, statusName: 'Prototype', archived: false})),
+              },
+            ],
+          }
+        } else {
+          unsupportedProductIds.push(brandComplianceProductId)
+        }
+      }).filter(product => product)
+
+      const productErrors = unsupportedProductIds.map(id => ({
+        id,
+        message: `Product: ${id} can not be imported because: The business partner supplied is not a Merchandise Vendor`,
+      }))
+      try {
+        const { products: productResults } = await SPARK_Product.Mutation.addProducts(parent, { workspaceId, products }, ctx)
+        return {
+          products: productResults,
+          errors: productErrors,
+        }
+      } catch (error) {
+        return {
+          products: [],
+          errors: [{
+            id: 'unexpected error',
+            message: error.message,
+          }],
+        }
+      }
+    },
+  },
+}

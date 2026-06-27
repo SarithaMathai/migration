@@ -1,0 +1,53 @@
+import _ from 'lodash'
+import { defaultChunkSize } from '../../utils/constants'
+
+export const getCodeValueAttributeUpdateText = (newValues, oldValues) => {
+  let newAttributeValues = []; let oldAttributeValues = []
+  const isNewValuesArray = _.isArray(newValues)
+  const isOldValuesArray = _.isArray(newValues)
+  let isSingleValueUpdate = false
+  if ((newValues && isNewValuesArray && newValues.length > 0) || (oldValues && isOldValuesArray && oldValues.length > 0)) {
+    newAttributeValues = newValues.map(value => value && value.description)
+    oldAttributeValues = oldValues.map(value => value && value.description)
+  } else if ((newValues && !isNewValuesArray) || (oldValues && !isOldValuesArray)) {
+    if (newValues && !isNewValuesArray) {
+      newAttributeValues = [newValues.description]
+    }
+    if (oldValues && !isOldValuesArray) {
+      oldAttributeValues = [oldValues.description]
+    }
+    isSingleValueUpdate = true
+  }
+  return { newAttributeValues, oldAttributeValues, isSingleValueUpdate }
+}
+export const getOldAndNewTagValues = async (attributeOldValue, attributeNewValue, getTags) => {
+  let oldTagValues = []
+  let newTagValues = []
+  if (attributeNewValue && attributeNewValue.length) {
+    const tags = await getTags.load({
+      page: 0,
+      size: 10000,
+      ids: [...attributeNewValue],
+    })
+    newTagValues = [...(tags && tags.content)].map((tag) => tag.name)
+  }
+  if (attributeOldValue && attributeOldValue.length) {
+    const tags = await getTags.load({
+      page: 0,
+      size: 10000,
+      ids: [...attributeOldValue],
+    })
+    oldTagValues = [...(tags && tags.content)].map((tag) => tag.name)
+  }
+  return ({ oldTagValues, newTagValues })
+}
+
+export const chunkArray = (array, chunkSize = defaultChunkSize) => {
+  const result = []
+
+  for (let i = 0; i < array.length; i += chunkSize) {
+    result.push(array.slice(i, i + chunkSize))
+  }
+
+  return result
+}

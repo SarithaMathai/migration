@@ -1,0 +1,175 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import _ from 'lodash'
+import SPARK_WorkspaceV2 from './../SPARK_WorkspaceV2'
+import { workspaceAssociationHelper, ValidWorkspaceAssociationTypes } from './../../utils/workspaceAssociationHelper'
+import { getUserGroup } from '../../utils/Product/userGroupUtils'
+import { loadBps } from '../../utils/vmmUtils'
+
+export default {
+  Query: {
+    getMeasurementByIds: async (parent, { ids, calculated }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.measurement.getMeasurementByIds(permissionJWT, ids, calculated)
+    },
+    getMeasurements: async (parent, { businessPartnerIds, calculated, mustHaveRows, resourceId }, ctx) => {
+      const relationships = await ctx.loaders.relationship.findRelationships(resourceId, {
+        includeNodeTypes: ['measurement_set'],
+        maxDepth: 0,
+      })
+      const measurementSetIds = relationships.map(node => node.id)
+      if (!measurementSetIds.length) {
+        return []
+      }
+      const permissionJWT = await getUserPermissionsJWT(measurementSetIds, ctx)
+      const { content } = await ctx.loaders.measurement.getMeasurementByIds(permissionJWT, measurementSetIds, calculated, businessPartnerIds, mustHaveRows)
+      return {
+        content: _.orderBy(content, ({ createdAt }) => new Date(createdAt), 'desc'),
+      }
+    },
+    getMeasurementsElastic: async (parent, { resourceId }, ctx) => {
+      const { content } = await ctx.loaders.search.getMeasurementSets.load({ q: `parentId: ${resourceId}` })
+      return {
+        content: _.orderBy(content, ({ createdAt }) => new Date(createdAt), 'desc'),
+      }
+    },
+    getUnitsOfMeasure: (parent, { ids }, ctx) => ctx.loaders.measurement.getUnitsOfMeasure(ids),
+    getThicknessUnitsOfMeasure: (parent, { }, ctx) => ctx.loaders.measurement.getThicknessUnitsOfMeasure(),
+    getMeasurementSetStatus: (parent, { }, ctx) => ctx.loaders.measurement.getMeasurementSetStatus(),
+    getSampleMeasurement: (parent, { sampleId }, ctx) => ctx.loaders.measurement.getSampleMeasurement(sampleId),
+  },
+  Mutation: {
+    addMeasurement: async (parent, { sparkMeasurement }, ctx) => {
+      const measurement = await ctx.loaders.measurement.addMeasurement(sparkMeasurement)
+      if (measurement.validationErrors || measurement.message) {
+        throw new Error('Error creating measurement set \n' + JSON.stringify(measurement))
+      }
+      return measurement
+    },
+  updateMeasurementComponentStatus: (parent, { productId, ids, status }, ctx) =>
+      ctx.loaders.measurement.updateMeasurementComponentStatus({productId, ids, status}),
+    updateMeasurement: async (parent, { sparkMeasurement }, ctx) => {
+      const workspaceAssociations = sparkMeasurement.updateWorkspaceAssociations || {}
+      const permissionJWT = await getUserPermissionsJWT([sparkMeasurement.humanId], ctx)
+
+      if ((workspaceAssociations.addWorkspaces && workspaceAssociations.addWorkspaces.length > 0) || (workspaceAssociations.removeWorkspaces && workspaceAssociations.removeWorkspaces.length > 0)) {
+        const addWorkspaces = await workspaceAssociationHelper(ValidWorkspaceAssociationTypes.MEASUREMENT, sparkMeasurement.humanId, workspaceAssociations.addWorkspaces, workspaceAssociations.removeWorkspaces, ctx)
+        if (addWorkspaces.validationErrors || addWorkspaces.message) {
+          throw new Error('Error associating measurement set workspaces \n' + JSON.stringify(addWorkspaces))
+        }
+      }
+
+      const measurement = await ctx.loaders.measurement.updateMeasurement(permissionJWT, sparkMeasurement)
+
+      if (measurement.validationErrors || measurement.message) {
+        throw new Error('Error updating measurement set \n' + JSON.stringify(measurement))
+      }
+      return measurement
+    },
+    updateMeasurementAccess: async (parent, { measurementSetId, systemTeamIds, systemTeamDto }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([measurementSetId], ctx)
+      return ctx.loaders.measurement.updateMeasurementAccess(permissionJWT, measurementSetId, systemTeamIds, systemTeamDto)
+    },
+    lockMeasurementSet: async (parent, { measurementSetId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([measurementSetId], ctx)
+      return ctx.loaders.measurement.lockMeasurementSet(permissionJWT, measurementSetId)
+    },
+    unlockMeasurementSet: async (parent, { measurementSetId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([measurementSetId], ctx)
+      return ctx.loaders.measurement.unlockMeasurementSet(permissionJWT, measurementSetId)
+    },
+    putSampleMeasurementSet: async (parent, { sampleMeasurementSet }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([ sampleMeasurementSet.measurementSetId, sampleMeasurementSet.sampleId ], ctx)
+      const measurement = await ctx.loaders.measurement.putSampleMeasurementSet(permissionJWT, sampleMeasurementSet)
+      if (measurement.validationErrors || measurement.message) {
+        throw new Error('Error creating sample measurement set \n' + JSON.stringify(measurement))
+      }
+      return measurement
+    },
+    deleteSampleMeasurementSet: async (parent, { sampleId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sampleId, ctx)
+      return ctx.loaders.measurement.deleteSampleMeasurementSet(permissionJWT, sampleId)
+    },
+  },
+
+  SPARK_Measurements: {
+    access: async (measurement, args, ctx) => {
+      // since we are only getting access for one measurement, return the first element of the list returned from service
+      const perms = await ctx.loaders.accessControl.getPermissions.load({
+        resourceIds: [ measurement.humanId ],
+      })
+      return perms && perms.length > 0 ? perms[0] : null
+    },
+    currentUserPermissions: async (measurement, args, ctx) => {
+      const { resourcePermissions: currentUserPermissions } = await ctx.loaders.accessControl.getUserAccessUnencoded.load(measurement.humanId)
+      return currentUserPermissions[0]
+    },
+    businessPartners: async (measurementSet, args, ctx) => measurementSet.businessPartnerIds && loadBps(ctx, measurementSet.businessPartnerIds),
+    createdBy: (measurementSet, args, ctx) => {
+      if (measurementSet.createdBy) {
+        return ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(measurementSet.createdBy)
+      }
+    },
+    product: (measurement, args, ctx) => {
+      if (measurement.resourceId && measurement.resourceId.indexOf('PID') === 0) {
+        return ctx.loaders.product.getByID.load(measurement.resourceId)
+      }
+      return null
+    },
+    workspaces: (measurement, args, ctx) => {
+      const workspaceIds = measurement.workspaceContext || []
+      if (workspaceIds.length) {
+        return SPARK_WorkspaceV2.Query.getWorkspacesByIdsV2({}, { ids: workspaceIds }, ctx)
+      }
+      return null
+    },
+    status: measurement => ({
+      code: measurement.statusId,
+      description: measurement.statusName,
+    }),
+    updatedBy: (measurementSet, args, ctx) =>
+      measurementSet.updatedBy &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(measurementSet.updatedBy),
+    updatedFromResource: (measurementSet, args, ctx) => {
+      if (measurementSet.updatedFromResource) {
+        const updatedFromResource = measurementSet.updatedFromResource
+        switch (updatedFromResource.type) {
+          case 'sample':
+            return ctx.loaders.sampleV2.getSampleById.load(updatedFromResource.id)
+        }
+      }
+      return null
+    },
+    measurementTemplates: async (measurementSet, args, ctx) => {
+      const templateIds = (measurementSet.measurementTemplates || []).map(({ id }) => id)
+      if (templateIds.length > 0) {
+        const measurementTemplates = await ctx.loaders.measurementTemplate.getMeasurementTemplatesByIds(templateIds)
+        return measurementTemplates.content
+      }
+      return []
+    },
+    sizeTemplate: async (measurementSet, args, ctx) => {
+      if (measurementSet.sizeTemplate) {
+        const sizeTemplates = await ctx.loaders.sizeTemplate.getSizeTemplates([measurementSet.sizeTemplate])
+        return sizeTemplates[0]
+      }
+    },
+    tightFitTemplate: async (measurementSet, args, ctx) => {
+      if (measurementSet.tightFitTemplate) {
+        const { id, version } = measurementSet.tightFitTemplate
+        const tightFitTemplate = await ctx.loaders.tightFit.getTightFitByIdAndVersion.load({ id, version })
+        return tightFitTemplate
+      }
+    },
+    participantDetails: async (measurementSet, args, ctx) => getUserGroup(ctx, measurementSet.humanId),
+  },
+  SPARK_SampleMeasurementSet: {
+    createdBy: (sampleMeasurementSet, args, ctx) => {
+      if (sampleMeasurementSet.createdBy) {
+        return ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(sampleMeasurementSet.createdBy)
+      }
+    },
+    measurementSizeId: (SampleMeasurementSet) => {
+      return SampleMeasurementSet.measurementSize && SampleMeasurementSet.measurementSize.code
+    },
+  },
+}

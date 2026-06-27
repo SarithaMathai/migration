@@ -1,0 +1,12 @@
+export const RESOURCE_LINK_REASONS = {
+  developedFrom: 'Developed From',
+}
+
+export const createResourceLink = async ({ sourceHumanId, targetHumanId, reason, ctx }) => {
+  const resourceLink = {
+    source: sourceHumanId,
+    target: targetHumanId,
+    reason,
+  }
+  return ctx.loaders.materialHub.createResourceLink.load(resourceLink)
+}

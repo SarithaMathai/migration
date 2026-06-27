@@ -1,0 +1,19 @@
+export default {
+  Query: {
+    getMerchTypes: (parentValue, { department_id }, ctx) =>
+      ctx.loaders.ig.merchType.getByID.load(department_id),
+    getMerchTypeById: (parentValue, { merchandise_type_id }, ctx) =>
+      ctx.loaders.ig.merchType.getByMerchTypeId.load(merchandise_type_id),
+  },
+
+  IG_MerchType: {
+    id: merchType => merchType.merchandise_type_id,
+    name: merchType => merchType.merchandise_type_name,
+    productSubtypeId: merchType => merchType.product_sub_type_id,
+    productSubtypeName: merchType => merchType.product_sub_type_name,
+    productSubtypeDisplayText: merchType =>
+      `${merchType.product_sub_type_id}: ${merchType.product_sub_type_name}`,
+    displayText: merchType =>
+      `${merchType.merchandise_type_id}: ${merchType.merchandise_type_name}`,
+  },
+}

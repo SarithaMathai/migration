@@ -1,0 +1,112 @@
+# Impression — PO Sprint Planning Summary
+
+> **Domain:** `impression` · **Target DGS:** TBD (stand-alone `plm-impression` vs co-locate in `plm-product`)
+> **Pipeline Version:** 1.1 · **Generated:** 2026-05-18
+> **Stories:** [04-stories.md](output/impression/04-stories.md)
+
+---
+
+## What Are We Building?
+
+Impressions are the partner-facing "set" of visible variants on a Product (a partner sees only the impressions assigned to them). The domain is a thin sub-resource of Product — a single REST endpoint family at `/impressions/product/{productId}` providing search + bulk-update.
+
+This is the **smallest domain** in scope: 169 source lines across 3 files (schema 59 / resolver 66 / service 44). 2 queries + 1 mutation + 2 types + 1 interesting count-bucketizer field resolver. The migration is essentially a polish-and-port exercise, made interesting by **three latent bugs in the source** that need PO decisions before code lands.
+
+---
+
+## Migration Scope
+
+| Surface | Count | Status |
+|---|---|---|
+| Queries | 2 | 🔜 (1 has a 🔴 dropped-arg bug to fix) |
+| Mutations | 1 | 🔜 |
+| Field resolvers | 6 (5 on Impression + 1 on count wrapper) | 🔜 |
+| Types | 2 owned (+ 1 new `ImpressionCountResult` from restructure) | 🔜 |
+| External dependencies | 4 (VMM, Product, WorkspaceV2, UserProfileAttributes) | 🔵 / 🔜 |
+
+---
+
+## Story Summary by Phase
+
+| Phase | Description | Stories | Raw days | +20% buffer |
+|---|---|---|---|---|
+| A | Foundation & Schema | 2 | 2–3 | 3–4 |
+| B | Queries | 2 | 2–4 | 3–5 |
+| D | Mutation | 1 | 1–2 | 2–3 |
+| G | Field Resolvers | 2 | 2–4 | 3–5 |
+| F | Federation Contribution to Product | 1 | 2–3 | 3–4 |
+| H | Schema Restructure + Bug Fixes | 2 | 3–5 | 4–6 |
+| I | Test Coverage | 2 | 3–5 | 4–6 |
+| **Total** | | **12** | **15–26** | **22–33** |
+
+> **Calendar:** one engineer ≈ **4–7 sprints**. Two engineers ≈ **2–4 sprints** (most stories are independent).
+
+---
+
+## Key Risk Areas
+
+| Risk | Severity | Story |
+|---|---|---|
+| `enableWorkspaceContextFiltering` arg declared in schema, accepted by resolver, but **silently dropped** by service — never reaches backend | 🔴 Critical | A02, B01, H02 |
+| `SPARK_ImpressionCount` returns `[SPARK_Impression]` array from an object-typed field — relies on type-system trick; client-visible restructure required | 🔴 Critical | H01 |
+| Decide stand-alone DGS vs co-locate in `plm-product` | 🟡 High | A01 |
+| Empty-array TypeError in `counts` resolver masked by try/catch | 🟡 High | H02 |
+| Silent dummy-counts on error masks observability | 🟡 High | H02 |
+| F01 federation contribution BLOCKED-BY product domain Phase 3 | 🟡 High | F01 |
+| `bpType` field mixes integer partnerIds with string `'totalCount'` sentinel | 🟢 Low | H01 |
+
+---
+
+## Decisions Required from PO / Architecture
+
+| # | Decision | Impact |
+|---|---|---|
+| 1 | **Co-location:** stand-alone `plm-impression` DGS or fold into `plm-product`? Recommendation: co-locate (169 LOC ≪ operational overhead of a separate subgraph) | A01 |
+| 2 | **`ImpressionCountResult` restructure:** proceed with deprecation cycle on old `ImpressionCount` shape, or hold? | H01 |
+| 3 | **`enableWorkspaceContextFiltering`:** wire to backend (and what semantic does backend expect?) or remove from schema after client survey? | A02, B01 |
+| 4 | **Top-level queries vs Product entity-extension:** keep both surfaces (recommended, with `@deprecated` on top-level after migration) or go entity-only? | F01 |
+| 5 | **Backend-side error handling:** is the silent dummy-count fallback an intentional API contract, or a workaround for a backend gap? | H02 |
+
+---
+
+## Dependency Map
+
+```
+plm-impression (or plm-product if co-located) depends on:
+  spark-product backend  (REST: /enterprise_product_development_products/impressions/product)
+  spark-access-control   (ACL JWT on both queries + mutation)
+  Hive Gateway → VMM     (businessPartners, owningBusinessPartner)
+  Hive Gateway → plm-workspace        (workspaces)
+  Hive Gateway → plm-user-profile     (createdBy, updatedBy)
+  Hive Gateway → plm-product          (parentId resolution for counts)
+```
+
+---
+
+## Recommended Sprint Sequencing
+
+| Sprint | Phases | Focus |
+|---|---|---|
+| S1 | A01–A02 + H01 + H02 | Schema, service port, restructure, bug fixes in one go |
+| S2 | B01–B02 + D01 + G01–G02 | All resolvers + mutation (highly parallel) |
+| S3 | I01–I02 | Tests + cut-over rehearsal |
+| Ongoing | F01 | Federation contribution — unblocked when product domain completes Phase 3 |
+
+---
+
+## Capacity Planning
+
+| Team size | Calendar (5d sprints) | Notes |
+|---|---|---|
+| 1 engineer | ~4–7 sprints | Sequential |
+| 2 engineers | ~2–4 sprints | Most stories independent after A |
+
+---
+
+## Pipeline-Wide Position
+
+Impression is the cleanest, fastest domain to migrate so far. Recommended as a **pilot domain** for the DGS migration if `plm-product` is not chosen — proves out the pipeline (schema derivation, federation contribution, ACL JWT, cross-DGS stubs) end-to-end in a single sprint.
+
+---
+
+*Generated by spark-migration pipeline v1.1 — Phase 4 complete. All 8 artifacts ready under `output/impression/`.*

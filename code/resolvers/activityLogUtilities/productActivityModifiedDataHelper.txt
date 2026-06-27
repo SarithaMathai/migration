@@ -1,0 +1,168 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import { loadBps } from '../../utils/vmmUtils'
+import { getOldAndNewTagValues } from './commonUtilities'
+
+const productActivityModifiedDataHelper = async (activity, streamResourceId, ctx) => {
+  if (!ctx) return []
+  const {
+    loaders: {
+      teamV2: { getByIDs: getTeamByIds } = {},
+      vmm: { getByID: getBPInfoById } = {},
+      brand: { getBrand: getBrandInfo } = {},
+      ig: { department: { getByID: getDepartmentById } = {} } = {},
+      tag: { getTags } = {},
+    } = {},
+  } = ctx
+
+  const {
+    resourceType = '',
+    resourceId: eventResourceId,
+    eventType = 'UPDATE',
+    eventSummary: { humanId = '', description = '', modifiedAttributes = [] } = {},
+  } = activity || {}
+
+  if (!modifiedAttributes || !modifiedAttributes.length) {
+    const isReleaseEvent = (eventType === 'RELEASE') || (eventType === 'RELEASE_FAIL')
+    const isReleaseFailedEvent = eventType === 'RELEASE_FAIL'
+    const attributeUpdateText = isReleaseFailedEvent ? 'Release failed for' : ''
+    const resourceChangeTypeText = isReleaseFailedEvent ? 'which was released by' : `was ${String(eventType).toLowerCase()}d by`
+    const linkPath = isReleaseEvent && `/api/attachments/v3/techpack/${eventResourceId}/download`
+    return [{
+      attributeUpdateText,
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId: humanId,
+        resourceDescription: description,
+        parentResourceInfo: {
+          linkGenerationVariables: { productId: humanId },
+          ...(linkPath && { linkPath }),
+        },
+      },
+      resourceChangeTypeText,
+    }]
+  }
+
+  return modifiedAttributes.map(async (attr) => {
+    const { attributeName: initialAttributeName = '', attributeNewValue = [], attributeOldValue = [] } = attr || {}
+    let attributeName = initialAttributeName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/_/g, ' ')
+
+    let isSingleValueUpdate = false
+    let resourceId = humanId
+    let resourceTextDescription = ''
+    let oldValues = []
+    let newValues = []
+    if (attributeName.includes('add remove') && attributeName.includes('business partner')) {
+      attributeName = attributeName.replace('add remove ', '')
+      if (attributeNewValue) {
+        const bps = await loadBps(ctx, [...Object.keys(attributeNewValue)])
+        newValues = [...bps].map((bp) => bp.bpName)
+      }
+      if (attributeOldValue) {
+        const bps = await loadBps(ctx, [...Object.keys(attributeOldValue)])
+        oldValues = [...bps].map((bp) => bp.bpName)
+      }
+    } else if (attributeName.includes('drop undrop') && attributeName.includes('business partner')) {
+      attributeName = attributeName.replace('drop undrop ', '')
+      if (attributeNewValue) {
+        const bps = await loadBps(ctx, [...attributeNewValue])
+        newValues = [...bps].map((bp) => bp.bpName)
+      }
+      if (attributeOldValue) {
+        const bps = await loadBps(ctx, [attributeOldValue])
+        oldValues = [...bps].map((bp) => bp.bpName)
+      }
+    } else if (attributeNewValue && (attributeNewValue.linkedChildProductId || attributeNewValue.linkedParentProductId)) {
+      const { linkedChildProductId, linkedParentProductId } = attributeNewValue
+      let attributeUpdateText = ''
+      let resourceChangeTypeText = ''
+      if (linkedChildProductId === streamResourceId) {
+        resourceId = linkedParentProductId || (attributeOldValue && attributeOldValue.linkedParentProductId)
+        attributeUpdateText = `Parent product`
+        resourceChangeTypeText = `was ${!linkedParentProductId ? 'un' : ''}linked by`
+      } else if (linkedParentProductId === streamResourceId) {
+        attributeUpdateText = `Child product`
+        resourceChangeTypeText = `was ${!linkedChildProductId ? 'un' : ''}linked by`
+      }
+      return ({
+        attributeUpdateText,
+        resourceUpdated: {
+          resourceType: resourceType,
+          resourceId,
+          parentResourceInfo: {
+            linkGenerationVariables: { productId: resourceId },
+          },
+        },
+        resourceChangeTypeText,
+      })
+    } else if (attributeName.includes('add remove') && (attributeName.includes('product teams') || attributeName.includes('product workspace teams'))) {
+      attributeName = attributeName.replace('add remove ', '')
+      if (attributeNewValue && attributeNewValue.length > 0) {
+        const jwt = await getUserPermissionsJWT([...attributeNewValue], ctx)
+        const teams = await getTeamByIds(jwt).load({ ids: [...attributeNewValue] })
+        newValues = [...teams].map((team) => team.teamName)
+      }
+      if (attributeOldValue && attributeOldValue.length > 0) {
+        const jwt = await getUserPermissionsJWT([...attributeOldValue], ctx)
+        const teams = await getTeamByIds(jwt).load({ ids: [...attributeOldValue] })
+        oldValues = [...teams].map((team) => team.teamName)
+      }
+    } else if (attributeName.includes('product status') && attributeNewValue && attributeNewValue.length > 0 && attributeNewValue[0].statusName) {
+      isSingleValueUpdate = true
+      newValues = [attributeNewValue[0].statusName]
+      if (attributeOldValue && attributeOldValue.length > 0 && attributeOldValue[0].statusName) {
+        oldValues = [attributeOldValue[0].statusName]
+      }
+      if (attributeNewValue[0].businessPartnerId) {
+        const bp = await getBPInfoById.load(attributeNewValue[0].businessPartnerId)
+        if (bp && bp.bpName) {
+          resourceTextDescription = `${bp.bpName}`
+        }
+      }
+    } else if (attributeName === 'brand' && attributeNewValue) {
+      const brandInfo = await getBrandInfo.load(attributeNewValue)
+      if (brandInfo && brandInfo.brandName) {
+        newValues = [brandInfo.brandName]
+      }
+      isSingleValueUpdate = true
+    } else if ((attributeName === 'department' || attributeName === 'departments')) {
+      let departmentInfo = {}
+      if (attributeNewValue && attributeNewValue.length && attributeNewValue[0].id !== -1) {
+        departmentInfo = await getDepartmentById.load(attributeNewValue[0].id)
+      } else if (attributeNewValue && attributeNewValue !== -1) {
+        departmentInfo = await getDepartmentById.load(attributeNewValue)
+      }
+      if (departmentInfo && departmentInfo.department_name) {
+        newValues = [departmentInfo.department_name]
+        isSingleValueUpdate = true
+      }
+    } else if (attributeName === 'class') {
+      isSingleValueUpdate = true
+    } else if (attributeName === 'tags') {
+      const { oldTagValues, newTagValues } = await getOldAndNewTagValues(attributeOldValue, attributeNewValue, getTags)
+      oldValues = oldTagValues
+      newValues = newTagValues
+    } else if (typeof attributeOldValue === 'number' || typeof attributeNewValue === 'string') {
+      isSingleValueUpdate = true
+      newValues = [attributeNewValue]
+    }
+
+    return {
+      oldValues,
+      newValues,
+      attributeName,
+      eventType,
+      isSingleValueUpdate,
+      resourceUpdated: {
+        text: resourceTextDescription,
+        resourceType: resourceType,
+        resourceId,
+        resourceDescription: description,
+        parentResourceInfo: {
+          linkGenerationVariables: { productId: resourceId },
+        },
+      },
+    }
+  })
+}
+
+export default productActivityModifiedDataHelper

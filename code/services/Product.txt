@@ -1,0 +1,589 @@
+import qs from 'querystring'
+import _, { find, snakeCase } from 'lodash'
+
+import {
+  deepToCamelCase,
+  deepToSnakeCase,
+  buildURLParam,
+  buildSampleURLParam,
+  buildCommaSeparatedString,
+} from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import { SPARK_GATEWAY_API_KEY } from '../config/constants'
+import SparkService from './SparkService'
+import { productRuleResponseTransformer, rulesRequestTransformer } from '../utils/Product/productUtils'
+
+const USE_NEW_RULES_API = process.env.USE_NEW_RULES_API === 'true'
+
+export default class ProductService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = process.env.PRODUCT_ENDPOINT
+    this.endpointv1 =
+      process.env.PRODUCT_ENDPOINT +
+      '/enterprise_product_development_products/v1'
+    this.endpointv2 =
+      process.env.PRODUCT_ENDPOINT +
+      '/enterprise_product_development_products/v2'
+    this.elasticSearchEndpoint = process.env.PRODUCT_SEARCH_ENDPOINT
+    this.endpointCopy = process.env.SEARCH_ENDPOINT + '/requests/v1'
+    this.ratingEndpoint = process.env.RATING_ENDPOINT
+    this.ratingKey = SPARK_GATEWAY_API_KEY
+
+    this.getPage = loadListing(
+      ({ page, size, products, additionalParams }) =>
+        products
+          ? `${
+            this.endpointv1
+          }?productId=${products}&page=${page}&size=${size}&sort=createdDate,desc${additionalParams}`
+          : `${
+            this.endpointv1
+          }?page=${page}&size=${size}&sort=createdDate,desc`,
+      this.headers,
+      {
+        transform: products => deepToCamelCase(products),
+        getDataLoader: () => this.getByID,
+        primeKey: product => product.productId,
+      },
+      this.logContext,
+    )
+
+    this.getByID = loadOne(
+      id => `${this.endpointv1}?productId=${id}&size=${id.length}`,
+      this.headers,
+      {
+        transform: (ids, json) =>
+          deepToCamelCase(ids.map(product_id => find(json.content, { product_id }) || null)),
+      },
+      this.logContext,
+    )
+
+    this.getCopyStatus = loadOne(
+      id => `${this.endpointv2}/count/resource-type?copyId=${id}`,
+      this.headers,
+      {
+        transform: (id, data) => data && [deepToCamelCase(data)],
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.createBulk = postOne(
+      `${this.endpointv1}/bulk`,
+      this.headers,
+      {
+        transform: data =>
+          data &&
+          data.products && {
+            products: deepToCamelCase(data.products),
+          },
+        transformRequest: products =>
+          products && {
+            products: deepToSnakeCase(products),
+          },
+        getDataLoader: () => this.getByID,
+        primeKey: product => product && product.productId,
+      },
+      this.logContext,
+    )
+
+    this.bulkUpdate = putOne(
+      `${this.endpointv1}/mass_update`,
+      this.headers,
+      {
+        transform: data =>
+          data && data.products && { products: deepToCamelCase(data.products) },
+        transformRequest: sparkProducts =>
+          sparkProducts && {
+            products_update_dtos: deepToSnakeCase(sparkProducts),
+          },
+        getDataLoader: () => this.getByID,
+        primeKey: product => product && product.productId,
+      },
+      this.logContext,
+    )
+
+    this.addTeams = postOne(
+      ({ productId }) => `${this.endpointv1}/${productId}/resources/bulk`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    this.updateBusinessPartnerStatuses = putOne(
+      ({ productId }) => `${this.endpointv1}/${productId}/status_update/bulk`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transformRequest: ({ statusInput }) => deepToSnakeCase(statusInput),
+        transform: product => deepToCamelCase(product),
+      },
+      this.logContext,
+    )
+    this.dropUndropProductBusinessPartner = permissionJWT => postOne(
+      ({ productId }) =>
+        `${this.endpointv2}/${productId}/drop-undrop-partner`, {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      }, {
+        getDataLoader: () => this.getByID,
+        transform: product => deepToCamelCase(product),
+        transformRequest: product => deepToSnakeCase(product),
+      },
+    )
+    this.dropProductBusinessPartner = postOne(
+      ({ productId, partnerId }) =>
+        `${this.endpointv1}/${productId}/drop-partner/${partnerId}`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transform: product => deepToCamelCase(product),
+
+      },
+    )
+
+    this.unDropProductBusinessPartner = postOne(
+      ({ productId, partnerId }) =>
+        `${this.endpointv1}/${productId}/undrop-partner/${partnerId}`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transform: product => deepToCamelCase(product),
+      },
+    )
+
+    this.updateProduct = putOne(
+      product => `${this.endpointv1}/${product.id}`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transform: product => deepToCamelCase(product),
+        transformRequest: product => deepToSnakeCase(product),
+      },
+      this.logContext,
+    )
+
+    this.carryForwardProduct = putOne(
+      ({ productId, workspaceId }) => `${this.endpointv1}/${productId}/carry_forward/${workspaceId}`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transform: product => deepToCamelCase(product),
+        transformRequest: product => deepToSnakeCase(product),
+      },
+      this.logContext,
+    )
+
+    this.removeProductResources = deleteOne(
+      ({ productId, resourceIds }) =>
+        `${
+          this.endpointv1
+        }/${productId}/resources/bulk?resourceList=${resourceIds}`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transform: product => deepToCamelCase(product),
+      },
+      this.logContext,
+    )
+
+    this.removeProductBusinessPartner = permissionJWT => deleteOne(
+      ({ productId, partnerId }) =>
+        `${
+          this.endpointv2
+        }/${productId}/partners/bulk?partnerList=${partnerId}`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        getDataLoader: () => this.getByID,
+        transform: product => deepToCamelCase(product),
+      },
+      this.logContext,
+    )
+    this.deletePartnerWorkspaceStatuses = deleteOne(
+      ({ productId, workspaceId }) =>
+        `${
+          this.endpointv1
+        }/${productId}/workspaceAttributes/${workspaceId}`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transform: product => deepToCamelCase(product),
+      },
+      this.logContext,
+    )
+
+    // This Will Search from Elastic Data base
+    this.getFilteredProducts = loadListing(
+      ({ resourceType, resourceId, q, filter, page, size }) =>
+        `${
+          this.elasticSearchEndpoint
+        }/search?resourceType=${resourceType}&resourceId=${resourceId}${buildURLParam(
+          q,
+          filter,
+          page,
+          size,
+        )}`,
+      this.headers,
+      {
+        transform: products => {
+          const response =
+            products &&
+            products.content &&
+            products.content.map(product => product.human_id)
+          return response || []
+        },
+      },
+      this.logContext,
+    )
+
+    // This Will Search from Elastic Data base for product listing page. Returns entire page object
+    this.getFilteredProductsListing = loadListing(
+      ({ resourceType, resourceId, includeBoms,
+        includeClaims, includeMeasurementSets,
+        includeProductDetails,
+        q, filter, size, page, types,
+        includeProductComponentsCount,
+        includeBomTemplates,
+        includeClaimTemplates,
+        includeMeasurementSetTemplates,
+        includeProductDetailTemplates,
+      }) =>
+        `${this.elasticSearchEndpoint}/search?${qs.stringify({
+          resourceType: resourceType,
+          resourceId: resourceId || '',
+          includeBoms: includeBoms || false,
+          includeClaims: includeClaims || false,
+          includeMeasurementSets: includeMeasurementSets || false,
+          includeProductDetails: includeProductDetails || false,
+          includeProductComponentsCount: includeProductComponentsCount || false,
+          'includeBomTemplates': includeBomTemplates || false,
+          'includeClaimTemplates': includeClaimTemplates || false,
+          'includeMeasurementSetTemplates': includeMeasurementSetTemplates || false,
+          'includeProductDetailTemplates': includeProductDetailTemplates || false,
+          size: size,
+          page: page,
+          types: types,
+        })}${buildURLParam(q, filter)}`,
+      this.headers,
+      {
+        transform: products => deepToCamelCase(products),
+      },
+      this.logContext,
+    )
+
+    // This Will Search from Elastic Data base
+    this.getFilteredSamples = loadListing(
+      ({ resourceType, resourceId, q, filter, productId }) =>
+        `${
+          this.elasticSearchEndpoint
+        }/search?resourceType=${resourceType}&resourceId=${resourceId}${buildSampleURLParam(
+          q,
+          filter,
+          productId,
+        )}`,
+      this.headers,
+      {
+        transform: products => {
+          const consolidatedProducts = _.get(
+            deepToCamelCase(products),
+            'content',
+            [],
+          )
+          return (
+            consolidatedProducts &&
+            consolidatedProducts.reduce((accumulator, product) => {
+              return [
+                ...accumulator,
+                ...(product.samples || []).map(sample => sample.humanId),
+              ]
+            }, [])
+          )
+        },
+      },
+      this.logContext,
+    )
+    // Right Rail Filter Changes
+    this.getProductCategories = loadListing(
+      ({ type, resourceId, resourceType, productType }) =>
+        `${this.elasticSearchEndpoint}/search/${snakeCase(
+          type,
+        )}?resourceType=${resourceType}&resourceId=${resourceId}&productType=${productType}`,
+      this.headers,
+      {
+        transform: product => deepToCamelCase(product),
+      },
+      this.logContext,
+    )
+
+    this.getByIdList = loadListing(
+      ids =>
+        `${this.endpointv1}?productId=${buildCommaSeparatedString(
+          ids,
+        )}&page=0&size=10000&sort=createdDate,desc`,
+      this.headers,
+      {
+        transform: products => deepToCamelCase(products),
+        getDataLoader: () => this.getByID,
+        primeKey: product => product.productId,
+      },
+      this.logContext,
+    )
+
+    this.addProduct = postOne(
+      `${this.endpointv1}`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        getDataLoader: () => this.getByID,
+        primeKey: product => product.productId,
+      },
+      this.logContext,
+    )
+
+    this.getStatus = loadListing(
+      () => `${this.endpointv1}/masterData/status`,
+      this.headers,
+      {
+        transform: status =>
+          _.get(deepToCamelCase(status), 'productStatuses', []),
+      },
+      this.logContext,
+    )
+    this.updateViewToggle = putOne(
+      input =>
+        `${this.endpointv1}/${input.productId}/workspaceAttributes/${
+          input.workspaceId
+        }`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: requestBody => requestBody && deepToSnakeCase(requestBody),
+        getDataLoader: () => this.getByID,
+        primeKey: product => product.productId,
+      },
+      this.logContext,
+    )
+    this.updateWorkspaceAttributes = putOne(
+      ({ productId, workspaceAttributesInput }) =>
+        `${this.endpointv1}/${productId}/workspaceAttributes/${
+          workspaceAttributesInput.humanId
+        }`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: ({ workspaceAttributesInput }) => deepToSnakeCase(workspaceAttributesInput),
+        getDataLoader: () => this.getByID,
+        primeKey: product => product.productId,
+      },
+      this.logContext,
+    )
+    this.getWorkspaceProducts = loadListing(
+      ({ workspaceId, q, filter, page, size }) =>
+        `${
+          this.elasticSearchEndpoint
+        }/search?resourceType=workspaces&resourceId=${workspaceId}${buildURLParam(
+          q,
+          filter,
+          page,
+          size,
+        )}`,
+      this.headers,
+      {
+        transform: products => deepToCamelCase(products),
+      },
+      this.logContext,
+    )
+    this.copyProduct = permissionJWT => postOne(
+      `${this.endpointv2}/copy-details`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => data && deepToSnakeCase(data),
+        getDataLoader: () => this.getByID,
+        primeKey: product => product.productId,
+      },
+      this.logContext,
+    )
+    this.addBusinessPartnersWithType = postOne(
+      ({ productId }) => `${this.endpointv1}/${productId}/partners-add/bulk`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transformRequest: product => deepToSnakeCase(product),
+      },
+      this.logContext,
+    )
+    this.updateProductTeamsWorkspaceContext = putOne(
+      ({ productId }) => `${this.endpointv1}/${productId}/manage_workspace_teams`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+        transformRequest: data => data && deepToSnakeCase(data),
+        transform: data => data && deepToCamelCase(data),
+      },
+      this.logContext,
+    )
+    this.getVersions = loadListing(
+      ({ id, page = 0, size = 10000 }) =>
+        `${this.endpointv1}/${id}/versions?page=${page}&size=${size}`,
+      this.headers,
+      {
+        transform: versions => deepToCamelCase(versions),
+        getDataLoader: () => this.getByID,
+        primeKey: version => version.productId,
+      },
+      this.logContext,
+    )
+    this.linkProduct = putOne(
+      ({ childProductId }) =>
+        `${this.endpointv1}/${childProductId}/link_product`,
+      this.headers,
+      {
+        transformRequest: data => data && deepToSnakeCase(data),
+        transform: data => data && deepToCamelCase(data),
+        throwOnError: true,
+      },
+    )
+    this.unlinkProduct = putOne(
+      ({ childProductId }) =>
+        `${this.endpointv1}/${childProductId}/unlink_product`,
+      this.headers,
+      {
+        transformRequest: data => data && deepToSnakeCase(data),
+        transform: data => data && deepToCamelCase(data),
+      },
+    )
+
+    this.getRatingByTcin = loadOne(
+      tcin => `${this.ratingEndpoint}?reviewType=product&includes=statistics&reviewedId=${tcin}&key=${this.ratingKey}`,
+      {},
+      {
+        transform: (ids, rating) => [deepToCamelCase(rating)],
+        batch: false,
+        skipJsonParse: true,
+      },
+      this.logContext,
+    )
+
+    this.getAllRules = loadListing(
+      `${this.endpoint}/spark_rules/v1`,
+      this.headers,
+      {
+        transform: (result) => deepToCamelCase(result.content),
+      },
+      this.logContext,
+    )
+
+    this.getAllInsightsRules = loadListing(
+      `${this.endpoint}/spark_rules/v1/insights`,
+      this.headers,
+      {
+        transform: (result) => deepToCamelCase(result.content),
+      },
+      this.logContext,
+    )
+
+    this.getRuleById = loadOne(
+      (id) => `${this.endpoint}/spark_rules/v1/${id}`,
+      this.headers,
+      {
+        transform: (id, result) => [deepToCamelCase(result)],
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.addRule = postOne(
+      () => `${this.endpoint}/spark_rules/v1`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => data && rulesRequestTransformer(data),
+        getDataLoader: () => this.getRuleById,
+        primeKey: rule => rule.id,
+      },
+      this.logContext,
+    )
+
+    this.updateRule = putOne(
+      (rule) => `${this.endpoint}/spark_rules/v1/${rule.id}`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => data && rulesRequestTransformer(data),
+        getDataLoader: () => this.getRuleById,
+        primeKey: rule => rule.id,
+      },
+      this.logContext,
+    )
+
+    this.deleteRule = deleteOne(
+      (id) => `${this.endpoint}/spark_rules/v1/${id}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getAvailableRules = loadListing(
+      `${this.endpoint}/spark_rules/v1/rules`,
+      this.headers,
+      {
+        transform: (result) => deepToCamelCase(result),
+      },
+      this.logContext,
+    )
+
+    if (!USE_NEW_RULES_API) {
+      this.searchProductDeptRules = loadListing(
+        ({ productIds, departmentIds, activeOnly }) => `${this.endpoint}/spark_rules/v1/search?productIds=${productIds}&departmentIds=${departmentIds}&activeOnly=${activeOnly}`,
+        this.headers,
+        {
+          transform: (result) => deepToCamelCase(result),
+        },
+        this.logContext,
+      )
+
+      this.searchProductBPRules = loadListing(
+        ({ productIds, businessPartnerIds, activeOnly }) => `${this.endpoint}/spark_rules/v1/search?productIds=${productIds}&businessPartnerIds=${businessPartnerIds}&activeOnly=${activeOnly}`,
+        this.headers,
+        {
+          transform: (result) => deepToCamelCase(result),
+        },
+        this.logContext,
+      )
+
+      this.searchProductRules = loadListing(
+        ({ productIds, departmentIds, businessPartnerIds, activeOnly }) => `${this.endpoint}/spark_rules/v1/search_mapped?productIds=${productIds}&businessPartnerIds=${businessPartnerIds}&departmentIds=${departmentIds}&activeOnly=${activeOnly}`,
+        this.headers,
+        {
+          transform: (result) => deepToCamelCase(productRuleResponseTransformer(result)),
+        },
+        this.logContext,
+      )
+    }
+
+    this.updateComponentStatus = putOne(
+      `${this.endpointv1}/component_status_update/bulk`,
+      this.headers,
+      {
+        transform: (result) => deepToCamelCase(result),
+        transformRequest: (productComponents) => deepToSnakeCase(productComponents),
+      },
+      this.logContext,
+    )
+  }
+}

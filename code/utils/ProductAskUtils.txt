@@ -1,0 +1,50 @@
+// ProductAskUtils.js
+// Utility for fetching product asks for a workspace
+
+async function getProductAsksForWorkspace(ctx, { workspaceId, productIds, page, size }) {
+  const workspace = await ctx.loaders.workspaceV2.getWorkspaceByIdV2.load(workspaceId);
+
+  // Check if workspace has date range set
+  if (!workspace.setDateRange?.start || !workspace.setDateRange?.end) {
+    return {
+      content: [],
+      paging: {
+        totalElements: 0,
+        totalPages: 0,
+        size,
+        number: page,
+        numberOfElements: 0,
+        first: true,
+        last: true,
+      },
+    }
+  }
+
+  // Extract parameters similar to the SPARK_WorkspaceV2 productAsks resolver
+  const { start: from, end: to } = workspace.setDateRange
+  const classIds = workspace.departments?.reduce((acc, dept) => {
+    if (dept.classId) {
+      acc.push(...dept.classId)
+    }
+    return acc
+  }, []) || []
+
+  const departmentIds = workspace.departments?.map(dept => dept.departmentId) || []
+
+  // Call the productAsk search for this workspace
+  const results = await ctx.loaders.productAsk.searchProductAsks.load({
+    from,
+    to,
+    page,
+    size,
+    classIds,
+    departmentIds,
+    productIds,
+  })
+
+  return results
+}
+
+module.exports = {
+  getProductAsksForWorkspace,
+}

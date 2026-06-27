@@ -1,0 +1,122 @@
+import jwt from 'jsonwebtoken'
+import { impersonationProfiles } from '../utils/impersonationDefaultUsers'
+import VMM_BusinessPartner from '../resolvers/VMM_BusinessPartner'
+
+const DEFAULT_EXPIRES_IN = process.env.DEFAULT_EXPIRES_IN || 1
+const expiresInAsText = `${DEFAULT_EXPIRES_IN}h`
+
+const checkIfUserCanImpersonate = ({ currentUserToken }) => {
+  const currentToken = jwt.decode(currentUserToken)
+  let tokenData
+  try {
+    tokenData = JSON.parse(currentToken.sub)
+  } catch (err) {
+    throw new Error('Error bad token', err)
+  }
+  if (tokenData) {
+    // just in case the roles ever end up having case changed in the future
+    const roles = tokenData.roles.map(role => role.toLowerCase())
+    if (roles.includes('sparkimpersonation') && tokenData.internal) {
+      return true
+    } else {
+      throw new Error('You are not authorized')
+    }
+  }
+}
+
+const getExpiresIn = () => {
+  const currentTime = new Date()
+  currentTime.setHours(currentTime.getHours() + DEFAULT_EXPIRES_IN)
+  return Math.round(currentTime.valueOf() / 1000)
+}
+
+export const impersonateUser = async ({ userIdData, profileName, currentUserToken, ctx }) => {
+  if (checkIfUserCanImpersonate({ currentUserToken })) {
+    try {
+      const profileData = await buildProfileData({ profileName, userProfileData: userIdData, ctx })
+      const subject = buildSubject({ profileData })
+      const token = generateToken({ subject, jwtid: profileData.userProfileId })
+      return {
+        token,
+        user: JSON.stringify({
+          ...profileData,
+          accessToken: token,
+          userProfileToken: token,
+        }),
+      }
+    } catch (err) {
+      throw new Error('Unable to impersonate', err)
+    }
+  }
+}
+
+export const generateToken = ({ subject, jwtid }) => {
+  const defaultSecret = JSON.parse(process.env.IMPERSONATE_CLIENT_SECRET)
+  const signedByteArray = new Int8Array(defaultSecret)
+  const secret = Buffer.from(signedByteArray)
+  const options = {
+    jwtid,
+    subject,
+    issuer: process.env.IMPERSONATE_CLIENT_ID,
+    expiresIn: expiresInAsText,
+  }
+  return jwt.sign({}, secret, options)
+}
+
+const buildSubject = ({ profileData }) => {
+  return JSON.stringify({
+    'userProfileId': profileData.userProfileId,
+    'userId': profileData.userId,
+    'firstName': profileData.firstName,
+    'lastName': profileData.lastName,
+    'email': profileData.email,
+    'internal': profileData.internal,
+    'companyName': profileData.companyName,
+    'partnerId': profileData.partnerId,
+    'approvedVMMRoles': profileData.approvedVMMRoles,
+    'expiresAt': getExpiresIn(),
+    'systemTeamId': profileData.systemTeamId,
+    'currentVMMRole': profileData.currentVMMRole,
+    'relatedFabricSuppliers': profileData.relatedFabricSuppliers,
+    'accreditation': profileData.accreditation,
+  })
+}
+
+const buildProfileData = async ({ profileName, userProfileData, ctx }) => {
+  if (profileName) {
+    return impersonationProfiles[profileName].profile
+  } else if (userProfileData.userProfileId) {
+    const systemTeams = await ctx.loaders.search.searchTeams.load({
+      q: `businessPartner.partnerId:${userProfileData.partnerId} AND teamType:SYSTEM`,
+    })
+    let relatedFabricSuppliers = []
+    if (userProfileData.partnerId) {
+      relatedFabricSuppliers = await VMM_BusinessPartner.Query.getRelatedFabricSuppliers(undefined, { merchVendorId: userProfileData.partnerId }, ctx)
+    }
+    const systemTeam = systemTeams?.content?.find(team => team.partnerType.code === userProfileData.currentVmmRole) || systemTeams?.content?.[0]
+
+    return {
+      'displayName': userProfileData.displayName,
+      'userProfileId': userProfileData.userProfileId,
+      'lanId': userProfileData.lanId,
+      'firstName': userProfileData.firstName,
+      'lastName': userProfileData.lastName,
+      'email': userProfileData.email,
+      'internal': userProfileData.internal,
+      'companyName': userProfileData.companyName,
+      // backend currently returns this as a number even though we want it as a string
+      'partnerId': Number(userProfileData.partnerId),
+      'approvedVMMRoles': userProfileData.currentVmmRole ? [userProfileData.currentVmmRole] : [],
+      'currentVMMRole': userProfileData.currentVmmRole,
+      'relatedFabricSuppliers': relatedFabricSuppliers,
+      'defaultRoleStatusDisabled': userProfileData.defaultRoleStatusDisabled,
+      'active': userProfileData.active,
+      'accreditation': userProfileData.accreditation ? userProfileData.accreditation.map(accreditation => accreditation.code) : null,
+      'systemTeamId': systemTeam?.teamId,
+      // this is an assumption for the purpose of impersonation.
+      'isAuthorized': true,
+      // currently hardcoded as its not calculatible via gql apis.
+      'roles': ['User'],
+    }
+  }
+}

@@ -1,0 +1,291 @@
+import SparkService from './SparkService'
+
+import { find } from 'lodash'
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadOne from '../utils/loadOne'
+import loadListing from '../utils/loadListing'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+
+export default class CombinationService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}/enterprise_product_development_combinations/v1`
+    this.headers = headers
+
+    this.getById = loadOne(
+      id => `${this.endpoint}?humanIds=${id}`,
+      this.headers,
+      {
+        transform: (ids, json) =>
+          deepToCamelCase(ids.map(human_id => find(json, { human_id }) || null)),
+        fetchAclToken: true,
+      },
+      this.logContext,
+    )
+    this.getByIds = permissionJWT =>
+      loadListing(
+        ids => `${this.endpoint}?humanIds=${ids}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        { transform: combination => deepToCamelCase(combination) },
+        logContext,
+      )
+
+    this.create = permissionJWT => postOne(
+      this.endpoint,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: combination => deepToCamelCase(combination),
+        transformRequest: combination => deepToSnakeCase(combination),
+      },
+      this.logContext,
+    )
+
+    this.update = permissionJWT =>
+      putOne(
+        combination => `${this.endpoint}/${combination.humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: combination => deepToCamelCase(combination),
+          transformRequest: combination => deepToSnakeCase(combination),
+        },
+        this.logContext,
+      )
+
+    this.bulkUpdate = permissionJWT =>
+      putOne(
+        `${this.endpoint}/bulk`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transformRequest: combination => deepToSnakeCase(combination),
+          skipJsonParse: true,
+        },
+        this.logContext,
+      )
+
+    this.delete = permissionJWT =>
+      deleteOne(
+        humanId => `${this.endpoint}/${humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {},
+        this.logContext,
+      )
+
+    this.exportCombination = loadOne(id =>
+      `${this.endpoint}/export?workspaceId=${id}`,
+    this.headers,
+    {
+      skipJsonParse: true,
+      batch: false,
+    },
+    this.logContext,
+    )
+
+    this.getMerchTypesByDepartmentId = loadListing(
+      ({ departmentId, materialCategory }) => `${this.endpoint}/merch_type/${departmentId}/${materialCategory}`,
+      this.headers,
+      {
+        transform: merchType => deepToCamelCase(merchType),
+      },
+      this.logContext,
+    )
+
+    this.getImpressionIntentBucketsByComboId = permissionJWT =>
+      loadListing(
+        id => `${this.endpoint}/impression_intent_buckets/${id}/getByCombo`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: combinations => deepToCamelCase(combinations),
+        },
+        this.logContext,
+      )
+
+    this.getFabricSpecComboById = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/fabric_spec_combos/getById/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, fabricSpecCombination) => [deepToCamelCase(fabricSpecCombination)],
+        },
+        this.logContext,
+      )
+
+    this.addImpressionIntentBucket = permissionJWT => postOne(
+      `${this.endpoint}/impression_intent_buckets`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: combination => deepToCamelCase(combination),
+        transformRequest: combination => deepToSnakeCase(combination),
+      },
+      this.logContext,
+    )
+
+    this.updateImpressionIntentBucket = permissionJWT =>
+      putOne(
+        impressionIntentBucket => `${this.endpoint}/impression_intent_buckets/${impressionIntentBucket.humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: combination => deepToCamelCase(combination),
+          transformRequest: combination => deepToSnakeCase(combination),
+        },
+        this.logContext,
+      )
+
+    this.addMaterialsToCombination = permissionJWT =>
+      putOne(
+        ({ parentComboId }) => `${this.endpoint}/impression_intent_buckets/${parentComboId}/bulk`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: combination => deepToCamelCase(combination),
+          transformRequest: combination => deepToSnakeCase(combination),
+        },
+        this.logContext,
+      )
+
+    this.bulkAddMerchVendorsToBuckets = ({ permissionJWT, parentComboId }) => {
+      return putOne(
+        () => `${this.endpoint}/impression_intent_buckets/${parentComboId}/bulkAddLines`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: impressionBucket => deepToCamelCase(impressionBucket),
+          transformRequest: impressionBucket => deepToSnakeCase(impressionBucket),
+        },
+        this.logContext,
+      )
+    }
+
+    this.deleteImpressionIntentBucket = permissionJWT =>
+      deleteOne(
+        humanId => `${this.endpoint}/impression_intent_buckets/${humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {},
+        this.logContext,
+      )
+    this.addImpressionIntentLine = ({ permissionJWT, intentHumanId }) => {
+      return putOne(
+        () => `${this.endpoint}/impression_intent_buckets/impression_intent_lines/${intentHumanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: combination => deepToCamelCase(combination),
+          transformRequest: combination => deepToSnakeCase(combination),
+        },
+        this.logContext,
+      )
+    }
+    this.updateImpressionIntentLine = ({ permissionJWT, lineHumanId }) => {
+      return putOne(
+        () => `${this.endpoint}/impression_intent_buckets/impression_intent_lines/${lineHumanId}/update`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: combination => deepToCamelCase(combination),
+          transformRequest: combination => deepToSnakeCase(combination),
+        },
+        this.logContext,
+      )
+    }
+    this.updateImpressionIntentLineStatus = ({ permissionJWT, lineHumanId }) => {
+      return putOne(
+        () => `${this.endpoint}/impression_intent_buckets/impression_intent_lines/${lineHumanId}/update/status`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: combination => deepToCamelCase(combination),
+          transformRequest: combination => deepToSnakeCase(combination),
+        },
+        this.logContext,
+      )
+    }
+    this.deleteImpressionIntentLine = permissionJWT =>
+      putOne(
+        humanId => `${this.endpoint}/impression_intent_buckets/impression_intent_lines/${humanId}/delete`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: combination => deepToCamelCase(combination),
+          transformRequest: combination => deepToSnakeCase(combination),
+        },
+        this.logContext,
+      )
+
+    this.updateCombinationTeams = (humanId) =>
+      postOne(
+        `${this.endpoint}/${humanId}/teams`,
+        {
+          ...this.headers,
+        },
+        {
+          transform: product => deepToCamelCase(product),
+          transformRequest: product => deepToSnakeCase(product),
+          getDataLoader: () => this.getByID,
+          skipJsonParse: true,
+        },
+        logContext,
+      )
+
+    this.createFabricSpecCombos = ({ permissionJWT, humanId }) =>
+      postOne(
+        `${this.endpoint}/fabric_spec_combos/${humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        { skipJsonParse: true },
+        this.logContext,
+      )
+
+    this.archiveFabricSpecCombo = permissionJWT =>
+      deleteOne(
+        fabricSpecComboId => `${this.endpoint}/fabric_spec_combos/${fabricSpecComboId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {},
+        this.logContext,
+      )
+  }
+}

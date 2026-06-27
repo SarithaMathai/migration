@@ -1,0 +1,56 @@
+
+export const latestPairedAttachment = (attachments, extensionPairs) => {
+  let foundAttachment = { attachment: null, native3DAttachment: null }
+  if (attachments.length) {
+    const attachmentsMap = mapAttachmentsByResourceId(attachments)
+    const pairs = getUniqueAttachmentsPairs(Object.entries(attachmentsMap), extensionPairs)
+    foundAttachment = pickLatestPairedAttachment(pairs)
+  }
+  return foundAttachment
+}
+
+function mapAttachmentsByResourceId (attachments) {
+  return attachments.reduce((acc, attachment) => {
+    if (!(attachment.resource.id in acc)) {
+      acc[attachment.resource.id] = []
+    }
+    acc[attachment.resource.id].push(attachment)
+    return acc
+  }, {})
+}
+
+export const is3DFileValid = (latestPairedBomAttachment) => {
+  let native3DAttachment = latestPairedBomAttachment.native3DAttachment
+  return native3DAttachment && native3DAttachment.galleryDetails && native3DAttachment.galleryDetails.fileValid
+}
+
+export const getUniqueAttachmentsPairs = (list, extensionPairs) => {
+  // eslint-disable-next-line no-unused-vars
+  return list.map(([id, attachmentsSublist]) => {
+    return getFirstMatchingPair(attachmentsSublist, extensionPairs)
+  }).filter((pair) => pair.native3DAttachment !== null && pair.attachment !== null)
+}
+
+export const getFirstMatchingPair = (list, extensionPairs) => {
+  const result = { native3DAttachment: null, attachment: null }
+  const validDocumentTypes = new Set(Object.keys(extensionPairs))
+
+  list.forEach(item => {
+    const documentType = item.documentType.toLowerCase()
+    if (validDocumentTypes.has(documentType)) {
+      const validExtensions = extensionPairs[documentType]
+      const matchingItem = list.find(i => validExtensions.includes(i.documentType.toLowerCase()))
+      if (matchingItem && !(result.native3DAttachment !== null && result.attachment !== null)) {
+        result.native3DAttachment = item
+        result.attachment = matchingItem
+      }
+    }
+  })
+
+  return result
+}
+
+export const pickLatestPairedAttachment = (pairedAttachments) => {
+  const sortedAttachments = pairedAttachments.sort((a, b) => new Date(b.native3DAttachment.createdAt) - new Date(a.native3DAttachment.createdAt))
+  return sortedAttachments.length ? sortedAttachments[0] : null
+}

@@ -1,0 +1,20 @@
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import postOne from '../../utils/postOne'
+import SparkService from '../SparkService'
+
+export default class InsightsIntegrationService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = `${endpoint}/spark_insight_integration_exports`
+
+    this.createExportRequest = () => postOne(
+      ({ id, exportType }) => `${this.endpoint}?cardId=${id}&exportType=${exportType}`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: filters => deepToSnakeCase(filters),
+      },
+      logContext)
+  }
+}

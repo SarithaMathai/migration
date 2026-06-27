@@ -1,0 +1,63 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import { SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY } from '../utils/constants'
+
+export default {
+  Query: {
+    getPomByIds: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.pom.getPomByIds(permissionJWT).load(ids)
+    },
+    getPoms: async (parent, { page, size, q, sort }, ctx) =>
+      ctx.loaders.search.getPoms
+        .load({ page, size, q, sort }),
+    getSections: (parent, {}, ctx) =>
+      ctx.loaders.pom.getSections.load(),
+    getPomStatus: (parent, { }, ctx) =>
+      ctx.loaders.pom.getPomStatus.load(),
+  },
+  Mutation: {
+    addPom: async (parent, { pomInput }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY,
+        ctx,
+      )
+      return ctx.loaders.pom
+        .create(permissionJWT)
+        .load(pomInput)
+    },
+    updatePom: async (parent, { pomInput }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        SPARK_POM_CREATE_MODIFY_TARGET_LIBRARY,
+        ctx,
+      )
+      return ctx.loaders.pom
+        .update(permissionJWT)
+        .load(pomInput)
+    },
+  },
+  SPARK_Pom: {
+    pomId: pom => pom.pomId || pom.id,
+    createdBy: (pom, args, ctx) =>
+      pom.createdBy &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(pom.createdBy),
+    updatedBy: (pom, args, ctx) =>
+      pom.updatedBy &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(pom.updatedBy),
+  },
+  SPARK_PomsPaged: {
+    paging: pomsPaged => {
+      return {
+        totalPages: pomsPaged.totalPages,
+        totalElements: pomsPaged.totalElements,
+        first: pomsPaged.first,
+        numberOfElements: pomsPaged.numberOfElements,
+        size: pomsPaged.size,
+        number: pomsPaged.number,
+        last: pomsPaged.last,
+        sort: pomsPaged.sort,
+      }
+    },
+    content: poms => poms.content,
+    pageable: poms => poms.pageable,
+  },
+}

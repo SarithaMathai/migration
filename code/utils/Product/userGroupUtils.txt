@@ -1,0 +1,10 @@
+import SPARK_UserGroup from '../../resolvers/SPARK_UserGroup'
+
+export const getUserGroup = async (ctx, id) => {
+  const userGroups = await SPARK_UserGroup.Query.getUserGroups({}, { ids: [id] }, ctx)
+  if (userGroups && userGroups[0]) {
+    return userGroups[0].participantDetails
+  } else {
+    return { teams: [], users: [] }
+  }
+}

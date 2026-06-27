@@ -1,0 +1,132 @@
+import sortBpByName from './sortBpByName'
+import {AUTHORIZED_STATUS_ID} from './constants'
+import _ from 'lodash'
+
+export const getRelatedSuppliersForMVs = async (ctx, merchVendorIds, roles = []) => {
+  const mvRelationships = []
+  await Promise.all(
+    merchVendorIds.filter(Boolean).map(async mvId => {
+      const mv = await ctx.loaders.vmm.getByID.load(mvId)
+
+      const relationships = _.get(mv, 'relationship', [])
+        .filter(rel => roles.includes(_.get(rel, 'type.relatedBpRole.bpRoleId', null)))
+        .filter(rel => _.get(rel, 'relatedBpStatusName', null) === 'Approved')
+        .map(rel => rel.relatedBpId)
+
+      mvRelationships.push(relationships)
+    }),
+  )
+  return _.intersection(...mvRelationships)
+}
+
+export const loadManyIncludeEmptyResponse = (loader, keys) => {
+  return Promise.all(
+    keys.map(key => {
+      return loader.load(key)
+        .then(res => {
+          if (Array.isArray(res) && res.length === 0) {
+            return null
+          }
+
+          return res
+        })
+    }),
+  )
+}
+
+const handleMissingBp = async (id, ctx) => {
+  const missingBp = { bpId: id, bpName: 'MISSING_PARTNER' }
+  if (id && id !== '0') {
+    const backupBpList = await ctx.loaders.userAttributes.getPartnersFromUserProfileBackup.load([id])
+    if (backupBpList.length > 0) {
+      missingBp.bpName = backupBpList[0].name
+    }
+  }
+  return missingBp
+}
+
+export const loadBps = async (ctx, ids) => {
+  // sometimes the ids are passed in as strings, sometimes as numbers - convert to string to avoid double-caching/double-lookup of bps
+  const bpIds = (ids || []).map(bpId => bpId ? bpId.toString() : bpId)
+  const bpList = await Promise.all(
+    bpIds.filter(Boolean).map(async id => {
+      const vmmResponse = await ctx.loaders.vmm.getByID.load(id)
+      if (Array.isArray(vmmResponse) && vmmResponse.length === 0) {
+        return handleMissingBp(id, ctx)
+      } else {
+        return vmmResponse
+      }
+    }))
+  return sortBpByName(bpList)
+}
+
+export const loadBp = async (ctx, id) => {
+  const bps = await loadBps(ctx, [id])
+  return bps[0]
+}
+
+export const loadLaundries = async (ctx, ids) => {
+  if (ids.length > 0) {
+    return ids.map((id) => ctx.loaders.location.getLocationById(id).load())
+  } else {
+    return []
+  }
+}
+
+export const loadBpsWithType = async (partners, ctx) => {
+  if (!partners || partners.length === 0) return [];
+
+  const partnerIds = partners.map(({ partnerId }) => partnerId);
+  const bps = await loadBps(ctx, partnerIds);
+
+  // Map bpId to BP object for quick lookup
+  const bpMap = {};
+  bps.forEach(bp => {
+    if (bp && bp.bpId !== undefined && bp.bpId !== null) {
+      bpMap[parseInt(bp.bpId)] = bp;
+    }
+  });
+
+  // For each partner entry, create a BP object with the correct associatedPartnerType
+  return partners.map(partner => {
+    const bp = bpMap[parseInt(partner.partnerId)];
+    return {
+      ...(bp || {bpId: partner.partnerId}),
+      associatedPartnerType: partner.partnerType || 8, //8 - Merch Vendor
+    };
+  });
+}
+
+export const loadBpWithType = async (ctx, id) => {
+  if (id) {
+    const bps = await loadBpsWithType([{ partnerId: id }], ctx)
+    if (bps.length > 0) {
+      return bps[0]
+    }
+  }
+  return null
+}
+
+export const getCapabilityIdsByType = (businessPartner, type) => {
+  const capabilityIds = []
+  businessPartner.bpCapability.forEach(cap => {
+    cap.capability && cap.capability.forEach(locCap => {
+      type.includes(locCap.capabilityCategory) && capabilityIds.push(locCap.capabilityId)
+    })
+  })
+  return capabilityIds
+}
+
+export const getFilteredLocations = (bpLocations, laundryCapIds) => {
+  let isLocationMatch = false
+  bpLocations.forEach(bpLocation => {
+    bpLocation.bpLocationCapability.forEach(bpLocationCapability => {
+      bpLocationCapability.capability.forEach(capability => {
+        if (laundryCapIds.includes(capability.capabilityId) && capability.locationCapabilityAuthorizationStatusId === AUTHORIZED_STATUS_ID) {
+          isLocationMatch = true
+        }
+      })
+    })
+  })
+  return isLocationMatch
+}

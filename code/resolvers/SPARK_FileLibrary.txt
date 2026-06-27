@@ -1,0 +1,100 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+import { SPARK_FILE_CREATE_MODIFY_TARGET_LIBRARY } from '../utils/constants'
+import { getUser } from '../utils/userAttributesUtils'
+import { resolvePaging } from './../utils/resolvePaging'
+
+export default {
+  Mutation: {
+    addFileLibrary: async (parent, { sparkFileLibrary }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        SPARK_FILE_CREATE_MODIFY_TARGET_LIBRARY,
+        ctx,
+      )
+      const fileLibrary = await ctx.loaders.fileLibrary.addFileLibrary(permissionJWT, sparkFileLibrary)
+
+      if (fileLibrary.validationErrors || fileLibrary.message) {
+        throw new Error('Error creating FileLibrary \n' + JSON.stringify(fileLibrary))
+      }
+      return fileLibrary
+    },
+    updateFileLibrary: async (parent, { humanId, sparkFileLibrary }, ctx) => {
+      sparkFileLibrary.humanId = humanId
+      const permissionJWT = await getUserPermissionsJWT(
+        SPARK_FILE_CREATE_MODIFY_TARGET_LIBRARY,
+        ctx,
+      )
+      const fileLibrary = await ctx.loaders.fileLibrary.updateFileLibrary(permissionJWT, sparkFileLibrary)
+
+      if (fileLibrary.validationErrors || fileLibrary.message) {
+        throw new Error('Error updating FileLibrary \n' + JSON.stringify(fileLibrary))
+      }
+      return fileLibrary
+    },
+  },
+
+  Query: {
+    getFileLibraries: async (parent, { page, size, humanIds, types, statusIds, brandIds }, ctx) => {
+      return ctx.loaders.fileLibrary.getFileLibraries.load({ page, size, humanIds, types, statusIds, brandIds })
+    },
+    getPackageLibrary: async (parent, { id }, ctx) => {
+      return ctx.loaders.fileLibrary.getPackageLibrary.load(id)
+    },
+    getRelatedPackagingComponents: async (parent, { id }, ctx) => {
+      const relatedComponents = await ctx.loaders.relationship.whereUsedSearch.load({ id, maxDepth: 0 })
+      const packagingIds = ((relatedComponents[0] && relatedComponents[0].nodes) || []).map(node => node.id)
+
+      if (packagingIds.length > 0) {
+        return ctx.loaders.packaging.getPackagings().load({ page: 0, size: 10000, packagingIds, parentIds: [], workspaceIds: [], partnerIds: [], statusIds: [] })
+      }
+      return null
+    },
+    getSPGElasticSearch: async (parent, { q, page, size }, ctx) => {
+      const result = await ctx.loaders.search.getSPGSearch.load({ q, page, size })
+      return result
+    } },
+
+  SPARK_SpgFileLibrary: {
+    createdBy: (fileLibrary, _, ctx) =>
+      fileLibrary.createdBy && getUser(fileLibrary.createdBy, ctx),
+    updatedBy: (fileLibrary, _, ctx) =>
+      fileLibrary.updatedBy && ctx.loaders.userAttributes.getUserByID.load(fileLibrary.updatedBy),
+    attachment: async (fileLibrary, _, ctx) => {
+      const attachments = await ctx.loaders.search.searchAttachmentsByRelatedResource.load(fileLibrary.humanId)
+      return attachments ? attachments[0] : null
+    },
+    latestArdFile: async (fileLibrary, _, ctx) => {
+      const latestArdFile = await ctx.loaders.search.searchAttachmentsByRelatedResources.load({ resourceIds: [fileLibrary.humanId], sort: 'versionNumber,desc&sort=updatedAt,desc', q: 'documentType:ard' })
+      return latestArdFile?.content?.length ? latestArdFile.content[0] : null
+    },
+    latestPreviewableFile: async (fileLibrary, _, ctx) => {
+      const latestAiOrEps = await ctx.loaders.search.searchAttachmentsByRelatedResources.load({ resourceIds: [fileLibrary.humanId], sort: 'updatedAt,desc', q: 'documentType:ai OR documentType:eps' })
+      return latestAiOrEps?.content?.length ? latestAiOrEps.content[0] : null
+    },
+    attachments: async (fileLibrary, { page, size }, ctx) => {
+      return ctx.loaders.search.searchAttachmentsByRelatedResources.load({ resourceIds: [fileLibrary.humanId], page, size, sort: 'versionNumber,desc&sort=updatedAt,desc' })
+    },
+    brands: async (fileLibrary, _, ctx) => {
+      if (
+        fileLibrary &&
+        fileLibrary.brandIds &&
+        fileLibrary.brandIds.length > 0
+      ) {
+        const brandPromises = fileLibrary.brandIds.map(brandId =>
+          ctx.loaders.brand.getBrand.load(brandId),
+        )
+        return Promise.all(brandPromises).then(list =>
+          list.filter(brand => !!brand),
+        )
+      }
+      return []
+    },
+  },
+  SPARK_FileLibrary: {
+    __resolveType: async () => {
+      return 'SPARK_SpgFileLibrary'
+    },
+  },
+  SPARK_FileLibraryPaged: {
+    paging: resolvePaging,
+  },
+}

@@ -1,0 +1,110 @@
+import { getUserPermissionsJWT, loadTags } from '../../utils/commonLoaders'
+import { getUser } from '../../utils/userAttributesUtils'
+import { loadLaundries } from '../../utils/vmmUtils'
+import { loadFiles } from '../commonResolvers/Files'
+import { loadTeams, loadBusinessPartners, loadDroppedBusinessPartners } from '../commonResolvers/Teams'
+import _ from 'lodash'
+
+export default {
+  Query: {
+    getWash: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      const wash = await ctx.loaders.wash.getWash(permissionJWT).load(id)
+      return wash
+    },
+    getAllWashByIds: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      const wash = await ctx.loaders.wash
+        .getAllWashByIds(permissionJWT)
+        .load(ids)
+      return wash
+    },
+    getWashStatus: (parent, { }, ctx) => ctx.loaders.wash.getStatus.load(),
+    getWashTypes: (parent, { }, ctx) => ctx.loaders.wash.getWashTypes.load(),
+    getSustainabilities: (parent, { }, ctx) => ctx.loaders.wash.getSustainabilities.load(),
+    getWashProcess: (parent, { }, ctx) => ctx.loaders.wash.getWashProcess.load(),
+    getGarmentDye: (parent, { }, ctx) => ctx.loaders.wash.getGarmentDye.load(),
+    getTargetRecipe: (parent, { }, ctx) => ctx.loaders.wash.getTargetRecipe.load(),
+    exportWash: async (parent, { q, nestedQueryList, isThumbnailsRequired }, ctx) => {
+      await ctx.loaders.search.exportWash.load({ q, nestedQueryList, isThumbnailsRequired })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+  },
+  Mutation: {
+    addWash: async (parent, { wash }, ctx) => {
+      const response = await ctx.loaders.wash.addWash.load(wash)
+      // // Setup relationships
+      if (wash.files && wash.files.length > 0) {
+        const associateAttachmentTeamDto = { 
+          teamsToUpdateDto: { teamsToAdd: wash.teamsToAdd }, 
+          parentId: response.humanId, 
+          humanIds: wash.files,
+          relatedResourceIds: [response.humanId],
+        }
+        const attachmentPermissionJWT = await getUserPermissionsJWT(wash.files, ctx)
+        await ctx.loaders.attachment.associateAttachmentTeams(attachmentPermissionJWT).load(associateAttachmentTeamDto, { humanId: response.humanId })
+      }
+      return response
+    },
+
+    // Wash teams
+    updateWashTeams: async (parent, { humanId, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.wash.updateWashTeams(permissionJWT).load(teamsToUpdate, { humanId })
+    },
+    updateWash: async (parent, { updateWash }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(updateWash.humanId, ctx)
+      const response = await ctx.loaders.wash.updateWash(permissionJWT).load(updateWash)
+      return response
+    },
+  },
+
+  SPARK_Wash: {
+    createdBy: (wash, args, ctx) => getUser(wash.createdBy, ctx),
+    updatedBy: (wash, args, ctx) => getUser(wash.updatedBy, ctx),
+    brand: (wash, args, ctx) =>
+      wash.brand ? ctx.loaders.brand.getBrand.load(wash.brand) : null,
+    departments: (wash, args, ctx) =>
+      wash && wash.departments && wash.departments.length > 0
+        ? ctx.loaders.ig.department.getByID.loadMany(wash.departments)
+        : [],
+    color: async (wash, args, ctx) => {
+      const colors = (wash.color && wash.color.length > 0 && wash.color) || null
+      if (colors) {
+        const permissionJWT = await getUserPermissionsJWT(colors, ctx)
+        return ctx.loaders.color.getByIDs(permissionJWT).load({ ids: colors })
+      }
+      return null
+    },
+    vendor: (wash, args, ctx) => {
+      if (wash.vendorName || wash.vendorId) {
+        return ctx.loaders.vmm.getByID.load(wash.vendorName || wash.vendorId)
+      }
+      return null
+    },
+    laundry: async (wash, args, ctx) => loadLaundries(ctx, (wash.laundry || wash.laundryName || [])),
+    manualColors: (wash) => wash.manualColors || wash.manuelColors,
+    fabricRecordInfo: async (wash, args, ctx) => {
+      if (wash.fabricId) {
+        const permissionJWT = await getUserPermissionsJWT(wash.fabricId, ctx)
+        return ctx.loaders.fabric.getByID(permissionJWT).load(wash.fabricId)
+      }
+    },
+    fabricSpec: async (wash, args, ctx) => {
+      const fabricSpecId = (wash.fabricSpecificationIds && wash.fabricSpecificationIds.length > 0 && wash.fabricSpecificationIds[0]) || null
+      if (!fabricSpecId) {
+        return null
+      }
+      return ctx.loaders.fabric.getSpecificationByID.load(fabricSpecId)
+    },
+    designCycles: async (wash, args, ctx) => wash && wash.designCycles ? loadTags(wash.designCycles, ctx) : [],
+    tags: async (wash, args, ctx) => wash && wash.tags ? loadTags(wash.tags, ctx) : [],
+    files: (wash, args, ctx) => loadFiles(wash.humanId, ctx),
+    teams: (wash, args, ctx) => loadTeams(wash.humanId, ctx),
+    businessPartners: (wash, args, ctx) => loadBusinessPartners(wash.humanId, ctx),
+    droppedPartnerIds: (wash, args, ctx) => loadDroppedBusinessPartners(wash.humanId, ctx),
+  },
+}

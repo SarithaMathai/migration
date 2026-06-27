@@ -1,0 +1,158 @@
+import createDebug from 'debug'
+import {
+  addRelationship,
+  addAccessControlPermissionsV2, getUserPermissionsJWT,
+} from '../../utils/commonLoaders'
+import { RESOURCE_TYPES_PREFIXES } from '../../config/constants'
+
+const logTrace = createDebug('spark-trace:load-one')
+
+export const loadTeams = async (resourceId, ctx) => {
+  try {
+    const relationship = await ctx.loaders.relationship.getByID.load({
+      id: resourceId,
+      type: 'team',
+    })
+
+    // TODO do in bulk
+    if (relationship && relationship.nodes && relationship.nodes.length > 0) {
+      const mapped = await Promise.all(
+        relationship.nodes.map(async (team) => {
+          const jwt = await getUserPermissionsJWT(team.id, ctx)
+          const teamDetails = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: [team.id] })
+          return teamDetails[0]
+        }),
+      )
+
+      return mapped.filter(team => !!team).sort((a, b) => (a.teamId > b.teamId) ? 1 : (b.teamId > a.teamId) ? -1 : 0)
+    }
+    return []
+  } catch (err) {
+    logTrace(JSON.stringify(err, null, '  '))
+    return []
+  }
+}
+
+export const resolveTypeNameToId = (name) => {
+  if (name === 'MerchVendor') {
+    return 8
+  } else if (name === 'FabSupplier') {
+    return 7
+  } else if (name === 'dps') {
+    return 5
+  } else if (name === 'TrimSupplier') {
+    return 10
+  } else {
+    return null
+  }
+}
+
+export const loadBusinessPartners = async (resourceId, ctx) => {
+  var grantees = []
+  var acl = {}
+  // Get business partners from ACL
+  const prefix = resourceId.split('-')[0]
+  if ([RESOURCE_TYPES_PREFIXES.Fabrics,
+    RESOURCE_TYPES_PREFIXES.Trim,
+    RESOURCE_TYPES_PREFIXES.ReferenceColors,
+    RESOURCE_TYPES_PREFIXES.TargetColors].includes(prefix)
+  ) {
+    // Disable dpSecurity for fabrics as design partners should be able to see all partners on fabric
+    acl = await ctx.loaders.accessControl.getPermissionsForResourceNoDpSecurity.load(resourceId)
+  } else {
+    acl = await ctx.loaders.accessControl.getPermissionsForResource.load(resourceId)
+  }
+  acl && acl.permissions && acl.permissions.map(perm => {
+    if (perm.abstractAccessGroup.type === 'bps' ||
+        perm.abstractAccessGroup.type === 'MerchVendor' ||
+        perm.abstractAccessGroup.type === 'FabSupplier' ||
+        perm.abstractAccessGroup.type === 'dps' ||
+        perm.abstractAccessGroup.type === 'TrimSupplier'
+    ) {
+      grantees = grantees.concat(perm.abstractAccessGroup.grantees.map(grantee => { return { id: grantee, type: perm.abstractAccessGroup.type } }))
+    }
+  })
+
+  if (!grantees) {
+    return []
+  }
+
+  async function fetchVmmWithType (ctx, bp) {
+    const vmm = await ctx.loaders.vmm.getByID.load(bp.id)
+    if (!vmm || !vmm.bpId) {
+      return null
+    }
+    return {
+      ...vmm,
+      associatedPartnerType: resolveTypeNameToId(bp.type),
+    }
+  }
+
+  const uniqueGrantees = [...new Set(grantees)].filter(Boolean)
+  const results = await Promise.all(uniqueGrantees.map((bp) => fetchVmmWithType(ctx, bp)))
+  return results.filter(vmm => vmm !== null)
+}
+
+export const loadDroppedBusinessPartners = async (resourceId, ctx, showDrop) => {
+  var droppedBps = []
+  // Get business partners from ACL
+  var acls
+  if (showDrop) {
+    acls = await ctx.loaders.accessControl.getPermissions.load({
+      resourceIds: [resourceId], showDrop: true,
+    })
+  } else {
+    acls = await ctx.loaders.accessControl.getPermissions.load({
+      resourceIds: [resourceId],
+    })
+  }
+  acls.map(acl => {
+    acl.permissions.map(perm => {
+      if (perm.abstractAccessGroup.type === 'bps' || perm.abstractAccessGroup.type === 'MerchVendor' || perm.abstractAccessGroup.type === 'FabSupplier' || perm.abstractAccessGroup.type === 'TrimSupplier' || perm.abstractAccessGroup.type === 'dps') {
+        if (perm.droppedIds && perm.droppedIds.length > 0) {
+          droppedBps = Array.from(new Set(droppedBps.concat(perm.droppedIds)))
+        }
+      }
+    })
+  })
+
+  return droppedBps
+}
+
+export const addTeamsToResource = async (resourceId, teamIds, bpPermissionLevel, teamPermissionLevel, ctx) => {
+  if (teamIds && teamIds.length > 0) {
+    await Promise.all([
+      addAccessControlPermissionsV2(
+        ctx,
+        teamIds,
+        null,
+        resourceId,
+        bpPermissionLevel,
+        teamPermissionLevel,
+      ),
+      addRelationship({
+        ctx,
+        rootId: resourceId,
+        nodes: teamIds.map(team => {
+          return {
+            node: team,
+          }
+        }),
+        returnObject: null,
+      }),
+    ])
+  }
+}
+
+export const addBusinessPartnersToResource = async (resourceId, partnerIds, bpPermissionLevel, teamPermissionLevel, ctx) => {
+  if (partnerIds && partnerIds.length > 0) {
+    addAccessControlPermissionsV2(
+      ctx,
+      [],
+      partnerIds,
+      resourceId,
+      bpPermissionLevel,
+      teamPermissionLevel,
+    )
+  }
+}

@@ -1,0 +1,479 @@
+import { getUserPermissionsJWT, getUserPermissionsJWTByProxy, loadTags, associateAttachmentResourcesV3 } from '../utils/commonLoaders'
+import { loadFiles } from './commonResolvers/Files'
+import { loadTeams, loadBusinessPartners, loadDroppedBusinessPartners } from './commonResolvers/Teams'
+import { loadBpsWithType } from '../utils/vmmUtils'
+
+import _ from 'lodash'
+import { getMasterId, isVariantId } from '../utils/variantIdFunctions'
+import { getUser } from '../utils/userAttributesUtils'
+
+export default {
+  Query: {
+    getMerchTypesByDepartmentId: (parent, { departmentId, materialCategory }, ctx) =>
+      ctx.loaders.combination.getMerchTypesByDepartmentId.load({ departmentId, materialCategory }),
+    getCombination: async (parent, { id }, ctx) => {
+      return ctx.loaders.combination.getById.load(id)
+    },
+    getCombinationByIds: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      const combo = await ctx.loaders.combination
+        .getByIds(permissionJWT)
+        .load(ids)
+      return combo
+    },
+    getImpressionIntentBucketsByComboId: async (parent, { id }, ctx) => {
+      const token = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.combination.getImpressionIntentBucketsByComboId(token).load(id)
+    },
+    searchFabricSpecCombos: async (parent, pageArgs, ctx) => ctx.loaders.search.searchFabricSpecCombos.load(pageArgs),
+    getFabricSpecCombosByComboId: async (parent, { id }, ctx) => {
+      const token = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.search.getFabricSpecCombosByComboId(token).load(id)
+    },
+    getFabricSpecComboById: async (parent, { id }, ctx) => {
+      const token = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.combination.getFabricSpecComboById(token).load(id)
+    },
+    exportCombination: async (parent, { q, workspaceId, isThumbnailRequired }, ctx) => {
+      await ctx.loaders.search.exportCombinations.load({ q, workspaceId, isThumbnailRequired })
+      return {
+        workspaceId: workspaceId,
+      }
+    },
+    getBulkCombinations: async (parent, { q, page, size }, ctx) => {
+      const elasticCombinations = await ctx.loaders.search.searchCombinations.load({ q, page, size })
+      const combinationIds = elasticCombinations.content.map(combo => combo.id)
+      const permissionJWT = await getUserPermissionsJWT(combinationIds, ctx)
+      const combinations = await ctx.loaders.combination.getByIds(permissionJWT).load(combinationIds)
+      return { content: combinations, paging: elasticCombinations }
+    },
+    exportComboICSReport: async (parent, { q, workspaceId }, ctx) => {
+      await ctx.loaders.search.exportComboICSReport.load({ q, workspaceId })
+      return {
+        workspaceId: workspaceId,
+      }
+    },
+  },
+  Mutation: {
+    addCombination: async (parent, { combination }, ctx) => {
+      let list = []
+      let token
+      let newCombination
+      if (combination.relatedMaterials) {
+        list = list.concat(combination.relatedMaterials.map(material => isVariantId(material.resourceId) ? getMasterId(material.resourceId) : material.resourceId))
+      }
+      if (combination.fabricRecordHumanId) { list.push(combination.fabricRecordHumanId) }
+
+      if (list.length > 0) {
+        token = await getUserPermissionsJWT(list, ctx)
+        newCombination = await ctx.loaders.combination.create(token).load(combination)
+      } else {
+        token = await getUserPermissionsJWT([''], ctx)
+        newCombination = await ctx.loaders.combination.create(token).load(combination)
+      }
+      if (combination.files && combination.files.length > 0) {
+        const associateAttachmentTeamDto = { 
+          teamsToUpdateDto: { teamsToAdd: combination.teamsToAdd }, 
+          parentId: newCombination.humanId, 
+          humanIds: combination.files,
+          relatedResourceIds: [newCombination.humanId],
+        }
+        const attachmentPermissionJWT = await getUserPermissionsJWT(combination.files, ctx)
+        await ctx.loaders.attachment.associateAttachmentTeams(attachmentPermissionJWT).load(associateAttachmentTeamDto, { humanId: newCombination.humanId })
+      }
+
+      return newCombination
+    },
+    updateCombination: async (parent, { combination }, ctx) => {
+      const token = await getUserPermissionsJWT(combination.humanId, ctx)
+      const updatedCombination = await ctx.loaders.combination.update(token).load(combination)
+
+      await Promise.all([
+        (combination.files && combination.files.length > 0) && associateAttachmentResourcesV3({
+          parentId: combination.humanId,
+          humanIds: combination.files,
+          ctx,
+        }),
+      ])
+      return updatedCombination
+    },
+    bulkUpdateCombination: async (parent, { bulkCombinationUpdates }, ctx) => {
+      const combinationIds = []
+      bulkCombinationUpdates.updateCombinationDtoList.map(combo => combinationIds.push(combo.comboId))
+      const token = await getUserPermissionsJWT(combinationIds, ctx)
+      return ctx.loaders.combination.bulkUpdate(token).load(bulkCombinationUpdates)
+    },
+    deleteCombination: async (parent, { humanId }, ctx) => {
+      const token = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.combination.delete(token).load(humanId)
+    },
+    addMaterialsToCombination: async (parent, { parentComboId, materialImpressionIntentList }, ctx) => {
+      let list = [parentComboId]
+      let token
+      if (materialImpressionIntentList) {
+        list = list.concat(materialImpressionIntentList.map(material => isVariantId(material.resourceId) ? getMasterId(material.resourceId) : material.resourceId))
+      }
+      token = await getUserPermissionsJWT(list, ctx)
+      return ctx.loaders.combination.addMaterialsToCombination(token).load({ parentComboId, materialImpressionIntentList })
+    },
+    deleteImpressionIntentBucket: async (parent, { humanId }, ctx) => {
+      const token = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.combination.deleteImpressionIntentBucket(token).load(humanId)
+    },
+    addImpressionIntentBucket: async (parent, { impressionIntentBucket }, ctx) => {
+      let list = [impressionIntentBucket.parentComboId]
+      let token
+      if (impressionIntentBucket.relatedMaterials) { list.push(...impressionIntentBucket.relatedMaterials) }
+      if (impressionIntentBucket.fabricSpecIds) { list.push(...impressionIntentBucket.fabricSpecIds) }
+      if (list.length > 0) {
+        token = await getUserPermissionsJWT(list, ctx)
+      }
+      return ctx.loaders.combination.addImpressionIntentBucket(token).load(impressionIntentBucket)
+    },
+    updateImpressionIntentBucket: async (parent, { impressionIntentBucket }, ctx) => {
+      let list = [impressionIntentBucket.parentComboId]
+      let token
+      if (impressionIntentBucket.addMaterials) {
+        impressionIntentBucket.addMaterials.map(material => isVariantId(material) ? list.push(getMasterId(material)) : list.push(material))
+      }
+      if (impressionIntentBucket.removeMaterials) {
+        impressionIntentBucket.removeMaterials.map(material => isVariantId(material) ? list.push(getMasterId(material)) : list.push(material))
+      }
+      if (list.length > 0) {
+        token = await getUserPermissionsJWT(list, ctx)
+      }
+
+      return ctx.loaders.combination.updateImpressionIntentBucket(token).load(impressionIntentBucket)
+    },
+    bulkAddMerchVendorsToBuckets: async (parent, { parentComboId, impressionIntentLine }, ctx) => {
+      let token = await getUserPermissionsJWT(parentComboId, ctx)
+      return ctx.loaders.combination.bulkAddMerchVendorsToBuckets({ permissionJWT: token, parentComboId }).load(impressionIntentLine)
+    },
+    addImpressionIntentLine: async (parent, { intentHumanId, impressionIntentLine }, ctx) => {
+      const token = await getUserPermissionsJWT(intentHumanId, ctx)
+      return ctx.loaders.combination.addImpressionIntentLine({ permissionJWT: token, intentHumanId }).load(impressionIntentLine)
+    },
+    updateImpressionIntentLine: async (parent, { lineHumanId, impressionIntentLine }, ctx) => {
+      let list = [lineHumanId]
+      let token
+      if (impressionIntentLine.fabricSpecHumanId) { list.push(impressionIntentLine.fabricSpecHumanId) }
+      token = await getUserPermissionsJWT(list, ctx)
+      return ctx.loaders.combination.updateImpressionIntentLine({ permissionJWT: token, lineHumanId }).load(impressionIntentLine)
+    },
+    updateImpressionIntentLineStatus: async (parent, { lineHumanId, impressionIntentLineStatus }, ctx) => {
+      let token
+      token = await getUserPermissionsJWT(lineHumanId, ctx)
+      return ctx.loaders.combination.updateImpressionIntentLineStatus({ permissionJWT: token, lineHumanId }).load(impressionIntentLineStatus)
+    },
+    deleteImpressionIntentLine: async (parent, { humanId }, ctx) => {
+      const token = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.combination.deleteImpressionIntentLine(token).load(humanId)
+    },
+    updateCombinationTeams: async (parent, { humanId, teamsToUpdate }, ctx) => {
+      return ctx.loaders.combination.updateCombinationTeams(humanId).load(teamsToUpdate)
+    },
+    createFabricSpecCombos: async (parent, { humanId }, ctx) => {
+      const token = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.combination.createFabricSpecCombos({ permissionJWT: token, humanId }).load()
+    },
+    archiveFabricSpecCombo: async (parent, { fabricSpecComboId }, ctx) => {
+      const token = await getUserPermissionsJWT(fabricSpecComboId, ctx)
+      return ctx.loaders.combination.archiveFabricSpecCombo(token).load(fabricSpecComboId)
+    },
+  },
+  SPARK_Combination: {
+    brands: (combination, args, ctx) => combination && combination.brands && combination.brands.length > 0 ? ctx.loaders.brand.getBrand.loadMany(combination.brands.map(brand => brand.id)) : [],
+    businessPartners: (combination, args, ctx) => loadBusinessPartners(combination.humanId, ctx),
+    droppedPartnerIds: (combination, args, ctx) => loadDroppedBusinessPartners(combination.humanId, ctx, true),
+    createdBy: (combination, args, ctx) =>  getUser(combination.createdBy, ctx),
+    updatedBy: (combination, args, ctx) =>  getUser(combination.updatedBy, ctx),
+    department: (combination, args, ctx) => combination && combination.department && combination.department.id ? ctx.loaders.ig.department.getByID.load(combination.department.id) : null,
+    division: async (combination, args, ctx) =>
+      await (combination && combination.division && combination.division.id)
+        ? ctx.loaders.ig.division.getByID.load(combination.division.id)
+        : null,
+    clazz: async (combination, args, ctx) =>
+      await (combination && combination.clazz && combination.clazz.id && combination.department && combination.department.id)
+        ? ctx.loaders.ig.clazz.getByID.load({
+          department: combination.department.id, id: combination.clazz.id,
+        })
+        : null,
+    designCycles: async (combination, args, ctx) => combination && combination.designCycles ? loadTags(combination.designCycles, ctx) : [],
+    files: (combination, args, ctx) => loadFiles(combination.humanId, ctx),
+    tags: async (combination, args, ctx) => combination && combination.tags ? loadTags(combination.tags, ctx) : [],
+    materialCategory: async (combination, args, ctx) => {
+      const materialCatId = (combination && combination.materialCategory && combination.materialCategory.id) || null
+      const response = await (materialCatId && await loadTags([materialCatId], ctx))
+      return response && response.length > 0 ? response[0] : null
+    },
+    teams: (combination, args, ctx) => loadTeams(combination.humanId, ctx),
+    top20RelatedMaterials: (combination, args, ctx) => ctx.loaders.search.getPage.load({ q: `relatedAssetIds:"${combination.humanId}"`, page: 0, size: 20 }),
+    fabricRecord: async (combination, args, ctx) => {
+      if (combination.fabricRecordHumanId) {
+        const permissionJWT = await getUserPermissionsJWT(combination.fabricRecordHumanId, ctx)
+        return ctx.loaders.fabric.getByID(permissionJWT).load(combination.fabricRecordHumanId)
+      }
+    },
+    impressionIntentBucketList: async (combination, args, ctx) => {
+      if (combination.humanId) {
+        const permissionJWT = await getUserPermissionsJWT(combination.humanId, ctx)
+        return ctx.loaders.combination.getImpressionIntentBucketsByComboId(permissionJWT).load(combination.humanId)
+      } else {
+        return []
+      }
+    },
+    fabricSpecCombos: async (combination, args, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(combination.humanId, ctx)
+      return ctx.loaders.search.getFabricSpecCombosByComboId(permissionJWT).load(combination.humanId)
+    },
+  },
+  SPARK_ImpressionIntentBucket: {
+    relatedMaterials: (impressionIntentBucket, args, ctx) => ctx.loaders.search.getPage.load({ q: `relatedAssetIds:"${impressionIntentBucket.humanId}"`, page: 0, size: 20 }),
+    proxyRelatedMaterials: async (impressionIntentBucket, args, ctx) => {
+      const lines = []
+      if (impressionIntentBucket.impressionIntentLines && impressionIntentBucket.impressionIntentLines.length > 0) {
+        impressionIntentBucket.impressionIntentLines.map(line => lines.push(line.humanId))
+      }
+      lines.push(impressionIntentBucket.parentComboId)
+      const permissionJWT = await getUserPermissionsJWT(lines, ctx)
+      return ctx.loaders.search.searchMaterialsByProxyIds(permissionJWT).load({ q: `relatedAssetIds:"${impressionIntentBucket.humanId}"`, proxyIds: lines, page: 0, size: 20 })
+    },
+    createdBy: (impressionIntentBucket, args, ctx) => getUser(impressionIntentBucket.createdBy, ctx),
+    updatedBy: (impressionIntentBucket, args, ctx) => getUser(impressionIntentBucket.updatedBy, ctx),
+  },
+  SPARK_ImpressionIntentLine: {
+    merchVendorTeam: async (impressionIntentLine, args, ctx) => {
+      if (!impressionIntentLine.merchVendorTeamId) {
+        return null
+      }
+
+      const permissionJWT = await getUserPermissionsJWT(impressionIntentLine.merchVendorTeamId, ctx)
+      const teams = await ctx.loaders.teamV2.getByIDs(permissionJWT).load({ ids: [impressionIntentLine.merchVendorTeamId] })
+      if (teams && teams.length > 0) {
+        return teams[0]
+      } else {
+        return null
+      }
+    },
+    proxyMerchVendorTeam: async (impressionIntentLine, args, ctx) => {
+      if (!impressionIntentLine.merchVendorTeamId || !impressionIntentLine.humanId) {
+        return null
+      }
+
+      const permissionJWT = await getUserPermissionsJWTByProxy({ id: impressionIntentLine.merchVendorTeamId, proxyIds: [impressionIntentLine.humanId] }, ctx)
+      const teams = await ctx.loaders.teamV2.getByIDs(permissionJWT).load({ ids: [impressionIntentLine.merchVendorTeamId] })
+      if (teams && teams.length > 0) {
+        return teams[0]
+      } else {
+        return null
+      }
+    },
+    fabricSupplierTeam: async (impressionIntentLine, args, ctx) => {
+      if (!impressionIntentLine.fabricSupplierTeamId) {
+        return null
+      }
+      const permissionJWT = await getUserPermissionsJWT(impressionIntentLine.fabricSupplierTeamId, ctx)
+      const teams = await ctx.loaders.teamV2.getByIDs(permissionJWT).load({ ids: [impressionIntentLine.fabricSupplierTeamId] })
+      return teams[0]
+    },
+    fabricSpec: async (impressionIntentLine, args, ctx) => {
+      if (!impressionIntentLine.fabricSpecHumanId) {
+        return null
+      }
+      return ctx.loaders.fabric.getSpecificationByID.load(impressionIntentLine.fabricSpecHumanId)
+    },
+    countryOfProduction: async (impressionIntentLine, args, ctx) => {
+      if (impressionIntentLine.countryOfProduction) {
+        return ctx.loaders.tag.getTag.load(impressionIntentLine.countryOfProduction)
+      } else {
+        return null
+      }
+    },
+  },
+  SPARK_FabricSpecCombo: {
+    relatedMaterials: async (fabricSpecCombo, args, ctx) => {
+      if (ctx.currentUser.internal) {
+        const buckets = _.uniq(fabricSpecCombo.intentLineIds.map(lineId => lineId.split('.')[0]))
+        if (buckets && buckets.length > 0) {
+          const paddedBuckets = buckets.map(bucket => `"${bucket}"`)
+          return ctx.loaders.search.getPage.load({ q: `relatedAssetIds:(${paddedBuckets.join(' OR ')})`, page: 0, size: 500 })
+        } else {
+          return null
+        }
+      } else {
+        if (fabricSpecCombo.intentLineIds && fabricSpecCombo.intentLineIds.length > 0) {
+          const buckets = _.uniq(fabricSpecCombo.intentLineIds.map(lineId => lineId.split('.')[0]))
+          const paddedBuckets = buckets.map(bucket => `"${bucket}"`)
+          const permissionJWT = await getUserPermissionsJWT(fabricSpecCombo.intentLineIds, ctx)
+          const proxyIds = fabricSpecCombo.intentLineIds
+          proxyIds.push(fabricSpecCombo.parentComboId)
+          return ctx.loaders.search.searchMaterialsByProxyIds(permissionJWT).load({ q: `relatedAssetIds:(${paddedBuckets.join(' OR ')})`, proxyIds: proxyIds, page: 0, size: 500 })
+        } else {
+          return null
+        }
+      }
+    },
+    asapColorApprovals: async (fabricSpecCombo, args, ctx) => {
+      const buckets = _.uniq(fabricSpecCombo.intentLineIds.map(lineId => lineId.split('.')[0]))
+      if (buckets && buckets.length > 0) {
+        const paddedBuckets = buckets.map(bucket => `"${bucket}"`)
+        const materials = await ctx.loaders.search.getPage.load({ q: `relatedAssetIds:(${paddedBuckets.join(' OR ')})`, page: 0, size: 500 })
+        const filteredMaterialIds = materials &&
+          materials.content.filter(material => material.solid)
+            .map(material => material.id)
+        if (filteredMaterialIds && filteredMaterialIds.length > 0) {
+          return ctx.loaders.tgtColorEvaluator.getAsapEvaluationUpdates.load({
+            fabricSpecId: fabricSpecCombo.fabricSpecId,
+            colorIds: filteredMaterialIds,
+          })
+        } else {
+          return []
+        }
+      } else {
+        return []
+      }
+    },
+    proxyRelatedMaterials: async (fabricSpecCombo, args, ctx) => {
+      if (fabricSpecCombo.intentLineIds && fabricSpecCombo.intentLineIds.length > 0) {
+        const buckets = _.uniq(fabricSpecCombo.intentLineIds.map(lineId => lineId.split('.')[0]))
+        const paddedBuckets = buckets.map(bucket => `"${bucket}"`)
+        const permissionJWT = await getUserPermissionsJWT(fabricSpecCombo.intentLineIds, ctx)
+        const proxyIds = fabricSpecCombo.intentLineIds
+        proxyIds.push(fabricSpecCombo.parentComboId)
+        return ctx.loaders.search.searchMaterialsByProxyIds(permissionJWT).load({ q: `relatedAssetIds:(${paddedBuckets.join(' OR ')})`, proxyIds: proxyIds, page: 0, size: 500 })
+      } else {
+        return null
+      }
+    },
+    fabricSpec: async (fabricSpecCombo, args, ctx) => {
+      if (!fabricSpecCombo.fabricSpecId) {
+        return null
+      }
+      return ctx.loaders.fabric.getSpecificationByID.load(fabricSpecCombo.fabricSpecId)
+    },
+    fabricSpecForBom: async (fabricSpecCombo, args, ctx, info) => {
+      if (!fabricSpecCombo.fabricSpecId) {
+        return null
+      }
+
+      if (ctx.currentUser.internal) {
+        const material = await ctx.loaders.fabric.getSpecificationByID.load(fabricSpecCombo.fabricSpecId)
+        return material
+      } else {
+        const bomId = _.get(info, 'variableValues.ids.[0]', undefined) || _.get(info, 'variableValues.id')
+        const permissionJWT = await getUserPermissionsJWTByProxy({ id: fabricSpecCombo.fabricSpecId, proxyIds: [bomId] }, ctx)
+        const material = await ctx.loaders.fabric.getSpecificationsByIDs(permissionJWT).load(fabricSpecCombo.fabricSpecId)
+
+        return material && material[0]
+      }
+    },
+    parentCombo: async (fabricSpecCombo, args, ctx) => {
+      if (!fabricSpecCombo.parentComboId) {
+        return null
+      }
+      return ctx.loaders.combination.getById.load(fabricSpecCombo.parentComboId)
+    },
+    merchVendors: async (fabricSpecCombo, args, ctx) => {
+      const partners = await loadBpsWithType(fabricSpecCombo.mvIds.map(partner => ({ partnerId: partner })), ctx)
+      return partners
+    },
+    merchVendorTeams: async (fabricSpecCombo, args, ctx) => {
+      if (fabricSpecCombo.mvTeamIds) {
+        const permissionJWT = await getUserPermissionsJWT(fabricSpecCombo.mvTeamIds, ctx)
+        const teams = await ctx.loaders.teamV2.getByIDs(permissionJWT).load({ ids: fabricSpecCombo.mvTeamIds })
+        return teams
+      } else {
+        return null
+      }
+    },
+    proxyMerchVendorTeams: async (fabricSpecCombo, args, ctx) => {
+      if (fabricSpecCombo.mvTeamIds) {
+        const permissionJWT = await getUserPermissionsJWTByProxy({ id: fabricSpecCombo.mvTeamIds, proxyIds: fabricSpecCombo.intentLineIds }, ctx)
+        const teams = await ctx.loaders.teamV2.getByIDs(permissionJWT).load({ ids: fabricSpecCombo.mvTeamIds })
+        return teams
+      } else {
+        return null
+      }
+    },
+    fabricSupplier: async (fabricSpecCombo, args, ctx) => {
+      if (fabricSpecCombo.fsId) {
+        const fs = await ctx.loaders.vmm.getByID.load(fabricSpecCombo.fsId)
+        return fs
+      }
+
+      return null
+    },
+    samples: async (fabricSpecCombo, args, ctx) => {
+      // rfidTagId not on sample in elastic so double network call
+      const samplesPaged = await ctx.loaders.search.searchSamplesByParentId.load({
+        parentIds: [fabricSpecCombo.id],
+        query: (args && args.query) || '*',
+        page: (args && args.page) || 0,
+        size: (args && args.size) || 20,
+      })
+      const elasticSamples = (samplesPaged.content || [])
+      if (elasticSamples.length === 0) {
+        return samplesPaged
+      }
+
+      const sampleIds = elasticSamples.map(sample => sample.id)
+      const permissionJWT = await getUserPermissionsJWT(sampleIds, ctx)
+      const samples = await ctx.loaders.sampleV2.getSamplesByIdsV2(permissionJWT).load(sampleIds)
+      const response = {
+        ...samplesPaged || {},
+        content: samples.map(sample => {
+          const elasticSample = _.find(elasticSamples, { id: sample.id })
+          return {
+            ...elasticSample,
+            ...sample,
+          }
+        }) || [],
+      }
+      return response
+    },
+    createdBy: () => {},
+    updatedBy: () => {},
+  },
+  SPARK_SampleYardage: {
+    fabricSpec: async (sampleYardage, args, ctx) => {
+      if (sampleYardage.fabricSpec) {
+        return ctx.loaders.fabric.getSpecificationByID.load(sampleYardage.fabricSpec)
+      }
+      return null
+    },
+    material: async (sampleYardage, args, ctx) => {
+      if (sampleYardage.material) {
+        return ctx.loaders.search.getPage.load({ q: `id:"${sampleYardage.material}"`, page: 0, size: 1 })
+      }
+      return null
+    },
+    proxyMaterial: async (sampleYardage, args, ctx, info) => {
+      if (sampleYardage.material) {
+        const permissionJWT = await getUserPermissionsJWT(info.variableValues.id, ctx)
+        return ctx.loaders.search.searchMaterialsByProxyIds(permissionJWT).load({ q: `id:"${sampleYardage.material}"`, proxyIds: info.variableValues.id, page: 0, size: 1 })
+      }
+      return null
+    },
+    merchVendors: async (sampleYardage, args, ctx) => {
+      if (sampleYardage.merchVendors && sampleYardage.merchVendors.length > 0) {
+        const merchVendors = []
+        await Promise.all(
+          sampleYardage.merchVendors.map(async id => {
+            await ctx.loaders.vmm.getByID.load(id)
+              .then(res => {
+                if (res.bpId && res.bpName) { merchVendors.push(res) }
+              })
+          }),
+        )
+        return merchVendors
+      }
+      return null
+    },
+  },
+  SPARK_ExportCombination: {
+    requestId: (exportData, args, ctx) => _.get(ctx, 'headers.X-Api-Id', 'FU'),
+  },
+  SPARK_SearchFabricSpecCombosPaged: {
+    paging: searchResults => searchResults,
+  },
+}

@@ -1,0 +1,108 @@
+const getAreStatusesEqual = (statuses) => statuses.every(statusObject =>
+  statusObject.statusId === statuses[0].statusId,
+)
+
+export const getFinalPartnerStatuses = (product, args) => {
+  if (!Array.isArray(product.businessPartners) || product.businessPartners.length === 0) {
+    return []
+  }
+
+  const businessPartners = product.businessPartners.filter(filterOutDesignPartners) || []
+
+  if (args.workspaceIdFilter) {
+    return businessPartners.map(partner => {
+      const relevantStatus = partner.status.find(statusObject =>
+        statusObject.workspaceId === args.workspaceIdFilter,
+      )
+      return {
+        partnerId: partner.partnerId,
+        status: relevantStatus ? {
+          id: relevantStatus.statusId,
+          name: relevantStatus.statusName,
+          workspaceId: relevantStatus.workspaceId,
+        } : null,
+        statusCount: partner.status.length,
+        allStatuses: partner.status,
+      }
+    })
+  } else {
+    return businessPartners.map(partner => {
+      const allEqualStatuses = getAreStatusesEqual(partner.status)
+      const firstStatus = partner.status[0]
+      if (allEqualStatuses) {
+        return {
+          partnerId: partner.partnerId,
+          status: firstStatus
+            ? {
+              id: firstStatus.statusId,
+              name: firstStatus.statusName,
+              workspaceId: null,
+            }
+            : null,
+          statusCount: partner.status.length,
+          allStatuses: partner.status,
+        }
+      } else {
+        return {
+          partnerId: partner.partnerId,
+          status: { id: 0, name: 'Varies', workspaceId: null },
+          statusCount: partner.status.length,
+          allStatuses: partner.status,
+        }
+      }
+    })
+  }
+}
+
+const VARIES_STATUS = { id: 0, name: 'Varies' }
+const DEFAULT_STATUS = { id: 100, name: 'Prototype' }
+
+export const filterOutDesignPartners = ({ partnerType }) => partnerType !== 5
+
+export const getProductStatus = (product, args) => {
+  let currentStatus
+
+  if (!Array.isArray(product.businessPartners) || product.businessPartners.length === 0) {
+    return DEFAULT_STATUS
+  }
+
+  const businessPartners = product.businessPartners.filter(filterOutDesignPartners) || []
+
+  const partners = args.partnerIdFilter
+    ? businessPartners.filter(partner => `${partner.partnerId}` === `${args.partnerIdFilter}`)
+    : businessPartners
+
+  for (const partner of partners) {
+    if (args.workspaceIdFilter) {
+      const relevantStatus = partner.status.find(statusObject =>
+        statusObject.workspaceId === args.workspaceIdFilter,
+      )
+      if (relevantStatus) {
+        if (!currentStatus) {
+          currentStatus = relevantStatus
+        } else if (relevantStatus.statusId !== currentStatus.statusId) {
+          return VARIES_STATUS
+        }
+      }
+    } else {
+      if (partner.status && partner.status.length > 0) {
+        if (!currentStatus) {
+          currentStatus = partner.status[0]
+        }
+        const allEqual = getAreStatusesEqual(partner.status)
+        if (!allEqual || (currentStatus.statusId !== partner.status[0].statusId)) {
+          return VARIES_STATUS
+        }
+      }
+    }
+  }
+  return currentStatus ? {
+    id: currentStatus.statusId,
+    name: currentStatus.statusName,
+  } : DEFAULT_STATUS
+}
+
+export default {
+  getProductStatus,
+  getFinalPartnerStatuses,
+}

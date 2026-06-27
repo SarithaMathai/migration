@@ -1,0 +1,129 @@
+import _ from 'lodash'
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import SPARK_WorkspaceV2 from '../SPARK_WorkspaceV2'
+import SPARK_UserGroup from '../SPARK_UserGroup'
+
+export default {
+  Query: {
+    getWatchlistReasons: (parent, args, ctx) =>
+      ctx.loaders.watchlist.getWatchlistReasons.load(),
+    getWatchlistInspectionActions: (parent, args, ctx) =>
+      ctx.loaders.watchlist.getWatchlistInspectionActions.load(),
+    getWatchlistByIds: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.watchlist.getWatchlistByIds(permissionJWT).load(ids)
+    },
+    getWatchlistByFilter: async (parent, { q, filter, workspaceId, page, size }, ctx) => {
+      const productData = await ctx.loaders.product.getWorkspaceProducts.load({ q, filter, workspaceId, page, size })
+      const productIds = productData.content.map(product => product.humanId)
+      const queryString = `parentId:(${_.join(productIds, ' OR ')}) AND workspaceContext: ${workspaceId} AND statusId: 501`
+      const watchlistData = await ctx.loaders.search.searchWatchlist.load({ q: queryString, page, size })
+      const watchlistIds = watchlistData.content.map(watchlist => watchlist.id)
+      const permissionJWT = await getUserPermissionsJWT(watchlistIds, ctx)
+      return ctx.loaders.watchlist.getWatchlistByIds(permissionJWT).load(watchlistIds)
+    },
+  },
+
+  Mutation: {
+    createWatchlistEntries: async (parent, { watchlistEntries }, ctx) => {
+      const watchlistResponse = await Promise.all(watchlistEntries.map(async (watchlist) => {
+        const response = await ctx.loaders.watchlist.createWatchlistEntries.load([watchlist])
+        if (response.validationErrors || response.message) {
+          throw new Error('Error creating watchlist \n' + JSON.stringify(response))
+        } else {
+          const userGroup = await ctx.loaders.userGroup.addUserGroup.load({ resourceId: response[0].humanId, participantDetails: watchlist.participantDetails, relatedResources: watchlist.relatedResources })
+          if (userGroup.validationErrors || userGroup.message) {
+            throw new Error('Error creating user group \n' + JSON.stringify(userGroup))
+          }
+        }
+        return _.flatten(response)
+      }))
+      return _.flatten(watchlistResponse)
+    },
+
+    updateWatchlistEntries: async (parent, { watchlistEntries }, ctx) => {
+      watchlistEntries.map(async (watchlist) => {
+        const userGroups = await SPARK_UserGroup.Query.getUserGroups({}, { ids: [watchlist.humanId] }, ctx)
+        if (userGroups.length && !_.isEmpty(userGroups[0].participantDetails)) {
+          const userGroup = await SPARK_UserGroup.Mutation.updateUserGroup(null, { userGroup: { resourceId: watchlist.humanId, participantDetails: watchlist.participantDetails, relatedResources: watchlist.relatedResources } }, ctx)
+          if (userGroup.validationErrors || userGroup.message) {
+            throw new Error('Error Updating user group \n' + JSON.stringify(userGroup))
+          }
+        } else {
+          const userGroup = await ctx.loaders.userGroup.addUserGroup.load({ resourceId: watchlist.humanId, participantDetails: watchlist.participantDetails, relatedResources: watchlist.relatedResources })
+          if (userGroup.validationErrors || userGroup.message) {
+            throw new Error('Error creating user group \n' + JSON.stringify(userGroup))
+          }
+        }
+      })
+      const watchlist = await ctx.loaders.watchlist.updateWatchlistEntries.load(watchlistEntries)
+      if (watchlist.validationErrors || watchlist.message) {
+        throw new Error('Error updating watchlist \n' + JSON.stringify(watchlist))
+      }
+      const attachmentsToRemove = _.compact(_.flatMap(watchlistEntries, 'removedAttachmentIds'))
+      const archiveRequest = _.map(attachmentsToRemove, id => ({ humanId: id, documentId: id }))
+      const permissionJWT = await getUserPermissionsJWT(attachmentsToRemove, ctx)
+      await ctx.loaders.attachment.archiveAttachmentBulkV3(permissionJWT).load({ attachments: archiveRequest })
+      return watchlist
+    },
+
+    cloneFilesForWatchlist: async (parent, { attachmentIds, cloneReference }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(attachmentIds, ctx)
+
+      const response = await Promise.all(
+        attachmentIds.map(async (id, index) => {
+          let cloneReferences = []
+          cloneReferences.push(cloneReference[index])
+          const clones = await ctx.loaders.attachment.cloneAttachmentV3(permissionJWT)
+            .load({ cloneReferences }, id)
+          const cloneCopy = [{ ...clones[0], parentResource: id }]
+          return cloneCopy
+        }))
+
+      return _.flatten(response)
+    },
+  },
+
+  SPARK_Watchlist: {
+    statusId: watchlist => watchlist.status.code,
+    statusName: watchlist => watchlist.status.description,
+    reasonIds: watchlist => _.map(watchlist.reasons, 'code'),
+    reasons: watchlist => _.map(watchlist.reasons, 'description'),
+    attachments: async (watchlist, args, ctx) => ctx.loaders.search.searchAttachmentsByRelatedResource.load(watchlist.humanId),
+    createdBy: (watchlist, args, ctx) => ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(watchlist.createdBy),
+    updatedBy: (watchlist, args, ctx) => ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(watchlist.updatedBy),
+    workspaces: (watchlist, args, ctx) => {
+      const workspaceIds = watchlist.workspaceContext || []
+      if (workspaceIds.length) {
+        return SPARK_WorkspaceV2.Query.getWorkspacesByIdsV2({}, { ids: workspaceIds }, ctx)
+      }
+      return null
+    },
+    participantDetails: async (watchlist, args, ctx) => {
+      const userGroups = await SPARK_UserGroup.Query.getUserGroups({}, { ids: [watchlist.humanId] }, ctx)
+      if (userGroups.length && !_.isEmpty(userGroups[0].participantDetails)) {
+        return userGroups[0].participantDetails
+      }
+      return null
+    },
+    product: (watchlist, args, ctx) =>
+      (watchlist.parentId && watchlist.parentId.indexOf('PID') === 0)
+        ? ctx.loaders.product.getByID.load(watchlist.parentId)
+        : null,
+  },
+
+  SPARK_WatchlistInspection: {
+    actionId: inspection => inspection.action.code,
+    action: inspection => inspection.action.description,
+  },
+
+  SPARK_WatchlistPartner: {
+    partnerName: async (partner, args, ctx) => {
+      if (!partner.partnerId) {
+        return null
+      }
+      const businessPartner = await ctx.loaders.vmm.getByID.load(partner.partnerId)
+      return _.get(businessPartner, 'bpName', '')
+    },
+  },
+}

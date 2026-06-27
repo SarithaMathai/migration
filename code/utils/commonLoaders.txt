@@ -1,0 +1,884 @@
+import qs from 'querystring'
+import _ from 'lodash'
+import { logger } from './../utils/logger'
+import { deepToSnakeCase } from './convertFunctions'
+import { ACCESS_GROUP_TYPES } from '../config/constants'
+import { getAccessControlBatch } from './accessControlUtils'
+import { chunkArray } from '../resolvers/activityLogUtilities/commonUtilities'
+
+export const loadTags = async (ids, ctx) => {
+  const idQueryString = ids.reduce(
+    (queryString, id) =>
+      queryString !== '' ? `${queryString},${id}` : `${id}`,
+    '',
+  )
+  const tags =
+    ids && !!ids.length
+      ? await ctx.loaders.tag.getTags.load({
+        page: 0,
+        size: 10000,
+        ids: idQueryString,
+      })
+      : []
+  return tags.content || []
+}
+
+export const makeTagFromBp = bpId => {
+  return `${bpId}`
+}
+
+export const getACLGroupFromPermissions = (permissions, type, dropped, partnerIds) => {
+  const existingBPGroup = dropped ? _.filter(
+    permissions,
+    permission =>
+      permission.abstractAccessGroup &&
+      permission.abstractAccessGroup.type === type &&
+    permission.droppedIds.some(droppedId => partnerIds.includes(droppedId)),
+  )
+    : _.filter(
+      permissions,
+      permission =>
+        permission.abstractAccessGroup &&
+        permission.abstractAccessGroup.type === type,
+    )
+  if ((type === 'bps' || type === 'MerchVendor' || type === 'FabSupplier') && existingBPGroup[0]) {
+    var withoutDropped = existingBPGroup[0].abstractAccessGroup.grantees.filter(e => !existingBPGroup[0].droppedIds.includes(e))
+    existingBPGroup[0].abstractAccessGroup.grantees = withoutDropped
+    return existingBPGroup[0].abstractAccessGroup
+  } else {
+    return existingBPGroup[0] ? existingBPGroup[0].abstractAccessGroup : null
+  }
+}
+
+export const getDroppedPartnersFromACL = (permissions) => {
+  let grantees = []
+  if (permissions && permissions.length > 0) {
+    permissions.map(perm => {
+      if (perm.abstractAccessGroup.type === 'MerchVendor' || perm.abstractAccessGroup.type === 'bps' || perm.abstractAccessGroup.type === 'dps') {
+        grantees = perm.droppedIds.length ? grantees.concat({ id: perm.droppedIds[0], type: perm.abstractAccessGroup.type === 'dps' ? 5 : 8 }) : grantees
+      }
+    })
+  }
+  return grantees
+}
+
+// Deprecated
+export const addRelationship = async ({
+  ctx,
+  rootId,
+  rootResourceType,
+  nodes,
+  returnObject,
+}) => {
+  try {
+    await ctx.loaders.relationship.create.load({
+      newRelationshipRootDto: {
+        root: rootId,
+        rootResourceType: rootResourceType,
+      },
+      newRelationshipNodeDto: nodes,
+    })
+  } catch (error) {
+    logger.error('Error adding relationships', {}, { error: error })
+  } finally {
+    return returnObject
+  }
+}
+
+export const addBulkRelationShip = async (ctx, relationships) => {
+  let relationship
+  try {
+    relationship = await ctx.loaders.relationship.createBulkRelationship.load(
+      relationships,
+    )
+  } catch (error) {
+    relationship = { error: error, status: 500 }
+    logger.error('Error adding relationships', {}, { error: error })
+  } finally {
+    return relationship
+  }
+}
+
+export const removeRelationship = async ({
+  ctx,
+  rootId,
+  nodes,
+  returnObject,
+}) => {
+  try {
+    await ctx.loaders.relationship.update.load({
+      id: rootId,
+      removeRelationshipDto: nodes,
+    })
+  } catch (error) {
+    logger.error('Error updating relationships', {}, { error: error })
+  } finally {
+    return returnObject
+  }
+}
+
+export const deleteRelationshipResource = async ({ ctx, id }) => {
+  try {
+    await ctx.loaders.relationship.delete.load(id)
+  } catch (error) {
+    logger.error('Error adding relationships', {}, { error: error })
+  }
+}
+
+export const getUserPermissionsJWT = (ids, ctx) => {
+  if (!ids || (ids && Array.isArray(ids) && ids.length === 0)) {
+    return ''
+  }
+  return ctx.loaders.accessControl.getUserAccess.load(ids)
+}
+
+export const getUserPermissionsJWTHelper = async (ids, ctx) => {
+  if (!ids || (ids && Array.isArray(ids) && ids.length === 0)) {
+    return ''
+  }
+  if (ids.length > 50) {
+    return ctx.loaders.accessControl.getUserAccessByPost.load(ids)
+  } else {
+    return ctx.loaders.accessControl.getUserAccess.load(ids)
+  }
+}
+
+export const getUserPermissionsJWTByProxy = ({ id, proxyIds, basePermissions = false }, ctx) => {
+  const queryParam = `${qs.stringify({ resourceIds: id })}&proxyIds=${proxyIds.join(',')}&basePermissions=${basePermissions}`
+  return ctx.loaders.accessControl.getUserAccessByProxy.load(queryParam)
+}
+export const getUserPermissionsJWTByProxyUnencoded = ({ id, proxyIds, basePermissions = false }, ctx) => {
+  const queryParam = `basePermissions=${basePermissions}&encode=false&proxyIds=${proxyIds.join(',')}&${qs.stringify({ resourceIds: id })}`
+  return ctx.loaders.accessControl.getUserAccessByProxyUnencoded.load(queryParam)
+}
+export const associateAttachmentResourcesV3 = async ({
+  ctx,
+  parentId,
+  humanIds,
+  relatedResourceIds,
+  returnObject,
+}) => {
+  try {
+    const permissionJWT = await getUserPermissionsJWT(humanIds, ctx)
+    await ctx.loaders.attachment.associateResourcesV3(permissionJWT).load({
+      parentId: parentId,
+      humanIds: humanIds,
+      relatedResourceIds: relatedResourceIds,
+    })
+  } catch (error) {
+    logger.error('Error adding parent to attachment', {}, { error: error })
+  } finally {
+    return returnObject
+  }
+}
+
+export const removeAccessControlPermissionsV2 = async (
+  ctx,
+  teamIds,
+  bpIds,
+  resourceId,
+) => {
+  const groupsToDelete = []
+  teamIds &&
+    (await Promise.all(
+      teamIds.map(async teamId => {
+        // All Fetch should come from the V2.
+        const jwt = await getUserPermissionsJWT(teamId, ctx)
+        const team = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: [teamId] })
+        const teamDetails = team[0] || {}
+        if (
+          teamDetails &&
+          teamDetails.accessControlGroupIds &&
+          teamDetails.accessControlGroupIds.length > 0
+        ) {
+          teamDetails.accessControlGroupIds.map(groupId => {
+            groupsToDelete.push(groupId)
+          })
+        }
+      }),
+    ))
+
+  await ctx.loaders.accessControl.deleteAccessControlPermission.load({
+    deleteAccessControl: {
+      tags:
+        (bpIds && bpIds.length > 0 && bpIds.map(id => makeTagFromBp(id))) || [],
+      groupIds:
+        (groupsToDelete.length > 0 &&
+          groupsToDelete.filter(group => group !== 'internal')) ||
+        [],
+    },
+    resourceId,
+  })
+}
+
+export const addAccessControlPermissionsV2 = async (
+  ctx,
+  teamIds,
+  bpIds,
+  resourceId,
+  bpPermissionLevel,
+  teamPermissionLevel,
+  resourceName,
+) => {
+  const groupsToAdd = []
+  // Setup teams to add
+  teamIds &&
+    (await Promise.all(
+      teamIds.map(async teamId => {
+        // All Fetch should come from the V2.
+        const jwt = await getUserPermissionsJWT(teamId, ctx)
+        const team = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: [teamId] })
+        const teamDetails = team[0] || {}
+        if (
+          teamDetails &&
+          teamDetails.accessControlGroupIds &&
+          teamDetails.accessControlGroupIds.length > 0
+        ) {
+          teamDetails.accessControlGroupIds.map(groupId => {
+            groupsToAdd.push({
+              groupId: groupId,
+              permissionLevel: teamPermissionLevel,
+            })
+          })
+        }
+      }),
+    ))
+
+  // Setup bps to add
+  const bpsToAdd = []
+  bpIds &&
+    bpIds.map(bpId => {
+      bpsToAdd.push({
+        grantees: [bpId],
+        permissionLevel: bpPermissionLevel,
+        tag: makeTagFromBp(bpId),
+      })
+    })
+  let aclPartnerPermissions
+  if (bpsToAdd.length > 0) {
+    aclPartnerPermissions = {
+      resourceId: resourceId,
+      addAccessControl: {
+        existing:
+          groupsToAdd.length > 0
+            ? groupsToAdd.filter(it => it.groupId !== 'internal')
+            : [],
+        bps: bpsToAdd,
+      },
+    }
+  } else {
+    aclPartnerPermissions = {
+      resourceId: resourceId,
+      addAccessControl: {
+        existing:
+          groupsToAdd.length > 0
+            ? groupsToAdd.filter(it => it.groupId !== 'internal')
+            : [],
+      },
+    }
+  }
+  if (resourceName === 'discussion') {
+    aclPartnerPermissions = { ...aclPartnerPermissions, additionalProperties: { resource_type_key: 'discussion' } }
+  }
+  ctx.loaders.accessControl.addAccessControlPermission.load(aclPartnerPermissions)
+}
+
+export const getPermissions = async (ctx, resourceIds) => {
+  const accessControl = await ctx.loaders.accessControl.getPermissions.load({
+    resourceIds,
+  })
+  return accessControl
+}
+
+export const hasSecurity = async (ctx, resourceId) => {
+  return await ctx.loaders.accessControl.getPermissions.load({
+    resourceIds: [resourceId],
+  }).length > 0
+}
+
+export const createAccessControl = async (
+  ctx,
+  resourceId,
+  partnerIds,
+  userId,
+) => {
+  let existingAccessGroup
+  const businussPartnerAccessGroup = []
+  const userAccessGroup = []
+  if (userId) {
+    userAccessGroup.push({
+      permissionLevel: 'READ_WRITE_DELETE',
+      grantees: [userId],
+    })
+  } else {
+    existingAccessGroup = [{ permissionLevel: 'ADMIN', groupId: 'internal' }]
+    if (partnerIds && partnerIds.length) {
+      businussPartnerAccessGroup.push({
+        permissionLevel: 'READ_WRITE',
+        grantees: partnerIds,
+        tag: makeTagFromBp(partnerIds),
+      })
+    }
+  }
+  const accessControl = await ctx.loaders.accessControl.createAccessControl.load({
+    resourceId: resourceId,
+    ids: userAccessGroup,
+    bps: businussPartnerAccessGroup,
+    existing: existingAccessGroup,
+  })
+  return accessControl
+}
+export const createAccessControlWithExistingGroup = async (
+  ctx,
+  resourceId,
+  group,
+) => {
+  const existingAccessGroup = [{ permissionLevel: 'ADMIN', groupId: 'internal' }]
+  if (!_.isEmpty(group)) {
+    existingAccessGroup.push({
+      permissionLevel: 'READ_WRITE',
+      groupId: group.id,
+    })
+  }
+  await ctx.loaders.accessControl.createAccessControl.load({
+    resourceId: resourceId,
+    existing: existingAccessGroup,
+  })
+}
+export const addPartnerToGroup = async (ctx, groupId, partnerId, resourceName) => {
+  let addAccessGroupIds = {
+    bpIds: [
+      {
+        grantees: partnerId,
+        groupId: groupId,
+      },
+    ],
+  }
+  let aclPartnerPermissions
+  if (resourceName === 'discussion') {
+    aclPartnerPermissions = { ...addAccessGroupIds, additionalProperties: { resource_type_key: 'discussion' } }
+  } else {
+    aclPartnerPermissions = addAccessGroupIds
+  }
+  const bpAccessGroup = await ctx.loaders.accessControl.addAccessGroupIds.load(
+    aclPartnerPermissions,
+  )
+  return bpAccessGroup
+}
+
+export const deletePartnerFromGroup = async (ctx, groupId, partnerId, resourceName) => {
+  let deleteAccessGroupIds = {
+    bpIds: [
+      {
+        revokees: partnerId,
+        groupId: groupId,
+      },
+    ],
+  }
+  let aclPartnerPermissions
+  if (resourceName === 'discussion') {
+    aclPartnerPermissions = { ...deleteAccessGroupIds, additionalProperties: { resource_type_key: 'discussion' } }
+  } else {
+    aclPartnerPermissions = deleteAccessGroupIds
+  }
+  const bpAccessGroup = await ctx.loaders.accessControl.deleteAccessGroupIds.load(
+    aclPartnerPermissions,
+  )
+  return bpAccessGroup
+}
+
+export const addAccessControlDiscussionAttachment = async (
+  ctx,
+  resourceId,
+  attachments,
+  existingBPGroup,
+  userId,
+) => {
+  if (userId) {
+    await Promise.all(
+      attachments.map(async () => {
+        await createAccessControl(ctx, resourceId, null, userId)
+      }),
+    )
+  } else if (existingBPGroup) {
+    await Promise.all(
+      attachments.map(async attachment => {
+        await createAccessControlWithExistingGroup(
+          ctx,
+          attachment.documentId,
+          existingBPGroup.id,
+        )
+      }),
+    )
+  }
+}
+export const getAccessBPGroup = async (ctx, resourceIds) => {
+  let existingBPGroup
+  const accessControl = await ctx.loaders.accessControl.getPermissions.load({
+    resourceIds,
+  })
+  accessControl.map(acl => {
+    existingBPGroup = _.filter(
+      acl.permissions,
+      permission =>
+        permission.abstractAccessGroup &&
+        permission.abstractAccessGroup.type === 'bps',
+    )
+  })
+  return existingBPGroup[0]
+}
+export const getACLPermissions = async (ctx, resourceIds) => {
+  const accessControl = await ctx.loaders.accessControl.getPermissions.load({
+    resourceIds,
+  })
+  return accessControl.map(acl => acl.permissions).shift()
+}
+
+export const getACLPermissionsForResource = async (ctx, resourceId) => {
+  const accessControl = await ctx.loaders.accessControl.getPermissionsForResource.load(resourceId)
+  return accessControl && accessControl.permissions
+}
+
+export const getDroppedACLGroups = async (ctx, resourceIds) => {
+  let droppedGroups = {}
+  const accessControl = await ctx.loaders.accessControl.getPermissions.load({
+    resourceIds,
+  })
+  accessControl.map(acl => {
+    const groups = acl.permissions.filter(perm => {
+      return perm.abstractAccessGroup && perm.abstractAccessGroup.type === 'bps' && !_.isEmpty(perm.droppedIds)
+    })
+    groups.map(group => {
+      var droppedGroup = { [acl.resourceId]: [{
+        permission: group.permission,
+        group_id: group.abstractAccessGroup.id,
+        type: group.abstractAccessGroup.type,
+        dropped_ids: group.droppedIds,
+      }] }
+      droppedGroups = { ...droppedGroups, ...droppedGroup }
+    })
+  })
+  return droppedGroups
+}
+
+export const getAccessUserGroup = async (ctx, resourceIds) => {
+  let existingUserGroup
+  const accessControl = await ctx.loaders.accessControl.getPermissions.load({
+    resourceIds,
+  })
+  accessControl.map(acl => {
+    existingUserGroup = _.filter(
+      acl.permissions,
+      permission =>
+        permission.abstractAccessGroup &&
+        permission.abstractAccessGroup.type === 'ids',
+    )
+  })
+  return existingUserGroup
+}
+
+export const addBulkPermissionToAttachments = async (
+  ctx,
+  bpGroups,
+  attachments,
+) => {
+  const bulkPermissionDTO = []
+  _.forEach(attachments, attachment => {
+    const updatedACLData = {
+      resourceId: attachment.documentId,
+      additionalProperties: {
+        resourceTypeKey: 'attachments',
+      },
+      existing: [
+        {
+          permissionLevel: 'ADMIN',
+          groupId: 'internal',
+        },
+      ],
+    }
+    if (!_.isEmpty(bpGroups)) {
+      bpGroups.forEach(bpGroup => {
+        updatedACLData.existing.push({
+          permissionLevel: 'ADMIN',
+          groupId: bpGroup.id,
+        })
+      })
+    }
+    bulkPermissionDTO.push(updatedACLData)
+  })
+  const accessControl = await ctx.loaders.accessControl.updateAccessControl.load(
+    bulkPermissionDTO,
+  )
+  return accessControl
+}
+
+export const updateAccessControlPermissions = async (
+  ctx,
+  bpGroupId,
+  userGroupId,
+  resourceIds,
+) => {
+  const updateACLAccessDTO = {
+    targetResourceIds: resourceIds,
+    addAclAccessDTO: {
+      existing: [{ permissionLevel: 'ADMIN', groupId: 'internal' }],
+    },
+  }
+  if (!_.isEmpty(bpGroupId)) {
+    updateACLAccessDTO.addAclAccessDTO.existing.push({
+      permissionLevel: 'ADMIN',
+      groupId: bpGroupId,
+    })
+  }
+  if (!_.isEmpty(userGroupId)) {
+    updateACLAccessDTO.addAclAccessDTO.existing.push({
+      permissionLevel: 'ADMIN',
+      groupId: userGroupId,
+    })
+  }
+  const accessControl = await ctx.loaders.accessControl.updateAccessControl.load(
+    updateACLAccessDTO,
+  )
+  return accessControl
+}
+
+export const getChildrenFromRelationshipAsMap = async (
+  ctx,
+  resourceId,
+  type,
+  maxDepth,
+) => {
+  const relationShipTree = await ctx.loaders.relationship.searchByIds.load({
+    id: resourceId,
+    type: type,
+    maxDepth: maxDepth,
+  })
+  let resourceChildrenMap = {}
+  if (relationShipTree.length > 0) {
+    resourceChildrenMap = _.groupBy(relationShipTree[0].nodes, 'type')
+  }
+  return resourceChildrenMap
+}
+/*
+  This API will return a levelwise map for a resourceId
+  say a productId PID-J3GJ and an inputMap as below
+  {
+    discussions:[0,1,2],
+    attachments: [0,1]
+  }
+  The output will be a map as below
+  {
+    discussions:  {   0:[list of discussionIds at level 0],
+                      1:[list of discussionIds at level 1],
+                      2:[list of discussionIds at level 2]   } ,
+    attachments:  {   0:[list of teamIds at level 0],
+                      1:[list of teamIds at level 1]   }
+  }
+ */
+export const getResourceAndLevelWiseChildrenFromRelationship = async (
+  ctx,
+  inputMap,
+  resourceId,
+  type,
+  maxDepth,
+  includeBranches,
+  includeNodeTypes,
+  includeMigratedV3Attachments = false,
+) => {
+  const relationShipTree = await ctx.loaders.relationship.searchByIds.load({
+    id: resourceId,
+    type: type,
+    maxDepth: maxDepth,
+    includeBranches: includeBranches,
+    includeNodeTypes: includeNodeTypes,
+    includeMigratedV3Attachments: includeMigratedV3Attachments,
+  })
+  let levelWiseMap = {}
+  if (relationShipTree.length > 0) {
+    levelWiseMap = _.groupBy(relationShipTree[0].nodes, 'depth')
+  }
+
+  const outputMap = {}
+  for (const [nodeType, nodeDepthList] of Object.entries(inputMap)) {
+    outputMap[nodeType] = {}
+    nodeDepthList.forEach(nodeDepth => {
+      const nodesAtLevel = levelWiseMap[nodeDepth]
+      if (!_.isEmpty(nodesAtLevel)) {
+        levelWiseMap[nodeDepth].forEach(levelNode => {
+          if (levelNode.type === nodeType) {
+            outputMap[nodeType][nodeDepth] =
+              outputMap[nodeType][nodeDepth] || []
+            outputMap[nodeType][nodeDepth].push(levelNode.id)
+          }
+        })
+      }
+    })
+  }
+  return outputMap
+}
+
+/*
+  This method takes a list of resourceIds and a partnerId which must be a number.
+  And also a boolean parameter considerIdGroups which will
+  decide whether to take into consideration IdAccessGroup.
+  This method will fetch all the resource permissions from ACL
+  and will filter and return the partner permissions only
+ */
+
+export const filterResourcesByPartner = async (
+  ctx,
+  resourceIds,
+  partnerId,
+  considerIdGroups,
+  droppedFlag,
+) => {
+  const resources = await getAccessControlBatch(resourceIds, 100, ctx)
+
+  let usersMap = {}
+  if (considerIdGroups) {
+    const userIdSet = new Set()
+    resources.forEach(resource => {
+      resource.permissions &&
+        resource.permissions.forEach(permission => {
+          if (
+            considerIdGroups &&
+            permission.abstractAccessGroup.type === ACCESS_GROUP_TYPES.Ids &&
+            !_.isEmpty(permission.abstractAccessGroup.grantees)
+          ) {
+            permission.abstractAccessGroup.grantees.forEach(item =>
+              userIdSet.add(item),
+            )
+          }
+        })
+    })
+    if (userIdSet.size > 0) {
+      const usersResponse = await ctx.loaders.userAttributes.getUsers.load(
+        {
+          page: 0,
+          size: userIdSet.size,
+          userProfileId: Array.from(userIdSet).join(','),
+        })
+      usersMap = _.keyBy(usersResponse.content, 'userProfileId')
+    }
+  }
+  _.forEach(resources, (resource) => {
+    _.remove(resource.permissions, (permission) => {
+      const permissionGroup = permission.abstractAccessGroup
+      if (droppedFlag) {
+        if ((permissionGroup.type === ACCESS_GROUP_TYPES.Bps || permissionGroup.type === ACCESS_GROUP_TYPES.MerchVendor || permissionGroup.type === ACCESS_GROUP_TYPES.FabricSupplier || permissionGroup.type === ACCESS_GROUP_TYPES.Dps) &&
+              permission.droppedIds && permission.droppedIds.includes(partnerId) &&
+              !_.isEmpty(permissionGroup.grantees) && permissionGroup.grantees.includes(partnerId)) {
+          return false
+        }
+        if (permissionGroup.type === ACCESS_GROUP_TYPES.Ids && considerIdGroups && !_.isEmpty(permission.droppedIds) && !_.isEmpty(permissionGroup.grantees)) {
+          _.remove(permissionGroup.grantees, (userGrantee) => usersMap[userGrantee].partnerId !== partnerId)
+          return permissionGroup.grantees.length === 0
+        }
+      } else {
+        if ((permissionGroup.type === ACCESS_GROUP_TYPES.Bps || permissionGroup.type === ACCESS_GROUP_TYPES.Dps || permissionGroup.type === ACCESS_GROUP_TYPES.MerchVendor || permissionGroup.type === ACCESS_GROUP_TYPES.FabricSupplier) &&
+              permission.droppedIds && !permission.droppedIds.includes(partnerId) &&
+              !_.isEmpty(permissionGroup.grantees) && permissionGroup.grantees.includes(partnerId)) {
+          return false
+        }
+        if (permissionGroup.type === ACCESS_GROUP_TYPES.Ids && considerIdGroups && _.isEmpty(permission.droppedIds) && !_.isEmpty(permissionGroup.grantees)) {
+          _.remove(permissionGroup.grantees, (userGrantee) => usersMap[userGrantee].partnerId !== partnerId)
+          return permissionGroup.grantees.length === 0
+        }
+      }
+      return true
+    })
+  })
+  return _.keyBy(resources, 'resourceId')
+}
+
+/*
+ Assemble query string only if provided, baseUrl may already contain query parameters
+ */
+export const resolveUrl = (baseUrl, params) => {
+  if (typeof baseUrl === 'function') {
+    return baseUrl(params)
+  }
+
+  if (!_.isEmpty(params)) {
+    return `${baseUrl}?${qs.stringify(params, null, null, { encodeURIComponent: qs.escape })}`
+  }
+
+  return baseUrl
+}
+
+export const getPermissionMapForBulkACLCall = (resourcePermissions, partnerId) => {
+  const permissionsMap = {}
+  Object.keys(resourcePermissions).forEach((key) => {
+    const value = resourcePermissions[key]
+
+    if (value && value.permissions.length > 0) {
+      permissionsMap[key] = []
+
+      value.permissions.forEach((permission) => {
+        if (permission.abstractAccessGroup.type === ACCESS_GROUP_TYPES.Bps || permission.abstractAccessGroup.type === ACCESS_GROUP_TYPES.Dps ||
+          permission.abstractAccessGroup.type === ACCESS_GROUP_TYPES.MerchVendor || permission.abstractAccessGroup.type === ACCESS_GROUP_TYPES.FabricSupplier || permission.abstractAccessGroup.type === ACCESS_GROUP_TYPES.Ids) {
+          const droppedPermission = {}
+          droppedPermission.permission = permission.permission
+          droppedPermission.groupId = permission.abstractAccessGroup.id
+          droppedPermission.type = permission.abstractAccessGroup.type
+          if (permission.abstractAccessGroup.type === ACCESS_GROUP_TYPES.Ids) {
+            droppedPermission.droppedIds = permission.abstractAccessGroup.grantees
+          } else {
+            droppedPermission.droppedIds = [parseInt(partnerId)]
+          }
+          permissionsMap[key].push(deepToSnakeCase(droppedPermission))
+        }
+      })
+    }
+  })
+  return permissionsMap
+}
+
+// Changing V2 Team
+export const setAccessControlForResource = async (ctx, resourceIds, teamIds, permissionLevel) => {
+  const bpsToAdd = []
+  const usedBps = []
+
+  teamIds &&
+    (await Promise.all(
+      teamIds.map(async teamId => {
+        const jwt = await getUserPermissionsJWT(teamId, ctx)
+        const team = await ctx.loaders.teamV2.getByIDs(jwt).load({ ids: [teamId] })
+        const teamDetails = team[0] || {}
+        if (teamDetails && teamDetails.businessPartner && teamDetails.teamType !== 'INTERNAL' && !usedBps.includes(teamDetails.businessPartner.partnerId)) {
+          usedBps.push(teamDetails.businessPartner.partnerId)
+          bpsToAdd.push({
+            grantees: [teamDetails.businessPartner.partnerId],
+            permissionLevel,
+            tag: makeTagFromBp(teamDetails.businessPartner.partnerId),
+          })
+        }
+      }),
+    ))
+
+  resourceIds &&
+    (await Promise.all(
+      resourceIds.map(async resourceId => {
+        const result = await getPermissions(ctx, [resourceId])
+        const permissionGroup = result[0].permissions.find(perm => perm.abstractAccessGroup.type === 'bps')
+
+        await ctx.loaders.accessControl.lockResource.load({
+          resourceId,
+          locked: false,
+        })
+        if (!permissionGroup) {
+          await ctx.loaders.accessControl.addAccessControlPermission.load({
+            resourceId: resourceId,
+            addAccessControl: {
+              bps: bpsToAdd,
+            },
+          })
+        } else {
+          await addPartnerToGroup(ctx, permissionGroup, bpsToAdd)
+        }
+      }),
+    ))
+}
+
+export const getFilteredResourceAndLevelWiseChildrenBasedOnPartnerACLPermission = async (
+  ctx,
+  inputMap,
+  productId,
+  partnerId,
+  includeBranches,
+  includeNodeTypes,
+  includeMigratedV3Attachments,
+) => {
+  const commonLoaderOutputMaps = await getResourceAndLevelWiseChildrenFromRelationship(ctx, inputMap, productId, null, null, includeBranches, includeNodeTypes, includeMigratedV3Attachments)
+
+  let totalIdList = []
+  let resourcePermissions
+
+  for (const depthMap of Object.values(commonLoaderOutputMaps)) {
+    for (const idList of Object.values(depthMap)) {
+      totalIdList = [...totalIdList, ...idList]
+    }
+  }
+
+  if (totalIdList.length > 0) {
+    // partner id needs to be a number going into filterResourcesByPartner
+    resourcePermissions = await filterResourcesByPartner(ctx, totalIdList, partnerId, false, false)
+    for (const depthMap of Object.values(commonLoaderOutputMaps)) {
+      for (const idList of Object.values(depthMap)) {
+        _.remove(idList, (id) => !_.get(resourcePermissions, `${id}.permissions`, []).length)
+      }
+    }
+  }
+  return commonLoaderOutputMaps
+}
+// This is a temporary fix to allow chunked arrays for getPermissions
+// load listing should handle this for you
+// TODO: fix getPermissions attaching "resourceIds" before each variable
+const getChunkedPermissions = async (resourceIds, context) => {
+  const chunkedResourceIds = chunkArray(resourceIds)
+
+  const response = await Promise.all(chunkedResourceIds.map(async (chunk) => {
+    if (chunk) {
+      const chunkResources = await context.loaders.accessControl.getPermissions.load({
+
+        resourceIds: chunk, dpSecurity: false,
+      })
+      return chunkResources
+    }
+    return []
+  }))
+  if (response && response.length > 0) {
+    return response.flat()
+  }
+  return []
+}
+
+export const getUnDroppablePartners = async (ctx, productId) => {
+  const resourceIds = await getAssociatedChildrensFromResouceId(ctx, productId)
+  const resources = await getChunkedPermissions(
+    resourceIds, ctx)
+  const nonDPResources = resources.filter(({ permissions }) => {
+    return !permissions.map(perm => perm.abstractAccessGroup.type).includes('dps')
+  })
+
+  return _.uniq(nonDPResources.reduce((ids, permission) => {
+    const grantees = permission.permissions.map(per => per.abstractAccessGroup.grantees)
+    return [...ids, ..._.flatten(grantees).filter(Number)]
+  }, []))
+}
+
+export const getAssociatedChildrensFromResouceId = async (ctx, productId) => {
+  const relationShipTree = await ctx.loaders.relationship.searchByIds.load({
+    id: productId,
+  })
+
+  const relationShipAsMap = _.groupBy(_.get(relationShipTree, '[0].nodes', null), 'type')
+
+  const discussions = relationShipAsMap && relationShipAsMap.discussions ? relationShipAsMap.discussions.map(({ id }) => id) : []
+
+  const attachments = relationShipAsMap && relationShipAsMap.attachments ? relationShipAsMap.attachments.map(({ id }) => id) : []
+
+  const measurementSets = relationShipAsMap && relationShipAsMap.measurement_set ? relationShipAsMap.measurement_set.map(({ id }) => id) : []
+
+  const bomIds = relationShipAsMap && relationShipAsMap.bill_of_materials ? relationShipAsMap.bill_of_materials.map(({ id }) => id) : []
+
+    const packagingBomIds = relationShipAsMap && relationShipAsMap.packaging_bom ? relationShipAsMap.packaging_bom.map(({ id }) => id) : []
+
+  const samples = relationShipAsMap && relationShipAsMap.sample ? relationShipAsMap.sample.map(({ id }) => id) : []
+
+  const claims = relationShipAsMap && relationShipAsMap.claim ? relationShipAsMap.claim.map(({ id }) => id) : []
+
+  return [...discussions, ...attachments, ...bomIds, ...packagingBomIds, ...samples, ...measurementSets, productId, ...claims]
+}
+
+export const getDesignPartner = async (resourceId, ctx) => {
+  let partnerId = []
+  const dpGroup = getACLGroupFromPermissions(
+    await getACLPermissionsForResource(ctx, resourceId), 'dps')
+  if (!_.isEmpty(dpGroup)) {
+    partnerId = dpGroup.grantees
+  } else {
+    partnerId = []
+  }
+  return partnerId
+}

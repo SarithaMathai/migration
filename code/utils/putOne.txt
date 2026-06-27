@@ -1,0 +1,86 @@
+import { Agent } from 'https'
+import { performance } from 'perf_hooks'
+import fetch from 'node-fetch'
+
+import { logger } from './../utils/logger'
+import { resolveUrl } from './commonLoaders'
+import { generateBasicLogContextFromHeaders } from './logging/generateBasicLogContextFromHeaders'
+
+export default function putOne (
+  baseURL,
+  headers,
+  options = {},
+  logContext = {},
+) {
+  const { transform, transformRequest, fetchOptions, skipJsonParse, omitParamsInBody, throwOnError = false } = options
+  const { logContext: defaultLogContext } = generateBasicLogContextFromHeaders(headers)
+  const finalLogContext = { ...logContext, ...defaultLogContext }
+
+  return {
+    load: async body => {
+      let transformedBody = body
+      const url = resolveUrl(baseURL, omitParamsInBody ? {} : body)
+      const method = (fetchOptions && fetchOptions.method) || 'PUT'
+      if (transformRequest) {
+        transformedBody = transformRequest(transformedBody)
+      }
+      const started = performance.now()
+
+      logger.debug('putBody', { body: transformedBody }, finalLogContext)
+      const response = await fetch(url, {
+        agent: /^https:\/\//.test(url)
+          ? new Agent({
+            rejectUnauthorized: false,
+          })
+          : undefined,
+        method,
+        headers: {
+          ...headers,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(transformedBody || body),
+        ...fetchOptions,
+      })
+
+      if (skipJsonParse) {
+        const result = await response.text()
+        logger.logResponse(
+          url,
+          method,
+          response.status,
+          result,
+          finalLogContext,
+          Math.round(performance.now() - started),
+        )
+        return [result]
+      }
+
+      const json = await response.json()
+
+      if (response.status >= 400) {
+        logger.debug('putResponse', { response: json }, finalLogContext)
+        logger.error('putBodyError', { body: transformedBody }, finalLogContext)
+        if (throwOnError) {
+          throw new Error(`Error on Put: Message: ${json.message} Body: ${transformedBody}`)
+        }
+      }
+
+      logger.logResponse(
+        url,
+        method,
+        response.status,
+        json,
+        finalLogContext,
+        Math.round(performance.now() - started),
+      )
+
+      let item = json
+
+      if (transform) {
+        item = transform(json)
+      }
+
+      return item
+    },
+  }
+}

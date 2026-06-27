@@ -1,0 +1,87 @@
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+
+import SparkService from './SparkService'
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import { trainingResourceDocumentContentAdapter } from '../utils/trainingResourceUtils'
+
+export default class TrainingService extends SparkService {
+  constructor (endpoint, headers, logContext, key, confluenceSpaceId) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.getPageId = (id) => {
+      if (id === 'SPRKRT') {
+        return 199349958
+      } else if (id === 'SPARK2020') {
+        return 197362475
+      } else {
+        return 181476290
+      }
+    }
+
+    this.getLabels = postOne(
+      `${this.endpoint}/${this.getPageId(confluenceSpaceId)}`,
+      this.headers,
+      {
+        transformRequest: params => deepToSnakeCase(params),
+      },
+    )
+    this.searchDocuments = postOne(
+      `${this.endpoint}/search`,
+      this.headers,
+      {
+        transformRequest: params => deepToSnakeCase(params),
+        transform: documents => deepToCamelCase(documents),
+      },
+    )
+
+    this.getDocument = postOne(
+      ({ documentId, key }) => `${this.endpoint}/${documentId}?key=${key}`,
+      this.headers,
+      {
+        transformRequest: params => deepToSnakeCase(params),
+        transform: documents => deepToCamelCase(trainingResourceDocumentContentAdapter(documents)),
+
+      },
+
+    )
+
+    this.getDocumentAttachments = loadListing(
+      (pageId) => `${this.endpoint}/attachments_metadata?key=${key}&document_space=${confluenceSpaceId}&document_id=${pageId}`,
+      this.headers,
+      {
+        transformRequest: params => deepToSnakeCase(params),
+        transform: document => deepToCamelCase(document),
+      },
+    )
+
+    this.getImage =
+      loadOne(
+        ([{ imageId, imageName, imageType }]) => `${this.endpoint}/attachments?key=${key}&page_id=${imageId}&attachment_name=${imageName}&image_type=${imageType}&document_space=${confluenceSpaceId}`,
+        {
+          ...this.headers,
+        },
+        {
+          skipJsonParse: true,
+          batch: false,
+        },
+        this.logContext,
+      )
+
+    this.getVideo =
+      loadOne(
+        ([{ videoId, videoName }]) => `${this.endpoint}/videos?key=${key}&metadataLink=true&video_id=${videoId}&video_name=${videoName}&document_space=${confluenceSpaceId}`,
+        {
+          ...this.headers,
+        },
+        {
+          skipJsonParse: true,
+          batch: false,
+        },
+        this.logContext,
+      )
+  }
+}

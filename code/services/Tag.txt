@@ -1,0 +1,148 @@
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import SparkService from './SparkService'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import { find, isUndefined } from 'lodash'
+import deleteOne from '../utils/deleteOne'
+
+export default class TagService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.getTags = loadListing(
+      ({ ids, type, archived }) =>
+        ids
+          ? `${this.endpoint}/spark/v1/tags/search?ids=${ids}`
+          : `${this.endpoint}/spark/v1/tags/search?${
+            isUndefined(archived) ? '' : `archived=${archived}&`
+          }type=${type}&sort=createdTimestamp,desc`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    this.getTag = loadOne(
+      id => `${this.endpoint}/spark/v1/tags/search?ids=${id}`,
+      this.headers,
+      {
+        batched: true, // default behavior, but call it out
+        transform: (ids, json) =>
+          ids.map(id => find(json.content, { id }) || null),
+      },
+      this.logContext,
+    )
+
+    this.getPage = loadListing(
+      ({ page, size }) => `${this.endpoint}/spark/v1/tags?page=${page}&size=${size}&sort=createdTimestamp,desc`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    this.create = postOne(
+      `${this.endpoint}/spark/v1/admin/tags`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: tag => deepToCamelCase(tag),
+        transformRequest: tag => deepToSnakeCase(tag),
+      },
+      this.logContext,
+    )
+
+    this.update = putOne(
+      tag => `${this.endpoint}/spark/v1/admin/tags/${tag.id}`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: tag => deepToCamelCase(tag),
+        transformRequest: tag => deepToSnakeCase(tag),
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    this.search = loadListing(
+      ({ type, archived, page, size, search }) => {
+        let searchUrl = `${this.endpoint}/spark/v1/tags/search?`
+        if (type) {
+          searchUrl = `${searchUrl}type=${type}`
+        }
+        if (type && archived) {
+          searchUrl = `${searchUrl}&archived=${archived}`
+        } else if (archived) {
+          searchUrl = `${searchUrl}archived=${archived}`
+        }
+        if (search) {
+          searchUrl = `${searchUrl}&q=${search}`
+        }
+        return `${searchUrl}&sort=createdTimestamp,desc&page=${page}&size=${size}`
+      },
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    this.getTypes = loadListing(
+      () => `${this.endpoint}/spark/v1/tag_types`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    this.delete = deleteOne(
+      id => `${this.endpoint}/spark/v1/admin/tags/delete/${id}`,
+      {
+        ...this.headers,
+      },
+      {},
+      logContext,
+    )
+
+    this.getTrainingTopicOrder = loadListing(
+      () => `${this.endpoint}/training/v2/order?entity_types=topics`,
+      this.headers,
+      {
+        transform: topics => deepToCamelCase(topics),
+      },
+      this.logContext,
+    )
+
+    this.setTrainingTopicOrder = postOne(
+      `${this.endpoint}/training/v2/order`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: topics => deepToCamelCase(topics),
+        transformRequest: topics => deepToSnakeCase(topics),
+      },
+      this.logContext,
+    )
+
+    this.sendResourceNotifications = postOne(
+      `${this.endpoint}/training/v2/pushNotification`,
+      {
+        ...this.headers,
+      },
+      {
+        transformRequest: topics => deepToSnakeCase(topics),
+      },
+      this.logContext,
+    )
+  }
+}

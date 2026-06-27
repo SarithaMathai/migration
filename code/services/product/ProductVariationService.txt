@@ -1,0 +1,26 @@
+
+import loadListing from '../../utils/loadListing'
+import { deepToCamelCase } from '../../utils/convertFunctions'
+
+export default class ProductVariationService {
+  constructor(endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/product_variation/v1`
+    this.logContext = logContext
+
+    this.getProductVariations = (permissionJWT, productId, statusName, partnerId, workspaceId) => {
+      const params = { status: statusName }
+      if (partnerId !== undefined && partnerId !== null) params.partner_id = partnerId
+      if (workspaceId !== undefined && workspaceId !== null) params.workspace_id = workspaceId
+      return loadListing(
+        `${this.endpoint}/${productId}?${require('querystring').stringify(params)}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        { transform: variations => deepToCamelCase(variations) },
+        this.logContext,
+      )
+    }
+  }
+}
+
+
+ 

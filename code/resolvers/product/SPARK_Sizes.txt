@@ -1,0 +1,20 @@
+import SPARK_Tag from './../SPARK_Tag'
+import NEXUS_Attributes from './../NEXUS_Attributes'
+export default {
+  Query: {
+    searchSparkSizes: async (parent, { nameFilter, size }, ctx) => {
+      const [nexusSizes, customSizes] = await Promise.all([
+        await NEXUS_Attributes.Query.searchSizes(parent, { nameFilter: nameFilter, page: 0, size: size }, ctx),
+        SPARK_Tag.Query.searchTags(parent, { type: 'SIZE', archived: false, search: nameFilter, page: 0, size: size }, ctx),
+      ])
+
+      const sized = [
+        ...(nexusSizes || []).map(nexusSize => ({ ...nexusSize, source: 'Nexus' })),
+        ...(customSizes.content || []).map(customSize => ({ ...customSize, source: 'Spark' })),
+      ]
+
+      return sized.slice(0, size)
+    },
+
+  },
+}

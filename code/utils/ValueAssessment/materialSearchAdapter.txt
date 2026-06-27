@@ -1,0 +1,11 @@
+export const VASearchResultsAdapter = (materials = [], source) => {
+  const parsedResults = []
+  materials.forEach(material => {
+    parsedResults.push({
+      id: material.id,
+      humanId: source === 'va' ? material.requirementId : material.id,
+      description: source === 'va' ? material.description : material.name,
+    })
+  })
+  return parsedResults
+}

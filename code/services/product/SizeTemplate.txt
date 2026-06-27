@@ -1,0 +1,58 @@
+import postOne from '../../utils/postOne'
+import putOne from '../../utils/putOne'
+import loadListing from '../../utils/loadListing'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+
+export default class SizeTemplateService {
+  constructor (endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/size_templates/v1`
+
+    const masterDataEndpoint = `${endpoint}/enterprise_product_development_products/master_data`
+    const sizeCategoryEndpoint = `${masterDataEndpoint}/size_category`
+    const materialTypeEndpoint = `${masterDataEndpoint}/material_type`
+
+    this.addSizeTemplate = (permissionJWT, sizeTemplate) => postOne(`${this.endpoint}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        logContext,
+      }).load(sizeTemplate)
+
+    this.updateSizeTemplate = (permissionJWT, sizeTemplate) => putOne(`${this.endpoint}/${sizeTemplate.id}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        logContext,
+      }).load(sizeTemplate)
+
+    this.getSizeTemplates = (ids) => postOne(`${this.endpoint}/search`,
+      this.headers,
+      {
+        transform: response => deepToCamelCase(response),
+        logContext,
+      }).load(ids)
+
+    this.getSizeCategories = (ids) => {
+      const endpoint = ids && ids.length ? `${sizeCategoryEndpoint}?ids=${ids}` : `${sizeCategoryEndpoint}`
+      return loadListing(endpoint,
+        this.headers, {
+          transform: sizeCategories => {
+            return sizeCategories ? deepToCamelCase(sizeCategories.size_categories) : []
+          },
+          logContext,
+        }).load()
+    }
+
+    this.getMaterialTypes = (ids) => {
+      const endpoint = ids && ids.length ? `${materialTypeEndpoint}?ids=${ids}` : `${materialTypeEndpoint}`
+      return loadListing(endpoint,
+        this.headers, {
+          transform: materialTypes => {
+            return materialTypes ? deepToCamelCase(materialTypes.material_types) : []
+          },
+          logContext,
+        }).load()
+    }
+  }
+}

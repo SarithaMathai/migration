@@ -1,0 +1,735 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import _, { orderBy, get } from 'lodash'
+import {
+  workspaceAssociationHelper,
+  ValidWorkspaceAssociationTypes,
+} from './../../utils/workspaceAssociationHelper'
+import {
+  getTrimSizeValue,
+  getBomSizeCaption,
+  getBusinessPartners,
+  getCurrentUserPermissions,
+  getCreatedBy,
+  getProduct,
+  getWorkspaces,
+  getUpdatedBy,
+  getBomAccess,
+  getMaterialLibraryUom,
+  getBomMaterial,
+  getCountryOfOrigin,
+} from '../../utils/bomUtils'
+
+import { getUserGroup } from '../../utils/Product/userGroupUtils'
+import SPARK_Combination from '../SPARK_Combination'
+import VMM_BusinessPartner from '../VMM_BusinessPartner'
+import { getRelatedSuppliersForMVs } from '../../utils/vmmUtils'
+import BusinessPartnerRole from '../../config/businessPartner'
+import { VMM_ROLE_IDS } from '../../config/constants'
+
+export const MATERIAL_CATEGORY_ID = {
+  COMPONENT: 1,
+  FABRIC: 2,
+  TRIM: 4,
+  OTHER: 5,
+  WASH: 6,
+  HUB: 9,
+  PACKAGING_PAPER: 10,
+  PACKAGING_PLASTIC: 11,
+  PACKAGING_GLASS: 12,
+  PACKAGING_METAL: 13,
+  PACKAGING_UNSPECIFIED: 14,
+  COMBINATION: 15,
+  FABRIC_SPEC: 16,
+  ACRYLIC: 17,
+  RUBBER: 18,
+  WOOD: 19,
+  CERAMIC: 20,
+  SYNTHETIC_MATERIAL: 21,
+  ORGANIC_MATERIAL: 22,
+  PACKAGING_TRIM: 23,
+  STICK: 24,
+}
+
+export const IMPRESSION_TYPE = {
+  BASE: 601,
+  FABRIC: 602,
+  TRIM: 603,
+  WASH: 604,
+  TRIM_ZIPPER: 605,
+}
+
+const PRODUCT_HUB_MATERIAL_BOM_TYPE = { code: 1, description: 'Product' }
+
+const searchMaterialById = async (variableName, detail, ctx) => {
+  const id = get(detail, `${variableName}.id`, null)
+  if (id) {
+    const material = ctx.loaders.search.getMaterialByIds.load(id)
+    return material
+  }
+}
+
+const getMaterialHubResource = async (material, ctx) => {
+  const matId = get(material, 'libraryResource.id') || null
+  if (matId) {
+    const permissionJWT = await getUserPermissionsJWT(matId, ctx)
+    const materialHubData = await ctx.loaders.materialHub
+      .getHubMaterial(permissionJWT)
+      .load(matId)
+    return materialHubData
+  }
+}
+
+export default {
+  Query: {
+    getBomByIds: async (parent, { ids }, ctx) => {
+      if (ids.length === 0) {
+        return []
+      }
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.bom.getBomByIds(permissionJWT, ids)
+    },
+    getBomDataV2: async (parent, { ids }, ctx) => {
+      if (ids.length === 0) {
+        return []
+      }
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.bom.getBomByIds(permissionJWT, ids)
+    },
+    getBomStatus: (parent, { }, ctx) => ctx.loaders.bom.getBomStatus(),
+    getBomByParentId: async (parent, { parentId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(parentId, ctx)
+
+      const boms = await ctx.loaders.bom.getActiveBomsByProductId(permissionJWT, parentId)
+
+      return {
+        content: orderBy(
+          boms,
+          ({ createdAt }) => new Date(createdAt),
+          'desc',
+        ),
+      }
+    },
+    getBomMaterialTypes: async (parent, { ids }, ctx) => {
+      let materialTypes = []
+      const bomMaterialTypes = await ctx.loaders.bom.getBomMaterialTypes(ids)
+      const materialHubTypes = await ctx.loaders.materialHub.getHubMaterialTypes.load()
+      materialTypes = materialTypes.concat(bomMaterialTypes)
+      materialTypes = materialTypes.concat(
+        materialHubTypes.map(type => {
+          return {
+            code: 9,
+            description: type,
+            bomType: PRODUCT_HUB_MATERIAL_BOM_TYPE,
+            libraryLink: true,
+            freeText: true,
+          }
+        }),
+      )
+
+      return materialTypes
+    },
+    getBomPackagingMaterialTypes: async (parent, {}, ctx) => {
+      return ctx.loaders.bom.getBomPackagingMaterialTypes()
+    },
+    getBomPackagingSubstrates: async (parent, {}, ctx) => {
+      return ctx.loaders.bom.getBomPackagingSubstrates()
+    },
+    getBomPackagingUnitOfMeasure: async (parent, {}, ctx) => {
+      return ctx.loaders.bom.getBomPackagingUnitOfMeasure()
+    },
+    getBomElastic: async (parent, query, ctx) => {
+      let { content: boms = [] } = await ctx.loaders.search.getBomElastic.load(query)
+      return boms
+    },
+    searchMaterialsBom: async (
+      parent,
+      { searchString, materialType, partnerIds, internalOnly, excludedTypes, size, sortField, sortDirection, nestedSearchFilters = [] },
+      ctx,
+    ) => {
+      const fabricSuppliers = await VMM_BusinessPartner.Query.getRelatedFabricSuppliersByMerchVendors(null, { merchVendorIds: partnerIds }, ctx)
+
+      const queryPayload = {
+        q: searchString,
+        type: materialType,
+        fabricSuppliers,
+        partnerIds,
+        internalOnly,
+        excludedTypes,
+        size,
+        sortField,
+        sortDirection,
+      }
+
+      if (nestedSearchFilters && nestedSearchFilters.length > 0) {
+        nestedSearchFilters.forEach((item, index) => {
+          queryPayload[`nestedSearchFilters[${index}].type`] = item.type
+          queryPayload[`nestedSearchFilters[${index}].fieldPath`] = item.fieldPath
+          queryPayload[`nestedSearchFilters[${index}].nestedFieldPath`] = item.nestedFieldPath
+          queryPayload[`nestedSearchFilters[${index}].operator`] = item.operator
+          queryPayload[`nestedSearchFilters[${index}].values`] = item.values
+        })
+
+        delete queryPayload.nestedSearchFilters
+      }
+
+      return ctx.loaders.search.searchMaterialsBom.load(queryPayload)
+    },
+    getValidTrimSuppliersForBom: async (parent, { merchVendorIds }, ctx) => {
+      const relatedTrimSuppliersForMV = await getRelatedSuppliersForMVs(ctx, merchVendorIds, [BusinessPartnerRole.TRIM_SUPPLIER.code])
+      return relatedTrimSuppliersForMV
+    },
+    getValidRawMaterialSuppliersForBom: async (parent, { merchVendorIds }, ctx) => {
+      const relatedRawMaterialSuppliersForMV = await getRelatedSuppliersForMVs(
+        ctx,
+        merchVendorIds,
+        [VMM_ROLE_IDS.RAW_MATERIAL_SUPPLIER, VMM_ROLE_IDS.FABRIC_SUPPLIER, VMM_ROLE_IDS.TRIM_SUPPLIER],
+      )
+      return relatedRawMaterialSuppliersForMV
+    },
+    getComboSupplierForBom: async (
+      parent,
+      { comboId, partnerIds },
+      ctx,
+    ) => {
+      const fabricSpecCombos = await SPARK_Combination.Query.searchFabricSpecCombos(null, { q: `parentComboId:${comboId}`, page: 0, size: 100 }, ctx)
+      const suppliers = []
+      if (fabricSpecCombos && fabricSpecCombos.content && fabricSpecCombos.content.length > 0) {
+        const filteredFabricSpecCombos = fabricSpecCombos.content.filter(fabricSpecCombo => (fabricSpecCombo.fsId &&
+          ((partnerIds && partnerIds.length > 0 && fabricSpecCombo && fabricSpecCombo.mvIds && fabricSpecCombo.mvIds.length === 1 && partnerIds.includes(fabricSpecCombo.mvIds[0])) ||
+            !partnerIds || partnerIds.length === 0)))
+        await Promise.all(filteredFabricSpecCombos.map(async fabricSpecCombo => {
+          await ctx.loaders.vmm.getByID.load(fabricSpecCombo.fsId)
+            .then(fs => {
+              if (fs.bpName) {
+                suppliers.push({
+                  fabricSupplier: {
+                    id: fabricSpecCombo.fsId,
+                    name: fs.bpName,
+                  },
+                  fabricSpecCombo: fabricSpecCombo,
+                })
+              }
+            })
+        }))
+      }
+      return suppliers
+    },
+  },
+  Mutation: {
+    addBom: async (parent, { sparkBom }, ctx) => {
+      const bom = await ctx.loaders.bom.addBom(sparkBom)
+
+      if (bom.validationErrors || bom.message) {
+        throw new Error('Error creating bom \n' + JSON.stringify(bom))
+      }
+      return bom
+    },
+    updateBom: async (parent, { sparkBom }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sparkBom.humanId, ctx)
+      if (
+        sparkBom.workspaceContext &&
+        (sparkBom.workspaceContext.addWorkspaces.length > 0 ||
+          sparkBom.workspaceContext.removeWorkspaces.length > 0)
+      ) {
+        await workspaceAssociationHelper(
+          ValidWorkspaceAssociationTypes.BOM,
+          sparkBom.humanId,
+          sparkBom.workspaceContext.addWorkspaces,
+          sparkBom.workspaceContext.removeWorkspaces,
+          ctx,
+        )
+      }
+      const bom = await ctx.loaders.bom.updateBom(permissionJWT, sparkBom)
+      if (bom.validationErrors || bom.message) {
+        throw new Error('Error updating bom \n' + JSON.stringify(bom))
+      }
+      if (sparkBom.businessPartners) {
+        await ctx.loaders.bom.updatePermissions(permissionJWT).load(sparkBom)
+      }
+      return bom
+    },
+    manageBomWorkspaces: async (
+      parent,
+      { bomId, workspacesToAdd = [], workspacesToRemove = [] },
+      ctx,
+    ) => {
+      let result
+      if (workspacesToAdd.length > 0 || workspacesToRemove.length > 0) {
+        result = await workspaceAssociationHelper(
+          ValidWorkspaceAssociationTypes.BOM,
+          bomId,
+          workspacesToAdd,
+          workspacesToRemove,
+          ctx,
+        )
+      }
+      return result
+    },
+    lockBom: async (parent, { bomId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(bomId, ctx)
+      return ctx.loaders.bom.lockBom(permissionJWT, bomId)
+    },
+    unlockBom: async (parent, { bomId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(bomId, ctx)
+      return ctx.loaders.bom.unlockBom(permissionJWT, bomId)
+    },
+  updateBomComponentStatus: (parent, { productId, ids, status }, ctx) =>
+      ctx.loaders.bom.updateBomComponentStatus({productId, ids, status}),
+  },
+
+  SPARK_Bom: {
+    humanId: (bom) => bom.humanId || bom.id,
+    access: async (bom, args, ctx) => getBomAccess(bom, args, ctx),
+    businessPartners: async (bom, args, ctx) =>
+      getBusinessPartners(bom, args, ctx),
+    currentUserPermissions: (bom, args, ctx) =>
+      getCurrentUserPermissions(bom, args, ctx),
+    createdBy: async (bom, args, ctx) => getCreatedBy(bom, args, ctx),
+    product: (bom, args, ctx) => getProduct(bom, args, ctx),
+    workspaces: (bom, args, ctx) => getWorkspaces(bom, args, ctx),
+    updatedBy: async (bom, args, ctx) => getUpdatedBy(bom, args, ctx),
+    participantDetails: async (bom, args, ctx) =>
+      getUserGroup(ctx, bom.humanId || bom.id),
+  },
+  SPARK_Bom_Unified: {
+    humanId: (bom) => bom.humanId || bom.id,
+    access: async (bom, args, ctx) => getBomAccess(bom, args, ctx),
+    businessPartners: async (bom, args, ctx) =>
+      getBusinessPartners(bom, args, ctx),
+    currentUserPermissions: (bom, args, ctx) =>
+      getCurrentUserPermissions(bom, args, ctx),
+    createdBy: (bom, args, ctx) => getCreatedBy(bom, args, ctx),
+    product: (bom, args, ctx) => getProduct(bom, args, ctx),
+    workspaces: (bom, args, ctx) => getWorkspaces(bom, args, ctx),
+    updatedBy: (bom, args, ctx) => getUpdatedBy(bom, args, ctx),
+    participantDetails: async (bom, args, ctx) =>
+      getUserGroup(ctx, bom.humanId || bom.id),
+  },
+  SPARK_BomMaterial_Unified: {
+    libraryResourceId: material => get(material, 'libraryResource.id', null),
+    libraryResource: async (material, args, ctx) =>
+      getBomMaterial(material, args, ctx),
+    materialLibraryUom: async (material, args, ctx) =>
+      getMaterialLibraryUom(material, args, ctx),
+  },
+  SPARK_BomMaterialInterface: {
+    __resolveType: (material) => {
+      const materialCode = material.materialCategory?.code || ''
+      switch (materialCode) {
+        case MATERIAL_CATEGORY_ID.TRIM:
+          return 'SPARK_BomTrimMaterial'
+        case MATERIAL_CATEGORY_ID.WASH:
+          return 'SPARK_BomWashMaterial'
+        case MATERIAL_CATEGORY_ID.FABRIC:
+          return 'SPARK_BomFabricMaterial'
+        case MATERIAL_CATEGORY_ID.COMBINATION:
+          return 'SPARK_BomCombinationMaterial'
+        case MATERIAL_CATEGORY_ID.FABRIC_SPEC:
+          return 'SPARK_BomFabricSpecMaterial'
+        case MATERIAL_CATEGORY_ID.PACKAGING_PAPER:
+        case MATERIAL_CATEGORY_ID.PACKAGING_PLASTIC:
+        case MATERIAL_CATEGORY_ID.PACKAGING_METAL:
+        case MATERIAL_CATEGORY_ID.PACKAGING_GLASS:
+        case MATERIAL_CATEGORY_ID.PACKAGING_UNSPECIFIED:
+        case MATERIAL_CATEGORY_ID.ACRYLIC:
+        case MATERIAL_CATEGORY_ID.RUBBER:
+        case MATERIAL_CATEGORY_ID.WOOD:
+        case MATERIAL_CATEGORY_ID.CERAMIC:
+        case MATERIAL_CATEGORY_ID.SYNTHETIC_MATERIAL:
+        case MATERIAL_CATEGORY_ID.ORGANIC_MATERIAL:
+        case MATERIAL_CATEGORY_ID.PACKAGING_TRIM:
+        case MATERIAL_CATEGORY_ID.STICK:
+          return 'SPARK_BomPackagingMaterial'
+        default:
+          return 'SPARK_BomMaterial'
+      }
+    },
+  },
+  SPARK_BomMaterial: {
+    impressionDetails: material => material.impressions,
+    libraryResourceId: material => get(material, 'libraryResource.id', null),
+    libraryResource: (material, args, ctx) => getMaterialHubResource(material, ctx),
+    genericMaterialType: async (material, args, ctx) => {
+      const libraryResource = await getMaterialHubResource(material, ctx)
+      if (libraryResource) {
+        if (libraryResource.baseMaterial?.relatedMaterialType && libraryResource.baseMaterial.relatedMaterialType !== material.genericMaterialType) {
+          return libraryResource.baseMaterial.relatedMaterialType
+        } else {
+          return material.genericMaterialType
+        }
+      } else {
+        return material.genericMaterialType
+      }
+    },
+    countryOfOrigin: async (material, args, ctx) => getCountryOfOrigin(material, ctx),
+    parentLibraryResourceId: material => get(material, 'parentLibraryResource.id', null),
+    origins: async (material, args, ctx) => {
+      const originMap = await getCodedOptions('Origin', ctx)
+
+      const materialOrigins = material.origins || []
+      return materialOrigins.filter(element => (element.origin && originMap.get(String(element.origin))))
+        .map(element => ({ origin: { code: element.origin, description: originMap.get(String(element.origin)) }, percentage: element.percentage }))
+    },
+    certifications: async (material, args, ctx) => {
+      const certificationsMap = await getCodedOptions('Certification', ctx)
+      const materialCertifications = material.certifications || []
+      return materialCertifications.filter(element => (element && certificationsMap.get(String(element))))
+        .map(element => ({ code: element, description: certificationsMap.get(String(element)) }))
+    },
+    weight: (material, args, ctx) => getMaterialWeight(material, ctx),
+    sizeUnitOfMeasure: (material, args, ctx) => getValueWithMaterialHubUom(material && material.size, material && material.sizeUomId, ctx),
+  },
+  SPARK_BomPackagingMaterial: {
+    impressionDetails: material => material.impressions,
+    countryOfOrigin: async (material, args, ctx) => getCountryOfOrigin(material, ctx),
+  },
+  SPARK_BomFabricMaterial: {
+    impressionDetails: material => material.impressions,
+    libraryResourceId: material => get(material, 'libraryResource.id', null),
+    libraryResource: async (material, args, ctx) => {
+      const fscId = get(material, 'libraryResource.id') || null
+      if (fscId) {
+        const fabricSpecComboSearch = await ctx.loaders.search.searchFabricSpecCombos.load(
+          { q: `id:${fscId}`, page: 0, size: 1 },
+        )
+        return get(fabricSpecComboSearch, 'content[0]') || { id: fscId }
+      }
+    },
+    weight: (material, args, ctx) => getMaterialWeight(material, ctx),
+    countryOfOrigin: async (material, args, ctx) => getCountryOfOrigin(material, ctx),
+  },
+  SPARK_BomFabricSpecMaterial: {
+    impressionDetails: material => material.impressions,
+    libraryResourceId: material => get(material, 'libraryResource.id', null),
+    libraryResource: async (material, args, ctx) => {
+      const fabricSpecId = get(material, 'libraryResource.id') || null
+      if (fabricSpecId) {
+        const fabricSpec = await ctx.loaders.fabric.getSpecificationByID.load(fabricSpecId)
+        return fabricSpec || { id: fabricSpecId}
+      }
+    },
+    weight: (material, args, ctx) => getMaterialWeight(material, ctx),
+    countryOfOrigin: async (material, args, ctx) => getCountryOfOrigin(material, ctx),
+  },
+  SPARK_BomCombinationMaterial: {
+    libraryResourceId: material => get(material, 'libraryResource.id', null),
+    libraryResource: async (material, args, ctx) => {
+      const combinationId = get(material, 'libraryResource.id') || null
+      if (combinationId) {
+        const combination = await ctx.loaders.combination.getById.load(combinationId)
+        return combination || { id: combinationId }
+      }
+    },
+    weight: (material, args, ctx) => getMaterialWeight(material, ctx),
+    countryOfOrigin: async (material, args, ctx) => getCountryOfOrigin(material, ctx),
+  },
+  SPARK_BomTrimMaterial: {
+    impressionDetails: material => material.impressions,
+    libraryResourceId: material => get(material, 'libraryResource.id', null),
+    libraryResource: async (material, args, ctx) => {
+      const trimId = get(material, 'libraryResource.id') || null
+      if (trimId) {
+        const trimResult = await ctx.loaders.trim.getTrimBatch.load(trimId)
+        return trimResult || { id: trimId }
+      }
+    },
+    materialLibraryUom: async (material, args, ctx) => {
+      if (material.materialLibraryUomId) {
+        const uoms = await ctx.loaders.trim.getTrimUnitOfMeasures.load()
+        return (
+          uoms &&
+          uoms.find(
+            uom => uom.code === material.materialLibraryUomId.toString(),
+          )
+        )
+      }
+    },
+    sizeValue: async (material, args, ctx) => {
+      const trimId = get(material, 'libraryResource.id') || null
+      let trim = null
+      if (trimId) {
+        trim = await ctx.loaders.trim.getTrimBatch.load(trimId)
+      }
+      const matchingSize = ((trim && trim.trimSizes) || []).find(
+        size => size.sizeId === material.librarySizeId,
+      )
+      const trimType = trim && trim.trimType && trim.trimType.code
+      const trimSubType =
+        trim &&
+        trim.trimSubType &&
+        trim.trimSubType[0] &&
+        trim.trimSubType[0].code
+      if (matchingSize) {
+        return getTrimSizeValue(trimType, trimSubType, matchingSize)
+      }
+    },
+    sizeCaption: async (material, args, ctx) => {
+      const trimId = get(material, 'libraryResource.id') || null
+      let trim = null
+      if (trimId) {
+        trim = await ctx.loaders.trim.getTrimBatch.load(trimId)
+      }
+      const matchingSize = ((trim && trim.trimSizes) || []).find(
+        size => size.sizeId === material.librarySizeId,
+      )
+      return getBomSizeCaption(trim, matchingSize || {})
+    },
+    facilityName: async (material, args, ctx) => {
+      const trimId = get(material, 'libraryResource.id') || null
+      if (trimId && !material.facilityName) {
+        const libraryResource = await ctx.loaders.trim.getTrimBatch.load(
+          trimId,
+        )
+        const supplier = _.find(libraryResource?.suppliers, {
+          supplierId: material?.supplierId,
+        })
+        const facility = _.find(supplier?.facilities, {
+          facilityId: material?.facilityId,
+        })
+        if (facility?.facilityId) {
+          const vmmFacility = await ctx.loaders.location
+            .getLocationById(facility?.facilityId)
+            .load()
+          return vmmFacility.name
+        }
+        return null
+      }
+
+      return material.facilityName
+    },
+    weight: (material, args, ctx) => getMaterialWeight(material, ctx),
+    countryOfOrigin: async (material, args, ctx) => getCountryOfOrigin(material, ctx),
+  },
+  SPARK_BomWashMaterial: {
+    impressionDetails: material => material.impressions,
+    libraryResourceId: material => get(material, 'libraryResource.id', null),
+    libraryResource: async (material, args, ctx) => {
+      const washId = get(material, 'libraryResource.id') || null
+      if (washId) {
+        const permissionJWT = await getUserPermissionsJWT(washId, ctx)
+        const wash = await ctx.loaders.wash.getWash(permissionJWT).load(washId)
+        return wash || { id: washId }
+      }
+    },
+    weight: (material, args, ctx) => getMaterialWeight(material, ctx),
+    countryOfOrigin: async (material, args, ctx) => getCountryOfOrigin(material, ctx),
+  },
+  SPARK_BomImpressionDetailsInterface: {
+    __resolveType: (impression) => {
+      switch (impression.type) {
+        case IMPRESSION_TYPE.TRIM:
+          return 'SPARK_BomTrimLibraryImpressionDetails'
+        case IMPRESSION_TYPE.TRIM_ZIPPER:
+          return 'SPARK_BomTrimZipperLibraryImpressionDetails'
+        case IMPRESSION_TYPE.WASH:
+          return 'SPARK_BomWashLibraryImpressionDetails'
+        case IMPRESSION_TYPE.FABRIC:
+          return 'SPARK_BomFabricLibraryImpressionDetails'
+        default:
+          return 'SPARK_BomBaseImpressionDetails'
+      }
+    },
+  },
+  SPARK_BomImpressionDetails_Unified: {
+    libraryResource: async (detail, args, ctx) => {
+      if (ctx.currentUser.internal) {
+        return searchMaterialById('libraryResource', detail, ctx)
+      } else {
+        const bomIds = args.ids
+        const libraryResourceId = get(detail, 'libraryResource.id', null)
+        if (!libraryResourceId) {
+          return null
+        }
+        const permissionJWT = await getUserPermissionsJWT(bomIds, ctx)
+        const materials = await ctx.loaders.search
+          .searchMaterialsByProxyIds(permissionJWT)
+          .load({
+            q: `id:(${libraryResourceId})`,
+            proxyIds: bomIds,
+            page: 0,
+            size: 1,
+          })
+        const material = get(materials, 'content.[0]', { id: libraryResourceId })
+        return material
+      }
+    },
+    groundColor: (detail, args, ctx) =>
+      searchMaterialById('groundColor', detail, ctx),
+    textColor: (detail, args, ctx) =>
+      searchMaterialById('textColor', detail, ctx),
+    sliderColor: (detail, args, ctx) =>
+      searchMaterialById('sliderColor', detail, ctx),
+    tapeColor: (detail, args, ctx) =>
+      searchMaterialById('tapeColor', detail, ctx),
+    teethColor: (detail, args, ctx) =>
+      searchMaterialById('teethColor', detail, ctx),
+  },
+  SPARK_BomFabricLibraryImpressionDetails: {
+    libraryResource: async (detail, args, ctx) => {
+      if (ctx.currentUser.internal) {
+        return searchMaterialById('libraryResource', detail, ctx)
+      } else {
+        const bomIds = args.ids
+        const libraryResourceId = get(detail, 'libraryResource.id', null)
+        if (!libraryResourceId) {
+          return null
+        }
+        const permissionJWT = await getUserPermissionsJWT(bomIds, ctx)
+        const materials = await ctx.loaders.search
+          .searchMaterialsByProxyIds(permissionJWT)
+          .load({
+            q: `id:(${libraryResourceId})`,
+            proxyIds: bomIds,
+            page: 0,
+            size: 1,
+          })
+        const material = get(materials, 'content.[0]', { id: libraryResourceId })
+        return material
+      }
+    },
+  },
+  SPARK_BomTrimLibraryImpressionDetails: {
+    libraryResource: async (detail, args, ctx) => {
+      if (ctx.currentUser.internal) {
+        return searchMaterialById('libraryResource', detail, ctx)
+      } else {
+        const bomIds = args.ids
+        const libraryResourceId = get(detail, 'libraryResource.id', null)
+        if (!libraryResourceId) {
+          return null
+        }
+        const permissionJWT = await getUserPermissionsJWT(bomIds, ctx)
+        const materials = await ctx.loaders.search
+          .searchMaterialsByProxyIds(permissionJWT)
+          .load({
+            q: `id:(${libraryResourceId})`,
+            proxyIds: bomIds,
+            page: 0,
+            size: 1,
+          })
+        const material = get(materials, 'content.[0]', { id: libraryResourceId })
+        return material
+      }
+    },
+    groundColor: (detail, args, ctx) =>
+      searchMaterialById('groundColor', detail, ctx),
+    textColor: (detail, args, ctx) =>
+      searchMaterialById('textColor', detail, ctx),
+  },
+
+  SPARK_BomTrimZipperLibraryImpressionDetails: {
+    sliderColor: (detail, args, ctx) =>
+      searchMaterialById('sliderColor', detail, ctx),
+    tapeColor: (detail, args, ctx) =>
+      searchMaterialById('tapeColor', detail, ctx),
+    teethColor: (detail, args, ctx) =>
+      searchMaterialById('teethColor', detail, ctx),
+  },
+
+  SPARK_BomMaterialType: {
+    id: (detail) => `${detail.code}_${detail.description}`,
+  },
+
+  SPARK_BomMaterialSearch: {
+    paging: searchResults => searchResults,
+  },
+
+  SPARK_BomMaterialSearchResult: {
+    description: (detail) => detail.description || detail.name,
+    status: (detail) =>
+      (detail.status && detail.status.description) || detail.status,
+    fabricSpec: async (detail, args, ctx) => {
+      if (detail.type !== 'fabric_spec_combo' || !detail.fabricSpecId) {
+        return null
+      }
+      return ctx.loaders.fabric.getSpecificationByID.load(detail.fabricSpecId)
+    },
+    fabric: async (detail, args, ctx) => {
+      const fabricRecordHumanId = detail.fabricRecordHumanId
+      if (detail.type === 'combination' && fabricRecordHumanId) {
+        const permissionJWT = await getUserPermissionsJWT(fabricRecordHumanId, ctx)
+        return ctx.loaders.fabric.getByID(permissionJWT).load(fabricRecordHumanId)
+      }
+    },
+    fabricId: async (detail) => {
+      const fabricRecordHumanId = detail.fabricRecordHumanId
+      if (detail.type === 'combination' && fabricRecordHumanId) {
+        return fabricRecordHumanId
+      }
+    },
+    relatedMaterials: async (detail, args, ctx) => {
+      if (ctx.currentUser.internal) {
+        if (detail.type === 'fabric_spec_combo') {
+          const buckets = _.uniq(
+            detail.intentLineIds.map(lineId => lineId.split('.')[0]),
+          )
+          if (buckets && buckets.length > 0) {
+            const paddedBuckets = buckets.map(bucket => `"${bucket}"`)
+            return ctx.loaders.search.getPage.load({
+              q: `relatedAssetIds:(${paddedBuckets.join(' OR ')})`,
+              page: 0,
+              size: 300,
+            })
+          } else {
+            return null
+          }
+        }
+        return null
+      } else {
+        if (
+          detail.type === 'fabric_spec_combo' &&
+          detail.intentLineIds &&
+          detail.intentLineIds.length > 0
+        ) {
+          const buckets = _.uniq(
+            detail.intentLineIds.map(lineId => lineId.split('.')[0]),
+          )
+          const paddedBuckets = buckets.map(bucket => `"${bucket}"`)
+          const permissionJWT = await getUserPermissionsJWT(
+            detail.intentLineIds,
+            ctx,
+          )
+          const proxyIds = detail.intentLineIds
+          proxyIds.push(detail.parentComboId)
+          return ctx.loaders.search
+            .searchMaterialsByProxyIds(permissionJWT)
+            .load({
+              q: `relatedAssetIds:(${paddedBuckets.join(' OR ')})`,
+              proxyIds: proxyIds,
+              page: 0,
+              size: 300,
+            })
+        } else {
+          return null
+        }
+      }
+    },
+  },
+}
+
+export async function getMaterialWeight (material, ctx) {
+  if (material && material.weight) {
+    const MATERIAL_WEIGHT_IN_GRAM_CODE = 23
+    const weightUomId = material && material.weightUomId ? material.weightUomId : MATERIAL_WEIGHT_IN_GRAM_CODE
+    const uoms = await ctx.loaders.materialHub.getHubUnitsOfMeasure.load()
+    const uom = uoms && uoms.find(uom => uom.code === weightUomId)
+    return { value: material.weight, unitOfMeasure: uom }
+  }
+  return null
+}
+
+export async function getValueWithMaterialHubUom (value, unitOfMeasureCode, ctx) {
+  if (value && unitOfMeasureCode) {
+    const uoms = await ctx.loaders.materialHub.getHubUnitsOfMeasure.load()
+    const uom = uoms && uoms.find(uom => uom.code === unitOfMeasureCode)
+    return { value, unitOfMeasure: uom }
+  }
+  return null
+}
+
+export async function getCodedOptions (type, ctx) {
+  const options = await ctx.loaders.materialHub.getHubCodedOptions.load(type) || []
+  const datamap = new Map()
+  options.forEach((option) => datamap.set(option.code, option.description))
+  return datamap
+}

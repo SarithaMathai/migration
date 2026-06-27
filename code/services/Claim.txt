@@ -1,0 +1,151 @@
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import postOne from '../utils/postOne'
+import SparkService from './SparkService'
+import loadListing from '../utils/loadListing'
+import putOne from '../utils/putOne'
+import loadOne from '../utils/loadOne'
+import { ManageWorkspaceActions } from '../utils/workspaceAssociationHelper'
+import qs from 'querystring'
+
+export default class ClaimService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.create = postOne(
+      this.endpoint,
+      {
+        ...this.headers,
+      },
+      {
+        transform: claim => deepToCamelCase(claim),
+        transformRequest: claim => deepToSnakeCase(claim),
+      },
+      this.logContext,
+    )
+    this.getClaims = loadListing(
+      `${this.endpoint}`,
+      this.headers,
+      {
+        transform: claim => deepToCamelCase(claim),
+        transformRequest: claim => deepToSnakeCase(claim),
+      },
+      this.logContext,
+    )
+    this.getClaimsByIds = (permissionJWT, ids) => {
+      return loadListing(`${this.endpoint}/search?claimIds=${ids}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: claims => deepToCamelCase(claims),
+        }, this.logContext).load()
+    }
+
+    this.getClaimVersionsById = (permissionJWT, id) => {
+      return loadListing(
+        `${this.endpoint}/${id}/versions`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: measurements => deepToCamelCase(measurements),
+        }, logContext,
+      ).load()
+    }
+
+    this.getClaimVersion = (params) => {
+      return loadOne(
+        () => `${this.endpoint}/${params.id}/versions/${params.version}`,
+        this.headers,
+        {
+          transform: (ids, json) => [deepToCamelCase(json)],
+          fetchAclToken: true,
+          batch: false,
+          aclIds: [params.id],
+        },
+        this.logContext,
+      )
+    }
+
+    this.updateClaim = (permissionJWT, claim) => putOne(`${this.endpoint}/${claim.humanId}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      }, this.logContext).load(claim)
+
+    this.bulkUpdateClaim = (claim) => putOne(`${this.endpoint}/bulk-update`,
+      { ...this.headers }, {
+        transform: data => data && deepToSnakeCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      }, this.logContext).load(claim)
+
+    this.getCommunicationChannels = loadListing(
+      `${this.endpoint}/communication-channels`,
+      this.headers,
+      {
+        getDataLoader: () => this.getByID,
+      },
+      this.logContext,
+    )
+
+    this.manageWorkspaceAssociations = (claimId, action, permissionJwt) => {
+      const endpoint = action === ManageWorkspaceActions.DISSOCIATE ? `${this.endpoint}/${claimId}/dissociate_workspace` : `${this.endpoint}/${claimId}/associate_workspace`
+      return putOne(
+        endpoint,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJwt },
+        {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+          omitParamsInBody: true,
+        },
+        logContext,
+      )
+    }
+    this.getClaimExports = loadListing(
+      () => `${this.endpoint}/export`,
+      this.headers,
+      {
+        transform: exports => deepToCamelCase(exports),
+      },
+      this.logContext,
+    )
+    this.requestClaimExport = postOne(
+      `${this.endpoint}/export`,
+      this.headers,
+      {
+        transform: response => response.request_id,
+      },
+      this.logContext,
+    )
+    this.searchGuestFacing = loadListing(
+      queryParams => {
+        return `${this.endpoint}/search/guest_facing_claim?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.lockClaim = (permissionJWT, claimId) =>
+      putOne(`${this.endpoint}/${claimId}/lock`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }).load({ claimId })
+
+    this.unlockClaim = (permissionJWT, claimId) =>
+      putOne(`${this.endpoint}/${claimId}/unlock`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }).load({ claimId })
+
+    this.getAllClaimsAbout = loadListing(
+      `${this.endpoint}/claims-about`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+  }
+}

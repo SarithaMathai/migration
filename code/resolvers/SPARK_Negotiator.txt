@@ -1,0 +1,46 @@
+import { loadBpWithType } from '../utils/vmmUtils'
+
+export default {
+  Query: {
+    getBidsForProduct: async (parent, { pids, workspaceId, askId }, ctx) => {
+        const results = await ctx.loaders.negotiatorBids.fetchProductBids.load({ pids, workspaceId, askId })
+        return results.bids
+    },
+  },
+
+  Negotiator_Bid: {
+    businessPartner: async (bid, _args, ctx) => {
+      return bid.bpId && loadBpWithType(ctx, bid.bpId)
+    },
+    createdAt: (bid) => {
+      if (bid.createTime) {
+        return new Date(bid.createTime)
+      }
+      return null
+    },
+    updatedAt: (bid) => {
+      if (bid.updateTime) {
+        return new Date(bid.updateTime)
+      }
+      return null
+    },
+  },
+
+  Negotiator_Item: {
+    department: (bid, _args, ctx) => {
+      if (bid?.item?.departmentId !== null) {
+        return ctx.loaders.ig.department.getByID.load(bid.item.departmentId)
+      }
+      return null
+    },
+    clazz: async (bid, _args, ctx) => {
+      if (bid?.item?.classId !== null) {
+        return ctx.loaders.ig.clazz.getByClassByDeptId.load({
+          department: bid.item.departmentId,
+          id: bid.item.classId,
+        })
+      }
+      return null
+    },
+  },
+}

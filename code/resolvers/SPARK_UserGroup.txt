@@ -1,0 +1,46 @@
+import { getUserPermissionsJWT } from '../utils/commonLoaders'
+
+export default {
+  Query: {
+    getUserGroups: async (parent, params, ctx) => {
+      let response = await ctx.loaders.userGroup.getUserGroupsByIds.load(params.ids)
+      return response.userGroups
+    },
+    getUserGroup: async (parent, params, ctx) => {
+      let response = await ctx.loaders.userGroup.getUserGroupById.load(params.id)
+      return response.userGroups[0]
+    },
+  },
+  Mutation: {
+    addUserGroup: (parent, { userGroup }, ctx) => ctx.loaders.userGroup.addUserGroup.load(userGroup),
+
+    updateUserGroup: async (parent, { userGroup }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(userGroup.resourceId, ctx)
+      const updatedUserGroup = await ctx.loaders.userGroup.updateUserGroup(permissionJWT).load(userGroup)
+      return updatedUserGroup
+    },
+    updateUserGroups: (parent, { userGroups }, ctx) => ctx.loaders.userGroup.updateUserGroups.load(userGroups),
+
+    addUserGroups: (parent, { userGroups }, ctx) => ctx.loaders.userGroup.addUserGroups.load(userGroups),
+  },
+
+  SPARK_UserGroup_Team: {
+    businessPartner: async (team, args, ctx) => {
+      if (team.businessPartnerId === 0 || team.businessPartnerId === null) {
+        return { bpId: 0, bpName: 'Target' }
+      } else {
+        const businessPartner = await ctx.loaders.vmm.getByID.load(
+          team.businessPartnerId,
+        )
+        return businessPartner
+      }
+    },
+    usersInfo: dt => dt.usersInfo,
+  },
+
+  SPARK_UserGroup_User: {
+    userDetails: async (member, args, ctx) =>
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(member.userId),
+  },
+
+}

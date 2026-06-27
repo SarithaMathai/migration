@@ -1,0 +1,56 @@
+import SparkService from '../SparkService'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import loadOne from '../../utils/loadOne'
+import loadListing from '../../utils/loadListing'
+import postOne from '../../utils/postOne'
+import putOne from '../../utils/putOne'
+
+export default class ProductPlanService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/product_plan/v1`
+
+    this.addProductPlan = (productPlan) => postOne(`${this.endpoint}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+      logContext,
+    }).load(productPlan)
+
+    this.updateProductPlan = (id, productPlan) => putOne(`${this.endpoint}/${id}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+      logContext,
+    }).load(productPlan)
+
+    this.getByID = () =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+        },
+        {
+          transform: (id, productPlan) => [deepToCamelCase(productPlan)],
+          batch: false,
+        },
+        logContext,
+      )
+      this.searchProductAsks = loadListing(
+      ({ from, to, page, size, classIds, departmentIds, productIds }) =>
+        `${this.endpoint}/search?${new URLSearchParams({
+          from,
+          to,
+          page: page || 0,
+          size: size || 200,
+          class_ids: classIds && classIds.length ? classIds : [],
+          department_ids: departmentIds && departmentIds.length ? departmentIds : [],
+          product_ids : productIds && productIds.length ? productIds : [],
+        })}`,
+      this.headers,
+      {
+        transform: productAsks => deepToCamelCase(productAsks),
+      },
+      this.logContext,
+    )
+  }
+}

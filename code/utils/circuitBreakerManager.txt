@@ -1,0 +1,21 @@
+import Breaker from 'opossum'
+
+export const circuitBreakers = {}
+
+export const addCircuitBreaker = (key, load, settings) => {
+  circuitBreakers[key] = new Breaker(load, settings)
+}
+
+export const getCircuitBreaker = (key) => {
+  return circuitBreakers[key]
+}
+
+export const getOrAddCircuitBreaker = (key, load, settings) => {
+  const breaker = getCircuitBreaker(key)
+  if (!breaker) {
+    addCircuitBreaker(key, load, settings)
+    return getCircuitBreaker(key)
+  } else {
+    return breaker
+  }
+}

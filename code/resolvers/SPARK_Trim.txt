@@ -1,0 +1,275 @@
+import { getUserPermissionsJWT, loadTags } from '../utils/commonLoaders'
+import { loadFiles } from './commonResolvers/Files'
+import { loadBusinessPartners, loadDroppedBusinessPartners, loadTeams } from './commonResolvers/Teams'
+import SPARK_Material from './SPARK_Material'
+import _ from 'lodash'
+import { getBomSizeCaption, getBomUomOptions, getSizeOptions, getSuppliers } from '../utils/bomUtils'
+import { getUser } from '../utils/userAttributesUtils'
+
+export default {
+  Query: {
+    getTrim: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.trim.getTrim(permissionJWT).load(id)
+    },
+    getTrims: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      const trim = await ctx.loaders.trim
+        .getTrims(permissionJWT)
+        .load(ids)
+      return trim
+    },
+    getAdjacencies: (parent, {}, ctx) =>
+      ctx.loaders.trim.getAdjacencies.load(),
+    getFiberContents: (parent, {}, ctx) =>
+      ctx.loaders.trim.getFiberContents.load(),
+    getFiberContentsByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getFiberContentsByType.load(typeCode),
+    getStatuses: (parent, {}, ctx) =>
+      ctx.loaders.trim.getStatuses.load(),
+    getPyramids: (parent, {}, ctx) =>
+      ctx.loaders.trim.getPyramids.load(),
+    getTrimTypes: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimTypes.load(),
+    getTrimSubTypes: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimSubTypes.load(),
+    getTrimSubTypesByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getTrimSubTypesByType.load(typeCode),
+    getTrimFurtherSubTypes: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimFurtherSubTypes.load(),
+    getTrimFurtherSubTypesFiltered: (parent, { typeCode, subTypeCode }, ctx) =>
+      ctx.loaders.trim.getTrimFurtherSubTypesFiltered.load({ typeCode: typeCode, subTypeCode: subTypeCode }),
+    getTrimFinishes: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimFinishes.load(),
+    getTrimCoatings: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimCoatings.load(),
+    getTrimInitiatedBys: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimInitiatedBys.load(),
+    getTrimUnitOfMeasures: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimUnitOfMeasures.load(),
+    getTrimUnitOfMeasuresByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getTrimUnitOfMeasuresByType.load(typeCode),
+    getTrimConstructions: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimConstructions.load(),
+    getTrimConstructionsByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getTrimConstructionsByType.load(typeCode),
+    getTrimShapes: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimShapes.load(),
+    getTrimShapesByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getTrimShapesByType.load(typeCode),
+    getTrimUsagesByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getTrimUsagesByType.load(typeCode),
+    getTrimApplicationMethodsByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getTrimApplicationMethodsByType.load(typeCode),
+    getTrimUnderpartsSpecifications: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimUnderpartsSpecifications.load(),
+    getTrimWeights: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimWeights.load(),
+    getHandFeels: (parent, {}, ctx) =>
+      ctx.loaders.trim.getHandFeels.load(),
+    getTrimLabelTypes: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimLabelTypes.load(),
+    getTrimLabelTypesBySubtype: (parent, { subTypeCode }, ctx) =>
+      ctx.loaders.trim.getTrimLabelTypesBySubtype.load(subTypeCode),
+    getTrimTapingConstructionsFiltered: (parent, { typeCode, subTypeCode }, ctx) =>
+      ctx.loaders.trim.getTrimTapingConstructionsFiltered.load({ typeCode: typeCode, subTypeCode: subTypeCode }),
+    getTrimEdgeFinishes: (parent, { subTypeCode }, ctx) =>
+      ctx.loaders.trim.getTrimEdgeFinishes.load(subTypeCode),
+    getTrimBackConstructions: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getTrimBackConstructions.load(typeCode),
+    getTrimFixedSizes: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimFixedSizes.load(),
+    getWeightUnitOfMeasuresByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getWeightUnitOfMeasuresByType.load(typeCode),
+    getSliderTypesByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getSliderTypesByType.load(typeCode),
+    getSliderMaterialsByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getSliderMaterialsByType.load(typeCode),
+    getPuller: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getPuller.load(typeCode),
+    getPullerAttachmentMaterialByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getPullerAttachmentMaterialByType.load(typeCode),
+    getCompatibleSizesByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getCompatibleSizesByType.load(typeCode),
+    getCompatibleSizeUnitOfMeasuresByType: (parent, { typeCode }, ctx) =>
+      ctx.loaders.trim.getCompatibleSizeUnitOfMeasuresByType.load(typeCode),
+    getFiberContentsByTypeAndSubtype: (parent, { typeCode, subTypeCode }, ctx) =>
+      ctx.loaders.trim.getFiberContentsByTypeAndSubtype.load({ typeCode: typeCode, subTypeCode: subTypeCode }),
+    getTrimBrands: (parent, {}, ctx) =>
+      ctx.loaders.trim.getTrimBrands.load(),
+    exportTrim: async (parent, { q, nestedQueryList, isThumbnailsRequired }, ctx) => {
+      await ctx.loaders.search.exportTrim.load({ q, nestedQueryList, isThumbnailsRequired })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+    getTrimColorTypes: (parent, { typeCode, subTypeCode }, ctx) =>
+      ctx.loaders.trim.getTrimColorTypes.load({ typeCode: typeCode, subTypeCode: subTypeCode }),
+    getTrimFinishTypes: (parent, { typeCode, subTypeCode }, ctx) =>
+      ctx.loaders.trim.getTrimFinishTypes.load({ typeCode: typeCode, subTypeCode: subTypeCode }),
+  },
+
+  Mutation: {
+    validateUniqueness: async (parent, { sparkTrim }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        'SPARK-TRIM-INTERNAL-TEAM',
+        ctx,
+      )
+      const uniqunessResult = await ctx.loaders.trim.validateUniqueness(permissionJWT).load(sparkTrim)
+      return uniqunessResult
+    },
+    addTrim: async (parent, { sparkTrim }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        'SPARK-TRIM-INTERNAL-TEAM',
+        ctx,
+      )
+      const trim = await ctx.loaders.trim.addTrim(permissionJWT).load(sparkTrim)
+      // Setup relationships
+      if (sparkTrim.files && sparkTrim.files.length > 0) {
+        const associateAttachmentTeamDto = { 
+          teamsToUpdateDto: { teamsToAdd: sparkTrim.teamsToAdd }, 
+          parentId: trim.humanId, 
+          humanIds: sparkTrim.files,
+          relatedResourceIds: [trim.humanId],
+        }
+        const attachmentPermissionJWT = await getUserPermissionsJWT(sparkTrim.files, ctx)
+        await ctx.loaders.attachment.associateAttachmentTeams(attachmentPermissionJWT).load(associateAttachmentTeamDto, { humanId: trim.humanId })
+      }
+      return trim
+    },
+    updateTrim: async (parent, { sparkTrim }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sparkTrim.humanId, ctx)
+      return ctx.loaders.trim.updateTrim(permissionJWT).load(sparkTrim)
+    },
+    updateTrimTeams: async (parent, { humanId, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(humanId, ctx)
+      return ctx.loaders.trim.updateTrimTeams(permissionJWT).load(teamsToUpdate, { humanId })
+    },
+    updateTrimVariations: async (parent, { sparkTrimVariations }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sparkTrimVariations.humanId, ctx)
+      return ctx.loaders.trim.updateTrimVariations(permissionJWT).load(sparkTrimVariations)
+    },
+  },
+
+  SPARK_Trim: {
+    createdBy: (trim, args, ctx) => getUser(trim.createdBy, ctx),
+    updatedBy: (trim, args, ctx) => getUser(trim.updatedBy, ctx),
+    designCycle: async (trim, args, ctx) => {
+      const designCycleId = (trim && trim.designCycle) || null
+      const response = (designCycleId && await loadTags([designCycleId], ctx))
+      return response && response.length > 0 ? response[0] : null
+    },
+    tags: async (trim, args, ctx) => trim && trim.tags ? loadTags(trim.tags, ctx) : [],
+    teams: (trim, args, ctx) => loadTeams(trim.humanId, ctx),
+    businessPartners: (trim, args, ctx) => loadBusinessPartners(trim.humanId, ctx),
+    droppedPartnerIds: (trim, args, ctx) => loadDroppedBusinessPartners(trim.humanId, ctx),
+    files: (trim, args, ctx) => loadFiles(trim.humanId, ctx),
+    suppliers: (trim) => getSuppliers(trim.suppliers),
+    bomSizeOptions: (trim) => getSizeOptions(trim),
+    bomUomOptions: (trim) => getBomUomOptions(trim),
+    baseSizeCaption: (trim) => getBomSizeCaption(trim),
+    brand: async (trim, args, ctx) => {
+      const brandData = trim.brandId ? await ctx.loaders.brand.getBrand.load(trim.brandId) : null
+      if (brandData) {
+        return {
+          id: brandData.brandId,
+          code: brandData.brandId,
+          name: brandData.brandName,
+          description: brandData.brandName,
+        }
+      }
+    },
+  },
+
+  SPARK_TrimColor: {
+    color: (trimColor, args, ctx) => {
+      return trimColor.colorId ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimColor.colorId }, ctx) : null
+    },
+    groundColor: (trimColor, args, ctx) => {
+      return trimColor.groundColor ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimColor.groundColor }, ctx) : null
+    },
+    textColors: (trimColor, args, ctx) => {
+      if (trimColor.textColors && trimColor.textColors.length > 0) {
+        return trimColor.textColors.map(textColor => SPARK_Material.Query.getMaterialByIdFromService(null, { id: textColor }, ctx))
+      }
+      return []
+    },
+    sliderColor: (trimColor, args, ctx) => {
+      return trimColor.sliderColorId ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimColor.sliderColorId }, ctx) : null
+    },
+    tapeColor: (trimColor, args, ctx) => {
+      return trimColor.tapeColorId ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimColor.tapeColorId }, ctx) : null
+    },
+    teethColor: (trimColor, args, ctx) => {
+      return trimColor.teethColorId ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimColor.teethColorId }, ctx) : null
+    },
+    pullerColor: (trimColor, args, ctx) => {
+      return trimColor.pullerColorId ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimColor.pullerColorId }, ctx) : null
+    },
+  },
+
+  SPARK_TrimColorRow: {
+    color: (trimColor, args, ctx) => {
+      return trimColor.colorId ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimColor.colorId }, ctx) : null
+    },
+  },
+
+  SPARK_TrimFinish: {
+    colorForCoating: (trimFinish, args, ctx) => {
+      return trimFinish.colorForCoatingId ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimFinish.colorForCoatingId }, ctx) : null
+    },
+    pullerColorForCoating: (trimFinish, args, ctx) => {
+      return trimFinish.pullerColorForCoating ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimFinish.pullerColorForCoating }, ctx) : null
+    },
+    sliderColorForCoating: (trimFinish, args, ctx) => {
+      return trimFinish.sliderColorForCoating ? SPARK_Material.Query.getMaterialByIdFromService(null, { id: trimFinish.sliderColorForCoating }, ctx) : null
+    },
+  },
+
+  SPARK_TrimSupplier: {
+    supplier: async (trimSupplier, args, ctx) => {
+      if (trimSupplier.supplierId) {
+        const supplier = await ctx.loaders.vmm.getByID.load(trimSupplier.supplierId)
+        return supplier
+      } else {
+        return null
+      }
+    },
+  },
+
+  SPARK_TrimFacility: {
+    facility: async (trimFacility, args, ctx) => {
+      const facilityId = trimFacility && trimFacility.facilityId
+      if (facilityId) {
+        return await ctx.loaders.location.getLocationById(facilityId).load()
+      } else {
+        return null
+      }
+    },
+  },
+
+  SPARK_TrimFacilitySizes: {
+    approvedBy: async (facilitySize, args, ctx) => {
+      const userId = (facilitySize && facilitySize.approvedBy) || null
+      if (userId) {
+        const data = await ctx.loaders.userAttributes.getUserByID.load(facilitySize.approvedBy)
+        return data
+      } else {
+        return null
+      }
+    },
+  },
+
+  SPARK_TrimFacilityRow: {
+    approvedBy: async (facilityApprovedColorRow, args, ctx) => {
+      const userId = (facilityApprovedColorRow && facilityApprovedColorRow.approvedBy) || null
+      if (userId) {
+        const data = await ctx.loaders.userAttributes.getUserByID.load(facilityApprovedColorRow.approvedBy)
+        return data
+      } else {
+        return null
+      }
+    },
+  },
+}

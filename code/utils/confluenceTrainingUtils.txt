@@ -1,0 +1,37 @@
+
+export const getTrainingLabelsFromType = (labels, type) => {
+  let filteredLabels = ''
+  switch (type) {
+    case 'topics':
+      filteredLabels = labels.filter(d => d.name.startsWith('topics_')).map(topic => topic.name.replace('topics_', ''))
+      break
+    case 'tags':
+      filteredLabels = labels.filter(d => d.name.startsWith('tags_')).map(topic => topic.name.replace('tags_', ''))
+      break
+    case 'contentTypes':
+      filteredLabels = labels.filter(d => d.name.startsWith('contenttypes_')).map(topic => topic.name.replace('contenttypes_', ''))
+      break
+    case 'users':
+      filteredLabels = labels.filter(d => d.name.startsWith('users_')).map(topic => topic.name.replace('users_', ''))
+      break
+  }
+  return filteredLabels
+}
+
+export const getDocumentsOnly = (documents, userType) => {
+  let filteredResult = null
+  switch (userType) {
+    case 'Internal' :
+      filteredResult = documents.searchResults
+      break
+    case 'External' :
+      filteredResult = documents.searchResults.filter(res => res.content.metadata.labels.labels.map(label => label.name).includes('users_business_partner'))
+      break
+    case 'DESIGN_PARTNER' :
+      filteredResult = documents.searchResults.filter(res => {
+        return res.content.metadata.labels.labels.map(label => label.name).includes('users_business_partner') || res.content.metadata.labels.labels.map(label => label.name).includes('users_design_partner')
+      })
+      break
+  }
+  return { searchResults: filteredResult }
+}

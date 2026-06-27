@@ -1,0 +1,56 @@
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import SparkService from './SparkService'
+
+export default class FileLibraryService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/file_library/v1`
+
+    this.addFileLibrary = (permissionJWT, fileLibrary) => postOne(`${this.endpoint}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        logContext,
+      }).load(fileLibrary)
+
+    this.updateFileLibrary = (permissionJWT, fileLibrary) => putOne(`${this.endpoint}/${fileLibrary.humanId}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        logContext,
+      }).load(fileLibrary)
+
+    this.getFileLibraries = loadListing(
+      ({ page, size, humanIds, types, statusIds, brandIds }) =>
+        `${this.endpoint}?${new URLSearchParams({
+          page: page || 0,
+          size: size || 20,
+          ids: humanIds || [],
+          types: types || ['SPG'],
+          brandIds: brandIds || [],
+          statusIds: statusIds || [200],
+        })}`, this.headers,
+      {
+        transform: data => deepToCamelCase(data),
+      },
+      this.logContext,
+    )
+
+    this.getPackageLibrary = loadOne(
+      id => `${this.endpoint}/${id}`,
+      this.headers,
+      {
+        transform: (ids, data) => [deepToCamelCase(data)],
+        batch: false,
+        logContext,
+      },
+    )
+  }
+}

@@ -1,0 +1,129 @@
+import { loadBpsWithType } from '../../utils/vmmUtils'
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import SPARK_WorkspaceV2 from './../SPARK_WorkspaceV2'
+import _ from 'lodash'
+import { getUserGroup } from '../../utils/Product/userGroupUtils'
+import { ValidWorkspaceAssociationTypes, workspaceAssociationHelper } from '../../utils/workspaceAssociationHelper'
+
+export default {
+  Query: {
+    getProductDetailsElastic: async (parent, { resourceId, types }, ctx) => {
+      return ctx.loaders.search.getProductDetailsElastic.load({ q: `parentId: ${resourceId}`, types })
+    },
+    getProductDetailsById: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.ProductDetails.getProductDetailsById(permissionJWT, ids)
+    },
+  },
+  Mutation: {
+    createProductDetailsSet: async (parent, { productDetails }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(['SPARK-CONSTRUCTION-CREATE-MODIFY-TARGET-LIBRARY'], ctx)
+
+      const productDetailSet = await ctx.loaders.ProductDetails.createProductDetailsSet(permissionJWT, productDetails)
+      if (productDetailSet.validationErrors || productDetailSet.message) {
+        throw new Error('Error creating product details   \n' + JSON.stringify(productDetailSet))
+      }
+      return productDetailSet
+    },
+    updateProductDetailAccess: async (parent, { updateAccessPermissions }, ctx) => {
+      const productDetailId = updateAccessPermissions.managePermissionsRequest.map(object => object.resourceId)
+      const permissionJWT = await getUserPermissionsJWT(productDetailId, ctx)
+      return ctx.loaders.ProductDetails.updateProductDetailAccess(permissionJWT, updateAccessPermissions)
+    },
+    productDetailLockUnlock: async (parent, { constructionSetId, isLock }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([constructionSetId], ctx)
+      return ctx.loaders.ProductDetails.productDetailLockUnlock(permissionJWT, constructionSetId, isLock)
+    },
+    updateProductDetailsSet: async (parent, { productDetailsId, productDetails }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT([productDetailsId], ctx)
+      const workspaceAssociations = productDetails.workspaceContext || {}
+      if ((workspaceAssociations.addWorkspaces && workspaceAssociations.addWorkspaces.length > 0) || (workspaceAssociations.removeWorkspaces && workspaceAssociations.removeWorkspaces.length > 0)) {
+        const addWorkspaces = await workspaceAssociationHelper(ValidWorkspaceAssociationTypes.PRODUCT_DETAIL, productDetailsId, workspaceAssociations.addWorkspaces, workspaceAssociations.removeWorkspaces, ctx)
+        if (addWorkspaces.validationErrors || addWorkspaces.message) {
+          throw new Error('Error associating measurement set workspaces \n' + JSON.stringify(addWorkspaces))
+        }
+      }
+
+      productDetails.workspaceContext = null
+
+      if (!_.isEmpty(productDetails.deleteAttachmentIds)) {
+        const attachmentPermissionJWT = await getUserPermissionsJWT(productDetails.deleteAttachmentIds, ctx)
+        await ctx.loaders.attachment.archiveAttachmentBulkV3(attachmentPermissionJWT).load(
+          { attachments: productDetails.deleteAttachmentIds.map(attachment => ({ humanId: attachment, documentId: attachment })) })
+      }
+      return ctx.loaders.ProductDetails.updateProductDetailsSet(permissionJWT, productDetailsId, productDetails)
+    },
+    cloneFilesForProductDetails: async (parent, { attachmentIds, cloneReference }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(attachmentIds, ctx)
+
+      const response = await Promise.all(
+        attachmentIds.map(async (id, index) => {
+          let cloneReferences = []
+          cloneReferences.push(cloneReference[index])
+          const clones = await ctx.loaders.attachment.cloneAttachmentV3(permissionJWT)
+            .load({ cloneReferences }, id)
+          const cloneCopy = [{ ...clones[0], parentResource: id }]
+          return cloneCopy
+        }))
+
+      return _.flatten(response)
+    },
+      updateProductDetailComponentStatus: (parent, { productId, ids, status }, ctx) =>
+      ctx.loaders.ProductDetails.updateProductDetailComponentStatus({productId, ids, status}),
+  },
+
+  SPARK_ProductDetails: {
+    access: async (productDetailSet, args, ctx) => {
+      // since we are only getting access for one Product Detail, return the first element of the list returned from service
+      const perms = await ctx.loaders.accessControl.getPermissions.load({
+        resourceIds: [productDetailSet.humanId || productDetailSet.id],
+      })
+      return perms && perms.length > 0 ? perms[0] : null
+    },
+    currentUserPermissions: async (productDetailSet, args, ctx) => {
+      const { resourcePermissions: currentUserPermissions } = await ctx.loaders.accessControl.getUserAccessUnencoded.load(productDetailSet.humanId || productDetailSet.id)
+      return currentUserPermissions && currentUserPermissions[0]
+    },
+    product: (productDetailSet, args, ctx) => {
+      if (productDetailSet.parentId && productDetailSet.parentId.indexOf('PID') === 0) {
+        return ctx.loaders.product.getByID.load(productDetailSet.parentId)
+      }
+      return null
+    },
+    createdBy: (productDetailSet, args, ctx) =>
+      productDetailSet.createdBy && ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(productDetailSet.createdBy),
+    updatedBy: (productDetailSet, args, ctx) =>
+      productDetailSet.updatedBy && ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(productDetailSet.updatedBy),
+    businessPartners: (productDetailSet, args, ctx) => loadBpsWithType(productDetailSet.businessPartners, ctx),
+    workspaces: (measurement, args, ctx) => {
+      const workspaceIds = measurement.workspaceContext || []
+      if (workspaceIds.length) {
+        return SPARK_WorkspaceV2.Query.getWorkspacesByIdsV2({}, { ids: workspaceIds }, ctx)
+      }
+      return null
+    },
+    attachment: async (productDetailSet, args, ctx) => {
+      const attachmentData = await ctx.loaders.search.searchAttachments.load({ relatedIds: [productDetailSet.humanId || productDetailSet.id] })
+      return attachmentData.content ? attachmentData.content.find(attachment => attachment.relatedResources.length <= 2) : {}
+    },
+    participantDetails: async (productDetailSet, args, ctx) => getUserGroup(ctx, productDetailSet.humanId),
+  },
+
+  SPARK_ProductDetailsCategoryWithSection: {
+    subCategories: async (category, args, ctx) => {
+      const masterData = await ctx.loaders.specificationsTemplate.getProductDetailsCategorySection()
+      const selectedCategory = masterData.find(data => data.code === category.code)
+      return selectedCategory.subCategories
+    },
+  },
+  SPARK_ProductDetailsItem: {
+    attachment: async (productDetail, args, ctx) => {
+      const attachmentData = productDetail.templateId && await ctx.loaders.search.searchAttachments.load({ relatedIds: [productDetail.templateId] })
+      return _.get(attachmentData, 'content[0]', {})
+    },
+    constructionSetAttachments: async (productDetail, args, ctx) => {
+      const attachmentData = productDetail.id && await ctx.loaders.search.searchAttachments.load({ relatedIds: [productDetail.id] })
+      return attachmentData ? attachmentData.content : []
+    },
+  },
+}

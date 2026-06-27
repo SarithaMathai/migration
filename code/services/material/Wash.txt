@@ -1,0 +1,135 @@
+import { deepToCamelCase, deepToSnakeCase, transformKeyValues } from '../../utils/convertFunctions'
+import loadOne from '../../utils/loadOne'
+import postOne from '../../utils/postOne'
+import SparkService from '../SparkService'
+import loadListing from '../../utils/loadListing'
+import putOne from '../../utils/putOne'
+
+export default class WashService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = `${endpoint}`
+    this.headers = headers
+
+    this.getWash = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, wash) => [deepToCamelCase(wash)],
+        },
+        this.logContext,
+      )
+
+    this.getAllWashByIds = permissionJWT =>
+      loadListing(
+        ids => `${this.endpoint}?humanIds=${ids}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        { transform: wash => deepToCamelCase(wash) },
+        logContext,
+      )
+    this.addWash = postOne(
+      this.endpoint,
+      this.headers,
+      {
+        transform: wash => deepToCamelCase(wash),
+        transformRequest: wash => deepToSnakeCase(wash),
+      },
+      this.logContext,
+    )
+
+    this.updateWash = permissionJWT => putOne(
+      wash => `${this.endpoint}/${wash.humanId}`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: wash => deepToCamelCase(wash),
+        transformRequest: wash => deepToSnakeCase(wash),
+      },
+      this.logContext,
+    )
+    this.getStatus = loadListing(
+      () => `${this.endpoint}/code_value/status`,
+      this.headers,
+      {
+        transform: types => transformKeyValues(types),
+      },
+      this.logContext,
+    )
+    this.getWashTypes = loadListing(
+      () => `${this.endpoint}/code_value/washTypes`,
+      this.headers,
+      {
+        transform: types => transformKeyValues(types),
+      },
+      this.logContext,
+    )
+    this.getSustainabilities = loadListing(
+      () => `${this.endpoint}/code_value/sustainability`,
+      this.headers,
+      {
+        transform: types => transformKeyValues(types),
+      },
+      this.logContext,
+    )
+
+    this.getWashProcess = loadListing(
+      () => `${this.endpoint}/code_value/washProcess`,
+      this.headers,
+      {
+        transform: types => transformKeyValues(types),
+      },
+      this.logContext,
+    )
+
+    this.getGarmentDye = loadListing(
+      () => `${this.endpoint}/code_value/garmentDye`,
+      this.headers,
+      {
+        transform: types => transformKeyValues(types),
+      },
+      this.logContext,
+    )
+
+    this.getTargetRecipe = loadListing(
+      () => `${this.endpoint}/code_value/targetRecipe`,
+      this.headers,
+      {
+        transform: types => transformKeyValues(types),
+      },
+      this.logContext,
+    )
+
+    this.updateWashTeams = permissionJWT => postOne(
+      ({ humanId }) => `${this.endpoint}/${humanId}/teams`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+        skipJsonParse: true,
+      },
+      logContext,
+    )
+
+    this.bulkUpdateTeams = (permissionJWT) =>
+      postOne(
+        ({ humanIds }) => `${this.endpoint}/bulkUpdate/teams?humanIDs=${humanIds}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+          skipJsonParse: true,
+        },
+        logContext,
+      )
+  }
+}

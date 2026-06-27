@@ -1,0 +1,151 @@
+import { deepToCamelCase, deepToSnakeCase, transformKeyValues } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import SparkService from './SparkService'
+
+export default class ColorService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.getPage = loadListing(this.endpoint, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      getDataLoader: () => this.getByID,
+    }, this.logContext)
+
+    this.getByID = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, color) => [deepToCamelCase(color)],
+          batch: false,
+        },
+        this.logContext,
+      )
+
+    this.getByIDs = permissionJWT =>
+      loadListing(
+        this.endpoint,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: color => deepToCamelCase(color),
+        },
+        this.logContext,
+      )
+
+    this.getColorStatuses = loadListing(
+      `${this.endpoint}/status`,
+      this.headers,
+      {
+        transform: statusResponse =>
+          deepToCamelCase(statusResponse && statusResponse.color_status),
+      },
+      logContext,
+    )
+
+    this.getColorSubstrates = loadListing(
+      `${this.endpoint}/substrate`,
+      this.headers,
+      {
+        transform: substrateResponse =>
+          deepToCamelCase(substrateResponse && substrateResponse.substrate),
+      },
+      logContext,
+    )
+
+    this.create = permissionJWT =>
+      postOne(
+        this.endpoint,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: color => deepToCamelCase(color),
+          transformRequest: color => deepToSnakeCase(color),
+        },
+        this.logContext,
+      )
+
+    this.delete = permissionJWT =>
+      deleteOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {},
+        this.logContext,
+      )
+
+    this.update = permissionJWT =>
+      putOne(
+        sparkColor => `${this.endpoint}/${sparkColor.humanId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: color => deepToCamelCase(color),
+          transformRequest: color => deepToSnakeCase(color),
+          getDataLoader: () => this.getByID,
+        },
+        this.logContext,
+      )
+
+    this.updateColorTeams = permissionJWT => postOne(
+      ({ humanId }) => `${this.endpoint}/${humanId}/teams`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+        skipJsonParse: true,
+      },
+      logContext,
+    )
+
+    this.bulkUpdateTeams = (permissionJWT) =>
+      postOne(
+        ({ humanIds }) => `${this.endpoint}/bulkUpdate/teams?humanIDs=${humanIds}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+          skipJsonParse: true,
+        },
+        logContext,
+      )
+
+    this.getImpressionIntent = loadListing(
+      `${this.endpoint}/code_value/impression_intents`,
+      this.headers,
+      {
+        transform: impressionIntents =>
+          transformKeyValues(impressionIntents),
+      },
+      logContext,
+    )
+
+    this.validateColorName = loadOne(
+      name => `${this.endpoint}/validate_color_name?name=${name}`,
+      this.headers,
+      { skipJsonParse: true },
+      logContext,
+    )
+  }
+}

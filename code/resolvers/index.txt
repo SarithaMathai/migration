@@ -1,0 +1,161 @@
+import _ from 'lodash'
+
+import core from './core'
+import IgClazz from './IG_Clazz'
+import IgDepartment from './IG_Department'
+import IgDivision from './IG_Division'
+import IgMerchType from './IG_MerchType'
+import NexusAttributes from './NEXUS_Attributes'
+import Measurement from './product/SPARK_Measurement'
+import ValueAssessment from './product/SPARK_ValueAssessment'
+import AccessControl from './SPARK_AccessControl'
+import Activity from './SPARK_Activity'
+import AdminTools from './SPARK_AdminTools'
+import Artwork from './SPARK_Artwork'
+import Attachment from './SPARK_Attachment'
+import Color from './SPARK_Color'
+import ColorColoro from './material/SPARK_ColorColoro'
+import ColorArchroma from './SPARK_ColorArchroma'
+import Combination from './SPARK_Combination'
+import Discussion from './SPARK_Discussion'
+import DiscussionV3 from './SPARK_DiscussionV3'
+import Fabric from './SPARK_Fabric'
+import Favorite from './SPARK_Favorite'
+import FileLibrary from './SPARK_FileLibrary'
+import Palette from './SPARK_Palette'
+import Pdf from './SPARK_Pdf'
+import Product from './SPARK_Product'
+import RecentlyViewed from './SPARK_RecentlyViewed'
+import Relationship from './SPARK_Relationship'
+import Role from './SPARK_Role'
+import SampleV2 from './SPARK_SampleV2'
+import Search from './SPARK_Search'
+import Tag from './SPARK_Tag'
+import Team from './SPARK_Team'
+import TeamV2 from './SPARK_TeamV2'
+import ToDo from './SPARK_ToDo'
+import Trim from './SPARK_Trim'
+import UserAttributes from './SPARK_UserAttributes'
+import UserGroup from './SPARK_UserGroup'
+import WorkspaceV2 from './SPARK_WorkspaceV2'
+import Brand from './VMM_Brand'
+import VMM from './VMM_BusinessPartner'
+import LDAP from './LDAP_Directory'
+import Location from './VMM_Location'
+import Pom from './SPARK_Pom'
+import Notification from './SPARK_Notification'
+import RequestDetails from './SPARK_RequestDetails'
+import Material from './SPARK_Material'
+import MaterialHub from './SPARK_MaterialHub'
+import MeasurementTemplate from './SPARK_MeasurementTemplate'
+import SizeTemplate from './product/SPARK_SizeTemplate'
+import Claim from './product/SPARK_Claims'
+import Bom from './product/SPARK_Bom'
+import Impression from './product/SPARK_Impression'
+import Training from './CONFLUENCE_Training'
+import Component from './SPARK_Component'
+import Wash from './material/SPARK_Wash'
+import BaseMaterialCommonFields from './material/SPARK_BaseMaterialCommonFields'
+import SpecificationsTemplate from './SPARK_SpecificationsTemplate'
+import BackgroundNotifications from './SPARK_BackgroundNotifications'
+import ProductDetails from './product/SPARK_ProductDetail'
+import Greenfield from './reporting/SPARK_Greenfield'
+import RFID from './SPARK_RFID'
+import Watchlist from './product/SPARK_Watchlist'
+import Tools from './SPARK_Tools'
+import TightFit from './product/SPARK_TightFit'
+import Doppler from './Doppler'
+import SPARK_Sizes from './product/SPARK_Sizes'
+import SPARK_AsapTGTColorEvaluator from './SPARK_AsapTGTColorEvaluator'
+import Packaging from './product/SPARK_Packaging'
+import ByoTemplate from './reporting/SPARK_ByoTemplate'
+import InsightsIntegration from './reporting/SPARK_InsightsIntegration'
+import BusinessPartner from './SPARK_BusinessPartner'
+import RuleLibrary from './SPARK_RuleLibrary'
+import OBDP_BrandComplicance from './OBDP_BrandComplicance'
+import Apex from './APEX_ProductPlan'
+import ProductPlan from './productplan/SPARK_ProductPlan'
+import AssortmentItem from './AssortmentItem'
+import Banner from './SPARK_Banner'
+import NegotiatorBids from './SPARK_Negotiator'
+export default _.merge(
+  {},
+  AccessControl,
+  AdminTools,
+  Activity,
+  Attachment,
+  Artwork,
+  Brand,
+  Color,
+  ColorArchroma,
+  Combination,
+  IgClazz,
+  core,
+  Discussion,
+  DiscussionV3,
+  Fabric,
+  Favorite,
+  FileLibrary,
+  IgDepartment,
+  IgDivision,
+  IgMerchType,
+  Search,
+  Product,
+  SampleV2,
+  VMM,
+  LDAP,
+  Palette,
+  Team,
+  TeamV2,
+  Tag,
+  Trim,
+  WorkspaceV2,
+  Role,
+  UserAttributes,
+  UserGroup,
+  Relationship,
+  ToDo,
+  RecentlyViewed,
+  Measurement,
+  ValueAssessment,
+  Location,
+  Pdf,
+  Pom,
+  Notification,
+  RequestDetails,
+  Material,
+  MaterialHub,
+  MeasurementTemplate,
+  SizeTemplate,
+  NexusAttributes,
+  Claim,
+  Bom,
+  Impression,
+  Training,
+  ColorColoro,
+  Component,
+  Wash,
+  SpecificationsTemplate,
+  BackgroundNotifications,
+  ProductDetails,
+  Greenfield,
+  RFID,
+  Watchlist,
+  Tools,
+  TightFit,
+  Doppler,
+  SPARK_Sizes,
+  SPARK_AsapTGTColorEvaluator,
+  Packaging,
+  ByoTemplate,
+  InsightsIntegration,
+  BaseMaterialCommonFields,
+  BusinessPartner,
+  RuleLibrary,
+  OBDP_BrandComplicance,
+  Apex,
+  ProductPlan,
+  AssortmentItem,
+  Banner,
+  NegotiatorBids,
+)

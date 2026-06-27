@@ -1,0 +1,8 @@
+
+export default {
+  Query: {
+    megaSearch: async (parent, { q }, ctx) => {
+      return ctx.loaders.search.megaSearch.load({ q: q, size: 50 })
+    },
+  },
+}

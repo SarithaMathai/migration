@@ -1,0 +1,164 @@
+import putOne from '../../utils/putOne'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import loadListing from '../../utils/loadListing'
+import postOne from '../../utils/postOne'
+import loadOne from '../../utils/loadOne'
+
+export default class PackagingService {
+  constructor (endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/packaging/v1`
+
+    this.addPackaging = (packaging) => postOne(`${this.endpoint}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+    }, logContext).load(packaging)
+
+    this.updatePackaging = (permissionJWT, packaging) => putOne(`${this.endpoint}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      }, logContext).load(packaging)
+
+    this.evaluateDieline = (dielineId, dielineEvaluation) => putOne(`${this.endpoint}/dielines/${dielineId}/evaluate`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+    }, logContext).load(dielineEvaluation)
+
+    this.manageWorkspaceAssociations = (permissionJwt, packagingId) => {
+      const endpoint = `${this.endpoint}/${packagingId}/workspace_associations`
+      return putOne(
+        endpoint,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJwt },
+        {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: requestData => deepToSnakeCase(requestData),
+        },
+        logContext,
+      )
+    }
+
+    this.requestPackagingExport = permissionJWT => postOne(
+      `${this.endpoint}/export`,
+      { ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: response => response.request_id,
+      },
+      this.logContext,
+    )
+
+    this.getPackagings = () => loadListing(
+      ({ page, size, packagingIds, parentIds, workspaceIds, partnerIds, statusIds }) =>
+        `${this.endpoint}?${new URLSearchParams({
+          page: page || 0,
+          size: size || 200,
+          humanIds: packagingIds || [],
+          parentIds: parentIds || [],
+          workspaceIds: workspaceIds || [],
+          partnerIds: partnerIds || [],
+          statusIds: statusIds || [501],
+        })}`, this.headers,
+      {
+        transform: packagings => deepToCamelCase(packagings),
+      },
+      this.logContext,
+    )
+
+    this.getPackagingFieldValuesByType = (type, ids) => {
+      const finalEndpoint = ids && ids.length ? `${this.endpoint}/field_values/${type}?ids=${ids}` : `${this.endpoint}/field_values/${type}`
+      return loadListing(finalEndpoint, this.headers,
+        {
+          transform: packagingFieldValues => deepToCamelCase(packagingFieldValues),
+        },
+        this.logContext,
+      ).load()
+    }
+    this.getDielines = loadListing(
+      ({ page, size, packagingIds, parentIds, printerIds, statusIds }) =>
+        `${this.endpoint}/dielines/search?${new URLSearchParams({
+          page: page || 0,
+          size: size || 2000,
+          humanIds: packagingIds || [],
+          parentIds: parentIds || [],
+          printerIds: printerIds || [],
+          statusIds: statusIds || [],
+        })}`, this.headers,
+      {
+        transform: packagings => deepToCamelCase(packagings),
+      },
+      this.logContext,
+    )
+    this.getDielineEvaluationStatuses = () => {
+      return loadListing(`${endpoint}/enterprise_product_development_products/master_data/dieline_evaluation_status`,
+        this.headers, {
+          transform: dielineEvalStatuses => {
+            return dielineEvalStatuses ? deepToCamelCase(dielineEvalStatuses.dieline_status) : []
+          },
+        }, logContext).load()
+    }
+
+    this.getCountries = (codes) => {
+      const countriesEndpoint = `${endpoint}/enterprise_product_development_products/master_data/countries`
+      const finalEndpoint = codes && codes.length ? `${countriesEndpoint}?codes=${codes}` : `${countriesEndpoint}`
+      return loadListing(finalEndpoint, this.headers,
+        {
+          transform: response => deepToCamelCase(response),
+        },
+        this.logContext,
+      ).load()
+    }
+
+    this.bulkAddPackagings = (bulkPackagingInput) => postOne(`${this.endpoint}/bulk`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+    }, logContext).load(bulkPackagingInput)
+
+    this.bulkUpdatePackagings = (permissionJWT, bulkPackagingInput) =>
+      putOne(`${this.endpoint}/bulk`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }, logContext).load(bulkPackagingInput)
+
+    this.lockPackaging = (permissionJWT, packagingId) =>
+      putOne(`${this.endpoint}/${packagingId}/lock`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }, logContext).load({ packagingId })
+
+    this.unlockPackaging = (permissionJWT, packagingId) =>
+      putOne(`${this.endpoint}/${packagingId}/unlock`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }, logContext).load({ packagingId })
+
+    this.getPackagingById = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, packaging) => [deepToCamelCase(packaging)],
+          batch: false,
+        },
+        logContext,
+      )
+      this.updatePackagingComponentStatus = (statusInput) => putOne(
+        `${this.endpoint}/component_status_update`,
+        this.headers,
+        {
+          transform: (result) => {
+            return {content: deepToCamelCase(result)}
+        },
+          transformRequest: (data) => deepToSnakeCase(data),
+        },
+        this.logContext,
+      ).load(statusInput) 
+  }
+}

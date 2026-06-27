@@ -1,0 +1,312 @@
+import qs from 'querystring'
+import _, { camelCase, has, set, snakeCase } from 'lodash'
+import BusinessPartnerRole from '../config/businessPartner'
+
+export function deepToCamelCase (object) {
+  let newObject
+  if (object instanceof Array) {
+    return object.map(value => {
+      if (value !== null && typeof value === 'object') {
+        value = deepToCamelCase(value)
+      }
+      return value
+    })
+  } else {
+    newObject = {}
+    let origKey
+    for (origKey in object) {
+      if (has(object, origKey)) {
+        let newKey
+        let value
+        value = object[origKey]
+        if (doCamelCaseConversion(origKey, value)) {
+          newKey = camelCase(origKey)
+          if (
+            value instanceof Array ||
+            (value !== null && typeof value === 'object')
+          ) {
+            value = deepToCamelCase(value)
+          }
+        } else {
+          newKey = origKey
+        }
+        newObject[newKey] = value
+      }
+    }
+  }
+  return newObject
+}
+
+export function doCamelCaseConversion (origKey, object) {
+  if (origKey && origKey === 'resources' && has(object, 'mappings')) {
+    return false
+  }
+  return true
+}
+
+export function deepToSnakeCase (object) {
+  let newObject
+  if (object instanceof Array) {
+    return object.map(value => {
+      if (typeof value === 'object') {
+        value = deepToSnakeCase(value)
+      }
+      return value
+    })
+  } else {
+    newObject = {}
+    let origKey
+    for (origKey in object) {
+      if (has(object, origKey)) {
+        let newKey
+        let value
+        newKey = snakeCase(origKey)
+        value = object[origKey]
+        if (
+          value instanceof Array ||
+          (value !== null && typeof value === 'object')
+        ) {
+          value = deepToSnakeCase(value)
+        }
+        newObject[newKey] = value
+      }
+    }
+  }
+  return newObject
+}
+// Hard Coded and it must be removed once we have status name in Elastic
+export function getStatusName (categoryId) {
+  const statusResolver = [
+    { id: '100', name: 'Prototype' },
+    { id: '101', name: 'Production' },
+    { id: '102', name: 'Dropped' },
+    { id: '103', name: 'Pre Production' },
+    { id: '104', name: 'Not Requested' },
+  ]
+  return _.find(statusResolver, status => status.id === categoryId)
+}
+
+// Hard Coded and it must be removed once we have status name in Elastic
+export function getTrackingStatusName (categoryId) {
+  const statusResolver = [
+    { id: '107', name: 'Requested' },
+    { id: '108', name: 'Sent' },
+    { id: '109', name: 'Received' },
+    { id: '110', name: 'Dropped' },
+    { id: '111', name: 'Cancel' },
+  ]
+  return _.find(statusResolver, status => status.id === categoryId)
+}
+
+// Hard Coded and it must be removed once we have status name in Elastic
+export function getEvalStatusName (categoryId) {
+  const statusResolver = [
+    { id: '100', name: 'Not evaluated yet' },
+    { id: '101', name: 'Approved' },
+    { id: '102', name: 'Approved Pending Change' },
+    { id: '103', name: 'Failed' },
+    { id: '131', name: 'Rejected' },
+    { id: '132', name: 'Dropped' },
+  ]
+  return _.find(statusResolver, status => status.id === categoryId)
+}
+
+export function buildURLParam (queryParam, filterParams, page, size) {
+  const initialValue = queryParam ? `&q=${queryParam}` : ''
+  const params = (filterParams || []).reduce((accumulator, currentValue) => {
+    return accumulator.concat('&', currentValue)
+  }, '')
+
+  if (page || size) {
+    return `${params}${initialValue}&page=${page}&size=${size}`
+  }
+
+  return `${params}${initialValue}`
+}
+
+export function buildSampleQuery (queryParam, productId) {
+  return queryParam &&
+  (queryParam.toUpperCase().includes('PID') ||
+    queryParam.toUpperCase().includes('SMP'))
+    ? queryParam
+    : productId
+}
+export function buildSampleURLParam (queryParam, filterParams, productId) {
+  const initialValue = `&q=${buildSampleQuery(queryParam, productId)}`
+  const params = filterParams.reduce((accumulator, currentValue) => {
+    return accumulator.concat('&', currentValue)
+  }, '')
+  return `${params}${initialValue}`
+}
+
+export function buildCommaSeparatedString (listOfIds) {
+  return listOfIds.reduce(
+    (queryString, id) =>
+      queryString !== '' ? `${queryString},${id}` : `${id}`,
+    '',
+  )
+}
+// This Could be common Function which will help in Resolving the Empty Query Param
+export function buildFilterQueryParam (varArgs, predicate) {
+  const doNotEncodeURI = v => v
+  const parsedQueryValues = _.pickBy(varArgs, predicate)
+  const queryString = qs.stringify(parsedQueryValues, '&', '=', { encodeURIComponent: doNotEncodeURI })
+  return queryString
+}
+
+export function buildString (listOfIds) {
+  return listOfIds.reduce(
+    (queryString, id) => (queryString !== '' ? `${queryString}${id}` : `${id}`),
+    '',
+  )
+}
+
+export function appendAndOperator (index) {
+  return index > 0 ? '&' : ''
+}
+
+// Additional Params in Product Service
+// visibleForWorkspace=WorkspaceId will be bring visible Products for Workspace
+// hiddenForWorkspace=WorkspaceId will be bring Hidden Products for Workspace
+// Internal input Can be [status=100,101,showHidden=false],Internal input Can be [status=100,101,showHidden=true],[status=100,101,showHidden=nofilter]
+// External [status=100,101,showHidden=nofilter]
+export const additionalParams = (args, workspaceId) => {
+  if (args && args.length > 0) {
+    const updatedFilterAtt = args.map((arg) => {
+      if (arg.startsWith('status')) {
+        return `&${arg.replace('status', 'statusId')}`
+      } else if (arg.startsWith('showHidden')) {
+        switch (arg.split('showHidden=')[1]) {
+          case 'true':
+            return `&hiddenForWorkspace=${workspaceId}`
+          case 'false':
+            return `&visibleForWorkspace=${workspaceId}`
+          default:
+            return ''
+        }
+      } else {
+        return arg
+      }
+    })
+    return buildString(updatedFilterAtt)
+  } else return ''
+}
+
+export const findRolesById = async (roleIds, ctx) => {
+  const roles = await ctx.loaders.role.getPage.load({})
+
+  const selectedRoles = _.reduce(roleIds, (result, id) => {
+    result.push({ id, value: roles[id] })
+    return result
+  }, [])
+
+  return selectedRoles
+}
+
+export let transformDiscussionMutateV2
+transformDiscussionMutateV2 = (discussion) => {
+  const transform = {
+    ...discussion,
+    ...transformUpdateParticipantsV2(discussion.participants, discussion.enableAcl, discussion),
+  }
+  delete transform.participants
+  return transform
+}
+// Transform function for bulk create discussions
+export let transformDiscussionsMutateV2 = (discussions) => {
+  return {
+    discussionDtoList: discussions.discussionDtoList.map(discussion => transformDiscussionMutateV2(discussion)),
+  }
+}
+// Pass in the discussion to derive the partner and design partner ids
+export const transformUpdateParticipantsV2 = (participants, enableAcl, discussion) => {
+  const derivePartnerIds = discussion ? discussion.derivePartnerIds : true
+  let partnerIds = []
+  let designPartnerIds = []
+  let users = []
+  const teams = []
+
+  if (_.get(participants, 'users')) {
+    _.reduce(_.get(participants, 'users'), (result, user) => {
+      if (user.partnerType === BusinessPartnerRole.DESIGN_PARTNER.code) {
+        designPartnerIds.push(user.partnerId)
+      } else {
+        partnerIds.push(user.partnerId || 0)
+      }
+      result.push(user)
+      return result
+    }, users)
+  }
+
+  if (_.get(participants, 'teams')) {
+    _.reduce(_.get(participants, 'teams'), (result, team) => {
+      if (team.partnerType === BusinessPartnerRole.DESIGN_PARTNER.code) {
+        designPartnerIds.push(team.businessPartnerId)
+      } else {
+        partnerIds.push(team.businessPartnerId || 0)
+      }
+      result.push({
+        teamId: _.get(team, 'teamId'),
+        edited: _.get(team, 'edited'),
+        teamName: _.get(team, 'teamName'),
+        partnerType: _.get(team, 'partnerType'),
+        businessPartnerId: _.get(team, 'businessPartnerId'),
+        usersInfo: _.get(team, 'users'),
+      })
+      return result
+    }, teams)
+  }
+
+  if (!derivePartnerIds && (discussion.partnerId || discussion.designPartnerId)) {
+    partnerIds = discussion.partnerId
+    designPartnerIds = discussion.designPartnerId
+  }
+  const transform = {
+    partnerId: _.uniq(partnerIds.filter(Number)),
+    designPartnerId: _.uniq(designPartnerIds),
+    enableAcl: participants ? participants.enableAcl || enableAcl : enableAcl,
+
+    participantDetails: {
+      users: [{
+        teamId: 'users',
+        usersInfo: users,
+      }],
+      teams: teams,
+    },
+  }
+  return transform
+}
+
+export const transformKeyValues = values => {
+  const formattedValues = []
+  for (var key in values) {
+    if (Object.prototype.hasOwnProperty.call(values, key)) {
+      formattedValues.push({
+        code: key,
+        description: values[key],
+      })
+    }
+  }
+  return formattedValues
+}
+
+export const batchedSingleDeepToCamelCase = (id, data) => data && [deepToCamelCase(data)]
+export const singleDeepToCamelCase = (data) => data && deepToCamelCase(data)
+export const singleDeepToSnakeCase = (data) => data && deepToSnakeCase(data)
+
+export const formatQueryResults = (result = [], mappings) => result.map(item => {
+  let formattedItem = {}
+  Object.keys(item).forEach(key => set(formattedItem, mappings[key], item[key]))
+  return formattedItem
+})
+
+/**
+ * Converts the provided object to a query string.  Array properties will be converted to a comma delimited string.
+ */
+export const toQueryString = (input) => Object.entries(input)
+  // eslint-disable-next-line no-unused-vars
+  .filter(([key, value]) => !!value && !(Array.isArray(value) && !value.length))
+  .map(([key, value]) => `${key}=${Array.isArray(value) ? encodeURIComponentArray(value) : encodeURIComponent(value)}`)
+  .join('&')
+
+const encodeURIComponentArray = (values) => values.map(it => encodeURIComponent(it)).join(',')

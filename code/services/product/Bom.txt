@@ -1,0 +1,184 @@
+import loadListing from '../../utils/loadListing'
+import postOne from '../../utils/postOne'
+import putOne from '../../utils/putOne'
+import loadOne from '../../utils/loadOne'
+import { deepToCamelCase, deepToSnakeCase } from '../../utils/convertFunctions'
+import { ManageWorkspaceActions } from '../../utils/workspaceAssociationHelper'
+
+export default class BomService {
+  constructor (endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/bom/v1`
+    this.masterDataEndpoint = `${endpoint}/masterData`
+    const bomMaterialTypeEndpoint = `${endpoint}/enterprise_product_development_products/master_data/bom_material_types`
+
+    this.getBomByIds = (permissionJWT, ids) => {
+      return loadListing(
+        `${this.endpoint}?ids=${ids}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: boms => deepToCamelCase(boms),
+        }, logContext,
+      ).load()
+    }
+
+    this.getActiveBomsByProductId = (permissionJWT, id) => {
+      return loadListing(
+        `${this.endpoint}/byProductId/${id}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: boms => deepToCamelCase(boms),
+        }, logContext,
+      ).load()
+    }
+
+    this.getActiveBomsByProductIdAndBomType = (permissionJWT, id, bomType) => {
+      return loadListing(
+        `${this.endpoint}/byProductId/${id}?type=${bomType}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: boms => deepToCamelCase(boms),
+        }, logContext,
+      ).load()
+    }
+
+    this.getBomVersionsById = (permissionJWT, id) => {
+      return loadListing(
+        `${this.endpoint}/${id}/versions`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          transform: boms => deepToCamelCase(boms),
+        }, logContext,
+      ).load()
+    }
+
+    this.getBomVersion = (params) => {
+      return loadOne(
+        () => `${this.endpoint}/${params.id}/versions/${params.version}`,
+        this.headers,
+        {
+          transform: (ids, json) => [deepToCamelCase(json)],
+          fetchAclToken: true,
+          batch: false,
+          aclIds: [params.id],
+        },
+        this.logContext,
+      )
+    }
+
+    this.getBomStatus = () => {
+      const headers = {
+        ...this.headers,
+      }
+      const options = {
+        transform: status => Object.keys(status).map(key => {
+          return { code: key, description: status[key] }
+        }),
+      }
+      return loadListing(`${this.masterDataEndpoint}?name=BomStatus`, headers, options, logContext).load()
+    }
+
+    this.addBom = (bom) => postOne(`${this.endpoint}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+      getDataLoader: (bom) => bom && bom.humanId && this.getBomByIds([bom.humanId]),
+      primeKey: bom => bom && bom.humanId,
+    }, logContext).load(bom)
+
+    this.updateBom = (permissionJWT, bom) => putOne(`${this.endpoint}/${bom.humanId}`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+        getDataLoader: (bom) => bom && bom.humanId && this.getBomByIds([bom.humanId]),
+        primeKey: bom => bom && bom.humanId,
+        omitParamsInBody: true,
+      }, logContext).load(bom)
+
+    this.updatePermissions = (permissionJWT) => putOne(
+      bom => `${this.endpoint}/${bom.humanId}/permission`,
+      { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+      {
+        transform: bom => bom && deepToCamelCase(bom),
+        transformRequest: bom => deepToSnakeCase({
+          businessPartners: bom.businessPartners,
+        }),
+      }, logContext,
+    )
+
+    this.getBomMaterialTypes = (ids) => {
+      const endpoint = ids && ids.length ? `${bomMaterialTypeEndpoint}?ids=${ids}` : `${bomMaterialTypeEndpoint}`
+      return loadListing(endpoint,
+        this.headers, {
+          transform: bomMaterialTypes => {
+            return bomMaterialTypes ? deepToCamelCase(bomMaterialTypes.bom_material_types) : []
+          },
+        }, logContext).load()
+    }
+    this.getBomPackagingMaterialTypes = () => {
+      return loadListing(`${endpoint}/enterprise_product_development_products/master_data/packaging_bom_material_types`,
+        this.headers, {
+          transform: bomMaterialTypes => {
+            return bomMaterialTypes ? deepToCamelCase(bomMaterialTypes.bom_material_types) : []
+          },
+        }, logContext).load()
+    }
+    this.getBomPackagingSubstrates = () => {
+      return loadListing(`${endpoint}/enterprise_product_development_products/master_data/packaging_bom_substrate_types`,
+        this.headers, {
+          transform: subTypes => {
+            return subTypes ? deepToCamelCase(subTypes.packaging_bom_substrate_types) : []
+          },
+        }, logContext).load()
+    }
+    this.getBomPackagingUnitOfMeasure = () => {
+      return loadListing(`${endpoint}/enterprise_product_development_products/master_data/packaging_unit_of_measure`,
+        this.headers, {
+          transform: uomTypes => {
+            return uomTypes ? deepToCamelCase(uomTypes.units_of_measure) : []
+          },
+        }, logContext).load()
+    }
+
+    this.manageWorkspaceAssociations = (bomId, action, permissionJwt) => {
+      const endpoint = action === ManageWorkspaceActions.DISSOCIATE ? `${this.endpoint}/${bomId}/dissociate_workspace` : `${this.endpoint}/${bomId}/associate_workspace`
+      return putOne(
+        endpoint,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJwt },
+        {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+          omitParamsInBody: true,
+        },
+        logContext,
+      )
+    }
+    this.lockBom = (permissionJWT, bomId) =>
+      putOne(`${this.endpoint}/${bomId}/lock`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }, logContext).load({ bomId })
+
+    this.unlockBom = (permissionJWT, bomId) =>
+      putOne(`${this.endpoint}/${bomId}/unlock`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: data => deepToSnakeCase(data),
+        }, logContext).load({ bomId })
+
+       this.updateBomComponentStatus = (statusInput) => putOne(
+          `${this.endpoint}/component_status_update`,
+          this.headers,
+          {
+            transform: (result) => {
+              return {content: deepToCamelCase(result)}
+            },
+            transformRequest: (data) => deepToSnakeCase(data),
+          },
+          this.logContext,
+        ).load(statusInput) 
+    
+
+  }
+}

@@ -1,0 +1,99 @@
+import { Agent } from 'https'
+import { performance } from 'perf_hooks'
+
+import DataLoader from 'dataloader'
+import fetch from 'node-fetch'
+import _ from 'lodash'
+
+import { logger } from './../utils/logger'
+import { getToken } from './accessControlUtils'
+import { generateBasicLogContextFromHeaders } from './logging/generateBasicLogContextFromHeaders'
+
+class LoadError extends Error {
+  constructor (statusCode, message) {
+    super(message)
+    this.statusCode = statusCode
+  }
+}
+
+export default function loadOne (
+  buildURL,
+  headers,
+  options = {},
+  logContext = {},
+) {
+  const {
+    transform,
+    fetchOptions,
+    skipJsonParse,
+    fetchAclToken,
+    aclIds,
+    nonErrorStatusCodes,
+    ...dataloaderOptions
+  } = options
+  const { logContext: defaultLogContext } = generateBasicLogContextFromHeaders(headers)
+  const finalLogContext = { ...logContext, ...defaultLogContext }
+
+  return new DataLoader(async ids => {
+    const url = buildURL(ids)
+    if (fetchAclToken) {
+      const permissionIds = aclIds || ids
+      headers['SPARK-Capability-Token'] = await getToken(permissionIds, headers, finalLogContext)
+    }
+
+    const started = performance.now()
+    const response = await fetch(url, {
+      agent: /^https:\/\//.test(url)
+        ? new Agent({
+          rejectUnauthorized: false,
+        })
+        : undefined,
+      headers,
+      ...fetchOptions,
+    })
+    if (skipJsonParse) {
+      const result = await response.text()
+      logger.logResponse(
+        url,
+        'GET',
+        response.status,
+        result,
+        finalLogContext,
+        Math.round(performance.now() - started),
+      )
+      return [result]
+    }
+
+    let json = {}
+    try {
+      json = await response.json()
+    } catch {
+      logger.error('invalid response received.  Unable to parse as json', finalLogContext)
+    }
+    logger.logResponse(
+      url,
+      'GET',
+      response.status,
+      json,
+      finalLogContext,
+      Math.round(performance.now() - started),
+    )
+
+    const anyBadStatusIsError = response.status >= 400 && !nonErrorStatusCodes
+    if (anyBadStatusIsError) {
+      throw new LoadError(response.status, JSON.stringify(json, null, '  '))
+    }
+
+    // Checks bad status code against any supplied nonErrorStatusCodes
+    const nonSkippableError = response.status >= 400 && nonErrorStatusCodes && _.isArray(nonErrorStatusCodes) && !nonErrorStatusCodes.includes(response.status)
+    if (nonSkippableError) {
+      throw new LoadError(response.status, JSON.stringify(json, null, '  '))
+    }
+
+    if (transform) {
+      return transform(ids, json)
+    }
+
+    return json
+  }, dataloaderOptions)
+}

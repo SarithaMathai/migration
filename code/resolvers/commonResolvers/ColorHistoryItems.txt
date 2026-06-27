@@ -1,0 +1,57 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+
+const validColorHistoryResourceTypes = [
+  'colors',
+  'colors_archroma',
+  'colors_coloro',
+  'colors_pantone',
+  'target_colors',
+  'target_colors_archroma',
+  'target_colors_pantone',
+  'target_colors_coloro',
+  'reference_colors',
+  'reference_colors_archroma',
+  'reference_colors_pantone',
+  'reference_colors_coloro',
+]
+
+export const loadColorHistoryItems = async (color, ctx) => {
+  const colorRelationships = await ctx.loaders.relationship.getByID.load({
+    id: color.humanId,
+    maxDepth: 0,
+  })
+
+  const colorHistoryItems = ((colorRelationships && colorRelationships.nodes) || [])
+    .filter(it => it && validColorHistoryResourceTypes.includes(it.type))
+  if (colorHistoryItems.length > 0) {
+    const colorHistoryItemIds = colorHistoryItems.map(it => it.id)
+    const permissionJWT = await getUserPermissionsJWT(
+      colorHistoryItemIds,
+      ctx,
+    )
+
+    const colors = await ctx.loaders.color.getByIDs(permissionJWT).load({ ids: colorHistoryItemIds })
+
+    const finalColors = [
+      ...colorHistoryItems
+        .filter(it => colors.find(color => color.humanId === it.id))
+        .map(colorNode => {
+          const color = colors.find(color => color.humanId === colorNode.id)
+          return {
+            relationship: colorNode.metadata,
+            humanId: color.humanId,
+            status: color.status,
+            name: color.name,
+            thumbnailId: color.thumbnailId,
+            red: color.red,
+            green: color.green,
+            blue: color.blue,
+          }
+        }),
+    ]
+
+    return finalColors
+  } else {
+    return []
+  }
+}

@@ -1,0 +1,32 @@
+import { getOrAddCircuitBreaker } from './circuitBreakerManager'
+import { logger } from './logger'
+
+export const defaultOptions = {
+  timeout: 15000, // 15,000ms (15 seconds) max request time before triggering failureResponse
+  rollingCountTimeout: 60000, // Keep track of statistics on failure rates for 60,000ms (1 min)
+  errorThresholdPercentage: 85, // If 85 percent of requests within the rollingCountTimeout are failing, default to failureResponse
+  resetTimeout: 30000, // After 30,000 ms (1 minute) start hitting the original service again
+  failureResponse: null, // This will be returned in the event of a failure, it can be null or mock placeholder data
+}
+
+export default function circuitBreaker (key, loader, options = {}) {
+  const settings = Object.assign({}, defaultOptions, options)
+
+  const originalLoad = loader.load.bind(loader)
+  const breaker = getOrAddCircuitBreaker(key, originalLoad, settings)
+
+  loader.load = (...args) => {
+    return new Promise((resolve) => {
+      breaker.fire(...args)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((err) => {
+          logger.error(`ERROR: Circuit breaker. Using circuit breaker failureResponse.`, err)
+          resolve(settings.failureResponse)
+        })
+    })
+  }
+
+  return loader
+}

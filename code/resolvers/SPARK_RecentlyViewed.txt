@@ -1,0 +1,66 @@
+export default {
+  Mutation: {
+    deleteRecentlyViewedByPartner: (
+      parent,
+      { resourceType, partnerId, resourceIds },
+      ctx,
+    ) =>
+      ctx.loaders.recentlyViewed.deleteRecentlyViewedByPartner.load({
+        resourceType,
+        partnerId,
+        resourceIds,
+      }),
+    addRecentlyViewed: (
+      parent,
+      { recentlyViewed },
+      ctx,
+    ) => ctx.loaders.recentlyViewed.addRecentlyViewed.load({
+      id: recentlyViewed.id,
+      type: recentlyViewed.type,
+    }),
+  },
+
+  Query: {
+    getAllRecentlyViewed: (parent, params, ctx) =>
+      ctx.loaders.recentlyViewed.getPage.load(params),
+  },
+
+  SPARK_RecentlyViewed: {
+    id: recentlyViewed => recentlyViewed.id,
+    sample: async (recentlyViewed, args, ctx) => {
+      if (
+        recentlyViewed.resource &&
+        recentlyViewed.resource.type === 'sample'
+      ) {
+        return ctx.loaders.sampleV2
+          .getSampleById
+          .load(recentlyViewed.resource.id)
+      }
+    },
+    product: (recentlyViewed, args, ctx) => {
+      if (
+        recentlyViewed.resource &&
+        recentlyViewed.resource.type === 'product'
+      ) {
+        return ctx.loaders.product.getByID.load(recentlyViewed.resource.id)
+      }
+    },
+  },
+
+  SPARK_RecentlyViewedPaged: {
+    paging: recentlyViewed => {
+      return {
+        totalPages: recentlyViewed.totalPages,
+        totalElements: recentlyViewed.totalElements,
+        first: recentlyViewed.first,
+        numberOfElements: recentlyViewed.numberOfElements,
+        size: recentlyViewed.size,
+        number: recentlyViewed.number,
+        last: recentlyViewed.last,
+        sort: recentlyViewed.sort,
+      }
+    },
+    content: recentlyViewed => recentlyViewed.content,
+    pageable: recentlyViewed => recentlyViewed.pageable,
+  },
+}

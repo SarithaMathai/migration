@@ -1,0 +1,298 @@
+import _ from 'lodash'
+import {
+  addRelationship,
+  removeRelationship,
+  getUserPermissionsJWT,
+  loadTags,
+  getUserPermissionsJWTByProxy,
+} from '../utils/commonLoaders'
+import { loadFiles } from './commonResolvers/Files'
+import { loadTeams, loadBusinessPartners, loadDroppedBusinessPartners } from './commonResolvers/Teams'
+import { getMasterId } from '../utils/variantIdFunctions'
+import { loadParentMaterial } from './material/SPARK_BaseMaterialCommonFields'
+import { materialHasFiles } from '../utils/materials/materialHasFiles'
+import { getFilesOrEmptyList } from '../utils/materials/getFilesOrEmptyList'
+import { getHumanIdsFromResourcesList } from '../utils/getHumanIdsFromResourcesList'
+import { getAttachmentsAndVariantAttachments } from '../utils/getAttachmentsAndVariantAttachments'
+import { buildUpdatedColorwaysForNewAttachments, bulkAssociateMaterialFilesAndColorwayFiles } from './SPARK_Fabric'
+import { RESOURCE_LINK_REASONS, createResourceLink } from '../utils/materials/resourceLinkUtils'
+import { getUser } from '../utils/userAttributesUtils'
+
+export default {
+  Query: {
+    getArtwork: async (parent, { id, proxyIds }, ctx) => {
+      const transformedId = getMasterId(id)
+      if (proxyIds && proxyIds.length > 0) {
+        const permissionJWT = await getUserPermissionsJWTByProxy({ id: transformedId, proxyIds: proxyIds }, ctx)
+        return ctx.loaders.artwork.getByID(permissionJWT).load(transformedId)
+      } else {
+        const permissionJWT = await getUserPermissionsJWT(transformedId, ctx)
+        return ctx.loaders.artwork.getByID(permissionJWT).load(transformedId)
+      }
+    },
+    getArtworks: async (parent, { ids }, ctx) => {
+      const transformedIds = ids.map(id => getMasterId(id))
+      const permissionJWT = await getUserPermissionsJWT(transformedIds, ctx)
+      return ctx.loaders.artwork.getByIDs(permissionJWT).load({ ids: transformedIds })
+    },
+    getStatus: (parent, {}, ctx) =>
+      ctx.loaders.artwork.getStatus.load(),
+    getApplicationTechnique: (parent, {}, ctx) =>
+      ctx.loaders.artwork.getApplicationTechnique.load(),
+    getStyleClassification: (parent, {}, ctx) =>
+      ctx.loaders.artwork.getStyleClassification.load(),
+  },
+
+  Mutation: {
+    addArtwork: async (parent, { sparkArtwork }, ctx) => {
+      // Create the artwork
+      const artwork = await ctx.loaders.artwork.create.load(sparkArtwork)
+      // Setup relationships
+      if (sparkArtwork.files && sparkArtwork.files.length > 0) {
+        const associateAttachmentTeamDto = { teamsToUpdateDto: { teamsToAdd: sparkArtwork.teamsToAdd }, parentId: artwork.humanId, humanIds: sparkArtwork.files }
+        const attachmentPermissionJWT = await getUserPermissionsJWT(sparkArtwork.files, ctx)
+        await ctx.loaders.attachment.associateAttachmentTeams(attachmentPermissionJWT).load(associateAttachmentTeamDto, { humanId: artwork.humanId })
+      }
+      return artwork
+    },
+    addBulkArtwork: async (parent, { sparkArtworks }, ctx) => {
+      // Create the artwork
+      const createdArtworks = await ctx.loaders.artwork.bulkCreate.load(sparkArtworks)
+      const bulkAttachmentIds = []
+      const bulkAssociateAttachmentDto = await sparkArtworks.filter(input => input.files && input.files.length > 0).map(input => {
+        if (input.thumbnailId) {
+          const artwork = _.find(createdArtworks, {
+            thumbnailId: input.thumbnailId,
+          })
+          bulkAttachmentIds.push(...input.files)
+          return {
+            teamsToUpdateDto: { teamsToAdd: input.teamsToAdd },
+            parentId: artwork.humanId,
+            relatedResourceIds: [artwork.humanId],
+            humanIds: input.files,
+          }
+        }
+      })
+      if (bulkAttachmentIds.length > 0) {
+        const attachmentsPermissionJWT = await getUserPermissionsJWT(bulkAttachmentIds, ctx)
+        const bulkAttachmentWrapper = {
+          humanIds: bulkAttachmentIds,
+          associatedBulkList: bulkAssociateAttachmentDto,
+        }
+        await ctx.loaders.attachment.bulkAssociateAttachmentTeams(attachmentsPermissionJWT).load(bulkAttachmentWrapper)
+      }
+      return createdArtworks
+    },
+    addColorway: async (parent, { sparkColorway }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sparkColorway.humanId, ctx)
+      return ctx.loaders.artwork.update(permissionJWT).load(sparkColorway)
+    },
+    replaceColorways: async (parent, { colorwayInput }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(colorwayInput.artworkId, ctx)
+      return ctx.loaders.artwork.replaceColorways(permissionJWT).load(colorwayInput)
+    },
+    cloneArtwork: async (parent, { sparkArtwork, filesToCopy }, ctx) => {
+      let newThumbnailId
+      let attachmentResponse = {}
+      if (filesToCopy.length > 0) {
+        const permissionJWT = await getUserPermissionsJWT(filesToCopy, ctx)
+        attachmentResponse = await ctx.loaders.attachment
+          .copyAttachmentsV3(permissionJWT)
+          .load({
+            thumbnailId: sparkArtwork.thumbnailId,
+            humanIds: filesToCopy,
+          })
+        newThumbnailId = attachmentResponse.thumbnailId
+      }
+
+      // Update necessary fields with newly copied attachments
+      const { attachments: copiedArtworkAttachments, variantAttachments: copiedColorwayAttachments, copiedIdToSourceParentMap } = getAttachmentsAndVariantAttachments(attachmentResponse.attachments, attachmentResponse.copiedAttachmentResponse)
+      sparkArtwork.files = getFilesOrEmptyList(sparkArtwork).concat(getHumanIdsFromResourcesList(copiedArtworkAttachments))
+      sparkArtwork.thumbnailId = newThumbnailId || materialHasFiles(sparkArtwork) ? sparkArtwork.files[0] : ''
+
+      sparkArtwork.colorways = buildUpdatedColorwaysForNewAttachments(sparkArtwork.colorways, copiedColorwayAttachments, copiedIdToSourceParentMap)
+
+      const artwork = await ctx.loaders.artwork.create.load(sparkArtwork)
+      if (sparkArtwork.parent) {
+        await createResourceLink({
+          sourceHumanId: sparkArtwork.parent,
+          targetHumanId: artwork.humanId,
+          reason: RESOURCE_LINK_REASONS.developedFrom,
+          ctx,
+        })
+      }
+      // Associate new attachments with new artwork and colorways
+      await bulkAssociateMaterialFilesAndColorwayFiles({ inputMaterial: sparkArtwork, createdMaterial: artwork, ctx })
+
+      // Add relationships
+      const nodeLinkedArts =
+        sparkArtwork.linkedArtsToAdd && sparkArtwork.linkedArtsToAdd.length > 0
+          ? sparkArtwork.linkedArtsToAdd.map(linkedArt => {
+            return {
+              node: linkedArt,
+            }
+          })
+          : []
+
+      await addRelationship({
+        ctx,
+        rootId: artwork.humanId,
+        nodes: nodeLinkedArts,
+        returnObject: null,
+      })
+
+      return artwork
+    },
+
+    updateArtwork: async (parent, { sparkArtwork }, ctx) => {
+      // Add all teams to ACL and relationship
+      const addNodes = []
+      const deleteNodes = []
+
+      sparkArtwork.linkedArtsToAdd &&
+        sparkArtwork.linkedArtsToAdd.length > 0 &&
+        sparkArtwork.linkedArtsToAdd.forEach(linkedArt => {
+          addNodes.push({
+            node: linkedArt,
+          })
+        })
+
+      sparkArtwork.linkedArtsToRemove &&
+        sparkArtwork.linkedArtsToRemove.length > 0 &&
+        sparkArtwork.linkedArtsToRemove.forEach(linkedArt => {
+          deleteNodes.push({
+            id: linkedArt,
+          })
+        })
+
+      await Promise.all([
+        addNodes.length > 0 &&
+          addRelationship({
+            ctx,
+            rootId: sparkArtwork.humanId,
+            nodes: addNodes,
+          }),
+        deleteNodes.length > 0 &&
+          removeRelationship({
+            ctx,
+            rootId: sparkArtwork.humanId,
+            nodes: deleteNodes,
+          }),
+      ])
+
+      const permissionJWT = await getUserPermissionsJWT(
+        getMasterId(sparkArtwork.humanId),
+        ctx,
+      )
+
+      return ctx.loaders.artwork.update(permissionJWT).load(sparkArtwork)
+    },
+    deleteArtwork: async (parent, { humanId }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(getMasterId(humanId), ctx)
+      return ctx.loaders.artwork.delete(permissionJWT).load(humanId)
+    },
+    addTeamsToArtwork: async (parent, { humanId, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(getMasterId(humanId), ctx)
+      await ctx.loaders.artwork.addDeleteTeams(permissionJWT).load(teamsToUpdate, { humanId })
+      return ctx.loaders.artwork.getByID(permissionJWT).load(humanId)
+    },
+
+    updateArtworkTeams: async (parent, { humanId, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(getMasterId(humanId), ctx)
+      return ctx.loaders.artwork.updateArtworkTeams(permissionJWT, humanId).load(teamsToUpdate)
+    },
+  },
+
+  SPARK_Artwork: {
+    teams: (artwork, args, ctx) => loadTeams(artwork.humanId, ctx),
+    businessPartners: (artwork, args, ctx) => loadBusinessPartners(artwork.humanId, ctx),
+    droppedPartnerIds: (artwork, args, ctx) => loadDroppedBusinessPartners(artwork.humanId, ctx),
+    brands: (artwork, args, ctx) =>
+      artwork && artwork.brands && artwork.brands.length > 0
+        ? ctx.loaders.brand.getBrand.loadMany(artwork.brands)
+        : [],
+    createdBy: (artwork, args, ctx) => getUser(artwork.createdBy, ctx),
+    updatedBy: (artwork, args, ctx) => getUser(artwork.updatedBy, ctx),
+    division: (artwork, args, ctx) => {
+      if (_.get(artwork, 'division', null)) {
+        return ctx.loaders.ig.division.getByID.loadMany(artwork.division)
+      }
+    },
+    departments: (artwork, args, ctx) =>
+      artwork && artwork.departments && artwork.departments.length > 0
+        ? ctx.loaders.ig.department.getByID.loadMany(artwork.departments)
+        : [],
+    designCycle: async (artwork, args, ctx) =>
+      artwork && artwork.designCycle ? loadTags(artwork.designCycle, ctx) : [],
+    tags: async (artwork, args, ctx) =>
+      artwork && artwork.tags ? loadTags(artwork.tags, ctx) : [],
+    linkedArtworks: async (artwork, args, ctx) => {
+      const childArts = await ctx.loaders.relationship.getByID.load({
+        id: artwork.humanId,
+        type: 'artworks',
+        maxDepth: 0,
+      })
+
+      if (childArts && childArts.nodes && childArts.nodes.length > 0) {
+        const linkedArtsIds = childArts.nodes.map(it => it.id)
+        const transformedIds = linkedArtsIds.map(id => getMasterId(id))
+        const permissionJWT = await getUserPermissionsJWT(transformedIds, ctx)
+        return ctx.loaders.artwork
+          .getByIDs(permissionJWT)
+          .load({ ids: transformedIds })
+      } else {
+        return []
+      }
+    },
+    biDirectionalLinkedArtworks: async (artwork, args, ctx) => {
+      const allArts = []
+      const childArts = await ctx.loaders.relationship.getByID.load({
+        id: artwork.humanId,
+        type: 'artworks',
+        maxDepth: 0,
+      })
+
+      childArts &&
+        childArts.nodes &&
+        childArts.nodes.length > 0 &&
+        allArts.push(...childArts.nodes)
+
+      const parentArts = await ctx.loaders.relationship.getWhereUsedByID.load({
+        id: artwork.humanId,
+        type: 'artworks',
+        maxDepth: 0,
+      })
+
+      parentArts &&
+        parentArts.nodes &&
+        parentArts.nodes.length > 0 &&
+        allArts.push(...parentArts.nodes)
+
+      if (allArts.length > 0) {
+        const linkedArtsIds = allArts.map(it => it.id)
+        const transformedIds = linkedArtsIds.map(id => getMasterId(id))
+        const permissionJWT = await getUserPermissionsJWT(transformedIds, ctx)
+        return ctx.loaders.artwork
+          .getByIDs(permissionJWT)
+          .load({ ids: transformedIds })
+      } else {
+        return []
+      }
+    },
+    files: (artwork, args, ctx) => loadFiles(artwork.humanId, ctx),
+    parent: loadParentMaterial,
+  },
+  SPARK_Colorway: {
+    libraryColors: async (colorways, args, ctx) => {
+      const colors = (colorways.libraryColors && colorways.libraryColors.length > 0 && colorways.libraryColors.map(color => color.id)) || null
+      if (colors) {
+        const permissionJWT = await getUserPermissionsJWT(colors, ctx)
+        return ctx.loaders.color.getByIDs(permissionJWT).load({ ids: colors })
+      }
+      return []
+    },
+    tags: async (colorway, args, ctx) =>
+      colorway && colorway.tags ? loadTags(colorway.tags, ctx) : [],
+    files: async (parent, args, ctx) => loadFiles(parent.humanId, ctx),
+  },
+}

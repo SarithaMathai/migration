@@ -1,0 +1,43 @@
+import { getUserPermissionsJWT } from './commonLoaders'
+
+export async function componentHistoryHelper (id, ctx) {
+  const permissionJWT = await getUserPermissionsJWT(id, ctx)
+  let loader
+  if (id.indexOf('BOM') === 0 || id.indexOf('PKGBOM') === 0 || id.indexOf('PRDBOM') === 0) {
+    loader = ctx.loaders.bom.getBomVersionsById(permissionJWT, id)
+  } else if (id.indexOf('MST') === 0) {
+    loader = ctx.loaders.measurement.getMeasurementSetVersionsById(permissionJWT, id)
+  } else if (id.indexOf('CLM') === 0) {
+    loader = ctx.loaders.claim.getClaimVersionsById(permissionJWT, id)
+  } else if (id.indexOf('PDTL') === 0) {
+    loader = ctx.loaders.ProductDetails.getProductDetailVersionsById(permissionJWT, id)
+  } else if (id.indexOf('PWL') === 0) {
+    loader = ctx.loaders.watchlist.getWatchlistVersionsById(permissionJWT, id)
+  }
+  if (loader) {
+    const data = await loader
+    return data.content
+  } else {
+    throw new Error('Unsupported component type')
+  }
+}
+
+export async function componentVersionHelper (args, ctx) {
+  let loader
+  if (args.id.indexOf('BOM') === 0 || args.id.indexOf('PKGBOM') === 0 || args.id.indexOf('PRDBOM') === 0) {
+    loader = ctx.loaders.bom.getBomVersion(args)
+  } else if (args.id.indexOf('MST') === 0) {
+    loader = ctx.loaders.measurement.getMeasurementSetVersion(args)
+  } else if (args.id.indexOf('CLM') === 0) {
+    loader = ctx.loaders.claim.getClaimVersion(args)
+  } else if (args.id.indexOf('PDTL') === 0) {
+    loader = ctx.loaders.ProductDetails.getProductDetailVersion(args)
+  } else if (args.id.indexOf('PWL') === 0) {
+    loader = ctx.loaders.watchlist.getWatchlistVersion(args)
+  }
+  if (loader) {
+    return loader.load(args)
+  } else {
+    throw new Error('Unsupported component type')
+  }
+}

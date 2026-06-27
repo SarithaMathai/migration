@@ -1,0 +1,58 @@
+import Product from '../../resolvers/SPARK_Product'
+import { uniq, clone } from 'lodash'
+
+const extractWorkspaceIds = (samples, components) => {
+  const workspaceIdsFromSamples = (samples || []).map(sample =>
+    sample.workspaceContext,
+  )
+  const workspaceIdsFromComponents = (components || []).reduce((workspaceIds, component) => (
+    [...workspaceIds, ...(component.workspaceContext || [])]
+  ), [])
+  return [...workspaceIdsFromSamples, ...workspaceIdsFromComponents]
+}
+
+export const getNotRemovableWorkspaceIds = async (product, args, ctx) => {
+  const samples = (await Product.SPARK_Product.samples(product, {}, ctx, { variableValues: {} })) || []
+  const components = (await Product.SPARK_Product.components(product, {}, ctx) || {}).content || []
+  const workspaceIdsFromTeams = (product.productWorkspaceInfo || product.productWorkspaceAttributes || []).reduce((workspaceIds, attribute) => {
+    if (attribute.teams && attribute.teams.length > 0) {
+      return [...workspaceIds, attribute.humanId]
+    }
+    return workspaceIds
+  }, [])
+  return uniq([...workspaceIdsFromTeams, ...extractWorkspaceIds(samples, components)]) || []
+}
+
+export const rulesRequestTransformer = (rule) => {
+  return {
+    id: rule.id,
+    criteria: {
+      department_ids: rule.departments,
+      business_partner_ids: rule.businessPartners,
+    },
+    active: rule.active,
+    rules: rule.rules,
+  }
+}
+
+export const productRuleResponseTransformer = (response) => {
+  let result = []
+  if (response && response.product_rules) {
+    result = Object.keys(response.product_rules).map(key => {
+      return {
+        ...response.product_rules[key],
+        product_id: key,
+      }
+    })
+  }
+  return result
+}
+
+export default {
+  getNotRemovableWorkspaceIds,
+}
+
+export const sanitizedProductDescription = (description) => {
+  const clonedDescription = clone(description)
+  return clonedDescription.replace(/[^\x20-\x7E\xA0-\xFF]/g, '').trim()
+}

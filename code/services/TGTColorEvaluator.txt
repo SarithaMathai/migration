@@ -1,0 +1,32 @@
+import { deepToCamelCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+
+import SparkService from './SparkService'
+import loadOne from '../utils/loadOne'
+
+export default class TGTColorEvaluator extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.getAsapEvaluationUpdates = loadListing(
+      this.endpoint,
+      this.headers,
+      {
+        transform: response => deepToCamelCase(response),
+      },
+      logContext,
+    )
+
+    this.getClmPackageById = loadOne(
+      id => `${this.endpoint}/${id}`,
+      this.headers,
+      {
+        transform: (id, clmPackage) => [deepToCamelCase(clmPackage)],
+        batch: false,
+      },
+      this.logContext,
+    )
+  }
+}

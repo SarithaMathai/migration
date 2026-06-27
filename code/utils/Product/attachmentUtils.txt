@@ -1,0 +1,329 @@
+import _ from 'lodash'
+import { RESOURCE_TYPES, RESOURCE_TYPE_PREFIXES } from '../constants'
+import SPARK_Discussion from '../../resolvers/SPARK_Discussion'
+import { CHUNK_SIZE, getDiscussionRepliesV2, getDiscussionThreadsBatch, getDiscussionsBatch } from '../discussionUtils'
+import { logger } from '../logger.js'
+import { getAccessControlBatch } from '../accessControlUtils.js'
+import { deepToCamelCase } from '../convertFunctions.js'
+
+export const initialCountsByBp = Object.freeze([
+  Object.freeze({ bpType: 'targetOnly', counts: 0 }),
+  Object.freeze({ bpType: 'totalCount', counts: 0 }),
+])
+
+export const orderAttachmentsByType = (attachments) => {
+  const orderByResourceType = (attachment) =>
+    (attachment.resource && (attachment.resource.type === 'product')) ? 0 : 1
+
+  const orderByCreatedDate = (attachment) => new Date(attachment.createdAt)
+  return _.orderBy(attachments, [orderByResourceType, orderByCreatedDate], ['asc', 'desc'])
+}
+
+export const orderComponentsByDate = (components) => {
+  const orderByCreatedDate = (component) => new Date(component.createdAt)
+  return _.orderBy(components, orderByCreatedDate, 'desc')
+}
+
+export const convertV2AccessToV3 = (partners) => ({
+  locked: false,
+  fabSuppliers: [], // Not used in product/workspace
+  designPartners: [], // Not used in product/workspace
+  merchVendors: [], // Not used in product/workspace
+  external: false, // Not used in product/workspace
+  bps: partners,
+})
+
+export const resolveRelationIds = async (relations, countsByBp, resourceId, ctx, onlyProductPacketFiles, primaryThumbnailIdToInclude) => {
+  const attachmentIds = []
+  const attachmentV3Ids = []
+  const discussionIds = []
+  const discussionThreadIds = []
+
+  relations[0].nodes.map(({ id, type }) => {
+    if (type === 'discussionThreads') {
+      discussionThreadIds.push(id)
+    } else if (type === 'discussions') {
+      discussionIds.push(id)
+    } else if (type === 'attachments') {
+      attachmentIds.push(id)
+    } else if (type === 'attachments_v3') {
+      attachmentV3Ids.push(id)
+    }
+  })
+
+  const attachmentsJWT = (attachmentIds.length === 0) ? '' : await ctx.loaders.accessControl.getUserAccessByPost.load(attachmentIds)
+  const attachmentsV3JWT = (attachmentV3Ids.length === 0) ? '' : await ctx.loaders.accessControl.getUserAccessByPost.load(attachmentV3Ids)
+
+  let attachments
+
+  if (!ctx.featureConfig.attachmentElasticResponseFeatureFlag) {
+    const attachmentIdsResponse = !_.isEmpty(attachmentIds) ? await ctx.loaders.attachment.getAttachmentsV3(attachmentsJWT).load(attachmentIds) : []
+    const attachmentV3IdsResponse = !_.isEmpty(attachmentV3Ids) ? await ctx.loaders.attachment.getAttachmentsV3(attachmentsV3JWT).load(attachmentV3Ids) : []
+    attachments = _.compact([...attachmentIdsResponse, ...attachmentV3IdsResponse])
+  } else {
+    let attachmentQuery = { q: `(_index:attachments AND relatedResources:${resourceId})` }
+    const response = await ctx.loaders.search.searchAttachments.load(attachmentQuery)
+    attachments = response.content || []
+  }
+  if (!attachments || !attachments.length) {
+    return { content: [], counts: countsByBp }
+  }
+
+  const discussions = discussionIds.length > 0 ? await getDiscussionsBatch(discussionIds, CHUNK_SIZE, ctx) : []
+  const discussionThreads = discussionThreadIds.length > 0 ? await getDiscussionThreadsBatch(discussionThreadIds, CHUNK_SIZE, ctx) : []
+
+  const resourceIds = _.compact([ ...attachmentIds, ...attachmentV3Ids ])
+  const permissions = await getAccessControlBatch(resourceIds, 250, ctx)
+
+  return createAttachmentPaged(
+    attachments,
+    permissions,
+    discussionThreads,
+    discussions,
+    resourceId,
+    countsByBp,
+    onlyProductPacketFiles,
+    primaryThumbnailIdToInclude,
+    ctx,
+  )
+}
+
+export const get3DmodelFile = async (attachment, ctx) => {
+  if (attachment) {
+    const convertToCamelCase = !!attachment.document_type
+    if (convertToCamelCase) {
+      attachment = deepToCamelCase(attachment)
+    }
+    const documentId = attachment.id || attachment.documentId
+    const isValid3dFile = attachment.galleryDetails && attachment.galleryDetails.fileValid
+    // Need to see if we can have more configurable way if we need to support more types
+    const setModelFile = attachment.mediaType && attachment.mediaType.toLowerCase() === 'fbx'
+
+    if (setModelFile && isValid3dFile && !attachment.canOpenInShowdog) {
+      const galleryFileData = await ctx.loaders.attachment.getRendersForAttachmentIds(true).load(documentId)
+      const relatedFiles = (galleryFileData && galleryFileData.relatedFiles) ? galleryFileData.relatedFiles : []
+      const glbFiles = relatedFiles.filter(it => it.renderType === 'GLB')
+
+      if (glbFiles && glbFiles.length > 0) {
+        return { fileId: glbFiles[0].fileId, fileName: glbFiles[0].fileName }
+      }
+    }
+  }
+  return null
+}
+
+export const addPartnersToCountObject = (partners, countsByBp) => {
+  const totalCountIndex = _.findIndex(countsByBp, { bpType: 'totalCount' })
+  if (partners.length > 0) {
+    partners.filter(Number).forEach(partnerId => {
+      const existingBpCountIndex = _.findIndex(countsByBp, { bpType: +partnerId })
+      if (existingBpCountIndex !== -1) {
+        countsByBp[existingBpCountIndex].counts = (countsByBp[existingBpCountIndex].counts || 0) + 1
+      } else {
+        countsByBp.push({ bpType: +partnerId, counts: 1 })
+      }
+    })
+  } else {
+    const internalCountIndex = _.findIndex(countsByBp, { bpType: 'targetOnly' })
+    countsByBp[internalCountIndex].counts = (countsByBp[internalCountIndex].counts || 0) + 1
+  }
+  countsByBp[totalCountIndex].counts = (countsByBp[totalCountIndex].counts || 0) + 1
+}
+
+export const createAttachmentPaged = async (
+  attachments,
+  permissions,
+  discussionThreads,
+  discussions,
+  resourceId,
+  countsByBp,
+  onlyProductPacketFiles,
+  primaryThumbnailIdToInclude,
+  ctx,
+) => {
+  const searchAttachments = await attachments.map(attachment => {
+    let partners = []
+    let skipMe = false
+    let isResourceCritical = false
+    const documentId = attachment.document_id || attachment.documentId
+    const humanId = attachment.humanId || attachment.human_id
+    let access = _.find(permissions, { resourceId: humanId || attachment.id || documentId })
+    if (!access && (humanId || attachment.id)) {
+      access = _.find(permissions, { resourceId: documentId })
+    }
+    if (!access) {
+      logger.error((`no permissions object found for resourceId: ${(humanId || attachment.id)}`), ctx.logContext)
+      return { skipMe: true }
+    }
+    if (access.permissions) {
+      access.permissions.forEach(perm => {
+        if (perm?.abstractAccessGroup?.type === 'bps' || perm?.abstractAccessGroup?.type === 'dps' || perm?.abstractAccessGroup?.type === 'MerchVendor') {
+          const grantees = _.get(perm, 'abstractAccessGroup.grantees') || []
+          if (grantees.length) {
+            partners = _.uniq([...partners, ...grantees])
+          }
+        }
+      })
+    }
+
+    let relatedMainDiscussion
+    if (attachment.resource && (attachment.resource.type === 'discussion')) {
+      relatedMainDiscussion = (_.find(discussions, { discussionId: attachment.resource.id }))
+      if (relatedMainDiscussion) {
+        isResourceCritical = relatedMainDiscussion.critical
+        skipMe = relatedMainDiscussion.draft
+      }
+      if (relatedMainDiscussion === undefined) {
+        const discussionThread = (_.find(discussionThreads, { discussionThreadId: attachment.resource.id }))
+        if (discussionThread) {
+          isResourceCritical = discussionThread.critical
+          skipMe = discussionThread.draft
+          relatedMainDiscussion = _.find(discussions, { discussionId: discussionThread.discussionId })
+        } else {
+          // attachment is on a draft you do not have access to view
+          skipMe = true
+        }
+      }
+    }
+    if (onlyProductPacketFiles) {
+      const isDiscussionAttachmentCritical = isResourceCritical && (attachment.resource && (attachment.resource.type === RESOURCE_TYPES.Discussion))
+      const parentResourceId = (attachment.resource && attachment.resource.id) || attachment.parent_resource
+      if (!parentResourceId.includes(RESOURCE_TYPE_PREFIXES.Product) && !isDiscussionAttachmentCritical) {
+        const isCritical = (!_.isEmpty(attachment.product_packet_props) ? attachment.product_packet_props : []).some((packetProps) => {
+          return !!(packetProps || {}).critical
+        })
+        if (!isCritical && (!primaryThumbnailIdToInclude || documentId !== primaryThumbnailIdToInclude)) {
+          skipMe = true
+        }
+      }
+    }
+    if (!skipMe) {
+      addPartnersToCountObject(partners, countsByBp)
+    }
+    return {
+      skipMe, // skip draft discussions
+      id: attachment.id || humanId || documentId,
+      documentId: documentId,
+      documentSize: attachment.document_size || attachment.documentSize,
+      documentType: attachment.document_type || attachment.documentType,
+      name: attachment.document_name || attachment.name,
+      parentResource: (attachment.resource && attachment.resource.id) || attachment.parent_resource || attachment.parentResource || '',
+      relatedResources: attachment.relatedResources || (attachment.resource && (attachment.resource.id === resourceId)) ? [] : [resourceId],
+      createdAt: attachment.created_at || attachment.createdAt,
+      createdBy: attachment.created_by || attachment.createdBy,
+      updateAt: attachment.update_at || attachment.updatedAt,
+      updatedBy: attachment.updated_by || attachment.updatedBy,
+      previewable: attachment.previewable,
+      access: convertV2AccessToV3(partners.filter(Number)),
+      tags: attachment.tags,
+      product_packet_props: attachment.product_packet_props || attachment.productPacketProps,
+      relatedMainDiscussion, // Only the main discussion. If this is a thread attachment, this is the head of the thread
+      isResourceCritical, // Critical of thread or head attachment
+      resource: attachment.resource,
+      mediaType: attachment.media_type || attachment.mediaType,
+      canShareWithGallery: attachment.can_share_with_gallery || attachment.canShareWithGallery || false,
+      attachmentCanShowdog: attachment.attachment_can_showdog || attachment.attachmentCanShowdog || false,
+      sharedWithGallery: attachment.shared_with_gallery || attachment.sharedWithGallery || false,
+      galleryDetails: attachment.gallery_details || attachment.galleryDetails,
+      finalVirtualFile: attachment.finalVirtualFile || attachment.final_virtual_file,
+    }
+  }).filter(({ skipMe }) => !skipMe)
+
+  return {
+    content: orderAttachmentsByType(searchAttachments),
+    counts: countsByBp,
+  }
+}
+
+export const filterAttachmentsOrComponents = (attachmentsOrComponents, args, primaryThumbnailToInclude) =>
+  attachmentsOrComponents.filter(detail => {
+    const documentId = detail.document_id || detail.documentId
+    let skipMe = false
+    if (args) {
+      if (['claim', 'bom', 'packagingBom', 'measurement', 'productDetail', 'packaging'].includes(detail.type)) {
+        if (args.workspaceId) {
+          if (!Array.isArray(detail.workspaceContext) || !detail.workspaceContext.includes(args.workspaceId)) {
+            skipMe = true
+          }
+        }
+      }
+      if (args.partnerId) {
+        if (args.partnerId === 'targetOnly') {
+          if (detail.access.bps.length > 0) {
+            skipMe = true
+          }
+        } else if (!detail.access.bps.includes(+args.partnerId)) {
+          skipMe = true
+        }
+      }
+      if (args.tags) {
+        if (_.intersection(detail.tags, args.tags).length === 0) {
+          skipMe = true
+        }
+      }
+      if (args.type) {
+        let resourceType = detail.resource ? detail.resource.type : detail.type
+
+        if (resourceType !== args.type) {
+          skipMe = true
+        }
+      }
+      if (args.archived != null) {
+        skipMe = skipMe || detail.archived !== args.archived
+      }
+      if (args.onlyProductPacketFiles && (!primaryThumbnailToInclude || documentId !== primaryThumbnailToInclude)) {
+        const isDiscussionAttachmentCritical = detail.isResourceCritical && (detail.resource.type === RESOURCE_TYPES.Discussion)
+        if (!detail.parentResource.includes(RESOURCE_TYPE_PREFIXES.Product) && !isDiscussionAttachmentCritical) {
+          const isCritical = (!_.isEmpty(detail.product_packet_props) ? detail.product_packet_props : []).some((packetProps) => {
+            return !!(packetProps || {}).critical
+          })
+          if (!isCritical) {
+            skipMe = true
+          }
+        }
+      }
+    }
+    return !skipMe
+  })
+
+export const getProductOrWorkSpaceAttachments = async (resourceId, countsByBp, args, ctx, onlyProductPacketFiles, resourceThumbnailId = undefined) => {
+  //logger.info('about to call attachments', ctx.logContext)
+  const attachments = await ctx.loaders.search.searchAttachmentsByRelatedResource.load(
+    resourceId,
+  )
+  //logger.info('Logging attachments', attachments, ctx.logContext)
+  if (!attachments || attachments.length < 1) return []
+  const discussions = []
+  const allDiscussions = await SPARK_Discussion.Query.getDiscussionsV2({}, { resourceId: resourceId }, ctx)
+  let discussionThreads = []
+  //logger.info('Logging discussions', allDiscussions, ctx.logContext)
+  for (const discussion of allDiscussions.content) {
+    discussions.push(discussion.discussionDto)
+    try {
+      const discussionReplies = await getDiscussionRepliesV2(discussion.discussionDto.id, ctx) || []
+      discussionThreads = [...discussionThreads, ...discussionReplies]
+      //logger.info('Logging discussionThreads', ctx.logContext, { discussionThreads })
+    } catch (error) {
+      logger.error('error fetching discussion replies', ctx.logContext, { error })
+      continue
+    }
+  }
+
+  const permissions = await ctx.loaders.accessControl.getPermissions.load({ resourceIds: _.compact(attachments.map((attachment) => attachment.id)) })
+  const pagedAttachments = await createAttachmentPaged(attachments, permissions, discussionThreads, discussions,
+    resourceId, countsByBp, onlyProductPacketFiles, (onlyProductPacketFiles ? resourceThumbnailId : undefined), ctx)
+
+  const filteredAttachments = filterAttachmentsOrComponents(
+    pagedAttachments.content,
+    args,
+    onlyProductPacketFiles ? resourceThumbnailId : undefined,
+  )
+  return filteredAttachments
+}
+
+export default {
+  createAttachmentPaged,
+  resolveRelationIds,
+  filterAttachmentsOrComponents,
+  addPartnersToCountObject,
+}

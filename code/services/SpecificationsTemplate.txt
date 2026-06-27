@@ -1,0 +1,80 @@
+import postOne from '../utils/postOne'
+import loadListing from '../utils/loadListing'
+import putOne from '../utils/putOne'
+import qs from 'querystring'
+import { deepToCamelCase, deepToSnakeCase, transformKeyValues } from '../utils/convertFunctions'
+
+export default class SpecificationsTemplateService {
+  constructor (endpoint, headers, logContext) {
+    this.headers = headers
+    this.endpoint = `${endpoint}/enterprise_product_development_products/construction/templates/v1`
+    this.masterDataEndpoint = `${endpoint}/masterData`
+
+    this.getSpecificationTemplates = (queryParams) => {
+      return loadListing(`${this.endpoint}?${qs.stringify(queryParams)}&sort=createdAt,desc`,
+        { ...this.headers },
+        {
+          transform: templates => deepToCamelCase(templates),
+        }, logContext).load()
+    }
+
+    this.getSpecificationMasterData = (type) => {
+      return loadListing(`${this.masterDataEndpoint}?name=${type}`,
+        { ...this.headers },
+        {
+          transform: types => transformKeyValues(types),
+        }, logContext).load()
+    }
+
+    this.createSpecificationTemplate = (permissionJWT, templateData) => {
+      return postOne(`${this.endpoint}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: templateData => deepToSnakeCase(templateData),
+          logContext,
+        }).load(templateData)
+    }
+
+    this.createCategorySection = (permissionJWT, categorySectionInput) => {
+      return postOne(`${this.endpoint}/category_section`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: categorySectionInput => deepToSnakeCase(categorySectionInput),
+          logContext,
+        }).load(categorySectionInput)
+    }
+
+    this.getSpecificationTemplateById = (id) => {
+      return loadListing(`${this.endpoint}?ids=${id}`,
+        { ...this.headers },
+        {
+          transform: templates => deepToCamelCase(templates.content[0]),
+        }, logContext).load()
+    }
+
+    this.UpdateSpecificationTemplate = (permissionJWT, templateData) => {
+      return putOne(`${this.endpoint}/${templateData.humanId}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT }, {
+          transform: data => data && deepToCamelCase(data),
+          transformRequest: templateData => deepToSnakeCase(templateData),
+          logContext,
+        }).load(templateData)
+    }
+
+    this.getProductDetailsCategorySection = () => {
+      return loadListing(`${this.endpoint}/categories`,
+        { ...this.headers },
+        {
+          transform: types => deepToCamelCase(types),
+        }, logContext).load()
+    }
+
+    this.getProductDetailsStatus = () => {
+      return loadListing(`${this.endpoint}/status`,
+        { ...this.headers },
+        {
+          transform: types => deepToCamelCase(types),
+        }, logContext).load()
+    }
+  }
+}

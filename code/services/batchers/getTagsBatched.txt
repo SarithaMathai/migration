@@ -1,0 +1,13 @@
+
+export const getTagsBatched = (ctx, tagIds) => {
+  if (!tagIds || tagIds.length === 0) {
+    return []
+  }
+  // This map will call the service for each ID. However,
+  // the data-loader will batch these requests and roll it up into one network call.
+  // This is faster than getTags()
+  const tagPromises = tagIds.map(tagId =>
+    ctx.loaders.tag.getTag.load(tagId),
+  )
+  return Promise.all(tagPromises).then(list => list.filter(tag => tag))
+}

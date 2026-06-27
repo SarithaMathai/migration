@@ -1,0 +1,49 @@
+import SparkService from './SparkService'
+import loadListing from '../utils/loadListing'
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import putOne from '../utils/putOne'
+
+export default class BackgroundNotificationsService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.getBackgroundActivityNotifications = loadListing(
+      () =>
+        `${this.endpoint}/api/notifications`,
+      this.headers, {
+        transform: notifications => {
+          const camelCaseResponse = deepToCamelCase(notifications)
+          return {
+            ...camelCaseResponse,
+            content: camelCaseResponse.content.map(notification => {
+              return ({
+                ...notification,
+                createdAt: notification.createdAtIso,
+              })
+            }),
+          }
+        },
+      },
+      this.logContext,
+    )
+
+    this.updateBackgroundNotificationsByIds = putOne(
+      `${this.endpoint}/api/notifications/bulk/update`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+
+    this.archiveAllCompletedNotifications = putOne(
+      `${this.endpoint}/api/notifications/archive`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+  }
+}

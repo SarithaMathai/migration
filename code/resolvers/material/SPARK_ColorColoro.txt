@@ -1,0 +1,104 @@
+import {
+  addRelationship,
+  getUserPermissionsJWT,
+  getUserPermissionsJWTByProxy, loadTags, removeRelationship,
+} from '../../utils/commonLoaders'
+import { SPARK_COLOR_CREATE_MODIFY_TARGET_LIBRARY } from '../../utils/materialsConstants'
+import { loadFiles } from '../commonResolvers/Files'
+import { loadColorHistoryItems } from '../commonResolvers/ColorHistoryItems'
+import { loadColorLinks } from '../SPARK_Color'
+import { getUser } from '../../utils/userAttributesUtils'
+
+export default {
+  Query: {
+    getColorColoro: async (parent, { id, proxyIds }, ctx) => {
+      if (proxyIds && proxyIds.length > 0) {
+        const permissionJWT = await getUserPermissionsJWTByProxy({ id, proxyIds }, ctx)
+        return ctx.loaders.color.getByID(permissionJWT).load(id)
+      } else {
+        const permissionJWT = await getUserPermissionsJWT(id, ctx)
+        return ctx.loaders.color.getByID(permissionJWT).load(id)
+      }
+    },
+    getColorColoros: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.color.getByIDs(permissionJWT).load({ ids })
+    },
+  },
+  Mutation: {
+    addColoroColor: async (parent, { sparkColorColoro }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        SPARK_COLOR_CREATE_MODIFY_TARGET_LIBRARY,
+        ctx,
+      )
+      const coloro = await ctx.loaders.color
+        .create(permissionJWT)
+        .load(sparkColorColoro)
+      const nodesColorHistoryItems =
+        sparkColorColoro.colorHistoryItemsToAdd &&
+        sparkColorColoro.colorHistoryItemsToAdd.length > 0
+          ? sparkColorColoro.colorHistoryItemsToAdd.map(colorHistory => {
+            return {
+              node: colorHistory.humanId,
+              metadata: colorHistory.relationship,
+            }
+          })
+          : []
+      await addRelationship({
+        ctx,
+        rootId: coloro.humanId,
+        nodes: nodesColorHistoryItems,
+        returnObject: null,
+      })
+
+      return coloro
+    },
+    updateColoroColor: async (parent, { sparkColorColoro }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(sparkColorColoro.humanId, ctx)
+      const addNodes = []
+      const deleteNodes = []
+
+      sparkColorColoro.colorHistoryItemsToAdd &&
+      sparkColorColoro.colorHistoryItemsToAdd.length > 0 &&
+      sparkColorColoro.colorHistoryItemsToAdd.forEach(colorHistoryItem => {
+        addNodes.push({
+          node: colorHistoryItem.humanId,
+          metadata: colorHistoryItem.relationship,
+        })
+      })
+
+      sparkColorColoro.colorHistoryItemsToRemove &&
+      sparkColorColoro.colorHistoryItemsToRemove.length > 0 &&
+      sparkColorColoro.colorHistoryItemsToRemove.forEach(colorHistoryItem => {
+        deleteNodes.push({
+          id: colorHistoryItem.humanId,
+          metadata: colorHistoryItem.relationship,
+        })
+      })
+
+      if (deleteNodes.length > 0) {
+        await removeRelationship({
+          ctx,
+          rootId: sparkColorColoro.humanId,
+          nodes: deleteNodes,
+        })
+      }
+      if (addNodes.length > 0) {
+        await addRelationship({
+          ctx,
+          rootId: sparkColorColoro.humanId,
+          nodes: addNodes,
+        })
+      }
+      return ctx.loaders.color.update(permissionJWT).load(sparkColorColoro)
+    },
+  },
+  SPARK_ColorColoro: {
+    files: async (coloro, args, ctx) => loadFiles(coloro.humanId, ctx),
+    colorHistoryItems: async (coloro, args, ctx) => loadColorHistoryItems(coloro, ctx),
+    tags: async (coloro, args, ctx) =>
+      coloro && coloro.tags ? loadTags(coloro.tags, ctx) : [],
+    colorLinks: loadColorLinks,
+    createdBy: (color, args, ctx) => getUser(color.createdBy, ctx),
+  },
+}

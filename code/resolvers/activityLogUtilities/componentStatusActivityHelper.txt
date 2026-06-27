@@ -1,0 +1,80 @@
+const componentStatusActivityHelper = async (
+  activity,
+  parentResourceInfo,
+  ctx) => {
+  if (!ctx) return []
+
+  const {
+    resourceType = '',
+    eventType = 'UPDATE',
+    eventSummary: {
+      humanId = '',
+      description = '',
+      modifiedAttributes = [],
+    } = {},
+  } = activity || {}
+
+  if (!modifiedAttributes || !modifiedAttributes.length) {
+    return [
+      {
+        attributeUpdateText: '',
+        resourceUpdated: {
+          resourceType: resourceType,
+          resourceId: humanId,
+          resourceDescription: description,
+          parentResourceInfo,
+        },
+        resourceChangeTypeText: `was ${String(eventType).toLowerCase()}d by`,
+      },
+    ]
+  }
+
+  return modifiedAttributes.map(async attr => {
+    const {
+      attributeName: initialAttributeName = '',
+      attributeNewValue = [],
+      attributeOldValue = [],
+    } = attr || {}
+    let attributeName = initialAttributeName
+      .replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+      .replace(/_/g, ' ')
+
+    let isSingleValueUpdate = false
+    let oldValues = []
+    let newValues = []
+    let resourceId = humanId
+
+    if (
+      attributeName.includes('component status') &&
+      attributeNewValue &&
+      attributeNewValue.length > 0 &&
+      attributeNewValue[0].statusName
+    ) {
+      newValues = [attributeNewValue[0].statusName]
+      if (
+        attributeOldValue &&
+        attributeOldValue.length > 0 &&
+        attributeOldValue[0].statusName
+      ) {
+        oldValues = [attributeOldValue[0].statusName]
+      }
+    }
+    return {
+      oldValues,
+      newValues,
+      attributeName,
+      eventType,
+      isSingleValueUpdate,
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId,
+        resourceDescription: description,
+        parentResourceInfo: {
+          linkGenerationVariables: { productId: resourceId },
+        },
+      },
+    }
+  })
+}
+
+export default componentStatusActivityHelper

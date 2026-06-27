@@ -1,0 +1,283 @@
+/* istanbul ignore file */
+import postOne from '../utils/postOne'
+import qs from 'querystring'
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadListing from '../utils/loadListing'
+import SparkService from './SparkService'
+
+export default class AdminToolService extends SparkService {
+  constructor (headers, logContext) {
+    super(logContext)
+    this.headers = headers
+
+    this.productAdmin =
+      process.env.PRODUCT_ENDPOINT +
+      '/enterprise_product_development_products/admin'
+
+    this.workspaceV2 = process.env.WORKSPACE_ENDPOINT_V2
+
+    this.deleteWorkspaceEndpoint = process.env.WORKSPACE_ENDPOINT_V2.replace(
+      'enterprise_product_development_workspace/v2',
+      '',
+    )
+    this.deleteProductEndpoint = process.env.PRODUCT_ENDPOINT
+
+    this.sampleV2 =
+      process.env.SAMPLE_ENDPOINT_V2 +
+      '/enterprise_product_development_samples/v2'
+    this.discussionBaseUrl = (process.env.DISCUSSION_ENDPOINT || '').replace(
+      '/enterprise_product_development_discussions/v1',
+      '',
+    )
+    this.teamEndPoint =
+      (process.env.USERPROFILE_ENDPOINT || '').replace('userprofile', '') +
+      'enterprise_product_development_teams/v2/admin'
+
+    this.teamSearchEndPoint =
+      (process.env.USERPROFILE_ENDPOINT).replace('userprofile', '') +
+      '/enterprise_product_development_teams/v2/admin'
+
+    this.accessControlEndPoint =
+      (process.env.ACCESS_CONTROL_ENDPOINT) +
+      '/access/v1/admin'
+
+    this.elasticSearchEndPoint = process.env.SEARCH_ENDPOINT || ''
+
+    this.refreshProduct = postOne(
+      () => `${this.productAdmin}/products/refresh`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+
+    this.refreshProducts = postOne(
+      () => `${this.productAdmin}/products/refresh`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+
+    this.refreshWorkspace = postOne(
+      `${this.workspaceV2}/admin/refresh`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+    this.refreshSample = postOne(
+      param => `${this.sampleV2}/refresh?${qs.stringify(param)}`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+
+    this.refreshAllProducts = postOne(
+      `${this.productAdmin}/products/refreshall`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+    this.refreshAllWorkspaces = postOne(
+      `${this.workspaceV2}/admin/refreshall`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+    this.refreshAllSamples = postOne(
+      `${this.sampleV2}/refreshall?resource=product`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+
+    this.resendDiscussion = postOne(
+      ({ isReply }) =>
+        `${this.discussionBaseUrl}/api/admin/${
+          isReply ? 'threads' : 'discussions'
+        }/resend/bulk`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+    this.deleteTeam = deleteOne(
+      ({ teamId }) => `${this.teamEndPoint}/${teamId}`,
+      this.headers,
+      {
+        returnDebug: true,
+      },
+    )
+
+    this.refreshTeams = postOne(
+      param => `${this.teamEndPoint}/refresh/v2?${qs.stringify(param)}`,
+      this.headers,
+      {},
+    )
+
+    this.deleteWorkspace = permissionJWT =>
+      deleteOne(
+        ({ workspaceId }) =>
+          `${this.deleteWorkspaceEndpoint}purgeTestData/${workspaceId}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          returnDebug: true,
+        },
+      )
+
+    this.deleteProduct = permissionJWT =>
+      deleteOne(
+        ({ productId }) =>
+          `${this.deleteProductEndpoint}/purgeTestData/${productId}`,
+        { ...this.headers, 'SPARK-Capability-Token': permissionJWT },
+        {
+          returnDebug: true,
+        },
+      )
+
+    this.getTeamsESDiffs = loadListing(
+      () => `${this.teamEndPoint}/teams`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchTeamsES = loadListing(
+      queryParams => {
+        return `${this.elasticSearchEndPoint}/teams/v1/?${qs.stringify(
+          queryParams,
+        )}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getProductSummary = postOne(
+      `${this.productAdmin}/products/summary`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchProductsES = loadListing(
+      queryParams => {
+        return `${
+          this.elasticSearchEndPoint
+        }/products/v1/search_product?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getWorkspaceSummary = loadListing(
+      () => `${this.workspaceV2}/admin/workspaces`,
+      this.headers,
+      {
+        transform: (results) => results && deepToCamelCase(results),
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.searchWorkspacesES = loadListing(
+      queryParams => {
+        return `${
+          this.elasticSearchEndPoint
+        }/workspaces/v1/search?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getSampleSummary = postOne(
+      () => `${this.sampleV2}/samples/summary`,
+      this.headers,
+      {
+        transform: (results) => results && deepToCamelCase(results),
+        batch: false,
+      },
+      this.logContext,
+    )
+
+    this.searchSamplesES = loadListing(
+      queryParams => {
+        return `${
+          this.elasticSearchEndPoint
+        }/samples/v1?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.vendorMergeReplaceBP = postOne(
+      `${this.teamSearchEndPoint}/business-partner-replace`,
+      {
+        ...this.headers,
+      },
+      {
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+
+    this.vendorMergeReplaceTeam = postOne(
+      `${this.teamSearchEndPoint}/team-replace`,
+      {
+        ...this.headers,
+      },
+      {
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+    this.vendorMergeReplacePartners = postOne(
+      () => `${this.accessControlEndPoint}/migrate/replace-partners`,
+      this.headers,
+      {
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+
+    this.getComponentsCountByPartnerId = loadListing(
+      (partnerId) => `${this.elasticSearchEndPoint}/mega_search/v1/get_count_by_partnerid?partnerId=${partnerId}`,
+      this.headers,
+      {
+        transformRequest: request => deepToSnakeCase(request),
+      },
+      this.logContext,
+    )
+
+    this.getVendorMergeStatus = loadListing(
+      (params) => `${this.teamSearchEndPoint}/vendor-merge-status?${qs.stringify(params)}`,
+      this.headers,
+      {
+        transformRequest: request => deepToSnakeCase(request),
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+  }
+}

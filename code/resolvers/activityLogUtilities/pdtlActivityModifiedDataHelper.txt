@@ -1,0 +1,29 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import componentStatusActivityHelper from './componentStatusActivityHelper'
+
+const pdtlActivityModifiedDataHelper = async (activity, streamResourceId, ctx) => {
+  if (!ctx) return []
+  const {
+    loaders: {
+      ProductDetails: { getProductDetailsById } = {},
+    } = {},
+  } = ctx
+
+  const humanId = activity?.eventSummary?.humanId || {}
+
+  const permissionJWT = await getUserPermissionsJWT([humanId], ctx)
+  const pdtlData = await getProductDetailsById(permissionJWT, [humanId])
+
+  const productId = pdtlData?.[0]?.parentId
+  const workspaceId = pdtlData?.[0]?.workspaceContext?.[0]
+
+  const parentResourceInfo = {
+    linkGenerationVariables: { productDetailsId: humanId, productId, ...(workspaceId && { workspaceId }) },
+  }
+
+  return componentStatusActivityHelper(activity,
+    parentResourceInfo,
+    ctx)
+}
+
+export default pdtlActivityModifiedDataHelper

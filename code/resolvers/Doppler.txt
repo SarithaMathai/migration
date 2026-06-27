@@ -1,0 +1,18 @@
+export default {
+  Query: {
+    getCapacityTypes: async (parentValue, { departmentId }, ctx) => {
+      const response = await ctx.loaders.doppler.getCapacityTypesByDepartment.load(departmentId)
+      const uniqueResponse = [
+        ...new Map(response.map((item) => [item['capacityTypePrimaryId'] + item['capacityTypePrimaryName'] + item['capacityTypeSecondaryId'] + item['capacityTypeSecondaryName'], item])).values(),
+      ]
+      return uniqueResponse && Array.isArray(uniqueResponse) ? uniqueResponse : []
+    },
+    getCapacityTypesByDepartmentAndPrimaryId: async (parentValue, { departmentId, capacityTypePrimaryId }, ctx) => {
+      const response = await ctx.loaders.doppler.getCapacityTypesByDepartmentAndPrimaryId.load({ id: departmentId, primaryCapacityId: capacityTypePrimaryId })
+      const uniqueResponse = [
+        ...new Map(response.map((item) => [item['capacityTypePrimaryId'] + item['capacityTypePrimaryName'] + item['capacityTypeSecondaryId'] + item['capacityTypeSecondaryName'], item])).values(),
+      ]
+      return uniqueResponse && Array.isArray(uniqueResponse) ? uniqueResponse : []
+    },
+  },
+}

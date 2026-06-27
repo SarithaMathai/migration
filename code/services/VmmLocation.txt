@@ -1,0 +1,505 @@
+import _ from 'lodash'
+
+import cache from '../utils/cache'
+import circuitBreaker from '../utils/circuitBreaker'
+import loadListing from '../utils/loadListing'
+import { getCapabilityIdsByType, getFilteredLocations } from '../utils/vmmUtils'
+import { AUTHORIZED_STATUS_ID, CAPABILITIES } from '../utils/constants'
+import { SPARK_GATEWAY_API_KEY } from '../config/constants'
+
+export default class VmmLocationService {
+  constructor (endpoint, token) {
+    this.endpoint = endpoint
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    }
+
+    this.ibpKey = SPARK_GATEWAY_API_KEY
+
+    this.searchLocations = locationName =>
+      cache(
+        `VMM_Location_searchLocations${locationName}`,
+        loadListing(
+          () =>
+            `${this.endpoint}/business_partners/v1/search?key=${
+              this.ibpKey
+            }&per_page=100&page=1&bp_role_status=5&bp_role_id=7&field_groups=bp_locations,bp_cap_data&location_name=${locationName.replace(/[^\w\s]/gi, '')}`,
+          this.headers,
+          {
+            transform: partners =>
+              businessPartnerToLocation(partners.bp, locationName),
+          },
+        ),
+      )
+
+    this.getLocationById = locationId =>
+      cache(
+        `VMM_Location:${locationId}`,
+        loadListing(
+          () =>
+            `${this.endpoint}/business_partners/v1/search?key=${
+              this.ibpKey
+            }&per_page=50&page=1&field_groups=bp_locations,bp_cap_data&location_id=${locationId}`,
+          this.headers,
+          {
+            transform: partners =>
+              getLocationFromBusinessPartners(partners.bp, locationId),
+          },
+        ),
+        {
+          redisTtl: 86400, // 86,400 seconds = 1,440min (24hrs)
+        },
+      )
+
+    this.getLocationByIdWithCircuitBreaker =
+      circuitBreaker('VMM_Location', {
+        load: (locationId) => this.getLocationById(locationId).load(),
+      }, { failureResponse: {
+        name: null,
+        countryOfOrigin: null,
+        id: null,
+        status: 'Available',
+        authorized: true,
+        circuitBroken: true,
+      } })
+
+    this.getLocationsByBpId = id =>
+      cache(
+        `VMM_Location_getLocationsByBpId:${id}`,
+        loadListing(
+          () =>
+            `${this.endpoint}/business_partners/v1/${id}?key=${this.ibpKey}&per_page=100&page=1&field_groups=bp_locations,bp_cap_data`,
+          this.headers,
+          {
+            transform: partners => {
+              const locationArray = []
+              partners.bp.forEach(businessPartner => {
+                businessPartner.location.forEach(location => {
+                  if (location.locationStatus) {
+                    const authorized = getAuthorizationStatusFromCapabilities(location.bpLocation)
+                    const countryName = getCountryName(location.address)
+                    const statusVal = getLocationStatus(location.locationStatus)
+                    const isMarkedForDelete = location.markedForDelete
+                    if (authorized && !isMarkedForDelete) {
+                      locationArray.push({
+                        name: location.locationName,
+                        countryOfOrigin: countryName,
+                        id: location.locationId,
+                        status: statusVal,
+                        authorized: authorized,
+                      })
+                    }
+                  }
+                })
+              })
+              return locationArray
+            },
+            batch: false,
+          },
+          this.logContext,
+        ),
+        {
+          redisTtl: 86400, // 86,400 seconds = 1,440min (24hrs)
+        },
+      )
+
+    this.getLocationsByBpIdAndLocation = (id, locationName) =>
+      cache(
+        `VMM_Location_getLocationsByBpIdAndLocation:${id}${locationName}`,
+        loadListing(
+          () =>
+            `${this.endpoint}/business_partners/v1/${id}?key=${this.ibpKey}&per_page=100&page=1&field_groups=bp_locations,bp_cap_data&location_name=${locationName.replace(/[^\w\s]/gi, '')}`,
+          this.headers,
+          {
+            transform: partners => {
+              const locationArray = []
+              partners.bp.forEach(businessPartner => {
+                businessPartner.location.forEach(location => {
+                  if (location.locationStatus) {
+                    const authorized = getAuthorizationStatusFromCapabilities(location.bpLocation)
+                    const countryName = getCountryName(location.address)
+                    const statusVal = getLocationStatus(location.locationStatus)
+                    const isMarkedForDelete = location.markedForDelete
+                    if (authorized && !isMarkedForDelete) {
+                      locationArray.push({
+                        name: location.locationName,
+                        countryOfOrigin: countryName,
+                        id: location.locationId,
+                        status: statusVal,
+                        authorized: authorized,
+                      })
+                    }
+                  }
+                })
+              })
+              return locationArray
+            },
+            batch: false,
+          },
+          this.logContext,
+        ),
+        {
+          redisTtl: 86400, // 86,400 seconds = 1,440min (24hrs)
+        },
+      )
+
+    // Make call to VMM to get all the locations by BP id..
+    this.getAllLocationsByBpId = id =>
+      cache(
+        `VMM_Location_getAllLocationsByBpId:${id}`,
+        loadListing(
+          () =>
+            `${this.endpoint}/business_partners/v1/${id}?key=${this.ibpKey}&per_page=100&page=1&field_groups=bp_locations,bp_cap_data`,
+          this.headers,
+          {
+            transform: partners => {
+              const locationArray = []
+              const laundryCapIds = getAllLaundryCapabilityIds(partners.bp)
+              partners.bp.forEach(businessPartner => {
+                businessPartner.location.forEach(location => {
+                  if (location.locationStatus) {
+                    const isAuthorized = isLaundryWithAuthorizedCapability(location.bpLocation, laundryCapIds)
+                    const countryName = getCountryName(location.address)
+                    const statusVal = getLocationStatus(location.locationStatus)
+                    const isMarkedForDelete = location.markedForDelete
+
+                    if (isAuthorized && !isMarkedForDelete) {
+                      locationArray.push({
+                        name: location.locationName,
+                        id: location.locationId,
+                        countryOfOrigin: countryName,
+                        status: statusVal,
+                        authorized: isAuthorized,
+                      })
+                    }
+                  }
+                })
+              })
+              return locationArray
+            },
+            batch: false,
+          },
+          this.logContext,
+        ),
+        {
+          redisTtl: 86400, // 86,400 seconds = 1,440min (24hrs)
+        },
+      )
+
+    // Get locations by type
+    this.getFacilityByCapTypesAndBpId = (id, query, impression) =>
+      cache(
+        `VMM_Location_getFacilityByTypeAndBpId:${id}${query}`,
+        loadListing(
+          () => {
+            if (impression === CAPABILITIES.Packaging[0]) {
+              return `${this.endpoint}/business_partners/v1/${id}?key=${this.ibpKey}&per_page=100&page=1&capability_dimension=Services&capability_category=Packaging&field_groups=bp_locations,bp_cap_data&location_name=${query.replace(/[^\w\s]/gi, '')}`
+            }
+            return `${this.endpoint}/business_partners/v1/${id}?key=${this.ibpKey}&per_page=100&page=1&field_groups=bp_locations,bp_cap_data&location_name=${query.replace(/[^\w\s]/gi, '')}`
+          },
+          this.headers,
+          {
+            transform: partners => {
+              const locationArray = []
+              const capTypes = CAPABILITIES[impression]
+              partners.bp.forEach(businessPartner => {
+                const capIds = getCapabilityIdsByType(businessPartner, capTypes)
+                businessPartner.location && businessPartner.location.forEach(loc => {
+                  if (loc.locationStatus) {
+                    const isLocationMatch = getFilteredLocations(loc.bpLocation, capIds)
+                    if (isLocationMatch) {
+                      locationArray.push({
+                        name: loc.locationName,
+                        id: loc.locationId,
+                        countryOfOrigin: getCountryName(loc.address),
+                        status: getLocationStatus(loc.locationStatus),
+                        authorized: true,
+                        address: loc?.address?.[0],
+                      })
+                    }
+                  }
+                })
+              })
+              return locationArray
+            },
+            batch: false,
+          },
+          this.logContext,
+        ),
+        {
+          redisTtl: 86400, // 86,400 seconds = 1,440min (24hrs)
+        },
+      )
+    // Make call to VMM to get all the locations by BP id..
+    this.getAllTrimLocationsByBpId = id =>
+      cache(
+        `VMM_Location_getAllTrimLocationsByBpId:${id}`,
+        loadListing(
+          () =>
+            `${this.endpoint}/business_partners/v1/${id}?key=${this.ibpKey}&per_page=100&page=1&field_groups=bp_locations,bp_cap_data`,
+          this.headers,
+          {
+            transform: partners => {
+              const locationArray = []
+              const allTrimCapByIdMap = getAllTrimCapabilities(partners.bp)
+              partners.bp.forEach(businessPartner => {
+                businessPartner.location.forEach(location => {
+                  if (location.locationStatus) {
+                    const countryName = getCountryName(location.address)
+                    const statusVal = getLocationStatus(location.locationStatus)
+                    const authorized = getAuthorizationStatusFromCapabilities(location.bpLocation)
+                    const locationCapTypes = getTrimAuthorizedCapabilityTypes(location.bpLocation, allTrimCapByIdMap)
+                    const isMarkedForDelete = location.markedForDelete
+                    if (authorized && !isMarkedForDelete) {
+                      locationArray.push({
+                        name: location.locationName,
+                        id: location.locationId,
+                        countryOfOrigin: countryName,
+                        status: statusVal,
+                        authorized: authorized,
+                        capabilityTypes: locationCapTypes,
+                      })
+                    }
+                  }
+                })
+              })
+              return locationArray
+            },
+            batch: false,
+          },
+          this.logContext,
+        ),
+        {
+          redisTtl: 86400, // 86,400 seconds = 1,440min (24hrs)
+        },
+      )
+  }
+}
+
+function getLocationFromBusinessPartners (businessPartners, locationId) {
+  const correctlyTypeLocationId = getParseLocationId(locationId);
+  let locationResult = {}
+  businessPartners.forEach(businessPartner => {
+    businessPartner.location.forEach(location => {
+      if (location.locationId === correctlyTypeLocationId) {
+        if (locationResult.authorized !== true) {
+          locationResult = {
+            name: location.locationName,
+            countryOfOrigin: getCountryName(location.address),
+            id: location.locationId,
+            status: getLocationStatus(location.locationStatus),
+            authorized: getAuthorizationStatusFromCapabilities(location.bpLocation),
+          }
+        }
+      }
+    })
+  })
+  return locationResult
+}
+
+function getAuthorizationStatusFromCapabilities (bpLocations) {
+  let isAuthorized = false
+  bpLocations.forEach(bpLocation => {
+    bpLocation.bpLocationCapability.forEach(bpLocationCapability => {
+      bpLocationCapability.capability.forEach(capability => {
+        if (capability.locationCapabilityAuthorizationStatusName === 'Authorized') {
+          isAuthorized = true
+        }
+      })
+    })
+  })
+  return isAuthorized
+}
+
+function businessPartnerToLocation (businessPartners, locationName) {
+  locationName = locationName.replace(/[^\w\s]/gi, '')
+  var locations = []
+  businessPartners.forEach(businessPartner => {
+    businessPartner.location.forEach(location => {
+      if (location.locationStatus) {
+        location.locationStatus.forEach(status => {
+          location.address.forEach(address => {
+            // The distance between strings is then compare against what percentage of the location name
+            // the query is. So if you're searching abc and then location name is abcde then the percentage
+            // is 60%, so then the distance should match at least 48% of the location name to give some wiggle room
+            const percentOfName =
+              (locationName.length / location.locationName.length) * 0.9
+            const similarityScore = similarity(
+              location.locationName,
+              locationName,
+            )
+            if (similarityScore >= percentOfName) {
+              locations.push({
+                name: location.locationName,
+                countryOfOrigin: address.countryName,
+                id: location.locationId,
+                status: status.name,
+                authorized: getAuthorizationStatusFromCapabilities(location.bpLocation),
+                similarity: similarityScore,
+              })
+            }
+          })
+        })
+      }
+    })
+  })
+
+  return _.orderBy(_.uniqBy(locations, 'id'), 'similarity', 'desc')
+}
+
+// this uses levenshtein distance to calculate the distance between the two strings
+function similarity (string1, string2) {
+  var longer = string1
+  var shorter = string2
+  if (string1.length < string2.length) {
+    longer = string2
+    shorter = string1
+  }
+
+  if (longer.length === 0) {
+    return 1.0
+  }
+  return (
+    (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length)
+  )
+}
+
+// this function calculates the edit distance between two strings
+// the edit distance is the amount of characters that would need to
+// be changed for the two strings to be the same
+// for a more detailed explanation
+// https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
+function editDistance (string1, string2) {
+  string1 = string1.toLowerCase()
+  string2 = string2.toLowerCase()
+
+  var costs = []
+  for (var i = 0; i <= string1.length; i++) {
+    var lastValue = i
+    for (var j = 0; j <= string2.length; j++) {
+      if (i === 0) costs[j] = j
+      else {
+        if (j > 0) {
+          var newValue = costs[j - 1]
+          if (string1.charAt(i - 1) !== string2.charAt(j - 1)) { newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1 }
+          costs[j - 1] = lastValue
+          lastValue = newValue
+        }
+      }
+    }
+    if (i > 0) costs[string2.length] = lastValue
+  }
+  return costs[string2.length]
+}
+
+function getLocationStatus (statuses) {
+  let statusVal = ''
+  statuses.forEach(status => {
+    if (status.name && status.name.length > 0) {
+      statusVal = status.name
+    }
+  })
+  return statusVal
+}
+
+function getCountryName (addresses) {
+  let country = ''
+  addresses.forEach(address => {
+    if (address.countryName && address.countryName.length > 0) {
+      country = address.countryName
+    }
+  })
+  return country
+}
+
+function isLaundryWithAuthorizedCapability (bpLocations, laundryCapIds) {
+  let isAuthorized = false
+  const authorizedStatusId = 7264
+  bpLocations.forEach(bpLocation => {
+    bpLocation.bpLocationCapability.forEach(bpLocationCapability => {
+      bpLocationCapability.capability.forEach(capability => {
+        if (capability.locationCapabilityAuthorizationStatusId === authorizedStatusId && hasCapId(capability.capabilityId, laundryCapIds)) {
+          isAuthorized = true
+        }
+      })
+    })
+  })
+  return isAuthorized
+}
+
+function getAllLaundryCapabilityIds (businessPartners) {
+  let laundryCapIds = []
+  if (businessPartners && businessPartners.length > 0) {
+    businessPartners.forEach(bp => {
+      if (bp.bpCapability && bp.bpCapability.length > 0) {
+        bp.bpCapability.forEach(bpCap => {
+          if (bpCap.capability && bpCap.capability.length > 0) {
+            bpCap.capability.forEach(cap => {
+              if (cap.capabilityCategory === 'Laundry') {
+                laundryCapIds.push(cap.capabilityId)
+              }
+            })
+          }
+        })
+      }
+    })
+  }
+  return laundryCapIds
+}
+
+function hasCapId (capabilityId, laundryCapIds) {
+  let isValidLaundry = false
+  if (laundryCapIds && laundryCapIds.length > 0) {
+    laundryCapIds.forEach(id => {
+      if (id === capabilityId) {
+        isValidLaundry = true
+      }
+    })
+  }
+  return isValidLaundry
+}
+
+function getAllTrimCapabilities (businessPartners) {
+  const trimCapabilityByIdMap = new Map()
+  if (businessPartners && businessPartners.length > 0) {
+    businessPartners.forEach(bp => {
+      if (bp.bpCapability && bp.bpCapability.length > 0) {
+        bp.bpCapability.forEach(bpCap => {
+          if (bpCap.capability && bpCap.capability.length > 0) {
+            bpCap.capability.forEach(cap => {
+              if (cap.capabilityDimension === 'Materials' && cap.capabilityCategory === 'Trim') {
+                trimCapabilityByIdMap.set(cap.capabilityId, cap.capabilitySubCategory)
+              }
+            })
+          }
+        })
+      }
+    })
+  }
+  return trimCapabilityByIdMap
+}
+
+function getTrimAuthorizedCapabilityTypes (bpLocations, trimAllCapByIdMap) {
+  let trimLocationCaps = []
+  bpLocations.forEach(bpLocation => {
+    bpLocation.bpLocationCapability.forEach(bpLocationCapability => {
+      bpLocationCapability.capability.forEach(capability => {
+        if (capability.locationCapabilityAuthorizationStatusId === AUTHORIZED_STATUS_ID && trimAllCapByIdMap.has(capability.capabilityId)) {
+          if (!trimLocationCaps.includes(trimAllCapByIdMap.get(capability.capabilityId))) {
+            trimLocationCaps.push(trimAllCapByIdMap.get(capability.capabilityId))
+          }
+        }
+      })
+    })
+  })
+  return trimLocationCaps
+}
+
+function getParseLocationId (locationId) {
+  try {
+      return Number(locationId);
+  }catch (ex) {
+    return locationId
+  }
+}

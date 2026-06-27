@@ -1,0 +1,14 @@
+import { RESOURCE_TYPES_PREFIXES } from '../../config/constants'
+
+export const isColorId = (id) => id &&
+  (id.startsWith(RESOURCE_TYPES_PREFIXES.Colors) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.ColorColoro) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.ColorPantone) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.TargetColors) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.TargetColorColoro) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.TargetColorPantone) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.ReferenceColors) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.ReferenceColorColoro) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.ReferenceColorPantone) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.TargetColorArchroma) ||
+  id.startsWith(RESOURCE_TYPES_PREFIXES.ReferenceColorArchroma))

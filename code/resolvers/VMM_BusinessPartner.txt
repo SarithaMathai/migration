@@ -1,0 +1,100 @@
+import _ from 'lodash'
+import BusinessPartnerRole from '../config/businessPartner'
+import { APPROVED_ROLE_CODE, EXIT_IN_PROGRESS } from '../services/VmmBusinessPartner'
+import { getRelatedSuppliersForMVs } from '../utils/vmmUtils'
+
+export function formatQuery (query, bpRoleIds) {
+  let queryString = '&bp_name=' + encodeURIComponent(query)
+  if (bpRoleIds && bpRoleIds.length > 0) {
+    queryString = queryString.concat(`&bp_role_id=${bpRoleIds.join(',')}`)
+    return queryString
+  } else {
+    return queryString
+  }
+}
+
+export default {
+  Query: {
+    getBusinessPartners: (parent, { query, bpRoleIds }, ctx) =>
+      ctx.loaders.vmm.getPage.load(formatQuery(query, bpRoleIds)),
+    getBusinessPartner: (parent, { id }, ctx) =>
+      id ? ctx.loaders.vmm.getByID.load(id) : null,
+    getBusinessPartnersByIds: async (parent, { ids }, ctx) => {
+      const bps = []
+      await Promise.all(
+        ids.filter(Boolean).map(async id => {
+          await ctx.loaders.vmm.getByID.load(id)
+            .then(res => {
+              if (res.bpId && res.bpName) { bps.push(res) }
+            })
+        }),
+      )
+      return bps
+    },
+    getBusinessPartnersByType: (parent, { type }, ctx) =>
+      ctx.loaders.vmm.getPartnerByType.load(type),
+    getBusinessPartnersByTypeAndQuery: (parent, { type, query }, ctx) =>
+      ctx.loaders.vmm.getPartnerByTypeAndQuery.load({ type, query }),
+    getBusinessPartnersByUser: (parent, { userLanId }, ctx) =>
+      ctx.loaders.vmm.getPartnersByUser.load(userLanId),
+    getRelatedFabricSuppliers: async (parent, { merchVendorId }, ctx) => {
+      if (!merchVendorId) {
+        return []
+      }
+      const vendor = await ctx.loaders.vmm.getByID.load(merchVendorId)
+      const relationships = _.get(vendor, 'relationship', [])
+      return relationships
+        .filter(rel => _.get(rel, 'type.relatedBpRole.bpRoleId', null) === BusinessPartnerRole.FABRIC_SUPPLIER.code)
+        .filter(rel => _.get(rel, 'relatedBpStatusName', null) === 'Approved')
+        .map(rel => rel.relatedBpId)
+    },
+    getRelatedFabricSuppliersByMerchVendors: async (parent, { merchVendorIds }, ctx) => {
+      return getRelatedSuppliersForMVs(ctx, merchVendorIds, [BusinessPartnerRole.FABRIC_SUPPLIER.code])
+    },
+    getRelatedTrimSuppliers: async (parent, { merchVendorId }, ctx) => {
+      if (!merchVendorId) {
+        return []
+      }
+      const vendor = await ctx.loaders.vmm.getByID.load(merchVendorId)
+      const relationships = _.get(vendor, 'relationship', [])
+      return relationships
+        .filter(rel => _.get(rel, 'type.relatedBpRole.bpRoleId', null) === BusinessPartnerRole.TRIM_SUPPLIER.code)
+        .filter(rel => _.get(rel, 'relatedBpStatusName', null) === 'Approved')
+        .map(rel => rel.relatedBpId)
+    },
+    getBusinessPartnerByGmsVendorId: (parent, { id }, ctx) =>
+      ctx.loaders.vmm.getBusinessPartnerByGmsVendorId.load(id),
+    getBusinessPartnersByGmsVendorIds: async (parent, { ids }, ctx) => {
+      const bps = []
+      await Promise.all(
+        ids.map(async id => {
+          await ctx.loaders.vmm.getBusinessPartnerByGmsVendorId.load(id)
+            .then(res => {
+              if (res.bpId && res.bpName) { bps.push(res) }
+            })
+        }),
+      )
+      return bps
+    },
+    getBusinessPartnerUsers: (parent, { id }, ctx) =>
+      ctx.loaders.vmm.getUsers.load(id),
+  },
+  VMM_BusinessPartner: {
+    role: businessPartner =>
+      // remove non "Approved" (status.id 5) roles
+      (businessPartner.role && businessPartner.role.filter(role => role.status.filter(status => status.id === APPROVED_ROLE_CODE || status.id === EXIT_IN_PROGRESS).length > 0)) || [],
+  },
+  VMM_BusinessPartnerUsers: {
+    id: bp => bp.bpId,
+    name: bp => bp.bpName,
+    users: bp => bp.contact,
+  },
+  VMM_User: {
+    first_name: contact => contact.firstName,
+    last_name: contact => contact.lastName,
+    lan_id: contact => _.get(contact, 'user.0.userId'),
+    email: contact => _.get(contact, 'user.0.loginId'),
+    user_active: contact => _.get(contact, 'user.0.userActive'),
+    system_access_flag: contact => _.get(contact, 'user.0.systemAccessFlag'),
+  },
+}

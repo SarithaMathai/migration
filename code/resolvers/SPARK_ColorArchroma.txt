@@ -1,0 +1,130 @@
+import {
+  getUserPermissionsJWT,
+  addRelationship,
+  removeRelationship,
+  getUserPermissionsJWTByProxy,
+  loadTags, associateAttachmentResourcesV3,
+} from '../utils/commonLoaders'
+import { SPARK_COLOR_CREATE_MODIFY_TARGET_LIBRARY } from '../utils/materialsConstants'
+import { getUser } from '../utils/userAttributesUtils'
+import { loadColorLinks } from './SPARK_Color'
+
+import { loadColorHistoryItems } from './commonResolvers/ColorHistoryItems'
+import { loadFiles } from './commonResolvers/Files'
+import _ from 'lodash'
+
+export default {
+  Query: {
+    getColorArchroma: async (parent, { id, proxyIds }, ctx) => {
+      if (proxyIds && proxyIds.length > 0) {
+        const permissionJWT = await getUserPermissionsJWTByProxy({ id, proxyIds }, ctx)
+        return ctx.loaders.colorArchroma.getByID(permissionJWT).load(id)
+      } else {
+        const permissionJWT = await getUserPermissionsJWT(id, ctx)
+        return ctx.loaders.colorArchroma.getByID(permissionJWT).load(id)
+      }
+    },
+    getColorArchromas: async (parent, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.colorArchroma.getByIDs(permissionJWT).load({ ids })
+    },
+    exportArchromaColor: async (parent, { q, nestedQueryList }, ctx) => {
+      await ctx.loaders.search.exportArchromaColor.load({ q, nestedQueryList })
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+    getColorForAll: async (parent, { }, ctx) => ctx.loaders.colorArchroma.getColorForAll.load(),
+  },
+  Mutation: {
+    addColorArchroma: async (parent, { colorArchroma }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        SPARK_COLOR_CREATE_MODIFY_TARGET_LIBRARY,
+        ctx,
+      )
+
+      const color = await ctx.loaders.colorArchroma
+        .create(permissionJWT)
+        .load(colorArchroma)
+
+      const nodesColorHistoryItems =
+        colorArchroma.colorHistoryItemsToAdd &&
+        colorArchroma.colorHistoryItemsToAdd.length > 0
+          ? colorArchroma.colorHistoryItemsToAdd.map(colorHistory => ({
+            node: colorHistory.humanId,
+            metadata: colorHistory.relationship,
+          }))
+          : []
+
+      await associateAttachmentResourcesV3({
+        parentId: color.humanId,
+        humanIds: colorArchroma.files,
+        ctx,
+      })
+
+      await addRelationship({
+        ctx,
+        rootId: color.humanId,
+        nodes: nodesColorHistoryItems,
+      })
+
+      return color
+    },
+    deleteColorArchroma: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.colorArchroma.delete(permissionJWT).load(id)
+    },
+    updateColorArchroma: async (parent, { colorArchroma }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        colorArchroma.humanId,
+        ctx,
+      )
+      const addNodes = []
+      const deleteNodes = []
+
+      colorArchroma.colorHistoryItemsToAdd &&
+        colorArchroma.colorHistoryItemsToAdd.length > 0 &&
+        colorArchroma.colorHistoryItemsToAdd.forEach(colorHistoryItem => {
+          addNodes.push({
+            node: colorHistoryItem.humanId,
+            metadata: colorHistoryItem.relationship,
+          })
+        })
+
+      colorArchroma.colorHistoryItemsToRemove &&
+        colorArchroma.colorHistoryItemsToRemove.length > 0 &&
+        colorArchroma.colorHistoryItemsToRemove.forEach(colorHistoryItem => {
+          deleteNodes.push({
+            id: colorHistoryItem.humanId,
+            metadata: colorHistoryItem.relationship,
+          })
+        })
+
+      if (deleteNodes.length > 0) {
+        await removeRelationship({
+          ctx,
+          rootId: colorArchroma.humanId,
+          nodes: deleteNodes,
+        })
+      }
+      if (addNodes.length > 0) {
+        await addRelationship({
+          ctx,
+          rootId: colorArchroma.humanId,
+          nodes: addNodes,
+        })
+      }
+      return ctx.loaders.colorArchroma.update(permissionJWT).load(colorArchroma)
+    },
+  },
+  SPARK_ColorArchroma: {
+    files: async (color, args, ctx) => loadFiles(color.humanId, ctx),
+    colorHistoryItems: async (color, args, ctx) => loadColorHistoryItems(color, ctx),
+    tags: async (color, args, ctx) =>
+      color && color.tags ? loadTags(color.tags, ctx) : [],
+    providerId: (color) => color.providerId ? color.providerId : color.archromaId,
+    colorLinks: loadColorLinks,
+    createdBy: (color, args, ctx) => getUser(color.createdBy, ctx),
+  },
+}

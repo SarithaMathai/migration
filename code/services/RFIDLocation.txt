@@ -1,0 +1,33 @@
+import { deepToCamelCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import qs from 'querystring'
+import SparkService from './SparkService'
+
+export default class RFIDLocationService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = endpoint
+
+    this.getLocationBySearchParams = loadListing(
+      (params) => `${this.endpoint}/spark_rfid/v1/getByHostId?${qs.stringify(params)}`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: devices => deepToCamelCase(devices),
+      },
+      logContext,
+    )
+    this.getAllRFIDDevices = loadListing(
+      `${this.endpoint}/spark_rfid/v1/devices`,
+      {
+        ...this.headers,
+      },
+      {
+        transform: (devices) => deepToCamelCase(devices),
+      },
+      logContext,
+    )
+  }
+}

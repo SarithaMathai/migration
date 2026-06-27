@@ -1,0 +1,120 @@
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import loadListing from '../utils/loadListing'
+import deleteOne from '../utils/deleteOne'
+import _ from 'lodash'
+
+import SparkService from './SparkService'
+
+export default class PaletteService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.keyValuesTransform = values => {
+      const formattedValues = []
+      for (var key in values) {
+        if (Object.prototype.hasOwnProperty.call(values, key)) {
+          formattedValues.push({
+            code: key,
+            description: values[key],
+          })
+        }
+      }
+      return _.sortBy(formattedValues, ['description'])
+    }
+
+    this.getPalette = permissionJWT =>
+      loadOne(
+        id => `${this.endpoint}/${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: (id, palette) => [deepToCamelCase(palette)],
+        },
+        this.logContext,
+      )
+
+    this.getPaletteTypes = loadListing(
+      () => `${this.endpoint}/paletteTypes`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.getPaletteStatusOptions = loadListing(
+      () => `${this.endpoint}/paletteStatusOptions`,
+      this.headers,
+      {
+        transform: types => this.keyValuesTransform(types),
+      },
+      this.logContext,
+    )
+
+    this.addPalette = postOne(
+      this.endpoint,
+      this.headers,
+      {
+        transform: palette => deepToCamelCase(palette),
+        transformRequest: palette => deepToSnakeCase(palette),
+      },
+      this.logContext,
+    )
+
+    this.updatePalette = permissionJWT => putOne(
+      sparkPalette => `${this.endpoint}/${sparkPalette.humanId}`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transform: palette => deepToCamelCase(palette),
+        transformRequest: palette => deepToSnakeCase(palette),
+      },
+      this.logContext,
+    )
+
+    this.updatePaletteTeams = permissionJWT => postOne(
+      ({ humanId }) => `${this.endpoint}/${humanId}/teams`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {
+        transformRequest: teamsToUpdate => deepToSnakeCase(teamsToUpdate),
+        skipJsonParse: true,
+      },
+      logContext,
+    )
+
+    this.deletePalette = permissionJWT => deleteOne(
+      humanId => `${this.endpoint}/${humanId}`,
+      {
+        ...this.headers,
+        'SPARK-Capability-Token': permissionJWT,
+      },
+      {},
+      logContext,
+    )
+
+    this.getPalettesByIds = permissionJWT =>
+      loadListing(
+        this.endpoint,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: palettes => deepToCamelCase(palettes),
+        },
+        logContext,
+      )
+  }
+}

@@ -1,0 +1,49 @@
+import createDebug from 'debug'
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+
+const logTrace = createDebug('spark-trace:load-one')
+
+export const loadFiles = async (resourceId, ctx) => {
+  try {
+    const attachments = await ctx.loaders.relationship.getByID.load({
+      id: resourceId,
+      type: 'attachments_v3',
+    })
+    if (attachments && attachments.nodes && attachments.nodes.length > 0) {
+      const attachmentIds = attachments.nodes.map(it => it.id)
+      const permissionJWT = await getUserPermissionsJWT(attachmentIds, ctx)
+      return ctx.loaders.attachment
+        .getAttachmentsV3(permissionJWT)
+        .load(attachmentIds)
+    } else {
+      return []
+    }
+  } catch (err) {
+    logTrace(JSON.stringify(err, null, '  '))
+    return []
+  }
+}
+
+export const loadFilesTreeWithMetadata = async (resourceId, ctx) => {
+  const relationshipData = await ctx.loaders.relationship.searchByIds.load({
+    id: resourceId,
+    includeNodeTypes: ['attachments_v3'],
+    maxDepth: 1,
+  })
+  if (relationshipData[0] && relationshipData[0].nodes && relationshipData[0].nodes.length > 0) {
+    const attachmentIds = relationshipData[0].nodes.map(it => it.id)
+    const permissionJWT = await getUserPermissionsJWT(attachmentIds, ctx)
+    const attachmentsFull = await ctx.loaders.attachment
+      .getAttachmentsV3(permissionJWT)
+      .load(attachmentIds)
+    return attachmentsFull.map(attachment => {
+      const attachmentNode = relationshipData[0].nodes.find(node => node.id === attachment.human_id)
+      return {
+        ...attachment,
+        relationshipMetadata: attachmentNode && attachmentNode.metadata,
+      }
+    })
+  } else {
+    return []
+  }
+}

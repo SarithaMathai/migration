@@ -1,0 +1,30 @@
+export default {
+  Query: {
+    getByoTemplates: async (parent, { userAttributes }, ctx) => {
+      const result = await ctx.loaders.byotemplate.getByoTemplates.load(userAttributes)
+      return result
+    },
+    getByoTemplateById: async (parent, { id }, ctx) => {
+      const result = await ctx.loaders.byotemplate.getByoTemplateById.load(id)
+      return result
+    },
+  },
+  Mutation: {
+    addByoTemplate: async (parent, { sparkByoTemplate }, ctx) => {
+      const byotemplate = await ctx.loaders.byotemplate.addByoTemplate(sparkByoTemplate)
+      return byotemplate
+    },
+    updateByoTemplate: async (parent, { id, sparkByoTemplate }, ctx) => {
+      const byotemplate = await ctx.loaders.byotemplate.updateByoTemplate(id, sparkByoTemplate)
+      return byotemplate
+    },
+    shareByoTemplate: async (parent, { id, userProfileIds }, ctx) => {
+      const sharedTemplates = await ctx.loaders.byotemplate.shareByoTemplate(id, { userProfileIds: userProfileIds })
+      return sharedTemplates
+    },
+    deleteByoTemplate: async (parent, { id }, ctx) => {
+      const response = await ctx.loaders.byotemplate.deleteByoTemplate.load({ id })
+      return response
+    },
+  },
+}

@@ -1,0 +1,98 @@
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import deleteOne from '../utils/deleteOne'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import SparkService from './SparkService'
+import { SPARK_CAPABILITY_TOKEN_HEADER_KEY } from '../config/constants'
+import { productRuleResponseTransformer } from '../utils/Product/productUtils'
+
+const USE_NEW_RULES_API = process.env.USE_NEW_RULES_API === 'true'
+
+export default class RuleLibraryService extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.headers = headers
+    this.endpoint = `${endpoint}/spark_rules/v1`
+
+    this.addRuleLibrary = (ruleLibrary) => postOne(`${this.endpoint}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+      logContext,
+    }).load(ruleLibrary)
+
+    this.updateRuleLibrary = ({ id, ruleLibrary }) => putOne(`${this.endpoint}/${id}`, this.headers, {
+      transform: data => data && deepToCamelCase(data),
+      transformRequest: data => deepToSnakeCase(data),
+      logContext,
+    }).load(ruleLibrary)
+
+    this.deleteById = permissionJWT => deleteOne(id => `${this.endpoint}/${id}`,
+      { ...this.headers, [SPARK_CAPABILITY_TOKEN_HEADER_KEY]: permissionJWT },
+      {},
+      this.logContext,
+    )
+
+    this.getAllRuleOptions = loadListing(`${this.endpoint}/rule_options`,
+      this.headers,
+      {
+        transform: packagings => deepToCamelCase(packagings),
+      },
+      this.logContext,
+    )
+
+    this.getAllRuleLibraries = loadListing(
+      ({ page, size }) =>
+        `${this.endpoint}?${new URLSearchParams({
+          page: page || 0,
+          size: size || 50,
+        })}`, this.headers,
+      {
+        transform: packagings => deepToCamelCase(packagings),
+      },
+      this.logContext,
+    )
+
+    this.getByID = loadOne(
+      id => `${this.endpoint}/${id}`,
+      this.headers,
+      {
+        transform: (id, data) => data && [deepToCamelCase(data)],
+      },
+      this.logContext,
+    )
+
+    if (USE_NEW_RULES_API) {
+      this.searchProductRules = postOne(
+        `${this.endpoint}/search_mapped`,
+        this.headers,
+        {
+          transform: data => data && deepToCamelCase(productRuleResponseTransformer(data)),
+          transformRequest: data => deepToSnakeCase(data),
+          logContext,
+        },
+      )
+    }
+
+    this.searchRuleLibrary = (Search) => postOne(
+      `${this.endpoint}/search`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: USE_NEW_RULES_API ? data => deepToSnakeCase(data) : undefined,
+        logContext,
+      },
+    ).load(Search)
+
+    this.searchRuleLibraryByResource = (search) => postOne(
+      `${this.endpoint}/search_by_resource`,
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: USE_NEW_RULES_API ? data => deepToSnakeCase(data) : undefined,
+        logContext,
+      },
+    ).load(search)
+  }
+}

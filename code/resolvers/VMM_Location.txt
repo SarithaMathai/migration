@@ -1,0 +1,36 @@
+export default {
+  Query: {
+    getFabricFacilities: (parent, { query }, ctx) =>
+      ctx.loaders.location.searchLocations(query).load(),
+    getLocationById: (parent, { id }, ctx) =>
+      ctx.loaders.location.getLocationById(id).load(),
+    getFabricFacilityByIdWithCircuitBreaker: (parent, { id }, ctx) =>
+      ctx.loaders.location.getLocationByIdWithCircuitBreaker.load(id),
+    getFabricFacilitiesByBpId: (parent, { id }, ctx) =>
+      ctx.loaders.location.getLocationsByBpId(id).load(),
+    getLocationsByBpIdAndLocation: (parent, { id, query }, ctx) =>
+      ctx.loaders.location.getLocationsByBpIdAndLocation(id, query).load(),
+    getFacilityByCapTypesAndBpId: (parent, { id, query, impression }, ctx) =>
+      ctx.loaders.location.getFacilityByCapTypesAndBpId(id, query, impression).load(),
+    getFabricFacilitiesByBpIds: async (parent, { ids }, ctx) => {
+      const facilities = []
+      await Promise.all(
+        ids.map(async id => {
+          await ctx.loaders.location.getLocationsByBpId(id).load()
+            .then(res => {
+              if (res) {
+                res.forEach(element => {
+                  facilities.push(element)
+                })
+              }
+            })
+        }),
+      )
+      return facilities
+    },
+    getWashFacilitiesByBpId: (parent, { id }, ctx) =>
+      ctx.loaders.location.getAllLocationsByBpId(id).load(),
+    getTrimFacilitiesByBpId: (parent, { id }, ctx) =>
+      ctx.loaders.location.getAllTrimLocationsByBpId(id).load(),
+  },
+}

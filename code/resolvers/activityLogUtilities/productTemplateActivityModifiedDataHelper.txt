@@ -1,0 +1,112 @@
+import { getOldAndNewTagValues } from './commonUtilities'
+
+const productTemplateActivityModifiedDataHelper = async (activity, streamResourceId, ctx) => {
+  if (!ctx) return []
+  const {
+    loaders: {
+      ig: { department: { getByID: getDepartmentById } = {}, division: { getByID: getDivisionByID } = {} } = {},
+      tag: { getTags } = {},
+      brand: { getBrand: getBrandInfo } = {},
+    } = {},
+  } = ctx
+
+  const {
+    resourceType = '',
+    eventType = 'UPDATE',
+    eventSummary: { humanId = '', description = '', modifiedAttributes = [] } = {},
+  } = activity || {}
+
+  const parentResourceInfo = {
+    linkGenerationVariables: { productTemplateId: humanId },
+  }
+
+  if (!modifiedAttributes || !modifiedAttributes.length) {
+    return [{
+      attributeUpdateText: '',
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId: humanId,
+        resourceDescription: description,
+        parentResourceInfo,
+      },
+      resourceChangeTypeText: `was ${String(eventType).toLowerCase()}d by`,
+    }]
+  }
+
+  return modifiedAttributes.map(async (attr) => {
+    const { attributeName: initialAttributeName = '', attributeNewValue = [], attributeOldValue = [] } = attr || {}
+    let attributeName = initialAttributeName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/_/g, ' ')
+
+    let resourceId = humanId
+    let isSingleValueUpdate = false
+
+    let oldValues = []
+    let newValues = []
+
+    if ((attributeName === 'department' || attributeName === 'departments')) {
+      if (attributeNewValue && attributeNewValue.length && attributeNewValue.every((department) => !isNaN(department.id))) {
+        const newDepartmentsInfo = await Promise.all(attributeNewValue.map((department) => getDepartmentById.load(department.id)))
+        if (newDepartmentsInfo && newDepartmentsInfo.length && newDepartmentsInfo.every((departmentInfo) => !!departmentInfo.department_name)) {
+          newValues = newDepartmentsInfo.map((departmentInfo) => departmentInfo.department_name)
+        }
+      }
+      if (attributeOldValue && attributeOldValue.length && attributeOldValue.every((department) => !isNaN(department.id))) {
+        const oldDepartmentsInfo = await Promise.all(attributeOldValue.map((department) => getDepartmentById.load(department.id)))
+        if (oldDepartmentsInfo && oldDepartmentsInfo.length && oldDepartmentsInfo.every((departmentInfo) => !!departmentInfo.department_name)) {
+          oldValues = oldDepartmentsInfo.map((departmentInfo) => departmentInfo.department_name)
+        }
+      }
+    } else if (attributeName === 'tags') {
+      const { oldTagValues, newTagValues } = await getOldAndNewTagValues(attributeOldValue, attributeNewValue, getTags)
+      oldValues = oldTagValues
+      newValues = newTagValues
+    } else if (attributeName === 'brand ids') {
+      if (attributeNewValue && attributeNewValue.length) {
+        const newBrandsInfo = await Promise.all(attributeNewValue.map((brandId) => getBrandInfo.load(brandId)))
+        if (newBrandsInfo && newBrandsInfo.length && newBrandsInfo.every((brandInfo) => !!brandInfo.brandName)) {
+          newValues = newBrandsInfo.map((brandInfo) => brandInfo.brandName)
+        }
+      }
+      if (attributeOldValue && attributeOldValue.length) {
+        const oldBrandsInfo = await Promise.all(attributeOldValue.map((brandId) => getBrandInfo.load(brandId)))
+        if (oldBrandsInfo && oldBrandsInfo.length && oldBrandsInfo.every((brandInfo) => !!brandInfo.brandName)) {
+          oldValues = oldBrandsInfo.map((brandInfo) => brandInfo.brandName)
+        }
+      }
+    } else if (attributeName === 'division ids') {
+      if (attributeNewValue && attributeNewValue.length) {
+        const newDivisionsInfo = await Promise.all(attributeNewValue.map((divisionId) => getDivisionByID.load(divisionId)))
+        if (newDivisionsInfo && newDivisionsInfo.length && newDivisionsInfo.every((division) => !!division.division_name)) {
+          newValues = newDivisionsInfo.map((division) => division.division_name)
+        }
+      }
+      if (attributeOldValue && attributeOldValue.length) {
+        const oldDivisionsInfo = await Promise.all(attributeOldValue.map((divisionId) => getDivisionByID.load(divisionId)))
+        if (oldDivisionsInfo && oldDivisionsInfo.length && oldDivisionsInfo.every((division) => !!division.division_name)) {
+          oldValues = oldDivisionsInfo.map((division) => division.division_name)
+        }
+      }
+    } else if (typeof attributeNewValue === 'number' || typeof attributeNewValue === 'string') {
+      let updatedValue = attributeNewValue
+      if (attributeName === 'status') updatedValue = attributeNewValue === 501 ? 'Active' : 'Inactive'
+      isSingleValueUpdate = true
+      newValues = [updatedValue]
+    }
+
+    return ({
+      oldValues,
+      newValues,
+      attributeName,
+      eventType,
+      isSingleValueUpdate,
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId,
+        resourceDescription: description,
+        parentResourceInfo,
+      },
+    })
+  })
+}
+
+export default productTemplateActivityModifiedDataHelper

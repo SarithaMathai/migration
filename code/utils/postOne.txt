@@ -1,0 +1,112 @@
+import { Agent } from 'https'
+import { performance } from 'perf_hooks'
+import qs from 'querystring'
+
+import fetch from 'node-fetch'
+
+import { logger } from './../utils/logger'
+import { generateBasicLogContextFromHeaders } from './logging/generateBasicLogContextFromHeaders'
+
+export default function postOne (
+  baseURL,
+  headers,
+  options = {},
+  logContext = {},
+) {
+  const {
+    transform,
+    transformRequest,
+    skipJsonParse,
+    fetchOptions,
+    getDataLoader,
+    primeKey = resource => resource.id,
+    returnDebug,
+    throwOnError,
+  } = options
+  const { logContext: defaultLogContext } = generateBasicLogContextFromHeaders(headers)
+  const finalLogContext = { ...logContext, ...defaultLogContext }
+
+  return {
+    load: async (body, params) => {
+      let transformedBody = body
+
+      const url =
+        typeof baseURL === 'function'
+          ? baseURL(params)
+          : `${baseURL}?${qs.stringify(params)}`
+
+      if (transformRequest) {
+        transformedBody = transformRequest(transformedBody)
+      }
+
+      logger.debug('postBody', { body: transformedBody }, finalLogContext)
+      const started = performance.now()
+      const response = await fetch(url, {
+        agent: /^https:\/\//.test(url)
+          ? new Agent({
+            rejectUnauthorized: false,
+          })
+          : undefined,
+        method: 'POST',
+        headers: {
+          ...headers,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(transformedBody || body),
+        ...fetchOptions,
+      })
+
+      if (response.status >= 400) {
+        logger.error('Post Request Error', { body: transformedBody, url: url, status: response.status }, finalLogContext)
+      }
+
+      if (throwOnError) {
+        const status = await response.status
+        if (status >= 400) {
+          throw new Error('Error sending request: ' + status)
+        }
+      }
+
+      if (skipJsonParse) {
+        const result = await response.text()
+        logger.logResponse(
+          url,
+          'POST',
+          response.status,
+          result,
+          finalLogContext,
+          Math.round(performance.now() - started),
+        )
+        return [result]
+      }
+
+      const json = await response.json()
+      logger.logResponse(
+        url,
+        'POST',
+        response.status,
+        json,
+        finalLogContext,
+        Math.round(performance.now() - started),
+      )
+      let item = json
+
+      if (transform) {
+        item = transform(json)
+      }
+
+      if (getDataLoader && getDataLoader()) {
+        const dl = getDataLoader()
+        dl.prime(primeKey(item), item)
+      }
+
+      if (returnDebug) {
+        return `status: ${response.status}, method: 'POST', url: ${url},
+        response: ${JSON.stringify(json)},
+        ${JSON.stringify(finalLogContext)}, elapsedTime: ${Math.round(performance.now() - started)}`
+      }
+
+      return item
+    },
+  }
+}

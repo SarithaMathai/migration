@@ -1,0 +1,19 @@
+export default {
+  Query: {
+    getRelationship: (parent, { id, type, maxDepth }, ctx) =>
+      ctx.loaders.relationship.getByID.load({ id, type, maxDepth }),
+    getWhereUsed: (parent, { id, type, maxDepth }, ctx) =>
+      ctx.loaders.relationship.getWhereUsedByID.load({ id, type, maxDepth }),
+    searchRelationshipsByIds: (parent, params, ctx) => ctx.loaders.relationship.searchByIds.load(params),
+    whereUsedSearch: (parent, params, ctx) => ctx.loaders.relationship.whereUsedSearch.load(params),
+  },
+
+  Mutation: {
+    addRelationship: (parent, { sparkRelationship }, ctx) =>
+      ctx.loaders.relationship.create.load(sparkRelationship),
+    removeRelationship: (parent, { sparkRelationship }, ctx) =>
+      ctx.loaders.relationship.update.load(sparkRelationship),
+    deleteResource: (parent, { id }, ctx) =>
+      ctx.loaders.relationship.delete.load(id),
+  },
+}

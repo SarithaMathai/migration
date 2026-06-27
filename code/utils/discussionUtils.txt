@@ -1,0 +1,720 @@
+import _ from 'lodash'
+import {
+  addBulkPermissionToAttachments,
+  addBulkRelationShip,
+  getACLGroupFromPermissions,
+  getPermissions,
+  getUserPermissionsJWT,
+} from './commonLoaders'
+import SPARK_WorkspaceV2 from '../resolvers/SPARK_WorkspaceV2'
+import SPARK_SampleV2 from '../resolvers/SPARK_SampleV2'
+import SPARK_Product from '../resolvers/SPARK_Product'
+import SPARK_Palette from '../resolvers/SPARK_Palette'
+import SPARK_Artwork from '../resolvers/SPARK_Artwork'
+import SPARK_Trim from '../resolvers/SPARK_Trim'
+import SPARK_Wash from '../resolvers/material/SPARK_Wash'
+import SPARK_Fabric from '../resolvers/SPARK_Fabric'
+import SPARK_Color from '../resolvers/SPARK_Color'
+import SPARK_ColorArchroma from '../resolvers/SPARK_ColorArchroma'
+import SPARK_Combination from '../resolvers/SPARK_Combination'
+import { isVariantId } from './variantIdFunctions'
+import { SAMPLE_TRACKING_STATUSES } from './constants'
+import SPARK_MaterialHub from '../resolvers/SPARK_MaterialHub'
+import SPARK_Measurement from '../resolvers/product/SPARK_Measurement'
+import SPARK_Bom from '../resolvers/product/SPARK_Bom'
+import SPARK_Claims from '../resolvers/product/SPARK_Claims'
+import SPARK_ProductDetail from '../resolvers/product/SPARK_ProductDetail'
+import SPARK_Packaging from '../resolvers/product/SPARK_Packaging'
+import { logger } from './logger'
+
+export const CHUNK_SIZE = 250
+
+export const makeTagFromResource = resourceId => {
+  return `Discussion-${resourceId}`
+}
+
+export const createDiscussionAccessControl = async (
+  ctx,
+  resourceId,
+  partnerIds,
+  creatorId,
+) => {
+  const userAccessGroup = [] // By Default the creator will given admin access
+  let existingAccessGroup
+  const businessPartnerAccessGroup = []
+  if (creatorId) {
+    userAccessGroup.push({
+      permissionLevel: 'ADMIN',
+      grantees: [creatorId],
+      tag: makeTagFromResource(resourceId),
+    })
+  }
+  existingAccessGroup = [
+    {
+      permissionLevel: 'ADMIN',
+      tag: makeTagFromResource(resourceId),
+      groupId: 'internal',
+    },
+  ]
+  businessPartnerAccessGroup.push({
+    permissionLevel: 'ADMIN',
+    grantees:
+      !_.isEmpty(partnerIds) && partnerIds.filter(Number).length
+        ? partnerIds.filter(Number)
+        : [],
+    tag: makeTagFromResource(resourceId),
+  })
+  const accessControl = await ctx.loaders.accessControl.createAccessControl.load({
+    resourceId: resourceId,
+    ids: userAccessGroup,
+    bps: businessPartnerAccessGroup,
+    existing: existingAccessGroup,
+    additionalProperties: {
+      resource_type_key: 'discussion',
+    },
+  })
+  return accessControl
+}
+
+export const createDiscussionThreadsAccessControl = async (
+  ctx,
+  resourceId,
+  creatorId,
+  group,
+) => {
+  const userAccessGroup = [] // By Default the creator will given admin access
+  let existingAccessGroup
+  const businessPartnerAccessGroup = []
+  if (creatorId) {
+    userAccessGroup.push({
+      permissionLevel: 'ADMIN',
+      tag: makeTagFromResource(resourceId),
+      grantees: [creatorId],
+    })
+  }
+
+  existingAccessGroup = [
+    {
+      permissionLevel: 'ADMIN',
+      groupId: 'internal',
+    },
+  ]
+
+  if (_.isArray(group) && group.length > 0) {
+    group.forEach(bp => {
+      existingAccessGroup.push({
+        permissionLevel: 'ADMIN',
+        groupId: bp.id,
+      })
+    })
+  } else if (!_.isEmpty(group)) {
+    existingAccessGroup.push({
+      permissionLevel: 'ADMIN',
+      groupId: group.id,
+    })
+  }
+
+  const accessControl = await ctx.loaders.accessControl.createAccessControl.load({
+    resourceId: resourceId,
+    ids: userAccessGroup,
+    bps: businessPartnerAccessGroup,
+    existing: existingAccessGroup,
+    additionalProperties: {
+      resource_type_key: 'discussion_thread',
+    },
+  })
+  if (
+    _.isEmpty(accessControl) ||
+    (accessControl.status && accessControl.status >= 400)
+  ) {
+    return Promise.reject('Failed to create acl for threads')
+  }
+  return accessControl
+}
+
+export const updateDiscussionAccessControl = async (
+  ctx,
+  resourceId,
+  partnerIds,
+  group,
+) => {
+  const userAccessGroup = [] // By Default the creator will given admin access
+  let existingAccessGroup
+  const businessPartnerAccessGroup = []
+  if (!_.isEmpty(group)) {
+    existingAccessGroup.push({
+      permissionLevel: 'ADMIN',
+      groupId: group.id,
+    })
+  } else {
+    businessPartnerAccessGroup.push({
+      permissionLevel: 'ADMIN',
+      grantees:
+        partnerIds && partnerIds.filter(Number).length
+          ? partnerIds.filter(Number)
+          : [],
+      tag: makeTagFromResource(resourceId),
+    })
+  }
+
+  const accessControl = await ctx.loaders.accessControl.addAccessControlPermission.load(
+    {
+      resourceId: resourceId,
+      addAccessControl: {
+        ids: userAccessGroup,
+        bps: businessPartnerAccessGroup,
+        existing: existingAccessGroup,
+        additionalProperties: {
+          resource_type_key: 'discussion',
+        },
+      },
+    },
+  )
+  return accessControl
+}
+
+export const setSecurityForSampleDiscussionAttachment = async (
+  ctx,
+  resourceId,
+  discussionThreadId,
+  attachmentIds,
+) => {
+  const resourceAcl = await getPermissions(ctx, [resourceId])
+
+  const existingBPGroup = getACLGroupFromPermissions(
+    resourceAcl.map(acl => acl.permissions).shift(),
+    'bps',
+  )
+  const existingMVGroup = getACLGroupFromPermissions(
+    resourceAcl.map(acl => acl.permissions).shift(),
+    'MerchVendor',
+  )
+  const existingFSGroup = getACLGroupFromPermissions(
+    resourceAcl.map(acl => acl.permissions).shift(),
+    'FabSupplier',
+  )
+
+  const allExistingBPGroups = [
+    existingBPGroup,
+    existingMVGroup,
+    existingFSGroup,
+  ].filter(group => group !== null)
+
+  const attachments = attachmentIds.map(id => ({
+    'documentId': id,
+    'resource': {
+      type: 'discussion',
+      id: discussionThreadId,
+    },
+  }))
+
+  const response = await addBulkPermissionToAttachments(
+    ctx,
+    allExistingBPGroups,
+    attachments,
+  )
+  if (response.status >= 400) {
+    throw new Error(`Error creating ACL for attachments ${JSON.stringify(response)}`)
+  }
+}
+
+export const createSampleDiscussionAttachmentRelationshipHelper = (discussionThreadId, attachmentIds) => {
+  const relationshipNode = {
+    newRelationshipRootDTO: {
+      root: discussionThreadId,
+      rootResourceType: 'discussionThreads',
+    },
+    newRelationshipNodeDTO: attachmentIds.map(id => {
+      return {
+        node: id,
+        nodeResourceType: 'attachments',
+      }
+    }),
+  }
+  return relationshipNode
+}
+
+export const createSampleAttachmentRelationshipHelper = (sampleId, attachmentIds) => {
+  const relationshipNode = {
+    newRelationshipRootDTO: {
+      root: sampleId,
+      rootResourceType: 'sample',
+    },
+    newRelationshipNodeDTO: attachmentIds.map(id => {
+      return {
+        node: id,
+        nodeResourceType: 'attachments',
+      }
+    }),
+  }
+  return relationshipNode
+}
+
+export const createSampleAttachmentRelationship = async (
+  ctx,
+  sampleId,
+  attachmentIds,
+) => {
+  const relationshipNode = createSampleAttachmentRelationshipHelper(sampleId, attachmentIds)
+  await addBulkRelationShip(ctx, [relationshipNode])
+}
+
+export const createSampleDiscussionAttachmentRelationship = async (
+  ctx,
+  discussionThreadId,
+  attachmentIds,
+) => {
+  const relationshipNode = createSampleDiscussionAttachmentRelationshipHelper(discussionThreadId, attachmentIds)
+  await addBulkRelationShip(ctx, [relationshipNode])
+}
+
+export const createSampleDiscussionRelationshipsHelper = (resourceId, discussionId, discussionThreadId) => {
+  const relationshipNodes = [
+    {
+      newRelationshipRootDTO: {
+        root: resourceId,
+        rootResourceType: 'sample',
+      },
+      newRelationshipNodeDTO: [
+        {
+          node: discussionId,
+          nodeResourceType: 'discussions',
+        },
+      ],
+    },
+    {
+      newRelationshipRootDTO: {
+        root: discussionId,
+        rootResourceType: 'discussions',
+      },
+      newRelationshipNodeDTO: [
+        {
+          node: discussionThreadId,
+          nodeResourceType: 'discussionThreads',
+        },
+      ],
+    },
+  ]
+  return relationshipNodes
+}
+
+export const createSampleDiscussionRelationships = async (
+  ctx,
+  resourceId,
+  { discussionId, discussionThreadId },
+) => {
+  const relationshipNodes = createSampleDiscussionRelationshipsHelper(resourceId, discussionId, discussionThreadId)
+  const relationship = await addBulkRelationShip(ctx, relationshipNodes)
+
+  if (relationship.status && relationship.status >= 400) {
+    return Promise.reject(relationship.error)
+  }
+}
+
+export const createDiscussionThreadRelationshipHelper = (discussionId, discussionThreadId) => {
+  const relationshipNodes = [
+    {
+      newRelationshipRootDTO: {
+        root: discussionId,
+        rootResourceType: 'discussions',
+      },
+      newRelationshipNodeDTO: [
+        {
+          node: discussionThreadId,
+          nodeResourceType: 'discussionThreads',
+        },
+      ],
+    },
+  ]
+  return relationshipNodes
+}
+
+export const createDiscussionThreadRelationship = async (
+  ctx, { discussionId, discussionThreadId }) => {
+  const relationshipNodes = createDiscussionThreadRelationshipHelper(discussionId, discussionThreadId)
+  const relationship = await addBulkRelationShip(ctx, relationshipNodes)
+
+  if (relationship.status && relationship.status >= 400) {
+    return Promise.reject(relationship.error)
+  }
+}
+
+export const createSampleDiscussionSecurity = async (
+  ctx, sampleDiscussion, existingBPGroups,
+) => {
+  const existingGroups = [
+    {
+      permissionLevel: 'ADMIN',
+      groupId: 'internal',
+    },
+    ...(existingBPGroups || []).map(group => {
+      return {
+        permissionLevel: 'ADMIN',
+        groupId: group.id,
+      }
+    }),
+  ]
+
+  const accessControlObject = [
+    {
+      resourceId: sampleDiscussion.discussionId,
+      existing: existingGroups,
+      additionalProperties: {
+        resource_type_key: 'discussion',
+      },
+    },
+    {
+      resourceId: sampleDiscussion.discussionThreadId,
+      existing: existingGroups,
+      additionalProperties: {
+        resource_type_key: 'discussion_thread',
+      },
+    },
+  ]
+  const accessControl = await ctx.loaders.accessControl.createBulkAccessControl.load(
+    accessControlObject,
+  )
+  if (_.isEmpty(accessControl) || (accessControl.status && accessControl.status >= 400)) {
+    return Promise.reject('Failed to create access control for new sample discussion and thread')
+  }
+}
+
+export const createSampleDiscussionThread = async (
+  ctx, sparkSampleDiscussion,
+) => {
+  const response = await ctx.loaders.discussion.createSampleDiscussion.load(
+    {
+      ...sparkSampleDiscussion,
+      'partnerId': [sparkSampleDiscussion.partnerId],
+      'resources': { 'mappings': { 'sample': [sparkSampleDiscussion.resourceId] } },
+    },
+  )
+
+  if (response.statusCode >= 400) {
+    throw new Error(`Error creating a discussion head ${response.message}, errors: ${JSON.stringify(
+      response.validationErrors)}`)
+  }
+  return response
+}
+
+export const createSampleDiscussions = async (ctx, sampleDiscussions) => {
+  const mappedInput = sampleDiscussions.map(sampleDiscussion => {
+    return {
+      ...sampleDiscussion,
+      'enableAcl': true,
+      'partnerId': [sampleDiscussion.partnerId],
+      'resources': {
+        'mappings': {
+          'sample': [sampleDiscussion.resourceId],
+        },
+      },
+    }
+  })
+
+  const response = await ctx.loaders.discussion.bulkCreateSampleDiscussions.load(
+    { discussionMessages: mappedInput },
+  )
+
+  if (response.statusCode >= 400) {
+    throw new Error(`Error creating a discussion head ${response.message}, errors: ${JSON.stringify(
+      response.validationErrors)}`)
+  }
+  return response
+}
+
+export const bulkAddSampleDiscussionsUtil = async (ctx, sampleDiscussions) => {
+  let sampleDiscussionAttachmentRelationships = []
+  sampleDiscussions.forEach(sampleDiscussion => {
+    if (sampleDiscussion.attachmentIds && sampleDiscussion.attachmentIds.length > 0) {
+      const relationshipNode = createSampleDiscussionAttachmentRelationshipHelper(
+        sampleDiscussion.discussionThreadId, sampleDiscussion.attachmentIds)
+      sampleDiscussionAttachmentRelationships.push(relationshipNode)
+    }
+  })
+
+  if (sampleDiscussionAttachmentRelationships.length > 0) {
+    await addBulkRelationShip(ctx, sampleDiscussionAttachmentRelationships)
+  }
+
+  const createdSampleDiscussionsResponse = await createSampleDiscussions(ctx, sampleDiscussions)
+  const createdSampleDiscussions = createdSampleDiscussionsResponse && createdSampleDiscussionsResponse.discussionMessages
+  let sampleDiscussionRelationships = []
+  let discussionThreadRelationships = []
+  createdSampleDiscussions.forEach(async (discussion) => {
+    const { discussionId, discussionThreadId, newDiscussion } = discussion
+    if (newDiscussion) {
+      const matchingDiscussionInput = _.find(sampleDiscussions, { discussionThreadId: discussionThreadId })
+      const relationshipNodes = createSampleDiscussionRelationshipsHelper(matchingDiscussionInput.resourceId, discussionId, discussionThreadId)
+      sampleDiscussionRelationships.push(...relationshipNodes)
+    } else {
+      const relationshipNodes = createDiscussionThreadRelationshipHelper(discussionId, discussionThreadId)
+      discussionThreadRelationships.push(...relationshipNodes)
+    }
+  })
+
+  if (sampleDiscussionRelationships.length > 0) {
+    await addBulkRelationShip(ctx, sampleDiscussionRelationships)
+  }
+  if (discussionThreadRelationships.length > 0) {
+    await addBulkRelationShip(ctx, discussionThreadRelationships)
+  }
+  sampleDiscussions.forEach(async (sampleDiscussion) => {
+    if (sampleDiscussion.attachmentIds && sampleDiscussion.attachmentIds.length > 0) {
+      const permissionJWT = await getUserPermissionsJWT(
+        sampleDiscussion.attachmentIds,
+        ctx,
+      )
+      const matchingCreatedSampleDiscussion = _.find(createdSampleDiscussions, { discussionThreadId: sampleDiscussion.discussionThreadId })
+      const relatedResources = [...sampleDiscussion.relatedResources, matchingCreatedSampleDiscussion.discussionId, matchingCreatedSampleDiscussion.discussionThreadId]
+      const attachments = sampleDiscussion.attachmentIds.map(ids => ({
+        documentId: ids,
+        relatedResources: relatedResources,
+        // DO we need these? #TODO
+        // productPacketProps: {
+        //   critical: !!sampleDiscussion.critical,
+        //   partnerId: sampleDiscussion.partnerId,
+        // },
+      }))
+      ctx.loaders.attachment.bulkUpdateAttributes(permissionJWT).load({ attachments: attachments })
+    }
+  })
+  return createdSampleDiscussions
+}
+
+export async function getDiscussionResource (discussion, ctx) {
+  const mappings = _.get(discussion, 'resources.mappings')
+  if (_.get(mappings, 'product.0')) {
+    return SPARK_Product.Query.getProduct({}, { id: mappings.product[0] }, ctx)
+  } else if (_.get(mappings, 'workspace.0')) {
+    return SPARK_WorkspaceV2.Query.getWorkspaceV2({}, { id: mappings.workspace[0] }, ctx)
+  } else if (_.get(mappings, 'sample.0')) {
+    return SPARK_SampleV2.Query.getSampleById({}, { id: mappings.sample[0] }, ctx)
+  } else if (_.get(mappings, 'palette.0')) {
+    return SPARK_Palette.Query.getPalette({}, { id: mappings.palette[0] }, ctx)
+  } else if (_.get(mappings, 'artworks.0')) {
+    if (isVariantId(mappings.artworks[0])) {
+      const artwork = await SPARK_Artwork.Query.getArtwork({}, { id: mappings.artworks[0] }, ctx)
+      const colorway = _.find(artwork.colorways, ['humanId', mappings.artworks[0]])
+      return { humanId: mappings.artworks[0], name: _.get(colorway, 'name', '') }
+    } else {
+      return SPARK_Artwork.Query.getArtwork({}, { id: mappings.artworks[0] }, ctx)
+    }
+  } else if (_.get(mappings, 'trim.0')) {
+    return SPARK_Trim.Query.getTrim({}, { id: mappings.trim[0] }, ctx)
+  } else if (_.get(mappings, 'wash.0')) {
+    return SPARK_Wash.Query.getWash({}, { id: mappings.wash[0] }, ctx)
+  } else if (_.get(mappings, 'fabric.0')) {
+    return SPARK_Fabric.Query.getFabric({}, { id: mappings.fabric[0] }, ctx)
+  } else if (_.get(mappings, 'referenceColors.0')) {
+    return SPARK_Color.Query.getColor({}, { id: mappings.referenceColors[0] }, ctx)
+  } else if (_.get(mappings, 'targetColors.0')) {
+    return SPARK_Color.Query.getColor({}, { id: mappings.targetColors[0] }, ctx)
+  } else if (_.get(mappings, 'referenceColorsArchroma.0')) {
+    return SPARK_ColorArchroma.Query.getColorArchroma({}, { id: mappings.referenceColorsArchroma[0] }, ctx)
+  } else if (_.get(mappings, 'targetColorsArchroma.0')) {
+    return SPARK_ColorArchroma.Query.getColorArchroma({}, { id: mappings.targetColorsArchroma[0] }, ctx)
+  } else if (_.get(mappings, 'combination.0')) {
+    return SPARK_Combination.Query.getCombination({}, { id: mappings.combination[0] }, ctx)
+  } else if (_.get(mappings, 'material.0')) {
+    return SPARK_MaterialHub.Query.getHubMaterial({}, { id: mappings.material[0] }, ctx)
+  } else if (_.get(mappings, 'measurement_set.0')) {
+    const measurements = await SPARK_Measurement.Query.getMeasurementByIds({}, { ids: mappings.measurement_set[0] }, ctx)
+    return measurements ? measurements.content[0] : null
+  } else if (_.get(mappings, 'bill_of_materials.0')) {
+    const boms = await SPARK_Bom.Query.getBomByIds({}, { ids: mappings.bill_of_materials[0] }, ctx)
+    return boms ? boms[0] : null
+  } else if (_.get(mappings, 'packaging_bom.0')) {
+    const boms = await SPARK_Bom.Query.getBomByIds({}, { ids: mappings.packaging_bom[0] }, ctx)
+    return boms ? boms[0] : null
+  } else if (_.get(mappings, 'claim.0')) {
+    const claims = await SPARK_Claims.Query.getClaimByIds({}, { claimHumanIds: mappings.claim[0] }, ctx)
+    return claims ? claims[0] : null
+  } else if (_.get(mappings, 'construction_set.0')) {
+    const constructionSets = await SPARK_ProductDetail.Query.getProductDetailsById({}, { ids: mappings.construction_set[0] }, ctx)
+    return constructionSets ? constructionSets[0] : null
+  } else if (_.get(mappings, 'packaging.0')) {
+    const packaging = await SPARK_Packaging.Query.getPackagingById({}, { packagingId: mappings.packaging[0] }, ctx)
+    return packaging
+  }
+}
+
+export function getDiscussionResourceId (discussion) {
+  const mappings = _.get(discussion, 'resources.mappings')
+  if (_.get(mappings, 'product.0')) {
+    return mappings.product[0]
+  } else if (_.get(mappings, 'workspace.0')) {
+    return mappings.workspace[0]
+  } else if (_.get(mappings, 'sample.0')) {
+    return mappings.sample[0]
+  } else if (_.get(mappings, 'palette.0')) {
+    return mappings.palette[0]
+  } else if (_.get(mappings, 'artworks.0')) {
+    return mappings.artworks[0]
+  } else if (_.get(mappings, 'trim.0')) {
+    return mappings.trim[0]
+  } else if (_.get(mappings, 'wash.0')) {
+    return mappings.wash[0]
+  } else if (_.get(mappings, 'fabric.0')) {
+    return mappings.fabric[0]
+  } else if (_.get(mappings, 'referenceColors.0')) {
+    return mappings.referenceColors[0]
+  } else if (_.get(mappings, 'targetColors.0')) {
+    return mappings.targetColors[0]
+  } else if (_.get(mappings, 'referenceColorsArchroma.0')) {
+    return mappings.referenceColorsArchroma[0]
+  } else if (_.get(mappings, 'targetColorsArchroma.0')) {
+    return mappings.targetColorsArchroma[0]
+  } else if (_.get(mappings, 'combination.0')) {
+    return mappings.combination[0]
+  } else if (_.get(mappings, 'material.0')) {
+    return mappings.material[0]
+  } else if (_.get(mappings, 'bill_of_aterials.0')) {
+    return mappings.bill_of_materials[0]
+  } else if (_.get(mappings, 'claim.0')) {
+    return mappings.claim[0]
+  } else if (_.get(mappings, 'measurement_set.0')) {
+    return mappings.measurementSet[0]
+  } else if (_.get(mappings, 'construction_set.0')) {
+    return mappings.constructionSet[0]
+  } else if (_.get(mappings, 'packaging.0')) {
+    return mappings.packaging[0]
+  }
+}
+
+export const findAllParticipantPartnerIds = (participants) => {
+  const teams = _.get(participants, 'teams')
+  const users = _.get(participants, 'users')
+  const partners = []
+  if (teams) {
+    _.reduce(teams, (result, team) => {
+      if (team.businessPartnerId && team.businessPartnerId !== null && +team.businessPartnerId !== 0) {
+        result.push(+team.businessPartnerId)
+      }
+      return result
+    }, partners)
+  }
+  if (users) {
+    _.reduce(users, (result, user) => {
+      if (user.partnerId && user.partnerId !== null && +user.partnerId !== 0) {
+        result.push(+user.partnerId)
+      }
+      return result
+    }, partners)
+  }
+  const uniqueList = _.uniq(partners)
+  return uniqueList
+}
+
+export const getParentResourceType = (resourceId) => {
+  let resourceType
+  if (resourceId.indexOf('PID') === 0) {
+    return 'product'
+  } else if (resourceId.indexOf('WRK') === 0) {
+    return 'workspace'
+  } else if (resourceId.indexOf('SMP') === 0) {
+    return 'sample'
+  } else if (resourceId.indexOf('PKGBOM') === 0) {
+    return 'packaging_bom'
+  } else if (resourceId.indexOf('BOM') === 0) {
+    return 'bill_of_materials'
+  } else if (resourceId.indexOf('CLM') === 0) {
+    return 'claim'
+  } else if (resourceId.indexOf('MST') === 0) {
+    return 'measurement_set'
+  } else if (resourceId.indexOf('PDTL') === 0) {
+    return 'construction_set'
+  } else if (resourceId.indexOf('PKG') === 0) {
+    return 'packaging'
+  }
+  return resourceType
+}
+
+export const canHaveOnlySingleDiscussion = (resource) => {
+  const resource_support_single_discussion = ['SMP', 'BOM', 'PKGBOM','PRDBOM','CLM', 'MST', 'PDTL', 'PKG']
+  const regexp = new RegExp('^' + resource_support_single_discussion.join('|^'))
+  return regexp.test(resource)
+}
+
+export const handle3dFileSampleDiscussion = async (sparkSampleDiscussion, attachmentIds, ctx) => {
+  const sampleId = sparkSampleDiscussion.relatedResources.find(resource => resource.startsWith('SMP-'))
+  const sample = await ctx.loaders.sampleV2.getSampleById.load(sampleId)
+  if ([SAMPLE_TRACKING_STATUSES.REQUESTED, SAMPLE_TRACKING_STATUSES.SENT].includes(sample.tracking.status.code)) {
+    const permissionJWT = await getUserPermissionsJWT([...attachmentIds, sampleId], ctx)
+    const attachments = await ctx.loaders.attachment.getAttachmentsV3(permissionJWT).load(attachmentIds)
+    if (attachments.find(att => ['FBX', 'GLB'].includes(att.document_type.toUpperCase()))) {
+      await updateSampleTracking(sample, SAMPLE_TRACKING_STATUSES.RECEIVED, ctx)
+    }
+  }
+}
+
+const updateSampleTracking = async (sample, status, ctx) => {
+  const updateSample = buildUpdateSample(sample, status)
+  const permissionJWT = await getUserPermissionsJWT(sample.id, ctx)
+  await ctx.loaders.sampleV2.updateSamplesV2(permissionJWT).load({ updateSamples: [updateSample] })
+}
+
+const buildUpdateSample = (sample, status) => ({
+  id: sample.id,
+  tracking: {
+    etaDate: sample.tracking.etaDate,
+    sentDate: sample.tracking.sentDate,
+    number: sample.tracking.number,
+    lateReasonType: sample.tracking.lateReason.type,
+    status,
+    receivedDate: status === SAMPLE_TRACKING_STATUSES.RECEIVED ? new Date().toISOString() : null,
+  },
+  type: sample.sampleType.code,
+})
+
+export const getDiscussionRepliesV2 = async (discussionId, ctx) => {
+  let replies = []
+
+  const threadIds = await ctx.loaders.relationship.searchByIds.load({
+    id: discussionId,
+    type: 'discussionThreads',
+    maxDepth: 0,
+  })
+
+  if (threadIds.length && !_.isEmpty(threadIds[0].nodes)) {
+    const aclPermissionJWT = await ctx.loaders.accessControl.getUserAccessByPost.load(
+      threadIds[0].nodes.map(node => node.id),
+    )
+    //logger.info('Logging all thread ids', threadIds, ctx.logContext)
+    replies = await ctx.loaders.discussion
+      .getThreadsByPost(aclPermissionJWT)
+      .load(threadIds[0].nodes.map(node => node.id))
+  }
+  return replies
+}
+
+export const getDiscussionsBatch = async (discussionIds, chunkSize, ctx) => {
+  let allDiscussions = []
+  let index = 0
+
+  const chunks = _.chunk(discussionIds, chunkSize)
+  while (index < chunks.length) {
+    const discussionsJWT = (chunks[index].length === 0) ? '' : await ctx.loaders.accessControl.getUserAccessByPost.load(chunks[index])
+    const discussions = chunks[index].length > 0 ? await ctx.loaders.discussion.getDiscussionsByPost(discussionsJWT).load(chunks[index]) : []
+    if (discussions && discussions.length > 0) {
+      allDiscussions = allDiscussions.concat(discussions)
+    }
+    index++
+  }
+  return allDiscussions
+}
+
+export const getDiscussionThreadsBatch = async (discussionThreadIds, chunkSize, ctx) => {
+  let allThreads = []
+  let index = 0
+
+  const chunks = _.chunk(discussionThreadIds, chunkSize)
+  while (index < chunks.length) {
+    const discussionsThreadJWT = (chunks.length === 0) ? '' : await ctx.loaders.accessControl.getUserAccessByPost.load(chunks[index])
+    const discussionsThreads = chunks.length > 0 ? await ctx.loaders.discussion.getThreadsByPost(discussionsThreadJWT).load(chunks[index]) : []
+    if (discussionsThreads && discussionsThreads.length > 0) {
+      allThreads = allThreads.concat(discussionsThreads)
+    }
+    index++
+  }
+  return allThreads
+}

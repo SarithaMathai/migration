@@ -1,0 +1,28 @@
+
+import SparkService from './SparkService';
+import postOne from '../utils/postOne';
+import { deepToCamelCase, deepToSnakeCase } from '../utils/convertFunctions'
+import { SPARK_GATEWAY_API_KEY } from '../config/constants';
+
+export default class AssortmentItemService extends SparkService {
+  constructor(endpoint, token, logContext) {
+    super(logContext);
+    this.endpoint = endpoint;
+    this.itemKey = SPARK_GATEWAY_API_KEY;
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    };
+
+    // Define the getItemsByPid function using postOne
+    this.getItemsByPid = postOne(
+      () => `${this.endpoint}/assortment_items/v1/search?key=${this.itemKey}`,
+      this.headers,
+      {
+        transform: (res) => res && deepToCamelCase(res),
+        transformRequest: (req) => deepToSnakeCase(req),
+      },
+      logContext,
+    );
+  }
+}

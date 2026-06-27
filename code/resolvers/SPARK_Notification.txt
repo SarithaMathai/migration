@@ -1,0 +1,249 @@
+import SPARK_Discussion from './SPARK_Discussion'
+import moment from 'moment'
+import { resolvePaging } from './../utils/resolvePaging'
+import {
+  getUserPermissionsJWT,
+} from '../utils/commonLoaders'
+import _ from 'lodash'
+import { getTagsBatched } from '../services/batchers/getTagsBatched'
+import { loadBps } from '../utils/vmmUtils'
+import { systemUser } from '../utils/userAttributesUtils'
+
+export default {
+  Query: {
+    getNotifications: async (parent, queryArgs, ctx) => {
+      const data = await ctx.loaders.notification.getNotifications.load({ ...queryArgs, sort: 'timestamp,desc', after: moment().subtract(30, 'days').format('YYYY-MM-DDTHH:mm:ss[Z]') })
+      const ids = data.content.map(item => item.resourceId)
+      const jwt = await getUserPermissionsJWT(ids, ctx)
+      data.content.forEach(item => { item.jwt = jwt })
+      return data
+    },
+    getNotificationGroups: async (parent, queryArgs, ctx) => {
+      const data = await ctx.loaders.notification.getNotificationGroups.load({ ...queryArgs, sort: 'lastNotificationTime,desc', after: moment().subtract(30, 'days').format('YYYY-MM-DDTHH:mm:ss[Z]') })
+      const ids = data.content.map(item => item.resourceId)
+      const jwt = await getUserPermissionsJWT(ids, ctx)
+      data.content.forEach(item => { item.jwt = jwt })
+      return data
+    },
+    getNotificationGroupStats: async (parent, queryArgs, ctx) => {
+      return ctx.loaders.notification.getNotificationGroupStats.load({ ...queryArgs, sort: 'timestamp,desc', after: moment().subtract(30, 'days').format('YYYY-MM-DDTHH:mm:ss[Z]') })
+    },
+  },
+  Mutation: {
+    updateNotificationStatus: async (parent, { notificationStatusInput }, ctx) =>
+      ctx.loaders.notification.updateNotificationStatus.load(notificationStatusInput),
+    updateNotificationGroups: async (parent, { input }, ctx) =>
+      ctx.loaders.notification.updateNotificationGroups.load({ updates: input }),
+  },
+  SPARK_Notification: {
+    author: async (notification, args, ctx) => {
+      if (!notification.author) {
+        return {}
+      }
+      if (notification.author.systemUser) {
+        return systemUser(notification.author.userProfileId)
+      } else {
+        return ctx.loaders.userAttributes.getUserByID.load(notification.author.userProfileId)
+      }
+    },
+    discussionOrThread: async (notification, args, ctx) => {
+      if (notification.resourceType === 'discussions') {
+        return SPARK_Discussion.Query.getDiscussionV2({}, { id: notification.resourceId }, ctx)
+      } else if (notification.resourceType === 'discussionThreads') {
+        return ctx.loaders.discussion
+          .getThread
+          .load(notification.resourceId)
+      }
+    },
+    resource: async (notification, args, ctx) => {
+      if (notification.resourceType === 'discussions') {
+        return SPARK_Discussion.Query.getDiscussionV2({}, { id: notification.resourceId }, ctx)
+      } else if (notification.resourceType === 'discussionThreads') {
+        return ctx.loaders.discussion
+          .getThread
+          .load(notification.resourceId)
+      } else if (notification.resourceType === 'sample') {
+        return ctx.loaders.sampleV2
+          .getSampleById
+          .load(notification.resourceId)
+      } else if (notification.resourceType === 'packaging') {
+        const packagings = await ctx.loaders.packaging.getPackagings().load({
+          packagingIds: [notification.resourceId],
+        })
+        const result = (packagings?.content || [])[0]
+        return result
+      }
+    },
+    parentId: (notification) => {
+      return notification.parentId
+    },
+    relatedResources: (notification) => {
+      return notification.relatedResources
+    },
+    tags: async (notification, args, ctx) => {
+      let tagIds = _.get(notification, 'tags') || []
+      let tags = []
+      if (tagIds.length > 0) {
+        tags = getTagsBatched(ctx, notification.tags)
+      }
+      return tags
+    },
+    attachmentCount: async (notification, args, ctx) => {
+      const attachments = await ctx.loaders.search.searchAttachmentsByRelatedResource.load(notification.resourceId)
+      return attachments.length
+    },
+  },
+  SPARK_Notification_Group: {
+    primaryResourceId: (group) => group.keyResources.primary.id,
+    primaryResourceType: (group) => group.keyResources.primary.type,
+    discussion: (group, args, ctx) => {
+      if (!group.keyResources.sample) {
+        const resource = group.keyResources.secondary
+        return resource && SPARK_Discussion.Query.getDiscussionV2({}, { id: resource.id }, ctx)
+      }
+    },
+    sample: (group, args, ctx) => {
+      if (group.keyResources.sample) {
+        const resource = group.keyResources.primary
+        return resource && ctx.loaders.sampleV2.getSampleById.load(resource.id)
+      }
+    },
+    packaging: async (group, args, ctx) => {
+      if (group.keyResources.primary?.type === 'packaging') {
+        const resource = group.keyResources.primary
+        const isPackaging = resource && await ctx.loaders.packaging.getPackagings().load({
+          packagingIds: [resource.id],
+        })
+        return isPackaging.content[0]
+      }
+    },
+    watchlist: async (group, _, ctx) => {
+      const notification = group && group.notifications && group.notifications.length > 0 && group.notifications[0]
+      if (notification && notification.resourceId && notification.resourceType === 'product_watchlist') {
+        const data = {}
+        const permissionJWT = await getUserPermissionsJWT([notification.resourceId], ctx)
+        const watchlistData = await ctx.loaders.watchlist
+          .getWatchlistByIds(permissionJWT)
+          .load(notification.resourceId)
+
+        if (watchlistData && watchlistData.length > 0 && watchlistData[0].workspaceContext) {
+          const { workspaceContext, parentId, businessPartners } = watchlistData[0]
+          data.workspaceId = workspaceContext
+          data.productId = parentId
+          const { description, tags: workspaceTags } = await ctx.loaders.workspaceV2.getWorkspaceByIdV2.load(workspaceContext)
+          const { tags: productTags } = await ctx.loaders.product.getByID.load(parentId)
+          data.description = description
+          if (businessPartners && businessPartners.length > 0) {
+            const bps = await loadBps(ctx, businessPartners.map((bp) => bp.partnerId))
+            data.businessPartners = bps
+          }
+          data.tags = getTagsBatched(ctx, [...workspaceTags, ...productTags])
+        }
+        data.id = notification.resourceId
+        return data
+      }
+    },
+    claim: async (group, _, ctx) => {
+      const notification = group && group.notifications && group.notifications.length > 0 && group.notifications[0]
+      if (notification && notification.resourceId && notification.resourceType === 'claim') {
+        const data = {}
+        const permissionJWT = await getUserPermissionsJWT([notification.resourceId], ctx)
+        const claimData = await ctx.loaders.claim.getClaimsByIds(permissionJWT, [notification.resourceId])
+        if (claimData && claimData.length > 0) {
+          let bps
+          let vmmPartnerId
+          const { workspaceContext = [], parentId, partnerId, dpPartnerId } = claimData[0]
+          // workspace id
+          const workspaceId = workspaceContext[0] || ''
+          // workspace description and tags
+          const { description } = await ctx.loaders.workspaceV2.getWorkspaceByIdV2.load(workspaceId)
+          // product tags
+          const { tags: productTags } = await ctx.loaders.product.getByID.load(parentId)
+          // business partners related to the claim
+          if (partnerId) { // if partnerId is present then use it
+            vmmPartnerId = partnerId
+          } else if (!dpPartnerId) { // if partnerId and dpPartnerId is null then use 0
+            vmmPartnerId = 0
+          } else { // if partnerId is null but the dpPartnerId is not null then use dpPartnerId
+            vmmPartnerId = dpPartnerId
+          }
+          if (!vmmPartnerId) {
+            bps = { bpId: 0, bpName: 'Target' }
+          } else {
+            bps = await ctx.loaders.vmm.getByID.load(vmmPartnerId)
+          }
+
+          data.workspaceId = workspaceId
+          data.productId = parentId
+          data.description = description || ''
+          data.businessPartners = [bps]
+          data.tags = getTagsBatched(ctx, [...productTags])
+        }
+        data.id = notification.resourceId
+        return data
+      }
+    },
+    totalAttachmentCount: async (group, args, ctx) => {
+      const { keyResources } = { ...group }
+      if (keyResources && keyResources.sample && keyResources.primary && keyResources.primary.id) {
+        const attachments = await ctx.loaders.search.searchAttachmentsByRelatedResource.load(keyResources.primary.id)
+        return attachments.length
+      } else if (keyResources && keyResources.secondary && keyResources.secondary.id) {
+        const attachments = await ctx.loaders.search.searchAttachmentsByRelatedResource.load(keyResources.secondary.id)
+        return attachments.length
+      }
+    },
+    workspaceId: (group) =>
+      (group.keyResources.context?.type === 'workspace') ? group.keyResources.context.id : null,
+  },
+  SPARK_Notification_Group_Stats: {
+    tags: async (notification, args, ctx) => {
+      let tagIds = _.get(notification, 'tags') || []
+      let tags = []
+      if (tagIds.length > 0) {
+        tags = getTagsBatched(ctx, notification.tags)
+      }
+      return tags
+    },
+    businessPartners: async (notification, args, ctx) => notification.businessPartnerIds && loadBps(ctx, notification.businessPartnerIds),
+  },
+  SPARK_Notification_Recipient: {
+    userProfile: (notificationTo, args, ctx) =>
+      notificationTo.userProfileId &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(notificationTo.userProfileId),
+    partner: async (notification, args, ctx) =>
+      notification.partnerId && notification.partnerId !== 0 &&
+        ctx.loaders.vmm.getByID.load(notification.partnerId),
+  },
+
+  SPARK_NotificationsPaged: {
+    paging: resolvePaging,
+  },
+
+  SPARK_Notification_GroupsPaged: {
+    paging: resolvePaging,
+  },
+
+  SPARK_DiscussionOrThread: {
+    __resolveType: async (resource) => {
+      if (resource.discussionThreadId) {
+        return 'SPARK_DiscussionReply'
+      } else {
+        return 'SPARK_Discussion'
+      }
+    },
+  },
+  SPARK_Notification_Resource: {
+    __resolveType: async (resource) => {
+      if (resource.discussionThreadId) {
+        return 'SPARK_DiscussionReply'
+      } else if (resource.sampleRound) {
+        return 'SPARK_SampleV2'
+      } else if (resource.packagingElements) {
+        return 'SPARK_Packaging'
+      } else {
+        return 'SPARK_Discussion'
+      }
+    },
+  },
+}

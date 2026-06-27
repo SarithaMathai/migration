@@ -1,0 +1,23 @@
+export const resolveNodes = (object, nodeResourceTypes) => {
+  let addNodes = []
+  let removeNodes = []
+  nodeResourceTypes.forEach(nodeResourceType => {
+    if (nodeResourceType === 'attachments' && object.files && object.files.length > 0) {
+      addNodes = addNodes.concat(
+        object.files.map(node => ({
+          node,
+          nodeResourceType: 'attachments_v3',
+        })),
+      )
+    }
+    if (nodeResourceType === 'teamsToAdd' && object.teamsToAdd && object.teamsToAdd.length > 0) {
+      addNodes = addNodes.concat(object.teamsToAdd.map(node => ({ node })))
+    }
+    if (nodeResourceType === 'teamsToRemove' && object.teamsToRemove && object.teamsToRemove.length > 0) {
+      removeNodes = removeNodes.concat(object.teamsToRemove.map(id => ({ id })))
+    }
+  })
+  return {
+    addNodes, removeNodes,
+  }
+}

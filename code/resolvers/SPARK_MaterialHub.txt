@@ -1,0 +1,381 @@
+import { getUserPermissionsJWT, loadTags } from '../utils/commonLoaders'
+import { loadBusinessPartners, loadDroppedBusinessPartners, loadTeams } from './commonResolvers/Teams'
+import { loadFiles } from './commonResolvers/Files'
+import _ from 'lodash'
+import { loadParentMaterial } from './material/SPARK_BaseMaterialCommonFields'
+import { getUser } from '../utils/userAttributesUtils'
+
+export const resolveMaterialType = (material) => {
+  if (material.type === 'Paper Based Substrate') {
+    return 'SPARK_Paper'
+  } else if (material.type === 'Wood') {
+    return 'SPARK_Wood'
+  } else {
+    return 'SPARK_UserDefinedMaterial'
+  }
+}
+
+export const handleResolveResourceMaterial = async (id, type, ctx) => {
+  const { getOne } = materialTypeToOperationsRegistry[type]
+  if (id && getOne) {
+    const permissionJWT = await getUserPermissionsJWT(id, ctx)
+    return getOne(permissionJWT, id, ctx)
+  } else return {}
+}
+
+export const handleAddMaterial = async (parent, { material }, ctx) => {
+  const response = await ctx.loaders.materialHub.addHubMaterial.load(material)
+  const createdMateriaHumanId = response.humanId
+
+  const files = _.get(material, 'baseMaterial.files', [])
+  const teamsToAdd = _.get(material, 'baseMaterial.teamsToAdd', [])
+  if (files.length > 0) {
+    const associateAttachmentTeamDto = { 
+      teamsToUpdateDto: { teamsToAdd }, 
+      parentId: createdMateriaHumanId, 
+      humanIds: files,
+      relatedResourceIds: [createdMateriaHumanId],
+    }
+    const attachmentPermissionJWT = await getUserPermissionsJWT(files, ctx)
+    await ctx.loaders.attachment.associateAttachmentTeams(attachmentPermissionJWT).load(associateAttachmentTeamDto, { humanId: createdMateriaHumanId })
+  }
+
+  if (teamsToAdd.length > 0) {
+    const permissionJWT = await getUserPermissionsJWT([createdMateriaHumanId], ctx)
+    const teamsToUpdate = {
+      teamsToAdd,
+      resourceId: createdMateriaHumanId,
+    }
+    await ctx.loaders.materialHub.updateTeams(permissionJWT).load(teamsToUpdate, { id: createdMateriaHumanId })
+  }
+
+  return response
+}
+
+export const handleUpdateMaterial = async (parent, { material }, ctx) => {
+  const permissionJWT = await getUserPermissionsJWT(material.humanId, ctx)
+  return ctx.loaders.materialHub.updateHubMaterial(permissionJWT).load(material)
+}
+
+const materialTypePrefixToTypeRegistry = {
+  ART: 'artworks',
+  FAB: 'fabric',
+  TRM: 'trim',
+  MAT: 'material',
+}
+
+const materialTypeToOperationsRegistry = {
+  artworks: {
+    getOne: (permissionJWT, resourceId, ctx) => ctx.loaders.artwork.getByID(permissionJWT).load(resourceId),
+    update: (permissionJWT, resource, ctx) => ctx.loaders.artwork.update(permissionJWT).load(resource),
+    skipApplyParentUpdate: false,
+    applyParentUpdate: (resource, parentResourceId) => {
+      resource.parent = parentResourceId
+      return resource
+    },
+    getMany: (permissionJWT, resourceIds, ctx) => ctx.loaders.artwork.getByIDs(permissionJWT).load({ ids: resourceIds }),
+  },
+  fabric: {
+    getOne: (permissionJWT, resourceId, ctx) => ctx.loaders.fabric.getByID(permissionJWT).load(resourceId),
+    update: (permissionJWT, resource, ctx) => ctx.loaders.fabric.update(permissionJWT).load(resource),
+    skipApplyParentUpdate: false,
+    applyParentUpdate: (resource, parentResourceId) => {
+      resource.parent = parentResourceId
+      return resource
+    },
+    getMany: (permissionJWT, resourceIds, ctx) => ctx.loaders.fabric.getByIDs(permissionJWT).load({ ids: resourceIds }),
+  },
+  trim: {
+    getOne: (permissionJWT, resourceId, ctx) => ctx.loaders.trim.getTrim(permissionJWT).load(resourceId),
+    update: (permissionJWT, resource, ctx) => ctx.loaders.trim.updateTrim(permissionJWT).load(resource),
+    skipApplyParentUpdate: false,
+    applyParentUpdate: (resource, parentResourceId) => {
+      resource.parent = parentResourceId
+      return resource
+    },
+    getMany: (permissionJWT, resourceIds, ctx) => ctx.loaders.trim.getTrims(permissionJWT).load(resourceIds),
+  },
+  material: {
+    getOne: (permissionJWT, resourceId, ctx) => ctx.loaders.materialHub.getHubMaterial(permissionJWT).load(resourceId),
+    update: (permissionJWT, resource, ctx) => handleUpdateMaterial(null, { material: resource }, ctx),
+    skipApplyParentUpdate: true,
+    applyParentUpdate: (resource, parentResourceId) => {
+      resource.baseMaterial = {
+        ...resource.baseMaterial,
+        parent: parentResourceId,
+      }
+      return resource
+    },
+    getMany: (permissionJWT, resourceIds, ctx) => ctx.loaders.materialHub.getHubMaterials(permissionJWT).load({ materialIds: resourceIds.join(',') }),
+  },
+}
+
+const applyParentUpdateForNewResourceLink = async (resourceLink, ctx) => {
+  const resourceType = materialTypePrefixToTypeRegistry[resourceLink.target.slice(0, 3)]
+  if (!resourceType) {
+    return null
+  }
+
+  const { getOne, update, applyParentUpdate, skipApplyParentUpdate } = materialTypeToOperationsRegistry[resourceType]
+  if (getOne && update && applyParentUpdate && !skipApplyParentUpdate) {
+    const permissionJWT = await getUserPermissionsJWT(resourceLink.target, ctx)
+    const resource = await getOne(permissionJWT, resourceLink.target, ctx)
+    const updatedResource = applyParentUpdate(resource, resourceLink.source)
+    const updatedResourceResponse = await update(permissionJWT, updatedResource, ctx)
+    return updatedResourceResponse
+  }
+
+  return null
+}
+
+const getResourcesFromResourceLinks = async (resourceLinks, filterType, ctx) => {
+  const resourceType = filterType
+  const { getMany } = materialTypeToOperationsRegistry[resourceType]
+  if (getMany) {
+    const resourceIds = resourceLinks.map(link => link.target.id)
+
+    const permissionJWT = await getUserPermissionsJWT(resourceIds, ctx)
+    const materials = getMany(permissionJWT, resourceIds, ctx)
+    return materials
+  }
+  return []
+}
+
+export default {
+  Query: {
+    getHubMaterial: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      const material = await ctx.loaders.materialHub.getHubMaterial(permissionJWT).load(id)
+      return material
+    },
+    getHubMaterials: async (parent, { materialIds }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(materialIds, ctx)
+      return ctx.loaders.materialHub.getHubMaterials(permissionJWT).load({ materialIds: materialIds.join(',') })
+    },
+    getHubCodedOptions: async (parent, { type }, ctx) =>
+      ctx.loaders.materialHub.getHubCodedOptions.load(type),
+    getHubMaterialTypes: async (parent, { searchCriteria }, ctx) =>
+      ctx.loaders.materialHub.getHubMaterialTypes.load(searchCriteria),
+    getMaterialTemplateTypes: async (parent, { searchCriteria }, ctx) =>
+      ctx.loaders.materialHub.getMaterialTemplateTypes.load(searchCriteria),
+    getMaterialTemplate: async (parent, { name, inheritAttributes }, ctx) =>
+      ctx.loaders.materialHub.getMaterialTemplate(inheritAttributes).load(name),
+    getMaterialTemplateHierarchy: async (parent, {}, ctx) =>
+      ctx.loaders.materialHub.getMaterialTemplateHierarchy.load(),
+    getHubUnitsOfMeasure: async (parent, { type }, ctx) =>
+      ctx.loaders.materialHub.getHubUnitsOfMeasure.load(type),
+    getResourceLink: async (parent, { targetId, sourceId }, ctx) =>
+      ctx.loaders.materialHub.getResourceLink.load({ targetId, sourceId }),
+    searchResourceLinks: async (parent, { targetIds = [], sourceIds = [], filterType }, ctx) => {
+      const resourceLinks = await ctx.loaders.materialHub.searchResourceLinks.load({ sourceIds, targetIds })
+      const filteredResourceLinks = resourceLinks.filter(link => link && link.target.type === filterType)
+      if (!filteredResourceLinks || filteredResourceLinks.length === 0) {
+        return {}
+      }
+
+      const materials = await getResourcesFromResourceLinks(filteredResourceLinks, filterType, ctx)
+      return {
+        resourceLinks: filteredResourceLinks,
+        materials: materials,
+      }
+    },
+    exportMaterials: async (parent, { exportSearchParams }, ctx) => {
+      await ctx.loaders.search.exportMaterials.load(exportSearchParams)
+      const requestId = _.get(ctx, 'headers.X-Api-Id', 'NA')
+      return {
+        requestId: requestId,
+      }
+    },
+    searchMaterialsByCriteria: async (parent, { searchCriteria }, ctx) =>
+      ctx.loaders.materialHub.searchMaterialsByCriteria.load(searchCriteria),
+    getMaterialWithTemplate: async (parent, { id }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      const wrapper = await ctx.loaders.materialHub.getMaterialWithTemplate(permissionJWT).load(id)
+      return wrapper
+    },
+  },
+
+  Mutation: {
+    partialUpdateHubMaterial: async (parent, { id, partialMaterial }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.materialHub.partialUpdateHubMaterial(id, permissionJWT).load(partialMaterial)
+    },
+    updateTeams: async (parent, { id, teamsToUpdate }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.materialHub.updateTeams(permissionJWT).load(teamsToUpdate, { id })
+    },
+    addMaterialTemplate: (parent, { template }, ctx) =>
+      ctx.loaders.materialHub.addMaterialTemplate.load(template),
+    updateMaterialTemplate: (parent, { template }, ctx) =>
+      ctx.loaders.materialHub.updateMaterialTemplate.load(template),
+    addPaper: handleAddMaterial,
+    updatePaper: handleUpdateMaterial,
+    addWood: handleAddMaterial,
+    updateWood: handleUpdateMaterial,
+    createResourceLink: async (parent, { resourceLink }, ctx) => {
+      const resourceLinkResponse = await ctx.loaders.materialHub.createResourceLink.load(resourceLink)
+      await applyParentUpdateForNewResourceLink(resourceLink, ctx)
+      return resourceLinkResponse
+    },
+    deleteResourceLink: async (parent, { targetId, sourceId }, ctx) =>
+      ctx.loaders.materialHub.deleteResourceLink.load({ targetId, sourceId }),
+    bulkAddDeleteResourceLinks: async (parent, { bulkAddDeleteResourceLinksRequest }, ctx) =>
+      ctx.loaders.materialHub.bulkAddDeleteResourceLinks.load(bulkAddDeleteResourceLinksRequest),
+    validateMaterialUniqueness: async (parent, { material, page, size }, ctx) =>
+      ctx.loaders.materialHub.validateMaterialUniqueness(material, page, size).load(material),
+    bulkValidateMaterialUniqueness: async (parent, { bulkValidateUniqueRequest }, ctx) => {
+      return ctx.loaders.materialHub.bulkValidateMaterialUniqueness.load(bulkValidateUniqueRequest)
+    },
+  },
+
+  SPARK_HubMaterialInterface: {
+    __resolveType: resolveMaterialType,
+  },
+
+  SPARK_BaseMaterial: {
+    departments: (baseMaterial, args, ctx) =>
+      baseMaterial && baseMaterial.departments && baseMaterial.departments.length > 0
+        ? ctx.loaders.ig.department.getByID.loadMany(baseMaterial.departments)
+        : [],
+    countryOfOrigin: (baseMaterial, args, ctx) =>
+      baseMaterial && baseMaterial.countryOfOrigin
+        ? ctx.loaders.tag.getTag.load(baseMaterial.countryOfOrigin)
+        : null,
+    designCycles: async (baseMaterial, args, ctx) => baseMaterial && baseMaterial.designCycles ? loadTags(baseMaterial.designCycles, ctx) : [],
+    tags: async (baseMaterial, args, ctx) => baseMaterial && baseMaterial.tags ? loadTags(baseMaterial.tags, ctx) : [],
+    businessPartners: async (baseMaterial, args, ctx) => {
+      const materialId = baseMaterial && baseMaterial.humanId
+      return materialId ? loadBusinessPartners(materialId, ctx) : []
+    },
+    files: (baseMaterial, args, ctx) => {
+      const materialId = baseMaterial && baseMaterial.humanId
+      return materialId ? loadFiles(materialId, ctx) : []
+    },
+    teams: async (baseMaterial, args, ctx) => {
+      const materialId = baseMaterial && baseMaterial.humanId
+      return materialId ? loadTeams(materialId, ctx) : []
+    },
+    supplier: async (baseMaterial, args, ctx) => {
+      const supplierId = _.get(baseMaterial, 'supplier')
+      if (supplierId && (_.isInteger(supplierId) || _.isString(supplierId))) {
+        return ctx.loaders.vmm.getByID.load(supplierId)
+      }
+    },
+    developedBaseMaterials: async (baseMaterial, args, ctx) => {
+      const relationship = await ctx.loaders.relationship.findRelationships(
+        baseMaterial.humanId,
+        {
+          includeNodeTypes: ['material'],
+          maxDepth: 0,
+        },
+      )
+      const materialIds = await relationship.map(node => node.id)
+      if (materialIds.length > 0) {
+        const permissionJWT = await getUserPermissionsJWT(materialIds, ctx)
+        return ctx.loaders.materialHub.getHubMaterials(permissionJWT).load({ materialIds: materialIds.join(',') })
+      }
+      return []
+    },
+    supplierInfo: async (baseMaterial, args, ctx) => {
+      const supplierInfo = _.get(baseMaterial, 'supplierInfo')
+      const supplierId = supplierInfo && supplierInfo.id
+      let vmmSupplierDetails
+      if (supplierId && (_.isInteger(supplierId) || _.isString(supplierId))) {
+        vmmSupplierDetails = await ctx.loaders.vmm.getByID.load(supplierId)
+        return {
+          ...supplierInfo,
+          businessPartnerDetails: vmmSupplierDetails,
+        }
+      }
+    },
+    suppliers: async (baseMaterial, args, ctx) => {
+      const suppliers = _.get(baseMaterial, 'suppliers', [])
+      if (suppliers && suppliers.length > 0) {
+        const supplierIds = suppliers.map(supplier => supplier.id).filter(id => _.isInteger(id) || _.isString(id))
+        let vmmSupplierDetails = []
+        await Promise.all(supplierIds.map(async id => {
+          await ctx.loaders.vmm.getByID.load(id).then(res => {
+            vmmSupplierDetails.push(res)
+          })
+        }))
+        const validVmmSupplierDetails = vmmSupplierDetails.filter(supplier => supplier.bpId !== undefined)
+        return suppliers.map((supplier, index) => ({
+          ...supplier,
+          supplier: validVmmSupplierDetails[index],
+          businessPartnerDetails: validVmmSupplierDetails[index],
+          facilities: supplier.facilities || [],
+        }))
+      } else {
+        return []
+      }
+    },
+    createdBy: (baseMaterial, args, ctx) => getUser(baseMaterial.createdBy, ctx),
+    updatedBy: (baseMaterial, args, ctx) => getUser(baseMaterial.updatedBy, ctx),
+    parent: loadParentMaterial,
+    droppedPartnerIds: (baseMaterial, args, ctx) => loadDroppedBusinessPartners(baseMaterial.humanId, ctx),
+    connectedBoms: async (baseMaterial, args, ctx) => {
+      const baseMaterialConnectedBoms = await ctx.loaders.relationship.whereUsedSearch.load({
+        id: baseMaterial.humanId,
+        maxDepth: 1,
+        includeNodeTypes: ['bill_of_materials', 'packaging_bom'],
+      })
+      const bomIds = baseMaterialConnectedBoms.flatMap(item => item.nodes.map(node => node.id))
+      if (bomIds?.length > 0) {
+        const permissionJWTForBom = await getUserPermissionsJWT(bomIds, ctx)
+        return ctx.loaders.bom.getBomByIds(permissionJWTForBom, bomIds)
+      }
+      return []
+    },
+  },
+  SPARK_MaterialTemplate: {
+    parentTemplate: async (template, args, ctx) => {
+      if (template.parent) {
+        const inheritAttributes = true
+        return ctx.loaders.materialHub.getMaterialTemplate(inheritAttributes).load(template.parent)
+      }
+    },
+  },
+  SPARK_ResourceLink: {
+    createdBy: (parent, args, ctx) => getUser(parent.createdBy, ctx),
+    updatedBy: (parent, args, ctx) => getUser(parent.updatedBy, ctx),
+    sourceMaterial: async (parent, args, ctx) => handleResolveResourceMaterial(parent.source.id, parent.source.type, ctx),
+    targetMaterial: async (parent, args, ctx) => handleResolveResourceMaterial(parent.target.id, parent.target.type, ctx),
+  },
+  SPARK_HubMaterial: {
+    humanId: (parent) => parent.humanId || parent.id,
+  },
+  SPARK_MaterialComposition: {
+    humanId: (parent) => {
+      const material = parent.material
+      return material && (material.humanId || material.id)
+    },
+    hubMaterial: async (parent, args, ctx) => {
+      const id = parent.material.id
+      const permissionJWT = await getUserPermissionsJWT(id, ctx)
+      return ctx.loaders.materialHub.getHubMaterial(permissionJWT).load(id)
+    },
+    template: async (parent, args, ctx) => {
+      const materialId = parent && parent.material && parent.material.id
+      if (materialId) {
+        return ctx.loaders.materialHub.getMaterialTemplateByMaterialId.load(materialId)
+      } else {
+        return null
+      }
+    },
+    countryOfOrigin: async (parent, args, ctx) => 
+      parent && parent.countryOfOrigin
+        ? await ctx.loaders.tag.getTag.load(parent.countryOfOrigin)
+        : null,
+  },
+
+  SPARK_MaterialFacility: {
+    facility: async (sparkMaterialFacility, args, ctx) => {
+      const facilityId = sparkMaterialFacility && sparkMaterialFacility.facilityId
+      if (facilityId) {
+        return ctx.loaders.location.getLocationById(facilityId).load()
+      } else {
+        return null
+      }
+    },
+  },
+}

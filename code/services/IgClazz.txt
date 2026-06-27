@@ -1,0 +1,61 @@
+import { IG_CLAZZ_PATH, SPARK_GATEWAY_API_KEY } from '../config/constants'
+import { deepToCamelCase } from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import loadOne from '../utils/loadOne'
+
+import SparkService from './SparkService'
+import cache from '../utils/cache'
+
+export default class IgClazzService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.igKey = SPARK_GATEWAY_API_KEY
+
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: `application/json`,
+    }
+
+    this.getPage = loadListing(
+      department =>
+        `${this.endpoint}/${IG_CLAZZ_PATH}?key=${this.igKey}&per_page=500&department_id=${department}`,
+      this.headers,
+      {
+        transform: clazzes =>
+          clazzes && clazzes.status !== 404 ? deepToCamelCase(clazzes) : [],
+      },
+      this.logContext,
+    )
+
+    this.getByID = cache(`IG_DEPARTMENTCLASS_LIST`,
+      loadOne(
+        ([{ department, id }]) =>
+          `${this.endpoint}/${IG_CLAZZ_PATH}?key=${this.igKey}&department_id=${department}&class_id=${id}`,
+        this.headers,
+        {
+          transform: ([{}], clazzes) => {
+            return clazzes && clazzes.status !== 404
+              ? deepToCamelCase([clazzes[0]])
+              : []
+          },
+        },
+        this.logContext,
+      ))
+    // returns a single class object instead of an array of classes like getByID does
+    this.getByClassByDeptId = cache(`IG_DEPARTMENTCLASS_LIST`,
+      loadListing(
+        ({ department, id }) =>
+          `${this.endpoint}/${IG_CLAZZ_PATH}?key=${this.igKey}&department_id=${department}&class_id=${id}`,
+        this.headers,
+        {
+          transform: clazzes => {
+            return clazzes && clazzes.status !== 404
+              ? deepToCamelCase(clazzes[0])
+              : {}
+          },
+        },
+        this.logContext,
+      ))
+  }
+}

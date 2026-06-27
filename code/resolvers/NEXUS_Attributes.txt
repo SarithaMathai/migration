@@ -1,0 +1,52 @@
+import _ from 'lodash'
+import { CLAIMS_PER_PAGE, NEXUS_SIZE_ATTRIBUTE_ID } from '../config/constants'
+
+export default {
+  Query: {
+    searchSizes: async (parent, { page, size, nameFilter }, ctx) => {
+      return ctx.loaders.nexusAttributes.getPage.load({ nameFilter, size, page })
+    },
+    getSizes: async (parent, { sizeIds }, ctx) => {
+      const sizes = []
+      await Promise.all(
+        sizeIds.map(async id => {
+          await ctx.loaders.nexusAttributes.getById.load(id)
+            .then(res => {
+              if (res.name) {
+                sizes.push(res)
+              }
+            })
+        }),
+      )
+      return sizes
+    },
+    getExternalClaims: async (parent, {}, ctx) => {
+      let page = 1
+      let fetch = true
+      let claims = []
+      while (fetch) {
+        const pageData = await ctx.loaders.nexusAttributes.getClaims.load(page)
+        claims.push(...pageData)
+        fetch = _.size(pageData) === CLAIMS_PER_PAGE
+        page++
+      }
+      return claims
+    },
+  },
+  NEXUS_AttributesPaged: {
+    content: result => result,
+  },
+  NEXUS_Attribute: {
+    id: result => {
+      if (result.aliases) {
+        const sizeAlias = _.find(result.aliases, alias => alias.attributeId === NEXUS_SIZE_ATTRIBUTE_ID)
+        if (sizeAlias) {
+          return sizeAlias.valueId
+        } else {
+          throw new Error('That value is not available as a size')
+        }
+      }
+      return result.id
+    },
+  },
+}

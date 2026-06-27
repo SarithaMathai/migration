@@ -1,0 +1,44 @@
+import loadListing from '../utils/loadListing'
+import SparkService from './SparkService'
+import { deepToCamelCase } from '../utils/convertFunctions'
+
+export default class GalleryService extends SparkService {
+  constructor (endpoint, token, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    }
+
+    this.getAssetFiles =
+        loadListing(
+          (assetId) => `${this.endpoint}/assets/${assetId}`,
+          this.headers,
+          {
+            transform: response => getFileExtensions(deepToCamelCase(response.data)),
+          },
+          this.logContext,
+        )
+  }
+}
+
+function getFileExtensions (data) {
+  let fileExtensions = []
+  let galleryAssetDetails = {
+    assetId: '',
+    fileTypes: [],
+  }
+  if (data && data.files && data.files.length > 0) {
+    galleryAssetDetails.assetId = data.id
+    data.files.forEach(file => {
+      if (file.fileSources && file.fileSources.length > 0) {
+        file.fileSources.forEach(fileSource => {
+          fileExtensions.push(fileSource.fileExtension)
+        })
+      }
+    })
+    galleryAssetDetails.fileTypes = fileExtensions
+  }
+  return galleryAssetDetails.fileTypes
+}

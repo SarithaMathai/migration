@@ -1,0 +1,29 @@
+import { getUserPermissionsJWT } from '../../utils/commonLoaders'
+import componentStatusActivityHelper from './componentStatusActivityHelper'
+
+const measurementsActivityModifiedDataHelper = async (activity, streamResourceId, ctx) => {
+  if (!ctx) return []
+  const {
+    loaders: {
+      measurement: { getMeasurementByIds } = {},
+    } = {},
+  } = ctx
+
+  const humanId = activity?.eventSummary?.humanId || {}
+
+  const permissionJWT = await getUserPermissionsJWT([humanId], ctx)
+  const mstData = await getMeasurementByIds(permissionJWT, [humanId])
+
+  const productId = mstData?.content?.[0]?.parentId
+  const workspaceId = mstData?.content?.[0]?.workspaceContext?.[0]
+
+  const parentResourceInfo = {
+    linkGenerationVariables: { measurementId: humanId, productId, ...(workspaceId && { workspaceId }) },
+  }
+
+  return componentStatusActivityHelper(activity,
+    parentResourceInfo,
+    ctx)
+}
+
+export default measurementsActivityModifiedDataHelper

@@ -1,0 +1,35 @@
+export default {
+  Query: {
+    getDepartments: (parentValue, { query }, ctx) =>
+      ctx.loaders.ig.department.getPage.load(query),
+
+    getAllDepartments: (parentValue, { }, ctx) =>
+      ctx.loaders.ig.department.getAllDepartments.load(),
+
+    getDepartment: (parentValue, { id }, ctx) =>
+      ctx.loaders.ig.department.getByID.load(id),
+
+    getDepartmentsByDivision: (parentValue, { divisionId, query }, ctx) =>
+      ctx.loaders.ig.department.getDepartmentsByDivision.load({ divisionId, query }),
+  },
+
+  IG_Department: {
+    id: department => department.department_id,
+    name: department => department.department_name,
+    divisionId: department => department.division_id,
+    divisionName: department => department.division_name,
+    displayText: department =>
+      `${department.department_id}: ${department.department_name}`,
+    clazzes: async(department, args, ctx) => {
+      try {
+        return await ctx.loaders.ig.clazz.getPage.load(department.department_id)
+      } catch (error) {
+        if (JSON.parse(error.message).status === 404) {
+          return []
+        } else {
+          throw error
+        }
+      }
+    },
+  },
+}

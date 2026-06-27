@@ -1,0 +1,5 @@
+export default {
+  Query: {
+    getColorEvalBySpecIdAndColorIds: async (parent, { fabricSpecId, colorIds }, ctx) => ctx.loaders.tgtColorEvaluator.getAsapEvaluationUpdates.load({ fabricSpecId, colorIds }),
+  },
+}
