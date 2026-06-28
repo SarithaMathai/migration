@@ -8,7 +8,7 @@
 
 We are moving the **Impression** domain (the product's printed/embellished artwork "impressions" and their
 per-partner counts) off the `spark-internal-graphql` gateway into the **`plm-product`** DGS. It is the
-**smallest and lowest-risk** of the eleven domains: 2 queries, 1 mutation, and 6 field resolvers across a
+**smallest and lowest-risk** of the thirteen domains: 2 queries, 1 mutation, and 6 field resolvers across a
 66-line resolver — no polymorphism, no orchestration. We recommend migrating it **first** as a team warm-up
 that proves the pipeline end-to-end.
 

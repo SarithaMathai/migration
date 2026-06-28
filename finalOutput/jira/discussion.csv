@@ -1,0 +1,94 @@
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,Complexity,Story point estimate,Labels,Labels,Labels,Depends On,Description
+Epic,,Discussion → plm-discussion DGS migration,Discussion → plm-discussion DGS migration,,,,,dgs-migration,discussion,epic,,Epic for the discussion domain migration to the plm-product DGS.
+Story,SPARK-DISC-A01,SPARK-DISC-A01 · Schema skeleton + DateTime scalar,,Discussion → plm-discussion DGS migration,A,Low,2,dgs-migration,discussion,schema,,"**Current Behaviour:** green-field; schema translated from `SPARK_Discussion.txt` + `SPARK_DiscussionV3.txt`.
+**Target:** federation v2.3 header, `scalar DateTime → Instant`, `scalar JsonNode`, empty `extend type Query`/`Mutation`. **Acceptance:** 1. `generateJava` passes. **Tests:** ☐ compiles ☐ serde."
+Story,SPARK-DISC-A02,SPARK-DISC-A02 · Owned types + inputs (V2+V3 surface),,Discussion → plm-discussion DGS migration,A,High,5,dgs-migration,discussion,schema,SPARK-DISC-A01,"**Target:** `Discussion` (`@key(fields:""discussionId"")`) + ~18 value types + ~12 inputs per [03-schema.graphql](./03-schema.graphql); reconcile V2 + V3 type shapes. **Acceptance:** 1. all types/inputs present; nullability matches SDLs. 2. validates. **Tests:** ☐ validates ☐ entity stub."
+Story,SPARK-DISC-A03,SPARK-DISC-A03 · External stubs (platform + other DGS + Resource members),,Discussion → plm-discussion DGS migration,A,Medium,3,dgs-migration,discussion,schema,SPARK-DISC-A01,"**Target:** `@extends @external` stubs for `Attachment`/`SearchAttachment`, `DiscussionElastic`,
+`UserProfileAttributes`, `UserGroup_Participants`, `Tag`, `VMM_BusinessPartner`, and the `Resource` members
+`Product`/`SampleV2`/`WorkspaceV2`. **Acceptance:** 1. compiles; gateway composes. **Tests:** ☐ compiles ☐ stub resolves."
+Story,SPARK-DISC-A04,SPARK-DISC-A04 · Resource union @DgsTypeResolver (Product|SampleV2|WorkspaceV2),,Discussion → plm-discussion DGS migration,A,Medium,3,dgs-migration,discussion,field-resolver,"SPARK-DISC-A02, SPARK-DISC-A03","**Current Behaviour (`__resolveType`):** map the discussion's parent resource id prefix → `Product` | `SampleV2` | `WorkspaceV2`. **Target:** `@DgsTypeResolver(name=""Resource"")`. **Acceptance:** 1. each member maps by prefix; unknown → null. **Tests:** ☐ product ☐ sample ☐ workspace."
+Story,SPARK-DISC-A05,SPARK-DISC-A05 · DiscussionService port (v1/v2 + V3 consolidated),,Discussion → plm-discussion DGS migration,A,High,5,dgs-migration,discussion,service,SPARK-DISC-A01,"**Current Behaviour (Phase 2 §Service):** `discussions/v1` (+ `discussion_message`, `/bulk`), `discussions/v2`
+(`/discussion`), admin `/unsent`, + V3 service (~30 methods). **Target:** consolidated Kotlin service; map the `core*` system-context twins. **Acceptance:** 1. v1/v2/V3 endpoints present. 2. core twins distinguished. **Tests:** ☐ endpoint build ☐ core context.
+
+---
+
+### Phase B — Core Reads"
+Story,SPARK-DISC-B01,SPARK-DISC-B01 · getDiscussionV2 (+ coreGetDiscussionV2),,Discussion → plm-discussion DGS migration,B,Low,2,dgs-migration,discussion,query,"SPARK-DISC-A02, SPARK-DISC-A05","**Current Behaviour:** (own) `GET discussions/v2?ids={id}` → `FullDiscussion`; `core*` = system context. **Target:** `@DgsQuery → FullDiscussion` (two fields, shared impl). **Acceptance:** 1. returns discussion; core uses system context. **Tests:** ☐ happy ☐ core."
+Story,SPARK-DISC-B02,SPARK-DISC-B02 · getDiscussionByIdsV2,,Discussion → plm-discussion DGS migration,B,Low,2,dgs-migration,discussion,query,SPARK-DISC-A05,**Current Behaviour:** (own) `GET /v2?ids={csv}`. **Target:** `@DgsQuery → [FullDiscussion]`. **Acceptance:** 1. returns by ids. **Tests:** ☐ happy ☐ empty.
+Story,SPARK-DISC-B03,SPARK-DISC-B03 · getDiscussionsCount,,Discussion → plm-discussion DGS migration,B,Low,2,dgs-migration,discussion,query,SPARK-DISC-A05,**Current Behaviour:** (own) count by `resourceId`/`resourceType` → `[ResourceCount]`. **Target:** `@DgsQuery`. **Acceptance:** 1. returns per-resource counts. **Tests:** ☐ counts.
+Story,SPARK-DISC-B04,SPARK-DISC-B04 · getDiscussionOnResource,,Discussion → plm-discussion DGS migration,B,Low,2,dgs-migration,discussion,query,SPARK-DISC-A05,**Current Behaviour:** (own) discussions for a resource. **Target:** `@DgsQuery → [Discussion]`. **Acceptance:** 1. returns discussions. **Tests:** ☐ happy.
+Story,SPARK-DISC-B05,SPARK-DISC-B05 · getDiscussionsByThread,,Discussion → plm-discussion DGS migration,B,Low,2,dgs-migration,discussion,query,SPARK-DISC-A05,**Current Behaviour:** (own) discussions in a thread. **Target:** `@DgsQuery → [Discussion]`. **Acceptance:** 1. returns thread discussions. **Tests:** ☐ happy.
+Story,SPARK-DISC-B06,SPARK-DISC-B06 · getUnsentDiscussions,,Discussion → plm-discussion DGS migration,B,Low,2,dgs-migration,discussion,query,SPARK-DISC-A05,**Current Behaviour:** (own) `GET /api/admin/unsent`. **Target:** `@DgsQuery → UnsentDiscussions`. **Acceptance:** 1. returns unsent. **Tests:** ☐ happy.
+Story,SPARK-DISC-B07,SPARK-DISC-B07 · getVersionedDiscussions (+ threads),,Discussion → plm-discussion DGS migration,B,Medium,3,dgs-migration,discussion,query,SPARK-DISC-A05,"**Covers:** `getVersionedDiscussions(id)`, `getVersionedDiscussionThreads(id)` (V3). **Current Behaviour:** (own V3) version history. **Target:** `@DgsQuery`. **Acceptance:** 1. both return version history. **Tests:** ☐ discussions ☐ threads.
+
+---
+
+### Phase C — Search & Listing"
+Story,SPARK-DISC-C01,SPARK-DISC-C01 · getDiscussionsV2 (elastic),,Discussion → plm-discussion DGS migration,C,Medium,3,dgs-migration,discussion,query,SPARK-DISC-A05,**Current Behaviour:** (🔴 search) elastic discussions by `resourceId`/`resourceType` (partner-filtered) → `DiscussionElastic`. **Target:** `@DgsQuery`. **Acceptance:** 1. elastic query + partner filter. **Tests:** ☐ query ☐ partner filter.
+Story,SPARK-DISC-C02,SPARK-DISC-C02 · getSampleDiscussion,,Discussion → plm-discussion DGS migration,C,Medium,3,dgs-migration,discussion,query,SPARK-DISC-A05,"**Current Behaviour:** (own) sample-scoped discussions. **Target:** `@DgsQuery → [Discussion]`. **Acceptance:** 1. returns sample discussions. **Tests:** ☐ happy.
+
+---
+
+### Phase D — Mutations"
+Story,SPARK-DISC-D01,SPARK-DISC-D01 · addDiscussionV2 (+ attachments),,Discussion → plm-discussion DGS migration,D,Medium,3,dgs-migration,discussion,mutation,SPARK-DISC-A05,**Current Behaviour:** (own) create + (🟡 attachment) bulk attachment input. **Target:** `@DgsMutation → Discussion`. **Acceptance:** 1. creates; attachments associated. **Tests:** ☐ create ☐ +attachments.
+Story,SPARK-DISC-D02,SPARK-DISC-D02 · addDiscussionReplyV2 + updateDiscussionReplyV2,,Discussion → plm-discussion DGS migration,D,Medium,3,dgs-migration,discussion,mutation,SPARK-DISC-A05,**Current Behaviour:** add/update reply + (🟡 attachment) input (`isAttachmentsV3` flag). **Target:** `@DgsMutation → DiscussionReply`. **Acceptance:** 1. add + update reply; v3-attachment flag honored. **Tests:** ☐ add ☐ update ☐ attachments.
+Story,SPARK-DISC-D03,SPARK-DISC-D03 · updateDiscussionV2,,Discussion → plm-discussion DGS migration,D,Low,2,dgs-migration,discussion,mutation,SPARK-DISC-A05,**Current Behaviour:** (own) `PUT` discussion body. **Target:** `@DgsMutation → Discussion`. **Acceptance:** 1. updates. **Tests:** ☐ update.
+Story,SPARK-DISC-D04,SPARK-DISC-D04 · deleteDiscussionV2,,Discussion → plm-discussion DGS migration,D,Low,2,dgs-migration,discussion,mutation,SPARK-DISC-A05,**Current Behaviour:** (own) delete by id → ID. **Target:** `@DgsMutation → ID`. **Acceptance:** 1. deletes. **Tests:** ☐ delete.
+Story,SPARK-DISC-D05,SPARK-DISC-D05 · deleteDiscussionReplyV2,,Discussion → plm-discussion DGS migration,D,Low,2,dgs-migration,discussion,mutation,SPARK-DISC-A05,**Current Behaviour:** (own) delete reply → ID. **Target:** `@DgsMutation → ID`. **Acceptance:** 1. deletes reply. **Tests:** ☐ delete.
+Story,SPARK-DISC-D06,SPARK-DISC-D06 · deleteDiscussionPartnersV2,,Discussion → plm-discussion DGS migration,D,Low,2,dgs-migration,discussion,mutation,SPARK-DISC-A05,**Current Behaviour:** (own) delete partners from a discussion → ID. **Target:** `@DgsMutation → ID`. **Acceptance:** 1. removes partners. **Tests:** ☐ delete partners.
+Story,SPARK-DISC-D07,SPARK-DISC-D07 · Sample discussions (addSampleDiscussionV2/V3 + bulkAddSampleDiscussions),,Discussion → plm-discussion DGS migration,D,Medium,3,dgs-migration,discussion,mutation,SPARK-DISC-A05,"**Covers:** `addSampleDiscussionV2`, `addSampleDiscussionV3`, `bulkAddSampleDiscussions`. **Current Behaviour:** (own) sample-scoped create. **Target:** `@DgsMutation → SampleDiscussion`/`[…]`. **Acceptance:** 1. each creates sample discussion(s). **Tests:** ☐ v2 ☐ v3 ☐ bulk."
+Story,SPARK-DISC-D08,SPARK-DISC-D08 · Flags (updateAsCritical/updateDiscussionEditable/updateTagExisting),,Discussion → plm-discussion DGS migration,D,Low,2,dgs-migration,discussion,mutation,SPARK-DISC-A05,"**Covers:** `updateAsCritical`, `updateDiscussionEditable`, `updateTagExisting` (share the `DiscussionAsCritical` input). **Target:** `@DgsMutation → DiscussionReply`. **Acceptance:** 1. each flag updates. **Tests:** ☐ critical ☐ editable ☐ tag."
+Story,SPARK-DISC-D09,SPARK-DISC-D09 · cloneFilesForBulkDiscussion,,Discussion → plm-discussion DGS migration,D,Medium,3,dgs-migration,discussion,mutation,SPARK-DISC-A05,"**Current Behaviour:** (ACL) token → `Promise.all(attachmentIds.map(id → (🟡 attachment) cloneAttachmentV3({cloneReferences}, id)))`. **Target:** structured-concurrency fan-out. **Acceptance:** 1. clones each id. **Tests:** ☐ clone."
+Story,SPARK-DISC-D10,SPARK-DISC-D10 · discussionReadByUsers,,Discussion → plm-discussion DGS migration,D,Medium,3,dgs-migration,discussion,mutation,SPARK-DISC-A05,**Current Behaviour:** (own) mark read across `discussionIds`/`discussionThreadIds` for `readByUserList`. **Target:** `@DgsMutation → DiscussionReadByUsers`. **Acceptance:** 1. records read receipts. **Tests:** ☐ read receipts.
+Story,SPARK-DISC-D11,SPARK-DISC-D11 · addDiscussionV3 (+ coreAddDiscussionV3),,Discussion → plm-discussion DGS migration,D,Medium,3,dgs-migration,discussion,mutation,SPARK-DISC-A05,"**Current Behaviour:** (own V3) create + attachments; `core*` = system context. **Target:** `@DgsMutation → Discussion` (two fields, shared impl). **Acceptance:** 1. creates; core uses system context. **Tests:** ☐ add ☐ core."
+Story,SPARK-DISC-D12,SPARK-DISC-D12 · addBulkDiscussionV3,,Discussion → plm-discussion DGS migration,D,High,5,dgs-migration,discussion,mutation,SPARK-DISC-A05,"**Current Behaviour:** (own V3) bulk create across resources + attachments → `BulkDiscussionOutputV3`.
+**Note:** `coreAddBulkDiscussionV3` is **schema-drift** (no resolver — see F03). **Target:** `@DgsMutation`. **Acceptance:** 1. bulk creates. **Tests:** ☐ bulk ☐ parity."
+Story,SPARK-DISC-D13,SPARK-DISC-D13 · updateDiscussionV3 (+ coreUpdateDiscussionV3),,Discussion → plm-discussion DGS migration,D,Medium,3,dgs-migration,discussion,mutation,SPARK-DISC-A05,"**Current Behaviour:** (own V3) update; `core*` = system context. **Target:** `@DgsMutation → Discussion`. **Acceptance:** 1. updates; core context. **Tests:** ☐ update ☐ core.
+
+---
+
+### Phase E — Participant management"
+Story,SPARK-DISC-E01,SPARK-DISC-E01 · Participants V2 (updateParticipantsV2 + deleteParticipantV2),,Discussion → plm-discussion DGS migration,E,Medium,3,dgs-migration,discussion,mutation,SPARK-DISC-A05,**Current Behaviour:** add participants (`AddParticipantInput`) / remove a participant (team/user/partner). **Target:** `@DgsMutation → Discussion`. **Acceptance:** 1. add + remove participants. **Tests:** ☐ add ☐ remove.
+Story,SPARK-DISC-E02,SPARK-DISC-E02 · Participants V3 (updateParticipantsV3 + coreUpdate + coreDelete + deleteParticipantV3),,Discussion → plm-discussion DGS migration,E,High,5,dgs-migration,discussion,mutation,SPARK-DISC-A05,"**Current Behaviour:** richer participant model — `updateParticipantsV3` / `coreUpdateParticipantsV3`
+(participants + relatedResources + resourceType), `coreDeleteParticipantsV3` (removedUser/team/partners/
+designPartners), `deleteParticipantV3` (team/user/partner/designPartner). **Target:** `@DgsMutation → Discussion` (one service, four fields). **Acceptance:** 1. each path updates/removes the right participants. **Tests:** ☐ update ☐ coreUpdate ☐ coreDelete ☐ delete.
+
+---
+
+### Phase F — Federation & decisions"
+Story,SPARK-DISC-F01,SPARK-DISC-F01 · Discussion entity fetcher (federated reference),,Discussion → plm-discussion DGS migration,F,Medium,3,dgs-migration,discussion,field-resolver,SPARK-DISC-A05,"**Target:** `@DgsEntityFetcher(name=""Discussion"")` by `discussionId`; provides `discussionsCount`/`discussionsV2`
+for product/workspace over the gateway. **Acceptance:** 1. entity resolves by key. 2. cross-subgraph smoke. **Tests:** ☐ entity ☐ smoke."
+Story,SPARK-DISC-F02,SPARK-DISC-F02 · ResourcesCount.discussions (TechPack — SPARK-PROD-F02),,Discussion → plm-discussion DGS migration,F,Low,2,dgs-migration,discussion,field-resolver,SPARK-DISC-A05,"**Target:** `extend type ResourcesCount @key(fields:""productId partnerId"") { discussions: [ID] }` with a `@DgsEntityFetcher`; fills the TechPack `discussions` count (the discussion side of `SPARK-PROD-F02`). **BLOCKED-BY:** product TechPack facade. **Acceptance:** 1. field resolves; parity vs facade. **Tests:** ☐ field ☐ parity."
+Story,SPARK-DISC-F03,SPARK-DISC-F03 · Deferred drift decision (drop/undrop partner + coreAddBulkDiscussionV3),,Discussion → plm-discussion DGS migration,F,Low,2,dgs-migration,discussion,schema,SPARK-DISC-A05,"**Current Behaviour:** `dropPartnerFromDiscussionIds`/`unDropPartnerFromDiscussionIds` (no resolver — run inside `workspaceBusinessPartnerActionsV2`); `coreAddBulkDiscussionV3` (no resolver). **Target:** delete or keep `@deprecated`; coordinate drop/undrop ownership with workspace. **Acceptance:** 1. decision + traffic survey. **Tests:** ☐ schema diff intentional.
+
+---
+
+### Phase G — Field Resolvers & Tests"
+Story,SPARK-DISC-G01,SPARK-DISC-G01 · Discussion + FullDiscussion + Content field resolvers,,Discussion → plm-discussion DGS migration,G,High,5,dgs-migration,discussion,field-resolver,"SPARK-DISC-A02, SPARK-DISC-A05","**Current Behaviour:** discussion/full/content bodies, `createdBy`/`updatedBy` (🟡 user), `tags` (🔵 tag),
+`resource` (union), `replies`/`participants`/`attachments` links. **Acceptance:** 1. each field resolves. **Tests:** ☐ bodies ☐ users ☐ resource ☐ replies."
+Story,SPARK-DISC-G02,SPARK-DISC-G02 · DiscussionReply + NotificationStatus field resolvers,,Discussion → plm-discussion DGS migration,G,Medium,3,dgs-migration,discussion,field-resolver,SPARK-DISC-A05,"**Current Behaviour:** reply body/author (🟡 user), `attachments` (🟡 attachment), `notificationStatus`. **Acceptance:** 1. each resolves. **Tests:** ☐ reply ☐ attachments ☐ notification."
+Story,SPARK-DISC-G03,SPARK-DISC-G03 · Participants + Team + Participant sub-types,,Discussion → plm-discussion DGS migration,G,Medium,3,dgs-migration,discussion,field-resolver,SPARK-DISC-A05,"**Current Behaviour:** `Discussion_Participants.teams`/`users`; `Discussion_Team.businessPartner` (🔵 vmm);
+`Discussion_Participant.userDetails` (🟡 user). **Acceptance:** 1. teams/users/bp resolve. **Tests:** ☐ teams ☐ users ☐ bp."
+Story,SPARK-DISC-G04,SPARK-DISC-G04 · Resource union members + Versioned + DiscussionReadByUsers field resolvers,,Discussion → plm-discussion DGS migration,G,Medium,3,dgs-migration,discussion,field-resolver,"SPARK-DISC-A04, SPARK-DISC-A05",**Current Behaviour:** `Resource` union resolution (via A04); `VersionedDiscussion`/`Thread.updatedBy` (🟡 user)/`updatedAt` (parse); `DiscussionReadByUsers.discussions`/`discussionThreads` (computed). **Acceptance:** 1. each resolves. **Tests:** ☐ resource ☐ versioned ☐ readBy.
+Story,SPARK-DISC-G05,"SPARK-DISC-G05 · Tests, parity harness",,Discussion → plm-discussion DGS migration,G,High,5,dgs-migration,discussion,tests,"SPARK-DISC-B01, SPARK-DISC-D12, SPARK-DISC-E02, SPARK-DISC-G01","**Target:** ≥80% unit coverage; parity harness (incl. V2/V3 + core twins, participants, bulk, the `Resource`
+union, read receipts); contract test (schema diff intentional-only). **Acceptance:** 1. unit ≥80%. 2. parity green. 3. schema-diff intentional. **Tests:** ☐ parity ☐ contract.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|------|-----------|--------|------------|-------|
+| Three API versions (v1/v2/V3) + `core*` twins | Medium | High | Consolidate in the service port; pair twins | Tech Lead |
+| Participant-management correctness (E01/E02) | Medium | Medium | Per-op parity (users/teams/partners/design-partners) | Backend Eng |
+| `Resource` union correctness (A04) | Medium | Medium | `@DgsTypeResolver` + per-member tests | Backend Eng |
+| Schema-drift drop/undrop owned by workspace (F03) | Medium | Low | Coordinate ownership with workspace | Architect |
+| Attachment coupling on write | Low | Medium | Attachment client / entity refs | Architect |
+
+## 5. Summary
+- **Stories:** 37 (A:5 · B:7 · C:2 · D:13 · E:2 · F:3 · G:5) covering 11 queries + 26 mutations (+3 drift).
+- **Critical path:** A01→A02/A05→A04→G01→G05; E02 + D12 for the heavy writes.
+- **Highest cost:** v1/v2/V3 consolidation + participant management + the field-resolver surface (+ `Resource` union).
+- **Separate subgraph:** discussion provides `discussionsCount`/`discussionsV2` + the TechPack `discussions` count.
+
+---
+**Phase Completed:** Phase 4 — Migration Stories · **Domain:** `discussion` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md."

@@ -2,16 +2,18 @@
 
 > **Audience:** Product Owners, Tech Leads, Architects. **Paste this page into Confluence** (it is the
 > program-level rollup). Per-domain PO pages: [product](./product.md) · [bom](./bom.md) ·
-> [measurement](./measurement.md) · [impression](./impression.md).
+> [measurement](./measurement.md) · [impression](./impression.md) · [attachment](./attachment.md) ·
+> [discussion](./discussion.md) (and the rest of the 13 in this folder).
 > Effort ranges are **AI-estimated — confirm in refinement**; stories themselves carry complexity only.
 
 ## What this program does
 
 We are moving the PLM **GraphQL domains** off the `spark-internal-graphql` gateway into Netflix DGS
-subgraphs. Eleven domains are analyzed and broken into engineering stories. Six compile into the **same
-`plm-product` subgraph** (cross-references are internal types); **claims**, **search**, **workspace**, and
-**sample** are **separate subgraphs** (`spark-claims`, `plm-elastic-search`, `plm-workspace`, `plm-sample`)
-that federate with the rest.
+subgraphs. Thirteen domains are analyzed and broken into engineering stories. Seven compile into the **same
+`plm-product` subgraph** (cross-references are internal types); **claims**, **search**, **workspace**,
+**sample**, **attachment**, and **discussion** are **separate subgraphs** (`spark-claims`,
+`plm-elastic-search`, `plm-workspace`, `plm-sample`, `plm-attachment`, `plm-discussion`) that federate with
+the rest.
 
 ## Program totals
 
@@ -24,11 +26,13 @@ that federate with the rest.
 | [claims](./claims.md) | claims (separate) | 24 | 0 | 2 | 11 | 11 | 44–75d |
 | [search](./search.md) | plm-elastic-search (separate) | 25 | 0 | 7 | 11 | 7 | 73–123d |
 | [packaging](./packaging.md) | plm-product | 28 | 0 | 2 | 11 | 15 | 51–87d |
+| [attachment](./attachment.md) | plm-attachment (separate) | 28 | 0 | 3 | 15 | 10 | 51–86d |
 | [workspace](./workspace.md) | plm-workspace (separate) | 32 | 3 | 3 | 15 | 11 | 87–146d |
 | [sample](./sample.md) | plm-sample (separate) | 33 | 0 | 7 | 13 | 13 | 81–136d |
+| [discussion](./discussion.md) | plm-discussion (separate) | 37 | 0 | 6 | 17 | 14 | 70–118d |
 | [bom](./bom.md) | plm-product | 42 | 1 | 2 | 15 | 24 | 76–127d |
 | [product](./product.md) | plm-product | 72 | 5 | 5 | 22 | 40 | 211–353d |
-| **Total** | | **325** | **9** | **31** | **125** | **160** | **740–1247d** |
+| **Total** | | **390** | **9** | **40** | **157** | **184** | **861–1451d** |
 
 ## Recommended sequencing
 
@@ -38,10 +42,14 @@ that federate with the rest.
 4. **Claims** — mid-size, **separate subgraph**; proves cross-subgraph federation back into Product.
 5. **Search** — the **read hub**; migrate early (or dual-run) since every domain calls it.
 6. **Packaging** — wide schema, one multi-step write + a pricing chain.
-7. **Workspace** — large standalone hub; 5-case partner-action dispatcher; provides the `WorkspaceV2` entity.
-8. **Sample** — wide entity + prefix-gated polymorphic parents + a union; provides the `SampleV2` entity.
-9. **BOM** — material polymorphism (7 types) + one 3-step write; first genuinely complex domain.
-10. **Product** — largest and the host DGS; the others' federation contributions land into it.
+7. **Attachment** — **separate subgraph**; provides the `Attachment` entity many domains reference (and the
+   TechPack `SPARK-PROD-F01` count); dual record shape + ACL writes. Migrate early to unblock Product F01.
+8. **Workspace** — large standalone hub; 5-case partner-action dispatcher; provides the `WorkspaceV2` entity.
+9. **Sample** — wide entity + prefix-gated polymorphic parents + a union; provides the `SampleV2` entity.
+10. **Discussion** — **separate subgraph**; v1/v2/V3 consolidation + `Resource` union + participant writes;
+    provides the `Discussion` entity + the TechPack `SPARK-PROD-F02` count.
+11. **BOM** — material polymorphism (7 types) + one 3-step write; first genuinely complex domain.
+12. **Product** — largest and the host DGS; the others' federation contributions land into it.
 
 ## Cross-domain blockers (true federation — a separate DGS must migrate first)
 
@@ -61,8 +69,11 @@ BOM's material field resolvers also wait on the **material-hub / trim / wash / f
 
 **Separate subgraphs (federate, not blockers per se):** `claims` (`spark-claims`), `workspace`
 (`plm-workspace` — provides the `WorkspaceV2` entity every product-family domain references), `search`
-(`plm-elastic-search` — the **read hub** every domain calls; sequence its cutover first or dual-run), and
-`sample` (`plm-sample` — provides the `SampleV2` entity; **unblocks `SPARK-MEAS-F02` + `SPARK-PROD-F03`** above).
+(`plm-elastic-search` — the **read hub** every domain calls; sequence its cutover first or dual-run),
+`sample` (`plm-sample` — provides the `SampleV2` entity; **unblocks `SPARK-MEAS-F02` + `SPARK-PROD-F03`** above),
+`attachment` (`plm-attachment` — provides the `Attachment` entity; **unblocks `SPARK-PROD-F01`** above), and
+`discussion` (`plm-discussion` — provides the `Discussion` entity + the TechPack count; **unblocks
+`SPARK-PROD-F02`** above).
 
 ## Highest-risk items (Very High)
 
@@ -79,7 +90,9 @@ BOM's material field resolvers also wait on the **material-hub / trim / wash / f
 
 | Decision | Domains | Owner |
 |---|---|---|
-| Non-atomic write failure strategy (saga / compensation / best-effort) | bom, measurement, product, packaging, productDetails, claims, watchlist, workspace, sample | Tech Lead + PO |
+| Non-atomic write failure strategy (saga / compensation / best-effort) | bom, measurement, product, packaging, productDetails, claims, watchlist, workspace, sample, discussion | Tech Lead + PO |
+| Consolidate vs preserve API versions; `core*` system-context twins | discussion (v1/v2/V3) | Architect |
+| Canonical DTO for dual record shapes; ACL-permission writes are build work | attachment | Architect |
 | `update*ComponentStatus*` has no auth token — backend-enforced? | bom, measurement, product, packaging, productDetails | PO |
 | Federation rollout order for sibling subgraphs | all | Architect + Platform |
 | Search (read hub) cutover ordering — migrate early or dual-run | all (search) | Tech Lead + Platform |
@@ -88,7 +101,7 @@ BOM's material field resolvers also wait on the **material-hub / trim / wash / f
 
 ## How to consume
 
-- **Jira:** create the 11 epics + 325 stories from [`../jira/all-stories.csv`](../jira/all-stories.csv)
+- **Jira:** create the 13 epics + 390 stories from [`../jira/all-stories.csv`](../jira/all-stories.csv)
   (see [`../jira/README.md`](../jira/README.md)).
 - **Confluence:** this page + each per-domain page.
 - **Implementation:** engineers work from `../<domain>/04-stories.md` + `../<domain>/02-resolver-analysis.md`.

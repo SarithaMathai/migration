@@ -1,8 +1,8 @@
 # Program Story Inventory — All Domains
 
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
-> Program-level rollup of every migration story across the eleven analyzed domains. Feed this (or
-> [index.yaml](./index.yaml)) to a Jira MCP to create the eleven epics + link stories, or to Confluence for a
+> Program-level rollup of every migration story across the thirteen analyzed domains. Feed this (or
+> [index.yaml](./index.yaml)) to a Jira MCP to create the thirteen epics + link stories, or to Confluence for a
 > portfolio page. Per-domain detail: each domain's `04-stories.md` + `04-stories-index.yaml`.
 
 ## 1. Program totals
@@ -16,14 +16,17 @@
 | [claims](./claims/04-stories.md) | claims (separate) | 24 | 0 | 2 | 11 | 11 | 44–75d |
 | [search](./search/04-stories.md) | plm-elastic-search (separate) | 25 | 0 | 7 | 11 | 7 | 73–123d |
 | [packaging](./packaging/04-stories.md) | plm-product | 28 | 0 | 2 | 11 | 15 | 51–87d |
+| [attachment](./attachment/04-stories.md) | plm-attachment (separate) | 28 | 0 | 3 | 15 | 10 | 51–86d |
 | [workspace](./workspace/04-stories.md) | plm-workspace (separate) | 32 | 3 | 3 | 15 | 11 | 87–146d |
 | [sample](./sample/04-stories.md) | plm-sample (separate) | 33 | 0 | 7 | 13 | 13 | 81–136d |
+| [discussion](./discussion/04-stories.md) | plm-discussion (separate) | 37 | 0 | 6 | 17 | 14 | 70–118d |
 | [bom](./bom/04-stories.md) | plm-product | 42 | 1 | 2 | 15 | 24 | 76–127d |
 | [product](./product/04-stories.md) | plm-product | 72 | 5 | 5 | 22 | 40 | 211–353d |
-| **Total** | | **325** | **9** | **31** | **125** | **160** | **740–1247d** |
+| **Total** | | **390** | **9** | **40** | **157** | **184** | **861–1451d** |
 
-> Effort is AI-estimated (confirm in refinement). Six domains target the same **`plm-product`** DGS (shared
-> Feign base URLs + some federation stories); **claims** is a separate subgraph that federates back into Product.
+> Effort is AI-estimated (confirm in refinement). Seven domains target the same **`plm-product`** DGS (shared
+> Feign base URLs + some federation stories); **claims, search, workspace, sample, attachment** and
+> **discussion** are separate subgraphs that federate back into Product.
 
 ## 2. Recommended program sequencing
 
@@ -82,11 +85,11 @@ the **material-hub / trim / wash / fabric / combination** DGSs being stubbed in 
 
 ## 6. How to consume this
 
-- **Jira MCP:** read [index.yaml](./index.yaml) → create 4 epics (one per domain) → create a Story per entry
+- **Jira MCP:** read [index.yaml](./index.yaml) → create 13 epics (one per domain) → create a Story per entry
   (map `complexity`→points, `depends_on`→"is blocked by" links, `labels`, `blocked_by`→a blocking note).
 - **Confluence MCP:** render this file as the portfolio page; render each domain's `05-attribute-inventory.md`
   + `03-schema-analysis.md §Migration Approach` + `04-po-summary.md` as the per-domain space pages.
 - See [scripts/06-feeding-mcp-tools.md](./scripts/06-feeding-mcp-tools.md) for the field-by-field mapping.
 
 ---
-*Pipeline 2.0 — 11 domains, 325 stories. Source of truth: `../code` (schema SDL + resolver + service + utils).*
+*Pipeline 2.0 — 13 domains, 390 stories. Source of truth: `../code` (schema SDL + resolver + service + utils).*

@@ -60,7 +60,8 @@ from **service constructors**, not `context.js`.
 ## Adding a new domain
 Look up its three sources and add a catalog row (above). Then run the pipeline via
 [`RUN-NEW-DOMAIN.md`](./RUN-NEW-DOMAIN.md). The four candidate domains below are **all done**; plus
-`workspace` (`plm-workspace`) and `sample` (`plm-sample`) were analyzed on request:
+`workspace` (`plm-workspace`), `sample` (`plm-sample`), `attachment` (`plm-attachment`) and `discussion`
+(`plm-discussion`) were analyzed on request:
 
 | Loader key | Schema (`code/schemas/`) | Resolver (`code/`) | Service (`code/`) | Subgraph | Status |
 |-----------|--------------------------|--------------------|-------------------|----------|--------|
@@ -70,6 +71,8 @@ Look up its three sources and add a catalog row (above). Then run the pipeline v
 | `search` | `SPARK_Search.txt` | `resolvers/SPARK_Search.txt` | `services/Search.txt` | separate DGS (elastic) | ✅ done |
 | `workspace` | `SPARK_WorkspaceV2.txt` | `resolvers/SPARK_WorkspaceV2.txt` | `services/WorkspaceV2.txt` | **separate DGS (plm-workspace)** | ✅ done |
 | `sample` | `SPARK_SampleV2.txt` | `resolvers/SPARK_SampleV2.txt` | `services/SampleV2.txt` | **separate DGS (plm-sample)** | ✅ done |
+| `attachment` | `SPARK_Attachment.txt` | `resolvers/SPARK_Attachment.txt` | `services/Attachment.txt` | **separate DGS (plm-attachment)** | ✅ done |
+| `discussion` | `SPARK_Discussion.txt` + `SPARK_DiscussionV3.txt` | `resolvers/SPARK_Discussion.txt` (+V3) | `services/Discussion.txt` (+V3) | **separate DGS (plm-discussion)** | ✅ done |
 
 ## Effort calibration (PO summary only — AI-estimated, confirm in refinement)
 Low/Small 1–2d · Medium 3–5d · High/Large 5–8d · Very-High/X-Large 8–13d · +20% buffer on domain totals.

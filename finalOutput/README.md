@@ -20,7 +20,7 @@ The same analysis is published in three layers. **Go to the one for your job:**
 Underneath, the per-domain folders (`product/`, `bom/`, `measurement/`, `impression/`) hold the **8 source
 analysis files** (the source of truth); `confluence/` and `jira/` are the **consumption layer** generated
 from them. Program rollup: [`STORIES-INDEX.md`](./STORIES-INDEX.md) + [`index.yaml`](./index.yaml) — all
-**325** stories across the 11 domains.
+**390** stories across the 13 domains.
 
 If you are a **junior engineer assigned a story**, you do **not** need to read the scripts.
 Go straight to your domain folder and open `04-stories.md`. Every story is self-contained:
@@ -69,14 +69,16 @@ internal-vs-external user branch, and the latent bugs were all re-checked agains
 
 ---
 
-## 3. The eleven domains in this folder
+## 3. The thirteen domains in this folder
 
 Seven compile into the **same `plm-product` DGS — a monorepo / single federation subgraph**. Because they
 are co-located, their references to each other (`Bom.product`, `Product.measurementSets`,
 `ResourcesCount.bomsCount`, …) are **plain internal GraphQL types and in-process calls — not gateway
 federation**. **`claims` (`spark-claims`), `workspace` (`plm-workspace`), `search` (`plm-elastic-search`),
-and `sample` (`plm-sample`) are separate subgraphs** that federate with the rest (workspace/sample provide
-the `WorkspaceV2`/`SampleV2` entities; search is the read hub).
+`sample` (`plm-sample`), `attachment` (`plm-attachment`), and `discussion` (`plm-discussion`) are separate
+subgraphs** that federate with the rest (workspace/sample provide the `WorkspaceV2`/`SampleV2` entities;
+search is the read hub; attachment/discussion provide the `Attachment`/`Discussion` entities and the TechPack
+attachment/discussion counts).
 True federation (`@extends @external`, CAT-4) applies only to **separate** DGS subgraphs
 (attachment, workspace, discussion, sample, claim, tag, access-control, user-profile, search, and the material
 DGSs hub/trim/wash/fabric/combination) and platforms (VMM/IG/Doppler/CORONA/APEX). See
@@ -91,11 +93,13 @@ DGSs hub/trim/wash/fabric/combination) and platforms (VMM/IG/Doppler/CORONA/APEX
 | [`claims`](./claims/) | `resolvers/product/SPARK_Claims.txt` | 164 | 7 | 6 | 24 | **separate subgraph**; proxy-ACL update |
 | [`search`](./search/) | `resolvers/SPARK_Search.txt` | 507 | ~48 | 1 | 25 | **separate subgraph**; elastic read hub; wide type surface |
 | [`packaging`](./packaging/) | `resolvers/product/SPARK_Packaging.txt` | 273 | 7 | 10 | 28 | wide schema; multi-step write + pricing chain |
+| [`attachment`](./attachment/) | `resolvers/SPARK_Attachment.txt` | 318 | 8(+1) | 15 | 28 | **separate subgraph**; dual record shape; ACL writes |
 | [`workspace`](./workspace/) | `resolvers/SPARK_WorkspaceV2.txt` | 1,060 | 8 | 10(+2) | 32 | **separate subgraph**; 5-case partner dispatcher; hub entity |
 | [`sample`](./sample/) | `resolvers/SPARK_SampleV2.txt` | 430 | 23 | 9(+3) | 33 | **separate subgraph**; `SampleAsset` union; prefix-gated parents |
+| [`discussion`](./discussion/) | `resolvers/SPARK_Discussion(.V3).txt` | 1,445 | 11 | 26(+3) | 37 | **separate subgraph**; v1/v2/V3 consolidation; `Resource` union; participant writes |
 | [`bom`](./bom/) | `resolvers/product/SPARK_Bom.txt` | 735 | 13 | 6 | 42 | 7-variant polymorphic `BomMaterial`; 3-step write |
 | [`product`](./product/) | `resolvers/SPARK_Product.txt` | 2,629 | 18 | 20(+3) | 72 | TechPack aggregation; `components`; host DGS |
-| **Total** | | | | | **325** | |
+| **Total** | | | | | **390** | |
 
 Each domain folder contains **eight** artifacts:
 

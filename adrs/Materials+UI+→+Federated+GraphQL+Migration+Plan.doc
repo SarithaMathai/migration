@@ -1,0 +1,2653 @@
+Date: Fri, 26 Jun 2026 14:07:12 -0500 (CDT)
+Message-ID: <1890763405.47192.1782500832362@cndlx1018.hq.target.com>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_47191_1376952752.1782500832362"
+
+------=_Part_47191_1376952752.1782500832362
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>Materials UI =E2=86=92 Federated GraphQL Migration Plan</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: var(--ds-surface, #fff) !important;
+        color: var(--ds-text, #000) !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: var(--ds-link-pressed, #000);
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        page-break-after: avoid;
+    }
+
+    pre {
+        font-family: Monaco, "Courier New", monospace;
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>Materials UI =E2=86=92 Federated GraphQL Migration Plan</h1>
+    <div class=3D"Section1">
+        <h1 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Materia=
+lsUI=E2=86=92FederatedGraphQLMigrationPlan">Materials UI =E2=86=92 Federate=
+d GraphQL Migration Plan</h1>
+<h2 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-JiraEpic&amp;St=
+oryBreakdown">Jira Epic &amp; Story Breakdown</h2>
+<blockquote>
+ <p><strong>Scope</strong>: Cut over all materials UI pages in <code>pdex-u=
+i-react</code> from <code>spark-graphql</code> monolith to the <code>plm-ma=
+terials</code> federated GraphQL gateway. <strong>UI client</strong>: Apoll=
+o <code>plmClient</code> (already exists in <code>network-library</code>). =
+Switch per-query via <code>client: plmClient</code> prop. <strong>No codege=
+n</strong> =E2=80=94 all TypeScript types are manual. <strong>Mutations</st=
+rong>: Added to subgraph services (not a BFF layer). <strong>Cutover strate=
+gy</strong>: Each domain is migrated in a single atomic PR =E2=80=94 no fea=
+ture flags. Validate in dev/staging, ship the PR, revert if needed.</p>
+</blockquote>
+<hr>
+<h2 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-PhaseOrderingRa=
+tionale">Phase Ordering Rationale</h2>
+<p>Wash is the first domain to migrate because it has the lowest complexity=
+, fewest ADR blockers, no saga mutations, and no Relationship service depen=
+dency beyond the deferrable <code>teams</code> field. It proves the full en=
+d-to-end migration pattern =E2=80=94 federated queries =E2=86=92 mutations =
+=E2=86=92 legacy removal =E2=80=94 before tackling higher-complexity domain=
+s.</p>
+<p><strong>Key sequencing insight</strong>: All 8 concrete material types a=
+lready exist as federated entities with <code>@key(fields: "id")</code> in =
+<code>materials-hub</code>. The <code>material(id)</code> and <code>materia=
+ls(ids)</code> queries work today and <code>__typename</code> routing is li=
+ve. This means:</p>
+<ul>
+ <li>Cross-cutting <code>getMaterialByIdFromService</code> UI migration is =
+<strong>Phase 0 infrastructure</strong>, not Phase 4.</li>
+ <li>Hub (<code>BaseMaterial</code>) detail page and list/search have <stro=
+ng>no dependency on other domain migrations</strong> =E2=80=94 they can be =
+worked in Phase 2 in parallel with Color/Artwork/Trim/Fabric.</li>
+ <li>Phase 4 is <strong>Search only</strong>.</li>
+</ul>
+<div class=3D"table-wrap">
+ <table class=3D"wrapped confluenceTable">
+  <thead>
+   <tr>
+    <th class=3D"confluenceTh">Domain</th>
+    <th class=3D"confluenceTh">Phase</th>
+    <th class=3D"confluenceTh">ADR Blockers</th>
+    <th class=3D"confluenceTh">Key Complexity</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Wash</strong></td>
+    <td class=3D"confluenceTd">1 =E2=9C=85 Start here</td>
+    <td class=3D"confluenceTd">ADR 0.1.9 (blocks <code>teams</code> field =
+=E2=80=94 must resolve before Wash is complete)</td>
+    <td class=3D"confluenceTd">
+     <p>3 small breaking changes</p>
+     <p>Note: Whatever data dependency existed between Wash and Fabric in t=
+he legacy `spark-graphql` monolith (likely shared resolver logic, shared lo=
+aders, or shared context) is irrelevant once you're in federation. Each dom=
+ain subgraph owns its own type and resolves independently. The `Wash` and `=
+Fabric` entities are already live `@key` federated entities in `materials-h=
+ub` =E2=80=94 they route independently via `__typename`.</p></td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Artwork</strong></td>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">ADR 0.1.3 (<code>bulkUpdateTeams</code>), AD=
+R 0.1.7 (Relationship service), ADR 0.1.9 (teams)</td>
+    <td class=3D"confluenceTd">10 Colorway field deltas, linked artworks</t=
+d>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Color</strong></td>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">ADR 0.1.3, ADR 0.1.9, Story 0.2.4 (<code>add=
+Color</code> schema design)</td>
+    <td class=3D"confluenceTd">Archroma/Coloro/Pantone sub-types entirely a=
+bsent</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Trim</strong></td>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">ADR 0.1.3, ADR 0.1.9</td>
+    <td class=3D"confluenceTd">44 reference data queries, <code>approvedCol=
+orRows</code> regression</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Fabric</strong></td>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">ADR 0.1.3, ADR 0.1.9, ADR 0.1.6 (<code>rfidT=
+agId</code>), ADR 0.1.7</td>
+    <td class=3D"confluenceTd">Clone sagas, costing breaking change, index-=
+alignment bug</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Hub (BaseMaterial)</strong></td>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">ADR 0.1.3, ADR 0.1.9, ADR 0.1.4, ADR 0.1.7</=
+td>
+    <td class=3D"confluenceTd">Dynamic template system entirely absent (hie=
+rarchy fetched at runtime =E2=80=94 unknown N types); Paper/Wood/UDM concre=
+te sub-types absent; <code>composition</code> N+1 fan-out; <code>developedB=
+aseMaterials</code>/<code>connectedBoms</code>/<code>searchResourceLinks</c=
+ode> all two-hop via Relationship service (ADR 0.1.7); <code>createResource=
+Link</code> cross-domain write-back (ADR 0.1.4); <code>suppliers</code> VMM=
+ N+1; <code>validateMaterialUniqueness</code> needed for create flow</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Palette</strong></td>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">ADR 0.1.3, ADR 0.1.5 (atomic mutations), ADR=
+ 0.1.9</td>
+    <td class=3D"confluenceTd"><code>relatedMaterials</code> semantic flip<=
+/td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Combination</strong></td>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">ADR 0.1.3, ADR 0.1.6, ADR 0.1.8 (<code>isInt=
+ernalUser</code>), ADR 0.1.9</td>
+    <td class=3D"confluenceTd">FSC complexity, 5-container branching</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Search</strong></td>
+    <td class=3D"confluenceTd">4</td>
+    <td class=3D"confluenceTd">Story 0.2.5 (search shape design)</td>
+    <td class=3D"confluenceTd">Cross-domain result rendering</td>
+   </tr>
+  </tbody>
+ </table>
+</div>
+<hr>
+<h2 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Phase0=E2=80=94=
+Foundation&amp;ArchitectureDecisions">Phase 0 =E2=80=94 Foundation &amp; Ar=
+chitecture Decisions</h2>
+<blockquote>
+ <p><strong>ADR dependency summary for all phases:</strong></p>
+ <ul>
+  <li>=E2=9C=85 <strong>ADR 0.1.1 (ACL/JWT)</strong> =E2=80=94 RESOLVED. Sp=
+ring Security filter handles this automatically. No blocker.</li>
+  <li>=E2=9C=85 <strong>ADR 0.1.2 (<code>getMaterialByIdFromService</code>)=
+</strong> =E2=80=94 RESOLVED. <code>material(id)</code> / <code>materials(i=
+ds)</code> on <code>materials-hub</code> works today =E2=80=94 all 8 concre=
+te types are live <code>@key</code> entities. UI migration is tracked in Ep=
+ic 0.2 (Story 0.2.6) as Phase 0 infrastructure.</li>
+  <li><strong>:white_check_mark: ADR 0.10 (Material entity&nbsp;<code>teams=
+</code>)</strong> =E2=80=94 Blocks <code>teams</code> read field on ALL 8 d=
+omains. Domain services do not own team associations =E2=80=94 stored exter=
+nally in the Relationship service. Resolve during Phase 1 so Phase 2 domain=
+s are unblocked. <strong>Wash cannot be considered complete until this is r=
+esolved</strong> (Story 1.1.5b), though the cutover PR can ship without the=
+ <code>teams</code> field.</li>
+  <li data-uuid=3D"6f212737-069a-4c07-9edd-a046dc54b50f"><strong>:white_che=
+ck_mark:&nbsp; ADR 0.11 (Material entity b<code>usinessPartners</code> / <c=
+ode>droppedPartnerIds</code>)</strong> =E2=80=94 Blocks <span style=3D"font=
+-family: SFMono-Medium , SF Mono , Segoe UI Mono , Roboto Mono , Ubuntu Mon=
+o , Menlo , Courier , monospace;">business partner and dropped business par=
+tner fields on all materials domain entities.&nbsp; Currently resolved in i=
+nternal GQL mono repo via access-control-service. <strong>Wash cannot be co=
+nsidered complete until this is resolved</strong></span></li>
+  <li>=F0=9F=94=B4 <strong>ADR 0.1.3 (<code>bulkUpdateTeams</code>)</strong=
+> =E2=80=94 Blocks all domain <code>update{Type}Teams</code> mutation epics=
+ in Phases 1=E2=80=933.</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.7 (Relationship service =E2=80=94 entity=
+ links)</strong> =E2=80=94 Blocks Artwork linked artworks (Phase 2), Fabric=
+ BOM/samples (Phase 2), Combination (Phase 3), Hub multi-hop (Phase 2).</li=
+>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.4 (<code>createResourceLink</code>)</str=
+ong> =E2=80=94 Blocks Fabric (Phase 2) and Combination (Phase 3).</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.6 (<code>rfidTagId</code>)</strong> =E2=
+=80=94 Blocks Fabric <code>FabricSpecification.samples</code> (Phase 2) and=
+ Combination FSC (Phase 3).</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.5 (Palette atomic mutations)</strong> =
+=E2=80=94 Blocks Palette (Phase 3).</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.8 (<code>isInternalUser</code>)</strong>=
+ =E2=80=94 Blocks Combination (Phase 3).</li>
+  <li><strong>Phase 1 (Wash) can start immediately</strong> after Phase 0 i=
+nfrastructure. ADR 0.1.9 blocks the <code>teams</code> field but not the re=
+st of the Wash migration =E2=80=94 resolve it during Phase 1 so Story 1.1.5=
+b can land before Wash is marked done.</li>
+ </ul>
+</blockquote>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic0.1=E2=80=
+=94ArchitectureDecisionRecords(ADRs)">Epic 0.1 =E2=80=94 Architecture Decis=
+ion Records (ADRs)</h3>
+<blockquote>
+ <p>Decisions marked =E2=9C=85 RESOLVED require no story. Open decisions ea=
+ch require an ADR + proof-of-concept before the domains that depend on them=
+ can begin.</p>
+</blockquote>
+<hr>
+<p><strong>Story 0.1.1 =E2=80=94 =E2=9C=85 RESOLVED: ACL / Permission JWT S=
+trategy</strong></p>
+<ul>
+ <li><strong>Resolution</strong>: A Spring Security filter has already been=
+ implemented in the <code>plm-materials</code> subgraphs. The filter automa=
+tically fetches the ACL token on every inbound request =E2=80=94 no per-res=
+olver <code>getUserPermissionsJWT</code> call needed. This is transparent t=
+o the UI and to federation entity resolution.</li>
+ <li><strong>Impact</strong>: No ACL-related blocker on any domain. All pha=
+ses can proceed without any ACL setup story.</li>
+ <li><strong>No story required.</strong></li>
+</ul>
+<hr>
+<p><strong>Story 0.1.2 =E2=80=94 =E2=9C=85 RESOLVED: <code>getMaterialByIdF=
+romService</code> Replacement</strong></p>
+<ul>
+ <li><strong>Resolution</strong>: The federated equivalent is confirmed: <c=
+ode>material(id: ID!): Material</code> (single) and <code>materials(ids: [I=
+D!]): [Material]</code> (bulk) on <code>materials-hub</code>. All 8 concret=
+e types already exist as <code>@key</code> federated entities =E2=80=94 <co=
+de>__typename</code> routing is live today. No architectural decision neede=
+d.</li>
+ <li><strong>Remaining work</strong>: Pure UI migration =E2=80=94 inventory=
+ call sites, swap to <code>plmClient</code>, adapt for <code>id</code>/<cod=
+e>description</code>/no <code>SPARK_</code> prefix, use <code>__typename</c=
+ode> to branch per concrete type. This is Phase 0 infrastructure work, not =
+Phase 4.</li>
+ <li><strong>This work is tracked in Epic 0.2, Story 0.2.6.</strong></li>
+ <li><strong>No ADR story required.</strong></li>
+</ul>
+<hr>
+<p><strong>Story 0.1.3 =E2=80=94 ADR: <code>bulkUpdateTeams</code> Replacem=
+ent</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Single mutation updates teams across 6+ mate=
+rial types. No cross-subgraph mutation exists in federation.</li>
+ <li><strong>Options</strong>:=20
+  <ul>
+   <li>A) N type-specific mutations: <code>updateColorTeams</code>, <code>u=
+pdateFabricTeams</code>, etc. (preferred =E2=80=94 each subgraph owns its d=
+ata).</li>
+   <li>B) Orchestration subgraph: a dedicated subgraph that fans out to eac=
+h domain subgraph.</li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>ADR written selecting Option A.</li>
+   <li>Each domain subgraph listed with its required <code>update{Type}Team=
+s</code> mutation signature.</li>
+   <li>UI call sites inventoried (grep for <code>bulkUpdateTeams</code>).</=
+li>
+   <li><code>teams</code> field gap tracked in each domain epic's backend s=
+tory.</li>
+  </ul></li>
+ <li><strong>Blocks</strong>: All domain mutation epics in Phases 2=E2=80=
+=934. <strong>Does NOT block Phase 1 (Wash)</strong> =E2=80=94 Wash <code>u=
+pdateWashTeams</code> is a net-new mutation, not a replacement for <code>bu=
+lkUpdateTeams</code>.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.1.4 =E2=80=94 ADR: <code>createResourceLink</code> Write=
+-Back</strong></p>
+<ul>
+ <li><strong>Problem</strong>: <code>applyParentUpdateForNewResourceLink</c=
+ode> in the legacy resolver performs a cross-service read-modify-write afte=
+r creating a resource link. This cannot be expressed as a federation mutati=
+on.</li>
+ <li><strong>Proposed solution</strong>: Move write-back to service-to-serv=
+ice call inside the Relationship service. The UI calls a single <code>creat=
+eResourceLink</code> mutation; the backend handles the cascade.</li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>ADR written confirming backend-owned cascade.</li>
+   <li>Relationship service team notified / story created in their backlog.=
+</li>
+   <li>UI call sites for <code>createResourceLink</code> inventoried.</li>
+   <li>No UI change required beyond switching to <code>plmClient</code> for=
+ the mutation.</li>
+  </ul></li>
+ <li><strong>Blocks</strong>: Fabric (Phase 2), Combination (Phase 3). <str=
+ong>Does NOT block Phase 1 (Wash).</strong></li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.1.5 =E2=80=94 ADR: Palette <code>addMaterial</code> / <c=
+ode>removeMaterial</code> Atomic Mutations</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Legacy Palette resolver does read-modify-wri=
+te set arithmetic on <code>relatedMaterials</code>. Race condition exists. =
+Federation cannot replicate this pattern.</li>
+ <li><strong>Proposed solution</strong>: <code>spark-palette-service</code>=
+ adds dedicated <code>addMaterialToPalette</code> and <code>removeMaterialF=
+romPalette</code> mutations with atomic backend semantics.</li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>ADR written.</li>
+   <li>Palette service team has stories for both mutations.</li>
+   <li>Input/return types defined (suggest returning updated <code>Palette<=
+/code>).</li>
+   <li>Phase 3 Palette epic references this ADR.</li>
+  </ul></li>
+ <li><strong>Blocks</strong>: Palette (Phase 3). <strong>Does NOT block Pha=
+ses 1 or 2.</strong></li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.1.6 =E2=80=94 ADR: <code>rfidTagId</code> Gap in <code>F=
+abricSpecCombo.samples</code></strong></p>
+<ul>
+ <li><strong>Problem</strong>: <code>rfidTagId</code> exists in Elastic sea=
+rch results but not in the <code>SampleV2</code> service data model. <code>=
+FabricSpecCombo.samples</code> stitches both sources.</li>
+ <li><strong>Options</strong>:=20
+  <ul>
+   <li>A) Add <code>rfidTagId</code> to the Sample subgraph data model (req=
+uires SampleV2 service change).</li>
+   <li>B) Sample subgraph contributes <code>rfidTagId</code> via <code>@pro=
+vides</code> from the Search subgraph.</li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>ADR written with chosen option.</li>
+   <li>If Option A: SampleV2 team has a story to add the field.</li>
+   <li>If Option B: <code>spark-elastic-search-hub</code> schema updated wi=
+th <code>@provides</code> directive.</li>
+   <li>Phase 2 Fabric and Phase 3 Combination FSC stories reference this AD=
+R.</li>
+  </ul></li>
+ <li><strong>Blocks</strong>: Fabric <code>FabricSpecification.samples</cod=
+e> (Phase 2), Combination FSC <code>samples</code> (Phase 3). <strong>Does =
+NOT block Phase 1 (Wash).</strong></li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.1.7 =E2=80=94 ADR: Relationship Service =E2=80=94 Subgra=
+ph vs. Internal</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Multiple domain resolvers call the Relations=
+hip service to resolve <code>connectedBoms</code>, <code>relatedBoms</code>=
+, <code>samples</code>, <code>developedFabrics</code>, <code>colorLinks</co=
+de>, <code>biDirectionalLinkedArtworks</code>, etc.</li>
+ <li><strong>Options</strong>:=20
+  <ul>
+   <li>A) Relationship service becomes a federation subgraph (BOM, Sample t=
+ypes with <code>@key</code>).</li>
+   <li>B) Relationship service remains internal; each domain DGS subgraph c=
+alls it directly as service-to-service.</li>
+  </ul></li>
+ <li><strong>Recommendation</strong>: Option B =E2=80=94 internal implement=
+ation detail; avoids exposing BOM/Sample as federated types prematurely.</l=
+i>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>ADR written confirming Option B.</li>
+   <li>Service-to-service call pattern documented (HTTP client config, auth=
+, retry).</li>
+   <li>Each affected domain epic's backend stories reference this pattern.<=
+/li>
+  </ul></li>
+ <li><strong>Blocks</strong>: Artwork linked artworks (Phase 2), Fabric BOM=
+/samples (Phase 2), Combination (Phase 3), Hub multi-hop traversal (Phase 2=
+). <strong>Does NOT block Phase 1 (Wash).</strong></li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.1.8 =E2=80=94 ADR: <code>isInternalUser</code> Proxy JWT=
+ in Combination</strong></p>
+<ul>
+ <li><strong>Problem</strong>: <code>SPARK_Combination.js</code> branches o=
+n <code>ctx.currentUser.internal</code> to generate different query shapes =
+and calls an ACL proxy endpoint for internal user impersonation.</li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>ADR written confirming proxy JWT endpoint remains accessible from <c=
+ode>spark-combination</code> DGS subgraph.</li>
+   <li><code>ctx.currentUser.internal</code> equivalent confirmed available=
+ in DGS request context.</li>
+   <li>Combination subgraph design doc shows how the 5 container query shap=
+es are preserved.</li>
+  </ul></li>
+ <li><strong>Blocks</strong>: Combination (Phase 3). <strong>Does NOT block=
+ Phases 1 or 2.</strong></li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.1.9 =E2=80=94 ADR: Material Entity <code>teams</code> / =
+<code>businessPartners</code> / <code>droppedPartnerIds</code> via Relation=
+ship Service</strong></p>
+<ul>
+ <li>
+  <p><strong>Problem</strong>: In the legacy monolith, <code>teams</code>, =
+<code>businessPartners</code>, and <code>droppedPartnerIds</code> on every =
+material type are resolved via <code>commonResolvers/Teams.js</code> =E2=80=
+=94 a shared utility that makes two hops:</p>
+  <ol>
+   <li><code>GET ${RELATIONSHIP_ENDPOINT}/{materialId}?resourceType=3Dteam<=
+/code> =E2=86=92 returns a list of team node IDs</li>
+   <li>For each node ID: <code>GET ${USERPROFILE_ENDPOINT}/teams/{id}</code=
+> =E2=86=92 hydrates full <code>TeamV2</code> object</li>
+  </ol>
+  <p>The domain services (Wash, Color, Fabric, etc.) <strong>do not own tea=
+m associations at all</strong> =E2=80=94 they are stored entirely in the ex=
+ternal Relationship service. All 8 material types share this pattern via th=
+e same <code>loadTeams</code> / <code>loadBusinessPartners</code> / <code>l=
+oadDroppedBusinessPartners</code> utility. These fields are currently absen=
+t from every federated subgraph schema.</p></li>
+ <li>
+  <p><strong>Options</strong>:</p>
+  <ul>
+   <li><strong>A) Each domain subgraph resolves teams independently</strong=
+>: Each DGS subgraph (<code>spark-wash</code>, <code>spark-color</code>, et=
+c.) adds a REST client for the Relationship service and duplicates the two-=
+hop resolver logic. Simple to implement per-domain but duplicates the same =
+code N times.</li>
+   <li><strong>B) Dedicated <code>relationship-hub</code> subgraph extends =
+all material types</strong>: A new <code>relationship-hub</code> subgraph p=
+articipates in the <code>plm-materials</code> federation gateway. It uses <=
+code>@key</code> to extend each material type (<code>Wash</code>, <code>Col=
+or</code>, <code>Artwork</code>, <code>Trim</code>, <code>Fabric</code>, <c=
+ode>Palette</code>, <code>Combination</code>, <code>BaseMaterial</code>) wi=
+th <code>teams</code>, <code>businessPartners</code>, and <code>droppedPart=
+nerIds</code> fields. One place to maintain; mirrors the existing cross-cut=
+ting <code>commonResolvers/Teams.js</code> pattern exactly.</li>
+   <li><strong>C) <code>materials-hub</code> subgraph owns cross-cutting fi=
+eld resolution</strong>: Centralizes in an existing subgraph but conflates =
+hub concerns with relationship concerns.</li>
+  </ul></li>
+ <li>
+  <p><strong>Recommendation</strong>: <strong>Option B</strong> =E2=80=94 <=
+code>relationship-hub</code> subgraph with federated <code>@extends</code> =
+on each material type. This is the cleanest mapping of the existing cross-c=
+utting pattern into federation and avoids duplicating resolver logic across=
+ 8 subgraphs.</p></li>
+ <li>
+  <p><strong>Acceptance Criteria</strong>:</p>
+  <ul>
+   <li>ADR written selecting preferred option.</li>
+   <li>If Option B: <code>relationship-hub</code> subgraph scaffolded in <c=
+ode>plm-materials</code>; <code>@key</code> entity stubs defined for all 8 =
+material types; <code>teams</code>, <code>businessPartners</code>, <code>dr=
+oppedPartnerIds</code> field resolvers implemented and tested.</li>
+   <li>If Option A: each domain subgraph's backend story updated to include=
+ the Relationship service REST client and two-hop resolver.</li>
+   <li><code>TeamV2</code> type defined in the gateway schema (currently ab=
+sent from all federated schemas).</li>
+   <li><code>BusinessPartner</code> type defined (currently absent).</li>
+   <li>Auth pattern for Relationship service calls from DGS confirmed (serv=
+ice-to-service token or pass-through).</li>
+   <li>All 8 domain backend stories updated to reference this ADR for their=
+ <code>teams</code> / <code>businessPartners</code> / <code>droppedPartnerI=
+ds</code> field stories.</li>
+  </ul></li>
+ <li>
+  <p><strong>Blocks</strong>: <code>teams</code>, <code>businessPartners</c=
+ode>, <code>droppedPartnerIds</code> read fields on ALL 8 domains across Ph=
+ases 1=E2=80=934. <strong>Phase 1 (Wash) can ship without these fields</str=
+ong> =E2=80=94 they can be deferred to a follow-up story (Story 1.1.5b) onc=
+e this ADR is resolved, since the Wash detail page does not require team di=
+splay to be functional.</p></li>
+ <li>
+  <p><strong>Estimate</strong>: 5 pts</p></li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic0.2=E2=80=
+=94Infrastructure&amp;DeveloperFoundation">Epic 0.2 =E2=80=94 Infrastructur=
+e &amp; Developer Foundation</h3>
+<ul>
+ <li><strong>Problem</strong>: <code>plmClient</code> currently uses <code>=
+new InMemoryCache()</code> with no configuration. The legacy <code>internal=
+Client</code> has <code>dataIdFromObject</code> keyed on <code>SPARK_*</cod=
+e> type prefixes and <code>humanId</code>. The federated schema drops <code=
+>SPARK_*</code> prefixes and uses <code>id</code> (not <code>humanId</code>=
+) as the canonical key.</li>
+ <li><strong>Tasks</strong>:=20
+  <ul>
+   <li>Add <code>typePolicies</code> to <code>plmClient</code>'s <code>InMe=
+moryCache</code> for all domain types: <code>Color</code>, <code>Artwork</c=
+ode>, <code>Wash</code>, <code>Trim</code>, <code>Fabric</code>, <code>Fabr=
+icSpecification</code>, <code>BaseMaterial</code>, <code>Palette</code>, <c=
+ode>Combination</code>, <code>FabricSpecCombo</code>.</li>
+   <li>Each type policy: <code>keyFields: ['id']</code>.</li>
+   <li>Add <code>possibleTypes</code> for the <code>Material</code> interfa=
+ce listing all concrete types.</li>
+   <li>Add <code>possibleTypes</code> for <code>ArtworkOrColor</code> union=
+ (used in Combination).</li>
+   <li>Document that <code>__typename</code> checks in UI components must u=
+se new type names (no <code>SPARK_</code> prefix).</li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li><code>plmClient</code> cache correctly normalizes entities by <code>=
+id</code>.</li>
+   <li><code>Material</code> interface fragments resolve correctly in Apoll=
+o cache.</li>
+   <li>Unit test: cache write + read round-trip for each concrete type.</li=
+>
+  </ul></li>
+ <li><strong>Required by</strong>: Phase 1 (Wash) and all subsequent phases=
+.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<hr>
+<hr>
+<p><strong>Story 0.2.3 =E2=80=94 Establish <code>*FederatedQueries.ts</code=
+> File Convention</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Each domain library currently has query file=
+s (e.g., <code>colorQueries.ts</code>). We need a clear convention for addi=
+ng federated query variants without breaking the legacy path.</li>
+ <li><strong>Convention</strong>:=20
+  <ul>
+   <li>New file per domain: <code>washFederatedQueries.ts</code>, <code>col=
+orFederatedQueries.ts</code>, etc.</li>
+   <li>Each file exports: query documents (gql tagged), TypeScript types fo=
+r request/response, and a note on which <code>plmClient</code> fields diffe=
+r from legacy.</li>
+   <li>Legacy query files remain untouched until the domain cutover PR is m=
+erged.</li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>Convention documented in a <code>CONTRIBUTING.md</code> or inline co=
+mment template.</li>
+   <li>One example file created (<code>washFederatedQueries.ts</code>) as t=
+he reference implementation (created as part of Phase 1 Wash migration).</l=
+i>
+   <li>PR template updated to remind engineers to add federated query file =
+when migrating a domain.</li>
+  </ul></li>
+ <li><strong>Required by</strong>: Phase 1 (Wash) and all subsequent phases=
+.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.2.4 =E2=80=94 Design: <code>addColor(providerType:)</cod=
+e> Consolidated Mutation Schema</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Legacy <code>addColor</code> mutation accept=
+s a <code>providerType</code> discriminator to route to Archroma, Coloro, o=
+r Pantone sub-flows. The federated <code>spark-color</code> schema has no m=
+utations and no sub-type schema.</li>
+ <li><strong>Tasks</strong>:=20
+  <ul>
+   <li>Design the federated mutation schema for color creation covering all=
+ 3 provider types.</li>
+   <li>Options: single <code>createColor(input: CreateColorInput!)</code> w=
+ith <code>providerType</code> enum, or 3 separate mutations.</li>
+   <li>Define all required input types and confirm with <code>spark-color</=
+code> service team.</li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>Schema design doc written and agreed with backend team.</li>
+   <li>Input types fully specified.</li>
+   <li><code>spark-color</code> team has a story to implement the schema + =
+resolvers.</li>
+   <li>Phase 2 Color mutation stories reference this design.</li>
+  </ul></li>
+ <li><strong>Blocks</strong>: Phase 2 Color mutations only. <strong>Does NO=
+T block Phase 1 (Wash).</strong></li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.2.5 =E2=80=94 Design: <code>MaterialsList.tsx</code> Sea=
+rch Shape (Flat vs. Interface + Fragments)</strong></p>
+<ul>
+ <li><strong>Problem</strong>: <code>MaterialsList.tsx</code> renders searc=
+h results across all material types. The UI must decide: flat common-field =
+query, or <code>... on Color { }</code> / <code>... on Fabric { }</code> in=
+line fragments per type.</li>
+ <li><strong>Options</strong>:=20
+  <ul>
+   <li>A) Flat: query only <code>Material</code> interface fields (<code>id=
+</code>, <code>description</code>, <code>tags</code>, <code>primaryAttachme=
+nt</code>, <code>designCycles</code>). Simpler, works today.</li>
+   <li>B) Interface + fragments: query type-specific fields per concrete ty=
+pe. More powerful but requires all concrete types in the federated schema.<=
+/li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>Design decision made and documented.</li>
+   <li>If Option B: list of per-type fields needed in the search result car=
+d for each domain.</li>
+   <li>Phase 4 Search stories reference this decision.</li>
+  </ul></li>
+ <li><strong>Blocks</strong>: Phase 4 Search UI only. <strong>Does NOT bloc=
+k Phases 1=E2=80=933.</strong></li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.2.6 =E2=80=94 Migrate <code>getMaterialByIdFromService</=
+code> UI Call Sites to <code>material(id)</code> Query</strong></p>
+<ul>
+ <li><strong>Why Phase 0</strong>: <code>material(id)</code> and <code>mate=
+rials(ids)</code> work today =E2=80=94 all 8 concrete types are live <code>=
+@key</code> federated entities with <code>__typename</code> routing. This i=
+s pure UI plumbing with zero backend dependencies.</li>
+ <li><strong>Inventory</strong>: All call sites in <code>pdex-ui-react</cod=
+e> that use <code>getMaterialById</code> / <code>getMaterialByIdFromService=
+</code>.</li>
+ <li><strong>Tasks</strong>: For each call site, replace with <code>materia=
+l(id: ID!): Material</code> or <code>materials(ids)</code> on <code>plmClie=
+nt</code>. Use <code>__typename</code> to branch rendering per concrete typ=
+e. Adapt for <code>id</code> (not <code>humanId</code>), <code>description<=
+/code> (not <code>name</code>), no <code>SPARK_</code> prefix.</li>
+ <li><strong>Acceptance Criteria</strong>: All call sites migrated. No rema=
+ining calls to legacy polymorphic router.</li>
+ <li><strong>Depends on</strong>: Story 0.2.1 (cache config).</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.2.7 =E2=80=94 Migrate <code>bulkUpdateTeams</code> UI Ca=
+ll Sites to Type-Specific Mutations</strong></p>
+<ul>
+ <li><strong>Why Phase 0</strong>: Inventory and wiring work is cross-cutti=
+ng and should be planned upfront. Actual execution is gated on each domain'=
+s <code>update{Type}Teams</code> mutation landing (Phase 2 domain epics), b=
+ut the call site inventory and the UI-side switch can be tracked here.</li>
+ <li><strong>Inventory</strong>: All call sites in <code>pdex-ui-react</cod=
+e> that use <code>bulkUpdateTeams</code>.</li>
+ <li><strong>Tasks</strong>: Replace each call with the appropriate type-sp=
+ecific mutation (<code>updateColorTeams</code>, <code>updateFabricTeams</co=
+de>, etc.). Each domain mutation is implemented in its subgraph (tracked in=
+ Phase 2 domain epics).</li>
+ <li><strong>Depends on</strong>: ADR 0.1.3, all Phase 2 domain <code>updat=
+e{Type}Teams</code> mutations.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<hr>
+<p><strong>Story 0.2.8 =E2=80=94 Migrate <code>createResourceLink</code> UI=
+ Call Sites</strong></p>
+<ul>
+ <li><strong>Why Phase 0</strong>: Cross-cutting call site inventory. Execu=
+tion gated on ADR 0.1.4.</li>
+ <li><strong>Inventory</strong>: All call sites in <code>pdex-ui-react</cod=
+e> that use <code>createResourceLink</code>.</li>
+ <li><strong>Tasks</strong>: Replace with federated <code>createResourceLin=
+k</code> mutation on <code>plmClient</code>. Backend handles cascade (per A=
+DR 0.1.4).</li>
+ <li><strong>Depends on</strong>: ADR 0.1.4.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<hr>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.9 blocks the <code>teams</co=
+de> / <code>businessPartners</code> / <code>droppedPartnerIds</code> fields=
+ on <code>Wash</code> and must be resolved before Wash can be considered co=
+mplete. All other Wash stories are unblocked and can begin as soon as Phase=
+ 0 infrastructure (0.2.1=E2=80=930.2.3) is done.</p>
+ <p><strong>ADR 0.1.9 strategy for Phase 1</strong>: Ship the Wash cutover =
+PR without the <code>teams</code> field. Resolve ADR 0.1.9 in parallel duri=
+ng Phase 1. Deliver Story 1.1.5b (teams field) as a follow-up PR before clo=
+sing the Wash epic. Wash is <strong>not done</strong> until 1.1.5b lands.</=
+p>
+ <p><strong>Why first</strong>: Lowest complexity domain. Single flat type,=
+ no sub-types, no saga mutations, no Relationship service dependency beyond=
+ the <code>teams</code> field. Proves the full end-to-end migration pattern=
+ for all subsequent phases.</p>
+</blockquote>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic1.1=E2=80=
+=94WashBackendGap-Fill">Epic 1.1 =E2=80=94 Wash Backend Gap-Fill</h3>
+<blockquote>
+ <p>All stories in this epic are <strong>backend</strong> (<code>spark-wash=
+</code> DGS subgraph in <code>plm-materials</code>). No ADR dependencies. C=
+an start immediately.</p>
+</blockquote>
+<p><strong>Story 1.1.1 =E2=80=94 Resolve <code>washType</code> Non-Null Bre=
+aking Change</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Federated schema has <code>washType: CodeDes=
+cription!</code> (non-null). Legacy has <code>washType: CodeDescription</co=
+de> (nullable). Any existing wash records with null <code>washType</code> w=
+ill cause resolver errors.</li>
+ <li><strong>Tasks</strong>: Confirm data quality in wash service. If nulls=
+ exist, either backfill data or make field nullable in federated schema.</l=
+i>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<p><strong>Story 1.1.2 =E2=80=94 Resolve <code>laundry</code> List =E2=86=
+=92 <code>laundryFacility</code> Single Breaking Change</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Legacy <code>SPARK_Wash.laundry: [SPARK_Faci=
+lity]</code> (list). Federated <code>Wash.laundryFacility: Facility</code> =
+(single). UI components that render multiple laundry facilities will break.=
+</li>
+ <li><strong>Tasks</strong>: Confirm business rule (is one facility the cor=
+rect model?). If yes, UI adapts. If no, federated schema must be corrected =
+to a list.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<p><strong>Story 1.1.3 =E2=80=94 Resolve <code>manualColors</code> / <code>=
+manuelColors</code> Typo Alias</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Legacy schema has both <code>manualColors</c=
+ode> and <code>manuelColors</code> (typo) as aliases. UI may use either spe=
+lling.</li>
+ <li><strong>Tasks</strong>: Grep UI for both spellings. If <code>manuelCol=
+ors</code> is used, add it as a deprecated alias in federated schema, or up=
+date UI to use <code>manualColors</code>.</li>
+ <li><strong>Estimate</strong>: 1 pt</li>
+</ul>
+<p><strong>Story 1.1.4 =E2=80=94 Add Wash Queries to <code>spark-wash</code=
+> Schema</strong></p>
+<ul>
+ <li>Missing queries:=20
+  <ul>
+   <li><code>getWashById(id: ID!): Wash</code></li>
+   <li><code>getWashesByIds(ids: [ID!]!): [Wash]</code></li>
+   <li><code>searchWashes(input: WashSearchInput!): WashSearchResult</code>=
+</li>
+   <li><code>getWashReferenceData: WashReferenceData</code> (washType, sust=
+ainability, washProcesses, garmentDye enums)</li>
+   <li><code>getWashesByTag</code>, <code>getWashesByDesignCycle</code>, <c=
+ode>getWashesByStatus</code></li>
+   <li><code>getWashesByFabric(fabricId: ID!): [Wash]</code></li>
+   <li><code>getWashesByColor(colorId: ID!): [Wash]</code></li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>: All queries implemented, tested,=
+ and deployed to dev environment.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 1.1.5 =E2=80=94 Add Missing Fields to <code>Wash</code> Ty=
+pe (excluding <code>teams</code>)</strong></p>
+<ul>
+ <li>Missing fields that can be added immediately: any remaining scalar/enu=
+m fields not yet in the federated schema.</li>
+ <li><strong>Note</strong>: <code>teams: [Team]</code>, <code>businessPartn=
+ers: [BusinessPartner]</code>, and <code>droppedPartnerIds: [String]</code>=
+ are blocked by ADR 0.1.9 =E2=80=94 the domain service does not own these; =
+they are resolved from the external Relationship service. These fields are =
+tracked in Story 1.1.5b below.</li>
+ <li><strong>Note</strong>: <code>updateWashTeams</code> mutation (Story 1.=
+1.6) is a net-new mutation =E2=80=94 not a replacement for <code>bulkUpdate=
+Teams</code>. ADR 0.1.3 does NOT need to be resolved before this story.</li=
+>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<p><strong>Story 1.1.5b =E2=80=94 Add <code>teams</code> / <code>businessPa=
+rtners</code> / <code>droppedPartnerIds</code> to <code>Wash</code> Type</s=
+trong></p>
+<ul>
+ <li><strong>Blocked by</strong>: ADR 0.1.9 (Relationship service teams res=
+olution pattern).</li>
+ <li>Once ADR 0.1.9 is resolved, implement <code>teams</code>, <code>busine=
+ssPartners</code>, and <code>droppedPartnerIds</code> on <code>Wash</code> =
+using the agreed pattern (either <code>relationship-hub</code> subgraph ext=
+ension or direct Relationship service call from <code>spark-wash</code>).</=
+li>
+ <li>This story can be delivered as a follow-up PR after the main Wash cuto=
+ver =E2=80=94 it does not block the Phase 1 cutover.</li>
+ <li><strong>Depends on</strong>: ADR 0.1.9.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 1.1.6 =E2=80=94 Add Wash Mutations to <code>spark-wash</co=
+de> Schema</strong></p>
+<ul>
+ <li>Missing mutations:=20
+  <ul>
+   <li><code>createWash</code>, <code>updateWash</code>, <code>deleteWash</=
+code></li>
+   <li><code>updateWashStatus</code></li>
+   <li><code>addWashTag</code>, <code>removeWashTag</code></li>
+   <li><code>updateWashTeams</code></li>
+   <li><code>addWashColor</code>, <code>removeWashColor</code></li>
+   <li><code>addWashFabricSpecification</code>, <code>removeWashFabricSpeci=
+fication</code></li>
+  </ul></li>
+ <li><strong>Note</strong>: <code>updateWashTeams</code> is net-new (no leg=
+acy <code>bulkUpdateTeams</code> call site for Wash). ADR 0.1.3 does NOT bl=
+ock this story.</li>
+ <li><strong>Acceptance Criteria</strong>: All mutations implemented, teste=
+d, deployed to dev.</li>
+ <li><strong>Estimate</strong>: 10 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic1.2=E2=80=
+=94WashUIMigration">Epic 1.2 =E2=80=94 Wash UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: None. Can begin once Epic 1.1.4 (que=
+ries) is deployed to dev. <strong>Phase 0 prerequisites</strong>: Stories 0=
+.2.1 (cache config), 0.2.3 (file convention).</p>
+</blockquote>
+<p><strong>Story 1.2.1 =E2=80=94 Wash Detail Page: Migrate Read Queries</st=
+rong></p>
+<ul>
+ <li><strong>Library</strong>: <code>spark-wash</code> Nx lib in <code>pdex=
+-ui-react</code>.</li>
+ <li><strong>Tasks</strong>:=20
+  <ul>
+   <li>Create <code>washFederatedQueries.ts</code> (this becomes the refere=
+nce implementation for Story 0.2.3).</li>
+   <li>Implement <code>GET_WASH_BY_ID</code> query using <code>plmClient</c=
+ode>.</li>
+   <li>Adapt components for field renames: <code>humanId</code> =E2=86=92 <=
+code>id</code>, <code>name</code> =E2=86=92 <code>description</code>, <code=
+>files</code> =E2=86=92 <code>primaryAttachment</code>/<code>designAttachme=
+nt</code>.</li>
+   <li>Remove <code>SPARK_</code> prefix from all <code>__typename</code> c=
+hecks.</li>
+   <li>Update URL params: any route using <code>humanId</code> must switch =
+to <code>id</code>.</li>
+   <li><code>laundry</code> =E2=86=92 <code>laundryFacility</code> adaptati=
+on (depends on Story 1.1.2 decision).</li>
+   <li><code>washType</code> non-null handling (depends on Story 1.1.1).</l=
+i>
+   <li><code>manualColors</code>/<code>manuelColors</code> alias (depends o=
+n Story 1.1.3).</li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>:=20
+  <ul>
+   <li>Wash detail page renders correctly with <code>plmClient</code> data.=
+</li>
+   <li>No TypeScript errors.</li>
+  </ul></li>
+ <li><strong>Depends on</strong>: Stories 1.1.1=E2=80=931.1.4, 0.2.1, 0.2.3=
+.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 1.2.2 =E2=80=94 Wash List / Search: Migrate Read Queries</=
+strong></p>
+<ul>
+ <li>Implement <code>SEARCH_WASHES</code> query using <code>plmClient</code=
+>.</li>
+ <li>Adapt search result cards for field renames.</li>
+ <li>Handle <code>washType</code>, <code>sustainability</code>, <code>washP=
+rocesses</code>, <code>garmentDye</code> filter queries via <code>getWashRe=
+ferenceData</code>.</li>
+ <li><strong>Depends on</strong>: Story 1.1.4.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 1.2.3 =E2=80=94 Wash Create / Edit / Mutations: Migrate</s=
+trong></p>
+<ul>
+ <li>Implement <code>CREATE_WASH</code>, <code>UPDATE_WASH</code>, <code>UP=
+DATE_WASH_STATUS</code>, <code>ADD_WASH_TAG</code>, <code>REMOVE_WASH_TAG</=
+code>, <code>UPDATE_WASH_TEAMS</code>, <code>ADD_WASH_COLOR</code>, <code>R=
+EMOVE_WASH_COLOR</code>, <code>ADD_WASH_FABRIC_SPECIFICATION</code>, <code>=
+REMOVE_WASH_FABRIC_SPECIFICATION</code> mutations using <code>plmClient</co=
+de>.</li>
+ <li>Update Apollo cache after mutations (<code>update</code> or <code>refe=
+tchQueries</code>).</li>
+ <li><strong>Depends on</strong>: Story 1.1.6.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 1.2.4 =E2=80=94 Wash: Remove Legacy Queries</strong></p>
+<ul>
+ <li>After all 1.2.x stories pass QA and the cutover PR is merged and stabl=
+e in production:=20
+  <ul>
+   <li>Delete legacy <code>internalClient</code> wash queries from <code>sp=
+ark-wash-graphql</code>.</li>
+   <li>Remove any remaining <code>SPARK_Wash</code> type references from UI=
+ components.</li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>: Wash domain fully on <code>plmCl=
+ient</code>. No legacy wash queries remain.</li>
+ <li><strong>Depends on</strong>: All 1.2.x stories passing QA in productio=
+n.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<h2 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Phase2=E2=80=94=
+Color,Artwork,Trim,Fabric,Hub(BaseMaterial)">Phase 2 =E2=80=94 Color, Artwo=
+rk, Trim, Fabric, Hub (BaseMaterial)</h2>
+<blockquote>
+ <p><strong>ADR dependencies for Phase 2</strong>:</p>
+ <ul>
+  <li>=F0=9F=94=B4 <strong>ADR 0.1.3 (<code>bulkUpdateTeams</code>)</strong=
+> =E2=80=94 Must be resolved before any Phase 2 <code>update{Type}Teams</co=
+de> mutation story. Resolve in parallel with Phase 1.</li>
+  <li>=F0=9F=94=B4 <strong>ADR 0.1.9 (Material entity <code>teams</code> re=
+ad)</strong> =E2=80=94 Must be resolved before <code>teams</code>, <code>bu=
+sinessPartners</code>, <code>droppedPartnerIds</code> fields can be added t=
+o any Phase 2 domain type. Resolve in parallel with Phase 1.</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.4 (<code>createResourceLink</code>)</str=
+ong> =E2=80=94 Must be resolved before Fabric resource link stories.</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.6 (<code>rfidTagId</code>)</strong> =E2=
+=80=94 Must be resolved before Fabric <code>FabricSpecification.samples</co=
+de> story.</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.7 (Relationship service)</strong> =E2=80=
+=94 Must be resolved before Artwork linked artworks and Fabric BOM/samples =
+stories.</li>
+  <li>=F0=9F=9F=A0 <strong>Story 0.2.4 (<code>addColor</code> schema design=
+)</strong> =E2=80=94 Must be resolved before Color mutation stories.</li>
+ </ul>
+ <p><strong>Recommended</strong>: Resolve ADRs 0.1.3, 0.1.4, 0.1.6, 0.1.7, =
+0.1.9 and Story 0.2.4 <strong>during Phase 1</strong> so Phase 2 can start =
+without delay.</p>
+</blockquote>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.1=E2=80=
+=94ColorBackendGap-Fill">Epic 2.1 =E2=80=94 Color Backend Gap-Fill</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams mutations), Story 0=
+.2.4 (create mutation schema), ADR 0.1.7 (Relationship service for history/=
+links).</p>
+</blockquote>
+<p><strong>Story 2.1.1 =E2=80=94 Add Color Queries to <code>spark-color</co=
+de> Schema</strong></p>
+<ul>
+ <li>Missing queries (from legacy <code>SPARK_Color.graphql</code>):=20
+  <ul>
+   <li><code>getColorById(id: ID!): Color</code></li>
+   <li><code>getColorsByIds(ids: [ID!]!): [Color]</code></li>
+   <li><code>searchColors(input: ColorSearchInput!): ColorSearchResult</cod=
+e></li>
+   <li><code>getColorReferenceData: ColorReferenceData</code> (substrate, c=
+ategory, colorForAll enums)</li>
+   <li><code>getColorsByProvider(providerType: String!, ...): [Color]</code=
+> (Archroma/Coloro/Pantone list queries =E2=80=94 3 variants)</li>
+   <li><code>getColorHistory(colorId: ID!): [ColorHistoryItem]</code></li>
+   <li><code>getColorLinks(colorId: ID!): [ColorLink]</code></li>
+   <li><code>getColorsByTag</code>, <code>getColorsByDesignCycle</code>, <c=
+ode>getColorsByStatus</code></li>
+   <li><code>getColorsByTargetStandard</code>, <code>getColorsBySubstrate</=
+code>, <code>getColorsByCategory</code></li>
+   <li><code>getColorsBySku</code>, <code>getColorsByReferenceId</code></li=
+>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>: All queries implemented, tested,=
+ deployed to dev.</li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<p><strong>Story 2.1.2 =E2=80=94 Add Archroma / Coloro / Pantone Sub-Types =
+to <code>spark-color</code> Schema</strong></p>
+<ul>
+ <li>Missing types (entirely absent from federated schema):=20
+  <ul>
+   <li><code>ArchromaColor</code>, <code>ColoroColor</code>, <code>PantoneC=
+olor</code> (or equivalent sub-type pattern)</li>
+   <li>All provider-specific fields (shade cards, color families, lab value=
+s, etc.)</li>
+  </ul></li>
+ <li><strong>Acceptance Criteria</strong>: Sub-types defined in schema, res=
+olvers implemented, <code>getColorsByProvider</code> queries return typed r=
+esults.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.1.3 =E2=80=94 Add Color Mutations to <code>spark-color</=
+code> Schema</strong></p>
+<ul>
+ <li>Missing mutations:=20
+  <ul>
+   <li><code>createColor(input: CreateColorInput!): Color</code> (see Story=
+ 0.2.4 for schema design)</li>
+   <li><code>updateColor(id: ID!, input: UpdateColorInput!): Color</code></=
+li>
+   <li><code>deleteColor(id: ID!): Boolean</code></li>
+   <li><code>updateColorStatus(id: ID!, status: String!): Color</code></li>
+   <li><code>addColorTag</code>, <code>removeColorTag</code></li>
+   <li><code>updateColorTeams(colorId: ID!, teamIds: [ID!]!): Color</code><=
+/li>
+   <li><code>addColorToFavorites</code>, <code>removeColorFromFavorites</co=
+de></li>
+  </ul></li>
+ <li><strong>Depends on</strong>: Story 0.2.4 (schema design), ADR 0.1.3.</=
+li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<p><strong>Story 2.1.4 =E2=80=94 Add Missing Fields to <code>Color</code> T=
+ype</strong></p>
+<ul>
+ <li>Missing fields:=20
+  <ul>
+   <li><code>teams: [Team]</code>, <code>businessPartners: [BusinessPartner=
+]</code> =E2=80=94 <strong>blocked by ADR 0.1.9</strong></li>
+   <li><code>colorHistoryItems: [ColorHistoryItem]</code> (via Relationship=
+ service =E2=80=94 ADR 0.1.7)</li>
+   <li><code>colorLinks: [ColorLink]</code> (via Relationship service)</li>
+   <li><code>biDirectionalLinkedArtworks: [Artwork]</code> (via Relationshi=
+p service)</li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.7, ADR 0.1.9.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.2=E2=80=
+=94ColorUIMigration">Epic 2.2 =E2=80=94 Color UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams mutations), Story 0=
+.2.4 (create form), ADR 0.1.7 (history/links panels).</p>
+</blockquote>
+<p><strong>Story 2.2.1 =E2=80=94 Color Detail Page: Migrate Read Queries</s=
+trong></p>
+<ul>
+ <li>Create <code>colorFederatedQueries.ts</code>.</li>
+ <li>Implement <code>GET_COLOR_BY_ID</code> using <code>plmClient</code>.</=
+li>
+ <li>Field renames: <code>humanId</code> =E2=86=92 <code>id</code>, <code>n=
+ame</code> =E2=86=92 <code>description</code>, <code>files</code> =E2=86=92=
+ <code>primaryAttachment</code>/<code>designAttachment</code>.</li>
+ <li>Remove <code>SPARK_</code> prefix from all <code>__typename</code> che=
+cks.</li>
+ <li>Update URL params: routes using <code>humanId</code> must switch to <c=
+ode>id</code>.</li>
+ <li><strong>Depends on</strong>: Stories 2.1.1, 0.2.1, 0.2.3.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 2.2.2 =E2=80=94 Color List / Search Page: Migrate Read Que=
+ries</strong></p>
+<ul>
+ <li>Implement <code>SEARCH_COLORS</code> using <code>plmClient</code>.</li=
+>
+ <li>Handle <code>colorForAll</code>, <code>substrate</code>, <code>categor=
+y</code> filter queries via <code>getColorReferenceData</code>.</li>
+ <li>Handle Archroma/Coloro/Pantone sub-type display (conditional rendering=
+ based on <code>__typename</code>).</li>
+ <li><strong>Depends on</strong>: Stories 2.1.1, 2.1.2.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.2.3 =E2=80=94 Color Create / Edit: Migrate Mutations</st=
+rong></p>
+<ul>
+ <li>Implement <code>CREATE_COLOR</code>, <code>UPDATE_COLOR</code> mutatio=
+ns using <code>plmClient</code>.</li>
+ <li>Adapt create form for <code>providerType</code> routing (Archroma/Colo=
+ro/Pantone flows).</li>
+ <li>Update cache after mutation.</li>
+ <li><strong>Depends on</strong>: Stories 2.1.3, 0.2.4.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.2.4 =E2=80=94 Color Status, Tags, Teams, Favorites: Migr=
+ate Mutations</strong></p>
+<ul>
+ <li>Implement <code>UPDATE_COLOR_STATUS</code>, <code>ADD_COLOR_TAG</code>=
+, <code>REMOVE_COLOR_TAG</code>, <code>UPDATE_COLOR_TEAMS</code>, <code>ADD=
+_TO_FAVORITES</code>, <code>REMOVE_FROM_FAVORITES</code>.</li>
+ <li><strong>Depends on</strong>: Story 2.1.3, ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 2.2.5 =E2=80=94 Color History, Links, Linked Artworks: Mig=
+rate Read Queries</strong></p>
+<ul>
+ <li>Implement <code>GET_COLOR_HISTORY</code>, <code>GET_COLOR_LINKS</code>=
+, <code>GET_BIDIRECTIONAL_LINKED_ARTWORKS</code> using <code>plmClient</cod=
+e>.</li>
+ <li><strong>Depends on</strong>: Story 2.1.4, ADR 0.1.7.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 2.2.6 =E2=80=94 Color: Remove Legacy Queries</strong></p>
+<ul>
+ <li>After cutover PR is merged and stable: delete legacy <code>internalCli=
+ent</code> color queries, remove <code>SPARK_Color</code> type references.<=
+/li>
+ <li><strong>Depends on</strong>: All 2.2.x stories passing QA in productio=
+n.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.3=E2=80=
+=94ArtworkBackendGap-Fill">Epic 2.3 =E2=80=94 Artwork Backend Gap-Fill</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams mutations), ADR 0.1=
+.7 (Relationship service for linked artworks).</p>
+</blockquote>
+<p><strong>Story 2.3.1 =E2=80=94 Add Artwork Queries to <code>spark-artwork=
+</code> Schema</strong></p>
+<ul>
+ <li>Missing queries:=20
+  <ul>
+   <li><code>getArtworkById(id: ID!): Artwork</code></li>
+   <li><code>getArtworksByIds(ids: [ID!]!): [Artwork]</code></li>
+   <li><code>searchArtworks(input: ArtworkSearchInput!): ArtworkSearchResul=
+t</code></li>
+   <li><code>getArtworkReferenceData: ArtworkReferenceData</code> (styleCla=
+ssification, applicationTechnique enums)</li>
+   <li><code>getLinkedArtworks(artworkId: ID!): [Artwork]</code> (via Relat=
+ionship service =E2=80=94 ADR 0.1.7)</li>
+   <li><code>getBiDirectionalLinkedArtworks(artworkId: ID!): [Artwork]</cod=
+e> (via Relationship service)</li>
+   <li><code>getArtworksByTag</code>, <code>getArtworksByDesignCycle</code>=
+, <code>getArtworksByStatus</code></li>
+   <li><code>getArtworksByDivision</code>, <code>getArtworksByDepartment</c=
+ode>, <code>getArtworksByBrand</code></li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.7 (for linked artwork queries).</=
+li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.3.2 =E2=80=94 Add Missing Fields to <code>Artwork</code>=
+ and <code>Colorway</code> Types</strong></p>
+<ul>
+ <li>Missing fields on <code>Artwork</code>:=20
+  <ul>
+   <li><code>teams: [Team]</code>, <code>businessPartners: [BusinessPartner=
+]</code> =E2=80=94 <strong>blocked by ADR 0.1.9</strong></li>
+   <li><code>linkedArtworks: [Artwork]</code> (via Relationship service =E2=
+=80=94 ADR 0.1.7)</li>
+   <li><code>biDirectionalLinkedArtworks: [Artwork]</code> (via Relationshi=
+p service)</li>
+  </ul></li>
+ <li>Missing/delta fields on <code>Colorway</code> (10 field-level deltas v=
+s. legacy):=20
+  <ul>
+   <li><code>colorwayId</code> (legacy) =E2=86=92 <code>id</code> (federate=
+d) =E2=80=94 confirm mapping</li>
+   <li><code>colorwayName</code> (legacy) =E2=86=92 <code>name</code> (fede=
+rated) =E2=80=94 confirm mapping</li>
+   <li><code>colorwayStatus</code> (legacy) =E2=86=92 <code>status</code> (=
+federated)</li>
+   <li><code>colorwayColors</code> (legacy) =E2=86=92 <code>otherColors</co=
+de> + <code>libraryColorIds</code> (federated) =E2=80=94 confirm semantic e=
+quivalence</li>
+   <li><code>colorwayAttachment</code> (legacy) =E2=86=92 <code>primaryAtta=
+chment</code> (federated)</li>
+   <li>Confirm all 10 deltas and add any missing fields.</li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.7.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 2.3.3 =E2=80=94 Add Artwork Mutations to <code>spark-artwo=
+rk</code> Schema</strong></p>
+<ul>
+ <li>Missing mutations:=20
+  <ul>
+   <li><code>createArtwork</code>, <code>updateArtwork</code>, <code>delete=
+Artwork</code></li>
+   <li><code>updateArtworkStatus</code></li>
+   <li><code>addArtworkTag</code>, <code>removeArtworkTag</code></li>
+   <li><code>updateArtworkTeams(artworkId: ID!, teamIds: [ID!]!): Artwork</=
+code></li>
+   <li><code>createColorway</code>, <code>updateColorway</code>, <code>dele=
+teColorway</code></li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 10 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.4=E2=80=
+=94ArtworkUIMigration">Epic 2.4 =E2=80=94 Artwork UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams), ADR 0.1.7 (linked=
+ artworks panel).</p>
+</blockquote>
+<p><strong>Story 2.4.1 =E2=80=94 Artwork Detail Page: Migrate Read Queries<=
+/strong></p>
+<ul>
+ <li>Field renames: <code>humanId</code> =E2=86=92 <code>id</code>, <code>n=
+ame</code> =E2=86=92 <code>description</code>, <code>files</code> =E2=86=92=
+ <code>primaryAttachment</code>.</li>
+ <li>Colorway component: adapt for 10 field-level deltas (Story 2.3.2).</li=
+>
+ <li><strong>Depends on</strong>: Story 2.3.1, 0.2.1, 0.2.3.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 2.4.2 =E2=80=94 Artwork List / Search: Migrate Read Querie=
+s</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 2.3.1.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 2.4.3 =E2=80=94 Artwork Create / Edit / Status / Tags / Te=
+ams: Migrate Mutations</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 2.3.3, ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 2.4.4 =E2=80=94 Artwork Linked Artworks Panel: Migrate Rea=
+d Queries</strong></p>
+<ul>
+ <li><code>linkedArtworks</code> and <code>biDirectionalLinkedArtworks</cod=
+e> =E2=80=94 straightforward Relationship service port.</li>
+ <li><strong>Depends on</strong>: Story 2.3.2, ADR 0.1.7.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<p><strong>Story 2.4.5 =E2=80=94 Artwork: Remove Legacy Queries</strong></p=
+>
+<ul>
+ <li>After cutover PR is merged and stable: delete legacy <code>internalCli=
+ent</code> artwork queries, remove <code>SPARK_Artwork</code> type referenc=
+es.</li>
+ <li><strong>Depends on</strong>: All 2.4.x stories passing QA in productio=
+n.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.5=E2=80=
+=94TrimBackendGap-Fill">Epic 2.5 =E2=80=94 Trim Backend Gap-Fill</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams mutations). No Rela=
+tionship service dependency.</p>
+</blockquote>
+<p><strong>Story 2.5.1 =E2=80=94 Add Trim Queries to <code>spark-trim</code=
+> Schema</strong></p>
+<ul>
+ <li>Missing queries:=20
+  <ul>
+   <li><code>getTrimById(id: ID!): Trim</code></li>
+   <li><code>getTrimsByIds(ids: [ID!]!): [Trim]</code></li>
+   <li><code>searchTrims(input: TrimSearchInput!): TrimSearchResult</code><=
+/li>
+   <li><strong>44 reference data queries</strong> =E2=80=94 options:=20
+    <ul>
+     <li>A) Single <code>getTrimReferenceData: TrimReferenceData</code> typ=
+e with all enum fields (preferred =E2=80=94 type-safe).</li>
+     <li>B) Keep dynamic <code>getTrimEnum(enumType: String!): [CodeDescrip=
+tion]</code> query.</li>
+    </ul></li>
+   <li><code>getTrimsByTag</code>, <code>getTrimsByDesignCycle</code>, <cod=
+e>getTrimsByStatus</code>, <code>getTrimsByBrand</code></li>
+  </ul></li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<p><strong>Story 2.5.2 =E2=80=94 Fix <code>SPARK_TrimFacility.approvedColor=
+Rows</code> Regression</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Federated schema has <code>approvedColorRowI=
+ds: [String]</code> (raw IDs). Legacy has <code>approvedColorRows: [SPARK_T=
+rimColorRow]</code> (resolved objects).</li>
+ <li><strong>Fix</strong>: <code>spark-trim</code> subgraph resolves <code>=
+approvedColorRows</code> by fetching <code>Color</code> entity stubs from <=
+code>spark-color</code> via federation entity resolution. Gateway batches N=
++1 via <code>@BatchMapping</code>.</li>
+ <li><strong>Acceptance Criteria</strong>: <code>SPARK_TrimFacility.approve=
+dColorRows</code> returns resolved <code>SPARK_TrimColorRow</code> objects.=
+</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 2.5.3 =E2=80=94 Add Missing Fields to <code>Trim</code> Ty=
+pe</strong></p>
+<ul>
+ <li>Missing: <code>teams: [Team]</code>, <code>businessPartners: [Business=
+Partner]</code>, <code>droppedPartnerIds: [String]</code> =E2=80=94 <strong=
+>blocked by ADR 0.1.9</strong></li>
+ <li><strong>Depends on</strong>: ADR 0.1.9.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 2.5.4 =E2=80=94 Add Trim Mutations to <code>spark-trim</co=
+de> Schema</strong></p>
+<ul>
+ <li>Missing mutations (23 total from legacy):=20
+  <ul>
+   <li><code>createTrim</code>, <code>updateTrim</code>, <code>deleteTrim</=
+code></li>
+   <li><code>updateTrimStatus</code></li>
+   <li><code>addTrimTag</code>, <code>removeTrimTag</code></li>
+   <li><code>updateTrimTeams</code></li>
+   <li><code>addTrimColor</code>, <code>updateTrimColor</code>, <code>remov=
+eTrimColor</code></li>
+   <li><code>addTrimFinish</code>, <code>updateTrimFinish</code>, <code>rem=
+oveTrimFinish</code></li>
+   <li><code>addTrimSupplier</code>, <code>updateTrimSupplier</code>, <code=
+>removeTrimSupplier</code></li>
+   <li><code>addTrimFacility</code>, <code>updateTrimFacility</code>, <code=
+>removeTrimFacility</code></li>
+   <li><code>addTrimSize</code>, <code>updateTrimSize</code>, <code>removeT=
+rimSize</code></li>
+   <li><code>addTrimFiberDetail</code>, <code>removeTrimFiberDetail</code><=
+/li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 21 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.6=E2=80=
+=94TrimUIMigration">Epic 2.6 =E2=80=94 Trim UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams mutations). No othe=
+r ADR blockers.</p>
+</blockquote>
+<p><strong>Story 2.6.1 =E2=80=94 Trim Detail Page: Migrate Read Queries</st=
+rong></p>
+<ul>
+ <li>Field renames: <code>humanId</code> =E2=86=92 <code>id</code>, <code>n=
+ame</code> =E2=86=92 <code>description</code>.</li>
+ <li><code>approvedColorRows</code> fix (depends on Story 2.5.2).</li>
+ <li>Reference data queries: adapt to new <code>getTrimReferenceData</code>=
+ shape.</li>
+ <li><strong>Depends on</strong>: Stories 2.5.1, 2.5.2, 0.2.1, 0.2.3.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.6.2 =E2=80=94 Trim List / Search: Migrate Read Queries</=
+strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 2.5.1.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 2.6.3 =E2=80=94 Trim Create / Edit: Migrate Mutations</str=
+ong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 2.5.4, ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.6.4 =E2=80=94 Trim Colors, Finishes, Suppliers, Faciliti=
+es, Sizes: Migrate Mutations</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 2.5.4.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 2.6.5 =E2=80=94 Trim: Remove Legacy Queries</strong></p>
+<ul>
+ <li>After cutover PR is merged and stable: delete legacy <code>internalCli=
+ent</code> trim queries, remove <code>SPARK_Trim</code> type references.</l=
+i>
+ <li><strong>Depends on</strong>: All 2.6.x stories passing QA in productio=
+n.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.7=E2=80=
+=94FabricBackendGap-Fill">Epic 2.7 =E2=80=94 Fabric Backend Gap-Fill</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams), ADR 0.1.4 (<code>=
+createResourceLink</code>), ADR 0.1.6 (<code>rfidTagId</code> for <code>Fab=
+ricSpecification.samples</code>), ADR 0.1.7 (Relationship service for BOM/s=
+amples/developedFabrics). <strong>Most complex Phase 2 domain</strong> =E2=
+=80=94 clone sagas, costing breaking change, index-alignment bug.</p>
+</blockquote>
+<p><strong>Story 2.7.1 =E2=80=94 Add Fabric Queries to <code>spark-fabric</=
+code> Schema</strong></p>
+<ul>
+ <li>Missing queries (27 from legacy):=20
+  <ul>
+   <li><code>getFabricById(id: ID!): Fabric</code></li>
+   <li><code>getFabricsByIds(ids: [ID!]!): [Fabric]</code></li>
+   <li><code>searchFabrics(input: FabricSearchInput!): FabricSearchResult</=
+code></li>
+   <li><code>getFabricSpecificationById(id: ID!): FabricSpecification</code=
+></li>
+   <li><code>getFabricSpecificationsByIds(ids: [ID!]!): [FabricSpecificatio=
+n]</code></li>
+   <li><code>getFabricReferenceData: FabricReferenceData</code> (fabType, f=
+abricSubType, mechanicalFinishes, chemicalFinishes, etc.)</li>
+   <li><code>getFabricsByTag</code>, <code>getFabricsByDesignCycle</code>, =
+<code>getFabricsByStatus</code></li>
+   <li><code>getFabricsBySupplier</code>, <code>getFabricsByBrand</code></l=
+i>
+   <li><code>getDevelopedFabrics(fabricId: ID!): [Fabric]</code> (via Relat=
+ionship service =E2=80=94 ADR 0.1.7)</li>
+   <li><code>getConnectedBoms(fabricId: ID!): [Bom]</code> (via Relationshi=
+p service)</li>
+   <li><code>getSamples(fabricSpecId: ID!): [Sample]</code> (via Relationsh=
+ip service + SampleV2)</li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.7 (for BOM/samples/developedFabri=
+cs queries).</li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<p><strong>Story 2.7.2 =E2=80=94 Fix <code>BaseMaterial.suppliers</code> In=
+dex-Alignment Bug</strong></p>
+<ul>
+ <li><strong>Problem</strong>: Legacy <code>SPARK_Fabric.js</code> has a kn=
+own index-alignment bug in the VMM fan-out for <code>suppliers</code>. Must=
+ be fixed before migration to avoid carrying the bug into federation.</li>
+ <li><strong>Acceptance Criteria</strong>: Bug identified, fixed in <code>s=
+park-fabric</code> subgraph resolver, regression test added.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 2.7.3 =E2=80=94 Add Missing Fields to <code>Fabric</code> =
+and <code>FabricSpecification</code> Types</strong></p>
+<ul>
+ <li>Missing on <code>Fabric</code>:=20
+  <ul>
+   <li><code>teams: [Team]</code>, <code>businessPartners: [BusinessPartner=
+]</code>, <code>droppedPartnerIds: [String]</code> =E2=80=94 <strong>blocke=
+d by ADR 0.1.9</strong></li>
+   <li><code>suppliers: [FabricSupplier]</code> (VMM fan-out =E2=80=94 depe=
+nds on Story 2.7.2 bug fix)</li>
+   <li><code>developedFabrics: [Fabric]</code> (via Relationship service =
+=E2=80=94 ADR 0.1.7)</li>
+   <li><code>connectedBoms: [Bom]</code> (via Relationship service)</li>
+  </ul></li>
+ <li>Missing on <code>FabricSpecification</code>:=20
+  <ul>
+   <li><code>teams: [Team]</code>, <code>businessPartners: [BusinessPartner=
+]</code> =E2=80=94 <strong>blocked by ADR 0.1.9</strong></li>
+   <li><code>samples: [Sample]</code> (Elastic + SampleV2 stitching =E2=80=
+=94 depends on ADR 0.1.6 for <code>rfidTagId</code>)</li>
+   <li><code>asapColorApprovals: [AsapColorApproval]</code> (3-phase: bucke=
+t IDs =E2=86=92 Elastic =E2=86=92 TGTColorEvaluator)</li>
+  </ul></li>
+ <li><strong>Note</strong>: <code>FabricEvaluation</code> in federated sche=
+ma is stripped to 3 fields vs. full audit trail in legacy. Confirm if addit=
+ional fields needed.</li>
+ <li><strong>Depends on</strong>: ADR 0.1.6, ADR 0.1.7, ADR 0.1.9, Story 2.=
+7.2.</li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<p><strong>Story 2.7.4 =E2=80=94 Add Fabric Mutations to <code>spark-fabric=
+</code> Schema</strong></p>
+<ul>
+ <li>Missing mutations (15 from legacy):=20
+  <ul>
+   <li><code>createFabric</code>, <code>updateFabric</code>, <code>deleteFa=
+bric</code></li>
+   <li><code>updateFabricStatus</code></li>
+   <li><code>addFabricTag</code>, <code>removeFabricTag</code></li>
+   <li><code>updateFabricTeams</code></li>
+   <li><code>cloneFabric</code> (=F0=9F=9F=A0 saga: 6-step orchestration =
+=E2=80=94 must be reimplemented in Kotlin DGS)</li>
+   <li><code>createFabricSpecification</code>, <code>updateFabricSpecificat=
+ion</code>, <code>deleteFabricSpecification</code></li>
+   <li><code>cloneFabricSpecification</code> (=F0=9F=9F=A0 saga: 11-step or=
+chestration including <code>getAttachmentsAndVariantAttachments</code>)</li=
+>
+   <li><code>updateFabricFromSpec</code> (GET-then-PUT with 13-field merge)=
+</li>
+   <li><code>addFabricSupplier</code>, <code>updateFabricSupplier</code>, <=
+code>removeFabricSupplier</code></li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.3, ADR 0.1.4.</li>
+ <li><strong>Estimate</strong>: 21 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.8=E2=80=
+=94FabricUIMigration">Epic 2.8 =E2=80=94 Fabric UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams), ADR 0.1.4 (resour=
+ce links), ADR 0.1.6 (<code>rfidTagId</code> for samples panel), ADR 0.1.7 =
+(BOM/samples panels).</p>
+</blockquote>
+<p><strong>Story 2.8.1 =E2=80=94 Fabric Detail Page: Migrate Read Queries</=
+strong></p>
+<ul>
+ <li>Field renames: <code>humanId</code> =E2=86=92 <code>id</code>, <code>n=
+ame</code> =E2=86=92 <code>description</code>.</li>
+ <li><strong>Breaking change</strong>: <code>cost: Float</code> fields =E2=
+=86=92 <code>CostValue { linYds60, squareYds }</code> =E2=80=94 all costing=
+ display components must be updated.</li>
+ <li><strong>Depends on</strong>: Story 2.7.1, 0.2.1, 0.2.3.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.8.2 =E2=80=94 Fabric Specification Detail: Migrate Read =
+Queries</strong></p>
+<ul>
+ <li><code>FabricEvaluation</code> audit trail: confirm field coverage (Sto=
+ry 2.7.3).</li>
+ <li><code>samples</code> panel: depends on ADR 0.1.6 (<code>rfidTagId</cod=
+e>) and ADR 0.1.7.</li>
+ <li><code>asapColorApprovals</code> panel: 3-phase resolver =E2=80=94 stra=
+ightforward UI once backend is ready.</li>
+ <li><strong>Depends on</strong>: Story 2.7.3, ADR 0.1.6, ADR 0.1.7.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.8.3 =E2=80=94 Fabric List / Search: Migrate Read Queries=
+</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 2.7.1.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 2.8.4 =E2=80=94 Fabric Costing: Migrate Queries and Mutati=
+ons</strong></p>
+<ul>
+ <li>Costing queries already exist in federated schema (<code>getFabricCost=
+sByFabrics</code>, <code>getFabricCostsByFabricSpecifications</code>).</li>
+ <li>Costing mutations already exist (<code>createFabricCosting</code>, <co=
+de>updateFabricCosting</code>, <code>upsertFabricCosting</code>).</li>
+ <li>UI adaptation: <code>cost: Float</code> =E2=86=92 <code>CostValue { li=
+nYds60, squareYds }</code> in all costing input/display components.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 2.8.5 =E2=80=94 Fabric Create / Edit / Clone: Migrate Muta=
+tions</strong></p>
+<ul>
+ <li><code>cloneFabric</code> / <code>cloneFabricSpecification</code> UI: f=
+ire single mutation, handle async saga response.</li>
+ <li><strong>Depends on</strong>: Story 2.7.4, ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.8.6 =E2=80=94 Fabric Suppliers, Teams, Tags: Migrate Mut=
+ations</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 2.7.4, ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 2.8.7 =E2=80=94 Fabric: Remove Legacy Queries</strong></p>
+<ul>
+ <li>After cutover PR is merged and stable: delete legacy <code>internalCli=
+ent</code> fabric queries, remove <code>SPARK_Fabric</code> / <code>SPARK_F=
+abricSpecification</code> type references.</li>
+ <li><strong>Depends on</strong>: All 2.8.x stories passing QA in productio=
+n.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.9=E2=80=
+=94Hub(BaseMaterial)BackendGap-Fill">Epic 2.9 =E2=80=94 Hub (BaseMaterial) =
+Backend Gap-Fill</h3>
+<blockquote>
+ <p><strong>Why Phase 2</strong>: All 8 concrete types are already live <co=
+de>@key</code> federated entities. <code>BaseMaterial</code> schema is well=
+-populated today. No dependency on other domain migrations =E2=80=94 Hub ca=
+n be worked in parallel with Color/Artwork/Trim/Fabric.</p>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams mutation), ADR 0.1.=
+9 (teams read field), ADR 0.1.7 (multi-hop Relationship service traversals)=
+, ADR 0.1.4 (<code>createResourceLink</code> cross-domain write-back).</p>
+ <p><strong>Key complexities confirmed from <code>SPARK_MaterialHub.js</cod=
+e> and <code>spark-materials-hub-graphql</code></strong>:</p>
+ <ol>
+  <li><strong>Dynamic template system entirely absent</strong> =E2=80=94 <c=
+ode>getMaterialTemplate</code>, <code>getMaterialTemplateHierarchy</code>, =
+<code>getMaterialTemplateTypes</code>, <code>addMaterialTemplate</code>, <c=
+ode>updateMaterialTemplate</code> all missing from federated schema. The te=
+mplate hierarchy is fetched at runtime from <code>${endpoint}/templates/hie=
+rarchy</code> =E2=80=94 there is no hardcoded list of types. This system dr=
+ives all UDF attribute rendering and is required for create/edit flows.</li=
+>
+  <li><strong>Paper / Wood / UserDefinedMaterial concrete sub-types absent<=
+/strong> =E2=80=94 each has its own queries (<code>GET_PAPER_BY_ID</code>, =
+<code>GET_WOOD_BY_ID</code>), mutations (<code>addPaper</code>, <code>updat=
+ePaper</code>, <code>addWood</code>, <code>updateWood</code>), enum sets (<=
+code>GET_PAPER_ENUMS</code>, <code>GET_WOOD_ENUMS</code>), and full UI page=
+s (<code>PaperForm</code>, <code>WoodForm</code>, <code>UserDefinedMaterial=
+View</code>, etc.). None exist in the federated schema.</li>
+  <li><strong><code>composition</code> N+1 fan-out</strong> =E2=80=94 each =
+composition item resolves <code>hubMaterial</code> (another <code>getHubMat=
+erial</code> call) + <code>template</code> (another <code>getMaterialTempla=
+teByMaterialId</code> call). Must be solved with DataLoader batching in the=
+ Kotlin DGS resolver.</li>
+  <li><strong><code>developedBaseMaterials</code> two-hop</strong> =E2=80=
+=94 <code>relationship.findRelationships(id, { includeNodeTypes: ['material=
+'] })</code> =E2=86=92 then <code>getHubMaterials(ids)</code>. Blocked by A=
+DR 0.1.7.</li>
+  <li><strong><code>connectedBoms</code> two-hop</strong> =E2=80=94 <code>r=
+elationship.whereUsedSearch(id, { includeNodeTypes: ['bill_of_materials', '=
+packaging_bom'] })</code> =E2=86=92 then <code>getBomByIds</code>. Blocked =
+by ADR 0.1.7.</li>
+  <li><strong><code>searchResourceLinks</code> cross-domain fan-out</strong=
+> =E2=80=94 Relationship service lookup =E2=86=92 then fan-out to artwork/f=
+abric/trim/material loaders per <code>filterType</code>. Blocked by ADR 0.1=
+.7.</li>
+  <li><strong><code>createResourceLink</code> cross-domain write-back</stro=
+ng> =E2=80=94 after creating the link, the legacy resolver calls <code>appl=
+yParentUpdateForNewResourceLink</code> which fetches the target material fr=
+om its own domain service and updates its <code>parent</code> field. Blocke=
+d by ADR 0.1.4.</li>
+  <li><strong><code>suppliers</code> VMM N+1</strong> =E2=80=94 each suppli=
+er resolves VMM business partner details via <code>ctx.loaders.vmm.getByID<=
+/code>. Must be batched in Kotlin DGS.</li>
+  <li><strong><code>validateMaterialUniqueness</code> / <code>bulkValidateM=
+aterialUniqueness</code></strong> =E2=80=94 uniqueness check mutations requ=
+ired for the create flow; absent from federated schema.</li>
+  <li><strong><code>addPaper</code>/<code>addWood</code> post-create side e=
+ffects</strong> =E2=80=94 after create: associate attachment teams + update=
+ material teams (same two-step pattern as other domains but explicit in Hub=
+ resolver).</li>
+  <li><strong>Reference data queries</strong> =E2=80=94 <code>getHubCodedOp=
+tions(type)</code>, <code>getHubUnitsOfMeasure</code>, <code>getHubMaterial=
+Types</code>, <code>getMaterialTemplateTypes</code> =E2=80=94 all missing f=
+rom federated schema.</li>
+ </ol>
+</blockquote>
+<p><strong>Story 2.9.1 =E2=80=94 Add <code>BaseMaterial</code> Core Fields =
+and Reference Data Queries</strong></p>
+<ul>
+ <li>Add missing reference data queries to <code>materials-hub</code> schem=
+a:=20
+  <ul>
+   <li><code>getHubCodedOptions(type: String!): [CodeDescription]</code> (S=
+tatus, Origin, Certification, VisualDescription, Brand, PaperSubtype, WoodS=
+ubtype, etc.)</li>
+   <li><code>getHubUnitsOfMeasure: [UnitOfMeasure]</code></li>
+   <li><code>getHubMaterialTypes: [String]</code></li>
+  </ul></li>
+ <li>Add missing fields on <code>BaseMaterial</code>:=20
+  <ul>
+   <li><code>teams: [Team]</code>, <code>businessPartners: [BusinessPartner=
+]</code> =E2=80=94 <strong>blocked by ADR 0.1.9</strong></li>
+   <li><code>droppedPartnerIds: [String]</code> =E2=80=94 <strong>blocked b=
+y ADR 0.1.9</strong></li>
+   <li><code>supplierInfo: BaseMaterialSupplierInfo</code></li>
+   <li><code>recycledContent: Boolean</code></li>
+   <li><code>productType: String</code></li>
+   <li><code>inspiration: Boolean</code></li>
+  </ul></li>
+ <li>Fix <code>BaseMaterialColorway.humanId</code> =E2=86=92 <code>id</code=
+>.</li>
+ <li>Fix <code>BaseMaterialComposition</code>: add <code>hubMaterial</code>=
+, <code>template</code>, <code>countryOfOrigin</code>, <code>size</code>, <=
+code>certifications</code> sub-fields (currently stripped in federated sche=
+ma).</li>
+ <li><strong>Depends on</strong>: ADR 0.1.9 (for <code>teams</code> / <code=
+>businessPartners</code> fields).</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.9.2 =E2=80=94 Add Paper / Wood / UserDefinedMaterial Con=
+crete Sub-Types</strong></p>
+<ul>
+ <li>Add <code>Paper</code> type with all sub-type fields: <code>subType</c=
+ode>, <code>bleaching</code>, <code>coating</code>, <code>pulpType</code>, =
+<code>lamination</code>, <code>paperGrade</code>, <code>paperboardGrade</co=
+de>, <code>corrugateFluting</code>, <code>tissueGrade</code>, <code>dryingT=
+ype</code>, <code>nonWoodFiberContent</code>.</li>
+ <li>Add <code>Wood</code> type with sub-type fields: <code>subType</code>,=
+ <code>species</code>, <code>finish</code>, <code>reclaimed</code>.</li>
+ <li>Add <code>UserDefinedMaterial</code> type with <code>details</code> (U=
+DF attribute map).</li>
+ <li>Add <code>__resolveType</code> logic in <code>materials-hub</code> to =
+route <code>BaseMaterial</code> =E2=86=92 <code>Paper</code> / <code>Wood</=
+code> / <code>UserDefinedMaterial</code> based on <code>classification</cod=
+e>.</li>
+ <li>Add Paper/Wood-specific enum queries (see <code>GET_PAPER_ENUMS</code>=
+, <code>GET_WOOD_ENUMS</code>).</li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<p><strong>Story 2.9.3 =E2=80=94 Add Material Template System to <code>mate=
+rials-hub</code> Schema</strong></p>
+<ul>
+ <li>Add queries: <code>getMaterialTemplate(name: ID!, inheritAttributes: B=
+oolean): MaterialTemplate</code>, <code>getMaterialTemplateHierarchy: [Mate=
+rialTemplate]</code>, <code>getMaterialTemplateTypes(statuses: [String]): [=
+String]</code>.</li>
+ <li>Add <code>MaterialTemplate</code> type with full attribute tree: <code=
+>attributes</code>, <code>parentTemplate</code>, <code>permissions</code>, =
+<code>suppliers</code>, <code>composition</code>, <code>origin</code>, <cod=
+e>certification</code>, <code>galleryTaxonomyMapping</code>, <code>definedB=
+aseAttributeConfigurations</code>.</li>
+ <li>Add mutations: <code>addMaterialTemplate(template: MaterialTemplateInp=
+ut!): MaterialTemplate</code>, <code>updateMaterialTemplate(template: Mater=
+ialTemplateInput!): MaterialTemplate</code>.</li>
+ <li><strong>Note</strong>: This is the largest single backend story =E2=80=
+=94 the template system is the backbone of all Hub create/edit flows.</li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<p><strong>Story 2.9.4 =E2=80=94 Add Multi-Hop Traversal Fields (Relationsh=
+ip Service)</strong></p>
+<ul>
+ <li>Add <code>developedBaseMaterials: [BaseMaterial]</code> =E2=80=94 two-=
+hop: Relationship <code>findRelationships</code> =E2=86=92 <code>getHubMate=
+rials</code>.</li>
+ <li>Add <code>connectedBoms: [Bom]</code> =E2=80=94 two-hop: Relationship =
+<code>whereUsedSearch</code> =E2=86=92 <code>getBomByIds</code>.</li>
+ <li>Add <code>searchResourceLinks(targetIds, sourceIds, filterType): Resou=
+rceLinkSearch</code> query =E2=80=94 Relationship lookup + cross-domain fan=
+-out.</li>
+ <li><strong>Blocked by</strong>: ADR 0.1.7.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.9.5 =E2=80=94 Add <code>BaseMaterial</code> Mutations</s=
+trong></p>
+<ul>
+ <li>Add mutations:=20
+  <ul>
+   <li><code>addPaper(material: PaperInput!): Paper</code>, <code>updatePap=
+er(material: PaperInput!): Paper</code></li>
+   <li><code>addWood(material: WoodInput!): Wood</code>, <code>updateWood(m=
+aterial: WoodInput!): Wood</code></li>
+   <li><code>partialUpdateHubMaterial(id: ID!, partialMaterial: HubMaterial=
+PartialInput!): BaseMaterial</code></li>
+   <li><code>updateTeams(id: ID!, teamsToUpdate: TeamsUpdateInput): Boolean=
+</code> =E2=80=94 <strong>blocked by ADR 0.1.3</strong></li>
+   <li><code>associateAttachmentTeams(parentId: ID!, files: [String]!, team=
+sToUpdate: TeamsUpdateInput!, relatedResourceIds: [String]): Attachment</co=
+de></li>
+   <li><code>validateMaterialUniqueness(material: NewHubMaterialInput!, pag=
+e: Int): UniquenessResult</code></li>
+   <li><code>bulkValidateMaterialUniqueness(bulkValidateUniqueRequest: [Bul=
+kValidateUniqueInput]!): [BulkUniquenessResult]</code></li>
+   <li><code>createResourceLink(resourceLink: ResourceLinkInput!): Resource=
+Link</code> + cross-domain write-back =E2=80=94 <strong>blocked by ADR 0.1.=
+4</strong></li>
+   <li><code>deleteResourceLink(targetId: ID!, sourceId: ID!): Boolean</cod=
+e></li>
+   <li><code>bulkAddDeleteResourceLinks(request: BulkResourceLinkInput!): B=
+oolean</code></li>
+   <li><code>addUserSettings(userSettings: UserSettingsInput!): UserSetting=
+s</code> (favorite material types, list view setting)</li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.3 (teams), ADR 0.1.4 (createResou=
+rceLink).</li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic2.10=E2=80=
+=94HubUIMigration">Epic 2.10 =E2=80=94 Hub UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (mutations), ADR 0.1.9 (te=
+ams field), ADR 0.1.7 (multi-hop fields), ADR 0.1.4 (createResourceLink). N=
+o dependency on other domain UI migrations.</p>
+ <p><strong>Key UI complexity</strong>: The Hub UI has two distinct sub-sys=
+tems =E2=80=94 the <strong>BaseMaterial detail/edit pages</strong> (shared =
+across all 30 material types) and the <strong>Material Template admin pages=
+</strong> (template hierarchy, attribute configuration). Both must be migra=
+ted. Paper/Wood/UserDefinedMaterial each have their own full page sets.</p>
+</blockquote>
+<p><strong>Story 2.10.1 =E2=80=94 Hub Detail Page: Migrate Read Queries for=
+ <code>BaseMaterial</code></strong></p>
+<ul>
+ <li>Migrate <code>GET_HUB_MATERIAL_AND_TEMPLATE_PERMISSIONS</code> and <co=
+de>GET_HUB_MATERIAL_BY_ID</code> to <code>plmClient</code>.</li>
+ <li>Field renames: <code>humanId</code> =E2=86=92 <code>id</code>; <code>n=
+ame</code> =E2=86=92 <code>description</code>; <code>files</code> =E2=86=92=
+ <code>primaryAttachment</code>/<code>designAttachment</code>.</li>
+ <li><code>BaseMaterialColorway.humanId</code> =E2=86=92 <code>id</code> (d=
+epends on Story 2.9.1).</li>
+ <li><code>composition.hubMaterial</code> and <code>composition.template</c=
+ode> sub-fields (depends on Story 2.9.1).</li>
+ <li><code>supplierInfo</code>, <code>recycledContent</code>, <code>product=
+Type</code> fields (depends on Story 2.9.1).</li>
+ <li>Missing: <code>teams</code>, <code>businessPartners</code>, <code>drop=
+pedPartnerIds</code> =E2=80=94 depends on ADR 0.1.9 (Story 2.9.1).</li>
+ <li>Missing: <code>developedBaseMaterials</code>, <code>connectedBoms</cod=
+e>, <code>searchResourceLinks</code> =E2=80=94 depends on Story 2.9.4 (ADR =
+0.1.7).</li>
+ <li><strong>Depends on</strong>: Story 2.9.1, 0.2.1, 0.2.3.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.10.2 =E2=80=94 Hub Paper / Wood / UserDefinedMaterial Pa=
+ges: Migrate</strong></p>
+<ul>
+ <li>Migrate <code>GET_PAPER_BY_ID</code>, <code>GET_PAPER_ENUMS</code>, <c=
+ode>ADD_PAPER</code>, <code>UPDATE_PAPER</code> to <code>plmClient</code>.<=
+/li>
+ <li>Migrate <code>GET_WOOD_BY_ID</code>, <code>GET_WOOD_ENUMS</code>, <cod=
+e>ADD_WOOD</code>, <code>UPDATE_WOOD</code> to <code>plmClient</code>.</li>
+ <li>Migrate <code>UserDefinedMaterialView</code>, <code>UserDefinedMateria=
+lModify</code>, <code>UserDefinedMaterialNew</code> containers.</li>
+ <li><strong>Depends on</strong>: Story 2.9.2, 2.9.5.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.10.3 =E2=80=94 Hub Material Template Admin Pages: Migrat=
+e</strong></p>
+<ul>
+ <li>Migrate <code>GET_TEMPLATE_DETAILS_FOR_FORM</code>, <code>GET_TEMPLATE=
+_HIERARCHY</code>, <code>GET_TEMPLATE_BY_ID</code>, <code>ADD_MATERIAL_TEMP=
+LATE</code>, <code>UPDATE_MATERIAL_TEMPLATE</code> to <code>plmClient</code=
+>.</li>
+ <li>Migrate <code>MaterialTypeEdit</code>, <code>MaterialTypeNew</code>, <=
+code>MaterialTypeView</code>, <code>MaterialTypeForm</code> containers.</li=
+>
+ <li><strong>Depends on</strong>: Story 2.9.3.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.10.4 =E2=80=94 Hub Create / Edit Mutations: Migrate</str=
+ong></p>
+<ul>
+ <li>Migrate <code>PARTIAL_UPDATE_HUB_MATERIAL</code>, <code>VALIDATE_MATER=
+IAL_UNIQUENESS</code>, <code>BULK_MATERIAL_VALIDATE_UNIQUENESS</code>, <cod=
+e>ADD_RELATIONSHIP</code>, <code>ADD_FAVORITE_MATERIAL_TYPES</code>, <code>=
+CHANGE_MATERIAL_VIEW_SETTING</code> to <code>plmClient</code>.</li>
+ <li>Migrate <code>createResourceLink</code> / <code>deleteResourceLink</co=
+de> / <code>bulkAddDeleteResourceLinks</code> =E2=80=94 <strong>depends on =
+ADR 0.1.4 (Story 2.9.5)</strong>.</li>
+ <li>Migrate <code>updateTeams</code> / <code>associateAttachmentTeams</cod=
+e> =E2=80=94 <strong>depends on ADR 0.1.3 (Story 2.9.5)</strong>.</li>
+ <li><strong>Depends on</strong>: Story 2.9.5, ADR 0.1.3, ADR 0.1.4.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 2.10.5 =E2=80=94 Hub: Remove Legacy Queries</strong></p>
+<ul>
+ <li>After cutover PR is merged and stable: delete legacy <code>internalCli=
+ent</code> hub/materials queries, remove <code>SPARK_BaseMaterial</code> / =
+<code>SPARK_Paper</code> / <code>SPARK_Wood</code> / <code>SPARK_UserDefine=
+dMaterial</code> type references.</li>
+ <li><strong>Depends on</strong>: All 2.10.x stories passing QA in producti=
+on.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<blockquote>
+ <p><strong>ADR dependencies for Phase 3</strong>:</p>
+ <ul>
+  <li>=F0=9F=94=B4 <strong>ADR 0.1.3 (<code>bulkUpdateTeams</code>)</strong=
+> =E2=80=94 Must be resolved (should be done during Phase 1).</li>
+  <li>=F0=9F=94=B4 <strong>ADR 0.1.9 (Material entity <code>teams</code> re=
+ad)</strong> =E2=80=94 Must be resolved before <code>teams</code> / <code>b=
+usinessPartners</code> fields on Palette and Combination (should be done du=
+ring Phase 1).</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.5 (Palette atomic mutations)</strong> =
+=E2=80=94 Must be resolved before Palette mutations.</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.6 (<code>rfidTagId</code>)</strong> =E2=
+=80=94 Must be resolved before Combination FSC <code>samples</code>.</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.7 (Relationship service)</strong> =E2=80=
+=94 Must be resolved before Combination <code>samples</code>.</li>
+  <li>=F0=9F=9F=A0 <strong>ADR 0.1.8 (<code>isInternalUser</code>)</strong>=
+ =E2=80=94 Must be resolved before Combination detail page.</li>
+ </ul>
+ <p><strong>Recommended</strong>: Resolve ADRs 0.1.5, 0.1.8, and 0.1.9 <str=
+ong>during Phase 2</strong> so Phase 3 can start without delay.</p>
+</blockquote>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic3.1=E2=80=
+=94PaletteBackendGap-Fill">Epic 3.1 =E2=80=94 Palette Backend Gap-Fill</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams), ADR 0.1.5 (atomic=
+ add/remove mutations).</p>
+</blockquote>
+<p><strong>Story 3.1.1 =E2=80=94 Add Palette Mutations to <code>spark-palet=
+te-service</code> Schema</strong></p>
+<ul>
+ <li>Missing mutations:=20
+  <ul>
+   <li><code>createPalette(input: CreatePaletteInput!): Palette</code></li>
+   <li><code>updatePalette(id: ID!, input: UpdatePaletteInput!): Palette</c=
+ode></li>
+   <li><code>deletePalette(id: ID!): Boolean</code></li>
+   <li><code>updatePaletteStatus(id: ID!, status: String!): Palette</code><=
+/li>
+   <li><code>addMaterialToPalette(paletteId: ID!, materialId: ID!): Palette=
+</code> (atomic =E2=80=94 replaces read-modify-write)</li>
+   <li><code>removeMaterialFromPalette(paletteId: ID!, materialId: ID!): Pa=
+lette</code> (atomic)</li>
+   <li><code>addPaletteTag</code>, <code>removePaletteTag</code></li>
+   <li><code>updatePaletteTeams</code></li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.5, ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 10 pts</li>
+</ul>
+<p><strong>Story 3.1.2 =E2=80=94 Add Missing Fields to <code>Palette</code>=
+ Type</strong></p>
+<ul>
+ <li>Missing: <code>teams: [Team]</code>, <code>businessPartners: [Business=
+Partner]</code> =E2=80=94 <strong>blocked by ADR 0.1.9</strong></li>
+ <li><strong>Note</strong>: <code>relatedMaterials: [Material]</code> alrea=
+dy returns resolved objects in federated schema (vs. <code>[String]</code> =
+IDs in legacy). UI must adapt from ID-based rendering to object-based rende=
+ring.</li>
+ <li><strong>Depends on</strong>: ADR 0.1.9.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 3.1.3 =E2=80=94 Add Palette Search Query</strong></p>
+<ul>
+ <li>Missing: <code>searchPalettes(input: PaletteSearchInput!): PaletteSear=
+chResult</code></li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic3.2=E2=80=
+=94PaletteUIMigration">Epic 3.2 =E2=80=94 Palette UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams), ADR 0.1.5 (atomic=
+ mutations).</p>
+</blockquote>
+<p><strong>Story 3.2.1 =E2=80=94 Palette Detail Page: Migrate Read Queries<=
+/strong></p>
+<ul>
+ <li><code>relatedMaterials: [String]</code> =E2=86=92 <code>[Material]</co=
+de> semantic flip: UI currently renders material IDs and fetches each separ=
+ately. With federation, <code>relatedMaterials</code> returns resolved <cod=
+e>Material</code> objects directly =E2=80=94 simplify rendering.</li>
+ <li>Field renames: <code>humanId</code> =E2=86=92 <code>id</code>, <code>n=
+ame</code> =E2=86=92 <code>description</code>.</li>
+ <li><strong>Depends on</strong>: Story 3.1.2, 0.2.1, 0.2.3.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 3.2.2 =E2=80=94 Palette List / Search: Migrate Read Querie=
+s</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 3.1.3.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 3.2.3 =E2=80=94 Palette Add/Remove Materials: Migrate Muta=
+tions</strong></p>
+<ul>
+ <li>Replace legacy read-modify-write with <code>addMaterialToPalette</code=
+> / <code>removeMaterialFromPalette</code> atomic mutations.</li>
+ <li><strong>Depends on</strong>: Story 3.1.1, ADR 0.1.5.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 3.2.4 =E2=80=94 Palette Create / Edit / Status / Tags / Te=
+ams: Migrate Mutations</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 3.1.1, ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 3.2.5 =E2=80=94 Palette: Remove Legacy Queries</strong></p=
+>
+<ul>
+ <li>After cutover PR is merged and stable: delete legacy <code>internalCli=
+ent</code> palette queries, remove <code>SPARK_Palette</code> type referenc=
+es.</li>
+ <li><strong>Depends on</strong>: All 3.2.x stories passing QA in productio=
+n.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic3.3=E2=80=
+=94CombinationBackendGap-Fill">Epic 3.3 =E2=80=94 Combination Backend Gap-F=
+ill</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams), ADR 0.1.6 (<code>=
+rfidTagId</code> for FSC samples), ADR 0.1.7 (Relationship service for samp=
+les), ADR 0.1.8 (<code>isInternalUser</code> branching).</p>
+</blockquote>
+<p><strong>Story 3.3.1 =E2=80=94 Add Combination Queries to <code>spark-com=
+bination</code> Schema</strong></p>
+<ul>
+ <li>Missing queries:=20
+  <ul>
+   <li><code>combinations(ids: [String!]!): [Combination]</code></li>
+   <li><code>searchCombinations(input: CombinationSearchInput!): Combinatio=
+nSearchResult</code></li>
+   <li><code>getBulkCombinations(ids: [String!]!): [Combination]</code> (al=
+ready solved by federation entity stubs)</li>
+   <li><code>searchMaterialsForPalette(input: SearchInput!): MaterialSearch=
+Result</code> (two-phase =E2=80=94 solved by federated search)</li>
+   <li><code>getCombinationReferenceData: CombinationReferenceData</code></=
+li>
+   <li><code>getCombinationsByTag</code>, <code>getCombinationsByDesignCycl=
+e</code>, <code>getCombinationsByStatus</code></li>
+  </ul></li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 3.3.2 =E2=80=94 Add Missing Fields to <code>Combination</c=
+ode> and <code>FabricSpecCombo</code> Types</strong></p>
+<ul>
+ <li>Missing on <code>Combination</code>:=20
+  <ul>
+   <li><code>teams: [Team]</code>, <code>businessPartners: [BusinessPartner=
+]</code> =E2=80=94 <strong>blocked by ADR 0.1.9</strong></li>
+   <li><code>samples: [Sample]</code> (via Relationship service =E2=80=94 A=
+DR 0.1.7)</li>
+  </ul></li>
+ <li>Missing on <code>FabricSpecCombo</code>:=20
+  <ul>
+   <li><code>samples: [Sample]</code> (Elastic + SampleV2 stitching =E2=80=
+=94 ADR 0.1.6)</li>
+   <li><code>asapColorApprovals: [AsapColorApproval]</code> (3-phase resolv=
+er)</li>
+  </ul></li>
+ <li><strong>Note</strong>: <code>isInternalUser</code> branching (ADR 0.1.=
+8) =E2=80=94 5 container query shapes must be preserved in DGS.</li>
+ <li><strong>Note</strong>: <code>sentToFpf</code> =E2=86=92 <code>sentToFP=
+F</code> capitalization already correct in federated schema.</li>
+ <li><strong>Depends on</strong>: ADR 0.1.6, ADR 0.1.7, ADR 0.1.8.</li>
+ <li><strong>Estimate</strong>: 13 pts</li>
+</ul>
+<p><strong>Story 3.3.3 =E2=80=94 Add Combination Mutations to <code>spark-c=
+ombination</code> Schema</strong></p>
+<ul>
+ <li>Missing mutations (16 from legacy):=20
+  <ul>
+   <li><code>createCombination</code>, <code>updateCombination</code>, <cod=
+e>deleteCombination</code></li>
+   <li><code>updateCombinationStatus</code></li>
+   <li><code>addCombinationTag</code>, <code>removeCombinationTag</code></l=
+i>
+   <li><code>updateCombinationTeams</code></li>
+   <li><code>createFabricSpecCombo</code>, <code>updateFabricSpecCombo</cod=
+e>, <code>deleteFabricSpecCombo</code></li>
+   <li><code>addImpressionIntentBucket</code>, <code>updateImpressionIntent=
+Bucket</code>, <code>removeImpressionIntentBucket</code></li>
+   <li><code>addImpressionIntentLine</code>, <code>updateImpressionIntentLi=
+ne</code>, <code>removeImpressionIntentLine</code></li>
+   <li><code>updateSampleYardage</code></li>
+  </ul></li>
+ <li><strong>Depends on</strong>: ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 16 pts</li>
+</ul>
+<hr>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic3.4=E2=80=
+=94CombinationUIMigration">Epic 3.4 =E2=80=94 Combination UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: ADR 0.1.3 (teams), ADR 0.1.6 (FSC sa=
+mples panel), ADR 0.1.7 (samples panel), ADR 0.1.8 (<code>isInternalUser</c=
+ode> branching =E2=80=94 must be resolved before detail page).</p>
+</blockquote>
+<p><strong>Story 3.4.1 =E2=80=94 Combination Detail Page: Migrate Read Quer=
+ies</strong></p>
+<ul>
+ <li><code>isInternalUser</code> branching: preserve 5 container query shap=
+es (ADR 0.1.8).</li>
+ <li>Field renames: <code>humanId</code> =E2=86=92 <code>id</code>, <code>n=
+ame</code> =E2=86=92 <code>description</code>.</li>
+ <li><code>sentToFpf</code> =E2=86=92 <code>sentToFPF</code> capitalization=
+ fix in UI (already correct in federated schema).</li>
+ <li><strong>Depends on</strong>: Story 3.3.1, ADR 0.1.8, 0.2.1, 0.2.3.</li=
+>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 3.4.2 =E2=80=94 FabricSpecCombo Detail: Migrate Read Queri=
+es</strong></p>
+<ul>
+ <li><code>samples</code> panel: depends on ADR 0.1.6 and ADR 0.1.7.</li>
+ <li><code>asapColorApprovals</code> panel: 3-phase resolver =E2=80=94 stra=
+ightforward UI once backend is ready.</li>
+ <li><strong>Depends on</strong>: Story 3.3.2, ADR 0.1.6, ADR 0.1.7.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 3.4.3 =E2=80=94 Combination List / Search: Migrate Read Qu=
+eries</strong></p>
+<ul>
+ <li><code>getBulkCombinations</code> =E2=86=92 federation entity stubs (st=
+raightforward).</li>
+ <li><strong>Depends on</strong>: Story 3.3.1.</li>
+ <li><strong>Estimate</strong>: 3 pts</li>
+</ul>
+<p><strong>Story 3.4.4 =E2=80=94 Combination Create / Edit / Mutations: Mig=
+rate</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 3.3.3, ADR 0.1.3.</li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 3.4.5 =E2=80=94 Combination: Remove Legacy Queries</strong=
+></p>
+<ul>
+ <li>After cutover PR is merged and stable: delete legacy <code>internalCli=
+ent</code> combination queries, remove <code>SPARK_Combination</code> / <co=
+de>SPARK_FabricSpecCombo</code> type references.</li>
+ <li><strong>Depends on</strong>: All 3.4.x stories passing QA in productio=
+n.</li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<h2 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Phase4=E2=80=94=
+Search">Phase 4 =E2=80=94 Search</h2>
+<blockquote>
+ <p><strong>ADR dependencies for Phase 4</strong>:</p>
+ <ul>
+  <li>=F0=9F=9F=A0 <strong>Story 0.2.5 (search shape design)</strong> =E2=
+=80=94 Must be resolved before Search UI stories begin.</li>
+ </ul>
+ <p>Search has no dependency on any domain migration being complete =E2=80=
+=94 the federated search subgraph (<code>spark-elastic-search-hub</code>) a=
+lready works. The only question is the UI rendering shape (Story 0.2.5).</p=
+>
+</blockquote>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Epic4.1=E2=80=
+=94SearchUIMigration">Epic 4.1 =E2=80=94 Search UI Migration</h3>
+<blockquote>
+ <p><strong>ADR dependencies</strong>: Story 0.2.5 (flat vs. interface+frag=
+ments design decision) must be resolved first.</p>
+</blockquote>
+<p><strong>Story 4.1.1 =E2=80=94 Migrate <code>SEARCH_MATERIALS_PAGINATED</=
+code> to Federated Search</strong></p>
+<ul>
+ <li><strong>Depends on</strong>: Story 0.2.5.</li>
+ <li><strong>Tasks</strong>:=20
+  <ul>
+   <li>Replace <code>SEARCH_MATERIALS_PAGINATED</code> (legacy) with federa=
+ted <code>searchMaterials</code> query on <code>plmClient</code>.</li>
+   <li>Input shape: <code>SPARK_SearchRequest</code> =E2=86=92 federated se=
+arch input (already mapped =E2=80=94 <code>spark-elastic-search-hub</code> =
+uses same shape).</li>
+   <li>Output shape: adapt <code>MaterialsList.tsx</code> for chosen design=
+ (flat or fragments).</li>
+  </ul></li>
+ <li><strong>Estimate</strong>: 8 pts</li>
+</ul>
+<p><strong>Story 4.1.2 =E2=80=94 Search Filters: Migrate Reference Data Que=
+ries</strong></p>
+<ul>
+ <li>All filter dropdowns (status, type, tag, designCycle, etc.) must use <=
+code>plmClient</code> reference data queries.</li>
+ <li><strong>Estimate</strong>: 5 pts</li>
+</ul>
+<p><strong>Story 4.1.3 =E2=80=94 Search: Remove Legacy Queries</strong></p>
+<ul>
+ <li>After cutover PR is merged and stable: delete legacy <code>SEARCH_MATE=
+RIALS_PAGINATED</code> query and <code>internalClient</code> search calls.<=
+/li>
+ <li><strong>Estimate</strong>: 2 pts</li>
+</ul>
+<hr>
+<h2 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-Summary">Summar=
+y</h2>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-StoryCount&amp;=
+EstimatesbyPhase">Story Count &amp; Estimates by Phase</h3>
+<div class=3D"table-wrap">
+ <table class=3D"wrapped confluenceTable">
+  <thead>
+   <tr>
+    <th class=3D"confluenceTh">Phase</th>
+    <th class=3D"confluenceTh">Epic</th>
+    <th class=3D"confluenceTh">Description</th>
+    <th class=3D"confluenceTh">Stories</th>
+    <th class=3D"confluenceTh">Est. (pts)</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr>
+    <td class=3D"confluenceTd">0</td>
+    <td class=3D"confluenceTd">0.1</td>
+    <td class=3D"confluenceTd">ADRs</td>
+    <td class=3D"confluenceTd">7 (2 resolved =E2=9C=85)</td>
+    <td class=3D"confluenceTd">19</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0</td>
+    <td class=3D"confluenceTd">0.2</td>
+    <td class=3D"confluenceTd">Infrastructure + Cross-Cutting UI</td>
+    <td class=3D"confluenceTd">8</td>
+    <td class=3D"confluenceTd">32</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>1</strong></td>
+    <td class=3D"confluenceTd"><strong>1.1</strong></td>
+    <td class=3D"confluenceTd"><strong>Wash Backend</strong> =E2=9C=85 Star=
+t here</td>
+    <td class=3D"confluenceTd"><strong>7</strong></td>
+    <td class=3D"confluenceTd"><strong>28</strong></td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>1</strong></td>
+    <td class=3D"confluenceTd"><strong>1.2</strong></td>
+    <td class=3D"confluenceTd"><strong>Wash UI</strong></td>
+    <td class=3D"confluenceTd"><strong>4</strong></td>
+    <td class=3D"confluenceTd"><strong>15</strong></td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.1</td>
+    <td class=3D"confluenceTd">Color Backend</td>
+    <td class=3D"confluenceTd">4</td>
+    <td class=3D"confluenceTd">42</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.2</td>
+    <td class=3D"confluenceTd">Color UI</td>
+    <td class=3D"confluenceTd">6</td>
+    <td class=3D"confluenceTd">31</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.3</td>
+    <td class=3D"confluenceTd">Artwork Backend</td>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">23</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.4</td>
+    <td class=3D"confluenceTd">Artwork UI</td>
+    <td class=3D"confluenceTd">5</td>
+    <td class=3D"confluenceTd">17</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.5</td>
+    <td class=3D"confluenceTd">Trim Backend</td>
+    <td class=3D"confluenceTd">4</td>
+    <td class=3D"confluenceTd">42</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.6</td>
+    <td class=3D"confluenceTd">Trim UI</td>
+    <td class=3D"confluenceTd">5</td>
+    <td class=3D"confluenceTd">26</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.7</td>
+    <td class=3D"confluenceTd">Fabric Backend</td>
+    <td class=3D"confluenceTd">4</td>
+    <td class=3D"confluenceTd">50</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.8</td>
+    <td class=3D"confluenceTd">Fabric UI</td>
+    <td class=3D"confluenceTd">7</td>
+    <td class=3D"confluenceTd">37</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.9</td>
+    <td class=3D"confluenceTd">Hub Backend</td>
+    <td class=3D"confluenceTd">5</td>
+    <td class=3D"confluenceTd">55</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">2</td>
+    <td class=3D"confluenceTd">2.10</td>
+    <td class=3D"confluenceTd">Hub UI</td>
+    <td class=3D"confluenceTd">5</td>
+    <td class=3D"confluenceTd">34</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">3.1</td>
+    <td class=3D"confluenceTd">Palette Backend</td>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">16</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">3.2</td>
+    <td class=3D"confluenceTd">Palette UI</td>
+    <td class=3D"confluenceTd">5</td>
+    <td class=3D"confluenceTd">16</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">3.3</td>
+    <td class=3D"confluenceTd">Combination Backend</td>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">37</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">3.4</td>
+    <td class=3D"confluenceTd">Combination UI</td>
+    <td class=3D"confluenceTd">5</td>
+    <td class=3D"confluenceTd">29</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">4</td>
+    <td class=3D"confluenceTd">4.1</td>
+    <td class=3D"confluenceTd">Search UI</td>
+    <td class=3D"confluenceTd">3</td>
+    <td class=3D"confluenceTd">15</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd"><strong>Total</strong></td>
+    <td class=3D"confluenceTd"><strong>19 epics</strong></td>
+    <td class=3D"confluenceTd"><br></td>
+    <td class=3D"confluenceTd"><strong>109 stories</strong></td>
+    <td class=3D"confluenceTd"><strong>~574 pts</strong></td>
+   </tr>
+  </tbody>
+ </table>
+</div>
+<blockquote>
+ <p><strong>Note</strong>: ~243 pts UI-only. ~331 pts backend gap-fill + AD=
+Rs. Total ~574 pts across both tracks. <strong>Sequencing change</strong>: =
+Hub moved from Phase 4 =E2=86=92 Phase 2 (no domain sequencing dependency =
+=E2=80=94 <code>@key</code> entities already live). Cross-cutting UI migrat=
+ions (<code>getMaterialByIdFromService</code>, <code>bulkUpdateTeams</code>=
+, <code>createResourceLink</code>) moved from Phase 4 =E2=86=92 Epic 0.2. P=
+hase 4 is now Search only. <strong>Hub complexity update</strong>: Hub is n=
+ow correctly rated =F0=9F=94=B4 (same tier as Color/Trim/Fabric) =E2=80=94 =
+dynamic template system (runtime hierarchy, unknown N types), Paper/Wood/UD=
+M concrete sub-types, composition N+1, three two-hop Relationship service t=
+raversals, cross-domain <code>createResourceLink</code> write-back, VMM sup=
+plier N+1.</p>
+</blockquote>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-CriticalPath">C=
+ritical Path</h3>
+<pre><code>Phase 0: Infrastructure + Cross-Cutting UI (0.2.1=E2=80=930.2.8)
+    =E2=94=82   0.2.6 (getMaterialByIdFromService migration) =E2=80=94 unbl=
+ocked, do immediately
+    =E2=94=82   0.2.7 (bulkUpdateTeams UI) =E2=80=94 gated on ADR 0.1.3 + P=
+hase 2 domain mutations
+    =E2=94=82   0.2.8 (createResourceLink UI) =E2=80=94 gated on ADR 0.1.4
+    =E2=94=82
+    =E2=94=9C=E2=94=80=E2=94=80 Resolve ADRs 0.1.9, 0.1.3, 0.1.7, 0.1.4, 0.=
+1.6 in parallel with Phase 1
+    =E2=94=82
+    =E2=96=BC
+Phase 1: Wash  [start immediately =E2=80=94 ADR 0.1.9 blocks teams field on=
+ly, not the cutover PR]
+    =E2=94=82   Story 1.1.5b (teams field) lands once ADR 0.1.9 resolves =
+=E2=80=94 Wash not done until then
+    =E2=94=82
+    =E2=94=9C=E2=94=80=E2=94=80 Resolve ADRs 0.1.5, 0.1.8 in parallel with =
+Phase 2
+    =E2=94=82
+    =E2=96=BC
+Phase 2: Color + Artwork + Trim + Fabric + Hub  [all parallel =E2=80=94 Hub=
+ has no domain sequencing dependency]
+    =E2=94=82   Requires: ADR 0.1.9 (all teams fields), ADR 0.1.3 (all muta=
+tions),
+    =E2=94=82             ADR 0.1.4 (Fabric), ADR 0.1.6 (Fabric), ADR 0.1.7=
+ (Artwork, Fabric, Hub)
+    =E2=94=82
+    =E2=96=BC
+Phase 3: Palette + Combination  [parallel]
+    =E2=94=82   Requires: ADR 0.1.5 (Palette), ADR 0.1.6 (Combination), ADR=
+ 0.1.7 (Combination), ADR 0.1.8 (Combination)
+    =E2=94=82
+    =E2=96=BC
+Phase 4: Search
+        Requires: Story 0.2.5 (search shape design)
+</code></pre>
+<h3 id=3D"MaterialsUI=E2=86=92FederatedGraphQLMigrationPlan-ADRBlockerMap=
+=E2=80=94WhichDomainsAreAffected">ADR Blocker Map =E2=80=94 Which Domains A=
+re Affected</h3>
+<div class=3D"table-wrap">
+ <table class=3D"wrapped confluenceTable">
+  <thead>
+   <tr>
+    <th class=3D"confluenceTh">ADR</th>
+    <th class=3D"confluenceTh">Status</th>
+    <th class=3D"confluenceTh">Phase 1 Wash</th>
+    <th class=3D"confluenceTh">Phase 2 Color</th>
+    <th class=3D"confluenceTh">Phase 2 Artwork</th>
+    <th class=3D"confluenceTh">Phase 2 Trim</th>
+    <th class=3D"confluenceTh">Phase 2 Fabric</th>
+    <th class=3D"confluenceTh">Phase 2 Hub</th>
+    <th class=3D"confluenceTh">Phase 3 Palette</th>
+    <th class=3D"confluenceTh">Phase 3 Combo</th>
+    <th class=3D"confluenceTh">Phase 4 Search</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr>
+    <td class=3D"confluenceTd">0.1.1 ACL/JWT</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Resolved</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.1.2 getMaterialById</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Resolved</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.1.9 teams/BPs read</td>
+    <td class=3D"confluenceTd">=F0=9F=94=B4 Open</td>
+    <td class=3D"confluenceTd">Blocks teams (1.1.5b)</td>
+    <td class=3D"confluenceTd">teams field</td>
+    <td class=3D"confluenceTd">teams field</td>
+    <td class=3D"confluenceTd">teams field</td>
+    <td class=3D"confluenceTd">teams field</td>
+    <td class=3D"confluenceTd">teams field</td>
+    <td class=3D"confluenceTd">teams field</td>
+    <td class=3D"confluenceTd">teams field</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.1.3 bulkUpdateTeams</td>
+    <td class=3D"confluenceTd">=F0=9F=94=B4 Open</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Not needed</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.1.7 Relationship svc (links)</td>
+    <td class=3D"confluenceTd">=F0=9F=9F=A0 Open</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Not needed</td>
+    <td class=3D"confluenceTd">History/links</td>
+    <td class=3D"confluenceTd">Linked artworks</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">BOM/samples</td>
+    <td class=3D"confluenceTd">developedBaseMaterials, connectedBoms, searc=
+hResourceLinks</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">Samples</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.1.4 createResourceLink</td>
+    <td class=3D"confluenceTd">=F0=9F=9F=A0 Open</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Not needed</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">createResourceLink write-back</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.1.6 rfidTagId</td>
+    <td class=3D"confluenceTd">=F0=9F=9F=A0 Open</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Not needed</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">FabSpec.samples</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">FSC.samples</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.1.5 Palette atomic</td>
+    <td class=3D"confluenceTd">=F0=9F=9F=A0 Open</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Not needed</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.1.8 isInternalUser</td>
+    <td class=3D"confluenceTd">=F0=9F=9F=A0 Open</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Not needed</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">Detail page</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.2.4 addColor schema</td>
+    <td class=3D"confluenceTd">=F0=9F=9F=A0 Open</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Not needed</td>
+    <td class=3D"confluenceTd">Mutations</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+   </tr>
+   <tr>
+    <td class=3D"confluenceTd">0.2.5 Search shape</td>
+    <td class=3D"confluenceTd">=F0=9F=9F=A0 Open</td>
+    <td class=3D"confluenceTd">=E2=9C=85 Not needed</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">=E2=80=94</td>
+    <td class=3D"confluenceTd">Search UI</td>
+   </tr>
+  </tbody>
+ </table>
+</div>
+    </div>
+</body>
+</html>
+------=_Part_47191_1376952752.1782500832362--

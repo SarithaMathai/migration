@@ -51,36 +51,50 @@ domains:
     index: packaging/04-stories-index.yaml
     risk: mid (wide schema; multi-step write + pricing chain)
     recommended_order: 7
+  - key: attachment
+    epic: "Attachment → plm-attachment DGS migration"
+    stories: 28
+    index: attachment/04-stories-index.yaml
+    target_dgs: plm-attachment
+    risk: mid (separate subgraph; dual record shape; ACL writes)
+    recommended_order: 8
   - key: workspace
     epic: "Workspace → plm-workspace DGS migration"
     stories: 32
     index: workspace/04-stories-index.yaml
     target_dgs: plm-workspace
     risk: high (separate subgraph; 5-case partner dispatcher; 2 X-Large field resolvers)
-    recommended_order: 8
+    recommended_order: 9
   - key: sample
     epic: "Sample → plm-sample DGS migration"
     stories: 33
     index: sample/04-stories-index.yaml
     target_dgs: plm-sample
     risk: mid-high (separate subgraph; wide entity + polymorphic parents + union; evaluation writes)
-    recommended_order: 9
+    recommended_order: 10
+  - key: discussion
+    epic: "Discussion → plm-discussion DGS migration"
+    stories: 37
+    index: discussion/04-stories-index.yaml
+    target_dgs: plm-discussion
+    risk: mid-high (separate subgraph; v1/v2/V3 consolidation; Resource union; participant writes)
+    recommended_order: 11
   - key: bom
     epic: "BOM → plm-product DGS migration"
     stories: 42
     index: bom/04-stories-index.yaml
     risk: mid (polymorphism + 3-step write)
-    recommended_order: 10
+    recommended_order: 12
   - key: product
     epic: "Product → plm-product DGS migration"
     stories: 72
     index: product/04-stories-index.yaml
     risk: highest (TechPack + host DGS)
-    recommended_order: 11
+    recommended_order: 13
 totals:
-  domains: 11
-  stories: 325
-  by_complexity: { Low: 160, Medium: 125, High: 31, "Very High": 9 }
+  domains: 13
+  stories: 390
+  by_complexity: { Low: 184, Medium: 157, High: 40, "Very High": 9 }
 artifacts_per_domain:
   - 01-schema-inventory.md      # tech lead
   - 02-resolver-analysis.md     # engineers (implementation spec)
