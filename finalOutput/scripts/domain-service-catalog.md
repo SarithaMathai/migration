@@ -59,14 +59,17 @@ from **service constructors**, not `context.js`.
 
 ## Adding a new domain
 Look up its three sources and add a catalog row (above). Then run the pipeline via
-[`RUN-NEW-DOMAIN.md`](./RUN-NEW-DOMAIN.md). The next four domains are already mapped:
+[`RUN-NEW-DOMAIN.md`](./RUN-NEW-DOMAIN.md). The four candidate domains below are **all done**; plus
+`workspace` (`plm-workspace`) and `sample` (`plm-sample`) were analyzed on request:
 
-| Loader key | Schema (`code/schemas/`) | Resolver (`code/`) | Service (`code/`) | Subgraph |
-|-----------|--------------------------|--------------------|-------------------|----------|
-| `claims` | `SPARK_Claims.txt` | `resolvers/product/SPARK_Claims.txt` | `services/Claim.txt` | separate DGS |
-| `productDetails` | `SPARK_ProductDetail.txt` | `resolvers/product/SPARK_ProductDetail.txt` | `services/product/ProductDetails.txt` | plm-product (co-located) |
-| `watchlist` | `SPARK_Watchlist.txt` | `resolvers/product/SPARK_Watchlist.txt` | `services/product/Watchlist.txt` | separate DGS |
-| `search` | `SPARK_Search.txt` | `resolvers/SPARK_Search.txt` | `services/Search.txt` | separate DGS (elastic) |
+| Loader key | Schema (`code/schemas/`) | Resolver (`code/`) | Service (`code/`) | Subgraph | Status |
+|-----------|--------------------------|--------------------|-------------------|----------|--------|
+| `claims` | `SPARK_Claims.txt` | `resolvers/product/SPARK_Claims.txt` | `services/Claim.txt` | **separate DGS** | ✅ done |
+| `productDetails` | `SPARK_ProductDetail.txt` | `resolvers/product/SPARK_ProductDetail.txt` | `services/product/ProductDetails.txt` | plm-product (co-located) | ✅ done |
+| `watchlist` | `SPARK_Watchlist.txt` | `resolvers/product/SPARK_Watchlist.txt` | `services/product/Watchlist.txt` | **plm-product (co-located)** | ✅ done |
+| `search` | `SPARK_Search.txt` | `resolvers/SPARK_Search.txt` | `services/Search.txt` | separate DGS (elastic) | ✅ done |
+| `workspace` | `SPARK_WorkspaceV2.txt` | `resolvers/SPARK_WorkspaceV2.txt` | `services/WorkspaceV2.txt` | **separate DGS (plm-workspace)** | ✅ done |
+| `sample` | `SPARK_SampleV2.txt` | `resolvers/SPARK_SampleV2.txt` | `services/SampleV2.txt` | **separate DGS (plm-sample)** | ✅ done |
 
 ## Effort calibration (PO summary only — AI-estimated, confirm in refinement)
 Low/Small 1–2d · Medium 3–5d · High/Large 5–8d · Very-High/X-Large 8–13d · +20% buffer on domain totals.

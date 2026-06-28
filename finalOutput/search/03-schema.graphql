@@ -1,0 +1,226 @@
+# =============================================================================
+# Search Domain — Federated Target DGS Schema (translated from source SDL)
+# Pipeline Version: 2.0 · Generated: 2026-06-27
+# DGS Target: Green-field → SEPARATE `plm-elastic-search` subgraph (elastic-backed)
+# Source:    code/schemas/SPARK_Search.txt (the real SDL, 655 lines) + code/resolvers/SPARK_Search.txt (behaviour)
+# Target:    plm-elastic-search/apps/app/src/main/resources/schema/search.graphqls
+# This is the FEDERATED TARGET schema, translated from the SDL (SPARK_ prefix dropped, @key added on
+# entities). Nullability/return-types from the SDL. The full ~48 queries + 1 mutation are below; the ~50
+# result/value types carry across 1:1 from the SDL (prefix dropped) — the principal enriched types are
+# shown here, the remaining value types are noted at the end.
+# Status: 🔜 all need migration.
+# =============================================================================
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@extends", "@external", "@shareable"])
+
+scalar DateTime
+scalar JSON
+
+# --- External stubs (search ENRICHES elastic hits from these subgraphs) ---
+type Product @extends @key(fields: "id") { id: ID! @external }
+type ProductsPaged @extends @key(fields: "id") { id: ID! @external }
+type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
+type Bom @extends @key(fields: "id") { id: ID! @external }
+type SampleV2 @extends @key(fields: "id") { id: ID! @external }
+type Attachment @extends @key(fields: "id") { id: ID! @external }
+type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
+type UserGroup_Participants @extends @key(fields: "id") { id: ID! @external }
+type VMM_BusinessPartner @extends @key(fields: "id") { id: ID! @external }
+type VMM_Brand @extends @key(fields: "brandId") { brandId: ID! @external }
+type IG_Division @extends @key(fields: "id") { id: ID! @external }
+type IG_Department @extends @key(fields: "id") { id: ID! @external }
+type Tag @extends @key(fields: "id") { id: ID! @external }
+type TeamPaged @extends @key(fields: "id") { id: ID! @external }
+type MeasurementTemplatesPaged @extends @key(fields: "id") { id: ID! @external }
+type SizeTemplatePaged @extends @key(fields: "id") { id: ID! @external }
+type SpecificationTemplatesPaged @extends @key(fields: "id") { id: ID! @external }
+
+# --- Shared value types ---
+type Paging @shareable { totalElements: Int, totalPages: Int, number: Int, size: Int, first: Boolean, last: Boolean, numberOfElements: Int }
+type CodeDescription @shareable { code: Int, description: String }
+type ResourceCount @shareable { resourceId: String, count: Int }
+type Suggestion { id: ID, text: String, type: String, humanId: String }
+
+# --- Principal owned (elastic) result types (enriched by field resolvers) ---
+type SearchAttachmentsPaged { content: [SearchAttachment], paging: Paging, counts: [BpCount] }
+type SearchAttachmentsCounts { attachmentCount(parentIds: [String], relatedIds: [String], skipQuery: Boolean): Int }
+type BpCount @shareable { bpType: String, counts: Int }
+
+type SearchAttachment @key(fields: "id") {
+  id: ID!  documentId: String  humanId: String  title: String  resource: AttachmentResource
+  relatedResources: [String]  canShareWithGallery: Boolean
+  # field resolvers ↓
+  createdBy: UserProfileAttributes
+  updatedBy: UserProfileAttributes
+  tags: [Tag]
+  productPacketProps: JSON
+  relatedProduct: Product
+  relatedWorkspace: WorkspaceV2
+  currentUserFileAccess: [String]
+  rendersDataFor3DFiles: JSON
+  galleryFiles: JSON
+  modelFile: JSON
+  canOpenInShowDog: Boolean
+  finalVirtualFile: Boolean
+}
+type AttachmentResource @shareable { id: String, type: String }
+
+type MaterialsPaged { content: [Material], paging: Paging, counts: [BpCount] }
+type Material @key(fields: "id") {
+  id: ID!  description: String  thumbnailId: String
+  # field resolvers ↓
+  supplierName: String
+  impressionIntent: JSON
+  permissions: [String]
+  claims: JSON
+  tags: [Tag]
+  trimSuppliers: JSON
+  attachments: [SearchAttachment]
+  businessPartners: [VMM_BusinessPartner]
+  referenceId: String
+  is3D: Boolean
+  createdBy: UserProfileAttributes
+  teams: TeamPaged
+  droppedPartnerIds: [ID]
+  baseMaterial: JSON
+  colorLinks: JSON
+}
+
+type CombinationPaged { content: [SearchCombination], paging: Paging }
+type SearchCombination @key(fields: "id") {
+  id: ID!  description: String
+  brands: [VMM_Brand]  businessPartners: [VMM_BusinessPartner]  droppedPartnerIds: [ID]
+  department: IG_Department  division: IG_Division  designCycles: [Tag]  materialCategory: Tag
+  fabricSpec: JSON  tags: [Tag]
+}
+
+type PalettePaged { content: [SearchPalette], paging: Paging }
+type SearchPalette @key(fields: "humanId") {
+  humanId: String!  description: String
+  brands: [VMM_Brand]  tags: [Tag]  designCycles: [Tag]  departments: [IG_Department]
+  businessPartners: [VMM_BusinessPartner]  droppedPartnerIds: [ID]
+}
+
+type WatchlistPaged { content: [SearchWatchlist], paging: Paging }
+type SearchWatchlist @key(fields: "id") {
+  id: ID!  parentId: String  workspaceContext: [ID]
+  businessPartners: [VMM_BusinessPartner]  createdBy: UserProfileAttributes  updatedBy: UserProfileAttributes
+  attachments: [SearchAttachment]  workspaces: [WorkspaceV2]  participantDetails: UserGroup_Participants  product: Product
+}
+
+type SearchComponent @key(fields: "id") {
+  id: ID!  type: String  workspaceContext: [ID]
+  createdBy: UserProfileAttributes  updatedBy: UserProfileAttributes  workspaces: [WorkspaceV2]  materials: JSON
+}
+
+type SearchSamplesPaged { content: [SampleV2], paging: Paging }
+type ClaimsPaged { content: [SearchWatchlist], paging: Paging }   # claims elastic hits (claim shape)
+type SearchLocationsPaged { content: [JSON], paging: Paging }
+type SearchAttachmentAccess { bps: [ID], partnerNamesMap: [IdName] }
+type IdName @shareable { id: ID, name: String }
+type BulkCombination { requestId: String }
+
+# Report / group-by result types (selected)
+type ConnectedBOMResult { groups: [ConnectedBOMGroup] }
+type ConnectedBOMGroup { id: Int, groupBy: String, results: [ConnectedBOMGroupResult] }
+type ConnectedBOMGroupResult { resourceId: String, designCycle: String }
+type Requested_Evaluated_Samples_By_User_Result { content: [Requested_Evaluated_Samples_By_User] }
+type Requested_Evaluated_Samples_By_User { resourceId: String, user: String }
+type SearchSamplesResult { content: JSON }
+type SearchSamplesGroup { key: String, count: Int }
+type SearchProductMetricsReport { count: Int }
+type SearchProductReport { content: JSON }
+
+# NOTE: the remaining ~25 SDL value types (material sub-objects, sample/report detail shapes, template paged
+# wrappers, etc.) carry across 1:1 from code/schemas/SPARK_Search.txt with the SPARK_ prefix dropped.
+# `Material`/attachment/JSON-typed fields above are shown as JSON where the SDL nests large sub-objects —
+# expand to the concrete SDL types in story A02.
+
+# --- Inputs ---
+input MaterialsSearchOptions { inspiration: Boolean, excludeVariantAssets: Boolean, libraryNames: [String], excludeDroppedResources: Boolean, materialType: String, excludedMaterialTypes: [String], includeSecondaryMaterialLibraries: Boolean }
+input MaterialSearchArguments { inspiration: Boolean, excludeDroppedResources: Boolean, searchCriteria: [MaterialSearchCriteria], libraryNames: [String], materialIds: [String], filters: [MaterialSearchFilter], nestedFilters: [MaterialNestedSearchFilter] }
+input MaterialSearchCriteria { targetLibrary: Boolean, colorForAll: Boolean, providers: [String], excludedProviders: [String], icsPoly: [String], icsCotton: [String], icsNylon: [String], rgbColor: MaterialRGBSearchCriteria }
+input MaterialSearchFilter { fieldPath: String!, values: [String]!, operator: String }
+input MaterialNestedSearchFilter { type: String!, nestedFieldPath: String!, fieldPath: String!, values: [String]!, operator: String }
+input MaterialRGBSearchCriteria { red: Int, green: Int, blue: Int, threshold: Int }
+input NestedQueryInput { path: String, query: String }
+input SearchMultipleMaterialRequest { id: String, query: String, options: MaterialsSearchOptions }
+input UpdateCombinationQueryInput { query: String, comboBulkUpdates: JSON, updateCombinationList: [UpdateCombinationDTO], updateImpressionIntentLineList: [UpdateLineDTO] }
+input UpdateCombinationDTO { comboId: String, comboUpdates: JSON }
+input UpdateLineDTO { lineHumanId: String }
+
+# --- Queries (~48; names + nullability preserved from the SDL; grouped by story in 04-stories.md) ---
+extend type Query {
+  # attachments
+  searchAttachments(q: String, parentIds: [String], relatedIds: [String], partnerId: ID, asset3D: Boolean, proxyIds: [String], sortField: String, sortDirection: String, page: Int = 0, size: Int = 20): SearchAttachmentsPaged   # C01
+  getAttachmentsCounts(resourceIds: [String]!): SearchAttachmentsCounts                                              # B03
+  # materials
+  searchMaterials(q: String, relatedBPIds: [Int], page: Int = 0, size: Int = 20, options: MaterialsSearchOptions): MaterialsPaged                                                                # C02
+  searchMaterialsV2(q: String, page: Int = 0, size: Int = 20, sortField: String, sortDirection: SortDirection, searchArguments: MaterialSearchArguments): MaterialsPaged                          # C02
+  multiRequestMaterialSearch(page: Int = 0, size: Int = 1, requestDTOs: [SearchMultipleMaterialRequest]): [SearchMultipleMaterialResponse]                                                        # C02
+  searchMaterialsById(id: ID!): Material                                                                             # B01
+  searchMaterialsNested(q: String, nestedQueryList: [NestedQueryInput], page: Int = 0, size: Int = 20, sortField: String, sortDirection: SortDirection, options: MaterialsSearchOptions): MaterialsPaged  # C02
+  searchMaterialsByProxyIds(q: String, proxyIds: [String], page: Int = 0, size: Int = 20): MaterialsPaged           # C02 (ACL)
+  # samples
+  searchSamples(q: String, page: Int = 0, size: Int = 20): SearchSamplesPaged                                       # C03
+  searchSamplesByParentId(parentIds: [ID]!, query: String = "*", page: Int = 0, size: Int = 20, sortField: String, sortDirection: String): SearchSamplesPaged                                     # C03
+  getElasticSamplesByIds(ids: [ID]!): [SampleV2]                                                                     # B02
+  getSampleCount(resourceId: [String]): [ResourceCount]                                                             # B03
+  getSamplesCountGroupBy(q: String, groupBy: String): [SearchSamplesGroup]                                          # C03
+  getMaterialSamplesGroupBy(q: String, filter: String, groupBy: String, dueDateTo: String, dueDateFrom: String): SearchSamplesResult  # C03
+  getRequestedSamplesByUser(q: String, filter: String): Requested_Evaluated_Samples_By_User_Result                  # C03
+  # teams
+  searchTeamsElastic(q: String, page: Int = 0, size: Int = 100, sort: String): TeamPaged                            # C04
+  searchTeamsElasticResourceType(q: String, resourceType: String, page: Int = 0, size: Int = 100, sort: String): TeamPaged  # C04
+  searchTeamsByProxyIds(q: String, proxyIds: [String], page: Int = 0, size: Int = 20): MaterialsPaged               # C04 (ACL)
+  searchTeamsWithTypeCheck(q: String, resourceId: ID, mvs: [ID], dps: [ID], page: Int = 0, size: Int = 100): TeamPaged  # C04
+  # templates
+  searchMeasurementTemplates(page: Int!, size: Int!, q: String): MeasurementTemplatesPaged                          # C05
+  searchSizeTemplates(q: String, size: Int = 20, page: Int = 0): SizeTemplatePaged                                  # C05
+  searchProductDetailsTemplates(q: String, size: Int = 20, page: Int = 0): SpecificationTemplatesPaged              # C05
+  # products
+  searchProductByField(q: String, page: Int = 0, size: Int = 100, sort: String, types: [Int]): ProductsPaged        # C06
+  getProductSuggestions(q: String, size: Int = 10, bps: [Int]): [Suggestion]                                        # C06
+  getProductSuggestionsV1(q: String, size: Int = 10, bps: [Int]): [Suggestion]                                      # C06
+  getTemplateSuggestions(q: String, size: Int = 10, types: [Int]): [Suggestion]                                     # C06
+  searchProducts: [Product]                                                                                          # ⏭ no resolver in snapshot (drift; resolver has searchProductsES→adminTools, not in SDL)
+  # combinations / palettes
+  searchCombinations(q: String, page: Int = 0, size: Int = 20): CombinationPaged                                    # C07
+  searchPalettes(q: String, page: Int = 0, size: Int = 20): PalettePaged                                            # C07
+  # other
+  searchWatchlist(q: String, size: Int = 100, page: Int = 0): WatchlistPaged                                        # C08
+  searchClaimsByProxyIds(q: String, proxyIds: [String], size: Int = 100, page: Int = 0): ClaimsPaged                # C08 (ACL)
+  searchRfidLocations(q: String, page: Int = 0, size: Int = 100): SearchLocationsPaged                              # C08
+  # reports
+  getConnectedBOMs(q: String, filter: GreenfieldFiltersInput, groupBy: String): ConnectedBOMResult                  # C10
+  getProductReport(startDate: String!, endDate: String): SearchProductReport                                        # C10
+  getProductWorkspaceMetricsReportCount(workspaceId: String): SearchProductMetricsReport                            # C10
+  # suggestions family → [Suggestion]
+  searchSuggestions(q: String, type: String!, size: Int = 10): [Suggestion]                                         # C09
+  searchRfidSuggestions(q: String, size: Int = 10): [Suggestion]                                                    # C09
+  searchPointOfMeasureSuggestions(q: String, size: Int = 10): [Suggestion]                                          # C09
+  searchCombinationSuggestions(q: String, size: Int = 10): [Suggestion]                                             # C09
+  searchPaletteSuggestions(q: String, size: Int = 10): [Suggestion]                                                 # C09
+  searchMeasurementTemplatesSuggestions(q: String, size: Int = 10): [Suggestion]                                    # C09
+  searchSizeTemplatesSuggestions(q: String, size: Int = 10): [Suggestion]                                           # C09
+  getProductDetailsTemplateSuggestions(q: String, size: Int = 10): [Suggestion]                                     # C09
+  searchSPGSuggestions(q: String, size: Int = 10): [Suggestion]                                                     # C09 ⚠ no resolver in snapshot — confirm owner
+  searchUsersSuggestions(q: String, size: Int = 10): [Suggestion]                                                   # C09 ⚠ no resolver in snapshot — confirm owner
+  searchTeamsSuggestions(q: String, size: Int = 10): [Suggestion]                                                   # C09 ⚠ no resolver in snapshot — confirm owner
+  searchWorkspaceSuggestions(q: String, size: Int = 10): [Suggestion]                                               # C09 † resolved in the workspace resolver
+  searchWorkspaceProductsSuggestions(q: String, size: Int = 10, workspaceId: ID, associatedProducts: [ID]): [Suggestion]  # C09 † resolved in the workspace resolver
+}
+
+# --- Mutation ---
+extend type Mutation {
+  sendBulkCombinationUpdates(combinationUpdates: UpdateCombinationQueryInput): BulkCombination                       # D01
+}
+
+# placeholders referenced above (carried 1:1 from the SDL / sibling schemas)
+enum SortDirection { ASC, DESC }
+scalar GreenfieldFiltersInput
+type SearchMultipleMaterialResponse { id: String, results: MaterialsPaged }
+
+# --- Federation: search exposes its Query operations directly. Every product-family subgraph's
+#     `ctx.loaders.search.*` calls become queries against this `plm-elastic-search` subgraph. ---

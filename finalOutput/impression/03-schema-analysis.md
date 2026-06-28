@@ -35,7 +35,7 @@ No interfaces/unions — no `@DgsTypeResolver` needed.
 
 ## 4. Migration Approach  *(Confluence approach page)*
 
-Impression is the **smallest and lowest-risk** of the seven domains — a good early win.
+Impression is the **smallest and lowest-risk** of the eleven domains — a good early win.
 
 1. **Phase A:** schema + `ImpressionService` port (one GET, one PUT). No interfaces, no type resolvers.
 2. **Phase B:** the 2 reads. `getImpressionCountsByProductId` reuses the search call; the aggregation lives

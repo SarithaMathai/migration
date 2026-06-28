@@ -5,8 +5,8 @@ cleanly into Confluence.
 
 | Page | Use |
 |------|-----|
-| [`00-portfolio.md`](./00-portfolio.md) | Program rollup — all 7 domains, totals, sequencing, blockers, decisions |
-| [`product.md`](./product.md) · [`bom.md`](./bom.md) · [`packaging.md`](./packaging.md) · [`claims.md`](./claims.md) · [`measurement.md`](./measurement.md) · [`productDetails.md`](./productDetails.md) · [`impression.md`](./impression.md) | One page per domain — what we're building, scope, effort, risks, decisions, sequencing |
+| [`00-portfolio.md`](./00-portfolio.md) | Program rollup — all 11 domains, totals, sequencing, blockers, decisions |
+| [`product.md`](./product.md) · [`bom.md`](./bom.md) · [`sample.md`](./sample.md) · [`workspace.md`](./workspace.md) · [`packaging.md`](./packaging.md) · [`search.md`](./search.md) · [`claims.md`](./claims.md) · [`measurement.md`](./measurement.md) · [`watchlist.md`](./watchlist.md) · [`productDetails.md`](./productDetails.md) · [`impression.md`](./impression.md) | One page per domain — what we're building, scope, effort, risks, decisions, sequencing |
 
 ## How to paste into Confluence (Cloud)
 

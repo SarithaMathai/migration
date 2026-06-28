@@ -1,8 +1,8 @@
 # Program Story Inventory — All Domains
 
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
-> Program-level rollup of every migration story across the seven analyzed domains. Feed this (or
-> [index.yaml](./index.yaml)) to a Jira MCP to create the seven epics + link stories, or to Confluence for a
+> Program-level rollup of every migration story across the eleven analyzed domains. Feed this (or
+> [index.yaml](./index.yaml)) to a Jira MCP to create the eleven epics + link stories, or to Confluence for a
 > portfolio page. Per-domain detail: each domain's `04-stories.md` + `04-stories-index.yaml`.
 
 ## 1. Program totals
@@ -11,12 +11,16 @@
 |--------|-----------|---------|-----------|------|--------|-----|------------------------|
 | [impression](./impression/04-stories.md) | plm-product | 11 | 0 | 0 | 2 | 9 | 14–24d |
 | [productDetails](./productDetails/04-stories.md) | plm-product | 17 | 0 | 1 | 9 | 7 | 31–53d |
+| [watchlist](./watchlist/04-stories.md) | plm-product | 17 | 0 | 1 | 8 | 8 | 32–55d |
 | [measurement](./measurement/04-stories.md) | plm-product | 24 | 0 | 1 | 8 | 15 | 40–68d |
 | [claims](./claims/04-stories.md) | claims (separate) | 24 | 0 | 2 | 11 | 11 | 44–75d |
+| [search](./search/04-stories.md) | plm-elastic-search (separate) | 25 | 0 | 7 | 11 | 7 | 73–123d |
 | [packaging](./packaging/04-stories.md) | plm-product | 28 | 0 | 2 | 11 | 15 | 51–87d |
+| [workspace](./workspace/04-stories.md) | plm-workspace (separate) | 32 | 3 | 3 | 15 | 11 | 87–146d |
+| [sample](./sample/04-stories.md) | plm-sample (separate) | 33 | 0 | 7 | 13 | 13 | 81–136d |
 | [bom](./bom/04-stories.md) | plm-product | 42 | 1 | 2 | 15 | 24 | 76–127d |
 | [product](./product/04-stories.md) | plm-product | 72 | 5 | 5 | 22 | 40 | 211–353d |
-| **Total** | | **218** | **6** | **13** | **78** | **121** | **467–787d** |
+| **Total** | | **325** | **9** | **31** | **125** | **160** | **740–1247d** |
 
 > Effort is AI-estimated (confirm in refinement). Six domains target the same **`plm-product`** DGS (shared
 > Feign base URLs + some federation stories); **claims** is a separate subgraph that federates back into Product.
@@ -85,4 +89,4 @@ the **material-hub / trim / wash / fabric / combination** DGSs being stubbed in 
 - See [scripts/06-feeding-mcp-tools.md](./scripts/06-feeding-mcp-tools.md) for the field-by-field mapping.
 
 ---
-*Pipeline 2.0 — 7 domains, 218 stories. Source of truth: `../code` (schema SDL + resolver + service + utils).*
+*Pipeline 2.0 — 11 domains, 325 stories. Source of truth: `../code` (schema SDL + resolver + service + utils).*

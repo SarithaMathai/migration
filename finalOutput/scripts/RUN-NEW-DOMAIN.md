@@ -44,10 +44,11 @@ Then `add a catalog row` for the domain in [`domain-service-catalog.md`](./domai
 
 ## Ready-to-run blocks (the four next domains)
 
-> **Subgraph note:** `productDetails` is **co-located in the `plm-product` monorepo** (its links to/from
-> Product are internal types). `claims`, `watchlist`, and `search` are **separate DGS subgraphs** — model
-> their cross-references to Product/others as true federation (`@extends @external`) and say so in their
-> `03-schema-analysis`.
+> **Subgraph note:** `productDetails` and `watchlist` are **co-located in the `plm-product` monorepo**
+> (their service uses the `enterprise_product_development_products` base; links to/from Product are internal
+> types). `claims` and `search` are **separate DGS subgraphs** — model their cross-references to
+> Product/others as true federation (`@extends @external`) and say so in their `03-schema-analysis`.
+> (Decide co-located vs separate from the **service base path**, not assumptions.)
 
 ### claims
 ```
@@ -78,8 +79,9 @@ Analyze the GraphQL domain "watchlist" per finalOutput/scripts/ (skills 01→06)
 - schema  : code/schemas/SPARK_Watchlist.txt        (98 lines, SDL — source of truth)
 - resolver: code/resolvers/product/SPARK_Watchlist.txt
 - service : code/services/product/Watchlist.txt
-Separate DGS subgraph; it also contributes ResourcesCount.watchlists to Product TechPack (see
-SPARK-PROD-F08). Output finalOutput/watchlist/01..05 + confluence/watchlist.md, run
+Co-located in the plm-product monorepo (service uses the enterprise_product_development_products base);
+it contributes ResourcesCount.watchlists to Product TechPack INTERNALLY (CAT-2, like bom/measurement —
+see SPARK-PROD-F08). Output finalOutput/watchlist/01..05 + confluence/watchlist.md, run
 python finalOutput/jira/generate.py, and refresh the program rollups. Follow the RUN-NEW-DOMAIN.md rules.
 ```
 

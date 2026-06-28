@@ -1,0 +1,98 @@
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,Complexity,Story point estimate,Labels,Labels,Labels,Depends On,Description
+Epic,,Workspace → plm-workspace DGS migration,Workspace → plm-workspace DGS migration,,,,,dgs-migration,workspace,epic,,Epic for the workspace domain migration to the plm-product DGS.
+Story,SPARK-WS-A01,SPARK-WS-A01 · Schema skeleton + DateTime/JsonNode scalars,,Workspace → plm-workspace DGS migration,A,Low,2,dgs-migration,workspace,schema,,"**Current Behaviour:** green-field; schema translated from `code/schemas/SPARK_WorkspaceV2.txt`.
+**Target:** federation v2.3 header, `scalar DateTime → Instant`, `scalar JsonNode`, empty `extend type Query`/`Mutation`. **Acceptance:** 1. `generateJava` passes. 2. scalars round-trip. **Tests:** ☐ compiles ☐ serde."
+Story,SPARK-WS-A02,SPARK-WS-A02 · Owned types + inputs,,Workspace → plm-workspace DGS migration,A,Medium,3,dgs-migration,workspace,schema,SPARK-WS-A01,"**Target:** `WorkspaceV2` (`@key(fields:""id"")`) + ~13 value types + ~10 inputs per [03-schema.graphql](./03-schema.graphql); `@shareable` on `CodeDescription`/`Paging`/`Pageable`/`ResourceCount`; carry `@deprecated`. **Acceptance:** 1. all types/inputs present; nullability matches SDL. 2. validates. **Tests:** ☐ validates ☐ entity stub."
+Story,SPARK-WS-A03,SPARK-WS-A03 · External stubs (platform + other DGS),,Workspace → plm-workspace DGS migration,A,Low,2,dgs-migration,workspace,schema,SPARK-WS-A01,"**Target:** `@extends @external` stubs for `Product`/`ProductsPaged`, `Claims`, `CombinationSourcePaged`,
+`Attachment`/`SearchAttachment(sPaged)`, `DiscussionPaged`/`DiscussionElastic`, `TeamPaged`,
+`UserProfileAttributes`, `ResourcePermissions`, `ResourceMapping`, `Tag`, `Status`, `VMM_*`, `IG_*`. **Acceptance:** 1. compiles; gateway composes. **Tests:** ☐ compiles ☐ stub resolves."
+Story,SPARK-WS-A04,SPARK-WS-A04 · WorkspaceServiceV2 port (plm-workspace),,Workspace → plm-workspace DGS migration,A,Medium,3,dgs-migration,workspace,service,SPARK-WS-A01,"**Current Behaviour (Phase 2 §Service):** 13 REST methods on the `plm-workspace` base.
+**Target:** Kotlin service; preserve the create/update **dup-check** throw and `changeWorkspace` throw-on-error; default `workspaceType=103`. **Acceptance:** 1. methods present (CRUD, resources/teams bulk, change_resource, drop/undrop). 2. dup-check throws. **Tests:** ☐ endpoint build ☐ dup-check ☐ change throw.
+
+---
+
+### Phase B — Core Reads"
+Story,SPARK-WS-B01,SPARK-WS-B01 · getWorkspaceV2,,Workspace → plm-workspace DGS migration,B,Low,2,dgs-migration,workspace,query,"SPARK-WS-A02, SPARK-WS-A04",**Current Behaviour (Q1):** (own) `getWorkspaceByIdV2.load(id)` `GET {base}?ids={id}`. **Target:** `@DgsQuery → WorkspaceV2`. **Acceptance:** 1. returns workspace; miss→null. **Tests:** ☐ happy ☐ miss.
+Story,SPARK-WS-B02,SPARK-WS-B02 · getWorkspacesByIdsV2,,Workspace → plm-workspace DGS migration,B,Low,2,dgs-migration,workspace,query,"SPARK-WS-A02, SPARK-WS-A04",**Current Behaviour (Q2):** (ACL) token → (own) `getWorkspacesByIdsV2(jwt).load({ids})`. **Target:** `@DgsQuery → [WorkspaceV2]`. **Acceptance:** 1. returns list for ids. **Tests:** ☐ happy ☐ empty.
+Story,SPARK-WS-B03,SPARK-WS-B03 · getWorkspaceTypeCount,,Workspace → plm-workspace DGS migration,B,Low,2,dgs-migration,workspace,query,SPARK-WS-A04,**Current Behaviour (Q7):** (🔴 search) `getWorkspaceTypeCount({})`. **Target:** `@DgsQuery → WorkspaceTypeCount`. **Acceptance:** 1. returns products/combinations/research counts. **Tests:** ☐ counts.
+Story,SPARK-WS-B04,SPARK-WS-B04 · findWorkspaceProductAndSampleIds,,Workspace → plm-workspace DGS migration,B,Medium,3,dgs-migration,workspace,query,SPARK-WS-A04,"**Current Behaviour (Q5):** (🔴 product) `getWorkspaceProducts({workspaceId, filter, q, page:0, size:10000})` → map `{id:humanId, sampleIds:[sample.humanId]}`. **Target:** `@DgsQuery → WorkspaceContentResult`. **Acceptance:** 1. maps products + their sample human ids. **Tests:** ☐ map ☐ parity."
+Story,SPARK-WS-B05,SPARK-WS-B05 · findWorkspaceClaims,,Workspace → plm-workspace DGS migration,B,Low,2,dgs-migration,workspace,query,SPARK-WS-A04,"**Current Behaviour (Q6):** (🔴 search) `getClaimsElastic({ q:""workspaceContext:{workspaceId}"", page:0, size:10000 })` → `.content`. **Target:** `@DgsQuery → [Claims]` (federated). **Acceptance:** 1. elastic query exact. **Tests:** ☐ query ☐ parity."
+Story,SPARK-WS-B06,SPARK-WS-B06 · getWorkspacePackagingAttachments,,Workspace → plm-workspace DGS migration,B,Medium,3,dgs-migration,workspace,query,SPARK-WS-A04,"**Current Behaviour (Q8):** env `WORKSPACE_PACKAGING_TAG_ID` (**throws if unset**) → (🔴 search) `searchAttachments({ q:""tags:{tag}[ AND security.bps:{bpId}]"", relatedIds:[workspaceId], size:500, sort:""createdAt,desc"" })` → `.content`. **Target:** `@DgsQuery`; tag id from config. **Acceptance:** 1. throws if tag config missing. 2. bp filter appended when present. **Tests:** ☐ config-missing ☐ with/without bp.
+
+---
+
+### Phase C — Search & Listing"
+Story,SPARK-WS-C01,SPARK-WS-C01 · getWorkspacesPagedV2,,Workspace → plm-workspace DGS migration,C,Medium,3,dgs-migration,workspace,query,SPARK-WS-A04,**Current Behaviour (Q3):** (🔴 search) `getWorkspacesPagedV2` — array params CSV-joined (except page/size); `omitBy` drops empties. **Target:** `@DgsQuery → WorkspacesPagedV2`. **Acceptance:** 1. array→CSV; empties omitted. **Tests:** ☐ params ☐ paging ☐ parity.
+Story,SPARK-WS-C02,SPARK-WS-C02 · getWorkspacesPagedV3,,Workspace → plm-workspace DGS migration,C,Medium,3,dgs-migration,workspace,query,SPARK-WS-A04,"**Current Behaviour (Q4):** (🔴 search) `getWorkspacesPagedV3` — CSV-join except `q`/`designPartnerIds`; `omitBy`. **Target:** `@DgsQuery → WorkspacesPagedV3`. **Acceptance:** 1. CSV-join rules preserved (q/designPartnerIds passthrough). **Tests:** ☐ params ☐ parity.
+
+---
+
+### Phase D — Mutations (simple)"
+Story,SPARK-WS-D01,SPARK-WS-D01 · createWorkspaceV2 (dup-check throw),,Workspace → plm-workspace DGS migration,D,Medium,3,dgs-migration,workspace,mutation,SPARK-WS-A04,**Current Behaviour (M1):** default `workspaceType=103`; (own) `POST {base}` (`validateUnique`). **Throw `GraphQLError('Workspace already exists')`** if the response message starts with the dup text. **Target:** `@DgsMutation → WorkspaceV2`. **Acceptance:** 1. creates; default type 103. 2. dup → GraphQLError. **Tests:** ☐ create ☐ dup→throw.
+Story,SPARK-WS-D02,SPARK-WS-D02 · updateWorkspaceV2 (dup-check throw),,Workspace → plm-workspace DGS migration,D,Medium,3,dgs-migration,workspace,mutation,SPARK-WS-A04,**Current Behaviour (M2):** (ACL) token for `workspace.id`; default type 103; (own) `PUT {base}/{id}?validateUnique=` → same dup-check throw. **Target:** `@DgsMutation`. **Acceptance:** 1. updates; dup→throw. **Tests:** ☐ update ☐ dup→throw.
+Story,SPARK-WS-D03,SPARK-WS-D03 · changeWorkspace,,Workspace → plm-workspace DGS migration,D,Medium,3,dgs-migration,workspace,mutation,SPARK-WS-A04,"**Current Behaviour (M3):** (ACL) token for `Attr-{newWs}-resources` → (own) `PUT {base}/{newWs}/change_resource` with `{newWorkspaceId, oldWorkspaceId, productHumanId, teams, removeWorkspaceOnly}`. **Throw on validationErrors/message.** **Target:** `@DgsMutation`. **Acceptance:** 1. moves product between workspaces. 2. error→throw. **Tests:** ☐ change ☐ error."
+Story,SPARK-WS-D04,SPARK-WS-D04 · addResourcesToWorkspaceV2 (product side-effect),,Workspace → plm-workspace DGS migration,D,Medium,3,dgs-migration,workspace,mutation,SPARK-WS-A04,**Current Behaviour (M4):** (ACL) token; **if single product** → (🔴 product) read `Product.workspaces` + `updateViewToggle` (init workspace attrs; `firstWorkspace` adds designCycle/setDates); (own) `POST {base}/{workspaceId}/resources/bulk`. **Target:** `@DgsMutation`; the product side-effect via a product client/entity. **Acceptance:** 1. adds resources. 2. single-product init side-effect preserved. **Tests:** ☐ add ☐ single-product init ☐ parity.
+Story,SPARK-WS-D05,SPARK-WS-D05 · removeWorkspaceResourcesV2 (product cleanup),,Workspace → plm-workspace DGS migration,D,Medium,3,dgs-migration,workspace,mutation,SPARK-WS-A04,**Current Behaviour (M5):** (ACL) token; **if single product** → (🔴 product) `deletePartnerWorkspaceStatuses` cleanup; (own) `DELETE {base}/{workspaceId}/resources/delete/bulk?resourceType=&resourceIds=`. **Target:** `@DgsMutation`. **Acceptance:** 1. removes resources. 2. single-product status cleanup. **Tests:** ☐ remove ☐ cleanup.
+Story,SPARK-WS-D06,SPARK-WS-D06 · addTeamsToWorkspaceV3,,Workspace → plm-workspace DGS migration,D,Low,2,dgs-migration,workspace,mutation,SPARK-WS-A04,**Current Behaviour (M6):** (ACL) token → (own) `POST {base}/{workspaceId}/teams/bulk`. **Target:** `@DgsMutation`. **Acceptance:** 1. adds teams. **Tests:** ☐ add.
+Story,SPARK-WS-D07,SPARK-WS-D07 · exportWorkspace,,Workspace → plm-workspace DGS migration,D,Low,2,dgs-migration,workspace,mutation,SPARK-WS-A04,"**Current Behaviour (M8):** (🔴 search) `requestBulkAttachmentExport({parentResourceId, exportType, includedAttachmentIds, includeOnlyPrimaryThumbnails}, {q, filter})`. **Target:** `@DgsMutation → WorkspaceExportReceipt`. **Acceptance:** 1. returns receipt. **Tests:** ☐ export."
+Story,SPARK-WS-D08,SPARK-WS-D08 · exportWorkspaceExcel,,Workspace → plm-workspace DGS migration,D,Low,2,dgs-migration,workspace,mutation,SPARK-WS-A04,**Current Behaviour (M9):** (🔵 exportHub) `exportWorkspaceExcel(workspaceExportOptions)`. **Target:** `@DgsMutation`. **Acceptance:** 1. returns receipt. **Tests:** ☐ export.
+Story,SPARK-WS-D09,SPARK-WS-D09 · exportPackagingFiles,,Workspace → plm-workspace DGS migration,D,Low,2,dgs-migration,workspace,mutation,SPARK-WS-A04,"**Current Behaviour (M10):** (🔴 search) `requestPackagingExport({workspaceId, workspaceDescription, exportContext, exportType}, {q, filter})`. **Target:** `@DgsMutation`. **Acceptance:** 1. returns receipt. **Tests:** ☐ export.
+
+---
+
+### Phase E — Complex Operations"
+Story,SPARK-WS-E01,SPARK-WS-E01 · workspaceBusinessPartnerActionsV2 (5-case drop/undrop dispatcher),,Workspace → plm-workspace DGS migration,E,Very High,8,dgs-migration,workspace,mutation,SPARK-WS-A04,"**As a** DGS engineer **I want** the partner-action dispatcher with a failure strategy **so that** drop/undrop
+stays consistent across workspace/discussion/sample/claim + ACL + user-profile.
+**Current Behaviour (M7 / helper):** ~310-line switch — `REMOVE_TEAM`, `REMOVE_PARTNER`, `DROP_PARTNER`,
+`UNDO_DROP_PARTNER`, `DROP_UNDROP_PARTNER`. Builds a relationship tree (🟡 relationship), ACL-filters
+resources, drops/undrops workspace + (🟡 discussion) + (🟡 sampleV2, skipped for DESIGN_PARTNER) in parallel,
+then (accessControl) `dropPartnerFromResources`/`unDropPartnerFromResources` + user-profile cleanup, with
+**manual compensation** on ACL failure. **⚠ the DROP/UNDO_DROP `Promise.all().then()` chains are not awaited.**
+**Target:** `WorkspacePartnerActionService` with 5 strategy methods; **PO decision** saga/compensation; **fix
+the un-awaited chains**; preserve the design-partner sample-skip. **Acceptance:** 1. all 5 paths reach REST
+parity (recorded fixtures). 2. chains awaited; compensation on ACL failure. 3. design-partner skips samples. **Tests:** ☐ REMOVE_TEAM ☐ REMOVE_PARTNER ☐ DROP ☐ UNDO_DROP ☐ DROP_UNDROP ☐ partial-failure ☐ parity.
+
+---
+
+### Phase F — Federation & decisions"
+Story,SPARK-WS-F01,SPARK-WS-F01 · WorkspaceV2 entity fetcher (federated reference),,Workspace → plm-workspace DGS migration,F,Medium,3,dgs-migration,workspace,field-resolver,SPARK-WS-A04,"**Target:** `@DgsEntityFetcher(name=""WorkspaceV2"")` resolving by `id`, so the product-family subgraphs
+(product/bom/measurement/impression/productDetails/packaging/claims/watchlist) resolve their `workspaces`
+fields over the gateway. **Acceptance:** 1. entity resolves by key from `_entities`. 2. a cross-subgraph `Product { workspaces { id description } }` smoke test passes. **Tests:** ☐ entity fetch ☐ cross-subgraph smoke."
+Story,SPARK-WS-F02,SPARK-WS-F02 · Deferred drop/undrop wrapper decision (drift mutations),,Workspace → plm-workspace DGS migration,F,Low,2,dgs-migration,workspace,schema,SPARK-WS-E01,"**Current Behaviour:** `dropWorkspaceBusinessPartnerV2`/`unDropWorkspaceBusinessPartnerV2` are schema-drift wrappers; traffic routes through `workspaceBusinessPartnerActionsV2`. **Target:** PO decides delete vs keep `@deprecated`. **Acceptance:** 1. traffic survey complete. 2. decision implemented. **Tests:** ☐ schema diff intentional.
+
+---
+
+### Phase G — Field Resolvers & Tests"
+Story,SPARK-WS-G01,SPARK-WS-G01 · WorkspaceV2.attachmentsWithMetaData,,Workspace → plm-workspace DGS migration,G,Very High,8,dgs-migration,workspace,field-resolver,"SPARK-WS-A02, SPARK-WS-A04","**Current Behaviour (~75 ln):** (🟡 relationship) tree (attachments_v3/discussions/discussionThreads) →
+(🔴 attachment) `getAttachmentsV3` (ACL) → (🟡 discussion) batch discussions/threads → merge → order by
+`resource.type,created_at desc` → **draft filter** (discussion attachments w/o link or draft removed). **Target:** Kotlin enrichment service; keep the ""ACL should do draft filter"" TODO. **Acceptance:** 1. parity for mixed attachment/discussion/thread. 2. ordering + draft filter preserved. **Tests:** ☐ merge ☐ ordering ☐ draft filter ☐ parity."
+Story,SPARK-WS-G02,SPARK-WS-G02 · WorkspaceV2.counts (product dashboard rollup),,Workspace → plm-workspace DGS migration,G,Very High,8,dgs-migration,workspace,field-resolver,SPARK-WS-A04,"**Current Behaviour (~85 ln):** (🔴 search) `getFilteredProductsWithSummary` → (🔴 product) `getPage` →
+(🟡 discussion) product discussion counts + (🔴 search) sample counts + sample-discussion roll-up into product
+discussion counts → assemble `WorkspaceCountsV2` (+ dashboard, nonEvaluated count). Empty product set → zeros. **Target:** Kotlin counts service; batch. **Acceptance:** 1. parity for the full rollup incl. sample-discussion increment. 2. empty → zeros. **Tests:** ☐ rollup ☐ sample-discussion ☐ empty ☐ parity."
+Story,SPARK-WS-G03,SPARK-WS-G03 · WorkspaceV2.attachmentsV3,,Workspace → plm-workspace DGS migration,G,High,5,dgs-migration,workspace,field-resolver,SPARK-WS-A04,"**Current Behaviour:** with args → `getProductOrWorkSpaceAttachments` (per-BP counts via `initialCountsByBp`);
+without args → relationship tree → `resolveRelationIds` → filter. **Target:** shared attachment helper. **Acceptance:** 1. both arg/no-arg paths. 2. per-BP counts. **Tests:** ☐ with args ☐ no args ☐ counts."
+Story,SPARK-WS-G04,SPARK-WS-G04 · products + productsCount + combinations + sampleReport (cross-subgraph),,Workspace → plm-workspace DGS migration,G,High,5,dgs-migration,workspace,field-resolver,SPARK-WS-A04,"**Current Behaviour:** `products` → (🔴 product) `getProducts(resourceType:'workspaces', resourceId, include*: true)`; `productsCount` → (🔴 product) `getPage` totalElements; `combinations` → (🔴 search) `searchCombinations` → (🟡 combination) `getByIds`; `sampleReport` → (🔴 search) samples-by-parent + (🟡 sampleV2) `getSamplesByIdsV2` + round filtering. **Target:** product/combination/sample clients (replace direct resolver calls). **Acceptance:** 1. each resolves; include flags forwarded. 2. sampleReport round counts correct. **Tests:** ☐ products ☐ count ☐ combinations ☐ sampleReport."
+Story,SPARK-WS-G05,SPARK-WS-G05 · businessPartners + droppedPartners + notRemovable + unDroppable,,Workspace → plm-workspace DGS migration,G,Medium,3,dgs-migration,workspace,field-resolver,SPARK-WS-A04,**Current Behaviour:** `businessPartners`/`droppedPartners` → (🔵 vmm) `loadBpsWithType`; `notRemovablePartnerIds` → `getWorkspacePartnersNotRemovable`; `unDroppablePartners` (isDesignPartner) → `getUnDroppablePartners` else `[]`. **Acceptance:** 1. each resolves; unDroppable gated on `isDesignPartner`. **Tests:** ☐ partners ☐ notRemovable ☐ unDroppable.
+Story,SPARK-WS-G06,SPARK-WS-G06 · divisions/brands/clazzes/designCycles/tags + WorkspaceDepartmentV2,,Workspace → plm-workspace DGS migration,G,Medium,3,dgs-migration,workspace,field-resolver,SPARK-WS-A04,"**Current Behaviour:** `divisions` (🔵 ig), `brands` (🔵 brand), `clazzes` (🔵 ig by dept+class), `designCycles`/`tags` (🟡 tag); `WorkspaceDepartmentV2.node`/`clazzes` (🔵 ig). **Acceptance:** 1. each resolves; empty → []. **Tests:** ☐ divisions ☐ brands ☐ clazzes ☐ tags."
+Story,SPARK-WS-G07,SPARK-WS-G07 · createdBy/updatedBy/status/id + discussionsV2/teams + paged computed,,Workspace → plm-workspace DGS migration,G,Medium,3,dgs-migration,workspace,field-resolver,SPARK-WS-A04,"**Current Behaviour:** `id` (workspaceHumanId||humanId), `status` ({id:status, name:statusName}), `workspaceTypeElastic`, `createdAt`/`updatedAt` (from ts) — computed; `createdBy`/`updatedBy` (🟡 user-profile); `discussionsV2`/`teams` (🔴 search elastic); `WorkspacesPagedV2/V3` paging/content/pageable (computed). **Acceptance:** 1. computed mappings correct. 2. users/discussions/teams resolve. **Tests:** ☐ computed ☐ users ☐ discussions ☐ teams."
+Story,SPARK-WS-G08,"SPARK-WS-G08 · Tests, parity harness, load test",,Workspace → plm-workspace DGS migration,G,High,5,dgs-migration,workspace,tests,"SPARK-WS-B01, SPARK-WS-E01, SPARK-WS-G01, SPARK-WS-G02","**Target:** ≥80% unit coverage; parity harness (incl. all 5 partner-action cases, attachmentsWithMetaData, counts, paged search, dup-check); load test p95 for `getWorkspaceV2`/`counts`/`attachmentsWithMetaData`; contract test (schema diff intentional-only). **Acceptance:** 1. unit ≥80%. 2. parity green. 3. load p95 parity. 4. schema-diff intentional. **Tests:** ☐ parity ☐ load ☐ contract.
+
+---
+
+## 4. Risk Register
+| Risk | Likelihood | Impact | Mitigation | Owner |
+|------|-----------|--------|------------|-------|
+| Partner-action dispatcher partial failure + un-awaited chains (E01) | High | High | Saga/compensation; await; parity per case | Tech Lead + PO |
+| `attachmentsWithMetaData` / `counts` perf (G01/G02) | Medium | High | Parallel + cached relationship/ACL; batch | Backend Eng |
+| Cross-subgraph coupling to product (G04/D04) | Medium | Medium | Entity refs / product client | Architect |
+| Schema-drift drop/undrop wrappers may have live consumers (F02) | Medium | Medium | Traffic survey before delete | PO |
+| `WORKSPACE_PACKAGING_TAG_ID` env dependency (B06) | Low | Medium | Move to config; fail-fast | Platform |
+
+## 5. Summary
+- **Stories:** 32 (A:4 · B:6 · C:2 · D:9 · E:1 · F:2 · G:8).
+- **Critical path:** A01→A02/A04→E01→G01/G02→G08.
+- **Highest risk:** `workspaceBusinessPartnerActionsV2` (E01), `attachmentsWithMetaData`/`counts` (G01/G02).
+- **Separate subgraph:** `WorkspaceV2` is the entity every product-family subgraph references for `workspaces`.
+
+---
+**Phase Completed:** Phase 4 — Migration Stories · **Domain:** `workspace` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md."

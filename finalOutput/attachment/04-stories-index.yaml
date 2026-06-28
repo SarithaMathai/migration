@@ -1,0 +1,42 @@
+# Machine-readable story index for Attachment — feed to Jira (bulk create) / Confluence rollup.
+# One entry per story in 04-stories.md. complexity = Low|Medium|High|Very High (no day-ranges).
+domain: attachment
+target_dgs: plm-attachment
+epic: "Attachment → plm-attachment DGS migration"
+labels_common: [dgs-migration, attachment]
+generated: 2026-06-27
+pipeline_version: "2.0"
+acl_policy: "ACL ignored in implementation; ACL *writes* (permission grants) ARE build work, not auth"
+stories:
+  - { id: SPARK-ATCH-A01, summary: "Schema skeleton + DateTime scalar", phase: A, category: CAT-1, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-A02, summary: "Owned types + inputs (normalize snake/camel record shape)", phase: A, category: CAT-1, complexity: Medium, depends_on: [SPARK-ATCH-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-A03, summary: "External stubs (platform + other DGS)", phase: A, category: CAT-1, complexity: Low, depends_on: [SPARK-ATCH-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-A04, summary: "AttachmentService port (plm-attachment)", phase: A, category: CAT-3, complexity: High, depends_on: [SPARK-ATCH-A01], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-B01, summary: "getAttachmentsV3", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-ATCH-A02, SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-B02, summary: "getAttachmentsByResource (relationship + ACL)", phase: B, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [{key: relationship, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-ATCH-B03, summary: "getAttachmentsByResourceAndOwner", phase: B, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [{key: relationship, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-ATCH-B04, summary: "Renders queries (ids/V3Ids/byPost)", phase: B, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-B05, summary: "getAttachmentsfromRelatedResource(s)", phase: B, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: SPARK-ATCH-D01, summary: "archiveAttachmentV3", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D02, summary: "deleteAttachmentV3", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D03, summary: "copyAttachmentsV3", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D04, summary: "associateResourcesV3", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D05, summary: "removeResourcesV3", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D06, summary: "updateAttachmentsACLPermissions (ACL write)", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [{key: accessControl, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-ATCH-D07, summary: "updateAttachmentTags + updateAttachmentTagsV3 (identical impl)", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D08, summary: "bulkUpdateAttachments (tags + permissions; fire-and-forget — confirm)", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [{key: accessControl, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-ATCH-D09, summary: "updateAttributes", phase: D, category: CAT-2, complexity: Low, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D10, summary: "bulkUpdateAttributes", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D11, summary: "bulkUpdateAttachmentsV2", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D12, summary: "publishAttachmentToGallery (ATC- V3/legacy branch)", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D13, summary: "unpublishAttachmentToGallery (ATC- V3/legacy branch)", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-D14, summary: "associateAttachmentTeams", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-F01, summary: "Attachment entity fetcher (federated reference)", phase: F, category: CAT-4, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-F02, summary: "Deferred getAttachments drift query decision", phase: F, category: CAT-4, complexity: Low, depends_on: [SPARK-ATCH-A04], ext_services: [], blocked_by: none }
+  - { id: SPARK-ATCH-G01, summary: "Attachment core field resolvers (snake/camel + access/users/businessPartnersFull)", phase: G, category: CAT-2, complexity: High, depends_on: [SPARK-ATCH-A02, SPARK-ATCH-A04], ext_services: [{key: accessControl, severity: YELLOW}, {key: vmm, severity: BLUE}, {key: userAttributes, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-ATCH-G02, summary: "tags + modelFile + gallery sub-types (GalleryDetails/File/3dFile/ProductPacketProps)", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-ATCH-A04], ext_services: [{key: tag, severity: YELLOW}, {key: gallery, severity: BLUE}, {key: userAttributes, severity: YELLOW}], blocked_by: none }
+  - { id: SPARK-ATCH-G03, summary: "Tests, parity harness", phase: G, category: CAT-5, complexity: High, depends_on: [SPARK-ATCH-B01, SPARK-ATCH-D08, SPARK-ATCH-G01], ext_services: [], blocked_by: none }
+totals:
+  story_count: 28
+  by_complexity: { Low: 10, Medium: 15, High: 3, "Very High": 0 }
+  by_phase: { A: 4, B: 5, D: 14, F: 2, G: 3 }

@@ -116,10 +116,10 @@ each owning domain's `04-stories.md`. See [reference-federation-patterns.md §0/
 | F05 | Claim | `claims` | **federation** — BLOCKED-BY claim domain |
 | F06 | BOM | `productBoms`, `packagingBoms`, `boms` | **internal** (same subgraph) — see [bom F02](../bom/04-stories.md) |
 | F07 | Construction | `constructions` | **federation** — BLOCKED-BY construction domain |
-| F08 | Watchlist | `watchlists` | **federation** — BLOCKED-BY watchlist domain |
+| F08 | Watchlist | `watchlists` | **internal** (same subgraph) — see [watchlist F-stories](../watchlist/04-stories.md) |
 
-**Acceptance (federated F01/F02/F03/F05/F07/F08):** the field resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
-**Acceptance (internal F04/F06):** the field resolves in-process; no gateway hop; parity vs facade. **Tests:** ☐ field resolves ☐ parity."
+**Acceptance (federated F01/F02/F03/F05/F07):** the field resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
+**Acceptance (internal F04/F06/F08):** the field resolves in-process; no gateway hop; parity vs facade. **Tests:** ☐ field resolves ☐ parity."
 Story,SPARK-PROD-F02,SPARK-PROD-F02 · ResourcesCount.discussions (Discussion),,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,federation,SPARK-PROD-E03,"ResourcesCount.discussions (Discussion)
 
 (Full detail is in finalOutput/product/04-stories.md — phase F section.)"
@@ -138,7 +138,7 @@ Story,SPARK-PROD-F06,"SPARK-PROD-F06 · ResourcesCount.productBoms+packagingBoms
 Story,SPARK-PROD-F07,SPARK-PROD-F07 · ResourcesCount.constructions (Construction),,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,federation,SPARK-PROD-E03,"ResourcesCount.constructions (Construction)
 
 (Full detail is in finalOutput/product/04-stories.md — phase F section.)"
-Story,SPARK-PROD-F08,SPARK-PROD-F08 · ResourcesCount.watchlists (Watchlist),,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,federation,SPARK-PROD-E03,"ResourcesCount.watchlists (Watchlist)
+Story,SPARK-PROD-F08,"SPARK-PROD-F08 · ResourcesCount.watchlists (Watchlist — INTERNAL, same subgraph)",,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,story,SPARK-PROD-E03,"ResourcesCount.watchlists (Watchlist — INTERNAL, same subgraph)
 
 (Full detail is in finalOutput/product/04-stories.md — phase F section.)"
 Story,SPARK-PROD-F09,SPARK-PROD-F09 · Retire TechPack aggregation facade,,Product → plm-product DGS migration,F,Low,2,dgs-migration,product,field-resolver,"SPARK-PROD-F01, SPARK-PROD-F02, SPARK-PROD-F03, SPARK-PROD-F04, SPARK-PROD-F05, SPARK-PROD-F06, SPARK-PROD-F07, SPARK-PROD-F08",**Target:** remove `TechPackAggregatorClient`; `TechPackDataFetcher` returns key+context only; decommission the facade. **Acceptance:** 1. all 11 `ResourcesCount` fields resolve via federation. 2. facade health-check 404. 3. no orphaned config. **Tests:** ☐ all fields via federation ☐ no facade alerts.

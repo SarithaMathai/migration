@@ -19,41 +19,68 @@ domains:
     index: productDetails/04-stories-index.yaml
     risk: mid-low (one multi-step write)
     recommended_order: 2
+  - key: watchlist
+    epic: "Watchlist → plm-product DGS migration"
+    stories: 17
+    index: watchlist/04-stories-index.yaml
+    risk: mid-low (one multi-step write; await-race fix)
+    recommended_order: 3
   - key: measurement
     epic: "Measurement → plm-product DGS migration"
     stories: 24
     index: measurement/04-stories-index.yaml
     risk: mid-low
-    recommended_order: 3
+    recommended_order: 4
   - key: claims
     epic: "Claims → claims DGS migration"
     stories: 24
     index: claims/04-stories-index.yaml
     target_dgs: spark-claims
     risk: mid (separate subgraph; proxy-ACL update)
-    recommended_order: 4
+    recommended_order: 5
+  - key: search
+    epic: "Search → plm-elastic-search DGS migration"
+    stories: 25
+    index: search/04-stories-index.yaml
+    target_dgs: plm-elastic-search
+    risk: mid (separate subgraph; read hub; wide type surface)
+    recommended_order: 6
   - key: packaging
     epic: "Packaging → plm-product DGS migration"
     stories: 28
     index: packaging/04-stories-index.yaml
     risk: mid (wide schema; multi-step write + pricing chain)
-    recommended_order: 5
+    recommended_order: 7
+  - key: workspace
+    epic: "Workspace → plm-workspace DGS migration"
+    stories: 32
+    index: workspace/04-stories-index.yaml
+    target_dgs: plm-workspace
+    risk: high (separate subgraph; 5-case partner dispatcher; 2 X-Large field resolvers)
+    recommended_order: 8
+  - key: sample
+    epic: "Sample → plm-sample DGS migration"
+    stories: 33
+    index: sample/04-stories-index.yaml
+    target_dgs: plm-sample
+    risk: mid-high (separate subgraph; wide entity + polymorphic parents + union; evaluation writes)
+    recommended_order: 9
   - key: bom
     epic: "BOM → plm-product DGS migration"
     stories: 42
     index: bom/04-stories-index.yaml
     risk: mid (polymorphism + 3-step write)
-    recommended_order: 6
+    recommended_order: 10
   - key: product
     epic: "Product → plm-product DGS migration"
     stories: 72
     index: product/04-stories-index.yaml
     risk: highest (TechPack + host DGS)
-    recommended_order: 7
+    recommended_order: 11
 totals:
-  domains: 7
-  stories: 218
-  by_complexity: { Low: 121, Medium: 78, High: 13, "Very High": 6 }
+  domains: 11
+  stories: 325
+  by_complexity: { Low: 160, Medium: 125, High: 31, "Very High": 9 }
 artifacts_per_domain:
   - 01-schema-inventory.md      # tech lead
   - 02-resolver-analysis.md     # engineers (implementation spec)

@@ -432,10 +432,10 @@ each owning domain's `04-stories.md`. See [reference-federation-patterns.md §0/
 | F05 | Claim | `claims` | **federation** — BLOCKED-BY claim domain |
 | F06 | BOM | `productBoms`, `packagingBoms`, `boms` | **internal** (same subgraph) — see [bom F02](../bom/04-stories.md) |
 | F07 | Construction | `constructions` | **federation** — BLOCKED-BY construction domain |
-| F08 | Watchlist | `watchlists` | **federation** — BLOCKED-BY watchlist domain |
+| F08 | Watchlist | `watchlists` | **internal** (same subgraph) — see [watchlist F-stories](../watchlist/04-stories.md) |
 
-**Acceptance (federated F01/F02/F03/F05/F07/F08):** the field resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
-**Acceptance (internal F04/F06):** the field resolves in-process; no gateway hop; parity vs facade. **Tests:** ☐ field resolves ☐ parity.
+**Acceptance (federated F01/F02/F03/F05/F07):** the field resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
+**Acceptance (internal F04/F06/F08):** the field resolves in-process; no gateway hop; parity vs facade. **Tests:** ☐ field resolves ☐ parity.
 
 ---
 
@@ -499,11 +499,11 @@ _(Full detail bundled in ../product/04-stories.md — phase F section.)_
 
 ---
 
-## SPARK-PROD-F08 · ResourcesCount.watchlists (Watchlist)
+## SPARK-PROD-F08 · ResourcesCount.watchlists (Watchlist — INTERNAL, same subgraph)
 **Type:** Story  ·  **Phase:** F  ·  **Complexity:** Low  ·  **Points (est.):** 2  ·  **Depends on:** SPARK-PROD-E03
-**Labels:** `dgs-migration`, `product`, `federation`
+**Labels:** `dgs-migration`, `product`, `story`
 
-ResourcesCount.watchlists (Watchlist)
+ResourcesCount.watchlists (Watchlist — INTERNAL, same subgraph)
 
 _(Full detail bundled in ../product/04-stories.md — phase F section.)_
 
