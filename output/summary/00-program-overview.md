@@ -1,0 +1,98 @@
+# Spark → Federated GraphQL Migration — Program Overview
+
+> 🏷️ **Tags:** `dgs-migration` · `program-overview` — **Confluence:** *Federation Graph Migration* (space home)
+> **Generated:** 2026-07-07 · **Scope:** 8 domains (phase 1) · `spark-internal-graphql` → Netflix DGS via Hive Schema Registry
+> Effort is **AI-estimated — confirm in refinement.**
+
+---
+
+## What & why
+
+- We are moving the PLM GraphQL API off the monolithic `spark-internal-graphql` Node.js gateway onto **Netflix DGS** subgraphs, federated via the **Hive Schema Registry**.
+- Phase 1 covers 8 domains: seven compile into the **same `plm-product` subgraph** (their cross-references resolve internally); **claims** is its own subgraph.
+- The remaining domains (attachment, discussion, sample, search, workspace) federate in a later phase.
+
+**Engineering model:**
+- Every story is self-contained in one PR — schema + DGS data fetcher + Kotlin REST service method + Hive push.
+- The model, REST controllers (GET/POST/PUT) and services already exist; each story only adds the thin DGS wrapper.
+- **Ship on green, per story** — except cross-subgraph entity extensions, which wait for their owning subgraph.
+
+---
+
+## Program totals
+
+| Metric | Value |
+|---|---|
+| Total domains | 8 |
+| Target DGS services | 2 |
+| **Total stories** | **206** |
+| Complexity | 🔴 6 Very High · 🟠 14 High · 🟡 79 Medium · 🟢 107 Low |
+| Open decisions | 34 |
+| **Effort (buffered +20%)** | **435–737 engineer-days** |
+
+---
+
+## Domains at a glance
+
+| Domain | Target DGS | Stories | T-Shirt | 🔴 | 🟠 | 🟡 | 🟢 | Effort (buffered) | Top risk |
+|---|---|---|---|---|---|---|---|---|---|
+| [Product](./product/FederatedGqlBrakDown-product.md) | `plm-product (host)` | **70** | XXL | 5 | 5 | 27 | 33 | 197–330d | 🔴 High TechPack aggregation + partner drop/undrop orchestration |
+| [BOM](./bom/FederatedGqlBrakDown-bom.md) | `plm-product (co-located)` | **39** | XL | 1 | 2 | 13 | 23 | 68–114d | 🔴 High `updateBom` 3-step write — no rollback path today |
+| [Packaging](./packaging/FederatedGqlBrakDown-packaging.md) | `plm-product (co-located)` | **24** | L | 0 | 2 | 9 | 13 | 42–72d | 🟡 Medium `updatePackaging` multi-step write + elastic search cutover |
+| [Measurement](./measurement/FederatedGqlBrakDown-measurement.md) | `plm-product (co-located)` | **20** | M | 0 | 1 | 6 | 13 | 32–55d | 🟡 Medium `updateMeasurement` 2-step write + master-data cache |
+| [Claims](./claims/FederatedGqlBrakDown-claims.md) | `spark-claims (separate)` | **20** | L | 0 | 2 | 9 | 9 | 36–62d | 🟡 Medium `updateClaim` proxy-ACL multi-step + camelCase response bug |
+| [Impression](./impression/FederatedGqlBrakDown-impression.md) | `plm-product (co-located)` | **7** | XS | 0 | 0 | 2 | 5 | 11–18d | 🟢 Low Impression sub-type polymorphism (5 types) |
+| [Product Details](./productDetails/FederatedGqlBrakDown-productDetails.md) | `plm-product (co-located)` | **13** | M | 0 | 1 | 7 | 5 | 24–42d | 🟡 Medium `updateProductDetailsSet` multi-step + elastic search |
+| [Watchlist](./watchlist/FederatedGqlBrakDown-watchlist.md) | `plm-product (co-located)` | **13** | M | 0 | 1 | 6 | 6 | 25–44d | 🟡 Medium `updateWatchlistEntries` multi-step write |
+| **TOTAL** | — | **206** | — | **6** | **14** | **79** | **107** | **435–737d** | — |
+
+> All counts + complexity are computed live from each domain's `04-stories.md` (same parser as the breakdown + Jira CSVs), so these totals always reconcile.
+
+---
+
+## DGS service groupings
+
+| DGS Service | Domains | Combined stories |
+|---|---|---|
+| `plm-product` | Product · BOM · Measurement · Packaging · Impression · Product Details · Watchlist | 186 |
+| `plm-sample` | Sample | 33 |
+| `plm-discussion` | Discussion | 37 |
+| `plm-workspace` | Workspace | 32 |
+| `plm-attachment` | Attachment | 26 |
+| `plm-elastic-search` | Search | 21 |
+| `spark-claims` | Claims | 22 |
+
+---
+
+## Recommended sequencing
+
+```
+Tier 1 — Foundation:  Search (read hub) · Product (host DGS, shared wiring)
+Tier 2 — Co-located:  Impression → Measurement → ProductDetails → Watchlist → BOM → Packaging
+Tier 3 — Separate:    Attachment · Claims · Discussion · Sample · Workspace
+Tier 4 — Federation:  all F-phase stories, once the owning subgraph is live
+```
+
+## Cross-domain blockers (true federation — a separate DGS must migrate first)
+
+| Blocked story | Domain | Waits on |
+|---|---|---|
+| `SPARK-PROD-F01` (attachments) | product | **attachment** |
+| `SPARK-PROD-F02` (discussions) | product | **discussion** |
+| `SPARK-PROD-F03` (sample) | product | **sample** |
+| `SPARK-PROD-F05` (claims) | product | **claim** |
+| `SPARK-PROD-F07` (constructions) | product | **construction** |
+| `SPARK-MEAS-F02` (sampleMeasurement) | measurement | **sample** |
+
+> Internal (NOT blockers, same `plm-product` subgraph): `SPARK-BOM-F01/F02`, `SPARK-PROD-F04/F06/F08`, `SPARK-MEAS-F01`, `SPARK-IMP-F01`, `SPARK-PDTL-F01`, `SPARK-PKG-F01`.
+
+---
+
+## How to consume
+
+- **Per domain:** open `summary/{domain}/FederatedGqlBrakDown-{domain}.md` (or the `.docx` for Confluence/Word).
+- **Jira:** import `jira/{domain}.csv` (or `jira/all-stories.csv`). See `PUSH-TO-JIRA-CONFLUENCE.md`.
+- **Read order by role + regeneration:** see `README.md`.
+
+---
+*Program overview · generated 2026-07-07 from `output/initial-analysis/*/04-*.md`.*

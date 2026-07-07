@@ -1,0 +1,208 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-PKG-B01,(Packaging) getPackagings(...) [SPARK-PKG-B01],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,,To Do,"*Current Behaviour:*
+* (own) `getPackagings().load({page,size,packagingIds,parentIds,workspaceIds,partnerIds,statusIds})` → paged.
+
+*Target:*
+* `@DgsQuery → PackagingPaged`.
+
+*Acceptance Criteria:*
+1. all 7 filter args forwarded; defaults page=0/size=10000"
+Story,SPARK-PKG-B02,(Packaging) getPackagingById(packagingId) [SPARK-PKG-B02],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+* (ACL context) token → (own) `getPackagingById.load(packagingId)`.
+
+*Target:*
+* `@DgsQuery → Packaging`.
+
+*Acceptance Criteria:*
+1. returns packaging; miss→null"
+Story,SPARK-PKG-B03,(Packaging) getDielines(...) [SPARK-PKG-B03],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+* (own) `getDielines.load({...})` → `.dielines`.
+
+*Target:*
+* `@DgsQuery → [Dieline]`.
+
+*Acceptance Criteria:*
+1. filters forwarded; returns the `dielines` array"
+Story,SPARK-PKG-B04,"(Packaging) getPackagingFieldValuesByType(type, ids) [SPARK-PKG-B04]",,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+* (own) `getPackagingFieldValuesByType(type, ids)`.
+
+*Target:*
+* `@DgsQuery → [PackagingFieldValues]`.
+
+*Acceptance Criteria:*
+1. by type (+optional ids)"
+Story,SPARK-PKG-B05,(Packaging) getDielineEvaluationStatuses (cacheable) [SPARK-PKG-B05],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+* (own) `getDielineEvaluationStatuses()`.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` → `[CodeDescription]`.
+
+*Acceptance Criteria:*
+1. returns statuses; cached"
+Story,SPARK-PKG-B06,(Packaging) getCountries(codes) (cacheable) [SPARK-PKG-B06],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+* (own) `getCountries(codes)`.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` → `[Countries]`.
+
+*Acceptance Criteria:*
+1. returns countries (optionally filtered by codes)"
+Story,SPARK-PKG-C01,(Packaging) getPackagingElastic(parentHumanId) [SPARK-PKG-C01],,Federate BreakDown Product,C,M,dgs-migration,packaging,search,,B01,To Do,"*Current Behaviour:*
+* (🔴 search) `search.getPackagingElastic.load({ q:""parentId: {parentHumanId}"" })` → `.content`. **EXT:** 🔴 search.
+
+*Target:*
+* `@DgsQuery → [Packaging]`.
+
+*Acceptance Criteria:*
+1. `parentId:` elastic query built; returns content"
+Story,SPARK-PKG-D01,(Packaging) addPackaging [SPARK-PKG-D01],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `POST packaging/v1`. **Throw on `validationErrors`/`message`.**
+
+*Target:*
+* `@DgsMutation → Packaging`; port throw-on-error.
+
+*Acceptance Criteria:*
+1. creates
+2. validation error → exception"
+Story,SPARK-PKG-D02,(Packaging) evaluateDieline [SPARK-PKG-D02],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `PUT packaging/v1/dielines/{dielineId}/evaluate`.
+
+*Target:*
+* `@DgsMutation → Dieline`.
+
+*Acceptance Criteria:*
+1. evaluates the dieline"
+Story,SPARK-PKG-D03,(Packaging) bulkAddPackagings [SPARK-PKG-D03],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `bulkAddPackagings`. **Throw on `validationErrors`/`message`.**
+
+*Target:*
+* `@DgsMutation → PackagingBulk`.
+
+*Acceptance Criteria:*
+1. bulk creates
+2. error → throw"
+Story,SPARK-PKG-D04,(Packaging) bulkUpdatePackagings [SPARK-PKG-D04],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* token for `packaging[].humanId` → (own) `bulkUpdatePackagings`. **Throw on error.**
+
+*Target:*
+* `@DgsMutation → PackagingBulk`.
+
+*Acceptance Criteria:*
+1. bulk updates
+2. error → throw"
+Story,SPARK-PKG-D05,(Packaging) exportPackaging [SPARK-PKG-D05],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* token → (own) `requestPackagingExport({workspace_id, workspace_description, product_ids})` → request id.
+
+*Target:*
+* `@DgsMutation → String`.
+
+*Acceptance Criteria:*
+1. returns the export request id"
+Story,SPARK-PKG-D06,(Packaging) lockPackaging [SPARK-PKG-D06],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* token → `PUT packaging/v1/{id}/lock`.
+
+*Target:*
+* `@DgsMutation → Packaging`.
+
+*Acceptance Criteria:*
+1. locks"
+Story,SPARK-PKG-D07,(Packaging) unlockPackaging [SPARK-PKG-D07],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* token → `PUT packaging/v1/{id}/unlock`.
+
+*Target:*
+* `@DgsMutation → Packaging`.
+
+*Acceptance Criteria:*
+1. unlocks"
+Story,SPARK-PKG-D08,(Packaging) cloneFilesForDielines [SPARK-PKG-D08],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* token → `Promise.all(attachmentIds.map(id => (🔴 attachment) cloneAttachmentV3({cloneReferences}, id)))`, flatten. **EXT:** 🔴 attachment.
+
+*Target:*
+* structured-concurrency fan-out.
+
+*Acceptance Criteria:*
+1. clones each id with the shared `cloneReferences`"
+Story,SPARK-PKG-D09,(Packaging) updatePackagingComponentStatus [SPARK-PKG-D09],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `updatePackagingComponentStatus({productId, ids, status})`. **No JWT — confirm backend-enforced.**
+
+*Target:*
+* `@DgsMutation → PackagingPagedForStatus`.
+
+*Acceptance Criteria:*
+1. updates statuses
+2. no-token behaviour documented"
+Story,SPARK-PKG-E01,(Packaging) updatePackaging (multi-step write) [SPARK-PKG-E01],,Federate BreakDown Product,E,L,dgs-migration,packaging,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* 1) token; set `humanId=packagingId`; `PUT packaging/v1` (body); 2) if `attachmentsToRemove` → (🔴 attachment) `archiveAttachmentBulkV2` + (🟡 relationship) `removeRelationship`; 3) if `attachmentsToAdd` → (🟡 relationship) `addBulkRelationShip` (**reject on status≥400**) then (🔴 attachment) `bulkUpdateAttributes`; 4) **throw on `validationErrors`/`message`**. No rollback. - **EXT:** 🔴 attachment · 🟡 relationship.
+
+*Target:*
+* ordered steps + chosen failure strategy (**PO decision**); **align** the add/remove error handling (the remove branch currently swallows errors).
+
+*Acceptance Criteria:*
+1. all branches in order
+2. add rejects on status≥400; remove error handling decided
+3. partial-failure strategy
+
+*Test Cases:*
+* [ ] body-only
+* [ ] remove
+* [ ] add
+* [ ] status≥400
+* [ ] partial-failure
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Complex — broken into sub-tasks:* E01-1 body + attachment add · E01-2 attachment remove + pricing"
+Story,SPARK-PKG-F01,"(Packaging) Product packaging links (internal, same subgraph) [SPARK-PKG-F01]",,Federate BreakDown Product,F,XS,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+* Product references packaging (e.g. `components(...packaging)`, packaging attributes) from the co-located packaging service.
+
+*Target:*
+* **internal** `@DgsData` calling `PackagingService` in-process (not gateway federation; depends only on the `Product`/`Component` types existing).
+
+*Acceptance Criteria:*
+1. resolves in-process; no gateway hop"
+Story,SPARK-PKG-G01,(Packaging) access + businessPartner + participantDetails [SPARK-PKG-G01],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `access` → `accessControl.getPermissions([humanId])[0]` (context); `businessPartner` → (🔵 vmm) `loadBpsWithType([businessPartner])[0]`; `participantDetails` → `getUserGroup(humanId||id)`.
+
+*Acceptance Criteria:*
+1. each resolves; null-safe"
+Story,SPARK-PKG-G02,(Packaging) createdBy + updatedBy + dielineEvaluators [SPARK-PKG-G02],,Federate BreakDown Product,G,XS,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `createdBy`/`updatedBy` (🟡 user-profile `getUser`); `dielineEvaluators` → map `userAttributes.getUserByID`, default `[]`.
+
+*Acceptance Criteria:*
+1. each resolves; null id → null"
+Story,SPARK-PKG-G03,(Packaging) product + workspaces + attachments [SPARK-PKG-G03],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `product` (internal, only if `parentId` starts `'PID'`); `workspaces` → (🔴 search) `getWorkspacesPagedV3({q:""id:(...)""})`.content; `attachments` → (🔴 search) `searchAttachmentsByRelatedResource(humanId)`.
+
+*Acceptance Criteria:*
+1. `product` null when not `PID*`
+2. workspaces/attachments via elastic"
+Story,SPARK-PKG-G04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + retailPrice [SPARK-PKG-G04],,Federate BreakDown Product,G,L,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `suggestedRetailPriceByDPCI` — gated on `requiresSuggestedRetailPrice` + a BP id: - collect printer ids from `packagingElements` → (own) `getDielines(printerIds)` → unique dpcis → (🔵 apex/pricing) `getRetailPriceByDpci({dpcis, bpId, productId})`; else `[]`. - `waveDescription` → (🟡 tag) `getTag(wave).name` if `wave`, else `waveDescription`. - `retailPrice` → `0` (deprecated).
+
+*Target:*
+* port the pricing chain; cache/batch dielines.
+
+*Acceptance Criteria:*
+1. price chain matches source; gate honored
+2. wave tag fallback
+3. `retailPrice`→0
+
+*Test Cases:*
+* [ ] price chain
+* [ ] gate
+* [ ] wave
+* [ ] retailPrice"
+Story,SPARK-PKG-G05,(Packaging) Dieline + PrinterDieline + PackagingElement field resolvers [SPARK-PKG-G05],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `Dieline.evaluatedBy` (🟡 user-profile), `Dieline.attachments` (🔴 search), `Dieline.attachment` (🔴 attachment `getAttachmentsV3([attachmentId])[0]`); `PrinterDieline.dielines` (own `getDielines({printerIds, statusIds})`); `PackagingElement.packagingLibrary` (internal fileLibrary).
+
+*Acceptance Criteria:*
+1. each field resolves to the right source"
+Story,SPARK-PKG-G06,"(Packaging) Tests, parity harness [SPARK-PKG-G06]",,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,"B01, E01, G03, G04",To Do,"*Target:*
+* ≥80% unit coverage; parity fixtures (incl. the multi-step `updatePackaging`, the pricing chain, attachment-by-search fields, create/bulk error contracts); contract test (schema diff intentional-only, incl. `@deprecated`).
+
+*Acceptance Criteria:*
+1. unit ≥80%
+2. parity green
+3. schema-diff intentional"

@@ -1,7 +1,7 @@
 # Creating the `migration` repo and pushing the code
 
 This document records the exact steps used to create the private GitHub
-repository **`SarithaMathai/migration`** and push this folder's code to it.
+repository **`XXX`** and push this folder's code to it.
 
 ---
 
@@ -59,7 +59,7 @@ gh repo create migration --private
 This creates an **empty private repo** at:
 
 ```
-https://github.com/SarithaMathai/migration
+https://github.com/XXX
 ```
 
 Useful variations:
@@ -83,7 +83,7 @@ git init                       # initialize a local git repo
 git add .                      # stage all files
 git commit -m "Initial commit" # create the first commit
 git branch -M main             # name the default branch 'main'
-git remote add origin https://github.com/SarithaMathai/migration.git
+git remote add origin https://github.com/XXX
 git push -u origin main        # push and set upstream
 ```
 

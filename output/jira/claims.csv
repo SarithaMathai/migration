@@ -1,0 +1,174 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-CLM-B01,"(Claims) getClaims(parentHumanId, claimHumanIds, partnerIds) [SPARK-CLM-B01]",,Federate BreakDown Product,B,XS,dgs-migration,claims,query,,,To Do,"*Current Behaviour:*
+* (own) `claim.getClaims.load({parentHumanId, claimHumanIds, partnerIds})` `GET {base}` (filtered) → camelCase. **No ACL token.**
+
+*Target:*
+* `@DgsQuery → [Claims]`.
+
+*Acceptance Criteria:*
+1. filters by the 3 args"
+Story,SPARK-CLM-B02,(Claims) getClaimByIds(claimHumanIds) [SPARK-CLM-B02],,Federate BreakDown Product,B,XS,dgs-migration,claims,query,,B01,To Do,"*Current Behaviour:*
+* (ACL context) token → `GET {base}/search?claimIds={csv}`.
+
+*Target:*
+* `@DgsQuery → [Claims]`.
+
+*Acceptance Criteria:*
+1. returns claims for ids"
+Story,SPARK-CLM-B03,(Claims) getCommunicationChannels (cacheable) [SPARK-CLM-B03],,Federate BreakDown Product,B,XS,dgs-migration,claims,query,,B01,To Do,"*Current Behaviour:*
+* (own) `GET {base}/communication-channels`.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` → `[CommunicationChannel]`.
+
+*Acceptance Criteria:*
+1. returns channels; cached"
+Story,SPARK-CLM-B04,(Claims) getAllClaimsAbout (cacheable) [SPARK-CLM-B04],,Federate BreakDown Product,B,XS,dgs-migration,claims,query,,B01,To Do,"*Current Behaviour:*
+* (own) `GET {base}/claims-about`.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` → `[CodeDescription]`.
+
+*Acceptance Criteria:*
+1. returns list; cached"
+Story,SPARK-CLM-B05,(Claims) getClaimExports [SPARK-CLM-B05],,Federate BreakDown Product,B,XS,dgs-migration,claims,query,,B01,To Do,"*Current Behaviour:*
+* (own) `GET {base}/export`.
+
+*Target:*
+* `@DgsQuery → [ClaimExport]`.
+
+*Acceptance Criteria:*
+1. returns export records"
+Story,SPARK-CLM-C01,(Claims) searchGuestFacing(queryParam) [SPARK-CLM-C01],,Federate BreakDown Product,C,M,dgs-migration,claims,search,,B01,To Do,"*Current Behaviour:*
+* (own) `GET {base}/search/guest_facing_claim?{qs(queryParam)}` → camelCase.
+
+*Target:*
+* `@DgsQuery → [Guest_Facing]`.
+
+*Acceptance Criteria:*
+1. query-string built from `queryParam`"
+Story,SPARK-CLM-C02,(Claims) getClaimsElastic(parentHumanId) [SPARK-CLM-C02],,Federate BreakDown Product,C,M,dgs-migration,claims,search,,B01,To Do,"*Current Behaviour:*
+* (🔴 search) `search.getClaimsElastic.load({ q:""parentId: {parentHumanId}"" })`. **EXT:** 🔴 search.
+
+*Target:*
+* `@DgsQuery → [Claims]` via the search subgraph/client.
+
+*Acceptance Criteria:*
+1. `parentId:` elastic query built"
+Story,SPARK-CLM-D01,(Claims) createClaim [SPARK-CLM-D01],,Federate BreakDown Product,D,M,dgs-migration,claims,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `POST {base}` (snake_case). **If `validationErrors`/`message` → throw.**
+
+*Target:*
+* `@DgsMutation → [Claims]`; port throw-on-error.
+
+*Acceptance Criteria:*
+1. creates claim(s)
+2. validation error → exception"
+Story,SPARK-CLM-D02,(Claims) bulkUpdateClaim [SPARK-CLM-D02],,Federate BreakDown Product,D,M,dgs-migration,claims,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `PUT {base}/bulk-update`. **Error contract:** result is array → return; `status_code>400` → throw; else throw ""unhandled"". **Latent:** source snake-cases the response — **fix to camelCase**.
+
+*Target:*
+* `@DgsMutation → [Claims]`.
+
+*Acceptance Criteria:*
+1. array result returned (camelCase)
+2. error status → exception"
+Story,SPARK-CLM-D03,(Claims) requestClaimExport [SPARK-CLM-D03],,Federate BreakDown Product,D,XS,dgs-migration,claims,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `POST {base}/export` → `response.request_id`.
+
+*Target:*
+* `@DgsMutation → String`.
+
+*Acceptance Criteria:*
+1. returns the request id"
+Story,SPARK-CLM-D04,(Claims) lockClaim [SPARK-CLM-D04],,Federate BreakDown Product,D,XS,dgs-migration,claims,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL context) token → `PUT {base}/{claimId}/lock`.
+
+*Target:*
+* `@DgsMutation → Claims`.
+
+*Acceptance Criteria:*
+1. locks the claim"
+Story,SPARK-CLM-D05,(Claims) unlockClaim [SPARK-CLM-D05],,Federate BreakDown Product,D,XS,dgs-migration,claims,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL context) token → `PUT {base}/{claimId}/unlock`.
+
+*Target:*
+* `@DgsMutation → Claims`.
+
+*Acceptance Criteria:*
+1. unlocks the claim"
+Story,SPARK-CLM-E01,(Claims) updateClaim (proxy ACL + multi-step write) [SPARK-CLM-E01],,Federate BreakDown Product,E,L,dgs-migration,claims,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* 1) `getUserPermissionsJWTByProxy({id:humanId, proxyIds:[parentId], basePermissions:true})` (proxy/external ACL path — context only); 2) if `workspaceContext.{add,remove}` non-empty → `workspaceAssociationHelper(CLAIM, humanId, add, remove)`; 3) `PUT {base}/{humanId}`; 4) **throw on `validationErrors`/`message`**. No rollback. - **EXT:** 🟡 workspaceV2.
+
+*Target:*
+* ordered steps + chosen failure strategy (**PO decision**). The proxy ACL is **context-only** (note it; build nothing).
+
+*Acceptance Criteria:*
+1. workspace assoc runs when present
+2. body update + throw-on-error
+3. partial-failure strategy
+
+*Test Cases:*
+* [ ] body-only
+* [ ] +workspace
+* [ ] validation-error→throw
+* [ ] partial-failure
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Complex — broken into sub-tasks:* E01-1 body PUT + workspace call · E01-2 ACL proxy + orchestration"
+Story,SPARK-CLM-F01,(Claims) Product.claims (federation contribution) [SPARK-CLM-F01],,Federate BreakDown Product,F,M,dgs-migration,claims,field-resolver,,"B01, product",To Do,"*Target:*
+* `extend type Product @key(fields:""id"") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] }` with a `@DgsEntityFetcher`; the claims subgraph fills `Product.claims` over the gateway. **BLOCKED-BY:** the `Product` entity existing (plm-product Phase A).
+
+*Acceptance Criteria:*
+1. `Product.claims` resolves via federation
+2. parity vs the current in-gateway resolver"
+Story,SPARK-CLM-F02,(Claims) ResourcesCount.claims (TechPack — claims side of SPARK-PROD-F05) [SPARK-CLM-F02],,Federate BreakDown Product,F,XS,dgs-migration,claims,field-resolver,,"B01, product",To Do,"*Target:*
+* `extend type ResourcesCount @key(fields:""productId partnerId"") { claims: [ID] }` with a `@DgsEntityFetcher`; fills the TechPack `claims` count. **BLOCKED-BY:** product TechPack facade (`SPARK-PROD-E03`/`F05`).
+
+*Acceptance Criteria:*
+1. field resolves on the federated `ResourcesCount`; parity vs facade"
+Story,SPARK-CLM-G01,(Claims) access + currentUserPermissions + participantDetails [SPARK-CLM-G01],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `access` → `accessControl.getPermissions([humanId])[0]`; `currentUserPermissions` → `getUserAccessUnencoded(humanId)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.)
+
+*Acceptance Criteria:*
+1. each resolves; null-safe"
+Story,SPARK-CLM-G02,(Claims) createdBy + updatedBy + businessPartner + designPartner [SPARK-CLM-G02],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B01,To Do,"*Current Behaviour:*
+* users via 🟡 user-profile; `businessPartner` **3-way fallback** (`partnerId` || `{bpId:0,bpName:'Target'}` when no `dpPartnerId` || `dpPartnerId`); `designPartner` `dpPartnerId` or `{bpId:null,bpName:null}`.
+
+*Target:*
+* preserve every branch exactly.
+
+*Acceptance Criteria:*
+1. all 3 BP branches correct (incl. `bpId:0` Target)
+2. null id → null user"
+Story,SPARK-CLM-G03,(Claims) product + parentDetails (otherClaimBps / systemTeams / droppedPartnerIds) [SPARK-CLM-G03],,Federate BreakDown Product,G,L,dgs-migration,claims,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `product` (🟡 product, only if `parentId` starts `'PID'`); `parentDetails` → - `product.getByID(parentId)` (the product feeds `ParentDetails`): `otherClaimBps` (🔴 search `getClaimsElastic` → partner ids), `systemTeams` (🔴 search `searchTeams` from product BPs; empty→`{content:[]}`), `droppedPartnerIds` (direct).
+
+*Target:*
+* federated product reference + search.
+
+*Acceptance Criteria:*
+1. `product` null when not `PID*`
+2. `otherClaimBps`/`systemTeams` elastic queries match source; empty-BP → `{content:[]}`
+
+*Test Cases:*
+* [ ] product branch
+* [ ] otherClaimBps
+* [ ] systemTeams
+* [ ] empty BPs"
+Story,SPARK-CLM-G04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName [SPARK-CLM-G04],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `workspaces` (🟡 workspaceV2 by `workspaceContext`); `substantiatedBy` (🟡 user-profile); `ClaimDetails.claimName` = `guestFacingClaim` (computed).
+
+*Acceptance Criteria:*
+1. each resolves; `workspaces` null when empty
+2. `claimName` mirrors `guestFacingClaim`"
+Story,SPARK-CLM-G05,"(Claims) Tests, parity harness [SPARK-CLM-G05]",,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,"B01, E01, G02, G03",To Do,"*Target:*
+* ≥80% unit coverage; parity fixtures (incl. `updateClaim` proxy path, `bulkUpdateClaim` camelCase fix, the `businessPartner` 3-way fallback, `parentDetails` elastic lookups); contract test (schema diff intentional-only).
+
+*Acceptance Criteria:*
+1. unit ≥80%
+2. parity green
+3. schema-diff intentional"

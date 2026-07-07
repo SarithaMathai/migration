@@ -1,0 +1,68 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-IMP-B01,(Impression) searchImpressionsByProductId data fetcher [SPARK-IMP-B01],,Federate BreakDown Product,B,XS,dgs-migration,impression,query,,,To Do,"*Current Behaviour:*
+* 1. `GET {base}/…/impressions/product/{id}?workspaceIds=…&partnerIds=…` → camelCase list. 2. `partnerIds` and `workspaceIds` forwarded as **repeated** query-string params. 3. `enableWorkspaceContextFiltering` is accepted but **not forwarded** to the backend today — intent must be confirmed.
+
+*Target:*
+* - **Annotation:** `@DgsQuery searchImpressionsByProductId(id, partnerIds, workspaceIds, enableWorkspaceContextFiltering): List<Impression>` - **Service:** `impressionService.searchByProductId(...)` → `ImpressionClient` GET with repeated params - **Request/Response mapping:** Jackson snake↔camel
+
+*Acceptance Criteria:*
+1. `searchImpressionsByProductId(id)` returns impressions list; empty product → `[]`
+2. `partnerIds` and `workspaceIds` are forwarded as **repeated** query params (not CSV)
+3. `enableWorkspaceContextFiltering` intent is documented in code (forwarded or intentionally ignored)
+4. `./gradlew generateJava` passes and `DateTime` round-trips ISO-8601. *(One-time gate — verify once in this PR.)*"
+Story,SPARK-IMP-B02,(Impression) getImpressionCountsByProductId data fetcher [SPARK-IMP-B02],,Federate BreakDown Product,B,XS,dgs-migration,impression,query,,B01,To Do,"*Current Behaviour:*
+* 1. Reuses the same REST search call as B01 for `id`. 2. Returns the impressions list typed as `ImpressionCount`; the `counts` field (G02) aggregates the list.
+
+*Target:*
+* - **Annotation:** `@DgsQuery getImpressionCountsByProductId(id): ImpressionCount` - Returns the search result as the `ImpressionCount` parent (G02 computes the `counts` child field). - **PO decision required:** preserve list-as-parent contract, or switch to a computed `ImpressionCountResult`?
+
+*Acceptance Criteria:*
+1. Returns the impressions list as the `ImpressionCount` parent type
+2. The contract decision (list-as-parent vs typed result) is recorded in story comments
+3. Empty product → `counts` yields `totalCount: 0` (verified by G02)"
+Story,SPARK-IMP-D01,(Impression) updateImpressions mutation [SPARK-IMP-D01],,Federate BreakDown Product,D,M,dgs-migration,impression,mutation,,B01,To Do,"*Current Behaviour:*
+* 1. `PUT {base}/…/impressions/product/{productId}` with body `{ impressionsToDelete, impressionsToUpdate }` (snake_case). 2. On `validationErrors || message` in the response → throw.
+
+*Target:*
+* - **Annotation:** `@DgsMutation updateImpressions(productId, productImpression): List<Impression>` - **Service:** `impressionService.update(...)` → `ImpressionClient` PUT (snake_case body, camelCase response) - **Error handling:** `validationErrors` or `message` field → throw `ImpressionValidationException` (typed, not a raw GraphQL error)
+
+*Acceptance Criteria:*
+1. PUT body includes both delete and update sets in snake_case
+2. Response is mapped to camelCase and returned as `List<Impression>`
+3. Backend `validationErrors` or `message` → typed `ImpressionValidationException` thrown (not a silent partial return)"
+Story,SPARK-IMP-F01,(Impression) Product.impressions / impressionCounts (internal field resolver) [SPARK-IMP-F01],,Federate BreakDown Product,F,XS,dgs-migration,impression,field-resolver,,"B01, product B01",To Do,"*Current Behaviour:*
+* Product exposes `impressions` and `impressionCounts` resolved via the impression search call (currently inside spark-internal-graphql).
+
+*Target:*
+* - **Annotation:** `@DgsData` fields on the internal `Product` type - `Product.impressions(partnerIds, workspaceIds)` → `impressionService.searchByProductId(...)` - `Product.impressionCounts` → same service call, typed as `ImpressionCount` - No gateway hop — in-process call only.
+
+*Acceptance Criteria:*
+1. `Product.impressions` and `Product.impressionCounts` resolve in-process via `impressionService`
+2. No HTTP call is made during resolution (verified by unit test mock)
+3. Output matches the current product-side resolver (parity)"
+Story,SPARK-IMP-G01,(Impression) Impression field resolvers (5 fields) [SPARK-IMP-G01],,Federate BreakDown Product,G,XS,dgs-migration,impression,field-resolver,,B01,To Do,"*Current Behaviour:*
+* 1. `businessPartners` — `loadBpsWithType(partnerIds.map(p => ({ partnerId: p })))` (🟡 vmm) 2. `owningBusinessPartner` — `loadBp(owningPartnerId)` (🔵 vmm) 3. `workspaces` — `getWorkspacesByIdsV2(workspaceContext)` or `[]` when context is empty (🟡 workspaceV2) 4. `createdBy` — `userAttributes.getUserByID.load(createdById)` (🔵 user-profile) 5. `updatedBy` — `userAttributes.getUserByID.load(updatedById)` (🔵 user-profile)
+
+*Target:*
+* - Five `@DgsData` fields resolving via federated references / clients. - `workspaces` returns `[]` when `workspaceContext` is empty — no service call is made.
+
+*Acceptance Criteria:*
+1. `businessPartners` and `owningBusinessPartner` resolve correctly from `partnerIds` / `owningPartnerId`
+2. `workspaces` returns `[]` when `workspaceContext` is empty; the workspace service is not called
+3. `createdBy` / `updatedBy`: `null` id returns `null` — no exception thrown"
+Story,SPARK-IMP-G02,(Impression) ImpressionCount.counts aggregation [SPARK-IMP-G02],,Federate BreakDown Product,G,M,dgs-migration,impression,field-resolver,,B01,To Do,"*Current Behaviour:*
+* 1. Parent is the impressions array from the search result. 2. `parentId = impressions[0].parentId` → `product.getByID.load(parentId)` *(internal same-DGS)* → partner ids from the product. 3. Per-partner count: `impressions.filter(i => i.partnerIds.includes(partnerId)).length` for each partner id. 4. Append `{ bpType: 'totalCount', counts: impressions.length }` as the final row. 5. On **any** error → log and return `[{ bpType: 'totalCount', counts: 0 }]` (no exception thrown).
+
+*Target:*
+* - **Annotation:** `@DgsData counts` on `ImpressionCount` - Product fetched via `productService.getById(parentId)` (in-process, no HTTP). - Computes per-partner rows then appends the `totalCount` row. - Preserves the try/catch fallback: any error → `[{ bpType:'totalCount', counts:0 }]`. - **PO note:** if `ImpressionCountResult` restructure is adopted (see B02), this becomes a fetcher-level computation instead of a child field.
+
+*Acceptance Criteria:*
+1. One row per product partner containing the correct filtered impression count
+2. Final row is always `{ bpType: 'totalCount', counts: <total impressions length> }`
+3. Empty impressions list or missing product → `[{ bpType: 'totalCount', counts: 0 }]` — no exception is propagated
+4. Product is fetched in-process; no HTTP call is made"
+Story,SPARK-IMP-G03,(Impression) Test coverage & parity [SPARK-IMP-G03],,Federate BreakDown Product,G,XS,dgs-migration,impression,field-resolver,,"B01, B02, D01, G02",To Do,"*Acceptance Criteria:*
+1. Unit test coverage ≥ 80% for all impression data fetchers
+2. Parity tests are green for search, counts, and the update mutation
+3. The `counts` error-fallback path is explicitly covered by a unit test"
