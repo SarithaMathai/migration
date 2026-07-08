@@ -16,7 +16,7 @@ breakdown are produced by the spike and land here when it concludes.
 | [partner-drop-undrop-write](partner-drop-undrop-write/00-overview.md) | `SPARK-SPIKE-03` | product · workspace |
 | [notRemovable-undroppable-partners](notRemovable-undroppable-partners/00-overview.md) | `SPARK-SPIKE-04` | product · workspace |
 | [polymorphic-type-resolution](polymorphic-type-resolution/00-overview.md) | `SPARK-SPIKE-05` | bom |
-| [cross-domain-association](cross-domain-association/00-overview.md) | `SPARK-SPIKE-06` | product · bom |
+| [cross-domain-association](cross-domain-association/00-overview.md) | `SPARK-SPIKE-06a` (Hydration) / `SPARK-SPIKE-06b` (Association) | product · bom |
 | [attachments-enrichment](attachments-enrichment/00-overview.md) | — (cutover pattern) | product · workspace |
 | [components-and-counts-rollups](components-and-counts-rollups/00-overview.md) | — (cutover pattern) | product · workspace |
 

@@ -9,8 +9,8 @@
 | **Target DGS services** | 2 |
 | **Total Stories** | **200** |
 | **Complexity** | 🔴 6 Very High · 🟠 13 High · 🟡 76 Medium · 🟢 105 Low |
-| **Phase Coverage** | 🔬 6 Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |
-| **Cross-domain spikes** | 🔬 6 program-level research spikes — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
+| **Phase Coverage** | 🔬 7 Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |
+| **Cross-domain spikes** | 🔬 7 program-level research spikes (`SPARK-SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
 | **Generated** | 2026-07-07 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
@@ -75,7 +75,7 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 1. **Phase 0 — Program Spikes table** — what each spike blocks and its status. Nothing dependent starts until the spike's decision is recorded.
 2. **Spike Detail** (per bucket) — the brief, the **Decision to make**, the **intended steps**, and the resolver table (blast radius).
-3. **Sequencing** — `SPARK-SPIKE-01/02/03` are critical path (Sprint 0); `04/05/06` run in parallel. Assign an owner + timebox each.
+3. **Sequencing** — `SPARK-SPIKE-01/02/03` are critical path (Sprint 0); `04/05/06a/06b` run in parallel. Assign an owner + timebox each.
 4. In a **domain page**, the *Spikes & Complex Cases* map lists which of that domain's stories are 🔴🔬-blocked — plan the domain around them.
 
 **🔧 Engineer:**
@@ -103,9 +103,21 @@ Stories are grouped into phases that encode the replacement order within a domai
 | `SPARK-SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business partner across every referencing child domain; decide ownership (domain subgraph vs workspace) and the write saga. | product `E01` · workspace `E01` | partner-write `E`/`F` | [`complexStories/partner-drop-undrop-write`](https://github.com/XXX/tree/main/output/complexStories/partner-drop-undrop-write) | 🔴 Open — ownership + orchestration to decide |
 | `SPARK-SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which partners cannot be removed/dropped because still referenced (cross-domain `@requires` union). | product `E01` · workspace `E01` | partner-read fields | [`complexStories/notRemovable-undroppable-partners`](https://github.com/XXX/tree/main/output/complexStories/notRemovable-undroppable-partners) | 🔴 Open — contribution contract to agree |
 | `SPARK-SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant + CI schema-conformance. | bom `A04` | type-resolver + variant fields | [`complexStories/polymorphic-type-resolution`](https://github.com/XXX/tree/main/output/complexStories/polymorphic-type-resolution) | 🔴 Open — code→type table to confirm |
-| `SPARK-SPIKE-06` | 🔬 **Cross-Domain Association / Hydration** — how a domain references another's entity (federated `@key` ref vs REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product `S01/S02` · bom (material rollout) | association + hydration + rollout | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — per-edge rule to decide |
+| `SPARK-SPIKE-06a` | 🔬 **Hydration** — how a domain *reads* another's entity (federated `@key` ref vs REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product `S02` (gates `C01`) · bom `B05` | hydration + rollout (reads) | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — per-edge rule to decide |
+| `SPARK-SPIKE-06b` | 🔬 **Cross-Domain Association** — one pattern for a mutation that also *links* its record into a sibling domain (workspace/attachment/team/partner), incl. sync-vs-async and partial-failure handling. | product `S01` (gates `D01`/`D02`/`D03`/`D04`/`D06`/`D07`/`D11`) | association-side writes | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — pattern to choose |
 
-> **Sequencing:** `SPARK-SPIKE-01/02/03` are on the critical path (they block `E`-phase writes and TechPack); run them in Sprint 0 alongside each domain's `B01` module scaffold. `04/05/06` block specific reads and can run in parallel. Each spike concludes with the decision recorded back into the affected domain stories.
+> **Sequencing:** `SPARK-SPIKE-01/02/03` are on the critical path (they block `E`-phase writes and TechPack); run them in Sprint 0 alongside each domain's `B01` module scaffold. `04/05/06a/06b` block specific reads/writes and can run in parallel. Each spike concludes with the decision recorded back into the affected domain stories.
+>
+> **Note on `06a`/`06b`:** these were originally tracked as one `SPARK-SPIKE-06` id. They're split here because they answer different questions — 06a is "how do I *read* another domain's data," 06b is "how does my *write* also link into another domain" — and a story should only cite the one it actually needs.
+
+### Non-spike complex cases (read pattern applied at cutover — no research decision needed)
+
+> These recur across domains too, but the shape of the fix is already known (per-domain contribution + fan-out merge) — there's nothing to research, just build. They still get one `complexStories/` brief each so the pattern is documented once instead of per-domain.
+
+| Bucket | Generic Problem | Domains affected (home story) | Research so far |
+|---|---|---|---|
+| `attachmentsWithMetaData` enrichment | 📎 **One attachments tab, three sources** — files, discussion files, and sample files must merge into one ordered, ACL-filtered feed without a Relationship-Service walk. | product `G01/G03` · workspace `G01/G03` (later phase) | [`complexStories/attachments-enrichment`](https://github.com/XXX/tree/main/output/complexStories/attachments-enrichment) |
+| `components` + `counts` rollups | 🧮 **Five domains, one dashboard number** — a product's component list and a workspace's counts strip both roll up parallel per-domain fan-outs plus a batched ACL call into a single screen's worth of data. | product `G02` · workspace `G02/G04` (later phase) | [`complexStories/components-and-counts-rollups`](https://github.com/XXX/tree/main/output/complexStories/components-and-counts-rollups) |
 
 ---
 
@@ -260,9 +272,9 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 ---
 
-### 🔬 `SPARK-SPIKE-06` · Cross-Domain Association / Hydration
+### 🔬 `SPARK-SPIKE-06a` · Hydration
 
-- One domain often needs another domain’s object (e.g. a `product` on a `bom`).
+- One domain often needs to **read** another domain’s object (e.g. a `product` on a `bom`).
 - This spike decides whether to stitch it as a federated `@key` reference or call the other service directly, plus the order the services must ship so nothing launches half-wired.
 
 **Decision to make:** Choose federated `@key` reference vs REST client per edge, and the cross-DGS rollout order.
@@ -278,6 +290,27 @@ Stories are grouped into phases that encode the replacement order within a domai
 |---|---|---|---|---|
 | 🔴🔬 `SPARK-BOM-B05` `getBomMaterialTypes` (merge with Material Hub) | bom | Query | `materialHub` | load bom material types (GET …/master_data/bom_material_types[?ids]) and materialHub.getHubMaterialTypes (today sequential), concat; map each hub type → {code:9… |
 | 🔴🔬 `SPARK-PROD-C01` `getProducts(...)` two-stage hydration | product | Query | `search` | listing products needs data from two places — the search index (which - knows flags like "has boms", "has claims", workspace membership) and the canonical product… |
+
+
+---
+
+### 🔬 `SPARK-SPIKE-06b` · Cross-Domain Association
+
+- A mutation on one domain’s record often also has to **link** that record into a sibling domain — attach files, put it in a workspace, add teams, add partners.
+- This spike decides the **one pattern** every such mutation should follow (sync direct call / event-driven / shared `AssociationService`), instead of each mutation inventing its own "write, then also link" logic.
+- Unlike `06a`, there is no read-hydration or federated-reference question here — this is purely about how a *write* fans out to a sibling domain.
+
+**Decision to make:** Pick the association pattern (see `SPARK-PROD-S01`’s three candidates) and how a mid-flight association failure is handled.
+
+**Intended cross-domain steps:**
+
+1. Primary mutation writes its own record (product create/update/bulk-update)
+2. If the input carries a cross-domain link (`workspaceId`, `copyProduct`, template attachments, teams, partners) → build the association per the **chosen S01 pattern** (sync call / event / shared service)
+3. Apply the link to the target domain (workspace, attachment, team, partner)
+4. Record what happens if the link step fails after the primary write succeeded (today: mostly silent/undocumented)
+
+| Resolver (home story) | Domain | Kind | Calls (external services) | What it does today (minimal) |
+|---|---|---|---|---|
 | 🔴🔬 `SPARK-PROD-D01` `addProduct` | product | Mutation | `workspaceV2`, `attachment` | POST ${v1} + optional copyProductToProduct(copyProduct) + workspace association |
 | 🔴🔬 `SPARK-PROD-D02` `addProducts` (bulk) | product | Mutation | `attachment` | bulk POST ${v1}/bulk + attachment-link side-effects (no rollback — preserve, flag) |
 | 🔴🔬 `SPARK-PROD-D03` `bulkUpdateProducts` | product | Mutation | — (internal only) | PUT ${v1}/mass_update |

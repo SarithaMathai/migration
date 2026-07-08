@@ -1,6 +1,6 @@
 # Complex Story — `attachmentsWithMetaData` enrichment (Product + Workspace)
 
-> **Summary —** Build the Product / Workspace “attachments-with-metadata” feed from per-domain attachment contributions — no Relationship-Service walk.
+> **Summary —** One attachments tab, three hidden sources — files, discussion files, sample files — merged and ordered today by a Relationship-Service walk we're retiring; make each domain contribute its own slice instead.
 > **Spike:** — *(read pattern applied at cutover, not a research spike)* · **Status:** Problem brief
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 

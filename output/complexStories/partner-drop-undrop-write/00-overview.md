@@ -1,6 +1,6 @@
 # Complex Story — Partner DROP / UNDROP / REMOVE write (`productBusinessPartnerActions` / `workspaceBusinessPartnerActionsV2`)
 
-> **Summary —** Drop / undrop / remove a business partner across every referencing child domain as one orchestrated, compensatable write.
+> **Summary —** One click, five services, no rollback — today a mid-flight failure leaves a partner half-dropped; orchestrate drop/undrop/remove as one compensatable write instead.
 > **Spike:** `SPARK-SPIKE-03` · **Status:** 🔴 Open — decision pending
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 

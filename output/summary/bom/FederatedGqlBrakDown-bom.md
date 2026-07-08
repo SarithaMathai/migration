@@ -55,7 +55,7 @@
 | Story | Program spike | Bucket |
 |---|---|---|
 | 🔴🔬 `SPARK-BOM-A04` — `@DgsTypeResolver` for the 2 BOM interfaces | `SPARK-SPIKE-05` | Polymorphic Type Resolution |
-| 🔴🔬 `SPARK-BOM-B05` — `getBomMaterialTypes` (merge with Material Hub) | `SPARK-SPIKE-06` | Cross-Domain Association / Hydration |
+| 🔴🔬 `SPARK-BOM-B05` — `getBomMaterialTypes` (merge with Material Hub) | `SPARK-SPIKE-06a` | Hydration |
 | 🔴🔬 `SPARK-BOM-E01` — `updateBom` — 3-step orchestrated write | `SPARK-SPIKE-01` | Non-Atomic Write Saga |
 
 > Follow a story's `SPARK-SPIKE-0x` id to the global **Spike Detail** for its brief, steps and cross-service resolver breakdown.
@@ -79,7 +79,7 @@ rest of the phase to finish.
   Product types exist in the shared schema.
 - ⛔ **Waits for an owning subgraph** — **none in BOM.** BOM consumes sibling material subgraphs
   (hub/trim/wash/fabric/combination) for *enrichment*, but a material field simply returns `{id}` until its
-  sibling is federated (rolled out per program spike `SPARK-SPIKE-06`), so the story still ships; it just shows partial enrichment until then.
+  sibling is federated (rolled out per program spike `SPARK-SPIKE-06a`), so the story still ships; it just shows partial enrichment until then.
 
 ---
 
@@ -153,7 +153,7 @@ rest of the phase to finish.
 | 🔷 `SPARK-BOM-B01`<br>`getBomByIds` data fetcher | 🟢 Low `XS` | Query | — | **Intent —** Looks up full BOM records for a set of BOM ids (the core 'give me these BOMs' read).<br>**Today —** if ids empty → []; else GET … → camelCase. - ACL ignored in DGS<br>**Done when:**<br>• `getBomByIds(["B1","B2"])` returns mapped `Bom` objects from the REST list endpoint<br>• Empty `ids` → returns `[]` with **no** REST call<br>• Response snake_case → camelCase per schema |
 | 🔷 `SPARK-BOM-B03`<br>`getBomStatus` (cacheable master data) | 🟢 Low `XS` | Query | — | **Intent —** Returns the list of possible BOM statuses — the options you'd see in a status dropdown.<br>**Today —** GET …; transform {key:value} map → [{code,description}]. No ACL<br>**Done when:**<br>• Returns `[{code,description}]` from the status map<br>• Second call served from cache (no REST)<br>• Map key→`code`, value→`description` |
 | 🔷 `SPARK-BOM-B04`<br>`getBomByParentId` data fetcher | 🟢 Low `XS` | Query | — | **Intent —** Lists all the BOMs that belong to one product, newest first.<br>**Today —** today, the gateway fetches boms for a product and sorts them by createdAt DESC itself, in application code — the backend returns them unsorted. ignored in DGS. -…<br>**Done when:**<br>• Returns boms for `parentId` sorted `createdAt` DESC, sorted by the **backend**, not client code<br>• Empty → `{content: []}`<br>• No `sortedByDescending` (or equivalent) remains in the Kotlin data fetcher — sorting happens once, server-side |
-| 🔴🔬 🔷 `SPARK-BOM-B05`<br>`getBomMaterialTypes` (merge with Material Hub)<br>🔴🔬 _Spike-gated on `SPARK-SPIKE-06` (Cross-Domain Association / Hydration) — see global Spike Detail_ | 🟡 Medium `M` | Query<br>Calls: `materialHub` | SPARK-SPIKE-06 | **Intent —** Returns the catalog of material types, combined with the shared material-hub types.<br>**Today —** load bom material types (GET …/master_data/bom_material_types[?ids]) and materialHub.getHubMaterialTypes (today sequential), concat; map each hub type → {code:9…<br>**Done when:**<br>• Returns bom types + synthesized hub types<br>• Hub rows carry `code=9, libraryLink=true, freeText=true, bomType={1,'Product'}`<br>• The two fetches run concurrently<br>• EXT hub failure → return bom types only (partial), logged |
+| 🔴🔬 🔷 `SPARK-BOM-B05`<br>`getBomMaterialTypes` (merge with Material Hub)<br>🔴🔬 _Spike-gated on `SPARK-SPIKE-06a` (Hydration) — see global Spike Detail_ | 🟡 Medium `M` | Query<br>Calls: `materialHub` | SPARK-SPIKE-06a | **Intent —** Returns the catalog of material types, combined with the shared material-hub types.<br>**Today —** load bom material types (GET …/master_data/bom_material_types[?ids]) and materialHub.getHubMaterialTypes (today sequential), concat; map each hub type → {code:9…<br>**Done when:**<br>• Returns bom types + synthesized hub types<br>• Hub rows carry `code=9, libraryLink=true, freeText=true, bomType={1,'Product'}`<br>• The two fetches run concurrently<br>• EXT hub failure → return bom types only (partial), logged |
 | 🔷 `SPARK-BOM-B06`<br>`getBomPackagingMaterialTypes` (cacheable) | 🟢 Low `XS` | Query | — | **Intent —** Returns the packaging material-type lookup list (cached, rarely changes).<br>**Today —** GET …/master_data/packaging_bom_material_types → camelCase. No ACL<br>**Done when:**<br>• Returns packaging material types<br>• Cached on second call |
 | 🔷 `SPARK-BOM-B07`<br>`getBomPackagingSubstrates` (cacheable) | 🟢 Low `XS` | Query | — | **Intent —** Returns the packaging substrate lookup list (cached).<br>**Today —** GET …/master_data/packaging_bom_substrate_types → camelCase<br>**Done when:**<br>• Returns substrate list<br>• Cached |
 | 🔷 `SPARK-BOM-B08`<br>`getBomPackagingUnitOfMeasure` (cacheable) | 🟢 Low `XS` | Query | — | **Intent —** Returns the packaging unit-of-measure lookup list (cached).<br>**Today —** GET …/master_data/packaging_unit_of_measure → camelCase (units_of_measure)<br>**Done when:**<br>• Returns UoM list<br>• Cached |

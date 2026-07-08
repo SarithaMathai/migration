@@ -42,7 +42,7 @@ Story,SPARK-BOM-B04,(BOM) getBomByParentId data fetcher [SPARK-BOM-B04],,Federat
 1. Returns boms for `parentId` sorted `createdAt` DESC, sorted by the **backend**, not client code
 2. Empty → `{content: []}`
 3. No `sortedByDescending` (or equivalent) remains in the Kotlin data fetcher — sorting happens once, server-side"
-Story,SPARK-BOM-B05,(BOM) getBomMaterialTypes (merge with Material Hub) [SPARK-BOM-B05],,Federate BreakDown Product,B,M,dgs-migration,bom,query,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-BOM-B05,(BOM) getBomMaterialTypes (merge with Material Hub) [SPARK-BOM-B05],,Federate BreakDown Product,B,M,dgs-migration,bom,query,,SPARK-SPIKE-06a,To Do,"*Requires spike:* SPARK-SPIKE-06a (Hydration) — see program spike
 
 *Current Behaviour:*
 * load bom material types (`GET …/master_data/bom_material_types[?ids]`) **and** `materialHub.getHubMaterialTypes` (today sequential), concat; map each hub type → `{code:9, description:type, bomType:{code:1,description:'Product'}, libraryLink:true, freeText:true}`. - **EXT Service Calls:** **EXT** → key: `materialHub` · severity: 🟡 — hub material type list to merge into bom types.

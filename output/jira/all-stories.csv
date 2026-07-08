@@ -71,8 +71,8 @@ Spike,SPARK-SPIKE-05,(Program) Polymorphic Type Resolution [SPARK-SPIKE-05],,Fed
 
 *Research so far:*
 * complexStories/polymorphic-type-resolution/"
-Spike,SPARK-SPIKE-06,(Program) Cross-Domain Association / Hydration [SPARK-SPIKE-06],,Federate BreakDown Product,S,M,dgs-migration,all-domains,spike,,,To Do,"*Summary:*
-* One domain often needs another domain’s object (e.g. a `product` on a `bom`). This spike decides whether to stitch it as a federated `@key` reference or call the other service directly, plus the order the services must ship so nothing launches half-wired.
+Spike,SPARK-SPIKE-06a,(Program) Hydration [SPARK-SPIKE-06a],,Federate BreakDown Product,S,M,dgs-migration,all-domains,spike,,,To Do,"*Summary:*
+* One domain often needs to read another domain's object (e.g. a `product` on a `bom`). This spike decides whether to stitch it as a federated `@key` reference or call the other service directly, plus the order the services must ship so nothing launches half-wired.
 
 *Decision to make:*
 * Choose federated `@key` reference vs REST client per edge, and the cross-DGS rollout order.
@@ -82,6 +82,20 @@ Spike,SPARK-SPIKE-06,(Program) Cross-Domain Association / Hydration [SPARK-SPIKE
 2. If `@key`: emit the key and let the **owning subgraph** hydrate it (gateway hop)
 3. If REST: call the other service **in-process/directly** and map the result
 4. Sequence the **rollout order** so no consumer launches before its provider is federated
+
+*Research so far:*
+* complexStories/cross-domain-association/"
+Spike,SPARK-SPIKE-06b,(Program) Cross-Domain Association [SPARK-SPIKE-06b],,Federate BreakDown Product,S,M,dgs-migration,all-domains,spike,,,To Do,"*Summary:*
+* A mutation on one domain's record often also has to link that record into a sibling domain — attach files, put it in a workspace, add teams, add partners. This spike decides the one pattern every such mutation should follow instead of each mutation inventing its own ""write, then also link"" logic.
+
+*Decision to make:*
+* Pick the association pattern (sync direct call / event-driven / shared AssociationService) and how a mid-flight association failure is handled.
+
+*Intended cross-domain steps:*
+1. Primary mutation writes its own record
+2. If the input carries a cross-domain link → build the association per the chosen pattern
+3. Apply the link to the target domain (workspace, attachment, team, partner)
+4. Record what happens if the link step fails after the primary write succeeded
 
 *Research so far:*
 * complexStories/cross-domain-association/"
@@ -127,7 +141,7 @@ Story,SPARK-BOM-B04,(BOM) getBomByParentId data fetcher [SPARK-BOM-B04],,Federat
 1. Returns boms for `parentId` sorted `createdAt` DESC, sorted by the **backend**, not client code
 2. Empty → `{content: []}`
 3. No `sortedByDescending` (or equivalent) remains in the Kotlin data fetcher — sorting happens once, server-side"
-Story,SPARK-BOM-B05,(BOM) getBomMaterialTypes (merge with Material Hub) [SPARK-BOM-B05],,Federate BreakDown Product,B,M,dgs-migration,bom,query,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-BOM-B05,(BOM) getBomMaterialTypes (merge with Material Hub) [SPARK-BOM-B05],,Federate BreakDown Product,B,M,dgs-migration,bom,query,,SPARK-SPIKE-06a,To Do,"*Requires spike:* SPARK-SPIKE-06a (Hydration) — see program spike
 
 *Current Behaviour:*
 * load bom material types (`GET …/master_data/bom_material_types[?ids]`) **and** `materialHub.getHubMaterialTypes` (today sequential), concat; map each hub type → `{code:9, description:type, bomType:{code:1,description:'Product'}, libraryLink:true, freeText:true}`. - **EXT Service Calls:** **EXT** → key: `materialHub` · severity: 🟡 — hub material type list to merge into bom types.
@@ -1210,7 +1224,7 @@ Story,SPARK-PROD-B11,"(Product) getProductBPRules(productIds, businessPartnerIds
 
 *Acceptance Criteria:*
 1. flag fork honored; BP filter applied"
-Story,SPARK-PROD-C01,(Product) getProducts(...) two-stage hydration [SPARK-PROD-C01],,Federate BreakDown Product,C,L,dgs-migration,product,search,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-PROD-C01,(Product) getProducts(...) two-stage hydration [SPARK-PROD-C01],,Federate BreakDown Product,C,L,dgs-migration,product,search,,SPARK-SPIKE-06a,To Do,"*Requires spike:* SPARK-SPIKE-06a (Hydration) — see program spike
 
 *Current Behaviour:*
 * listing products needs data from two places — the search index (which - knows flags like ""has boms"", ""has claims"", workspace membership) and the canonical product database (the actual product fields). - Today's code asks the search index first for matching ids + flags, then asks the product database for the full records, then glues the flags onto the records. - (🔴 search) `getFilteredProductsListing({resourceType ?? 'products', includeBoms ?? true, includeClaims ?? true, includeMeasurementSets ?? true, includeProductDetails ?? true, filter ?? [], q ?? '', page, size})` → ids → (internal) `getPage({products:ids, page:0, size})` `GET ${v1}?productId=&sort=createdDate,desc` → merge elastic flags (`boms, productDetails, claims, measurementSets, samples, sampleIds, hasSamplesUpcomingDue, hasNotEvaluatedReceivedSamples, receivedNotEvaluatedCount`) onto canonical records. - **Boolean defaults are truthy (`?? true`) — pin in tests.** - **EXT:** 🔴 search.
@@ -1222,7 +1236,7 @@ Story,SPARK-PROD-C01,(Product) getProducts(...) two-stage hydration [SPARK-PROD-
 1. parity for 4 arg combos (no flags / all flags / resourceType=workspaces / filter array)
 2. truthy defaults preserved
 3. elastic flags merged onto canonical
-4. Workspace-filter placement and elastic/canonical staleness handling match `SPARK-SPIKE-06`'s decision
+4. Workspace-filter placement and elastic/canonical staleness handling match `SPARK-SPIKE-06a`'s decision
 
 *Test Cases:*
 * [ ] 4 combos
@@ -1266,7 +1280,7 @@ Story,SPARK-PROD-C05,(Product) searchProductRules(...) [SPARK-PROD-C05],,Federat
 *Acceptance Criteria:*
 1. flag fork honored
 2. legacy response transformed correctly"
-Story,SPARK-PROD-D01,(Product) addProduct [SPARK-PROD-D01],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-PROD-D01,(Product) addProduct [SPARK-PROD-D01],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPARK-SPIKE-06b,To Do,"*Requires spike:* SPARK-SPIKE-06b (Cross-Domain Association) — see program spike
 
 *Current Behaviour:*
 * `POST ${v1}` + optional `copyProductToProduct(copyProduct)` + workspace association.
@@ -1278,7 +1292,7 @@ Story,SPARK-PROD-D01,(Product) addProduct [SPARK-PROD-D01],,Federate BreakDown P
 1. creates product
 2. optional copy runs when `copyProduct` present
 3. workspace assoc applied"
-Story,SPARK-PROD-D02,(Product) addProducts (bulk) [SPARK-PROD-D02],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-PROD-D02,(Product) addProducts (bulk) [SPARK-PROD-D02],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPARK-SPIKE-06b,To Do,"*Requires spike:* SPARK-SPIKE-06b (Cross-Domain Association) — see program spike
 
 *Current Behaviour:*
 * bulk `POST ${v1}/bulk` + attachment-link side-effects (no rollback — **preserve, flag**).
@@ -1289,7 +1303,7 @@ Story,SPARK-PROD-D02,(Product) addProducts (bulk) [SPARK-PROD-D02],,Federate Bre
 *Acceptance Criteria:*
 1. bulk creates
 2. attachment links applied; no-rollback behaviour documented"
-Story,SPARK-PROD-D03,(Product) bulkUpdateProducts [SPARK-PROD-D03],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-PROD-D03,(Product) bulkUpdateProducts [SPARK-PROD-D03],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPARK-SPIKE-06b,To Do,"*Requires spike:* SPARK-SPIKE-06b (Cross-Domain Association) — see program spike
 
 *Current Behaviour:*
 * `PUT ${v1}/mass_update`.
@@ -1299,7 +1313,7 @@ Story,SPARK-PROD-D03,(Product) bulkUpdateProducts [SPARK-PROD-D03],,Federate Bre
 
 *Acceptance Criteria:*
 1. mass-updates products"
-Story,SPARK-PROD-D04,(Product) updateProduct [SPARK-PROD-D04],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-PROD-D04,(Product) updateProduct [SPARK-PROD-D04],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPARK-SPIKE-06b,To Do,"*Requires spike:* SPARK-SPIKE-06b (Cross-Domain Association) — see program spike
 
 *Current Behaviour:*
 * `PUT ${v1}/{id}` + optional copy + archive removed-template attachments (template branch).
@@ -1319,7 +1333,7 @@ Story,SPARK-PROD-D05,(Product) carryForwardProduct [SPARK-PROD-D05],,Federate Br
 
 *Acceptance Criteria:*
 1. all input fields mapped to the request"
-Story,SPARK-PROD-D06,(Product) addTeamsToProduct 🔀 Collab Canvas [SPARK-PROD-D06],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-PROD-D06,(Product) addTeamsToProduct 🔀 Collab Canvas [SPARK-PROD-D06],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,SPARK-SPIKE-06b,To Do,"*Requires spike:* SPARK-SPIKE-06b (Cross-Domain Association) — see program spike
 
 *Current Behaviour:*
 * `POST ${v1}/{productId}/resources/bulk` + manage_workspace_teams.
@@ -1329,7 +1343,7 @@ Story,SPARK-PROD-D06,(Product) addTeamsToProduct 🔀 Collab Canvas [SPARK-PROD-
 
 *Acceptance Criteria:*
 1. adds teams + new partners + workspace links"
-Story,SPARK-PROD-D07,(Product) addBusinessPartnersToProductWithType 🔀 Collab Canvas [SPARK-PROD-D07],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-PROD-D07,(Product) addBusinessPartnersToProductWithType 🔀 Collab Canvas [SPARK-PROD-D07],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,SPARK-SPIKE-06b,To Do,"*Requires spike:* SPARK-SPIKE-06b (Cross-Domain Association) — see program spike
 
 *Current Behaviour:*
 * `POST ${v1}/{productId}/partners-add/bulk`.
@@ -1363,7 +1377,7 @@ Story,SPARK-PROD-D10,(Product) updateViewToggle [SPARK-PROD-D10],,Federate Break
 
 *Acceptance Criteria:*
 1. toggles hidden"
-Story,SPARK-PROD-D11,(Product) updateWorkspaceAttributes 🔀 Collab Canvas [SPARK-PROD-D11],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,SPARK-SPIKE-06,To Do,"*Requires spike:* SPARK-SPIKE-06 (Cross-Domain Association / Hydration) — see program spike
+Story,SPARK-PROD-D11,(Product) updateWorkspaceAttributes 🔀 Collab Canvas [SPARK-PROD-D11],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,SPARK-SPIKE-06b,To Do,"*Requires spike:* SPARK-SPIKE-06b (Cross-Domain Association) — see program spike
 
 *Current Behaviour:*
 * `PUT ${v1}/{productId}` workspace attrs.

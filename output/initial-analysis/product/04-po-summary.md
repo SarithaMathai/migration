@@ -44,8 +44,8 @@ ignored in the DGS implementation** (no ACL story) — noted for context only.
 | Phase | Name | Stories | Effort (est., +20%) | Ready when |
 |---|---|---|---|---|
 | B | Core Reads | 11 | 11–18d | after B01 |
-| C | Search & Listing | 5 | 17–29d | after B01; C01 gated on `SPARK-SPIKE-06` |
-| D | Mutations (simple) | 18 | 25–40d | after B01; D01-D04/D06/D07/D11 gated on `SPARK-SPIKE-06` |
+| C | Search & Listing | 5 | 17–29d | after B01; C01 gated on `SPARK-SPIKE-06a` (Hydration, via `SPARK-PROD-S02`) |
+| D | Mutations (simple) | 18 | 25–40d | after B01; D01-D04/D06/D07/D11 gated on `SPARK-SPIKE-06b` (Association, via `SPARK-PROD-S01`) |
 | E | Complex (partner/components/TechPack) | 4 | 33–56d | E01 gated on `SPARK-SPIKE-03` |
 | F | Federation & Stitching | 12 | 22–40d (most BLOCKED-BY siblings) | after E03 / siblings |
 | G | Field Resolvers, Bug-fixes, Utils, Tests | 17 | 86–143d | after B01. `G11` split into `G11-1`/`G11-2` (16 → 17) |
@@ -103,8 +103,8 @@ plm-product (Product subgraph, the host DGS) depends on:
 | 0 | Program spikes | run in Sprint 0 (see global Phase 0 — Program Spikes) so D/C/E work isn't waiting |
 | 1–2 | B01 (DGS module init + service wiring + first resolver) | schema, types, stubs, Categories resolver, ResourcesCount, service port |
 | 3 | B01–B11 | all core reads (incl. rules reads) |
-| 4 | C01–C05 | search/listing + rating + rules search (C01 needs `SPARK-SPIKE-06` concluded) |
-| 5–6 | D01–D18 | all simple mutations, parallelizable (D01-D04/D06/D07/D11 need `SPARK-SPIKE-06` concluded) |
+| 4 | C01–C05 | search/listing + rating + rules search (C01 needs `SPARK-SPIKE-06a` concluded) |
+| 5–6 | D01–D18 | all simple mutations, parallelizable (D01-D04/D06/D07/D11 need `SPARK-SPIKE-06b` concluded) |
 | 7–8 | E03/E04 | TechPack facade + bulk (focused; facade-vs-federate spike already resolved) |
 | 9 | E01/E02 | partner actions (needs `SPARK-SPIKE-03` concluded) + component fan-out |
 | 10–12 | G01–G10, G11-1, G11-2, G12–G14 | field resolvers (G01/G02 X-Large get their own sprint) |

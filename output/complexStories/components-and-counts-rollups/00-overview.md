@@ -1,6 +1,6 @@
 # Complex Story — `Product.components` + `WorkspaceV2.counts` rollups
 
-> **Summary —** Roll up a product’s component list and a workspace’s dashboard counts via parallel per-domain fan-out + one batched ACL call.
+> **Summary —** Two dashboards, same trick — a product's component list and a workspace's counts strip both fan out to every domain in parallel then roll up into one number; fix the N+1 ACL call while we're in there.
 > **Spike:** — *(read pattern applied at cutover, not a research spike)* · **Status:** Problem brief
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 

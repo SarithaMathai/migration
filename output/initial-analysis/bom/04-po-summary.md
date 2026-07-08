@@ -39,7 +39,7 @@ rest of the phase to finish.
   Product types exist in the shared schema.
 - ⛔ **Waits for an owning subgraph** — **none in BOM.** BOM consumes sibling material subgraphs
   (hub/trim/wash/fabric/combination) for *enrichment*, but a material field simply returns `{id}` until its
-  sibling is federated (rolled out per program spike `SPARK-SPIKE-06`), so the story still ships; it just shows partial enrichment until then.
+  sibling is federated (rolled out per program spike `SPARK-SPIKE-06a`), so the story still ships; it just shows partial enrichment until then.
 
 ---
 

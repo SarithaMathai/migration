@@ -1,6 +1,6 @@
 # Complex Story — Product Tech Pack (`getProductTechPack`)
 
-> **Summary —** Assemble the TechPack entity whose every field/count comes from a different microservice, via federation (`extend type ProductTechPack`) so each service owns its own slice.
+> **Summary —** One panel, eight services, zero owners — give the TechPack aggregate a federated home so each domain owns its own badge count instead of one 200-line function walking the whole graph.
 > **Spike:** `SPARK-SPIKE-02` · **Status:** 🔴 Open — decision pending
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 

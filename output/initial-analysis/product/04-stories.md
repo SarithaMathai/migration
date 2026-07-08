@@ -367,7 +367,7 @@ returns canonical records enriched with elastic flags.
 1. parity for 4 arg combos (no flags / all flags / resourceType=workspaces / filter array).
 2. truthy defaults preserved.
 3. elastic flags merged onto canonical.
-4. Workspace-filter placement and elastic/canonical staleness handling match `SPARK-SPIKE-06`'s decision.
+4. Workspace-filter placement and elastic/canonical staleness handling match `SPARK-SPIKE-06a`'s decision.
 
 #### Test Cases
 

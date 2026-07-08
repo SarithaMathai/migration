@@ -1,6 +1,6 @@
 # Complex Story — Polymorphic type resolution (`@DgsTypeResolver` + per-variant + prefix-gated parents)
 
-> **Summary —** Turn a category code into the right concrete GraphQL type with one `@DgsTypeResolver` playbook (dispatcher → per-variant resolvers → CI schema-conformance).
+> **Summary —** Same shape-shifting problem in three domains — a category code decides the real type, and today's dispatch tables drift silently. One `@DgsTypeResolver` playbook, enforced by CI, ends the drift.
 > **Spike:** `SPARK-SPIKE-05` · **Status:** 🔴 Open — decision pending
 > **⚠ Map authority:** the legacy resolver source is the authority for every dispatch table — do not port a dispatch map from drafted pseudo-code.
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
