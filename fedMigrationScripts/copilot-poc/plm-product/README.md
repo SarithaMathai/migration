@@ -2,6 +2,8 @@
 
 Starter GitHub Copilot configuration for the **plm-product** DGS subgraph repo (monorepo, `apps/app` = the API-hosting module: product · bom · measurement · packaging · impression · productDetails · watchlist). Drop this `.github/`, `AGENTS.md` and this `README.md` into the actual `plm-product` repo root.
 
+**New to this? Start with [GETTING-STARTED.md](./GETTING-STARTED.md)** — clone → copy these files into your `plm-product` clone → verify Copilot picked them up → implement your first story. This README is the reference; that file is the walkthrough.
+
 Uses GitHub Copilot's standard file conventions — no invented formats:
 
 ```

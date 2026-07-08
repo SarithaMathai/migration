@@ -2,6 +2,8 @@
 
 Starter GitHub Copilot configuration for the **spark-claims** DGS subgraph repo — a **standalone repo**, not a module in the `plm-product` monorepo. Drop this `.github/`, `AGENTS.md` and this `README.md` into the actual `spark-claims` repo root.
 
+**New to this? Start with [GETTING-STARTED.md](./GETTING-STARTED.md)** — clone → copy these files into your `spark-claims` clone → verify Copilot picked them up → implement your first story. This README is the reference; that file is the walkthrough.
+
 Same layer structure as the `plm-product` POC (see [`../plm-product/README.md`](../plm-product/README.md) for the general rationale), adapted for what's different about this repo: single domain, no co-located siblings, and it **contributes fields into `plm-product`'s types** instead of owning cross-domain data itself.
 
 ```
