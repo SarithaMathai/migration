@@ -6,7 +6,7 @@ description: "Implement one Spark→DGS migration story end-to-end in apps/app (
 
 Implement the migration story **${input:storyId:SPARK-PROD-B02}** in the `apps/app` module.
 
-Follow the `story-implementer` agent workflow (`.github/agents/story-implementer.agent.md`):
+Follow the `story-implementer` workflow (`.github/chatmodes/story-implementer.chatmode.md`):
 
 1. Gate check — if the story is Phase E or depends on a `SPARK-SPIKE-0x`, stop and report the open spike instead of coding (use `/check-spike-gate` logic).
 2. Read the story's *Current Behaviour → Target → Files → Acceptance Criteria → Test Cases* (I will paste the Jira ticket if you don't have it; otherwise use `output/initial-analysis/{domain}/04-stories.md` at https://github.com/XXX).

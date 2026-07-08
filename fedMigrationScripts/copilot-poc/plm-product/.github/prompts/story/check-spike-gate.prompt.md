@@ -15,7 +15,8 @@ Check whether story **${input:storyId:SPARK-PROD-E01}** is spike-gated, using th
 | `SPARK-PROD-E03`, `SPARK-PROD-E04` | `SPARK-SPIKE-02` | TechPack Aggregate |
 | `SPARK-PROD-G07` | `SPARK-SPIKE-04` | Not-Removable / Undroppable Partners |
 | `SPARK-BOM-A04` | `SPARK-SPIKE-05` | Polymorphic Type Resolution |
-| `SPARK-PROD-C01`, `SPARK-PROD-D01`–`D04`, `D06`, `D07`, `D11`, `SPARK-BOM-B05` | `SPARK-SPIKE-06` | Cross-Domain Association / Hydration |
+| `SPARK-PROD-C01`, `SPARK-BOM-B05` | `SPARK-SPIKE-06a` | Hydration (read: federated `@key` ref vs REST; via `SPARK-PROD-S02`) |
+| `SPARK-PROD-D01`–`D04`, `D06`, `D07`, `D11` | `SPARK-SPIKE-06b` | Cross-Domain Association (write links a sibling domain; via `SPARK-PROD-S01`) |
 
 - Spike briefs, decision-to-make and intended steps: **Phase 0 — Program Spikes** + **Spike Detail** on the global Confluence overview (`Federated+Graphql+Stories+-+BreakDown`); research so far in `output/complexStories/<case>/` at https://github.com/XXX.
 

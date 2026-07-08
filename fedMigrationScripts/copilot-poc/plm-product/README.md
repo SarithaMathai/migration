@@ -48,3 +48,5 @@ plm-product/
 2. `/implement-story SPARK-PROD-B02` (or switch to the **story-implementer** chat mode) — schema + Kotlin fetcher + service + tests in one pass.
 3. `/write-parity-tests getProduct SPARK-PROD-B02` or the **parity-checker** chat mode — after implementing, verify response-shape parity with the legacy resolver.
 4. **schema-steward** chat mode on any PR touching `.graphqls` — federation-safety review before the Hive push.
+
+See **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** for two full worked sessions — a simple story implemented start-to-finish (`SPARK-PROD-B01`) and a complex story caught by the spike gate (`SPARK-PROD-E01`) — showing exactly which chat mode, prompt, and instruction file fires at each step.
