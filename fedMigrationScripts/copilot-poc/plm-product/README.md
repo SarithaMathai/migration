@@ -22,7 +22,15 @@ plm-product/
     │   │   ├── implement-story.prompt.md          /implement-story
     │   │   └── check-spike-gate.prompt.md          /check-spike-gate
     │   ├── schema/derive-dgs-schema.prompt.md      /derive-dgs-schema
-    │   └── testing/write-parity-tests.prompt.md    /write-parity-tests
+    │   ├── testing/write-parity-tests.prompt.md    /write-parity-tests
+    │   └── product-phases/                         one prompt per migration phase (A–G)
+    │       ├── phase-a-scaffold.prompt.md          /phase-a-scaffold
+    │       ├── phase-b-reads.prompt.md             /phase-b-reads
+    │       ├── phase-c-search.prompt.md            /phase-c-search
+    │       ├── phase-d-mutations.prompt.md         /phase-d-mutations
+    │       ├── phase-e-complex.prompt.md           /phase-e-complex
+    │       ├── phase-f-federation.prompt.md        /phase-f-federation
+    │       └── phase-g-field-resolvers.prompt.md   /phase-g-field-resolvers
     └── chatmodes/                                 ← custom chat modes (VS Code mode picker)
         ├── story-implementer.chatmode.md
         ├── parity-checker.chatmode.md
@@ -52,3 +60,7 @@ plm-product/
 4. **schema-steward** chat mode on any PR touching `.graphqls` — federation-safety review before the Hive push.
 
 See **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** for two full worked sessions — a simple story implemented start-to-finish (`SPARK-PROD-B01`) and a complex story caught by the spike gate (`SPARK-PROD-E01`) — showing exactly which chat mode, prompt, and instruction file fires at each step.
+
+## Phase A–G, one prompt each
+
+Each migration phase has a different shape and a different amount of Copilot judgment involved — a Phase-B read just gets implemented, a Phase-E write stops dead until a spike resolves. **[copilotExample.md](./copilotExample.md)** walks all seven phases end-to-end with real `product`-domain stories, showing exactly what the Engineer types and how Copilot responds differently in each phase (proceed / propose-a-fallback / ask / refuse-and-scaffold-only / check-deployment-order-not-spike).

@@ -87,6 +87,8 @@ Now follow **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** — it walks `SPARK-PROD-B
 4. Follow along — gate check, contract read, diff plan (confirm before it writes anything), implementation, verification, PR draft.
 5. Before opening the PR, run the **parity-checker** chat mode to confirm response-shape parity with the legacy resolver, and **schema-steward** if you touched a `.graphqls` file.
 
+Once you know your story's **phase** (A–G, from its id or the Jira "Phase" field), use the matching phase prompt instead of the generic `/implement-story` — it encodes phase-specific judgment (e.g. Phase E always stops for a spike; Phase F checks deployment order, not a spike). See **[copilotExample.md](./copilotExample.md)** for a full walkthrough of all seven.
+
 ## 6. Commit and push the Copilot setup itself (if you're the one introducing it)
 
 ```bash
