@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
 """
-Master runner — generates all oneStopDoc artifacts for every domain.
+Master runner — regenerates the publication artifacts for every phase-1 domain.
 
-Output structure (per domain):
-  oneStopDoc/{domain}/
+Output structure (all paths relative to the migration repo root):
+  output/summary/{domain}/
     FederatedGqlBrakDown-{domain}.docx Word/Confluence-ready breakdown (tables, icons, formatting)
     FederatedGqlBrakDown-{domain}.md   Confluence-ready breakdown (Markdown fallback)
     {domain}-comprehensive.md          Full engineering doc (OPT-IN: --full)
     {domain}-po-review.md              PO/stakeholder executive review (OPT-IN: --full)
-    {domain}.csv                       Jira-import CSV (Phase A excluded; tests only for High/VH)
+  output/jira/{domain}.csv             Jira-import CSV per domain
 
-Program-level (at oneStopDoc root):
-  Federated+Graphql+Stories+-+BreakDown.docx  Global Word doc (all domains, tables, icons)
-  Federated+Graphql+Stories+-+BreakDown.md    Global all-domain breakdown (Markdown)
-  00-executive-summary.md                     Cross-domain summary
-  00-portfolio.md                             Program portfolio table
-  jira/all-stories.csv                        All stories in one Jira import file
+Program-level:
+  output/summary/Federated+Graphql+Stories+-+BreakDown.docx  Global Word doc (all domains)
+  output/summary/Federated+Graphql+Stories+-+BreakDown.md    Global all-domain breakdown
+  output/summary/00-program-overview.md                      Merged program overview
+  output/jira/all-stories.csv                                All stories + program spikes, one file
 
-Run:
-    cd migration/finalOutput/oneStopDoc
+Run (from anywhere — paths resolve relative to this script):
+    python fedMigrationScripts/generatescripts/generate_all.py              # all domains
+    python fedMigrationScripts/generatescripts/generate_all.py impression   # specific domain(s)
+    python fedMigrationScripts/generatescripts/generate_all.py --no-summary # skip program-level docs
 
-    python generate_all.py              # all domains
-    python generate_all.py impression   # one or more specific domains
-    python generate_all.py --no-summary # skip executive-summary / portfolio
+⚠ Regeneration overwrites output/summary/* and output/jira/* — any hand edits to those
+  generated files must first be folded back into the source (initial-analysis/*/04-stories.md
+  or the tables in generate_breakdown.py) or they will be lost.
 """
 
 import sys
@@ -51,8 +52,9 @@ word_mod      = _load("generate_word")
 ALL_DOMAINS = comp_mod.ALL_DOMAINS
 
 
-# ─── Program-level executive summary ─────────────────────────────────────────
-# Static data sourced from generate_executive_summary.py in output/initial-analysis.
+# ─── Program-level domain metadata (feeds build_program_overview) ────────────
+# Only the effort/sprint/decision/risk columns are read from here — story counts and
+# complexity are computed live from each domain's 04-stories.md so totals reconcile.
 DOMAIN_META = [
     # (key, label, dgs, stories, effort_lo, effort_hi, sprints_1eng_lo, sprints_1eng_hi,
     #  queries, mutations, field_blocks, open_decisions, top_risk, risk_level)
@@ -84,285 +86,9 @@ def tshirt(stories: int, effort_hi: int) -> str:
     return "XS"
 
 
-def build_executive_summary() -> str:
-    today = date.today().isoformat()
-    total_stories  = sum(d[3]  for d in DOMAIN_META)
-    total_lo       = sum(d[4]  for d in DOMAIN_META)
-    total_hi       = sum(d[5]  for d in DOMAIN_META)
-    total_decisions= sum(d[11] for d in DOMAIN_META)
-
-    lines: list[str] = [
-        "# Federated GraphQL Migration — Executive Summary",
-        "",
-        f"> **Generated:** {today} · **Pipeline Version:** 2.0 · **Scope:** {len(ALL_DOMAINS)} domains (phase 1) · **Gateway:** `spark-internal-graphql` → Netflix DGS",
-        "",
-        "---",
-        "",
-        "## What We Are Doing",
-        "",
-        "- We are migrating the PLM GraphQL API surface off the monolithic `spark-internal-graphql` "
-        "Node.js gateway onto **Netflix DGS** (Domain Graph Service) subgraphs, federated via the **Hive Schema Registry**.",
-        "- Each DGS is a Kotlin/Spring Boot service that exposes its domain schema as a federated subgraph.",
-        "- The supergraph stitches them together transparently for clients.",
-        "",
-        "**Why?**",
-        "- The monolith is a ~15,000-line Node.js resolver with no clear ownership boundaries",
-        "- Federation gives each team autonomous schema ownership, independent deployability, and fine-grained caching",
-        "- Netflix DGS provides production-proven tooling (DataLoaders, code generation, Hive integration)",
-        "",
-        "**Engineering model:** Every story is self-contained in one PR — schema additions, DGS data fetcher, "
-        "Kotlin REST service method, and Hive registry push. No separate service-layer stories.",
-        "",
-        "---",
-        "",
-        "## Overall Scope at a Glance",
-        "",
-        "| Metric | Value |",
-        "|---|---|",
-        f"| **Total domains** | {len(ALL_DOMAINS)} |",
-        f"| **Target DGS services** | {len({d[2].split()[0] for d in DOMAIN_META})} |",
-        f"| **Total stories** | **{total_stories}** |",
-        f"| **Total open decisions** | {total_decisions} |",
-        f"| **Total effort estimate (buffered +20%)** | **{total_lo}–{total_hi} engineer-days** |",
-        "",
-        "> Effort ranges are **AI-estimated** — confirm in sprint refinement.",
-        "",
-        "---",
-        "",
-        "## Domain Breakdown",
-        "",
-        "| Domain | Target DGS | Stories | T-Shirt | Effort (buffered) | 1-Eng Sprints | Queries | Mutations | Field Blocks | Top Risk | Risk |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
-    ]
-
-    for (key, label, dgs, stories, elo, ehi, slo, shi,
-         queries, mutations, fblockes, decisions, top_risk, risk_level) in DOMAIN_META:
-        ts = tshirt(stories, ehi)
-        lines.append(
-            f"| **{label}** | `{dgs}` | {stories} | **{ts}** | {elo}–{ehi} d | {slo}–{shi} | "
-            f"{queries} | {mutations} | {fblockes} | {top_risk} | {risk_level} |"
-        )
-
-    totals = DOMAIN_META
-    lines += [
-        f"| **TOTAL** | — | **{total_stories}** | — | **{total_lo}–{total_hi} d** | — | "
-        f"~{sum(d[8] for d in totals)} | ~{sum(d[9] for d in totals)} | "
-        f"~{sum(d[10] for d in totals)} | — | — |",
-        "",
-        "---",
-        "",
-        "## DGS Service Groupings",
-        "",
-        "| DGS Service | Domains | Combined Stories |",
-        "|---|---|---|",
-        "| `plm-product` | Product · BOM · Measurement · Packaging · Impression · Product Details · Watchlist | 197 |",
-        "| `plm-sample` | Sample | 33 |",
-        "| `plm-discussion` | Discussion | 37 |",
-        "| `plm-workspace` | Workspace | 32 |",
-        "| `plm-attachment` | Attachment | 26 |",
-        "| `plm-elastic-search` | Search | 21 |",
-        "| `spark-claims` | Claims | 22 |",
-        "",
-        "---",
-        "",
-        "## Open Decisions Requiring Action",
-        "",
-        "Critical-path decisions (must be resolved before the first sprint of the relevant phase):",
-        "",
-        "| Priority | Domain | Decision | Blocks |",
-        "|---|---|---|---|",
-        "| 🔴 P1 | Product | TechPack facade vs Kotlin aggregation | E03 (TechPack story) |",
-        "| 🔴 P1 | Product | `productBusinessPartnerActions` failure strategy | E01 |",
-        "| 🔴 P1 | BOM | `updateBom` failure strategy (saga / compensation / best-effort) | E01 |",
-        "| 🔴 P1 | Workspace | Partner-action dispatcher failure strategy + un-awaited chains bug | E01 |",
-        "| 🔴 P1 | Search | Read-hub cutover sequence — dual-run vs hard cutover | All domain C-phase |",
-        "| 🟡 P2 | Discussion | Consolidate v1/v2/V3 or preserve all three? | B01 |",
-        "| 🟡 P2 | BOM | Keep `Bom_Unified` type or replace with field selection on `Bom`? | B01/G01 |",
-        "| 🟡 P2 | Attachment | Canonical DTO for dual record shape | B01 |",
-        "",
-        "---",
-        "",
-        "## Recommended Migration Sequence",
-        "",
-        "```",
-        "Tier 1 — Foundation (unblock everything else)",
-        "  ├── Search        [XL]  ← every domain's field resolvers depend on this",
-        "  └── Product       [XXL] ← host DGS; all co-located domains share service wiring",
-        "",
-        "Tier 2 — Co-located (start once plm-product DGS is wired)",
-        "  ├── Impression    [XS]  ← recommended first: proves end-to-end, lowest risk",
-        "  ├── Measurement   [M]",
-        "  ├── Product Details [S]",
-        "  ├── Watchlist     [S]",
-        "  ├── BOM           [XL]  ← polymorphism + 3-step write",
-        "  └── Packaging     [L]",
-        "",
-        "Tier 3 — Separate subgraphs (can start independently)",
-        "  ├── Attachment    [L]   ← provides entity referenced by product/packaging/workspace",
-        "  ├── Claims        [M]   ← provides entity referenced by product",
-        "  ├── Discussion    [XL]  ← provides entity + TechPack count",
-        "  ├── Sample        [XL]  ← provides entity; unblocks measurement + product",
-        "  └── Workspace     [XL]  ← provides entity referenced by product/sample",
-        "",
-        "Tier 4 — Federation contributions (F-phase, after owning domain is live)",
-        "  └── All F-phase stories across all domains",
-        "```",
-        "",
-        "> **Critical path:** Search → Product → BOM (largest by field resolvers) → all F-phases.",
-        "",
-        "---",
-        "",
-        "## Per-Domain Quick Reference",
-        "",
-    ]
-
-    for (key, label, dgs, stories, elo, ehi, slo, shi,
-         queries, mutations, fblocks, decisions, top_risk, risk_level) in DOMAIN_META:
-        ts = tshirt(stories, ehi)
-        lines += [
-            f"### {label} — {ts}",
-            "",
-            "| | |",
-            "|---|---|",
-            f"| **Target DGS** | `{dgs}` |",
-            f"| **Total stories** | {stories} |",
-            f"| **T-shirt size** | **{ts}** |",
-            f"| **Effort (buffered)** | {elo}–{ehi} engineer-days |",
-            f"| **1-engineer sprints** | {slo}–{shi} sprints (5d) |",
-            f"| **Queries / Mutations / Field blocks** | {queries} / {mutations} / {fblocks} |",
-            f"| **Open decisions** | {decisions} |",
-            f"| **Top risk** | {risk_level} {top_risk} |",
-            "",
-        ]
-
-    lines += [
-        "---",
-        "",
-        "## Detailed Documentation",
-        "",
-        "| Domain | PO Review | Engineering Detail |",
-        "|---|---|---|",
-    ]
-    for key, label, *_ in DOMAIN_META:
-        lines.append(
-            f"| **{label}** | [FederatedGqlBrakDown-{key}.md](./{key}/FederatedGqlBrakDown-{key}.md) |"
-        )
-
-    return "\n".join(lines)
-
-
-def build_portfolio() -> str:
-    """Generate the program-level portfolio page (for Confluence space home)."""
-    today = date.today().isoformat()
-
-    lines: list[str] = [
-        "# Spark → Federated GraphQL Migration — Program Portfolio",
-        "",
-        f"> 🏷️ **Tags:** `dgs-migration` · `portfolio` · `pipeline-v2`  —  **Confluence location:** *Federation Graph Migration* (space home / parent page)",
-        "",
-        f"> **Audience:** Product Owners, Tech Leads. **Paste this page into Confluence.**  ",
-        "> Per-domain PO pages: see the [Domains] child pages.",
-        "> Effort ranges are **AI-estimated — confirm in refinement**.",
-        "",
-        "---",
-        "",
-        "## What this program does",
-        "",
-        "We are moving the PLM **GraphQL domains** off the `spark-internal-graphql` gateway into Netflix DGS "
-        "subgraphs. Thirteen domains are analyzed and broken into engineering stories. Seven compile into the "
-        "**same `plm-product` subgraph** (cross-references are internal types); **claims**, **search**, "
-        "**workspace**, **sample**, **attachment**, and **discussion** are **separate subgraphs** that federate with the rest.",
-        "",
-        "## Program totals",
-        "",
-        "| Domain | Target DGS | Stories | Very High | High | Medium | Low | Est. effort (buffered) |",
-        "|--------|-----------|---------|-----------|------|--------|-----|------------------------|",
-    ]
-
-    # Story complexity breakdown from confluence/00-portfolio.md reference data
-    COMPLEXITY = {
-        "impression":     (0, 0, 2, 5,  "11–18d"),
-        "productDetails": (0, 1, 9, 3,  "24–42d"),
-        "watchlist":      (0, 1, 8, 4,  "25–44d"),
-        "measurement":    (0, 1, 8, 11, "32–55d"),
-        "claims":         (0, 2, 11, 9, "36–62d"),
-        "search":         (0, 7, 11, 3, "59–99d"),
-        "packaging":      (0, 2, 11, 13,"42–72d"),
-        "attachment":     (0, 3, 15, 8, "42–71d"),
-        "workspace":      (3, 3, 15, 11,"75–126d"),
-        "sample":         (0, 7, 13, 13,"70–116d"),
-        "discussion":     (0, 6, 17, 14,"61–102d"),
-        "bom":            (1, 2, 13, 23,"68–114d"),
-        "product":        (5, 5, 27, 33,"197–330d"),
-    }
-
-    for key, label, dgs, stories, *_ in DOMAIN_META:
-        vh, h, m, lo, effort = COMPLEXITY.get(key, (0, 0, 0, 0, "?"))
-        lines.append(f"| [{label}](./{key}/FederatedGqlBrakDown-{key}.md) | `{dgs}` | {stories} | {vh} | {h} | {m} | {lo} | {effort} |")
-
-    total_stories = sum(d[3] for d in DOMAIN_META)
-    lines += [
-        f"| **Total** | | **{total_stories}** | **9** | **40** | **157** | **149** | **742–1251d** |",
-        "",
-        "## Recommended sequencing",
-        "",
-        "1. **Impression first** — smallest, lowest-risk; proves the pipeline + DGS scaffolding end-to-end.",
-        "2. **ProductDetails / Watchlist** — small, co-located; good early wins.",
-        "3. **Measurement** — mid-size, one 2-step write; reuses the scaffolding.",
-        "4. **Claims** — mid-size, **separate subgraph**; proves cross-subgraph federation back into Product.",
-        "5. **Search** — the **read hub**; migrate early (or dual-run) since every domain calls it.",
-        "6. **Packaging** — wide schema, one multi-step write + a pricing chain.",
-        "7. **Attachment** — **separate subgraph**; provides the `Attachment` entity many domains reference.",
-        "8. **Workspace** — large standalone hub; 5-case partner-action dispatcher.",
-        "9. **Sample** — wide entity + prefix-gated polymorphic parents.",
-        "10. **Discussion** — **separate subgraph**; v1/v2/V3 consolidation.",
-        "11. **BOM** — material polymorphism (7 types) + one 3-step write.",
-        "12. **Product** — largest and the host DGS; others' federation contributions land into it.",
-        "",
-        "## Cross-domain blockers (true federation — a separate DGS must migrate first)",
-        "",
-        "| Blocked story | In domain | Waits on (separate DGS) |",
-        "|---|---|---|",
-        "| `SPARK-MEAS-F02` (SampleV2.sampleMeasurement) | measurement | **sample** |",
-        "| `SPARK-PROD-F01` (product/discussion attachments) | product | **attachment** |",
-        "| `SPARK-PROD-F02` (discussions) | product | **discussion** |",
-        "| `SPARK-PROD-F03` (sample) | product | **sample** |",
-        "| `SPARK-PROD-F05` (claims) | product | **claim** |",
-        "| `SPARK-PROD-F07` (constructions) | product | **construction** |",
-        "",
-        "**Internal (NOT blockers — same `plm-product` subgraph):** `SPARK-BOM-F01/F02`, `SPARK-MEAS-F01`,",
-        "`SPARK-IMP-F01`, `SPARK-PROD-F04/F06/F08` (watchlist co-located), `SPARK-PDTL-F01`, `SPARK-PKG-F01`.",
-        "",
-        "## Program-wide decisions (Product Owner)",
-        "",
-        "| Decision | Domains | Owner |",
-        "|---|---|---|",
-        "| Non-atomic write failure strategy | bom, measurement, product, packaging, productDetails, claims, watchlist | Tech Lead + Product Owner |",
-        "| `update*ComponentStatus*` has no auth token | bom, measurement, product, packaging | Product Owner |",
-        "| Federation rollout order for sibling subgraphs | all | Product Owner + Platform |",
-        "| TechPack facade approach (Node vs Kotlin) | product | Product Owner |",
-        "| `Product.division` latent-bug fix cutover flag | product | Product Owner |",
-        "",
-        "## How to consume",
-        "",
-        "- **Jira:** import `output/jira/all-stories.csv` (one shared epic + the phase-1 stories and spikes; schema init is part of B01).",
-        "- **Complex cases:** each spike links to its `output/complexStories/<case>/` brief — the research so far.",
-        "- **Confluence:** this page + each per-domain breakdown page.",
-        "- **Implementation:** engineers work from `output/initial-analysis/{domain}/04-stories.md`.",
-    ]
-
-    return "\n".join(lines)
-
-
-# ─── Merged program overview (replaces 00-executive-summary + 00-portfolio) ──
-# Complexity split per domain (VH, High, Med, Low). BOM/Product are the verified-current values.
-PROGRAM_COMPLEXITY = {
-    "impression": (0,0,2,5),   "productDetails": (0,1,9,3),  "watchlist": (0,1,8,4),
-    "measurement": (0,1,8,11), "claims": (0,2,11,9),         "search": (0,7,11,3),
-    "packaging": (0,2,11,13),  "attachment": (0,3,15,8),     "workspace": (3,3,15,11),
-    "sample": (0,7,13,13),     "discussion": (0,6,17,14),    "bom": (1,2,13,23),
-    "product": (5,5,27,33),
-}
+# build_executive_summary() / build_portfolio() were deleted: superseded by
+# build_program_overview() below (which computes live counts from 04-stories.md
+# instead of hardcoded snapshots) and never called since the merge.
 
 def build_program_overview() -> str:
     today = date.today().isoformat()

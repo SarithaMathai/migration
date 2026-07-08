@@ -331,7 +331,7 @@ def _strip_domain_spike_refs(dep: str) -> str:
 
 
 def program_spike_rows() -> list[list]:
-    """The 6 generalized program spikes as Jira Spike rows (all-stories.csv only)."""
+    """The generalized program spikes (one Jira Spike row per SPIKE_TITLES bucket; all-stories.csv only)."""
     rows = []
     for b in sorted(SPIKE_TITLES):
         # One labelled section per line, steps as a numbered list — points, not a blob.
@@ -468,7 +468,7 @@ def generate_domain(domain: str, out_dir: "Path | None" = None) -> int:
 
 def generate_all_csv(domains: list[str]) -> None:
     all_rows: list[list] = [epic_row()]          # ONE shared epic for all domains
-    all_rows.extend(program_spike_rows())        # the 6 generalized cross-domain spikes
+    all_rows.extend(program_spike_rows())        # the generalized cross-domain spikes (one per bucket)
     for domain in domains:
         all_rows.extend(build_story_rows(domain))
     out = JIRA_OUT / "all-stories.csv"
