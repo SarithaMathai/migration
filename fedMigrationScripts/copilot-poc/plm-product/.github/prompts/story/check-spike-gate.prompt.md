@@ -7,7 +7,7 @@ description: "Check whether a story is gated on a program spike before starting 
 Check whether story **${input:storyId:SPARK-PROD-E01}** is spike-gated, using these program rules:
 
 - **Default rule:** every **Phase E** story is gated on `SPARK-SPIKE-01` unless overridden below.
-- **Overrides / non-E gated stories** (plm-product co-located domains):
+- **Overrides / non-E gated stories** — phase-1 domains only (product, bom, measurement, packaging, impression, productDetails, watchlist, claims). Later-phase domains (workspace, sample, search, discussion, attachment) have their own overrides once they're in scope — see `SPIKE_OVERRIDES` in `generate_breakdown.py` for the full map:
 
 | Story | Spike | Bucket |
 |---|---|---|
