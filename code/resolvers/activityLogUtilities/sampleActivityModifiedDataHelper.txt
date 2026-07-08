@@ -1,0 +1,108 @@
+import { getEvalStatusName, getTrackingStatusName } from '../../utils/convertFunctions'
+import moment from 'moment'
+import { loadBps } from '../../utils/vmmUtils'
+
+const sampleActivityModifiedDataHelper = async (activity, streamResourceId, ctx) => {
+  if (!ctx) return []
+  const {
+    loaders: {
+      sampleV2: { getSampleById } = {},
+    } = {},
+  } = ctx
+
+  const {
+    resourceType = '',
+    eventType = 'UPDATE',
+    eventSummary: { humanId = '', description = '', modifiedAttributes = [] } = {},
+    businessPartnerIds = [],
+  } = activity || {}
+
+  const isCreateEvent = eventType === 'CREATE'
+  const sampleData = await getSampleById.load(humanId)
+  const { parentId: productId, workspaceContext: workspaceId } = sampleData || {}
+
+  const parentResourceInfo = {
+    linkGenerationVariables: { sampleId: humanId, productId, ...(workspaceId && { workspaceId }) },
+  }
+
+  const eventTypeText = `${String(isCreateEvent ? 'Requeste' : eventType).toLowerCase()}d`
+  if (!modifiedAttributes || !modifiedAttributes.length) {
+    let resourceChangeTypeText = `was ${eventTypeText} by`
+    if (isCreateEvent && businessPartnerIds && businessPartnerIds.length) {
+      const bpInfo = await loadBps(ctx, [businessPartnerIds[0]])
+      if (bpInfo && bpInfo.length && bpInfo[0].bpName) {
+        resourceChangeTypeText = `was ${eventTypeText} from "${bpInfo[0].bpName}" by`
+      }
+    }
+    return [{
+      attributeUpdateText: '',
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId: humanId,
+        resourceDescription: description,
+        parentResourceInfo,
+      },
+      resourceChangeTypeText,
+    }]
+  }
+
+  return modifiedAttributes.map(async (attr) => {
+    const { attributeName: initialAttributeName = '', attributeNewValue = [], attributeOldValue = [] } = attr || {}
+    let attributeName = initialAttributeName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/_/g, ' ')
+
+    let oldValues = []
+    let newValues = []
+    let isSingleValueUpdate = false
+    let resourceId = humanId
+
+    if (attributeName === 'evaluation status') {
+      const oldEvaluationStatus = getEvalStatusName(String(attributeOldValue))
+      const oldEvalStatusName = oldEvaluationStatus && oldEvaluationStatus.name
+      const newEvaluationStatus = getEvalStatusName(String(attributeNewValue))
+      const newEvalStatusName = newEvaluationStatus && newEvaluationStatus.name
+      if (oldEvalStatusName && newEvalStatusName) {
+        isSingleValueUpdate = true
+        newValues = [newEvalStatusName]
+        oldValues = [oldEvalStatusName]
+      }
+    } else if (attributeName === 'due date' && moment(attributeOldValue).isValid() && moment(attributeNewValue).isValid()) {
+      const oldDueDate = moment(attributeOldValue)
+      const newDueDate = moment(attributeNewValue)
+      isSingleValueUpdate = true
+      if (oldDueDate.isSame(newDueDate)) {
+        newValues = [moment(attributeNewValue).format('DD MMM YYYY')]
+      } else {
+        newValues = [moment(attributeNewValue).format('DD MMM YYYY')]
+        oldValues = [moment(attributeOldValue).format('DD MMM YYYY')]
+      }
+    } else if (attributeName === 'tracking status') {
+      const oldTrackingStatusObj = getTrackingStatusName(String(attributeOldValue))
+      const newTrackingStatusObj = getTrackingStatusName(String(attributeNewValue))
+      const oldTrackingStatus = (attributeOldValue && (attributeOldValue.description || (oldTrackingStatusObj && oldTrackingStatusObj.name)))
+      const newTrackingStatus = (attributeNewValue && (attributeNewValue.description || (newTrackingStatusObj && newTrackingStatusObj.name)))
+      isSingleValueUpdate = true
+      if (oldTrackingStatus && newTrackingStatus) {
+        oldValues = [oldTrackingStatus]
+        newValues = [newTrackingStatus]
+      } else if (newTrackingStatus) {
+        newValues = [newTrackingStatus]
+      }
+    }
+
+    return ({
+      oldValues,
+      newValues,
+      attributeName,
+      eventType,
+      isSingleValueUpdate,
+      resourceUpdated: {
+        resourceType: resourceType,
+        resourceId,
+        resourceDescription: description,
+        parentResourceInfo,
+      },
+    })
+  })
+}
+
+export default sampleActivityModifiedDataHelper

@@ -30,12 +30,12 @@ FALLBACK_SRC  = HERE.parent.parent / "output" / "initial-analysis"
 JIRA_OUT      = HERE.parent.parent / "output" / "jira"
 
 # ─── Domain catalogue ─────────────────────────────────────────────────────────
-# Phase 1 scope: the 8 domains in the first production wave. Remaining domains
-# (attachment, discussion, sample, search, workspace) join in a later phase —
-# add them back here to regenerate their artifacts.
+# thirdAttempt scope: all 13 domains — the 8 phase-1 domains plus attachment,
+# discussion, sample, search and workspace.
 ALL_DOMAINS = [
-    "bom", "claims", "impression", "measurement",
-    "packaging", "product", "productDetails", "watchlist",
+    "attachment", "bom", "claims", "discussion", "impression",
+    "measurement", "packaging", "product", "productDetails",
+    "sample", "search", "watchlist", "workspace",
 ]
 
 DOMAIN_LABELS = {
@@ -76,9 +76,8 @@ DOMAIN_TAG = {
 GLOBAL_EPIC_NAME = "Federate BreakDown Product"
 GLOBAL_EPIC_DESC = (
     "Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL "
-    "migration. Holds the stories and spikes for the 8 phase-1 domains (Product, "
-    "Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); "
-    "each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+    "migration. Holds the stories and spikes for all 13 domains; each story summary "
+    "is prefixed with its domain (e.g. [BOM], [Product])."
 )
 
 DGS_MAP = {
@@ -267,6 +266,26 @@ def parse_stories(stories_path: Path) -> list[dict]:
 
         if test_lines:
             desc_parts.append("*Test Cases:*\n" + "\n".join(f"* {t}" for t in test_lines))
+
+        # Fallback for compact "family" stories (In plain terms / Covers / inline
+        # Acceptance) that carry no Current Behaviour / Target / #### sections.
+        if not desc_parts:
+            plain_m = re.search(r"\*\*In plain terms:?\*\*\s*([^\n]+)", body)
+            if plain_m:
+                desc_parts.append("*Summary:*\n* " + clean_jira_text(plain_m.group(1)))
+            cov_m = re.search(r"\*\*Covers:\*\*\s*(.*?)(?=\*\*Acceptance|\*\*Tests|\Z)", body, re.DOTALL)
+            if cov_m:
+                desc_parts.append("*Covers:*\n* " + clean_jira_text(cov_m.group(1)))
+            acc_m = re.search(r"\*\*Acceptance:\*\*\s*(.*?)(?=\*\*Tests|\Z)", body, re.DOTALL)
+            if acc_m:
+                items = re.findall(r"\d+\.\s*(.+?)(?=\s*\d+\.|\Z)", acc_m.group(1), re.DOTALL)
+                if items:
+                    desc_parts.append(
+                        "*Acceptance Criteria:*\n"
+                        + "\n".join(f"{i}. {clean_jira_text(x).rstrip('.')}" for i, x in enumerate(items, 1))
+                    )
+                else:
+                    desc_parts.append("*Acceptance Criteria:*\n* " + clean_jira_text(acc_m.group(1)))
 
         description = "\n\n".join(desc_parts)  # real paragraphs, preserved by CSV quoting
 

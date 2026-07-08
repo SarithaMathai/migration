@@ -1,0 +1,265 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for all 13 domains; each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-DISC-B01,(Discussion) getDiscussionV2 (+ coreGetDiscussionV2) [SPARK-DISC-B01],,Federate BreakDown Product,B,XS,dgs-migration,discussion,query,,,To Do,"*Current Behaviour:*
+* (own) `GET discussions/v2?ids={id}` → `FullDiscussion`; `core*` = system context.
+
+*Target:*
+* `@DgsQuery → FullDiscussion` (two fields, shared impl).
+
+*Acceptance Criteria:*
+1. returns discussion; core uses system context"
+Story,SPARK-DISC-B02,(Discussion) getDiscussionByIdsV2 [SPARK-DISC-B02],,Federate BreakDown Product,B,XS,dgs-migration,discussion,query,,B01,To Do,"*Current Behaviour:*
+* (own) `GET /v2?ids={csv}`.
+
+*Target:*
+* `@DgsQuery → [FullDiscussion]`.
+
+*Acceptance Criteria:*
+1. returns by ids"
+Story,SPARK-DISC-B03,(Discussion) getDiscussionsCount [SPARK-DISC-B03],,Federate BreakDown Product,B,XS,dgs-migration,discussion,query,,B01,To Do,"*Current Behaviour:*
+* (own) count by `resourceId`/`resourceType` → `[ResourceCount]`.
+
+*Target:*
+* `@DgsQuery`.
+
+*Acceptance Criteria:*
+1. returns per-resource counts"
+Story,SPARK-DISC-B04,(Discussion) getDiscussionOnResource [SPARK-DISC-B04],,Federate BreakDown Product,B,XS,dgs-migration,discussion,query,,B01,To Do,"*Current Behaviour:*
+* (own) discussions for a resource.
+
+*Target:*
+* `@DgsQuery → [Discussion]`.
+
+*Acceptance Criteria:*
+1. returns discussions"
+Story,SPARK-DISC-B05,(Discussion) getDiscussionsByThread [SPARK-DISC-B05],,Federate BreakDown Product,B,XS,dgs-migration,discussion,query,,B01,To Do,"*Current Behaviour:*
+* (own) discussions in a thread.
+
+*Target:*
+* `@DgsQuery → [Discussion]`.
+
+*Acceptance Criteria:*
+1. returns thread discussions"
+Story,SPARK-DISC-B06,(Discussion) getUnsentDiscussions [SPARK-DISC-B06],,Federate BreakDown Product,B,XS,dgs-migration,discussion,query,,B01,To Do,"*Current Behaviour:*
+* (own) `GET /api/admin/unsent`.
+
+*Target:*
+* `@DgsQuery → UnsentDiscussions`.
+
+*Acceptance Criteria:*
+1. returns unsent"
+Story,SPARK-DISC-B07,(Discussion) getVersionedDiscussions (+ threads) [SPARK-DISC-B07],,Federate BreakDown Product,B,M,dgs-migration,discussion,query,,B01,To Do,"*Current Behaviour:*
+* (own V3) version history.
+
+*Target:*
+* `@DgsQuery`.
+
+*Acceptance Criteria:*
+1. both return version history"
+Story,SPARK-DISC-C01,(Discussion) getDiscussionsV2 (elastic) [SPARK-DISC-C01],,Federate BreakDown Product,C,M,dgs-migration,discussion,search,,B01,To Do,"*Current Behaviour:*
+* (🔴 search) elastic discussions by `resourceId`/`resourceType` (partner-filtered) → `DiscussionElastic`.
+
+*Target:*
+* `@DgsQuery`.
+
+*Acceptance Criteria:*
+1. elastic query + partner filter"
+Story,SPARK-DISC-C02,(Discussion) getSampleDiscussion [SPARK-DISC-C02],,Federate BreakDown Product,C,M,dgs-migration,discussion,search,,B01,To Do,"*Current Behaviour:*
+* (own) sample-scoped discussions.
+
+*Target:*
+* `@DgsQuery → [Discussion]`.
+
+*Acceptance Criteria:*
+1. returns sample discussions"
+Story,SPARK-DISC-D01,(Discussion) addDiscussionV2 [SPARK-DISC-D01],,Federate BreakDown Product,D,M,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) create + (🟡 attachment) bulk attachment input.
+
+*Target:*
+* `@DgsMutation → Discussion`.
+
+*Acceptance Criteria:*
+1. creates; attachments associated"
+Story,SPARK-DISC-D02,(Discussion) addDiscussionReplyV2 + updateDiscussionReplyV2 [SPARK-DISC-D02],,Federate BreakDown Product,D,M,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* add/update reply + (🟡 attachment) input (`isAttachmentsV3` flag).
+
+*Target:*
+* `@DgsMutation → DiscussionReply`.
+
+*Acceptance Criteria:*
+1. add + update reply; v3-attachment flag honored"
+Story,SPARK-DISC-D03,(Discussion) updateDiscussionV2 [SPARK-DISC-D03],,Federate BreakDown Product,D,XS,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `PUT` discussion body.
+
+*Target:*
+* `@DgsMutation → Discussion`.
+
+*Acceptance Criteria:*
+1. updates"
+Story,SPARK-DISC-D04,(Discussion) deleteDiscussionV2 [SPARK-DISC-D04],,Federate BreakDown Product,D,XS,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) delete by id → ID.
+
+*Target:*
+* `@DgsMutation → ID`.
+
+*Acceptance Criteria:*
+1. deletes"
+Story,SPARK-DISC-D05,(Discussion) deleteDiscussionReplyV2 [SPARK-DISC-D05],,Federate BreakDown Product,D,XS,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) delete reply → ID.
+
+*Target:*
+* `@DgsMutation → ID`.
+
+*Acceptance Criteria:*
+1. deletes reply"
+Story,SPARK-DISC-D06,(Discussion) deleteDiscussionPartnersV2 [SPARK-DISC-D06],,Federate BreakDown Product,D,XS,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) delete partners from a discussion → ID.
+
+*Target:*
+* `@DgsMutation → ID`.
+
+*Acceptance Criteria:*
+1. removes partners"
+Story,SPARK-DISC-D07,(Discussion) Sample discussions (V2/V3 + bulk) [SPARK-DISC-D07],,Federate BreakDown Product,D,M,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) sample-scoped create.
+
+*Target:*
+* `@DgsMutation → SampleDiscussion`/`[…]`.
+
+*Acceptance Criteria:*
+1. each creates sample discussion(s)"
+Story,SPARK-DISC-D08,(Discussion) Flags (critical / editable / tag) [SPARK-DISC-D08],,Federate BreakDown Product,D,XS,dgs-migration,discussion,mutation,,B01,To Do,"*Target:*
+* `@DgsMutation → DiscussionReply`.
+
+*Acceptance Criteria:*
+1. each flag updates"
+Story,SPARK-DISC-D09,(Discussion) cloneFilesForBulkDiscussion [SPARK-DISC-D09],,Federate BreakDown Product,D,M,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → `Promise.all(attachmentIds.map(id → (🟡 attachment) cloneAttachmentV3({cloneReferences}, id)))`.
+
+*Target:*
+* structured-concurrency fan-out.
+
+*Acceptance Criteria:*
+1. clones each id"
+Story,SPARK-DISC-D10,(Discussion) discussionReadByUsers [SPARK-DISC-D10],,Federate BreakDown Product,D,M,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) mark read across `discussionIds`/`discussionThreadIds` for `readByUserList`.
+
+*Target:*
+* `@DgsMutation → DiscussionReadByUsers`.
+
+*Acceptance Criteria:*
+1. records read receipts"
+Story,SPARK-DISC-D11,(Discussion) addDiscussionV3 (+ coreAddDiscussionV3) [SPARK-DISC-D11],,Federate BreakDown Product,D,M,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own V3) create + attachments; `core*` = system context.
+
+*Target:*
+* `@DgsMutation → Discussion` (two fields, shared impl).
+
+*Acceptance Criteria:*
+1. creates; core uses system context"
+Story,SPARK-DISC-D12,(Discussion) addBulkDiscussionV3 [SPARK-DISC-D12],,Federate BreakDown Product,D,L,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own V3) bulk create across resources + attachments → `BulkDiscussionOutputV3`. - **Note:** `coreAddBulkDiscussionV3` is **schema-drift** (no resolver — see F03).
+
+*Target:*
+* `@DgsMutation`.
+
+*Acceptance Criteria:*
+1. bulk creates
+
+*Test Cases:*
+* [ ] bulk
+* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+Story,SPARK-DISC-D13,(Discussion) updateDiscussionV3 (+ coreUpdateDiscussionV3) [SPARK-DISC-D13],,Federate BreakDown Product,D,M,dgs-migration,discussion,mutation,,B01,To Do,"*Current Behaviour:*
+* (own V3) update; `core*` = system context.
+
+*Target:*
+* `@DgsMutation → Discussion`.
+
+*Acceptance Criteria:*
+1. updates; core context"
+Story,SPARK-DISC-E01,(Discussion) Participants V2 (updateParticipantsV2 + deleteParticipantV2) [SPARK-DISC-E01],,Federate BreakDown Product,E,M,dgs-migration,discussion,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* add participants (`AddParticipantInput`) / remove a participant (team/user/partner).
+
+*Target:*
+* `@DgsMutation → Discussion`.
+
+*Acceptance Criteria:*
+1. add + remove participants"
+Story,SPARK-DISC-E02,(Discussion) Participants V3 (updateParticipantsV3 + coreUpdate + coreDelete + deleteParticipantV3) [SPARK-DISC-E02],,Federate BreakDown Product,E,L,dgs-migration,discussion,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* richer participant model — `updateParticipantsV3` / `coreUpdateParticipantsV3` - (participants + relatedResources + resourceType), `coreDeleteParticipantsV3` (removedUser/team/partners/ designPartners), `deleteParticipantV3` (team/user/partner/designPartner).
+
+*Target:*
+* `@DgsMutation → Discussion` (one service, four fields).
+
+*Acceptance Criteria:*
+1. each path updates/removes the right participants
+
+*Test Cases:*
+* [ ] update
+* [ ] coreUpdate
+* [ ] coreDelete
+* [ ] delete
+
+*Complex — broken into sub-tasks:* E02-1 updateParticipantsV3 + coreUpdate · E02-2 coreDelete + deleteParticipantV3"
+Story,SPARK-DISC-F01,(Discussion) Discussion federated entity fetcher [SPARK-DISC-F01],,Federate BreakDown Product,F,M,dgs-migration,discussion,field-resolver,,B01,To Do,"*Target:*
+* `@DgsEntityFetcher(name=""Discussion"")` by `discussionId`; provides `discussionsCount`/`discussionsV2` for product/workspace over the gateway.
+
+*Acceptance Criteria:*
+1. entity resolves by key
+2. cross-subgraph smoke"
+Story,SPARK-DISC-F02,(Discussion) ResourcesCount.discussions (TechPack — SPARK-PROD-F02) [SPARK-DISC-F02],,Federate BreakDown Product,F,XS,dgs-migration,discussion,field-resolver,,"B01, product",To Do,"*Target:*
+* `extend type ResourcesCount @key(fields:""productId partnerId"") { discussions: [ID] }` with a `@DgsEntityFetcher`; fills the TechPack `discussions` count (the discussion side of `SPARK-PROD-F02`). **BLOCKED-BY:** product TechPack facade.
+
+*Acceptance Criteria:*
+1. field resolves; parity vs facade"
+Story,SPARK-DISC-F03,(Discussion) Deferred drift decision (drop/undrop + coreAddBulkDiscussionV3) [SPARK-DISC-F03],,Federate BreakDown Product,F,XS,dgs-migration,discussion,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `dropPartnerFromDiscussionIds`/`unDropPartnerFromDiscussionIds` (no resolver — run inside `workspaceBusinessPartnerActionsV2`); `coreAddBulkDiscussionV3` (no resolver).
+
+*Target:*
+* delete or keep `@deprecated`; coordinate drop/undrop ownership with workspace.
+
+*Acceptance Criteria:*
+1. decision + traffic survey"
+Story,SPARK-DISC-G01,(Discussion) Discussion + FullDiscussion + DiscussionContent field resolvers [SPARK-DISC-G01],,Federate BreakDown Product,G,L,dgs-migration,discussion,field-resolver,,B01,To Do,"*Current Behaviour:*
+* discussion/full/content bodies, `createdBy`/`updatedBy` (🟡 user), `tags` (🔵 tag), `resource` (union), `replies`/`participants`/`attachments` links.
+
+*Acceptance Criteria:*
+1. each field resolves
+
+*Test Cases:*
+* [ ] bodies
+* [ ] users
+* [ ] resource
+* [ ] replies
+
+*Complex — broken into sub-tasks:* G01-1 Discussion + Content · G01-2 FullDiscussion + participants"
+Story,SPARK-DISC-G02,(Discussion) DiscussionReply + NotificationStatus field resolvers [SPARK-DISC-G02],,Federate BreakDown Product,G,M,dgs-migration,discussion,field-resolver,,B01,To Do,"*Current Behaviour:*
+* reply body/author (🟡 user), `attachments` (🟡 attachment), `notificationStatus`.
+
+*Acceptance Criteria:*
+1. each resolves"
+Story,SPARK-DISC-G03,(Discussion) Participants + Team + Participant sub-types [SPARK-DISC-G03],,Federate BreakDown Product,G,M,dgs-migration,discussion,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `Discussion_Participants.teams`/`users`; `Discussion_Team.businessPartner` (🔵 vmm); `Discussion_Participant.userDetails` (🟡 user).
+
+*Acceptance Criteria:*
+1. teams/users/bp resolve"
+Story,SPARK-DISC-G04,(Discussion) Resource union members + Versioned + DiscussionReadByUsers [SPARK-DISC-G04],,Federate BreakDown Product,G,M,dgs-migration,discussion,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `Resource` union resolution (via A04); `VersionedDiscussion`/`Thread.updatedBy` (🟡 user)/`updatedAt` (parse); `DiscussionReadByUsers.discussions`/`discussionThreads` (computed).
+
+*Acceptance Criteria:*
+1. each resolves"
+Story,SPARK-DISC-G05,"(Discussion) Tests, parity harness [SPARK-DISC-G05]",,Federate BreakDown Product,G,L,dgs-migration,discussion,field-resolver,,"B01, D12, E02, G01",To Do,"*Target:*
+* ≥80% unit coverage; parity harness (incl. V2/V3 + core twins, participants, bulk, the `Resource` union, read receipts); contract test (schema diff intentional-only).
+
+*Acceptance Criteria:*
+1. unit ≥80%
+2. parity green
+3. schema-diff intentional
+
+*Test Cases:*
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+* [ ] contract"

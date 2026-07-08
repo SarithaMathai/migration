@@ -1,0 +1,81 @@
+import SPARK_SampleV2 from '../resolvers/SPARK_SampleV2'
+import SPARK_Discussion from '../resolvers/SPARK_Discussion'
+import { DEFAULT_SAMPLE_CHUNK_SIZE, SAMPLE_EVALUTION } from './constants'
+import _ from 'lodash'
+import SPARK_Attachment from '../resolvers/SPARK_Attachment'
+import { batchParallelOperation } from './batchingUtils'
+
+const createSampleSubject = (sample) => {
+  const subject = `${sample.sampleType ? sample.sampleType.description : ''}: ${sample.id} - ${sample.description}`
+  if (subject.length > 75) {
+    return `${subject.substring(0, 72)}...`
+  } else {
+    return subject
+  }
+}
+
+export const bulkEvaluateSampleUtil = async (ctx, updateSamples, newSampleRounds) => {
+  let newSampleRoundsResult = []
+  let updateSamplesResult = []
+  if (newSampleRounds && newSampleRounds.length > 0) {
+    const newSampleRoundOperation = async (newSampleRoundChunk) => {
+      const failedSampleIds = newSampleRoundChunk.map(sample => sample.id)
+      failedSampleIds.push(SAMPLE_EVALUTION)
+      const permissionJWTPost = await ctx.loaders.accessControl.getUserAccessByPost.load(failedSampleIds)
+      return ctx.loaders.sampleV2
+        .bulkCreateSampleRounds(permissionJWTPost)
+        .load({ newSampleRounds: newSampleRoundChunk })
+    }
+    newSampleRoundsResult = await batchParallelOperation({ batchSize: DEFAULT_SAMPLE_CHUNK_SIZE, operation: newSampleRoundOperation, items: newSampleRounds })
+  }
+  if (updateSamples && updateSamples.length > 0) {
+    const updatedSampleOperation = async (updateSampleChunk) => {
+      const updateSampleIds = updateSampleChunk.map(sample => sample.id)
+      const fullSamples = await SPARK_SampleV2.Query.getSamplesByIdsV2({}, { ids: updateSampleIds, recentlyViewed: false }, ctx)
+
+      const buildUpdateSamples = await Promise.all(updateSampleChunk.map(async (sampleToUpdate) => {
+        let updateInput = _.pick(sampleToUpdate, ['id', 'type', 'evaluationStatus', 'aestheticEvaluations', 'libraryColors'])
+        const matchingSample = _.find(fullSamples, { id: sampleToUpdate.id })
+        const hasAttachments = !_.isEmpty(sampleToUpdate.attachmentIds)
+        if (!matchingSample.primaryThumbnailId && hasAttachments) {
+          const attachments = await SPARK_Attachment.Query.getAttachmentsV3({}, { ids: sampleToUpdate.attachmentIds }, ctx)
+          const firstPreviewableAttachment = attachments.filter(it => it.previewable)[0]
+          if (firstPreviewableAttachment) {
+            updateInput.primaryThumbnailId = firstPreviewableAttachment.id || firstPreviewableAttachment.human_id || firstPreviewableAttachment.humanId || firstPreviewableAttachment.document_id || firstPreviewableAttachment.documentId
+          }
+        }
+        return updateInput
+      }))
+      const updateSampleInput = {
+        samples: {
+          updateSamples: buildUpdateSamples,
+        },
+      }
+      const updateSamplesChunkResult = await SPARK_SampleV2.Mutation.updateSamplesV2({}, updateSampleInput, ctx)
+      const samplesWithDiscussions = _.filter(updateSampleChunk, (sample) => {
+        return sample.discussionThreadId
+      })
+      const sparkBulkSampleDiscussion = samplesWithDiscussions.map(sample => {
+        const matchingSample = _.find(fullSamples, { id: sample.id })
+        const relatedResources = [matchingSample.id, matchingSample.parentId]
+        return {
+          ..._.pick(sample, ['comment', 'attachmentIds', 'discussionThreadId', 'critical']),
+          subject: createSampleSubject(matchingSample),
+          draft: false,
+          relatedResources: relatedResources,
+          partnerId: matchingSample.partnerId,
+          resourceId: matchingSample.id,
+        }
+      })
+      if (sparkBulkSampleDiscussion.length > 0) {
+        await SPARK_Discussion.Mutation.bulkAddSampleDiscussions({}, { sparkBulkSampleDiscussion }, ctx)
+      }
+      return updateSamplesChunkResult
+    }
+    updateSamplesResult = await batchParallelOperation({ batchSize: DEFAULT_SAMPLE_CHUNK_SIZE, operation: updatedSampleOperation, items: updateSamples })
+  }
+  return [
+    ...updateSamplesResult,
+    ...newSampleRoundsResult,
+  ]
+}

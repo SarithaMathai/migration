@@ -1,0 +1,1060 @@
+import _ from 'lodash'
+import {GraphQLError} from 'graphql'
+import Product from '../resolvers/SPARK_Product'
+import { filterResourcesByPartner, getPermissionMapForBulkACLCall, getUserPermissionsJWT, getUnDroppablePartners } from '../utils/commonLoaders'
+import { buildCommaSeparatedString } from '../utils/convertFunctions'
+
+import { PRODUCT_SAMPLE_TYPE, SAMPLE_EVALUTION, VIRTUAL_SAMPLE_TYPE } from '../utils/constants'
+import { loadManyIncludeEmptyResponse, loadBpsWithType } from '../utils/vmmUtils'
+
+import { logger } from './../utils/logger'
+import UserProfileAttributes from './SPARK_UserAttributes'
+import { getTagsBatched } from '../services/batchers/getTagsBatched'
+import { getWorkspacePartnersNotRemovable } from '../utils/removePartnerUtils'
+import { resolveRelationIds, filterAttachmentsOrComponents, initialCountsByBp, getProductOrWorkSpaceAttachments } from '../utils/Product/attachmentUtils'
+import BusinessPartnerRole from '../config/businessPartner'
+import { CHUNK_SIZE, getDiscussionThreadsBatch, getDiscussionsBatch } from '../utils/discussionUtils'
+
+export const getIsSingleProduct = (resourceList) => resourceList.length === 1 && resourceList[0].startsWith('PID')
+export const getWorkspaceResourceString = workspaceId =>
+  `Attr-${workspaceId}-resources`
+
+export const filterSample = (samples, type) => {
+  return (
+    samples &&
+    samples.filter(
+      sample => sample.tracking &&
+        sample.tracking.receivedDate &&
+        type.includes(+sample.sampleType.code),
+    ))
+}
+
+export const filterRoundSample = (samples, type) => {
+  return (
+    samples &&
+    samples.filter(
+      sample => sample.tracking &&
+        (!sample.sampleRound || sample.sampleRound.roundNumber === 1) &&
+        sample.tracking.receivedDate &&
+        sample.sampleType.code === +type,
+    ))
+}
+
+export default {
+  Query: {
+    getWorkspaceV2: async (parentValue, { id }, ctx) => {
+      return ctx.loaders.workspaceV2
+        .getWorkspaceByIdV2
+        .load(id)
+    },
+    getWorkspacesByIdsV2: async (parentValue, { ids }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(ids, ctx)
+      return ctx.loaders.workspaceV2
+        .getWorkspacesByIdsV2(permissionJWT)
+        .load({ ids })
+    },
+    getWorkspacesPagedV2: (parentValue, searchParams, ctx) => {
+      const formattedParams = { ...searchParams }
+      _.without(Object.keys(searchParams), 'size', 'page').forEach(key => {
+        if (searchParams[key]) {
+          formattedParams[key] = searchParams[key].join(',')
+        }
+      })
+      return ctx.loaders.search.getWorkspacesPagedV2.load(
+        _.omitBy(formattedParams, param => !param && param !== 0),
+      )
+    },
+    getWorkspacesPagedV3: (parentValue, searchParams, ctx) => {
+      const formattedParams = { ...searchParams }
+      _.without(Object.keys(searchParams), 'size', 'page', 'q', 'designPartnerIds').forEach(key => {
+        if (searchParams[key]) {
+          formattedParams[key] = searchParams[key].join(',')
+        }
+      })
+      return ctx.loaders.search.getWorkspacesPagedV3.load(
+        _.omitBy(formattedParams, param => !param && param !== 0),
+      )
+    },
+    searchWorkspaceSuggestions: (parentValue, searchParams, ctx) => {
+      const formattedParams = { ...searchParams }
+      _.without(Object.keys(searchParams)).forEach(key => {
+        if (searchParams[key]) {
+          formattedParams[key] = searchParams[key]
+        }
+      })
+      return ctx.loaders.search.getWorkspacesSuggessions.load(
+        _.omitBy(formattedParams, param => !param && param !== 0),
+      )
+    },
+    searchWorkspaceProductsSuggestions: async (parentValue, { q, size, workspaceId, associatedProducts }, ctx) => {
+      let suggestions
+      let searchQuery
+      if (q.toLowerCase().startsWith('smp-') === true) {
+        searchQuery = { q, size, parentResourceType: 'PRODUCT', parentIds: `${associatedProducts}` }
+        suggestions = await ctx.loaders.search.getSampleSuggestions.load(
+          _.omitBy(searchQuery, param => !param && param !== 0),
+        )
+      } else {
+        searchQuery = { q, size, workspaceId }
+        suggestions = await ctx.loaders.search.getWorkspaceProductsSuggestions.load(
+          _.omitBy(searchQuery, param => !param && param !== 0),
+        )
+      }
+      return suggestions
+    },
+    findWorkspaceProductAndSampleIds: async (parentValue, { workspaceId, q, filter }, ctx) => {
+      const elasticResults = await ctx.loaders.product.getWorkspaceProducts.load({
+        workspaceId: workspaceId,
+        filter: filter || [],
+        q: q || '',
+        page: 0,
+        size: 10000,
+      })
+
+      return {
+        products: elasticResults.content.map(product => {
+          return {
+            id: product.humanId,
+            sampleIds: product.samples.map(sample => {
+              return sample.humanId
+            }),
+          }
+        }),
+      }
+    },
+    findWorkspaceClaims: async (parentValue, { workspaceId }, ctx) => {
+      const { content: claims = [] } = await ctx.loaders.search.getClaimsElastic.load({
+        q: 'workspaceContext:' + workspaceId,
+        page: 0,
+        size: 10000,
+      })
+      return claims
+    },
+    getWorkspaceTypeCount: async (parentValue, { }, ctx) => {
+      return ctx.loaders.search.getWorkspaceTypeCount.load({})
+    },
+    getWorkspacePackagingAttachments: async (parentValue, { workspaceId, bpId }, ctx) => {
+      // fetching the variable here, so that you can more easily mock it in tests
+      const { WORKSPACE_PACKAGING_TAG_ID } = process.env
+      // WORKSPACE_PACKAGING_TAG_ID value must be set in env variables
+      const packagingTagId = WORKSPACE_PACKAGING_TAG_ID ?? ''
+      if (!packagingTagId) {
+        throw new Error('Packaging tag ID is not defined please setup WORKSPACE_PACKAGING_TAG_ID variable')
+      }
+      const sortField = 'createdAt'
+      const sortDirection = 'desc'
+      const relatedIds = [workspaceId]
+      let q = `tags:${packagingTagId}`
+      if (bpId) {
+        q += ` AND security.bps:${bpId}`
+      }
+      const result = await ctx.loaders.search.searchAttachments.load({
+        q,
+        relatedIds,
+        page: 0,
+        // hopefully we never have more than 500 packaging attachments in a single workspace
+        size: 500,
+        sort: sortField && sortDirection ? `${sortField},${sortDirection}` : undefined,
+      })
+      return result?.content || []
+    },
+  },
+
+  Mutation: {
+    createWorkspaceV2: async (parent, { workspace, validateUnique }, ctx) => {
+      workspace.workspaceType = workspace.workspaceType ? workspace.workspaceType : 103
+      const response = await ctx.loaders.workspaceV2.createWorkspaceV2.load(workspace, {validateUnique: Boolean(validateUnique)})
+      if(response.message?.startsWith('A workspace with the same criteria already exists')) {
+            throw new GraphQLError('Workspace already exists')
+      }
+      return response
+    },
+    updateWorkspaceV2: async (parent, { workspace, validateUnique }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(workspace.id, ctx)
+      workspace.workspaceType = workspace.workspaceType ? workspace.workspaceType : 103
+      const response = await ctx.loaders.workspaceV2
+        .updateWorkspaceV2(permissionJWT, Boolean(validateUnique))
+        .load(workspace)
+       if(response.message?.startsWith('A workspace with the same criteria already exists')) {
+            throw new GraphQLError('Workspace already exists')
+      }
+      return response
+    },
+    changeWorkspace: async (parent, incomingDataPayload, ctx) => {
+      const payload = {
+        newWorkspaceId: incomingDataPayload.newWorkspaceId,
+        oldWorkspaceId: incomingDataPayload.oldWorkspaceId,
+        productHumanId: incomingDataPayload.productId,
+        teams: incomingDataPayload.teams || [],
+        removeWorkspaceOnly: incomingDataPayload.removeWorkspaceOnly || false,
+      }
+
+      const permissionJWT = await getUserPermissionsJWT(getWorkspaceResourceString(incomingDataPayload.newWorkspaceId), ctx)
+      const changeWorkspaceRequest = await ctx.loaders.workspaceV2.changeWorkspace(permissionJWT)
+      const changeWorkspaceResponse = await changeWorkspaceRequest.load(payload)
+      if (changeWorkspaceResponse.validationErrors || changeWorkspaceResponse.message) {
+        throw new Error('Error changing workspaces  \n' + JSON.stringify(changeWorkspaceResponse))
+      }
+
+      return changeWorkspaceResponse
+    },
+
+    addResourcesToWorkspaceV2: async (
+      parent,
+      { resourceList, workspaceId, setDates, designCycle },
+      ctx,
+    ) => {
+      const resourcePermissionJWT = await getUserPermissionsJWT(
+        getWorkspaceResourceString(workspaceId),
+        ctx,
+      )
+      if (getIsSingleProduct(resourceList)) {
+        const workspacePageObject = await Product.SPARK_Product.workspaces({ productId: resourceList[0] }, {}, ctx)
+        if (!workspacePageObject) {
+          return new Error(`Could not fetch workspaces for ${resourceList[0]}`)
+        }
+        const firstWorkspace = workspacePageObject.totalElements === 0
+        // When adding workspace, have to initialize productWorkspaceAttributes by calling the product API
+        ctx.loaders.product.updateViewToggle.load({
+          productId: resourceList[0],
+          workspaceId,
+          hidden: false,
+          firstWorkspace,
+          ...(firstWorkspace
+            ? { designCycle, setDates } : {}
+          ),
+        })
+      }
+
+      return ctx.loaders.workspaceV2
+        .addResourcesToWorkspaceV2(resourcePermissionJWT)
+        .load(resourceList, { workspaceId })
+    },
+
+    removeWorkspaceResourcesV2: async (
+      parent,
+      { workspaceId, resourceType, resourceIds },
+      ctx,
+    ) => {
+      const resourcePermissionJWT = await getUserPermissionsJWT(
+        getWorkspaceResourceString(workspaceId),
+        ctx,
+      )
+
+      if (getIsSingleProduct(resourceIds)) {
+        // When removing workspace from product, have to clean up bp statuses
+        ctx.loaders.product.deletePartnerWorkspaceStatuses.load({
+          productId: resourceIds[0],
+          workspaceId,
+        })
+      }
+      return ctx.loaders.workspaceV2
+        .removeWorkspaceResourcesV2(resourcePermissionJWT)
+        .load({ workspaceId, resourceType, resourceIds })
+    },
+    addTeamsToWorkspaceV3: async (
+      parent,
+      { workspaceId, teamInput },
+      ctx,
+    ) => {
+      const permissionJWT = await getUserPermissionsJWT(
+        getWorkspaceResourceString(workspaceId), ctx)
+      return ctx.loaders.workspaceV2
+        .addTeamsToWorkspaceV3(permissionJWT)
+        .load({ teams: teamInput }, { workspaceId })
+    },
+    workspaceBusinessPartnerActionsV2: async (
+      parent,
+      { actionType, values },
+      ctx,
+    ) => {
+      switch (actionType) {
+        case 'REMOVE_TEAM':
+          { const resourcePermissionJWT = await getUserPermissionsJWT(
+            getWorkspaceResourceString(values.workspaceId),
+            ctx,
+          )
+          return ctx.loaders.workspaceV2
+            .removeTeamsFromWorkspaceV3(resourcePermissionJWT)
+            .load({ teams: values.teamInput }, { workspaceId: values.workspaceId }) }
+        case 'REMOVE_PARTNER':
+          { const permissionJWT = await getUserPermissionsJWT(
+            values.workspaceId,
+            ctx,
+          )
+          if (values.teamInput && values.teamInput.length > 0) {
+            const resourcePermissionJWT = await getUserPermissionsJWT(
+              getWorkspaceResourceString(values.workspaceId),
+              ctx,
+            )
+            await ctx.loaders.workspaceV2
+              .removeTeamsFromWorkspaceV3(resourcePermissionJWT)
+              .load({ teams: values.teamInput }, { workspaceId: values.workspaceId })
+          }
+          await ctx.loaders.favorite.deleteFavoritesByBusinessPartner.load({
+            resourceType: 'workspace',
+            resourceId: values.workspaceId,
+            partnerId: values.partnerId,
+          })
+
+          await ctx.loaders.workspaceV2
+            .removeWorkspaceBusinessPartnerV2(permissionJWT)
+            .load({
+              workspaceId: values.workspaceId,
+              partnerId: values.partnerId,
+            })
+          break }
+        case 'DROP_PARTNER':
+
+          { const droppedFlag = false
+          const relationShipTree = await ctx.loaders.relationship.searchByIds.load({
+            id: values.workspaceId, excludeTypeList: 'product',
+          })
+          const relationShipAsMap = _.groupBy(relationShipTree[0].nodes, 'type')
+
+          let totalIds = []
+          const discussions = relationShipAsMap && relationShipAsMap.discussions ? relationShipAsMap.discussions.map(({ id }) => id) : []
+
+          const attachments = relationShipAsMap && relationShipAsMap.attachments ? relationShipAsMap.attachments.map(({ id }) => id) : []
+
+          const discussionThreads = relationShipAsMap && relationShipAsMap.discussionThreads ? relationShipAsMap.discussionThreads.map(({ id }) => id) : []
+
+          totalIds = [...discussions, ...attachments, ...discussionThreads, values.workspaceId, getWorkspaceResourceString(values.workspaceId)]
+          let resourcePermissions = {}
+          let toBeDroppedPermissionsMap = {}
+          if (totalIds.length > 0) {
+            resourcePermissions = await filterResourcesByPartner(ctx, totalIds, parseInt(values.partnerId), true, droppedFlag)
+            _.remove(discussions, function (discussionId) {
+              return !(discussionId in resourcePermissions) || resourcePermissions[discussionId].permissions.length === 0
+            })
+            _.remove(attachments, function (attachment) {
+              return !(attachment in resourcePermissions) || resourcePermissions[attachment].permissions.length === 0
+            })
+
+            _.remove(discussionThreads, function (discussionThread) {
+              return !(discussionThread in resourcePermissions) || resourcePermissions[discussionThread].permissions.length === 0
+            })
+
+            toBeDroppedPermissionsMap = getPermissionMapForBulkACLCall(resourcePermissions, values.partnerId)
+          }
+
+          const userPermissionsCapabilityTokenJWT = await getUserPermissionsJWT(
+            [values.workspaceId, ...discussions, ...discussionThreads],
+            ctx,
+          )
+
+          const discussionDropCallRequired = discussions && discussions.length > 0
+
+          Promise.all([
+            ctx.loaders.workspaceV2.dropWorkspaceBusinessPartnerV2(userPermissionsCapabilityTokenJWT)
+              .load({}, { workspaceId: values.workspaceId, partnerId: values.partnerId }),
+
+            discussionDropCallRequired && ctx.loaders.discussion.dropPartnerFromDiscussionIds(userPermissionsCapabilityTokenJWT).load({
+              ids: discussions, partnerIds: [parseInt(values.partnerId)],
+            })])
+            .then(async promiseValues => {
+              const workspaceDropPassed = typeof promiseValues[0].droppedPartnerIds !== 'undefined' && promiseValues[0].droppedPartnerIds.includes(parseInt(values.partnerId))
+              let discussionDropPassed = !discussionDropCallRequired
+              logger.debug('workspaceDropResponse', { workspacePromiseResponse: promiseValues[0] })
+              logger.debug('discussionDropResponse', { discussionPromiseResponse: promiseValues[1] })
+              if (discussionDropCallRequired && Array.isArray(promiseValues[1])) {
+                discussionDropPassed = !promiseValues[1].some(droppedDiscussionResponse =>
+                  droppedDiscussionResponse.droppedPartnerIds === 'undefined' || !droppedDiscussionResponse.droppedPartnerIds.includes(parseInt(values.partnerId)),
+                )
+              }
+
+              logger.debug('discussionDropPassed', { discussionCallStatus: discussionDropPassed })
+              logger.debug('workspaceDropPassed', { workspaceCallStatus: workspaceDropPassed })
+              const resourceDropCallsPassed = workspaceDropPassed && discussionDropPassed
+
+              if (resourceDropCallsPassed) {
+                const accessControlResponse = await ctx.loaders.accessControl.dropPartnerFromResources.load(toBeDroppedPermissionsMap)
+                // Only for debugging,will remove it
+
+                logger.debug('accessControlResponse', { responseBody: accessControlResponse })
+                if (accessControlResponse) {
+                  logger.debug('accessControlResponse.status', { responseStatus: accessControlResponse.status })
+                  logger.debug('accessControlResponse comparison', { responseStatusCheck: accessControlResponse.status >= 400 })
+                }
+
+                /// /Only for debugging,will remove it
+                if (accessControlResponse && accessControlResponse.status >= 400) {
+                  // ACL drop call failed,so undropping the workspace and discussion call
+                  logger.debug('accessControlResponse failed', { failedResponse: accessControlResponse })
+
+                  Promise.all([
+                    ctx.loaders.workspaceV2.unDropWorkspaceBusinessPartnerV2(userPermissionsCapabilityTokenJWT)
+                      .load({}, {
+                        workspaceId: values.workspaceId, partnerId: values.partnerId,
+                      }),
+                    discussionDropCallRequired && ctx.loaders.discussion.unDropPartnerFromDiscussionIds(userPermissionsCapabilityTokenJWT).load({
+                      ids: discussions, partnerIds: [parseInt(values.partnerId)],
+                    })])
+                  // TODO
+                  // Promise.reject("Failed")
+                } else {
+                  // ACL drop call succeeded,so now removing the userprofile data for
+                  // the partner (favourites,todo,recentlyViewed)
+
+                  await UserProfileAttributes.Mutation.deleteAllUserProfileDataForAPartner(
+                    null, {
+                      partnerId: values.partnerId,
+                      resourceId: values.workspaceId,
+                      resourceType: 'workspace',
+                      discussionIds: discussions || [],
+                    }, ctx)
+                }
+              } else {
+                // One or both of workspace or discussion drop calls have failed,
+                // so we will undrop the successful call
+
+                if (workspaceDropPassed) {
+                  ctx.loaders.workspaceV2.unDropWorkspaceBusinessPartnerV2(userPermissionsCapabilityTokenJWT)
+                    .load({}, { workspaceId: values.workspaceId, partnerId: values.partnerId })
+                }
+                if (discussionDropCallRequired && discussionDropPassed) {
+                  ctx.loaders.discussion.unDropPartnerFromDiscussionIds(userPermissionsCapabilityTokenJWT).load({
+                    ids: discussions, partnerIds: [parseInt(values.partnerId)],
+                  })
+                }
+                // TODO
+                // Promise.reject("Failed")
+              }
+            })
+          break }
+
+        case 'UNDO_DROP_PARTNER':
+
+          { const droppedFlagForUndrop = true
+          let resourcePermissionsUndrop = {}
+          let permissionsMapForUndrop = {}
+
+          const relationShipTreeForUndrop = await ctx.loaders.relationship.searchByIds.load({
+            id: values.workspaceId, excludeTypeList: 'product',
+          })
+          const relationShipAsMapForUndrop = relationShipTreeForUndrop && _.groupBy(relationShipTreeForUndrop[0].nodes, 'type')
+
+          let totalIdsForUndrop = []
+          const discussionsForUndrop = relationShipAsMapForUndrop && relationShipAsMapForUndrop.discussions ? relationShipAsMapForUndrop.discussions.map(({ id }) => id) : []
+
+          const attachmentsForUndrop = relationShipAsMapForUndrop && relationShipAsMapForUndrop.attachments ? relationShipAsMapForUndrop.attachments.map(({ id }) => id) : []
+
+          const discussionThreadsForUndrop = relationShipAsMapForUndrop && relationShipAsMapForUndrop.discussionThreads ? relationShipAsMapForUndrop.discussionThreads.map(({ id }) => id) : []
+
+          totalIdsForUndrop = [...discussionsForUndrop, ...attachmentsForUndrop, ...discussionThreadsForUndrop, values.workspaceId, getWorkspaceResourceString(values.workspaceId)]
+
+          if (totalIdsForUndrop.length > 0) {
+            resourcePermissionsUndrop = await filterResourcesByPartner(ctx, totalIdsForUndrop, parseInt(values.partnerId), true, droppedFlagForUndrop)
+            _.remove(discussionsForUndrop, (discussionId) =>
+              !(discussionId in resourcePermissionsUndrop) || resourcePermissionsUndrop[discussionId].permissions.length === 0,
+            )
+            _.remove(attachmentsForUndrop, (attachment) =>
+              !(attachment in resourcePermissionsUndrop) || resourcePermissionsUndrop[attachment].permissions.length === 0,
+            )
+            _.remove(discussionThreadsForUndrop, (discussionThread) =>
+              !(discussionThread in resourcePermissionsUndrop) || resourcePermissionsUndrop[discussionThread].permissions.length === 0,
+            )
+
+            permissionsMapForUndrop = getPermissionMapForBulkACLCall(resourcePermissionsUndrop, values.partnerId)
+          }
+
+          const userPermissionsCapabilityTokenJWTForUndrop = await getUserPermissionsJWT(
+            [values.workspaceId, ...discussionsForUndrop, ...discussionThreadsForUndrop],
+            ctx,
+          )
+
+          const discussionUnDropRequired = discussionsForUndrop && discussionsForUndrop.length > 0
+
+          Promise.all([
+            ctx.loaders.workspaceV2.unDropWorkspaceBusinessPartnerV2(userPermissionsCapabilityTokenJWTForUndrop)
+              .load({}, { workspaceId: values.workspaceId, partnerId: values.partnerId }),
+
+            discussionUnDropRequired && ctx.loaders.discussion.unDropPartnerFromDiscussionIds(userPermissionsCapabilityTokenJWTForUndrop).load({
+              ids: discussionsForUndrop, partnerIds: [parseInt(values.partnerId)],
+            })])
+            .then(async promiseValues => {
+              const workspaceUnDropStatus = !_.isEmpty(promiseValues[0].partnerId) && promiseValues[0].partnerId.includes(parseInt(values.partnerId))
+
+              let discussionUnDropStatus = !discussionUnDropRequired
+
+              if (discussionUnDropRequired && Array.isArray(promiseValues[1])) {
+                discussionUnDropStatus = !promiseValues[1].some(unDroppedDiscussionResponse =>
+                  _.isEmpty(unDroppedDiscussionResponse.partnerId) || !unDroppedDiscussionResponse.partnerId.includes(parseInt(values.partnerId)),
+                )
+              }
+              const resourcesUnDropStatus = workspaceUnDropStatus && discussionUnDropStatus
+
+              if (resourcesUnDropStatus) {
+                const accessControlResponse = await ctx.loaders.accessControl.unDropPartnerFromResources.load(permissionsMapForUndrop)
+
+                if (accessControlResponse && accessControlResponse.status >= 400) {
+                  // ACL undrop call failed,so dropping the workspace and discussion call
+                  Promise.all([
+                    ctx.loaders.workspaceV2.dropWorkspaceBusinessPartnerV2(userPermissionsCapabilityTokenJWTForUndrop)
+                      .load({}, {
+                        workspaceId: values.workspaceId, partnerId: values.partnerId,
+                      }),
+                    discussionUnDropRequired && ctx.loaders.discussion.dropPartnerFromDiscussionIds(userPermissionsCapabilityTokenJWTForUndrop).load({
+                      ids: discussionsForUndrop, partnerIds: [parseInt(values.partnerId)],
+                    })])
+                }
+              } else {
+                // One or both of workspace or discussion undrop calls have failed,
+                // so we will drop the successful call
+                if (workspaceUnDropStatus) {
+                  ctx.loaders.workspaceV2.dropWorkspaceBusinessPartnerV2(userPermissionsCapabilityTokenJWTForUndrop)
+                    .load({}, { workspaceId: values.workspaceId, partnerId: values.partnerId })
+                }
+                if (discussionUnDropRequired && discussionUnDropStatus) {
+                  ctx.loaders.discussion.dropPartnerFromDiscussionIds(userPermissionsCapabilityTokenJWTForUndrop).load({
+                    ids: discussionsForUndrop, partnerIds: [parseInt(values.partnerId)],
+                  })
+                }
+              }
+            })
+          break }
+
+        case 'DROP_UNDROP_PARTNER':
+          { const { partnerId, dropped, partnerType, workspaceId } = values
+          const dropUndropBody = { dropped, partnerType, workspaceId, partnerId }
+          let [allResourcePermissions, toBePermissionsMap, allIds] = [{}, {}, []]
+
+          const relationShip = await ctx.loaders.relationship.searchByIds.load({
+            id: values.workspaceId, excludeTypeList: 'product',
+          })
+          const relationShipMap = relationShip && _.groupBy(relationShip[0].nodes, 'type')
+          const discussionList = relationShipMap && relationShipMap.discussions ? relationShipMap.discussions.map(({ id }) => id) : []
+
+          const attachmentList = relationShipMap && relationShipMap.attachments ? relationShipMap.attachments.map(({ id }) => id) : []
+
+          const discussionThreadsList = relationShipMap && relationShipMap.discussionThreads ? relationShipMap.discussionThreads.map(({ id }) => id) : []
+
+          const sampleList = relationShipMap && relationShipMap.sample ? relationShipMap.sample.map(({ id }) => id) : []
+
+          const claimList = relationShipMap && relationShipMap.claim ? relationShipMap.claim.map(({ id }) => id) : []
+
+          allIds = [...discussionList, ...attachmentList, ...discussionThreadsList, ...sampleList, workspaceId, ...claimList]
+
+          if (allIds.length > 0) {
+            allResourcePermissions = await filterResourcesByPartner(ctx, allIds, parseInt(partnerId), true, !dropped)
+            _.remove(discussionList, (discussionId) =>
+              !(discussionId in allResourcePermissions) || allResourcePermissions[discussionId].permissions.length === 0)
+            _.remove(attachmentList, (attachment) =>
+              !(attachment in allResourcePermissions) || allResourcePermissions[attachment].permissions.length === 0)
+            _.remove(discussionThreadsList, (discussionThread) =>
+              !(discussionThread in allResourcePermissions) || allResourcePermissions[discussionThread].permissions.length === 0)
+            _.remove(sampleList, (samples) =>
+              !(samples in allResourcePermissions) || allResourcePermissions[samples].permissions.length === 0)
+            _.remove(claimList, (claim) => !(claim in allResourcePermissions) || allResourcePermissions[claim].permissions.length === 0)
+
+            toBePermissionsMap = getPermissionMapForBulkACLCall(allResourcePermissions, partnerId)
+          }
+
+          const capabilityToken = await getUserPermissionsJWT(
+            [workspaceId, ...discussionList, ...discussionThreadsList, ...sampleList, ...claimList, SAMPLE_EVALUTION],
+            ctx,
+          )
+          const sampleCallNeeded = sampleList && sampleList.length > 0
+          let sampleCall = false
+          if ((partnerType !== BusinessPartnerRole.DESIGN_PARTNER.code) && sampleCallNeeded) {
+            sampleCall = !dropped ? ctx.loaders.sampleV2.unDropSamples(capabilityToken).load(sampleList, {}) : ctx.loaders.sampleV2.dropSamples(capabilityToken).load(sampleList, {})
+          }
+
+          await Promise.all([
+            ctx.loaders.workspaceV2.dropUndropWorkspaceBusinessPartnerV2(capabilityToken)
+              .load(dropUndropBody, { workspaceId: workspaceId }), sampleCall]).then(async () => {
+            dropped ? await ctx.loaders.accessControl.dropPartnerFromResources.load(toBePermissionsMap) : await ctx.loaders.accessControl.unDropPartnerFromResources.load(toBePermissionsMap)
+            dropped && await UserProfileAttributes.Mutation.deleteAllUserProfileDataForAPartner(
+              null, {
+                partnerId: partnerId,
+                resourceId: workspaceId,
+                resourceType: 'workspace',
+                discussionIds: discussionList || [],
+              }, ctx)
+          })
+          break }
+      }
+    },
+    exportWorkspace: async (
+      parent,
+      { workspaceId, exportType, onlyIncludeAttachmentIds, includeOnlyPrimaryThumbnails, q, filter },
+      ctx,
+    ) => {
+      return ctx.loaders.search
+        .requestBulkAttachmentExport
+        .load({
+          parentResourceId: workspaceId,
+          exportType: exportType,
+          includedAttachmentIds: onlyIncludeAttachmentIds,
+          includeOnlyPrimaryThumbnails: includeOnlyPrimaryThumbnails,
+        }, { q, filter })
+    },
+    exportWorkspaceExcel: async (parent, { workspaceExportOptions }, ctx) =>
+      ctx.loaders.exportHub.exportWorkspaceExcel.load(workspaceExportOptions),
+    // adding this here instead of in SPARK_Packaging because it needs filters
+    // right now exportPackaging in SPARK_Packaging does not have filters
+    exportPackagingFiles: async (
+      parent,
+      { workspaceId, workspaceDescription, exportContext, exportType, q, filter },
+      ctx,
+    ) => {
+      return ctx.loaders.search
+        .requestPackagingExport
+        .load({
+          workspaceId: workspaceId,
+          workspaceDescription: workspaceDescription,
+          exportContext: exportContext,
+          exportType: exportType,
+        }, { q, filter })
+    },
+  },
+
+  SPARK_WorkspaceV2: {
+    id: workspace =>
+      // Api
+      workspace.workspaceHumanId ||
+      // Elastic search
+      workspace.humanId,
+    description: workspace => workspace.description,
+    workspaceTypeElastic: workspace => workspace.workspaceType,
+    status: workspace => ({
+      id: workspace.status,
+      name: workspace.statusName,
+    }),
+    businessPartners: async (workspace, args, ctx) => loadBpsWithType(workspace.businessPartners, ctx),
+    droppedPartners: async (workspace, args, ctx) => loadBpsWithType(workspace.droppedPartners, ctx),
+    notRemovablePartnerIds: (workspace, args, ctx) => getWorkspacePartnersNotRemovable(ctx, workspace, args),
+    divisions: async (workspace, args, ctx) =>
+      workspace.divisionIds &&
+      (loadManyIncludeEmptyResponse(
+        ctx.loaders.ig.division.getByID,
+        workspace.divisionIds,
+        ctx.logContext,
+      )),
+    brands: async (workspace, args, ctx) =>
+      workspace.brandIds &&
+      (loadManyIncludeEmptyResponse(
+        ctx.loaders.brand.getBrand,
+        workspace.brandIds,
+        ctx.logContext,
+      )),
+    clazzes: async (workspace, args, ctx) =>
+      workspace.departments &&
+      workspace.departments.reduce((clazzesList, department) => {
+        const clazzesForDepartment = department.classId
+          ? department.classId.map(
+            async classId =>
+              ctx.loaders.ig.clazz.getByClassByDeptId.load({
+                department: department.departmentId,
+                id: classId,
+              }),
+          )
+          : []
+        return [...clazzesList, ...clazzesForDepartment]
+      }, []),
+    designCycles: async (workspace, args, ctx) => {
+      if (_.get(workspace, 'designCycles.length', 0) === 0) {
+        return []
+      }
+      const tags = await ctx.loaders.tag.getTags.load({
+        page: 0,
+        size: 1000,
+        type: 'DESIGN_CYCLE',
+        ids: workspace.designCycles.join(','),
+      })
+      return tags.content || []
+    },
+    tags: async (workspace, args, ctx) => getTagsBatched(ctx, workspace.tags),
+    createdAt: workspace =>
+      workspace.createdTs && new Date(workspace.createdTs),
+    createdBy: (workspace, args, ctx) =>
+      workspace.createdUser &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(workspace.createdUser),
+    updatedAt: workspace =>
+      workspace.updatedTs && new Date(workspace.updatedTs),
+    updatedBy: (workspace, args, ctx) =>
+      workspace.updatedUser &&
+      ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(workspace.updatedUser),
+    attachmentsWithMetaData: async (workspace, args, ctx) => {
+      const relations = await ctx.loaders.relationship.searchByIds.load(
+        {
+          id: workspace.workspaceHumanId,
+          includeBranches: ['workspace', 'discussions', 'discussionThreads'],
+          includeNodeTypes: ['attachments', 'discussions', 'discussionThreads', 'attachments_v3'],
+        },
+      )
+      if (_.get(relations, '0.nodes.length')) {
+        const attachmentV3Ids = []
+        const discussionIds = []
+        const discussionThreadIds = []
+
+        relations[0].nodes.map(({ id, type }) => {
+          if (type === 'discussionThreads') {
+            discussionThreadIds.push(id)
+          } else if (type === 'discussions') {
+            discussionIds.push(id)
+          } else if (type === 'attachments_v3') {
+            attachmentV3Ids.push(id)
+          }
+        })
+
+        if (_.isEmpty(attachmentV3Ids)) {
+          return []
+        }
+
+        const attachmentsV3JWT = (attachmentV3Ids.length === 0) ? '' : await ctx.loaders.accessControl.getUserAccessByPost.load(attachmentV3Ids)
+
+        let attachments = await ctx.loaders.attachment.getAttachmentsV3(attachmentsV3JWT).load(attachmentV3Ids)
+        const { resourcePermissions: currentUserPermissions } = await ctx.loaders.accessControl.getUserAccessUnencoded.load(
+          attachmentV3Ids,
+        )
+        let discussions = []
+        let discussionThreads = []
+
+        if (discussionIds.length) {
+          discussions = await getDiscussionsBatch(discussionIds, CHUNK_SIZE, ctx)
+        }
+
+        if (discussionThreadIds.length) {
+          discussionThreads = await getDiscussionThreadsBatch(discussionThreadIds, CHUNK_SIZE, ctx)
+        }
+
+        return _.orderBy(attachments, ['resource.type', 'created_at'], ['desc', 'desc'])
+          .map(attachment => {
+            const relatedDiscussion = _.find(discussions, { discussionId: attachment.resource.id })
+            const relatedDiscussionThread = _.find(discussionThreads, { discussionThreadId: attachment.resource.id })
+            let relatedResource = {}
+
+            if (relatedDiscussionThread) {
+              relatedResource = _.find(discussions, { discussionId: relatedDiscussionThread.discussionId })
+            } else if (relatedDiscussion) {
+              relatedResource = relatedDiscussion
+            }
+            return {
+              attachment,
+              linkedResourceId: relatedResource.discussionId,
+              resourceTitle: relatedResource.subject,
+              isResourceDraft: relatedDiscussionThread ? relatedDiscussionThread.draft : relatedResource.draft || false,
+              currentUserPermissions: _.find(currentUserPermissions, { resourceId: attachment.document_id }),
+            }
+          })
+          .filter(({ attachment, linkedResourceId, isResourceDraft }) => {
+            if (attachment.resource.type === 'discussion' && (!linkedResourceId || isResourceDraft)) {
+              // TODO: ACL should bbe doing this
+              // User should not have access to this draft attachment
+              return false
+            }
+            return true
+          })
+      } else {
+        return []
+      }
+    },
+    attachmentsV3: async (workspace, args, ctx) => {
+      const workspaceId = workspace.workspaceHumanId || workspace.humanId
+
+      const countsByBp = _.cloneDeep(initialCountsByBp)
+
+      _.forEach(workspace.partnerId || [], partnerId => {
+        countsByBp.push({ bpType: partnerId, counts: 0 })
+      })
+
+      if (args) {
+        const attachments = await getProductOrWorkSpaceAttachments(workspaceId, countsByBp, args, ctx)
+        return {
+          content: attachments,
+          counts: countsByBp,
+        }
+      } else {
+        const relations = await ctx.loaders.relationship.searchByIds.load(
+          {
+            id: workspaceId,
+            includeBranches: ['workspace', 'discussions', 'discussionThreads'],
+            includeNodeTypes: ['attachments', 'discussions', 'discussionThreads', 'attachments_v3'],
+          },
+        )
+
+        if (_.get(relations, '0.nodes.length')) {
+          const attachments = await resolveRelationIds(relations, countsByBp, workspaceId, ctx)
+          return {
+            content: filterAttachmentsOrComponents(attachments.content, args),
+            counts: countsByBp,
+          }
+        } else {
+          return {
+            content: [],
+            counts: countsByBp,
+          }
+        }
+      }
+    },
+    discussionsV2: async (workspace, args, ctx) => {
+      let discussions = []
+      const resourceId = workspace.workspaceHumanId || workspace.humanId
+      let discussionListQuery = args.partnerId ? { q: `(relatedResources:${resourceId} AND security.bps:${args.partnerId} AND _index:discussion)` } : { q: `(relatedResources:${resourceId} AND _index:discussion)` }
+      discussions = await ctx.loaders.search.searchDiscussionsElastic.load(discussionListQuery)
+      return discussions
+    },
+    teams: (workspace, args, ctx) => {
+      let q = `associations.workspace:${workspace.workspaceHumanId || workspace.humanId}`
+      if (!args.includeSystemTeams) {
+        q = `(${q}) AND (teamType:INTERNAL OR teamType:EXTERNAL)`
+      }
+      return ctx.loaders.search.searchTeams.load(
+        {
+          page: 0,
+          size: 10000,
+          q,
+          sort: 'teamName.keyword,asc',
+        },
+      )
+    },
+    products: async (workspace, args, ctx, info) => {
+      const products = await Product.Query.getProducts(null, {
+        resourceType: 'workspaces',
+        resourceId: info.variableValues.id || workspace.workspaceHumanId,
+        includeBoms: true,
+        includeClaims: true,
+        includeMeasurementSets: true,
+        includeProductDetails: true,
+        page: args.page,
+        size: args.size || 100,
+        q: args.q,
+        filter: info.variableValues.filter || args.filter || [],
+      }, ctx)
+      return products
+    },
+    productsCount: async (workspace, args, ctx) => {
+      if (_.get(workspace, 'resources.mappings.product', []).length === 0) {
+        return 0
+      } else {
+        const productData = await ctx.loaders.product.getPage.load({
+          products: buildCommaSeparatedString(
+            workspace.resources.mappings.product,
+          ),
+          page: 0,
+          size: 1,
+          additionalParams: '',
+        })
+        return productData.totalElements
+      }
+    },
+    combinations: async (workspace, args, ctx) => {
+      const q = `workspaceIds: "${workspace.workspaceHumanId}"`
+      const elasticCombinations = await ctx.loaders.search.searchCombinations.load({
+        q: (args && args.q) || q,
+        page: (args && args.page) || 0,
+        size: (args && args.size) || 20,
+      })
+      const combinationIds = (elasticCombinations.content || []).map(combo => combo.id)
+      if (combinationIds.length === 0) {
+        return {
+          paging: {
+            ...elasticCombinations || {},
+          },
+          content: [],
+        }
+      }
+
+      const permissionJWT = await getUserPermissionsJWT(combinationIds, ctx)
+      const combinations = await ctx.loaders.combination.getByIds(permissionJWT).load(combinationIds)
+      return {
+        paging: {
+          ...elasticCombinations || {},
+        },
+        content: combinations,
+      }
+    },
+    sampleReport: async (workspace, args, ctx) => {
+      let virtualSampleCount = 0
+      let workspaceSamplesCount = 0
+      let virtualFirstRoundSample = 0
+      let productFirstRoundSample = 0
+      if (_.get(workspace, 'resources.mappings.product', []).length === 0) {
+        return {
+          workspaceSamplesCount: 0,
+          virtualSampleCount: 0,
+          productSampleFirstRoundCount: 0,
+          virtualSampleFirstRoundCount: 0,
+        }
+      } else {
+        const samples = await ctx.loaders.search.searchSamplesByParentId.load({
+          page: 0,
+          parentIds: workspace.resources.mappings.product,
+          size: 10000,
+        })
+
+        if (samples.content.length > 0) {
+          const filteredSamples = filterSample(samples.content, [+VIRTUAL_SAMPLE_TYPE, +PRODUCT_SAMPLE_TYPE])
+          const filteredIds = filteredSamples.map(sample => sample.id)
+          if (filteredIds.length > 0) {
+            const permissionJWT = await getUserPermissionsJWT(filteredIds, ctx)
+            const samples = await ctx.loaders.sampleV2
+              .getSamplesByIdsV2(permissionJWT)
+              .load(filteredIds)
+            virtualFirstRoundSample = +filterRoundSample(samples, VIRTUAL_SAMPLE_TYPE).length
+            productFirstRoundSample = +filterRoundSample(samples, PRODUCT_SAMPLE_TYPE).length
+          }
+          virtualSampleCount = +filterSample(samples.content, [VIRTUAL_SAMPLE_TYPE]).length || 0
+          workspaceSamplesCount = +filterSample(samples.content, [PRODUCT_SAMPLE_TYPE]).length + virtualSampleCount
+        }
+      }
+
+      return {
+        workspaceSamplesCount: workspaceSamplesCount,
+        virtualSampleCount: virtualSampleCount,
+        productSampleFirstRoundCount: productFirstRoundSample,
+        virtualSampleFirstRoundCount: virtualFirstRoundSample,
+      }
+    },
+    counts: async (workspace, args, ctx, info) => {
+      if (_.get(workspace, 'resources.mappings.product', []).length === 0) {
+        return 0
+      } else {
+        const filterParams = {
+          resourceType: 'workspaces',
+          resourceId: info.variableValues.id,
+          filter: (args.filter || info.variableValues.filter) || [],
+          page: args.page,
+          size: args.size,
+        }
+        args.q && Object.assign(filterParams, { q: args.q })
+
+        const filteredProductsWithSummary = await ctx.loaders.search.getFilteredProductsWithSummary.load({
+          ...filterParams,
+        })
+
+        const productData = await ctx.loaders.product.getPage.load({
+          products: filteredProductsWithSummary?.products || [],
+          page: args.page,
+          size: args.size,
+          additionalParams: '',
+        })
+
+        if (productData.content && productData.content.length > 0) {
+          const productIds = productData.content.map(product => product.productId)
+          const discussionResponse = await ctx.loaders.discussion.getDiscussionsCount.load(
+            {
+              resourceType: 'product',
+              resourceId: productIds,
+            },
+          )
+          const sampleResponse = await ctx.loaders.search.getSampleCount.load(
+            productIds,
+          )
+          const samples = await ctx.loaders.search.searchSamplesByParentId.load({
+            page: 0,
+            query: '*',
+            parentIds: productIds,
+            size: 10000,
+          })
+          let discussionSampleResponse = {}
+          if (samples.content && samples.content.length > 0) {
+            discussionSampleResponse = await ctx.loaders.discussion.getDiscussionsCount.load(
+              {
+                resourceType: 'sample',
+                resourceId: samples.content.map(sample => sample.id),
+              },
+            )
+            discussionSampleResponse.discussionsCount.map(sampleDiscussion => {
+              // For each sample discussion (if count is 0 this is false) find the whole sample
+              if (sampleDiscussion.count) {
+                const sample = samples.content.find(
+                  sample => sample.id === sampleDiscussion.resourceId,
+                )
+                // With that sample find the product Discussion count entry that matches its parent (the product)
+                if (sample) {
+                  const discussionCountForProduct = discussionResponse.discussionsCount.find(
+                    discussionCount =>
+                      discussionCount.resourceId === sample.parentId,
+                  )
+                  // If you found it increment it by 1
+                  if (discussionCountForProduct) {
+                    discussionCountForProduct.count += 1
+                  }
+                }
+              }
+            })
+          }
+          return {
+            productsCount: productData.totalElements,
+            productsDiscussionsCount: discussionResponse.discussionsCount,
+            productsSamplesCount: sampleResponse,
+            nonEvaluatedRecievedSamplesCount: filteredProductsWithSummary?.receivedNotEvaluatedByWorkspaceCount || 0,
+            workspaceProductDashboard: filteredProductsWithSummary?.workspaceProductDashboard || null,
+          }
+        } else {
+          return {
+            productsCount: 0,
+            productsDiscussionsCount: [],
+            productsSamplesCount: [],
+            nonEvaluatedRecievedSamplesCount: 0,
+          }
+        }
+      }
+    },
+    unDroppablePartners: async (workspace, args, ctx) => {
+      if (args.isDesignPartner) {
+        const partnerIds = await getUnDroppablePartners(ctx, workspace.workspaceHumanId || workspace.humanId)
+        return partnerIds
+      } else {
+        return []
+      }
+    },
+  },
+
+  SPARK_WorkspaceDepartmentV2: {
+    node: (department, args, ctx) =>
+      ctx.loaders.ig.department.getByID.load(department.departmentId),
+    clazzes: async (department, args, ctx) => {
+      const classId = _.get(department, 'classId', [])
+      if (!classId) {
+        return []
+      }
+
+      return classId.map(async id => {
+        const clazz = await ctx.loaders.ig.clazz.getByClassByDeptId.load({
+          department: department.departmentId,
+          id: id,
+        })
+        return {
+          ...clazz,
+          name: clazz.className,
+        }
+      })
+    },
+  },
+
+  SPARK_WorkspacesPagedV2: {
+    paging: workspacesPaged => {
+      return {
+        totalPages: workspacesPaged.totalPages,
+        totalElements: workspacesPaged.totalElements,
+        first: workspacesPaged.first,
+        numberOfElements: workspacesPaged.numberOfElements,
+        size: workspacesPaged.size,
+        number: workspacesPaged.number,
+        last: workspacesPaged.last,
+        sort: workspacesPaged.sort,
+      }
+    },
+    content: workspaces => workspaces.content,
+    pageable: workspaces => workspaces.pageable,
+  },
+  SPARK_WorkspacesPagedV3: {
+    paging: workspacesPaged => {
+      return {
+        totalPages: workspacesPaged.totalPages,
+        totalElements: workspacesPaged.totalElements,
+        first: workspacesPaged.first,
+        numberOfElements: workspacesPaged.numberOfElements,
+        size: workspacesPaged.size,
+        number: workspacesPaged.number,
+        last: workspacesPaged.last,
+        sort: workspacesPaged.sort,
+      }
+    },
+    content: workspaces => workspaces.content,
+    pageable: workspaces => workspaces.pageable,
+  },
+}

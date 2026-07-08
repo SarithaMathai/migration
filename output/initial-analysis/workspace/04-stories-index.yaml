@@ -1,0 +1,443 @@
+domain: workspace
+target_dgs: plm-workspace
+epic: Workspace → plm-workspace DGS migration
+labels_common:
+- dgs-migration
+- workspace
+generated: 2026-06-27
+pipeline_version: '2.0'
+acl_policy: ACL ignored in implementation; drop/undrop resource bookkeeping IS build
+  work (not authorization)
+stories:
+- id: SPARK-WS-A01
+  summary: Schema skeleton + DateTime/JsonNode scalars
+  phase: A
+  category: CAT-1
+  complexity: Low
+  depends_on: []
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-A02
+  summary: Owned types + inputs
+  phase: A
+  category: CAT-1
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A01
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-A03
+  summary: External stubs (platform + other DGS)
+  phase: A
+  category: CAT-1
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A01
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-A04
+  summary: WorkspaceServiceV2 port (plm-workspace)
+  phase: A
+  category: CAT-3
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A01
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-B01
+  summary: getWorkspaceV2
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A02
+  - SPARK-WS-A04
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-B02
+  summary: getWorkspacesByIdsV2
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A02
+  - SPARK-WS-A04
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-B03
+  summary: getWorkspaceTypeCount
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-B04
+  summary: findWorkspaceProductAndSampleIds
+  phase: B
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: product
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-B05
+  summary: findWorkspaceClaims
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-B06
+  summary: getWorkspacePackagingAttachments
+  phase: B
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-C01
+  summary: getWorkspacesPagedV2
+  phase: C
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-C02
+  summary: getWorkspacesPagedV3
+  phase: C
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-D01
+  summary: createWorkspaceV2 (dup-check throw)
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-D02
+  summary: updateWorkspaceV2 (dup-check throw)
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-D03
+  summary: changeWorkspace
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-D04
+  summary: addResourcesToWorkspaceV2 (product side-effect)
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: product
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-D05
+  summary: removeWorkspaceResourcesV2 (product cleanup)
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: product
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-D06
+  summary: addTeamsToWorkspaceV3
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A04
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-D07
+  summary: exportWorkspace
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-D08
+  summary: exportWorkspaceExcel
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: exportHub
+    severity: BLUE
+  blocked_by: none
+- id: SPARK-WS-D09
+  summary: exportPackagingFiles
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-E01
+  summary: workspaceBusinessPartnerActionsV2 (5-case drop/undrop dispatcher)
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services: &id001
+  - key: relationship
+    severity: YELLOW
+  - key: discussion
+    severity: YELLOW
+  - key: sampleV2
+    severity: YELLOW
+  - key: favorite
+    severity: BLUE
+  blocked_by: none
+  parent: null
+  substories:
+  - SPARK-WS-E01-1
+  - SPARK-WS-E01-2
+- id: SPARK-WS-E01-1
+  summary: dispatcher scaffold + sample/discussion/claims cases
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  parent: SPARK-WS-E01
+  substories: []
+  depends_on:
+  - SPARK-WS-E01
+  - SPARK-WS-A04
+  blocked_by: none
+  ext_services: *id001
+- id: SPARK-WS-E01-2
+  summary: engagement/team/ACL removal + saga
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  parent: SPARK-WS-E01
+  substories: []
+  depends_on:
+  - SPARK-WS-E01
+  - SPARK-WS-A04
+  blocked_by: none
+  ext_services: *id001
+- id: SPARK-WS-F01
+  summary: WorkspaceV2 entity fetcher (federated reference)
+  phase: F
+  category: CAT-4
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-F02
+  summary: Deferred drop/undrop wrapper decision (drift mutations)
+  phase: F
+  category: CAT-4
+  complexity: Low
+  depends_on:
+  - SPARK-WS-E01
+  ext_services: []
+  blocked_by: none
+- id: SPARK-WS-G01
+  summary: WorkspaceV2.attachmentsWithMetaData
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A02
+  - SPARK-WS-A04
+  ext_services: &id002
+  - key: relationship
+    severity: YELLOW
+  - key: attachment
+    severity: RED
+  - key: discussion
+    severity: YELLOW
+  blocked_by: none
+  parent: null
+  substories:
+  - SPARK-WS-G01-1
+  - SPARK-WS-G01-2
+- id: SPARK-WS-G01-1
+  summary: call per-domain services + merge
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  parent: SPARK-WS-G01
+  substories: []
+  depends_on:
+  - SPARK-WS-G01
+  - SPARK-WS-A02
+  - SPARK-WS-A04
+  blocked_by: none
+  ext_services: *id002
+- id: SPARK-WS-G01-2
+  summary: metadata + draft filtering + counts
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  parent: SPARK-WS-G01
+  substories: []
+  depends_on:
+  - SPARK-WS-G01
+  - SPARK-WS-A02
+  - SPARK-WS-A04
+  blocked_by: none
+  ext_services: *id002
+- id: SPARK-WS-G02
+  summary: WorkspaceV2.counts (product dashboard rollup)
+  phase: G
+  category: CAT-2
+  complexity: Very High
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: search
+    severity: RED
+  - key: product
+    severity: RED
+  - key: discussion
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-WS-G03
+  summary: WorkspaceV2.attachmentsV3
+  phase: G
+  category: CAT-2
+  complexity: High
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: relationship
+    severity: YELLOW
+  - key: attachment
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-G04
+  summary: products + productsCount + combinations + sampleReport (cross-subgraph)
+  phase: G
+  category: CAT-2
+  complexity: High
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: product
+    severity: RED
+  - key: search
+    severity: RED
+  - key: combination
+    severity: YELLOW
+  - key: sampleV2
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-WS-G05
+  summary: businessPartners + droppedPartners + notRemovable + unDroppable
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: vmm
+    severity: BLUE
+  blocked_by: none
+- id: SPARK-WS-G06
+  summary: divisions/brands/clazzes/designCycles/tags + WorkspaceDepartmentV2
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: ig
+    severity: BLUE
+  - key: brand
+    severity: BLUE
+  - key: tag
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-WS-G07
+  summary: createdBy/updatedBy/status/id + discussionsV2/teams + paged computed
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-WS-A04
+  ext_services:
+  - key: userAttributes
+    severity: YELLOW
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-WS-G08
+  summary: Tests, parity harness, load test
+  phase: G
+  category: CAT-5
+  complexity: High
+  depends_on:
+  - SPARK-WS-B01
+  - SPARK-WS-E01
+  - SPARK-WS-G01
+  - SPARK-WS-G02
+  ext_services: []
+  blocked_by: none
+totals:
+  story_count: 32
+  by_complexity:
+    Low: 11
+    Medium: 15
+    High: 3
+    Very High: 3
+  by_phase:
+    A: 4
+    B: 6
+    C: 2
+    D: 9
+    E: 1
+    F: 2
+    G: 8

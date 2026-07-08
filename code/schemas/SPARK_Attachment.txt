@@ -1,0 +1,222 @@
+extend type Query {
+  getAttachmentsV3(ids: [ID]): [SPARK_Attachment]
+  getAttachmentsByResource(resourceId: [ID]): [SPARK_Attachment]
+  getAttachmentsByResourceAndOwner(resourceId: [ID]): [SPARK_Attachment]
+  getAttachments(resourceId: ID!, resourceType: String!): [SPARK_Attachment]! @deprecated(reason: "Use v3")
+  getRendersForAttachmentIds(ids: [String], betaMode: Boolean = false): [SPARK_GalleryAttachment] @deprecated(reason: "Use v3")
+  getRendersForAttachmentIdsByPost(ids: [String], betaMode: Boolean = false): [SPARK_GalleryAttachment]
+  getRendersForAttachmentV3Ids(ids: [String], betaMode: Boolean = false): [SPARK_GalleryAttachment]
+  getAttachmentsfromRelatedResource(relatedResourceId: ID!, parentResourceId: ID): [SPARK_SearchAttachment]
+  getAttachmentsfromRelatedResources(relatedResourceIds: [ID]!): [SPARK_SearchAttachment]
+}
+
+extend type Mutation {
+  archiveAttachmentV3(id: ID!): SPARK_Attachment
+  deleteAttachmentV3(humanId: ID!): String
+  copyAttachmentsV3(
+    attachmentInput: SPARK_CopyAttachmentInputV3
+  ): SPARK_CopyAttachment
+  associateResourcesV3(associateAttachmentInput: SPARK_AssociateResourceAttachmentInput): [SPARK_Attachment]
+  removeResourcesV3(associateAttachmentInput: SPARK_AssociateResourceAttachmentInput): [SPARK_Attachment]
+  updateAttachmentsACLPermissions(partnerId: ID, attachmentIdsForAdmin: [ID], attachmentsIdsForRead: [ID]): SPARK_AccessControl
+  updateAttachmentTags(attachmentId: ID, tags: [ID]): SPARK_Attachment
+  updateAttachmentTagsV3(attachmentId: ID, tags: [ID]): SPARK_Attachment
+  bulkUpdateAttachments(tags: [SPARK_BulkAttachmentTagsInput], permissions: SPARK_BulkAttachmentPermissionsInput): [SPARK_Attachment]
+  updateAttributes(attachment: SPARK_AttachmentAttributesUpdateInput): SPARK_Attachment
+  bulkUpdateAttributes(attachments: SPARK_BulkAttributesUpdateInput): [SPARK_Attachment]
+  bulkUpdateAttachmentsV2(attachments: [SPARK_UpdateAttachmentV2]): [SPARK_Attachment]
+  publishAttachmentToGallery(attachmentId: ID!): Boolean
+  unpublishAttachmentToGallery(attachmentId: ID!): Boolean
+  associateAttachmentTeams(parentId: ID!, files: [String]!, teamsToUpdate: SPARK_TeamsToUpdateInput!, relatedResourceIds: [String]): [SPARK_Attachment]
+}
+
+type SPARK_GalleryAttachment {
+  attachmentId: String
+  renders: [SPARK_GalleryRender]
+  relatedFiles: [SPARK_GalleryFile]
+}
+
+type SPARK_GalleryRender {
+  fileId: String
+  fileName: String
+  renderType: String
+  presignedUrl: String
+  primary: Boolean
+}
+
+type SPARK_GalleryFile {
+  fileId: String
+  fileName: String
+  presignedUrl: String
+  canOpenInShowDog: Boolean
+}
+
+type SPARK_3d_File {
+  fileId: String
+  fileName: String
+}
+
+type SPARK_Attachment {
+  id: ID!
+  documentId: ID
+  humanId: ID
+  attachmentId: ID
+  resource: SPARK_SingleResourceMapping
+  documentName: String
+  documentType: String
+  mediaType: String
+  sharedWithGallery: Boolean
+  canShareWithGallery: Boolean
+  attachmentCanShowdog: Boolean
+  documentSize: Float
+  createdAt: DateTime
+  createdBy: SPARK_UserProfileAttributes
+  updatedAt: DateTime
+  updatedBy: SPARK_UserProfileAttributes
+  businessPartners: [String]
+  businessPartnersFull: [VMM_BusinessPartner]
+  access: SPARK_AccessControl
+  parentResource: String
+  relatedResources: [String]
+  resources: SPARK_ResourceMapping
+  previewable: Boolean
+  relationshipMetadata: String
+  tags: [SPARK_Tag]
+  tcins: [String]
+  productPacketProps: [SPARK_ProductPacketProps]
+  galleryDetails: SPARK_GalleryDetails
+  finalVirtualFile: Boolean
+  modelFile: SPARK_3d_File
+  canOpenInShowDog: Boolean
+  versionNumber: Int
+}
+
+type SPARK_GalleryValidations {
+  name: String
+  value: String
+  description: String
+  message: String
+  classification: String
+  isInternal: Boolean
+  validationType: String
+}
+
+type SPARK_GalleryDetails {
+  assetId: String
+  transcoded: Boolean
+  published: Boolean
+  publishedAt: String
+  publishedBy: SPARK_UserProfileAttributes
+  fileValid: Boolean
+  validations: [SPARK_GalleryValidations]
+  fileTypes: [String]
+}
+
+type SPARK_ProductPacketProps {
+  partnerId: ID
+  critical: Boolean
+}
+
+type SPARK_CopyAttachment {
+  thumbnailId: String!
+  attachments: [SPARK_Attachment]
+}
+
+type SPARK_AttachmentAccess {
+  attachmentAccessId: ID
+  attachmentId: ID
+  partnerId: ID
+  viewable: Boolean
+}
+
+input SPARK_AttachmentInput {
+  type: String
+  id: String
+  attachmentId: [String]
+}
+
+input SPARK_BulkAttachmentInput {
+  documentId: String
+  resource: SPARK_SingleResourceMappingInput
+  relatedResources: [String]
+}
+
+input SPARK_CopyAttachmentInput {
+  thumbnailId: String!
+  attachmentIds: [String]
+}
+
+input SPARK_CopyAttachmentInputV3 {
+  thumbnailId: String
+  humanIds: [ID]!
+}
+
+input SPARK_AssociateResourceAttachmentInput {
+  humanIds: [String]!
+  parentId: String
+  relatedResourceIds: [String]
+}
+
+input SPARK_BulkTagUpdateInput {
+  attachmentTags: [SPARK_BulkAttachmentTagsInput]
+}
+
+input SPARK_BulkAttachmentTagsInput {
+  addTagIds: [String]
+  id: String
+  removeTagIds: [String]
+}
+
+input SPARK_BulkAttachmentPermissionsInput {
+  addAcl: [SPARK_CreateAccessControl]
+  deleteAcl: [SPARK_DeleteBulkPermissionInput]
+  revokePartners: SPARK_DeleteAccessGroupIds
+  lockedIds: [String]
+  unlockedIds: [String]
+}
+
+input SPARK_AttachmentAttributesUpdateInput {
+  documentId: String
+  humanId: String
+  productPacketProps: [SPARK_AttchmentProductPacketInput]
+  finalVirtualFile: Boolean
+}
+
+input SPARK_AttchmentProductPacketInput {
+  partnerId: ID
+  critical: Boolean
+}
+
+input SPARK_BulkAttributesUpdateInput {
+  attachments: [SPARK_AttachmentAttributesUpdateInput]
+}
+
+input SPARK_AttachmentManagePermission {
+  managePermissionsRequest: [SPARK_ManagePermissionsRequest]
+}
+
+input SPARK_ManagePermissionsRequest {
+  partnersToAdd: [SPARK_PartnerWithType]
+  partnersToDelete: [SPARK_PartnerWithType]
+  resourceId: ID
+  locked: Boolean
+  globalMvAccess: Boolean
+}
+
+input SPARK_PartnerWithType {
+  partnerId: ID
+  partnerType: Int
+}
+
+type SPARK_AttachmentManagePermissions {
+  deletedPartners: [SPARK_DeletePermissions]
+  addedPartners: [SPARK_UpdateACLGrantees]
+}
+
+input SPARK_UpdateAttachmentV2 {
+  documentId: ID
+  tags: [String]
+  productPacketProps: [SPARK_AttchmentProductPacketInput]
+  managePermissionsRequest: SPARK_ManagePermissionsRequest
+  relatedResources: [String]
+}

@@ -5,10 +5,10 @@
 | | |
 |---|---|
 | **Program** | `spark-internal-graphql` → Netflix DGS Federation (Hive Schema Registry) |
-| **Domains** | 8 |
-| **Target DGS services** | 2 |
-| **Total Stories** | **200** |
-| **Complexity** | 🔴 6 Very High · 🟠 13 High · 🟡 76 Medium · 🟢 105 Low |
+| **Domains** | 13 |
+| **Target DGS services** | 7 |
+| **Total Stories** | **337** |
+| **Complexity** | 🔴 9 Very High · 🟠 34 High · 🟡 140 Medium · 🟢 154 Low |
 | **Phase Coverage** | 🔬 6 Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |
 | **Cross-domain spikes** | 🔬 6 program-level research spikes — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
 | **Generated** | 2026-07-07 |
@@ -98,12 +98,12 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 | Spike ID | Bucket / Generic Problem | Domains affected (home story) | Blocks | Research so far | Status |
 |---|---|---|---|---|---|
-| `SPARK-SPIKE-01` | 🔬 **Non-Atomic Write Saga** — a mutation fans out across ≥2 REST services (workspace-assoc · body · permissions · component-status) with no transaction; on partial failure state is left inconsistent. Choose the failure strategy: (a) compensating saga · (b) compensation-log + best-effort · (c) best-effort. | bom `E01` · claims `E01` · measurement `E01` · packaging `E01` · productDetails `E01` · watchlist `E01` · product `E02` | all `E`-phase writes | [`complexStories/non-atomic-write-saga`](https://github.com/XXX/tree/main/output/complexStories/non-atomic-write-saga) (shared `WriteSaga`) | 🔴 Open — failure strategy to decide |
+| `SPARK-SPIKE-01` | 🔬 **Non-Atomic Write Saga** — a mutation fans out across ≥2 REST services (workspace-assoc · body · permissions · component-status) with no transaction; on partial failure state is left inconsistent. Choose the failure strategy: (a) compensating saga · (b) compensation-log + best-effort · (c) best-effort. | bom `E01` · claims `E01` · measurement `E01` · packaging `E01` · productDetails `E01` · sample `E01/E02` · watchlist `E01` · discussion `E01/E02` · product `E02` | all `E`-phase writes | [`complexStories/non-atomic-write-saga`](https://github.com/XXX/tree/main/output/complexStories/non-atomic-write-saga) (shared `WriteSaga`) | 🔴 Open — failure strategy to decide |
 | `SPARK-SPIKE-02` | 🔬 **TechPack Aggregate** — build a `ProductTechPack` entity where **every field is computed from a different microservice REST API**; pick the assembly pattern (A `extend type` · B elastic DGS · C orchestrator · D interface · E materialized). | product `E03/E04` | product techpack | [`complexStories/techpack`](https://github.com/XXX/tree/main/output/complexStories/techpack) | 🔴 Open — assembly pattern to decide |
-| `SPARK-SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business partner across every referencing child domain; decide ownership (domain subgraph vs workspace) and the write saga. | product `E01` · workspace `E01` | partner-write `E`/`F` | [`complexStories/partner-drop-undrop-write`](https://github.com/XXX/tree/main/output/complexStories/partner-drop-undrop-write) | 🔴 Open — ownership + orchestration to decide |
+| `SPARK-SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business partner across every referencing child domain; decide ownership (domain subgraph vs workspace) and the write saga. | product `E01` · workspace `E01` · attachment · discussion · sample | partner-write `E`/`F` | [`complexStories/partner-drop-undrop-write`](https://github.com/XXX/tree/main/output/complexStories/partner-drop-undrop-write) | 🔴 Open — ownership + orchestration to decide |
 | `SPARK-SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which partners cannot be removed/dropped because still referenced (cross-domain `@requires` union). | product `E01` · workspace `E01` | partner-read fields | [`complexStories/notRemovable-undroppable-partners`](https://github.com/XXX/tree/main/output/complexStories/notRemovable-undroppable-partners) | 🔴 Open — contribution contract to agree |
-| `SPARK-SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant + CI schema-conformance. | bom `A04` | type-resolver + variant fields | [`complexStories/polymorphic-type-resolution`](https://github.com/XXX/tree/main/output/complexStories/polymorphic-type-resolution) | 🔴 Open — code→type table to confirm |
-| `SPARK-SPIKE-06` | 🔬 **Cross-Domain Association / Hydration** — how a domain references another's entity (federated `@key` ref vs REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product `S01/S02` · bom (material rollout) | association + hydration + rollout | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — per-edge rule to decide |
+| `SPARK-SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant + CI schema-conformance. | bom `A04` · sample `B01` (`SampleAsset` union) · search `A02` | type-resolver + variant fields | [`complexStories/polymorphic-type-resolution`](https://github.com/XXX/tree/main/output/complexStories/polymorphic-type-resolution) | 🔴 Open — code→type table to confirm |
+| `SPARK-SPIKE-06` | 🔬 **Cross-Domain Association / Hydration** — how a domain references another's entity (federated `@key` ref vs REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product `S01/S02` · workspace `D04/G04` · search (read-hub order) · bom (material rollout) | association + hydration + rollout | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — per-edge rule to decide |
 
 > **Sequencing:** `SPARK-SPIKE-01/02/03` are on the critical path (they block `E`-phase writes and TechPack); run them in Sprint 0 alongside each domain's `B01` module scaffold. `04/05/06` block specific reads and can run in parallel. Each spike concludes with the decision recorded back into the affected domain stories.
 
@@ -128,15 +128,20 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 | # | Domain | Target DGS | T-Shirt | Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | Breakdown page |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | **Bill of Materials (BOM)** | `plm-product (co-located)` | **XL** | **36** | 1 | 2 | 12 | 21 | `FederatedGqlBrakDown-bom` |
-| 2 | **Claims** | `spark-claims (separate)` | **L** | **20** | 0 | 2 | 9 | 9 | `FederatedGqlBrakDown-claims` |
-| 3 | **Impression** | `plm-product (co-located)` | **XS** | **7** | 0 | 0 | 2 | 5 | `FederatedGqlBrakDown-impression` |
-| 4 | **Measurement** | `plm-product (co-located)` | **M** | **20** | 0 | 1 | 6 | 13 | `FederatedGqlBrakDown-measurement` |
-| 5 | **Packaging** | `plm-product (co-located)` | **L** | **24** | 0 | 2 | 9 | 13 | `FederatedGqlBrakDown-packaging` |
-| 6 | **Product** | `plm-product (host)` | **XXL** | **67** | 5 | 4 | 25 | 33 | `FederatedGqlBrakDown-product` |
-| 7 | **Product Details** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 7 | 5 | `FederatedGqlBrakDown-productDetails` |
-| 8 | **Watchlist** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 6 | 6 | `FederatedGqlBrakDown-watchlist` |
-| | **TOTAL** | — | — | **200** | **6** | **13** | **76** | **105** | — |
+| 1 | **Attachment** | `plm-attachment (separate)` | **L** | **24** | 0 | 2 | 14 | 8 | `FederatedGqlBrakDown-attachment` |
+| 2 | **Bill of Materials (BOM)** | `plm-product (co-located)` | **XL** | **36** | 1 | 2 | 12 | 21 | `FederatedGqlBrakDown-bom` |
+| 3 | **Claims** | `spark-claims (separate)` | **L** | **20** | 0 | 2 | 9 | 9 | `FederatedGqlBrakDown-claims` |
+| 4 | **Discussion** | `plm-discussion (separate)` | **XL** | **32** | 0 | 4 | 15 | 13 | `FederatedGqlBrakDown-discussion` |
+| 5 | **Impression** | `plm-product (co-located)` | **XS** | **7** | 0 | 0 | 2 | 5 | `FederatedGqlBrakDown-impression` |
+| 6 | **Measurement** | `plm-product (co-located)` | **M** | **20** | 0 | 1 | 6 | 13 | `FederatedGqlBrakDown-measurement` |
+| 7 | **Packaging** | `plm-product (co-located)` | **L** | **24** | 0 | 2 | 9 | 13 | `FederatedGqlBrakDown-packaging` |
+| 8 | **Product** | `plm-product (host)` | **XXL** | **67** | 5 | 4 | 25 | 33 | `FederatedGqlBrakDown-product` |
+| 9 | **Product Details** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 7 | 5 | `FederatedGqlBrakDown-productDetails` |
+| 10 | **Sample** | `plm-sample (separate)` | **XL** | **28** | 0 | 5 | 11 | 12 | `FederatedGqlBrakDown-sample` |
+| 11 | **Search** | `plm-elastic-search (separate)` | **L** | **25** | 0 | 7 | 11 | 7 | `FederatedGqlBrakDown-search` |
+| 12 | **Watchlist** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 6 | 6 | `FederatedGqlBrakDown-watchlist` |
+| 13 | **Workspace** | `plm-workspace (separate)` | **XL** | **28** | 3 | 3 | 13 | 9 | `FederatedGqlBrakDown-workspace` |
+| | **TOTAL** | — | — | **337** | **9** | **34** | **140** | **154** | — |
 
 ---
 
@@ -164,10 +169,14 @@ Stories are grouped into phases that encode the replacement order within a domai
 |---|---|---|---|---|
 | 🔴🔬 `SPARK-BOM-E01` `updateBom` — 3-step orchestrated write | bom | Mutation | `workspaceV2` | editing a bom today is really three separate backend calls made one - after another, with no undo button: (1) if the caller changed which workspaces the bom belongs… |
 | 🔴🔬 `SPARK-CLM-E01` `updateClaim` (proxy ACL + multi-step write) | claims | Mutation | `workspaceV2` | getUserPermissionsJWTByProxy({id:humanId, proxyIds:[parentId], basePermissions:true}) (proxy/external ACL path — context only); 2) if workspaceContext.{add,remove}… |
+| 🔴🔬 `SPARK-DISC-E01` Participants V2 (`updateParticipantsV2` + `deleteParticipantV2`) | discussion | Mutation | `userGroup` | add participants (AddParticipantInput) / remove a participant (team/user/partner) |
+| 🔴🔬 `SPARK-DISC-E02` Participants V3 (`updateParticipantsV3` + `coreUpdate` + `coreDelete` + `deleteParticipantV3`) | discussion | Mutation | `userGroup` | richer participant model — updateParticipantsV3 / coreUpdateParticipantsV3 - (participants + relatedResources + resourceType), coreDeleteParticipantsV3… |
 | 🔴🔬 `SPARK-MEAS-E01` `updateMeasurement` — 2-step orchestrated write | measurement | Mutation | `workspaceV2` | workspaceAssociations = sparkMeasurement.updateWorkspaceAssociations \|\| {}. token for [humanId]. 2. If add/remove workspaces → workspaceAssociationHelper(MEASUREMENT… |
 | 🔴🔬 `SPARK-PKG-E01` `updatePackaging` (multi-step write) | packaging | Mutation | `attachment`, `relationship` | token; set humanId=packagingId; PUT packaging/v1 (body); 2) if attachmentsToRemove → (attachment) archiveAttachmentBulkV2 + (relationship) removeRelationship; 3) if… |
 | 🔴🔬 `SPARK-PROD-E02` `updateComponentStatuses` (5-loader fan-out) | product | Mutation | `claim` | updating component statuses fans out to 5 places in parallel (bom, - measurement, productDetail, packaging — all internal — plus claim, external). - The bug: a loop… |
 | 🔴🔬 `SPARK-PDTL-E01` `updateProductDetailsSet` (multi-step write) | productDetails | Mutation | `attachment`, `workspaceV2` | if workspaceContext.{add,remove}Workspaces non-empty → workspaceAssociationHelper(PRODUCT_DETAIL, id, add, remove) (throws on error); 2) null workspaceContext; 3) if… |
+| 🔴🔬 `SPARK-SMPL-E01` `updateSamplesV2` | sample | Mutation | — (internal only) | token for all updateSamples[].id + SAMPLE_EVALUTION → updateSamplesV2 |
+| 🔴🔬 `SPARK-SMPL-E02` `bulkEvaluateSamples` | sample | Mutation | `attachment` | delegates to bulkEvaluateSampleUtil(ctx, updateSamples, newSampleRounds) — applies evaluations and creates new sample rounds |
 | 🔴🔬 `SPARK-WL-E01` `updateWatchlistEntries` (multi-step write) | watchlist | Mutation | `attachment`, `userGroup` | per-entry (currently NOT awaited — bug): getUserGroups([humanId]); if existing participants → updateUserGroup, else (user-group) addUserGroup (throw on error); 2)… |
 
 
@@ -213,6 +222,7 @@ Stories are grouped into phases that encode the replacement order within a domai
 | Resolver (home story) | Domain | Kind | Calls (external services) | What it does today (minimal) |
 |---|---|---|---|---|
 | 🔴🔬 `SPARK-PROD-E01` `productBusinessPartnerActions` (REMOVE/DROP/UNDROP) | product | Mutation | `sampleV2`, `recentlyViewed`, `todo`, `favorite` | removing, dropping, or un-dropping a business partner from a product - isn't one write — it's a ~220-line dispatcher that updates the partner's status and then fans… |
+| 🔴🔬 `SPARK-WS-E01` `workspaceBusinessPartnerActionsV2` (5-case drop/undrop dispatcher) | workspace | Mutation | `relationship`, `discussion`, `sampleV2`, `favorite` | ~310-line switch — REMOVE_TEAM, REMOVE_PARTNER, DROP_PARTNER, - UNDO_DROP_PARTNER, DROP_UNDROP_PARTNER. - Builds a relationship tree (relationship), ACL-filters… |
 
 
 ---
@@ -235,6 +245,7 @@ Stories are grouped into phases that encode the replacement order within a domai
 | Resolver (home story) | Domain | Kind | Calls (external services) | What it does today (minimal) |
 |---|---|---|---|---|
 | 🔴🔬 `SPARK-PROD-G07` `Product.vendorAttributes` + `businessPartners` + `droppedPartners` + `unDroppablePartners` + `status` | product | Field resolver | `vmm` | business-partner ids sometimes arrive as strings that need to be - parsed to ints before VMM will accept them (vmmUtils's int-parse normalization) — an easy detail to… |
+| 🔴🔬 `SPARK-WS-G05` partners (`businessPartners`/`droppedPartners`/`notRemovablePartnerIds`/`unDroppablePartners`) | workspace | Field resolver | `vmm` | — |
 
 
 ---
@@ -256,6 +267,8 @@ Stories are grouped into phases that encode the replacement order within a domai
 | Resolver (home story) | Domain | Kind | Calls (external services) | What it does today (minimal) |
 |---|---|---|---|---|
 | 🔴🔬 `SPARK-BOM-A04` `@DgsTypeResolver` for the 2 BOM interfaces | bom | Field resolver | — (internal only) | - Material: switch on material.materialCategory.code → 4→Trim, 6→Wash, 2→Fabric, 15→Combination, 16→FabricSpec, {10,11,12,13,14,17–24}→Packaging, default… |
+| 🔴🔬 `SPARK-SMPL-B01` `getSampleById(id)` | sample | Query | — (internal only) | getSampleById |
+| 🔴🔬 `SPARK-SRCH-A02` Owned result types + inputs (the big surface) | search | Story | — (internal only) | all ~50 owned result/value types (SearchAttachment, Material, SearchCombination |
 
 
 ---
@@ -285,3 +298,5 @@ Stories are grouped into phases that encode the replacement order within a domai
 | 🔴🔬 `SPARK-PROD-D06` `addTeamsToProduct` 🔀 Collab Canvas | product | Mutation | — (internal only) | POST ${v1}/{productId}/resources/bulk + manage_workspace_teams |
 | 🔴🔬 `SPARK-PROD-D07` `addBusinessPartnersToProductWithType` 🔀 Collab Canvas | product | Mutation | — (internal only) | POST ${v1}/{productId}/partners-add/bulk |
 | 🔴🔬 `SPARK-PROD-D11` `updateWorkspaceAttributes` 🔀 Collab Canvas | product | Mutation | — (internal only) | PUT ${v1}/{productId} workspace attrs |
+| 🔴🔬 `SPARK-WS-D04` `addResourcesToWorkspaceV2` | workspace | Mutation | `product` | token; if single product → (product) read Product.workspaces + updateViewToggle (init workspace attrs; firstWorkspace adds designCycle/setDates); POST … |
+| 🔴🔬 `SPARK-WS-G04` `products` + `productsCount` + `combinations` + `sampleReport` (cross-subgraph) | workspace | Field resolver | `product`, `search`, `combination`, `sampleV2` | products → (product) getProducts(resourceType:'workspaces', resourceId, include*: true); productsCount → (product) getPage totalElements; combinations → (search)… |

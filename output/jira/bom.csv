@@ -1,5 +1,5 @@
 Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
-Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for all 13 domains; each story summary is prefixed with its domain (e.g. [BOM], [Product])."
 Story,SPARK-BOM-A04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [SPARK-BOM-A04],,Federate BreakDown Product,A,M,dgs-migration,bom,schema,,SPARK-SPIKE-05,To Do,"*Requires spike:* SPARK-SPIKE-05 (Polymorphic Type Resolution) — see program spike
 
 *Current Behaviour:*

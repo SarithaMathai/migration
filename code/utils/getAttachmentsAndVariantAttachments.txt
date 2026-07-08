@@ -1,0 +1,40 @@
+import _ from 'lodash'
+import { isVariantId } from './variantIdFunctions'
+
+export const getAttachmentsAndVariantAttachments = (attachments, copiedAttachmentResponse) => {
+  if (!attachments || !_.isArray(attachments)) {
+    return {
+      attachments: [],
+      variantAttachments: [],
+      copiedIdToSourceParentMap: {},
+    }
+  }
+
+  if (!copiedAttachmentResponse || !_.isArray(copiedAttachmentResponse)) {
+    return {
+      attachments: [],
+      variantAttachments: [],
+      copiedIdToSourceParentMap: {},
+    }
+  }
+
+  // Build an immutable map from copiedId to sourceParentId for quick lookup
+  const copiedIdToSourceParentMap = copiedAttachmentResponse.reduce((map, item) => {
+    if (item.copiedId && item.sourceParentId) {
+      return { ...map, [item.copiedId]: item.sourceParentId }
+    }
+    return map
+  }, {})
+
+  return {
+    attachments: attachments.filter(attachment => {
+      const sourceParentId = copiedIdToSourceParentMap[attachment.humanId]
+      return sourceParentId && !isVariantId(sourceParentId)
+    }),
+    variantAttachments: attachments.filter(attachment => {
+      const sourceParentId = copiedIdToSourceParentMap[attachment.humanId]
+      return sourceParentId && isVariantId(sourceParentId)
+    }),
+    copiedIdToSourceParentMap,
+  }
+}

@@ -1,0 +1,1034 @@
+import qs from 'querystring'
+
+import {
+  buildURLParam,
+  deepToCamelCase,
+  deepToSnakeCase,
+  singleDeepToCamelCase,
+  singleDeepToSnakeCase,
+} from '../utils/convertFunctions'
+import loadListing from '../utils/loadListing'
+import postOne from '../utils/postOne'
+import {find} from 'lodash'
+
+import SparkService from './SparkService'
+import loadOne from '../utils/loadOne'
+
+export default class SearchService extends SparkService {
+  constructor(endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint
+    this.headers = headers
+
+    this.keyValuesTransform = values => {
+      const formattedValues = []
+      for (var key in values) {
+        if (Object.prototype.hasOwnProperty.call(values, key)) {
+          formattedValues.push({
+            bpType: key,
+            counts: values[key],
+          })
+        }
+      }
+      return formattedValues
+    }
+
+    this.getPage = loadListing(
+      params => {
+        const formattedParams = params
+        if (params?.options) {
+          formattedParams['inspiration'] = (params.options && params.options.inspiration) || false
+          formattedParams['excludeVariantAssets'] = (params.options && params.options.excludeVariantAssets) || false
+        }
+        delete formattedParams.options
+        return `${this.endpoint}/materials/v1?${qs.stringify(formattedParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getPalettePage = loadListing(
+      params => {
+        const formattedParams = params
+        if (params?.options) {
+          formattedParams['inspiration'] = (params.options && params.options.inspiration) || false
+        }
+        delete formattedParams.options
+        return `${this.endpoint}/palettes/v1?${qs.stringify(formattedParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getSuggestions = loadListing(
+      `${this.endpoint}/materials/v1/suggest`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+    this.getPaletteSuggestions = loadListing(
+      `${this.endpoint}/palettes/v1/suggest`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getCounts = loadListing(
+      `${this.endpoint}/materials/v1/counts`,
+      this.headers,
+      {
+        transform: counts => deepToCamelCase(counts),
+        transformRequest: counts => deepToSnakeCase(counts),
+      },
+      this.logContext,
+    )
+
+    this.getPaletteCounts = loadListing(
+      `${this.endpoint}/palettes/v1/counts`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getSamplesPage = loadListing(
+      `${this.endpoint}/samples/v1`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getSamplesCountGroupBy = loadListing(
+      `${this.endpoint}/samples/v1/samples_count`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchSamplesByParentId = loadListing(
+      `${this.endpoint}/samples/v1/parent`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getElasticSamplesByIds = loadListing(
+      `${this.endpoint}/samples/v1/ids`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getWorkspacesPagedV2 = loadListing(
+      queryParams =>
+        `${this.endpoint}/workspaces/v1?${qs.stringify(
+          queryParams,
+        )}&sort=createdAt,desc`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getWorkspacesPagedV3 = loadListing(
+      queryParams =>
+        `${this.endpoint}/workspaces/v1/search?${qs.stringify(
+          queryParams,
+        )}&sort=createdAt,desc`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getWorkspacesSuggessions = loadListing(
+      queryParams =>
+        `${this.endpoint}/workspaces/v1/suggest?${qs.stringify(queryParams)}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getPageNested = loadListing(
+      params => {
+        const formattedParams = params
+
+        if (params.nestedQueryList && params.nestedQueryList.length > 0) {
+          params.nestedQueryList.forEach((item, index) => {
+            formattedParams[`nestedQueriesList[${index}].path`] = item.path
+            formattedParams[`nestedQueriesList[${index}].query`] = item.query
+            formattedParams[`nestedQueriesList[${index}].type`] = item.type
+          })
+        }
+
+        delete formattedParams.nestedQueryList
+        if (params?.options) {
+          formattedParams['inspiration'] = (params.options && params.options.inspiration) || false
+        }
+        delete formattedParams.options
+        return `${this.endpoint}/materials/v1?${qs.stringify(formattedParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getPoms = loadListing(
+      ({page, size, q, sort}) => {
+        const sortQuery = sort ? `&sort=${sort}` : ''
+        return `${
+          this.endpoint
+        }/pointofmeasure/v1?page=${page}&size=${size}&q=${q}${sortQuery}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getPointOfMeasureSuggestions = loadListing(
+      `${this.endpoint}/pointofmeasure/v1/suggest`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getCombinationSuggestions = loadListing(
+      `${this.endpoint}/combinations/v1/suggest`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.searchCombinations = loadListing(
+      `${this.endpoint}/combinations/v1`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.sendBulkCombinationUpdates = postOne(
+      `${this.endpoint}/combinations/v1`,
+      this.headers,
+      {
+        transform: results => deepToCamelCase(results),
+        transformRequest: combination => deepToSnakeCase(combination),
+      },
+      this.logContext,
+    )
+
+    this.searchAttachments = loadListing(
+      `${this.endpoint}/attachments/v1`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchAttachmentsByRelatedResource = loadOne(
+      resourceIds =>
+        `${this.endpoint}/attachments/v1?relatedIds=${resourceIds.join(
+          ',',
+        )}&size=10000`,
+      this.headers,
+      {
+        // Some workspaces in prod have too many products and products have too many files. To reduce that load setting max batch at 75
+        maxBatchSize: 75,
+        transform: (ids, json) =>
+          deepToCamelCase(
+            ids.map(resourceId =>
+              json.content.filter(attachment =>
+                attachment.related_resources.includes(resourceId),
+              ),
+            ),
+          ),
+      },
+      this.logContext,
+    )
+    this.searchAttachmentsByRelatedResources = loadListing(
+      ({resourceIds, page = 0, size = 10000, sort = '', q = ''}) => {
+        return `${
+          this.endpoint
+        }/attachments/v1?relatedIds=${resourceIds.join(
+          ',',
+        )}&page=${page}&size=${size}${sort ? `&sort=${sort}` : ''}${q ? `&q=${q}` : ''}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+    this.getAttachmentsCounts = loadListing(
+      parentIds =>
+        `${this.endpoint}/attachments/v1/counts?parentIds=${parentIds}`,
+      this.headers,
+      {
+        transform: counts => this.keyValuesTransform(counts),
+      },
+      this.logContext,
+    )
+
+    this.searchTeams = loadListing(
+      queryParams => `${this.endpoint}/teams/v1?${qs.stringify(queryParams)}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getTeamsSuggessions = loadListing(
+      queryParams =>
+        `${this.endpoint}/teams/v1/suggest?${qs.stringify(queryParams)}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getMeasurementTemplatesSuggestions = loadListing(
+      `${this.endpoint}/measurementtemplate/v1/suggest`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getMeasurementTemplates = loadListing(
+      ({page, size, q}) =>
+        `${
+          this.endpoint
+        }/measurementtemplate/v1/search?page=${page}&size=${size}&q=${q}&sort=createdAt,desc`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getProductSuggestions = loadListing(
+      queryParams =>
+        `${this.endpoint}/products/v1/suggest?${qs.stringify(queryParams)}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getProductWorkspaceMetricsReportCount = loadListing(
+      workspaceId =>
+        `${this.endpoint}/products/v1/${workspaceId}/metricsReport`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchSizeTemplates = loadListing(
+      ({page, size, q, sort = 'createdAt,desc'}) =>
+        `${this.endpoint}/sizetemplate/v1?${qs.stringify({
+          page,
+          size,
+          q,
+          sort,
+        })}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+    this.searchSizeTemplatesSuggestions = loadListing(
+      `${this.endpoint}/sizetemplate/v1/suggest`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getSampleSuggestions = loadListing(
+      queryParams =>
+        `${this.endpoint}/samples/v1/suggest?${qs.stringify(queryParams)}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getUserSearch = loadListing(
+      queryParams => {
+        return `${this.endpoint}/users/v1/search?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getUsersSuggestions = loadListing(
+      queryParams =>
+        `${this.endpoint}/users/v1/suggest?${qs.stringify(queryParams)}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getSPGSearch = loadListing(
+      queryParams => {
+        return `${this.endpoint}/file_library/v1?${qs.stringify(queryParams)}&sort=updatedAt,desc`
+      },
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+      },
+      this.logContext,
+    )
+
+    this.getSPGSuggestions = loadListing(
+      queryParams =>
+        `${this.endpoint}/file_library/v1/suggest?${qs.stringify(queryParams)}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getWorkspaceProductsSuggestions = loadListing(
+      queryParams => {
+        return `${this.endpoint}/products/v1/suggest/edge?${qs.stringify(
+          queryParams,
+        )}`
+      },
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.searchDiscussions = loadListing(
+      queryParams => {
+        return `${this.endpoint}/discussion/v1/search?${qs.stringify(
+          queryParams,
+        )}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchDiscussionsElastic = loadListing(
+      queryParams => {
+        return `${this.endpoint}/discussion/v1/search/v2?${qs.stringify(
+          queryParams,
+        )}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getMeasurementSets = loadListing(
+      queryParams => {
+        return `${this.endpoint}/measurement/v1?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getWorkspaceTypeCount = loadListing(
+      () => `${this.endpoint}/workspaces/v1/counts`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.getClaimsElastic = loadListing(
+      queryParams => {
+        return `${this.endpoint}/claims/v1?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getPackagingElastic = loadListing(
+      queryParams => {
+        return `${this.endpoint}/packaging/v1?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getBomElastic = loadListing(
+      queryParams => {
+        return `${this.endpoint}/bom/v1?${qs.stringify(queryParams)}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getProductDetailsElastic = loadListing(
+      queryParams => {
+        return `${this.endpoint}/constructionset/v1?${qs.stringify(
+          queryParams,
+        )}`
+      },
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchMaterialsByProxyIds = permissionJWT =>
+      loadListing(
+        `${this.endpoint}/materials/v1/proxyIds`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: results => results && deepToCamelCase(results),
+        },
+        this.logContext,
+      )
+
+    this.searchFabricSpecCombos = loadListing(
+      ({q, page, size}) =>
+        `${
+          this.endpoint
+        }/fabric_spec_combos/v1?q=${q}&page=${page}&size=${size}`,
+      this.headers,
+      {
+        transform: fabricSpecCombinations =>
+          deepToCamelCase(fabricSpecCombinations),
+      },
+      this.logContext,
+    )
+
+    this.getFabricSpecCombosByComboId = permissionJWT =>
+      loadListing(
+        id => `${this.endpoint}/fabric_spec_combos/v1?parentId=${id}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: fabricSpecCombinations =>
+            deepToCamelCase(fabricSpecCombinations),
+        },
+        this.logContext,
+      )
+
+    this.searchTeamsByProxyIds = permissionJWT =>
+      loadListing(
+        `${this.endpoint}/teams/v1/proxyIds`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: results => results && deepToCamelCase(results),
+        },
+        this.logContext,
+      )
+    this.searchProductByField = postOne(
+      queryParams => {
+        return `${this.endpoint}/products/v1/search/fields?${qs.stringify(
+          queryParams,
+        )}`
+      },
+      this.headers,
+      {
+        transform: data => data && deepToCamelCase(data),
+        transformRequest: data => data && deepToSnakeCase(data),
+      },
+      this.logContext,
+    )
+
+    this.getProductReport = loadListing(
+      ({startDate, endDate}) =>
+        `${
+          this.endpoint
+        }/products/v1/product_report?fromDate=${startDate}&toDate=${endDate}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+    this.exportFabric = loadListing(
+      params => {
+        const formattedParams = params
+
+        if (params.nestedQueryList.length > 0) {
+          params.nestedQueryList.forEach((item, index) => {
+            formattedParams[`nestedQueriesList[${index}].path`] = item.path
+            formattedParams[`nestedQueriesList[${index}].query`] = item.query
+            formattedParams[`nestedQueriesList[${index}].type`] = item.type
+          })
+        }
+        delete formattedParams.nestedQueryList
+        if (params?.options) {
+          formattedParams['inspiration'] = (params.options && params.options.inspiration) || false
+          delete formattedParams.options
+        }
+
+        return `${this.endpoint}/materials/v1/export?${qs.stringify(
+          formattedParams,
+        )}`
+      },
+      this.headers,
+      this.logContext,
+    )
+    this.exportColor = loadListing(
+      params => {
+        const formattedParams = params
+
+        if (params.nestedQueryList.length > 0) {
+          params.nestedQueryList.forEach((item, index) => {
+            formattedParams[`nestedQueriesList[${index}].path`] = item.path
+            formattedParams[`nestedQueriesList[${index}].query`] = item.query
+            formattedParams[`nestedQueriesList[${index}].type`] = item.type
+          })
+        }
+        delete formattedParams.nestedQueryList
+
+        return `${this.endpoint}/materials/v1/export/color?${qs.stringify(
+          formattedParams,
+        )}`
+      },
+      this.headers,
+      this.logContext,
+    )
+
+    this.exportArchromaColor = loadListing(
+      params => {
+        const formattedParams = params
+
+        if (params.nestedQueryList.length > 0) {
+          params.nestedQueryList.forEach((item, index) => {
+            formattedParams[`nestedQueriesList[${index}].path`] = item.path
+            formattedParams[`nestedQueriesList[${index}].query`] = item.query
+            formattedParams[`nestedQueriesList[${index}].type`] = item.type
+          })
+        }
+        delete formattedParams.nestedQueryList
+
+        return `${this.endpoint}/materials/v1/export/color?${qs.stringify(
+          formattedParams,
+        )}`
+      },
+      this.headers,
+      this.logContext,
+    )
+
+    this.searchTeamsByType = loadListing(
+      queryParams =>
+        `${this.endpoint}/teams/v1/custom/search?${qs.stringify(queryParams)}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchTeamsResourceType = loadListing(
+      queryParams =>
+        `${this.endpoint}/teams/v1/type/search?${qs.stringify(queryParams)}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchProductDetailsTemplateSuggestions = loadListing(
+      queryParams =>
+        `${this.endpoint}/constructiontemplate/v1/suggest?${qs.stringify(
+          queryParams,
+        )}`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+
+    this.searchProductDetailsTemplates = loadListing(
+      queryParams =>
+        `${this.endpoint}/constructiontemplate/v1/search?${qs.stringify(
+          queryParams,
+        )}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.requestBulkAttachmentExport = postOne(
+      ({q, filter}) =>
+        `${this.endpoint}/attachments/v1/export${
+          q || (filter && filter.length > 0)
+            ? `?${buildURLParam(q, filter)}`
+            : ''
+        }`,
+      this.headers,
+      {
+        transform: singleDeepToCamelCase,
+        transformRequest: singleDeepToSnakeCase,
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+
+    this.requestPackagingExport = postOne(
+      ({q, filter}) =>
+        `${this.endpoint}/packaging/v1/export${
+          q || (filter && filter.length > 0)
+            ? `?${buildURLParam(q, filter)}`
+            : ''
+        }`,
+      this.headers,
+      {
+        transform: singleDeepToCamelCase,
+        transformRequest: singleDeepToSnakeCase,
+        throwOnError: true,
+      },
+      this.logContext,
+    )
+
+    this.exportTrim = loadListing(
+      params => {
+        const formattedParams = params
+
+        if (params.nestedQueryList.length > 0) {
+          params.nestedQueryList.forEach((item, index) => {
+            formattedParams[`nestedQueriesList[${index}].path`] = item.path
+            formattedParams[`nestedQueriesList[${index}].query`] = item.query
+            formattedParams[`nestedQueriesList[${index}].type`] = item.type
+          })
+        }
+        delete formattedParams.nestedQueryList
+
+        return `${this.endpoint}/materials/v1/export/trim?${qs.stringify(
+          formattedParams,
+        )}`
+      },
+      this.headers,
+      this.logContext,
+    )
+
+    this.exportWash = loadListing(
+      params => {
+        const formattedParams = params
+
+        if (params.nestedQueryList.length > 0) {
+          params.nestedQueryList.forEach((item, index) => {
+            formattedParams[`nestedQueriesList[${index}].path`] = item.path
+            formattedParams[`nestedQueriesList[${index}].query`] = item.query
+            formattedParams[`nestedQueriesList[${index}].type`] = item.type
+          })
+        }
+        delete formattedParams.nestedQueryList
+
+        return `${this.endpoint}/materials/v1/export/wash?${qs.stringify(
+          formattedParams,
+        )}`
+      },
+      this.headers,
+      this.logContext,
+    )
+    this.searchWatchlist = loadListing(
+      `${this.endpoint}/watchlist/v1/search`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getInisghtsDevRatioAndAdoption = loadListing(
+      query =>
+        `${
+          this.endpoint
+        }/enterprise_product_development/insights_search/v1/fabrics_dev_ratio?q=${query}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchProducts = loadListing(
+      query => `${this.endpoint}/products/v1/search?${query}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+    this.megaSearch = loadListing(
+      query => `${this.endpoint}/mega_search/v1/search?${qs.stringify(query)}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchClaimsByProxyIds = permissionJWT =>
+      loadListing(
+        `${this.endpoint}/claims/v1`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: results => results && deepToCamelCase(results),
+        },
+        this.logContext,
+      )
+    this.exportCombinations = loadListing(
+      `${this.endpoint}/combinations/v1/export`,
+      this.headers,
+      this.logContext,
+    )
+    this.getSampleCount = loadListing(
+      resourceId =>
+        `${this.endpoint}/samples/v1/count?resourceId=${resourceId}`,
+      this.headers,
+      {
+        transform: results => {
+          const samples = results && deepToCamelCase(results)
+          return samples.samplesCount || []
+        },
+      },
+      this.logContext,
+    )
+
+    this.getMaterialSamplesGroupBy = loadListing(
+      `${
+        this.endpoint
+      }/enterprise_product_development/insights_search/v1/material_samples`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getConnectedBOMs = loadListing(
+      `${
+        this.endpoint
+      }/enterprise_product_development/insights_search/v1/connected_boms`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getRequestedSampleByUser = loadListing(
+      `${
+        this.endpoint
+      }/enterprise_product_development/insights_search/v1/requested_evaluated_samples_by_user`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.searchMaterialsBom = loadListing(
+      params => `${this.endpoint}/materials/v1/bom_materials?${qs.stringify(params)}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+
+    this.getMaterialByIds = loadOne(
+      id => `${this.endpoint}/materials/v1?contextIds=${id}`,
+      this.headers,
+      {
+        transform: (ids, json) =>
+          deepToCamelCase(ids.map(id => find(json.content, {id}) || null)),
+      },
+      this.logContext,
+    )
+    // This Will Search from Elastic Data base
+    this.getFilteredProductsWithSummary = loadListing(
+      ({resourceType, resourceId, q, filter, page, size}) =>
+        `${
+          this.endpoint
+        }/products/v1/search_summary?resourceType=${resourceType}&resourceId=${resourceId}${buildURLParam(
+          q,
+          filter,
+          page,
+          size,
+        )}`,
+      this.headers,
+      {
+        transform: response => {
+          let transformedProduct =
+            response &&
+            response.productsPaged &&
+            response.productsPaged.content &&
+            response.productsPaged.content.map(product => product.human_id)
+          transformedProduct = transformedProduct || []
+          let receivedNotEvaluatedByWorkspaceCount =
+            response && response.receivedNotEvaluatedByWorkspaceCount
+              ? response.receivedNotEvaluatedByWorkspaceCount
+              : 0
+          let workspaceProductDashboard = response && response.workspaceProductDashboard
+          return {
+            products: transformedProduct,
+            receivedNotEvaluatedByWorkspaceCount: receivedNotEvaluatedByWorkspaceCount,
+            workspaceProductDashboard: workspaceProductDashboard,
+          }
+        },
+      },
+      this.logContext,
+    )
+    this.exportFabricCosting = loadListing(
+      params => {
+        const formattedParams = params
+
+        if (params.nestedQueryList.length > 0) {
+          params.nestedQueryList.forEach((item, index) => {
+            formattedParams[`nestedQueriesList[${index}].path`] = item.path
+            formattedParams[`nestedQueriesList[${index}].query`] = item.query
+            formattedParams[`nestedQueriesList[${index}].type`] = item.type
+          })
+        }
+        delete formattedParams.nestedQueryList
+
+        return `${this.endpoint}/materials/v1/export/costing?${qs.stringify(
+          formattedParams,
+        )}`
+      },
+      this.headers,
+      this.logContext,
+    )
+
+    this.exportComboICSReport = loadListing(
+      `${this.endpoint}/combinations/v1/comboICSExport`,
+      this.headers,
+      this.logContext,
+    )
+
+    this.exportMaterials = postOne(
+      `${this.endpoint}/materials/v2/export`,
+      this.headers,
+      {
+        transform: body => deepToCamelCase(body),
+        transformRequest: body => deepToSnakeCase(body),
+      },
+      this.logContext,
+    )
+
+    this.searchMaterialsV2 = postOne(
+      `${this.endpoint}/materials/v2/search`,
+      this.headers,
+      {
+        transform: body => deepToCamelCase(body),
+        transformRequest: body => deepToSnakeCase(body),
+      },
+      this.logContext,
+    )
+    this.multiRequestMaterialSearch = postOne(
+      `${this.endpoint}/materials/v2/multiSearch`,
+      this.headers,
+      {
+        transform: body => deepToCamelCase(body),
+        transformRequest: body => deepToSnakeCase(body),
+      },
+      this.logContext,
+    )
+    this.searchAttachmentsByParentAndRelatedResource = loadOne(
+      (queryParams) =>
+        `${this.endpoint}/attachments/v1?parentIds=${queryParams[0].parentResourceId}&relatedIds=${queryParams[0].relatedResourceId}&size=10000`,
+      this.headers,
+      {
+        maxBatchSize: 75,
+        transform: (ids, json) =>
+          deepToCamelCase(
+            ids.map(({parentResourceId}) =>
+              json.content.filter(attachment =>
+                attachment.parent_resource === parentResourceId,
+              ),
+            ),
+          ),
+      },
+      this.logContext,
+    )
+    this.searchAttachmentsByParentResources = loadListing(
+      parentIds =>
+        `${this.endpoint}/attachments/v1?parentIds=${parentIds.join(
+          ',',
+        )}&size=10000`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+    this.searchRfidLocations = loadListing(
+      queryParams => `${this.endpoint}/rfid_tags/v1?${qs.stringify(queryParams)}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+    this.searchLatestRfidLocations = loadListing(
+      queryParams => `${this.endpoint}/rfid_tags/v1/latest-by-tag?${qs.stringify(queryParams)}`,
+      this.headers,
+      {
+        transform: results => results && deepToCamelCase(results),
+      },
+      this.logContext,
+    )
+    this.getRfidSuggestions = loadListing(
+      `${this.endpoint}/rfid_tags/v1/suggest`,
+      this.headers,
+      {},
+      this.logContext,
+    )
+  }
+}

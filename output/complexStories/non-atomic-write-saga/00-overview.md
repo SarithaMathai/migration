@@ -5,12 +5,12 @@
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 
 > **Home domains:** bom, measurement, packaging, productDetails, watchlist, claims, sample, product
-> **Stub stories:** `SPARK-BOM-E01`, `SPARK-MEAS-E01`, `SPARK-PKG-E01`, `SPARK-PDTL-E01`, `SPARK-WL-E01`, `SPARK-CLM-E01`, `SPARK-SMPL-E01/E02` (later phase), `SPARK-PROD-E02`
+> **Stub stories:** `SPARK-BOM-E01`, `SPARK-MEAS-E01`, `SPARK-PKG-E01`, `SPARK-PDTL-E01`, `SPARK-WL-E01`, `SPARK-CLM-E01`, `SPARK-SMPL-E01/E02`, `SPARK-PROD-E02`
 
 > **Migrates (source resolvers → this case):** nine multi-step mutations — `updateBom` (`SPARK-BOM-E01`),
 > `updateMeasurement` (`SPARK-MEAS-E01`), `updatePackaging` (`SPARK-PKG-E01`), `updateProductDetailsSet`
 > (`SPARK-PDTL-E01`), `updateWatchlistEntries` (`SPARK-WL-E01`), `updateClaim` (`SPARK-CLM-E01`), `updateSamplesV2`
-> (`SPARK-SMPL-E01` (later phase)), `bulkEvaluateSamples` (`SPARK-SMPL-E02` (later phase)), `updateComponentStatuses` (`SPARK-PROD-E02`/M20).
+> (`SPARK-SMPL-E01`), `bulkEvaluateSamples` (`SPARK-SMPL-E02`), `updateComponentStatuses` (`SPARK-PROD-E02`/M20).
 >.
 
 ## 1. The problem (it recurs in 8+ places)

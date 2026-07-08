@@ -6,12 +6,12 @@
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 
 > **Home domains:** bom (`plm-product`), sample (`plm-sample`), search (`plm-elastic-search`)
-> **Stub stories:** `SPARK-BOM-G08`/material interface, `SPARK-SMPL-G02` (later phase)/`A04`, `SPARK-SRCH-G01` (later phase)/`G02`
+> **Stub stories:** `SPARK-BOM-G08`/material interface, `SPARK-SMPL-G02`/`A04`, `SPARK-SRCH-G01`/`G02`
 
 > **Migrates (source resolvers → this case):** bom **TR `BomMaterialInterface.__resolveType`** +
 > **`BomImpressionDetailsInterface.__resolveType`** (`SPARK-BOM-A04`, material FRs `SPARK-BOM-G08`); sample
-> **TR `SampleAsset` union** (`SPARK-SMPL-A04` (later phase)) + **FR `SampleV2.parent*`** (`SPARK-SMPL-G02` (later phase)); search
-> **Q `materialsSearch`** polymorphic stubs (`SPARK-SRCH-C02` (later phase)/`B01`).
+> **TR `SampleAsset` union** (`SPARK-SMPL-A04`) + **FR `SampleV2.parent*`** (`SPARK-SMPL-G02`); search
+> **Q `materialsSearch`** polymorphic stubs (`SPARK-SRCH-C02`/`B01`).
 > **Note:** two further `__resolveType` sites (discussion `Resource` union, product `SPARK_Categories`) are not
 > yet in this case — see `../REVIEW-findings.md` §2.
 

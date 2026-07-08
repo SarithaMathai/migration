@@ -1,0 +1,251 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for all 13 domains; each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-SMPL-B01,(Sample) getSampleById(id) [SPARK-SMPL-B01],,Federate BreakDown Product,B,XS,dgs-migration,sample,query,,SPARK-SPIKE-05,To Do,"*Requires spike:* SPARK-SPIKE-05 (Polymorphic Type Resolution) — see program spike
+
+*Current Behaviour:*
+* (own) `getSampleById.load(id)`.
+
+*Target:*
+* `@DgsQuery → SampleV2`.
+
+*Acceptance Criteria:*
+1. returns sample; miss→null"
+Story,SPARK-SMPL-B02,(Sample) getSamplesByIdsV2(ids) (batched) [SPARK-SMPL-B02],,Federate BreakDown Product,B,M,dgs-migration,sample,query,,B01,To Do,"*Current Behaviour:*
+* `batchParallelOperation(chunk)` → (ACL) token per batch → (own) `getSamplesByIdsV2ByPost`. **Side-effect:** exactly-one → (🔵 recentlyViewed) `addRecentlyViewed`.
+
+*Target:*
+* `@DgsQuery → [SampleV2]`; chunked.
+
+*Acceptance Criteria:*
+1. batched by chunk size
+2. single → recentlyViewed"
+Story,SPARK-SMPL-B03,(Sample) getSamplesByParentId(humanId) [SPARK-SMPL-B03],,Federate BreakDown Product,B,M,dgs-migration,sample,query,,B01,To Do,"*Current Behaviour:*
+* (🟡 relationship) `getByID({id, type:'sample', maxDepth:0})` → ids → (ACL) token → (own) `getSamplesByIdsV2`; empty → [].
+
+*Target:*
+* `@DgsQuery → [SampleV2]`.
+
+*Acceptance Criteria:*
+1. relationship→ids→samples chain"
+Story,SPARK-SMPL-B04,(Sample) getColorSamplesByParentId(id) [SPARK-SMPL-B04],,Federate BreakDown Product,B,XS,dgs-migration,sample,query,,B01,To Do,"*Current Behaviour:*
+* (own) `getColorSamplesByParentId.load(id)`.
+
+*Target:*
+* `@DgsQuery → [SampleV2]`.
+
+*Acceptance Criteria:*
+1. returns color samples"
+Story,SPARK-SMPL-B05,(Sample) getSampleRounds(humanId) [SPARK-SMPL-B05],,Federate BreakDown Product,B,XS,dgs-migration,sample,query,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → (own) `getSampleRounds`.
+
+*Target:*
+* `@DgsQuery → [SampleV2]`.
+
+*Acceptance Criteria:*
+1. returns rounds"
+Story,SPARK-SMPL-B06,(Sample) getSampleExports [SPARK-SMPL-B06],,Federate BreakDown Product,B,XS,dgs-migration,sample,query,,B01,To Do,"*Current Behaviour:*
+* (own) `getSampleExports`.
+
+*Target:*
+* `@DgsQuery → [SampleExport]`.
+
+*Acceptance Criteria:*
+1. returns exports"
+Story,SPARK-SMPL-B07,(Sample) getSampleNotificationErrors [SPARK-SMPL-B07],,Federate BreakDown Product,B,XS,dgs-migration,sample,query,,B01,To Do,"*Current Behaviour:*
+* (🟡 notification) `getSampleNotificationErrors`.
+
+*Target:*
+* `@DgsQuery → [SampleNotificationError]`.
+
+*Acceptance Criteria:*
+1. returns errors"
+Story,SPARK-SMPL-B08,(Sample) Master-data type/format/purpose queries (cacheable bundle) [SPARK-SMPL-B08],,Federate BreakDown Product,B,XS,dgs-migration,sample,query,,B01,To Do,"*Current Behaviour:*
+* thin (own) master-data loads.
+
+*Target:*
+* `@DgsQuery` each → `@Cacheable`.
+
+*Acceptance Criteria:*
+1. each returns its list; cached"
+Story,SPARK-SMPL-C01,(Sample) getSampleLocationByIds(ids) [SPARK-SMPL-C01],,Federate BreakDown Product,C,L,dgs-migration,sample,search,,B01,To Do,"*Current Behaviour:*
+* batched samples → for each with `rfidTagIds` → (🔴 search) `searchLatestRfidLocations({q: tagIds OR-joined})` → reduce to latest `lastSeen` → `{id, locationDescription, lastSeen}`; flatten.
+
+*Target:*
+* `@DgsQuery → [RfidSampleLocation]`; batch tag queries.
+
+*Acceptance Criteria:*
+1. latest-location reduce correct
+2. no tags → []
+
+*Test Cases:*
+* [ ] latest reduce
+* [ ] no-tags
+* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+Story,SPARK-SMPL-C02,(Sample) getSamplesByRfidTagIds(ids) [SPARK-SMPL-C02],,Federate BreakDown Product,C,M,dgs-migration,sample,search,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → (own) `getSamplesByRfidTagIds`.
+
+*Target:*
+* `@DgsQuery → [SampleRfidTagPair]`.
+
+*Acceptance Criteria:*
+1. returns tag→sample pairs"
+Story,SPARK-SMPL-D01,(Sample) createSamplesV2 [SPARK-SMPL-D01],,Federate BreakDown Product,D,M,dgs-migration,sample,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `createSamplesV2`; **if first new sample has files** → (🟡 relationship) `createSampleAttachmentRelationship` + (ACL) token + (🟡 attachment) `bulkUpdateAttributes` (stamp resource/related). No rollback.
+
+*Target:*
+* `@DgsMutation → [SampleV2]`.
+
+*Acceptance Criteria:*
+1. creates
+2. file-relationship + attribute side-effects when files present"
+Story,SPARK-SMPL-D02,(Sample) createSampleRoundV2 [SPARK-SMPL-D02],,Federate BreakDown Product,D,XS,dgs-migration,sample,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token `[sampleId, SAMPLE_EVALUTION]` → (own) `createSampleRoundV2`.
+
+*Target:*
+* `@DgsMutation → SampleV2`.
+
+*Acceptance Criteria:*
+1. creates a round"
+Story,SPARK-SMPL-D03,(Sample) updateSampleWorkspaceAssociation [SPARK-SMPL-D03],,Federate BreakDown Product,D,XS,dgs-migration,sample,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token `[sampleId, workspaceId]` → (own) `updateSampleWorkspaceAssociation`.
+
+*Target:*
+* `@DgsMutation → SampleV2`.
+
+*Acceptance Criteria:*
+1. associates sample to workspace"
+Story,SPARK-SMPL-D04,(Sample) requestSampleExport [SPARK-SMPL-D04],,Federate BreakDown Product,D,XS,dgs-migration,sample,mutation,,B01,To Do,"*Current Behaviour:*
+* (own) `requestSampleExport`.
+
+*Target:*
+* `@DgsMutation → String`.
+
+*Acceptance Criteria:*
+1. returns request id"
+Story,SPARK-SMPL-D05,(Sample) retrySampleNotificationError [SPARK-SMPL-D05],,Federate BreakDown Product,D,XS,dgs-migration,sample,mutation,,B01,To Do,"*Current Behaviour:*
+* (🟡 notification) `retrySampleNotificationError(failedMessageId)`.
+
+*Target:*
+* `@DgsMutation`.
+
+*Acceptance Criteria:*
+1. retries one"
+Story,SPARK-SMPL-D06,(Sample) retryAllSampleNotificationErrors [SPARK-SMPL-D06],,Federate BreakDown Product,D,XS,dgs-migration,sample,mutation,,B01,To Do,"*Current Behaviour:*
+* (🟡 notification) `retryAllSampleNotificationErrors`.
+
+*Target:*
+* `@DgsMutation → [...]`.
+
+*Acceptance Criteria:*
+1. retries all"
+Story,SPARK-SMPL-D07,(Sample) bulkCloneFilesForEvaluate [SPARK-SMPL-D07],,Federate BreakDown Product,D,M,dgs-migration,sample,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → `Promise.all(attachmentIds.map(id => (🟡 attachment) cloneAttachmentV3({cloneReferences}, id)))`, flatten.
+
+*Target:*
+* structured-concurrency fan-out.
+
+*Acceptance Criteria:*
+1. clones each id"
+Story,SPARK-SMPL-E01,(Sample) updateSamplesV2 [SPARK-SMPL-E01],,Federate BreakDown Product,E,L,dgs-migration,sample,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* (ACL) token for all `updateSamples[].id` + `SAMPLE_EVALUTION` → (own) `updateSamplesV2`.
+
+*Target:*
+* `@DgsMutation → [SampleV2]`.
+
+*Acceptance Criteria:*
+1. bulk-updates samples (eval-scoped token)
+
+*Test Cases:*
+* [ ] update
+* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+Story,SPARK-SMPL-E02,(Sample) bulkEvaluateSamples [SPARK-SMPL-E02],,Federate BreakDown Product,E,L,dgs-migration,sample,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* delegates to `bulkEvaluateSampleUtil(ctx, updateSamples, newSampleRounds)` — applies evaluations and creates new sample rounds.
+
+*Target:*
+* port the util as a service; choose a failure strategy if partial.
+
+*Acceptance Criteria:*
+1. evaluations + new rounds applied
+2. partial-failure handling decided
+
+*Test Cases:*
+* [ ] evaluate
+* [ ] new rounds
+* [ ] partial
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Complex — broken into sub-tasks:* E02-1 evaluation orchestrator · E02-2 new-rounds utility"
+Story,SPARK-SMPL-F01,(Sample) SampleV2 federated entity fetcher [SPARK-SMPL-F01],,Federate BreakDown Product,F,M,dgs-migration,sample,field-resolver,,B01,To Do,"*Target:*
+* `@DgsEntityFetcher(name=""SampleV2"")` resolving by `id`, so product (`Product.samples`/`sampleIds`), measurement (`SampleV2.sampleMeasurement` — `SPARK-MEAS-F02`), and workspace resolve sample over the gateway.
+
+*Acceptance Criteria:*
+1. entity resolves by key
+2. `Product { samples { id } }` cross-subgraph smoke test"
+Story,SPARK-SMPL-F02,(Sample) Deferred drift mutation decision [SPARK-SMPL-F02],,Federate BreakDown Product,F,XS,dgs-migration,sample,field-resolver,,E02,To Do,"*Current Behaviour:*
+* `updateSampleEvaluations` (no resolver — superseded by `bulkEvaluateSamples`), `dropSamples`/`undropSamples` (no resolver — run inside `workspaceBusinessPartnerActionsV2`).
+
+*Target:*
+* Product Owner decides delete vs keep `@deprecated`; coordinate drop/undrop ownership with workspace.
+
+*Acceptance Criteria:*
+1. decision + traffic survey"
+Story,SPARK-SMPL-G01,(Sample) Users (created/updated/evaluated + evaluators + primary roles) [SPARK-SMPL-G01],,Federate BreakDown Product,G,M,dgs-migration,sample,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `createdBy`/`updatedBy`/`evaluatedBy` (🟡 user; `systemGenerated` → `systemUser`), `designEvaluators`/`technicalEvaluators` (🟡 user map), `createdByInternalPrimaryRole`/`evaluatedByInternalPrimaryRole` (🔵 role).
+
+*Acceptance Criteria:*
+1. each resolves; system-user branch preserved"
+Story,SPARK-SMPL-G02,(Sample) Prefix-gated parents + SampleAsset union [SPARK-SMPL-G02],,Federate BreakDown Product,G,L,dgs-migration,sample,field-resolver,,B01,To Do,"*Current Behaviour:*
+* prefix-gated hydration — `product` (PID, 🟡 product), `colorArchroma` (ARCCLR/TARARCCLR/REFARCCLR, 🟡 colorArchroma), `fabricSpecCombo` (FSC, 🟡 combination), `fabricSpec` (FAS, 🟡 fabric), `artwork` (ART, 🟡 artwork), `trim` (🟡 trim), `asset` (union via 🟡 material).
+
+*Target:*
+* central prefix→loader table; `asset` resolves via the `SampleAsset` `@DgsTypeResolver` (A04).
+
+*Acceptance Criteria:*
+1. each prefix routes to the right loader
+2. `asset` union resolves
+3. non-matching → null
+
+*Test Cases:*
+* [ ] each prefix
+* [ ] union
+* [ ] null
+
+*Complex — broken into sub-tasks:* G02-1 prefix→loader table + DataLoader · G02-2 parent field resolvers + union"
+Story,SPARK-SMPL-G03,(Sample) Partners (businessPartner/fabricSupplier/merchandiseVendors/brand/designPartnerId) [SPARK-SMPL-G03],,Federate BreakDown Product,G,M,dgs-migration,sample,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `businessPartner`/`fabricSupplier`/`merchandiseVendors` (🔵 vmm), `brand` (🔵 brand), `designPartnerId` (computed from `dpPartnerId`).
+
+*Acceptance Criteria:*
+1. each resolves; empty → []"
+Story,SPARK-SMPL-G04,(Sample) workspace + sampleMeasurementSet + designCycle + clmPackage [SPARK-SMPL-G04],,Federate BreakDown Product,G,M,dgs-migration,sample,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `workspace` (🟡 workspace `getWorkspaceV2`), `sampleMeasurementSet` (🟡 measurement `getSampleMeasurement` — F02; gated on `sampleMeasurementSetId`), `sampleMeasurementSetAssociation` (computed), `designCycle` (🔵 tag), `clmPackage` (🔵 tgtColorEvaluator).
+
+*Acceptance Criteria:*
+1. each resolves; gates preserved"
+Story,SPARK-SMPL-G05,(Sample) attachments + rfidLocationInfo + currentLocations [SPARK-SMPL-G05],,Federate BreakDown Product,G,M,dgs-migration,sample,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `attachments` (🔴 search `searchAttachmentsByRelatedResource`); `rfidLocationInfo`/`currentLocations` (🔴 search `searchLatestRfidLocations` + latest reduce).
+
+*Acceptance Criteria:*
+1. attachments via elastic
+2. rfid latest-location preserved"
+Story,SPARK-SMPL-G06,(Sample) participants + sub-types (+ library color + department) [SPARK-SMPL-G06],,Federate BreakDown Product,G,M,dgs-migration,sample,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `discussionParticipants` (computed default), `participants` (🔵 userGroup, `isParticipantsFromUserGroup` branch); `SampleDiscussionParticipantTeamInfoV2.businessPartner` (🔵 vmm, Target-0); `SampleDiscussionParticipantUserInfoV2.userDetails` (🟡 user/systemUser); `SampleDiscussionsParticipantsV2.teams`/`users` (computed); `SampleLibraryColorsV2.color` (🟡 color); `SampleDepartment.department` (🔵 ig).
+
+*Acceptance Criteria:*
+1. each resolves; Target-0 + system-user preserved"
+Story,SPARK-SMPL-G07,"(Sample) Tests, parity harness, load test [SPARK-SMPL-G07]",,Federate BreakDown Product,G,L,dgs-migration,sample,field-resolver,,"B02, E02, G02",To Do,"*Target:*
+* ≥80% unit coverage; parity harness (incl. batched by-ids, bulkEvaluate, prefix-gated parents + the `SampleAsset` union, rfid latest-location); load test p95 for `getSamplesByIdsV2`/parents; contract test (schema diff intentional-only).
+
+*Acceptance Criteria:*
+1. unit ≥80%
+2. parity green
+3. load p95 parity
+4. schema-diff intentional
+
+*Test Cases:*
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+* [ ] Load: p95 latency is within spark-internal-graphql baseline
+* [ ] contract"

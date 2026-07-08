@@ -1,0 +1,87 @@
+import { deepToCamelCase, deepToSnakeCase, transformUpdateParticipantsV2, transformDiscussionMutateV2, transformDiscussionsMutateV2 } from '../utils/convertFunctions'
+import postOne from '../utils/postOne'
+import putOne from '../utils/putOne'
+import loadListing from '../utils/loadListing'
+
+import SparkService from './SparkService'
+export default class DiscussionV3Service extends SparkService {
+  constructor (endpoint, headers, logContext) {
+    super(logContext)
+    this.endpoint = endpoint + '/enterprise_product_development_discussions/v2'
+    this.headers = headers
+
+    this.createV3 = postOne(
+      `${this.endpoint}/discussion`,
+      this.headers,
+      {
+        transformRequest: sparkDiscussion => deepToSnakeCase(transformDiscussionMutateV2(sparkDiscussion)),
+        transform: discussion => discussion && deepToCamelCase(discussion),
+        primeKey: discussion => discussion.discussionId,
+      },
+      this.logContext,
+    )
+    this.createBulkV3 = postOne(
+      `${this.endpoint}/bulk-discussion`,
+      this.headers,
+      {
+        transformRequest: sparkDiscussions => deepToSnakeCase(transformDiscussionsMutateV2(sparkDiscussions)),
+      },
+      this.logContext,
+    )
+    this.updateV3 = permissionJWT =>
+      putOne(
+        sparkDiscussion =>
+          `${this.endpoint}/discussion/${sparkDiscussion.discussionId}`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: discussion => discussion && deepToCamelCase(discussion),
+          transformRequest: discussion => deepToSnakeCase(transformDiscussionMutateV2(discussion)),
+          primeKey: discussion => discussion.discussionId,
+        },
+        this.logContext,
+      )
+    this.updateParticipantsV3 = permissionJWT =>
+      postOne(
+        ({ id }) => `${this.endpoint}/discussion/${id}/participants`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transformRequest: participants => deepToSnakeCase(transformUpdateParticipantsV2(participants)),
+          transform: discussion => discussion && deepToCamelCase(discussion),
+          primeKey: discussion => discussion.discussionId,
+        },
+        this.logContext,
+      )
+
+    this.getVersionedDiscussionThreads = permissionJWT =>
+      loadListing(
+        (id) => `${this.endpoint}/thread/${id}/versions`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: discussion => discussion && deepToCamelCase(discussion),
+        },
+        this.logContext,
+      )
+
+    this.getVersionedDiscussions = permissionJWT =>
+      loadListing(
+        (id) => `${this.endpoint}/${id}/versions`,
+        {
+          ...this.headers,
+          'SPARK-Capability-Token': permissionJWT,
+        },
+        {
+          transform: discussion => discussion && deepToCamelCase(discussion),
+        },
+        this.logContext,
+      )
+  }
+}

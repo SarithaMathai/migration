@@ -4,10 +4,10 @@
 > **Spike:** `SPARK-SPIKE-03` · **Status:** 🔴 Open — decision pending
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 
-> **Home domains:** product (`plm-product`) + workspace (`plm-workspace`) · **Stub story:** `SPARK-PROD-E01` + `SPARK-WS-E01` (later phase)
+> **Home domains:** product (`plm-product`) + workspace (`plm-workspace`) · **Stub story:** `SPARK-PROD-E01` + `SPARK-WS-E01`
 
 > **Migrates (source resolvers → this case):** product **M10 `productBusinessPartnerActions`** (`SPARK-PROD-E01`)
-> + workspace **M7 `workspaceBusinessPartnerActionsV2`** (`SPARK-WS-E01` (later phase), 5-case dispatcher), fanning out to
+> + workspace **M7 `workspaceBusinessPartnerActionsV2`** (`SPARK-WS-E01`, 5-case dispatcher), fanning out to
 > per-domain drop/undrop participants (sample, discussion, claims, attachment, ACL, user-profile). Full per-task
 > mapping: 
 

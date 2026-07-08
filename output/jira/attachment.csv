@@ -1,0 +1,203 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for all 13 domains; each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-ATCH-B01,(Attachment) getAttachmentsV3(ids) [SPARK-ATCH-B01],,Federate BreakDown Product,B,XS,dgs-migration,attachment,query,,,To Do,"*Current Behaviour:*
+* empty ids → []; (ACL) token → (own) `GET /attachments/v3?humanIds=`.
+
+*Target:*
+* `@DgsQuery → [Attachment]`.
+
+*Acceptance Criteria:*
+1. returns attachments; empty ids → []"
+Story,SPARK-ATCH-B02,(Attachment) getAttachmentsByResource(resourceId) [SPARK-ATCH-B02],,Federate BreakDown Product,B,M,dgs-migration,attachment,query,,B01,To Do,"*Current Behaviour:*
+* (🟡 relationship) `searchByIds({id, includeNodeTypes:['attachments','attachments_v3'], maxDepth:0})` → ids → (accessControl) `getUserAccessByPost` → (own) `getAttachmentsByPostV3`.
+
+*Target:*
+* `@DgsQuery → [Attachment]`.
+
+*Acceptance Criteria:*
+1. relationship→ids→attachments chain"
+Story,SPARK-ATCH-B03,(Attachment) getAttachmentsByResourceAndOwner(resourceId) [SPARK-ATCH-B03],,Federate BreakDown Product,B,M,dgs-migration,attachment,query,,B01,To Do,"*Current Behaviour:*
+* (🟡 relationship) ids → (own) `getAttachmentsByIdsAndAuthorByPostV3`.
+
+*Target:*
+* `@DgsQuery → [Attachment]`.
+
+*Acceptance Criteria:*
+1. returns attachments incl. author"
+Story,SPARK-ATCH-B04,(Attachment) Renders queries (getRendersForAttachmentIds/V3Ids/byPost) [SPARK-ATCH-B04],,Federate BreakDown Product,B,M,dgs-migration,attachment,query,,B01,To Do,"*Current Behaviour:*
+* map each id → (own) renders loader (betaMode), compact; byPost uses an ACL token.
+
+*Target:*
+* `@DgsQuery → [GalleryAttachment]`.
+
+*Acceptance Criteria:*
+1. each variant returns renders; betaMode honored"
+Story,SPARK-ATCH-B05,(Attachment) getAttachmentsfromRelatedResource(s) [SPARK-ATCH-B05],,Federate BreakDown Product,B,M,dgs-migration,attachment,query,,B01,To Do,"*Current Behaviour:*
+* (🔴 search) `searchAttachmentsByParentAndRelatedResource` / `…ByRelatedResource(s)` → content or [].
+
+*Target:*
+* `@DgsQuery → [SearchAttachment]`.
+
+*Acceptance Criteria:*
+1. parent+related vs related-only branches"
+Story,SPARK-ATCH-D01,(Attachment) archiveAttachmentV3 [SPARK-ATCH-D01],,Federate BreakDown Product,D,XS,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → (own) `archiveAttachmentV3(id)`.
+
+*Target:*
+* `@DgsMutation → Attachment`.
+
+*Acceptance Criteria:*
+1. archives"
+Story,SPARK-ATCH-D02,(Attachment) deleteAttachmentV3 [SPARK-ATCH-D02],,Federate BreakDown Product,D,XS,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → (own) `deleteAttachmentV3(humanId)` → String.
+
+*Target:*
+* `@DgsMutation → String`.
+
+*Acceptance Criteria:*
+1. deletes; returns status"
+Story,SPARK-ATCH-D03,(Attachment) copyAttachmentsV3 [SPARK-ATCH-D03],,Federate BreakDown Product,D,M,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token for `humanIds` → (own) `copyAttachmentsV3`.
+
+*Target:*
+* `@DgsMutation → CopyAttachment`.
+
+*Acceptance Criteria:*
+1. copies; returns thumbnail + copies"
+Story,SPARK-ATCH-D04,(Attachment) associateResourcesV3 [SPARK-ATCH-D04],,Federate BreakDown Product,D,XS,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → (own) `associateResourcesV3`.
+
+*Target:*
+* `@DgsMutation → [Attachment]`.
+
+*Acceptance Criteria:*
+1. associates resources"
+Story,SPARK-ATCH-D05,(Attachment) removeResourcesV3 [SPARK-ATCH-D05],,Federate BreakDown Product,D,XS,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → (own) `removeResourcesV3`.
+
+*Target:*
+* `@DgsMutation → [Attachment]`.
+
+*Acceptance Criteria:*
+1. removes resources"
+Story,SPARK-ATCH-D06,(Attachment) updateAttachmentsACLPermissions [SPARK-ATCH-D06],,Federate BreakDown Product,D,M,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* build bulk `{resourceId, dps:[{permissionLevel:ADMIN/READ, grantees:[partnerId]}]}` for admin/read id lists → (accessControl) `updateAccessControl`. **Note:** this is an **ACL write** (grant data — build work).
+
+*Target:*
+* `@DgsMutation → AccessControl`.
+
+*Acceptance Criteria:*
+1. ADMIN/READ DTOs built correctly per id list"
+Story,SPARK-ATCH-D07,(Attachment) updateAttachmentTags + updateAttachmentTagsV3 [SPARK-ATCH-D07],,Federate BreakDown Product,D,XS,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* **identical impl** — (ACL) token → (own) `updateTagsV3({attachmentId, tags})`.
+
+*Target:*
+* `@DgsMutation` (one impl, two schema fields).
+
+*Acceptance Criteria:*
+1. updates tags; both fields delegate"
+Story,SPARK-ATCH-D08,(Attachment) bulkUpdateAttachments [SPARK-ATCH-D08],,Federate BreakDown Product,D,M,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* if tags → (own) `bulkUpdateTags`; if permissions → (accessControl) `bulkUpdateAttachmentPermissions`. **Latent:** fire-and-forget; **returns undefined** (confirm contract).
+
+*Target:*
+* `@DgsMutation`; await + return updated.
+
+*Acceptance Criteria:*
+1. tags + permissions applied
+2. returns updated attachments (fix the undefined)"
+Story,SPARK-ATCH-D09,(Attachment) updateAttributes [SPARK-ATCH-D09],,Federate BreakDown Product,D,XS,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token for `documentId` → (own) `updateAttributes`.
+
+*Target:*
+* `@DgsMutation → Attachment`.
+
+*Acceptance Criteria:*
+1. updates attributes"
+Story,SPARK-ATCH-D10,(Attachment) bulkUpdateAttributes [SPARK-ATCH-D10],,Federate BreakDown Product,D,M,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token for `documentId||humanId` → (own) `bulkUpdateAttributes`.
+
+*Target:*
+* `@DgsMutation → [Attachment]`.
+
+*Acceptance Criteria:*
+1. bulk-updates attributes"
+Story,SPARK-ATCH-D11,(Attachment) bulkUpdateAttachmentsV2 [SPARK-ATCH-D11],,Federate BreakDown Product,D,M,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token for `documentId` → (own) `bulkUpdateAttachmentsV2({attachments})`.
+
+*Target:*
+* `@DgsMutation → [Attachment]`.
+
+*Acceptance Criteria:*
+1. bulk-updates (tags/packet/perms/related)"
+Story,SPARK-ATCH-D12,(Attachment) publishAttachmentToGallery [SPARK-ATCH-D12],,Federate BreakDown Product,D,M,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* **branch on `ATC-` prefix** → V3 (`publishAttachmentToGalleryV3`) or legacy (`publishAttachmentToGallery`); api returns void → return `true`.
+
+*Target:*
+* `@DgsMutation → Boolean`.
+
+*Acceptance Criteria:*
+1. ATC- → V3, else legacy
+2. returns true on no-error"
+Story,SPARK-ATCH-D13,(Attachment) unpublishAttachmentToGallery [SPARK-ATCH-D13],,Federate BreakDown Product,D,M,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* as D12, unpublish (V3/legacy by `ATC-`).
+
+*Target:*
+* `@DgsMutation → Boolean`.
+
+*Acceptance Criteria:*
+1. ATC- → V3, else legacy"
+Story,SPARK-ATCH-D14,(Attachment) associateAttachmentTeams [SPARK-ATCH-D14],,Federate BreakDown Product,D,M,dgs-migration,attachment,mutation,,B01,To Do,"*Current Behaviour:*
+* build `{teamsToUpdateDto, parentId, humanIds:files, relatedResourceIds}` → (ACL) token for `files` → (own) `associateAttachmentTeams`.
+
+*Target:*
+* `@DgsMutation → [Attachment]`.
+
+*Acceptance Criteria:*
+1. associates teams to files"
+Story,SPARK-ATCH-F01,(Attachment) Attachment federated entity fetcher [SPARK-ATCH-F01],,Federate BreakDown Product,F,M,dgs-migration,attachment,field-resolver,,B01,To Do,"*Target:*
+* `@DgsEntityFetcher(name=""Attachment"")` resolving by `id`, so product (`attachments`, `attachmentsWithMetaData`, copy flows), productDetails, packaging, workspace, sample, claims resolve attachments over the gateway. Keep `Attachment` distinct from search's `SearchAttachment`.
+
+*Acceptance Criteria:*
+1. entity resolves by key
+2. `Product { attachments { id } }` smoke test"
+Story,SPARK-ATCH-F02,(Attachment) Deferred getAttachments drift query decision [SPARK-ATCH-F02],,Federate BreakDown Product,F,XS,dgs-migration,attachment,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `getAttachments(resourceId, resourceType)` is `@deprecated(""Use v3"")` with **no resolver**.
+
+*Target:*
+* delete or keep `@deprecated`; survey consumers.
+
+*Acceptance Criteria:*
+1. decision + traffic survey"
+Story,SPARK-ATCH-G01,(Attachment) Attachment core field resolvers (snake/camel + access/users/businessPartnersFull) [SPARK-ATCH-G01],,Federate BreakDown Product,G,L,dgs-migration,attachment,field-resolver,,B01,To Do,"*Current Behaviour:*
+* ~18 coalescing fields (snake/camel) + Date parse + `id` derivation; `access` (accessControl `getPermissionsForResource`), `businessPartnersFull` (🔵 vmm), `createdBy`/`updatedBy` (🟡 user).
+
+*Target:*
+* most coalescing handled by A02's canonical DTO; thin `@DgsData` for the EXT fields.
+
+*Acceptance Criteria:*
+1. coalescing correct (both shapes)
+2. access/users/bps resolve
+
+*Test Cases:*
+* [ ] snake shape
+* [ ] camel shape
+* [ ] access
+* [ ] users
+
+*Complex — broken into sub-tasks:* G01-1 access/users · G01-2 businessPartnersFull + snake/camel"
+Story,SPARK-ATCH-G02,(Attachment) tags + modelFile + gallery sub-types [SPARK-ATCH-G02],,Federate BreakDown Product,G,M,dgs-migration,attachment,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `tags` (🟡 tag `getTags`), `modelFile` (`get3DmodelFile`); `GalleryDetails.publishedBy` (🟡 user)/`fileTypes` (🔵 gallery `getAssetFiles`) + coalescing; `GalleryFile.canOpenInShowDog`, `ThreeDFile`, `ProductPacketProps` (coalesce).
+
+*Acceptance Criteria:*
+1. each resolves; gallery fileTypes via asset id"
+Story,SPARK-ATCH-G03,"(Attachment) Tests, parity harness [SPARK-ATCH-G03]",,Federate BreakDown Product,G,L,dgs-migration,attachment,field-resolver,,"B01, D08, G01",To Do,"*Target:*
+* ≥80% unit coverage; parity harness (incl. **both record shapes**, the gallery V3/legacy branch, ACL writes, bulk updates); contract test (schema diff intentional-only, incl. `@deprecated`).
+
+*Acceptance Criteria:*
+1. unit ≥80%
+2. parity green (both shapes)
+3. schema-diff intentional
+
+*Test Cases:*
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+* [ ] contract"

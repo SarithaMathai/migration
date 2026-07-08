@@ -94,7 +94,7 @@ def build_executive_summary() -> str:
     lines: list[str] = [
         "# Federated GraphQL Migration — Executive Summary",
         "",
-        f"> **Generated:** {today} · **Pipeline Version:** 2.0 · **Scope:** {len(ALL_DOMAINS)} domains (phase 1) · **Gateway:** `spark-internal-graphql` → Netflix DGS",
+        f"> **Generated:** {today} · **Pipeline Version:** 2.0 · **Scope:** {len(ALL_DOMAINS)} domains · **Gateway:** `spark-internal-graphql` → Netflix DGS",
         "",
         "---",
         "",
@@ -337,8 +337,11 @@ def build_portfolio() -> str:
         "",
         "| Decision | Domains | Owner |",
         "|---|---|---|",
-        "| Non-atomic write failure strategy | bom, measurement, product, packaging, productDetails, claims, watchlist | Tech Lead + Product Owner |",
+        "| Non-atomic write failure strategy | bom, measurement, product, packaging, productDetails, claims, watchlist, workspace | Tech Lead + Product Owner |",
+        "| Consolidate vs preserve API versions | discussion (v1/v2/V3) | Product Owner |",
+        "| Canonical DTO for dual record shapes | attachment | Product Owner |",
         "| `update*ComponentStatus*` has no auth token | bom, measurement, product, packaging | Product Owner |",
+        "| Search cutover ordering — migrate early or dual-run | all (search) | Tech Lead + Platform |",
         "| Federation rollout order for sibling subgraphs | all | Product Owner + Platform |",
         "| TechPack facade approach (Node vs Kotlin) | product | Product Owner |",
         "| `Product.division` latent-bug fix cutover flag | product | Product Owner |",
@@ -395,7 +398,7 @@ def build_program_overview() -> str:
         "# Spark → Federated GraphQL Migration — Program Overview",
         "",
         f"> 🏷️ **Tags:** `dgs-migration` · `program-overview` — **Confluence:** *Federation Graph Migration* (space home)",
-        f"> **Generated:** {today} · **Scope:** {len(ALL_DOMAINS)} domains (phase 1) · `spark-internal-graphql` → Netflix DGS via Hive Schema Registry",
+        f"> **Generated:** {today} · **Scope:** {len(ALL_DOMAINS)} domains · `spark-internal-graphql` → Netflix DGS via Hive Schema Registry",
         "> Effort is **AI-estimated — confirm in refinement.**",
         "",
         "---",
@@ -404,9 +407,9 @@ def build_program_overview() -> str:
         "",
         "- We are moving the PLM GraphQL API off the monolithic `spark-internal-graphql` Node.js gateway onto "
         "**Netflix DGS** subgraphs, federated via the **Hive Schema Registry**.",
-        "- Phase 1 covers 8 domains: seven compile into the **same `plm-product` subgraph** "
-        "(their cross-references resolve internally); **claims** is its own subgraph.",
-        "- The remaining domains (attachment, discussion, sample, search, workspace) federate in a later phase.",
+        "- Seven domains compile into the **same `plm-product` subgraph** (their cross-references resolve "
+        "internally); **claims, search, workspace, sample, attachment, discussion** are separate subgraphs "
+        "that federate back in.",
         "",
         "**Engineering model:**",
         "- Every story is self-contained in one PR — schema + DGS data fetcher + Kotlin REST service method + Hive push.",

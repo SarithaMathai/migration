@@ -45,12 +45,12 @@ def repo_linkify(text: str) -> str:
         return f"[`{path}`]({GITHUB_REPO}/{seg}/main/{norm})"
     return re.sub(r"`((?:complexStories/|output/|adrs/|code/)[^`\s<>]+)`", repl, text)
 
-# Phase 1 scope: the 8 domains in the first production wave. Remaining domains
-# (attachment, discussion, sample, search, workspace) join in a later phase —
-# add them back here to regenerate their artifacts.
+# thirdAttempt scope: all 13 domains — the 8 phase-1 domains plus attachment,
+# discussion, sample, search and workspace.
 ALL_DOMAINS = [
-    "bom", "claims", "impression", "measurement",
-    "packaging", "product", "productDetails", "watchlist",
+    "attachment", "bom", "claims", "discussion", "impression",
+    "measurement", "packaging", "product", "productDetails",
+    "sample", "search", "watchlist", "workspace",
 ]
 
 DOMAIN_LABELS = {
@@ -254,7 +254,7 @@ def program_spike_table() -> list[str]:
         "(workspace-assoc · body · permissions · component-status) with no transaction; on partial failure state "
         "is left inconsistent. Choose the failure strategy: (a) compensating saga · (b) compensation-log + "
         "best-effort · (c) best-effort. | bom `E01` · claims `E01` · measurement `E01` · packaging `E01` · "
-        "productDetails `E01` · watchlist `E01` · product `E02` | all "
+        "productDetails `E01` · sample `E01/E02` · watchlist `E01` · discussion `E01/E02` · product `E02` | all "
         "`E`-phase writes | `complexStories/non-atomic-write-saga/` (shared `WriteSaga`) | 🔴 Open — failure strategy to decide |",
         "| `SPARK-SPIKE-02` | 🔬 **TechPack Aggregate** — build a `ProductTechPack` entity where **every field is "
         "computed from a different microservice REST API**; pick the assembly pattern (A `extend type` · B elastic "
@@ -262,7 +262,7 @@ def program_spike_table() -> list[str]:
         "`complexStories/techpack/` | 🔴 Open — assembly pattern to decide |",
         "| `SPARK-SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business "
         "partner across every referencing child domain; decide ownership (domain subgraph vs workspace) and the "
-        "write saga. | product `E01` · workspace `E01` | partner-write "
+        "write saga. | product `E01` · workspace `E01` · attachment · discussion · sample | partner-write "
         "`E`/`F` | `complexStories/partner-drop-undrop-write/` | 🔴 Open — ownership + orchestration to decide |",
         "| `SPARK-SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which "
         "partners cannot be removed/dropped because still referenced (cross-domain `@requires` union). | product "
@@ -270,11 +270,11 @@ def program_spike_table() -> list[str]:
         "`complexStories/notRemovable-undroppable-partners/` | 🔴 Open — contribution contract to agree |",
         "| `SPARK-SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category "
         "dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant "
-        "+ CI schema-conformance. | bom `A04` | type-resolver + "
+        "+ CI schema-conformance. | bom `A04` · sample `B01` (`SampleAsset` union) · search `A02` | type-resolver + "
         "variant fields | `complexStories/polymorphic-type-resolution/` | 🔴 Open — code→type table to confirm |",
         "| `SPARK-SPIKE-06` | 🔬 **Cross-Domain Association / Hydration** — how a domain references another's "
         "entity (federated `@key` ref vs REST client); two-stage hydration; federation/read-hub rollout ordering "
-        "across sibling DGS. | product `S01/S02` · bom (material "
+        "across sibling DGS. | product `S01/S02` · workspace `D04/G04` · search (read-hub order) · bom (material "
         "rollout) | association + hydration + rollout | "
         "`complexStories/cross-domain-association/` | 🔴 Open — per-edge rule to decide |",
         "",

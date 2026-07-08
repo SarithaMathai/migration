@@ -1,0 +1,473 @@
+domain: sample
+target_dgs: plm-sample
+epic: Sample → plm-sample DGS migration
+labels_common:
+- dgs-migration
+- sample
+generated: 2026-06-27
+pipeline_version: '2.0'
+acl_policy: ACL ignored in implementation; current-impl ACL usage noted as context
+  only
+stories:
+- id: SPARK-SMPL-A01
+  summary: Schema skeleton + DateTime scalar
+  phase: A
+  category: CAT-1
+  complexity: Low
+  depends_on: []
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-A02
+  summary: Owned types + inputs (wide SampleV2 surface)
+  phase: A
+  category: CAT-1
+  complexity: High
+  depends_on:
+  - SPARK-SMPL-A01
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-A03
+  summary: External stubs (platform + other DGS)
+  phase: A
+  category: CAT-1
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A01
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-A04
+  summary: SampleAsset union @DgsTypeResolver (Color | Artwork)
+  phase: A
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A02
+  - SPARK-SMPL-A03
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-A05
+  summary: SampleServiceV2 port (samples/v2)
+  phase: A
+  category: CAT-3
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A01
+  ext_services: &id001 []
+  blocked_by: none
+  parent: null
+  substories:
+  - SPARK-SMPL-A05-1
+  - SPARK-SMPL-A05-2
+- id: SPARK-SMPL-A05-1
+  summary: SampleServiceV2 samples read
+  phase: A
+  category: CAT-3
+  complexity: Medium
+  parent: SPARK-SMPL-A05
+  substories: []
+  depends_on:
+  - SPARK-SMPL-A05
+  - SPARK-SMPL-A01
+  blocked_by: none
+  ext_services: *id001
+- id: SPARK-SMPL-A05-2
+  summary: v2 read/write consolidation
+  phase: A
+  category: CAT-3
+  complexity: Medium
+  parent: SPARK-SMPL-A05
+  substories: []
+  depends_on:
+  - SPARK-SMPL-A05
+  - SPARK-SMPL-A01
+  blocked_by: none
+  ext_services: *id001
+- id: SPARK-SMPL-B01
+  summary: getSampleById
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A02
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-B02
+  summary: getSamplesByIdsV2 (batched + recentlyViewed side-effect)
+  phase: B
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: recentlyViewed
+    severity: BLUE
+  blocked_by: none
+- id: SPARK-SMPL-B03
+  summary: getSamplesByParentId (relationship)
+  phase: B
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: relationship
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-SMPL-B04
+  summary: getColorSamplesByParentId
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-B05
+  summary: getSampleRounds
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-B06
+  summary: getSampleExports
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-B07
+  summary: getSampleNotificationErrors
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: notification
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-SMPL-B08
+  summary: Master-data type/format/purpose queries (cacheable bundle, ~13)
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-C01
+  summary: getSampleLocationByIds (RFID latest-location)
+  phase: C
+  category: CAT-2
+  complexity: High
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-SMPL-C02
+  summary: getSamplesByRfidTagIds
+  phase: C
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-D01
+  summary: createSamplesV2 (+ file relationship/attributes)
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: relationship
+    severity: YELLOW
+  - key: attachment
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-SMPL-D02
+  summary: createSampleRoundV2
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-D03
+  summary: updateSampleWorkspaceAssociation
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-D04
+  summary: requestSampleExport
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-D05
+  summary: retrySampleNotificationError
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: notification
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-SMPL-D06
+  summary: retryAllSampleNotificationErrors
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: notification
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-SMPL-D07
+  summary: bulkCloneFilesForEvaluate
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: attachment
+    severity: YELLOW
+  blocked_by: none
+- id: SPARK-SMPL-E01
+  summary: updateSamplesV2
+  phase: E
+  category: CAT-2
+  complexity: High
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-E02
+  summary: bulkEvaluateSamples (evaluation + new rounds util)
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: &id002
+  - key: attachment
+    severity: YELLOW
+  blocked_by: none
+  parent: null
+  substories:
+  - SPARK-SMPL-E02-1
+  - SPARK-SMPL-E02-2
+- id: SPARK-SMPL-E02-1
+  summary: evaluation orchestrator
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  parent: SPARK-SMPL-E02
+  substories: []
+  depends_on:
+  - SPARK-SMPL-E02
+  - SPARK-SMPL-A05
+  blocked_by: none
+  ext_services: *id002
+- id: SPARK-SMPL-E02-2
+  summary: new-rounds utility
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  parent: SPARK-SMPL-E02
+  substories: []
+  depends_on:
+  - SPARK-SMPL-E02
+  - SPARK-SMPL-A05
+  blocked_by: none
+  ext_services: *id002
+- id: SPARK-SMPL-F01
+  summary: SampleV2 entity fetcher (federated reference)
+  phase: F
+  category: CAT-4
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-F02
+  summary: Deferred drift mutation decision (updateSampleEvaluations/drop/undrop)
+  phase: F
+  category: CAT-4
+  complexity: Low
+  depends_on:
+  - SPARK-SMPL-E02
+  ext_services: []
+  blocked_by: none
+- id: SPARK-SMPL-G01
+  summary: Users (created/updated/evaluated + evaluators + primary roles)
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: userAttributes
+    severity: YELLOW
+  - key: role
+    severity: BLUE
+  blocked_by: none
+- id: SPARK-SMPL-G02
+  summary: Prefix-gated parents + SampleAsset union (product/trim/color/fabric/artwork/asset)
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A04
+  - SPARK-SMPL-A05
+  ext_services: &id003
+  - key: product
+    severity: YELLOW
+  - key: trim
+    severity: YELLOW
+  - key: colorArchroma
+    severity: YELLOW
+  - key: combination
+    severity: YELLOW
+  - key: fabric
+    severity: YELLOW
+  - key: artwork
+    severity: YELLOW
+  - key: material
+    severity: YELLOW
+  blocked_by: none
+  parent: null
+  substories:
+  - SPARK-SMPL-G02-1
+  - SPARK-SMPL-G02-2
+- id: SPARK-SMPL-G02-1
+  summary: prefix->loader table + DataLoader
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  parent: SPARK-SMPL-G02
+  substories: []
+  depends_on:
+  - SPARK-SMPL-G02
+  - SPARK-SMPL-A04
+  - SPARK-SMPL-A05
+  blocked_by: none
+  ext_services: *id003
+- id: SPARK-SMPL-G02-2
+  summary: parent field resolvers + union
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  parent: SPARK-SMPL-G02
+  substories: []
+  depends_on:
+  - SPARK-SMPL-G02
+  - SPARK-SMPL-A04
+  - SPARK-SMPL-A05
+  blocked_by: none
+  ext_services: *id003
+- id: SPARK-SMPL-G03
+  summary: Partners (businessPartner/fabricSupplier/merchandiseVendors/brand/designPartnerId)
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: vmm
+    severity: BLUE
+  - key: brand
+    severity: BLUE
+  blocked_by: none
+- id: SPARK-SMPL-G04
+  summary: workspace + sampleMeasurementSet + designCycle + clmPackage
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: workspaceV2
+    severity: YELLOW
+  - key: measurement
+    severity: YELLOW
+  - key: tag
+    severity: BLUE
+  - key: tgtColorEvaluator
+    severity: BLUE
+  blocked_by: none
+- id: SPARK-SMPL-G05
+  summary: attachments + rfidLocationInfo + currentLocations
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: SPARK-SMPL-G06
+  summary: participants + discussion-participant sub-types + library color + department
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - SPARK-SMPL-A05
+  ext_services:
+  - key: userGroup
+    severity: BLUE
+  - key: vmm
+    severity: BLUE
+  - key: color
+    severity: YELLOW
+  - key: ig
+    severity: BLUE
+  blocked_by: none
+- id: SPARK-SMPL-G07
+  summary: Tests, parity harness, load test
+  phase: G
+  category: CAT-5
+  complexity: High
+  depends_on:
+  - SPARK-SMPL-B02
+  - SPARK-SMPL-E02
+  - SPARK-SMPL-G02
+  ext_services: []
+  blocked_by: none
+totals:
+  story_count: 33
+  by_complexity:
+    Low: 13
+    Medium: 13
+    High: 7
+    Very High: 0
+  by_phase:
+    A: 5
+    B: 8
+    C: 2
+    D: 7
+    E: 2
+    F: 2
+    G: 7

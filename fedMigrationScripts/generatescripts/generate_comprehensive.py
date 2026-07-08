@@ -32,12 +32,12 @@ FALLBACK_SOURCE = HERE.parent.parent / "output" / "initial-analysis"       # ...
 OUT_DIR = HERE.parent.parent / "output" / "summary"
 
 # ─── Domain catalogue ─────────────────────────────────────────────────────────
-# Phase 1 scope: the 8 domains in the first production wave. Remaining domains
-# (attachment, discussion, sample, search, workspace) join in a later phase —
-# add them back here to regenerate their artifacts.
+# thirdAttempt scope: all 13 domains — the 8 phase-1 domains plus attachment,
+# discussion, sample, search and workspace.
 ALL_DOMAINS = [
-    "bom", "claims", "impression", "measurement",
-    "packaging", "product", "productDetails", "watchlist",
+    "attachment", "bom", "claims", "discussion", "impression",
+    "measurement", "packaging", "product", "productDetails",
+    "sample", "search", "watchlist", "workspace",
 ]
 
 DOMAIN_LABELS = {

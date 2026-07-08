@@ -1,0 +1,133 @@
+extend type Query {
+  getVersionedDiscussions(
+    id: ID!
+  ): [SPARK_VersionedDiscussion]
+  getVersionedDiscussionThreads(
+    id: ID!
+  ): [SPARK_VersionedDiscussionThread]
+}
+
+extend type Mutation {
+  addDiscussionV3(
+    sparkDiscussion: SPARK_DiscussionInputV3!
+    attachments: [SPARK_BulkAttachmentInput]
+  ): SPARK_Discussion
+  coreAddDiscussionV3(
+    sparkDiscussion: SPARK_DiscussionInputV3!
+    attachments: [SPARK_BulkAttachmentInput]
+  ): SPARK_Discussion
+  addBulkDiscussionV3(
+    sparkDiscussions: SPARK_BulkDiscussionInputV3!
+    attachments: [SPARK_BulkAttachmentInput]
+  ): SPARK_BulkDiscussionOutputV3
+  coreAddBulkDiscussionV3(
+    sparkDiscussions: SPARK_BulkDiscussionInputV3!
+    attachments: [SPARK_BulkAttachmentInput]
+  ): SPARK_BulkDiscussionOutputV3
+  updateDiscussionV3(
+    id: ID!
+    sparkDiscussion: SPARK_UpdateDiscussionInputV3
+  ): SPARK_Discussion
+  coreUpdateDiscussionV3(
+    id: ID!
+    sparkDiscussion: SPARK_UpdateDiscussionInputV3
+  ): SPARK_Discussion
+  updateParticipantsV3(
+    id: ID!
+    participants: SPARK_Participants_Input
+  ): SPARK_Discussion
+  coreUpdateParticipantsV3(
+    id: ID!
+    participants: SPARK_UserGroup_Participants_Input
+    relatedResources:[String]
+    resourceType: String
+  ): SPARK_Discussion
+  coreDeleteParticipantsV3(
+    id: ID!
+    participants: SPARK_UserGroup_Participants_Input
+    relatedResources:[String]
+    resourceType: String
+    removedUserId: ID
+    teamId: ID
+    removedPartnerIds: [ID]
+    removedDesignPartnerIds: [ID]
+  ): SPARK_Discussion
+  deleteParticipantV3(
+    id: ID!
+    teamId: ID
+    userId: ID
+    partnerId: ID
+    designPartnerId: ID
+  ): SPARK_Discussion
+  cloneFilesForBulkDiscussion(attachmentIds: [String], cloneReferences: [BulkDiscussionAttachCloneRef]): [SPARK_Attachment]
+  discussionReadByUsers(discussionIds: [String], discussionThreadIds: [String], readByUserList: [String]): SPARK_DiscussionReadByUsers
+}
+
+input BulkDiscussionAttachCloneRef {
+  resourceId: String
+  businessPartner: SPARK_ProductPartnerInput
+  relatedResources: [String]
+}
+
+input SPARK_BulkDiscussionInputV3 {
+  discussionDtoList: [SPARK_DiscussionInputV3]
+}
+
+input SPARK_DiscussionInputV3 {
+  discussionId: ID
+  discussionThreadId: String
+  attachmentId: [String]
+  discussionTitle: String
+  comment: String
+  resources: SPARK_ResourceMappingInput
+  participants: SPARK_Participants_Input
+  subject: String!
+  draft: Boolean
+  edited: Boolean
+  updateParticipants: Boolean
+  repliesCount: Int
+  createdTS: String
+  partnerId: [ID]
+  designPartnerId: [ID]
+  announcement: Boolean
+  createdUser: String
+  resourceType: String
+  resourceId: ID
+  relatedResources: [ID]
+  tags: [ID]
+}
+
+input SPARK_UpdateDiscussionInputV3 {
+  discussion: SPARK_UpdateDiscussionMessageInput
+  removedFiles: [String]
+  participants: SPARK_Participants_Input
+  partnerIds: [ID]
+  designPartnerId: [ID]
+  deletedTeams: [ID]
+  deletedUsers: [ID]
+  deletedPartnersId: [ID]
+  droppedPartners: [ID]
+  attachments: [SPARK_BulkAttachmentInput]
+  revokeDocumentIds: [String]
+  existingAttachmentIds: [ID]
+}
+
+type SPARK_VersionedDiscussion {
+  version: Int
+  updatedBy: SPARK_UserProfileAttributes
+  updatedAt: String
+}
+
+type SPARK_VersionedDiscussionThread {
+  version: Int
+  updatedBy: SPARK_UserProfileAttributes
+  updatedAt: String
+}
+type SPARK_BulkDiscussionOutputV3 {
+  discussionDtoList: [SPARK_Discussion]
+}
+
+type SPARK_DiscussionReadByUsers {
+  discussions: [SPARK_Discussion]
+  discussionThreads: [SPARK_DiscussionReply]
+}

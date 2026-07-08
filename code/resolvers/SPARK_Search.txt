@@ -1,0 +1,507 @@
+import { getUserPermissionsJWT, loadTags } from '../utils/commonLoaders'
+import { resolvePaging } from '../utils/resolvePaging'
+import { loadBusinessPartners, loadDroppedBusinessPartners, loadTeams } from './commonResolvers/Teams'
+import { loadBps, loadManyIncludeEmptyResponse } from '../utils/vmmUtils'
+import { getTagsBatched } from '../services/batchers/getTagsBatched'
+import { searchClaimsForParentResource } from './SPARK_Fabric'
+import SPARK_Attachment from './SPARK_Attachment'
+import SPARK_WorkspaceV2 from './SPARK_WorkspaceV2'
+import _ from 'lodash'
+import { getQueryForConnectedBOMSearch } from '../utils/Reporting/queryUtil'
+import SPARK_UserAttributes from './SPARK_UserAttributes'
+import SPARK_UserGroup from './SPARK_UserGroup'
+import { resolveBaseMaterial } from './material/SPARK_BaseMaterialCommonFields'
+import { RESOURCE_TYPES_PREFIXES } from '../config/constants'
+import { loadColorLinks } from './SPARK_Color'
+import { get3DmodelFile } from '../utils/Product/attachmentUtils'
+import { getUser } from '../utils/userAttributesUtils'
+import SPARK_Bom from './product/SPARK_Bom'
+
+export default {
+  Query: {
+    searchAttachments: (parent, { q, parentIds, relatedIds, partnerId, asset3D, proxyIds, page, size, sortField, sortDirection }, ctx) =>
+      ctx.loaders.search.searchAttachments.load({
+        q,
+        parentIds,
+        relatedIds,
+        partnerId,
+        asset3D,
+        proxyIds,
+        page,
+        size,
+        sort: sortField && sortDirection ? `${sortField},${sortDirection}` : undefined,
+      }),
+    searchMaterials: (parent, { q, relatedBPIds, page, size, sortField, sortDirection, options }, ctx) =>
+      ctx.loaders.search.getPage.load({ q, relatedBPIds, page, size, sortField, sortDirection, options }),
+    searchMaterialsV2: (parent, { q, page, size, sortField, sortDirection, options, searchArguments }, ctx) => {
+      const urlParams = {
+        page,
+        size,
+      }
+      const body = {
+        query: q,
+        sortField,
+        sortDirection,
+        ...options,
+        ...searchArguments,
+      }
+
+      return ctx.loaders.search.searchMaterialsV2.load(body, urlParams)
+    },
+    multiRequestMaterialSearch: (parent, { page, size, requestDTOs }, ctx) => {
+      const urlParams = {
+        page,
+        size,
+      }
+      return ctx.loaders.search.multiRequestMaterialSearch.load(requestDTOs, urlParams)
+    },
+    searchMaterialsById: (parent, { id }, ctx) => ctx.loaders.search.getMaterialByIds.load(id),
+    searchMaterialsNested: (parent, { q, nestedQueryList, page, size, sortField, sortDirection, options }, ctx) =>
+      ctx.loaders.search.getPageNested.load({ q, nestedQueryList, page, size, sortField, sortDirection, options }),
+    searchMaterialsByProxyIds: async (parent, { q, proxyIds, page, size }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(proxyIds, ctx)
+      return ctx.loaders.search.searchMaterialsByProxyIds(permissionJWT).load({ q, proxyIds, page, size })
+    },
+    searchSuggestions: (parent, { q, type, page, size }, ctx) =>
+      ctx.loaders.search.getSuggestions.load({ q, type, page, size }),
+    searchRfidSuggestions: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.getRfidSuggestions.load({ q, page, size }),
+    searchCombinations: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.searchCombinations.load({ q, page, size }),
+    searchPointOfMeasureSuggestions: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.getPointOfMeasureSuggestions.load({ q, page, size }),
+    searchCombinationSuggestions: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.getCombinationSuggestions.load({ q, page, size }),
+    searchPalettes: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.getPalettePage.load({ q, page, size }),
+    searchPaletteSuggestions: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.getPaletteSuggestions.load({ q, page, size }),
+    searchSamples: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.getSamplesPage.load({ q, page, size }),
+    getSamplesCountGroupBy: async (parent, { q, groupBy }, ctx) => {
+      const result = await ctx.loaders.search.getSamplesCountGroupBy.load({ q, groupBy })
+      return result.samplesCount
+    },
+    getMaterialSamplesGroupBy: async (parent, { q, groupBy, filter, dueDateTo, dueDateFrom }, ctx) => {
+      const result = await ctx.loaders.search.getMaterialSamplesGroupBy.load({ q, groupBy, filter, dueDateTo, dueDateFrom })
+      return result
+    },
+    getConnectedBOMs: async (parent, { q, groupBy, filter }, ctx) => {
+      const result = await ctx.loaders.search.getConnectedBOMs.load({ q, groupBy, ...getQueryForConnectedBOMSearch(filter) })
+      return result
+    },
+    getRequestedSamplesByUser: async (parent, { q, filter }, ctx) => {
+      const result = await ctx.loaders.search.getRequestedSampleByUser.load({ q, filter })
+      return result
+    },
+
+    searchSamplesByParentId: (parent, { parentIds, query, page, size, sortField, sortDirection }, ctx) =>
+      ctx.loaders.search.searchSamplesByParentId.load({
+        parentIds,
+        query,
+        page,
+        size,
+        sortField,
+        sortDirection,
+      }),
+    getElasticSamplesByIds: (parent, { ids }, ctx) => ctx.loaders.search.getElasticSamplesByIds.load({ ids }),
+    getSampleCount: (parent, { resourceId }, ctx) =>
+      ctx.loaders.search.getSampleCount.load(resourceId),
+    getProductWorkspaceMetricsReportCount: (parent, { workspaceId }, ctx) => ctx.loaders.search.getProductWorkspaceMetricsReportCount.load(workspaceId),
+    getProductReport: (parent, { startDate, endDate }, ctx) => {
+      const params = { startDate, endDate }
+      return ctx.loaders.search.getProductReport.load(params)
+    },
+    searchTeamsElastic: (parent, { page, size, q, sort }, ctx) => {
+      const params = { page, size, q }
+      if (sort) params.sort = sort
+      return ctx.loaders.search.searchTeams.load(params)
+    },
+    searchTeamsElasticResourceType: (parent, { page, size, q, resourceType, sort }, ctx) => {
+      const params = { page, size, q, resourceType }
+      if (sort) params.sort = sort
+      return ctx.loaders.search.searchTeamsResourceType.load(params)
+    },
+    searchTeamsByProxyIds: async (parent, { q, proxyIds, page, size }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(proxyIds, ctx)
+      return ctx.loaders.search.searchTeamsByProxyIds(permissionJWT).load({ q, proxyIds, page, size })
+    },
+    searchMeasurementTemplatesSuggestions: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.getMeasurementTemplatesSuggestions.load({ q, page, size }),
+    searchMeasurementTemplates: async (parent, { page, size, q }, ctx) => ctx.loaders.search.getMeasurementTemplates.load({ page, size, q }),
+    getProductSuggestionsV1: async (parent, { q, size, bps }, ctx) => ctx.loaders.search.getProductSuggestions.load({ q, size, bps }),
+    getProductSuggestions: async (parent, { q, size, bps, status }, ctx) => {
+      let suggestions
+      if (q.toLowerCase().startsWith('smp-') === true) {
+        suggestions = await ctx.loaders.search.getSampleSuggestions.load({ q, size, parentResourceType: 'PRODUCT' })
+      } else {
+        suggestions = await ctx.loaders.search.getProductSuggestions.load({ q, size, bps, status })
+      }
+      return suggestions
+    },
+    searchSizeTemplates: (parent, { q, page, size }, ctx) => ctx.loaders.search.searchSizeTemplates.load({ q, page, size }),
+    searchSizeTemplatesSuggestions: (parent, { q, page, size }, ctx) => ctx.loaders.search.searchSizeTemplatesSuggestions.load({ q, page, size }),
+    getProductDetailsTemplateSuggestions: (parent, { q, page, size }, ctx) => ctx.loaders.search.searchProductDetailsTemplateSuggestions.load({ q, page, size }),
+    searchProductDetailsTemplates: (parent, { q, page, size }, ctx) => ctx.loaders.search.searchProductDetailsTemplates.load({ q, page, size }),
+    searchProductsES: (parent, { q, page, size }, ctx) => ctx.loaders.adminTools.searchProductsES.load({ q, page, size }),
+    searchProductByField: (parent, { q, page, size, sort, types }, ctx) => ctx.loaders.search.searchProductByField.load(
+      // searchProduct by field weight in body
+      {
+        'fieldWeightDtoList': [{
+          'fieldName': 'descriptionSuggest',
+          'weight': 10,
+        }, {
+          'fieldName': 'humanIdSuggest',
+          'weight': 10,
+        }],
+      },
+      { q, types, page, size, sort },
+    ),
+    searchTeamsWithTypeCheck: (parent, { page, size, resourceId, mvs, dps, q }, ctx) => {
+      const params = { page, size, q }
+      if (resourceId) params.resourceId = resourceId
+      if (mvs) params.merchPartners = mvs
+      if (dps) params.designPartners = dps
+
+      return ctx.loaders.search.searchTeamsByType.load(params)
+    },
+    searchWatchlist: (parent, { q, page, size }, ctx) =>
+      ctx.loaders.search.searchWatchlist.load({ q, page, size }),
+    searchClaimsByProxyIds: async (parent, { q, proxyIds, page, size }, ctx) => {
+      const permissionJWT = await getUserPermissionsJWT(proxyIds, ctx)
+      return ctx.loaders.search.searchClaimsByProxyIds(permissionJWT).load({ q, page, proxyIds, size })
+    },
+    getTemplateSuggestions: async (parent, { q, page, size, types }, ctx) => {
+      let suggestions
+      suggestions = await ctx.loaders.search.getProductSuggestions.load({ q, page, size, types })
+      return suggestions
+    },
+    searchRfidLocations: (parent, { page, size, q }, ctx) => {
+      const params = { page, size, q }
+      return ctx.loaders.search.searchRfidLocations.load(params)
+    },
+  },
+
+  Mutation: {
+    sendBulkCombinationUpdates: (parent, { combinationUpdates }, ctx) => ctx.loaders.search.sendBulkCombinationUpdates.load(combinationUpdates),
+  },
+
+  SPARK_SearchAttachmentsPaged: {
+    paging: searchResults => searchResults,
+    counts: counts => counts,
+  },
+
+  SPARK_SearchAttachmentsCounts: {
+    attachmentCount: (searchResults, { parentIds, relatedIds, skipQuery }, ctx) => {
+      if (skipQuery) {
+        return (searchResults || {}).counts
+      } else {
+        return ctx.loaders.search.getAttachmentsCounts.load(parentIds, relatedIds)
+      }
+    },
+  },
+
+  SPARK_SearchAttachment: {
+    createdBy: (attachment, args, ctx) => {
+      if (attachment.createdBy) {
+        return getUser(attachment.createdBy, ctx)
+      }
+    },
+    updatedBy: (attachment, args, ctx) => {
+      if (attachment.updatedBy) {
+        getUser(attachment.updatedBy, ctx)
+      }
+    },
+    tags: (attachment, args, ctx) => SPARK_Attachment.SPARK_Attachment.tags(attachment, args, ctx),
+    productPacketProps: attachment => attachment.product_packet_props || attachment.productPacketProps,
+    relatedProduct: (attachment, args, ctx) => {
+      const relatedProductId = (attachment.relatedResources || []).find(resource => resource.indexOf('PID-') === 0)
+      if (relatedProductId) {
+        return ctx.loaders.product.getByID.load(relatedProductId)
+      }
+    },
+    canOpenInShowDog: attachment => attachment.can_open_in_showdog === undefined ? attachment.canOpenInShowDog : attachment.can_open_in_showdog,
+    relatedWorkspace: (attachment, args, ctx) => {
+      const relatedWorkspaceId = (attachment.relatedResources || []).find(resource => resource.indexOf('WRK-') === 0)
+      if (relatedWorkspaceId) {
+        return ctx.loaders.workspaceV2.getWorkspaceByIdV2.load(relatedWorkspaceId)
+      }
+    },
+    currentUserFileAccess: async (attachment, arg, ctx) => {
+      const permission = await ctx.loaders.accessControl.getUserAccessUnencoded.load([attachment.id])
+      const { resourcePermissions } = permission || {}
+      const { resourceId, permissions } = (resourcePermissions && resourcePermissions.length > 0 && resourcePermissions[0]) || {}
+      if (resourceId === attachment.id) {
+        return (permissions || [])
+      }
+      return []
+    },
+    rendersDataFor3DFiles: async (attachment, arg, ctx) => {
+      if (attachment && attachment.id && attachment.canShareWithGallery) {
+        const rendersData = await ctx.loaders.attachment.getRendersForAttachmentV3Ids(false).load(attachment.id)
+        return rendersData || {}
+      }
+      return {}
+    },
+    galleryFiles: async (attachment, arg, ctx) => {
+      if (attachment && attachment.id && attachment.canShareWithGallery) {
+        const rendersData = await ctx.loaders.attachment.getRendersForAttachmentV3Ids(true).load(attachment.id)
+        return rendersData || {}
+      }
+      return {}
+    },
+    modelFile: async (attachment, args, ctx) => {
+      return get3DmodelFile(attachment, ctx)
+    },
+    // False needs to be returned, not skipped in OR logic, so check for undefined instead
+    finalVirtualFile: attachment =>
+      attachment.final_virtual_file === undefined ? attachment.finalVirtualFile : attachment.final_virtual_file,
+  },
+
+  SPARK_SearchComponent: {
+    createdBy: async (component, args, ctx) => getUser(component.createdBy, ctx),
+    updatedBy: async (component, args, ctx) => getUser(component.updatedBy, ctx),
+    workspaces: (component, args, ctx) => {
+      const workspaceIds = component.workspaceContext || []
+      if (workspaceIds.length) {
+        return SPARK_WorkspaceV2.Query.getWorkspacesByIdsV2({}, { ids: workspaceIds }, ctx)
+      }
+      return null
+    },
+    materials: async (component, args, ctx) => {
+      if (component && (component.id.startsWith('BOM') || component.id.startsWith('PKGBOM') || component.id.startsWith('PRDBOM'))) {
+        const bom = await SPARK_Bom.Query.getBomByIds({}, { ids: [component.id] }, ctx)
+        if (bom && bom.length && bom[0].materials) {
+          return bom[0].materials
+        }
+      }
+      return []
+    },
+  },
+
+  SPARK_MaterialsPaged: {
+    paging: searchResults => searchResults,
+    counts: (searchResults, args, ctx) => ctx.loaders.search.getCounts.load(),
+  },
+
+  SPARK_SizeTemplatePaged: {
+    paging: resolvePaging,
+  },
+  SPARK_CombinationPaged: {
+    paging: searchResults => searchResults,
+  },
+
+  SPARK_SearchCombination: {
+    brands: async (combination, args, ctx) =>
+      combination.brands &&
+      (loadManyIncludeEmptyResponse(
+        ctx.loaders.brand.getBrand,
+        combination.brands,
+        ctx.logContext,
+      )),
+    businessPartners: (combination, args, ctx) => loadBusinessPartners(combination.id, ctx),
+    droppedPartnerIds: (combination, args, ctx) => loadDroppedBusinessPartners(combination.id, ctx),
+    department: (combination, args, ctx) => combination && combination.department ? ctx.loaders.ig.department.getByID.load(combination.department) : null,
+    designCycles: async (combination, args, ctx) => combination && combination.designCycles ? loadTags(combination.designCycles, ctx) : [],
+    materialCategory: async (combination, args, ctx) => {
+      const materialCategoryId = (combination && combination.materialCategory) || null
+      const response = (materialCategoryId && await loadTags([materialCategoryId], ctx))
+      return response && response.length > 0 ? response[0] : null
+    },
+    division: async (combination, args, ctx) =>
+      await (combination && combination.division)
+        ? ctx.loaders.ig.division.getByID.load(combination.division)
+        : null,
+    fabricSpec: async (combination, args, ctx) => {
+      if (combination.fabricSpecHumanId) {
+        return ctx.loaders.fabric.getSpecificationByID.load(combination.fabricSpecHumanId)
+      }
+    },
+    tags: async (combination, args, ctx) => getTagsBatched(ctx, combination.tags),
+  },
+
+  SPARK_Material: {
+    supplierName: async (spec, args, ctx) => {
+      if (spec.supplierId) {
+        const bp = await ctx.loaders.vmm.getByID.load(spec.supplierId)
+        return bp ? bp.bpName : null
+      } else {
+        return null
+      }
+    },
+    impressionIntent: material => (material.impressionIntents && material.impressionIntents.length > 0 && material.impressionIntents[0]) || null,
+    permissions: async (material, args, ctx) => {
+      const { resourcePermissions } = await ctx.loaders.accessControl.getUserAccessUnencoded.load([material.id])
+      if (resourcePermissions && resourcePermissions[0]) {
+        return resourcePermissions[0].permissions
+      } else {
+        return []
+      }
+    },
+    claims: (material, args, ctx) => searchClaimsForParentResource(material.id, ctx),
+    tags: async ({ tags }, _, ctx) => getTagsBatched(ctx, tags),
+    trimSuppliers: material => material && material.suppliers,
+    attachments: async (material, args, ctx) => {
+      if (!material) {
+        return []
+      }
+      const attachmentsResult = await ctx.loaders.search.searchAttachments.load({ parentIds: [material.id], size: 50 })
+      return attachmentsResult.content || []
+    },
+    businessPartners: (material, args, ctx) => material && material.id && loadBusinessPartners(material.id, ctx),
+    referenceId: (material) => {
+      const colorReferenceId = material.referenceId
+      const otherReferenceId = material.additionalInfoSpecification && material.additionalInfoSpecification.referenceId
+      return colorReferenceId || otherReferenceId
+    },
+    is3D: material => material && material['3D'],
+    createdBy: (material, args, ctx) =>
+      material.createdBy ? ctx.loaders.userAttributes.getUserByID.load(material.createdBy) : null,
+    teams: (material, args, ctx) => material && material.id && loadTeams(material.id, ctx),
+    droppedPartnerIds: (material, args, ctx) => material && material.id && loadDroppedBusinessPartners(material.id, ctx),
+    baseMaterial: async (material) => resolveBaseMaterial(material),
+    colorLinks: async (material, args, ctx) => {
+      const prefix = (material && material.id) ? material.id.split('-')[0] : null
+      if (prefix && (prefix === RESOURCE_TYPES_PREFIXES.Colors ||
+          prefix === RESOURCE_TYPES_PREFIXES.ColorColoro ||
+          prefix === RESOURCE_TYPES_PREFIXES.ColorPantone ||
+          prefix === RESOURCE_TYPES_PREFIXES.TargetColors ||
+          prefix === RESOURCE_TYPES_PREFIXES.TargetColorColoro ||
+          prefix === RESOURCE_TYPES_PREFIXES.TargetColorPantone ||
+          prefix === RESOURCE_TYPES_PREFIXES.ReferenceColors ||
+          prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorColoro ||
+          prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorPantone ||
+          prefix === RESOURCE_TYPES_PREFIXES.ColorArchroma ||
+          prefix === RESOURCE_TYPES_PREFIXES.TargetColorArchroma ||
+          prefix === RESOURCE_TYPES_PREFIXES.ReferenceColorArchroma)
+      ) {
+        const colorId = material.id
+        const permissionJWT = await getUserPermissionsJWT(colorId, ctx)
+        const color = await ctx.loaders.color.getByID(permissionJWT).load(colorId)
+          .then(res => {
+            return res
+          }).catch(() => null)
+
+        if (color) {
+          return loadColorLinks(color, args, ctx)
+        }
+      } else {
+        return null
+      }
+    },
+  },
+
+  SPARK_PalettePaged: {
+    paging: palettes => palettes,
+  },
+
+  SPARK_SearchPalette: {
+    brands: (palette, args, ctx) =>
+      palette && palette.brands && palette.brands.length > 0
+        ? ctx.loaders.brand.getBrand.loadMany(palette.brands)
+        : [],
+    tags: async (palette, args, ctx) => palette && palette.tags ? loadTags(palette.tags, ctx) : [],
+    designCycles: async (palette, args, ctx) => palette && palette.designCycles ? loadTags(palette.designCycles, ctx) : [],
+    departments: (palette, args, ctx) => palette && palette.departments && palette.departments.length > 0 ? ctx.loaders.ig.department.getByID.loadMany(palette.departments) : [],
+    businessPartners: (palette, args, ctx) => loadBusinessPartners(palette.humanId, ctx),
+    droppedPartnerIds: (palette, args, ctx) => loadDroppedBusinessPartners(palette.humanId, ctx),
+  },
+
+  SPARK_SearchSamplesPaged: {
+    paging: paging => paging,
+  },
+
+  SPARK_SearchProductDivisionCount: {
+    division: (division, args, ctx) => {
+      return division && division.id
+        ? ctx.loaders.ig.division.getByID.load(division.id)
+        : null
+    },
+  },
+
+  SPARK_SearchProductDepartmentCount: {
+    department: (department, args, ctx) => {
+      return department && department.id
+        ? ctx.loaders.ig.department.getByID.load(department.id)
+        : null
+    },
+  },
+
+  SPARK_SearchAttachmentAccess: {
+    bps: access => _.uniq([...(access.bps || []), ...(access.merchVendors || []), ...(access.fabSuppliers || [])]),
+    partnerNamesMap: async (access, arg, ctx) => {
+      const bpIds = _.uniq([...(access.bps || []), ...(access.merchVendors || []), ...(access.designPartners || []), ...(access.fabSuppliers || [])])
+      if (bpIds.length) {
+        const bpInfo = await loadBps(ctx, bpIds)
+        if (bpInfo && bpInfo.length) {
+          const partnerNamesMap = []
+          for (const bp of bpInfo) {
+            if (bp && bp.bpName && bp.bpId) {
+              partnerNamesMap.push({ id: bp.bpId, name: bp.bpName })
+            }
+          }
+          return partnerNamesMap
+        }
+        return []
+      }
+      return []
+    },
+  },
+
+  SPARK_SearchWatchlist: {
+    businessPartners: (watchlist, args, ctx) => loadBusinessPartners(watchlist.id, ctx),
+    createdBy: (watchlist, args, ctx) => ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(watchlist.createdBy),
+    updatedBy: (watchlist, args, ctx) => ctx.loaders.userAttributes.getUserByIDOrNullIfNotFound.load(watchlist.updatedBy),
+    attachments: async (watchlist, args, ctx) => ctx.loaders.search.searchAttachmentsByRelatedResource.load(watchlist.id),
+    workspaces: (watchlist, args, ctx) => {
+      const workspaceIds = watchlist.workspaceContext || []
+      if (workspaceIds.length) {
+        return SPARK_WorkspaceV2.Query.getWorkspacesByIdsV2({}, { ids: workspaceIds }, ctx)
+      }
+      return null
+    },
+    participantDetails: async (watchlist, args, ctx) => {
+      const userGroups = await SPARK_UserGroup.Query.getUserGroups({}, { ids: [watchlist.id] }, ctx)
+      if (userGroups.length && !_.isEmpty(userGroups[0].participantDetails)) {
+        return userGroups[0].participantDetails
+      }
+      return null
+    },
+    product: (watchlist, args, ctx) =>
+      (watchlist.parentId && watchlist.parentId.indexOf('PID') === 0)
+        ? ctx.loaders.product.getByID.load(watchlist.parentId)
+        : null,
+  },
+
+  SPARK_ConnectedBOMGroup: {
+    groupBy: async ({ id }, args, ctx) => {
+      if (id > 0) {
+        const result = await ctx.loaders.ig.division.getByID.load(id)
+        return result.division_name
+      }
+      return null
+    },
+  },
+
+  SPARK_ConnectedBOMGroupResult: {
+    designCycle: async ({ resourceId }, args, ctx) => {
+      const result = await loadTags([resourceId], ctx)
+      return result ? result[0].name : null
+    },
+  },
+
+  SPARK_Requested_Evaluated_Samples_By_User: {
+    user: async ({ resourceId }, args, ctx) => {
+      if (resourceId) {
+        const user = await SPARK_UserAttributes.Query.getUserAttributes({}, { id: resourceId }, ctx)
+        if (user) {
+          return `${user.firstName} ${user.lastName}`
+        } else {
+          return null
+        }
+      } else {
+        return null
+      }
+    },
+  },
+}

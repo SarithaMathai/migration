@@ -4,11 +4,11 @@
 > **Spike:** `SPARK-SPIKE-04` · **Status:** 🔴 Open — decision pending
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 
-> **Home domains:** product (`plm-product`) + workspace (`plm-workspace`) · **Stub story:** `SPARK-PROD-E01` (partner drop/undrop) + `SPARK-WS-E01` (later phase)
+> **Home domains:** product (`plm-product`) + workspace (`plm-workspace`) · **Stub story:** `SPARK-PROD-E01` (partner drop/undrop) + `SPARK-WS-E01`
 
 > **Migrates (source resolvers → this case):** product **FR `notRemovablePartnerIds`** (`SPARK-PROD-G11`) +
 > **FR `unDroppablePartners`** (`SPARK-PROD-G07`) + helpers `getProductPartnersNotRemovable` /
-> `getUnDroppablePartners`; workspace **FR `notRemovablePartnerIds`/`unDroppablePartners`** (`SPARK-WS-G05` (later phase)).
+> `getUnDroppablePartners`; workspace **FR `notRemovablePartnerIds`/`unDroppablePartners`** (`SPARK-WS-G05`).
 
 ## 1. The problem (grounded in the legacy code)
 

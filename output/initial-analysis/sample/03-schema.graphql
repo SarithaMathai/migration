@@ -1,0 +1,188 @@
+# =============================================================================
+# Sample Domain — Federated Target DGS Schema (translated from source SDL)
+# Pipeline Version: 2.0 · Generated: 2026-06-27
+# DGS Target: Green-field → SEPARATE `plm-sample` subgraph (own backend)
+# Source:    code/schemas/SPARK_SampleV2.txt (the real SDL, 513) + code/resolvers/SPARK_SampleV2.txt (behaviour)
+# Target:    plm-sample/apps/app/src/main/resources/schema/sample.graphqls
+# This is the FEDERATED TARGET schema, translated from the SDL (SPARK_ prefix dropped, @key added).
+# Nullability from the SDL. Sample is its OWN subgraph: product/workspace/measurement/search/etc. are all
+# cross-subgraph. `SampleAsset` is a polymorphic union (Color | Artwork) — needs a @DgsTypeResolver.
+# Status: 🔜 all need migration.
+# =============================================================================
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@extends", "@external", "@shareable"])
+
+scalar DateTime
+
+# --- External stubs (all cross-subgraph) ---
+type Product @extends @key(fields: "id") { id: ID! @external }
+type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
+type SampleMeasurementSet @extends @key(fields: "sampleId") { sampleId: String! @external }   # measurement subgraph
+type Attachment @extends @key(fields: "id") { id: ID! @external }
+type Trim @extends @key(fields: "id") { id: ID! @external }
+type ColorArchroma @extends @key(fields: "id") { id: ID! @external }
+type Color @extends @key(fields: "humanId") { humanId: String! @external }
+type Artwork @extends @key(fields: "humanId") { humanId: String! @external }
+type FabricSpecCombo @extends @key(fields: "id") { id: ID! @external }
+type FabricSpecification @extends @key(fields: "id") { id: ID! @external }
+type Material @extends @key(fields: "id") { id: ID! @external }
+type Role @extends @key(fields: "id") { id: ID! @external }
+type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
+type VMM_BusinessPartner @extends @key(fields: "id") { id: ID! @external }
+type VMM_Brand @extends @key(fields: "brandId") { brandId: ID! @external }
+type IG_Department @extends @key(fields: "id") { id: ID! @external }
+type Tag @extends @key(fields: "id") { id: ID! @external }
+type Spark_AsapEvaluation @extends @key(fields: "id") { id: ID! @external }     # tgtColorEvaluator (clmPackage)
+
+# --- Shared value types ---
+type CodeDescription @shareable { code: Int, description: String }
+type SampleCodeDescriptionV2 @shareable { code: Int, description: String }
+
+# --- Polymorphism: SampleAsset union (→ @DgsTypeResolver by humanId prefix) ---
+union SampleAsset = Color | Artwork
+# DGS: @DgsTypeResolver(name="SampleAsset") — isColorId(humanId) → Color; ART-prefix → Artwork; else null.
+
+# --- Owned entity: a sample ---
+type SampleV2 @key(fields: "id") {
+  id: ID!
+  humanId: String
+  parentId: String
+  parentHumanID: String
+  workspaceContext: String
+  systemGenerated: Boolean
+  version: Int
+  primaryThumbnailId: String
+  evaluatedDate: String  createdAt: String  updatedAt: String
+  evaluationStatus: SampleCodeDescriptionV2
+  sampleType: SampleCodeDescriptionV2
+  sampleFormat: SampleCodeDescriptionV2
+  materialSampleFormat: SampleCodeDescriptionV2
+  sampleEvaluationPurposes: [SampleCodeDescriptionV2]
+  purpose: CodeDescription
+  sampleRound: Sample_RoundsV2
+  aestheticEvaluations: [Sample_AestheticsV2]
+  colors: [Sample_ColorsV2]
+  libraryColors: [SampleLibraryColorsV2]
+  rfidTagIds: [String]
+  relatedResources: [String]
+  sizes: [Int]  finishes: [String]  colorIds: [String]  facilityIds: [String]  otherColors: [String]
+  dyeTypes: [String]  printTypes: [String]  deviationFromSpec: String  bestCanDo: Boolean
+  designPartnerId: [ID]
+  # field resolvers ↓
+  createdBy: UserProfileAttributes
+  updatedBy: UserProfileAttributes
+  evaluatedBy: UserProfileAttributes
+  designEvaluators: [UserProfileAttributes]
+  technicalEvaluators: [UserProfileAttributes]
+  createdByInternalPrimaryRole: Role
+  evaluatedByInternalPrimaryRole: Role
+  businessPartner: VMM_BusinessPartner!
+  fabricSupplier: VMM_BusinessPartner
+  merchandiseVendors: [VMM_BusinessPartner]
+  brand: VMM_Brand
+  designCycle: Tag
+  product: Product
+  workspace: WorkspaceV2
+  trim: Trim
+  colorArchroma: ColorArchroma
+  fabricSpecCombo: FabricSpecCombo
+  fabricSpec: FabricSpecification
+  artwork: Artwork
+  asset: SampleAsset                 # polymorphic (Color | Artwork) via material/asset hydration
+  clmPackage: Spark_AsapEvaluation
+  attachments: [Attachment]
+  rfidLocationInfo: String
+  currentLocations: [RFIDLastSeenLocation]
+  sampleMeasurementSet: SampleMeasurementSet           # → measurement.getSampleMeasurement (F02)
+  sampleMeasurementSetAssociation: Sample_MeasurementSetAssociation
+  departments: [SampleDepartment]
+  discussionParticipants: SampleDiscussionsParticipantsV2
+  participants(isParticipantsFromUserGroup: Boolean): SampleDiscussionsParticipantsV2
+}
+
+# --- Owned value types (selected; remaining carry 1:1 from the SDL, prefix dropped) ---
+type Sample_RoundsV2 { roundNumber: Int, originSampleId: String, parent: Boolean }
+type Sample_AestheticsV2 { keyName: String, aesthetic: String, other: String, status: String, explanations: [String], evaluatedDate: String }
+type Sample_ColorsV2 { id: String, name: String, status: String, explanations: [String], notes: String, other: String, evaluatedDate: String }
+type SampleLibraryColorsV2 { id: String, color: LibraryColorV2, status: String, explanations: [String], notes: String, other: String, colorApproval: Boolean, dyedGround: Boolean, evaluatedDate: String }
+type LibraryColorV2 { humanId: String, name: String, thumbnailId: String, red: Int, green: Int, blue: Int, colorForAll: [SampleCodeDescriptionV2], substrate: CodeDescription, icsPoly: String, icsNylon: String, icsCotton: String }
+type Sample_MeasurementSetAssociation { sampleMeasurementSetId: String }
+type SampleDepartment { id: Int, department: IG_Department }
+type SampleDiscussionsParticipantsV2 { teams: [SampleDiscussionParticipantTeamInfoV2], users: [SampleDiscussionParticipantUserInfoV2] }
+type SampleDiscussionParticipantTeamInfoV2 { businessPartnerId: ID, businessPartner: VMM_BusinessPartner }
+type SampleDiscussionParticipantUserInfoV2 { userId: String, systemUser: Boolean, userDetails: UserProfileAttributes }
+type RFIDLastSeenLocation { epc: String, locationDescription: String, lastSeen: String }
+type RfidSampleLocation { id: String, locationDescription: String, lastSeen: String }
+type SampleRfidTagPair { tagId: String, sample: SampleV2 }
+type SampleFormat { code: Int, description: String, type: String }
+type SampleTypeFormatMapping { type: Int, formats: [Int] }
+type SampleExport { id: String, requestId: String, createdAt: String, status: String }
+type SampleNotificationError { failedMessageId: String, error: String }
+type SampleNotificationErrorRetryResult { failedMessageId: String, status: String }
+type Participants @shareable { teams: [SampleDiscussionParticipantTeamInfoV2], users: [SampleDiscussionParticipantUserInfoV2] }
+# NOTE: ~10 more SDL value types (round/eval detail, value-assessment, etc.) carry 1:1 from
+# code/schemas/SPARK_SampleV2.txt with the SPARK_ prefix dropped — expand in story A02.
+
+# --- Inputs (key) ---
+input CreateSamplesInputV2 { newSamples: [NewSampleInputV2] }
+input NewSampleInputV2 { parentHumanID: String, files: [String], type: Int, format: Int, dueDate: String, quantity: Int }
+input UpdateSamplesInputV2 { updateSamples: [UpdateSampleInputV2] }
+input UpdateSampleInputV2 { id: String!, evaluationStatus: Int, comment: String, attachmentIds: [String] }
+input SampleUpdateSampleEvaluationInput { id: String!, type: Int, evaluationStatus: Int, comment: String, attachmentIds: [String], discussionThreadId: String, critical: Boolean, libraryColors: [MceSampleLibraryColorInput], aestheticEvaluations: [MceSampleAestheticEvaluationInput] }
+input Sample_RoundV2 { evaluationStatus: Int, address: String, notes: String, dueDate: String, quantity: Int, description: String, deliverTo: String, assetId: String, format: Int, evaluationPurposes: [Int!], designEvaluators: [String!], technicalEvaluators: [String!] }
+input BulkSampleRound { id: String!, evaluationStatus: Int, address: String, notes: String, dueDate: String!, description: String, quantity: Int, deliverTo: String, assetId: String, format: Int, evaluationPurposes: [Int!], designEvaluators: [String!] }
+input SampleAttachmentCloneRef { resourceId: String, businessPartner: ProductPartnerInput, relatedResources: [String] }
+input ProductPartnerInput { partnerId: ID!, partnerType: Int }
+input MceSampleLibraryColorInput { id: String, status: String }
+input MceSampleAestheticEvaluationInput { keyName: String, status: String }
+
+# --- Queries (names + nullability preserved from the SDL) ---
+extend type Query {
+  getSampleById(id: [ID!]): SampleV2                                                   # B01
+  getSamplesByIdsV2(ids: [ID!]): [SampleV2]                                            # B02 (batched; recentlyViewed side-effect)
+  getSamplesByParentId(humanId: [ID!]): [SampleV2]                                     # B03 (🟡 relationship)
+  getColorSamplesByParentId(id: String): [SampleV2]                                    # B04
+  getSampleRounds(humanId: ID!): [SampleV2]                                            # B05
+  getSampleExports: [SampleExport]                                                     # B06
+  getSampleNotificationErrors: [SampleNotificationError]                               # B07 (🟡 notification)
+  # master-data (cacheable bundle — B08)
+  getSampleMaterialTypesV2: [SampleCodeDescriptionV2]
+  getSampleTypesV2(resourceTypes: String): [SampleCodeDescriptionV2]
+  getFabricSampleTypesV2: [SampleCodeDescriptionV2]
+  getSampleProductTypesV2: [SampleCodeDescriptionV2]
+  getSampleTrackingTypesV2: [SampleCodeDescriptionV2]
+  getSampleLateReasonTypesV2: [SampleCodeDescriptionV2]
+  getColorSamplePurposesV2: [SampleCodeDescriptionV2]
+  getMaterialSampleEvaluationTypesV2: [SampleCodeDescriptionV2]
+  getProductSampleEvaluationTypesV2: [SampleCodeDescriptionV2]
+  getWashSampleTypesV2: [SampleCodeDescriptionV2]
+  getSampleFormats(type: String): [SampleFormat]
+  getMaterialSampleFormats(type: String): [SampleFormat]
+  getSampleEvaluationPurposes: [SampleCodeDescriptionV2]
+  getSampleTypeFormatMappings: [SampleTypeFormatMapping]
+  # rfid (C01/C02)
+  getSampleLocationByIds(ids: [ID!]): [RfidSampleLocation]                             # C01 (🔴 search rfid)
+  getSamplesByRfidTagIds(ids: [String]): [SampleRfidTagPair]                           # C02
+}
+
+# --- Mutations (names + nullability preserved from the SDL) ---
+extend type Mutation {
+  createSamplesV2(samples: CreateSamplesInputV2!): [SampleV2]                          # D01 (+file relationship)
+  createSampleRoundV2(sample: Sample_RoundV2!, sampleId: String!): SampleV2            # D02
+  updateSampleWorkspaceAssociation(sampleId: String, workspaceId: String): SampleV2    # D03
+  requestSampleExport: String                                                         # D04
+  retrySampleNotificationError(failedMessageId: String): SampleNotificationErrorRetryResult   # D05 (🟡 notification)
+  retryAllSampleNotificationErrors: [SampleNotificationErrorRetryResult]               # D06 (🟡 notification)
+  bulkCloneFilesForEvaluate(attachmentIds: [String], cloneReferences: [SampleAttachmentCloneRef]): [Attachment]  # D07 (🟡 attachment)
+  updateSamplesV2(samples: UpdateSamplesInputV2!): [SampleV2]                          # E01
+  bulkEvaluateSamples(updateSamples: [SampleUpdateSampleEvaluationInput!], newSampleRounds: [BulkSampleRound]): [SampleV2]   # E02 (bulkEvaluateSampleUtil)
+
+  # --- Schema-drift: declared in the SDL, no top-level resolver (drop/undrop run inside the workspace dispatcher). ---
+  updateSampleEvaluations(updateSamples: [SampleUpdateSampleEvaluationInput!]): [SampleV2]  @deprecated(reason: "use bulkEvaluateSamples")  # ⏭
+  dropSamples(ids: [ID!]): SampleV2    @deprecated(reason: "driven by workspaceBusinessPartnerActionsV2 (DROP_UNDROP_PARTNER)")    # ⏭
+  undropSamples(ids: [ID!]): SampleV2  @deprecated(reason: "driven by workspaceBusinessPartnerActionsV2 (DROP_UNDROP_PARTNER)")    # ⏭
+}
+
+# --- Federation: SampleV2 is referenced by product (`Product.samples`/`sampleIds`), measurement
+#     (`SampleV2.sampleMeasurement`), and workspace — resolved here by @DgsEntityFetcher on `id`. ---

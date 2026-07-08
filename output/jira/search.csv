@@ -1,0 +1,115 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for all 13 domains; each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-SRCH-A01,(Search) Schema skeleton + DateTime/JSON scalars [SPARK-SRCH-A01],,Federate BreakDown Product,A,XS,dgs-migration,search,schema,,,To Do,"*Current Behaviour:*
+* green-field; schema translated from `schemas/SPARK_Search.graphqls`.
+
+*Target:*
+* federation v2.3 header, `scalar DateTime → Instant`, `scalar JSON`, empty `extend type Query`/`Mutation`. **Acceptance:** 1. `generateJava` passes. 2. scalars round-trip. **Tests:** ☐ compiles ☐ serde."
+Story,SPARK-SRCH-A02,(Search) Owned result types + inputs (the big surface) [SPARK-SRCH-A02],,Federate BreakDown Product,A,L,dgs-migration,search,schema,,SPARK-SPIKE-05,To Do,"*Requires spike:* SPARK-SPIKE-05 (Polymorphic Type Resolution) — see program spike
+
+*Target:*
+* all ~50 owned result/value types (`SearchAttachment`, `Material`, `SearchCombination`, - `SearchPalette`, `SearchWatchlist`, `SearchComponent`, paged wrappers, report/group-by/suggestion shapes) + ~10 inputs per 03-schema.graphql. - **Expand the `JSON` placeholders** to the concrete SDL types. - `@key` on the enriched result entities; `@shareable` on `Paging`/`CodeDescription`/etc. - **This is the single biggest task in the domain.** **Acceptance:** 1. every SDL type present; no stray `JSON` where the SDL has a concrete type. - 2. validates. - **Tests:** ☐ validates ☐ entity stubs."
+Story,SPARK-SRCH-A03,(Search) External stubs (platform + other DGS) [SPARK-SRCH-A03],,Federate BreakDown Product,A,M,dgs-migration,search,schema,,,To Do,"*Target:*
+* `@extends @external` stubs for `Product(sPaged)`, `WorkspaceV2`, `Bom`, `SampleV2`, `Attachment`, `UserProfileAttributes`, `UserGroup_Participants`, `Tag`, `TeamPaged`, template paged wrappers, `VMM_*`, `IG_*`. **Acceptance:** 1. compiles; gateway composes. **Tests:** ☐ compiles ☐ stub resolves."
+Story,SPARK-SRCH-A04,(Search) SearchService Kotlin port (plm-elastic-search) [SPARK-SRCH-A04],,Federate BreakDown Product,A,L,dgs-migration,search,schema,,,To Do,"*Current Behaviour:*
+* ~80 elastic query-builder methods on the `plm-elastic-search` base.
+
+*Target:*
+* split into grouped services (`AttachmentSearch`, `MaterialSearch`, `SampleSearch`, `TeamSearch`, - `TemplateSearch`, `ProductSearch`, `SuggestionSearch`, `ReportSearch`); preserve each query-string/body shape and `deepToCamelCase`. - **Acceptance:** 1. each family's elastic query shape preserved. - 2. proxy reads accept a token. - **Tests:** ☐ query build per family ☐ camelCase. --- ### Phase B — Core Reads (by-id / counts)"
+Story,SPARK-SRCH-B01,(Search) searchMaterialsById(id) [SPARK-SRCH-B01],,Federate BreakDown Product,B,XS,dgs-migration,search,query,,,To Do,"*Current Behaviour:*
+* (own) `getMaterialByIds.load(id)`.
+
+*Target:*
+* `@DgsQuery → Material`. **Acceptance:** 1. returns material; miss→null. **Tests:** ☐ happy ☐ miss."
+Story,SPARK-SRCH-B02,(Search) getElasticSamplesByIds(ids) [SPARK-SRCH-B02],,Federate BreakDown Product,B,XS,dgs-migration,search,query,,,To Do,"*Current Behaviour:*
+* (own) `getElasticSamplesByIds.load({ids})`.
+
+*Target:*
+* `@DgsQuery → [SampleV2]`. **Acceptance:** 1. returns samples for ids. **Tests:** ☐ happy ☐ empty."
+Story,SPARK-SRCH-B03,(Search) getAttachmentsCounts + getSampleCount [SPARK-SRCH-B03],,Federate BreakDown Product,B,XS,dgs-migration,search,query,,,To Do,"*Current Behaviour:*
+* `getAttachmentsCounts(resourceIds)`; `getSampleCount(resourceId)` → `[ResourceCount]`.
+
+*Target:*
+* `@DgsQuery`. **Acceptance:** 1. both return counts. **Tests:** ☐ attachment counts ☐ sample counts. --- ### Phase C — Search & Listing (grouped by family)"
+Story,SPARK-SRCH-C01,(Search) searchAttachments [SPARK-SRCH-C01],,Federate BreakDown Product,C,M,dgs-migration,search,search,,,To Do,"*Current Behaviour:*
+* (own elastic) `searchAttachments({q,parentIds,relatedIds,partnerId,asset3D,proxyIds,page,size,sort})`.
+
+*Target:*
+* `@DgsQuery → SearchAttachmentsPaged`. **Acceptance:** 1. all params forwarded; `sort=field,dir`. **Tests:** ☐ params ☐ paging ☐ parity."
+Story,SPARK-SRCH-C02,(Search) Material search family [SPARK-SRCH-C02],,Federate BreakDown Product,C,L,dgs-migration,search,search,,,To Do,"*Current Behaviour:*
+* build elastic bodies (V2 = query+sort+options+`searchArguments` incl. - RGB color criteria + nested filters) → post → `MaterialsPaged`.
+
+*Target:*
+* one data fetcher per query over `MaterialSearch`. - **Acceptance:** 1. each variant's body shape preserved (RGB/nested). - 2. proxy variant tokens. - **Tests:** ☐ V2 body ☐ nested ☐ proxy ☐ multiRequest."
+Story,SPARK-SRCH-C03,(Search) Sample search family [SPARK-SRCH-C03],,Federate BreakDown Product,C,L,dgs-migration,search,search,,,To Do,"*Target:*
+* elastic sample queries + group-by aggregates. **Acceptance:** 1. each query/agg shape preserved. **Tests:** ☐ by-parent ☐ group-by ☐ requested-by-user."
+Story,SPARK-SRCH-C04,(Search) Team search family [SPARK-SRCH-C04],,Federate BreakDown Product,C,M,dgs-migration,search,search,,,To Do,"*Summary:*
+* Search teams.
+
+*Covers:*
+* `searchTeamsElastic`, `searchTeamsElasticResourceType`, `searchTeamsByProxyIds` (ACL), `searchTeamsWithTypeCheck` (mvs/dps).
+
+*Acceptance Criteria:*
+1. each query shape preserved"
+Story,SPARK-SRCH-C05,(Search) Template search family [SPARK-SRCH-C05],,Federate BreakDown Product,C,M,dgs-migration,search,search,,,To Do,"*Summary:*
+* Search templates.
+
+*Covers:*
+* `searchMeasurementTemplates`, `searchSizeTemplates`, `searchProductDetailsTemplates`.
+
+*Acceptance Criteria:*
+1. each returns its paged shape"
+Story,SPARK-SRCH-C06,(Search) Product search family [SPARK-SRCH-C06],,Federate BreakDown Product,C,M,dgs-migration,search,search,,,To Do,"*Summary:*
+* Search products.
+
+*Covers:*
+* `searchProductByField` (field-weight body), `getProductSuggestions` (SMP-prefix → sample-suggestion branch), `getProductSuggestionsV1`, `getTemplateSuggestions`. **Note:** `searchProducts` is **schema-drift** (no resolver — see F01).
+
+*Acceptance Criteria:*
+1. field-weight body preserved
+2. SMP-prefix branch"
+Story,SPARK-SRCH-C07,(Search) searchCombinations + searchPalettes [SPARK-SRCH-C07],,Federate BreakDown Product,C,XS,dgs-migration,search,search,,,To Do,"*Summary:*
+* Search combinations and colour palettes.
+
+*Covers:*
+* `searchCombinations`, `searchPalettes`.
+
+*Acceptance Criteria:*
+1. paged results"
+Story,SPARK-SRCH-C08,(Search) searchWatchlist + searchClaimsByProxyIds + searchRfidLocations [SPARK-SRCH-C08],,Federate BreakDown Product,C,XS,dgs-migration,search,search,,,To Do,"*Summary:*
+* Search watchlists, proxied claims and RFID locations.
+
+*Covers:*
+* `searchWatchlist`, `searchClaimsByProxyIds` (ACL), `searchRfidLocations`.
+
+*Acceptance Criteria:*
+1. each paged result; proxy token on claims"
+Story,SPARK-SRCH-C09,(Search) Suggestions family [SPARK-SRCH-C09],,Federate BreakDown Product,C,M,dgs-migration,search,search,,,To Do,"*Current Behaviour:*
+* thin elastic suggestion wrappers → `[Suggestion]`. - **Acceptance:** 1. each wrapper returns suggestions; `searchSuggestions` honors `type`. - **Tests:** ☐ generic+type ☐ each specific ☐ ownership confirmed."
+Story,SPARK-SRCH-C10,(Search) Reports [SPARK-SRCH-C10],,Federate BreakDown Product,C,M,dgs-migration,search,search,,,To Do,"*Summary:*
+* Run the search-backed reports.
+
+*Covers:*
+* `getConnectedBOMs` (query via `getQueryForConnectedBOMSearch(filter)`), `getProductReport`, `getProductWorkspaceMetricsReportCount`.
+
+*Acceptance Criteria:*
+1. each report aggregate preserved"
+Story,SPARK-SRCH-D01,(Search) sendBulkCombinationUpdates [SPARK-SRCH-D01],,Federate BreakDown Product,D,XS,dgs-migration,search,mutation,,,To Do,"*Current Behaviour:*
+* (own) `sendBulkCombinationUpdates(combinationUpdates)` → `{requestId}`.
+
+*Target:*
+* `@DgsMutation → BulkCombination`. **Acceptance:** 1. returns request id. **Tests:** ☐ bulk update. --- ### Phase F — Federation & ownership"
+Story,SPARK-SRCH-F01,(Search) Gateway composition + ownership reconciliation [SPARK-SRCH-F01],,Federate BreakDown Product,F,M,dgs-migration,search,field-resolver,,,To Do,"*Target:*
+* add `plm-elastic-search` to the supergraph; **reconcile drift/ownership**: `searchProducts` - (no resolver — delete or implement) vs `searchProductsES` (add to SDL or drop); decide owner for `searchSPGSuggestions`/`searchUsersSuggestions`/`searchTeamsSuggestions` (no resolver) and `searchWorkspaceSuggestions`/`searchWorkspaceProductsSuggestions` (resolved in workspace). - Sequence the read-hub cutover so dependents' `search` calls resolve. - **Acceptance:** 1. supergraph composes. - 2. each drift/cross-file op has an owner + decision. - **Tests:** ☐ compose ☐ ownership matrix. --- ### Phase G — Result-type Field Resolvers & Tests"
+Story,SPARK-SRCH-G01,(Search) SearchAttachment enrichment [SPARK-SRCH-G01],,Federate BreakDown Product,G,L,dgs-migration,search,field-resolver,,,To Do,"*Current Behaviour:*
+* `createdBy`/`updatedBy` (🟡 user), `tags` (delegates Attachment), - `relatedProduct` (🟡 product, PID-prefix), `relatedWorkspace` (🟡 workspace, WRK-prefix), `currentUserFileAccess` (accessControl), `renders`/`gallery`/`modelFile` (🟡 attachment, gated), `productPacketProps`/`canOpenInShowDog`/`finalVirtualFile` (snake/camel coalesce). - **Acceptance:** 1. each field resolves; prefix gates + coalesces preserved. - **Tests:** ☐ relatedProduct/Workspace ☐ renders gate ☐ coalesce."
+Story,SPARK-SRCH-G02,(Search) Material enrichment (incl. colorLinks) [SPARK-SRCH-G02],,Federate BreakDown Product,G,L,dgs-migration,search,field-resolver,,,To Do,"*Current Behaviour:*
+* `supplierName`/`businessPartners`/`droppedPartnerIds`/`teams` (🔵 vmm), - `permissions` (accessControl), `claims` (🔵 fabric), `tags` (🔵 tag), `attachments` (own elastic), `createdBy` (🟡 user), `baseMaterial`/`referenceId`/`impressionIntent`/`is3D`/`trimSuppliers` (computed), `colorLinks` (🔵 color, **12-prefix gate**). - **Acceptance:** 1. each field resolves; colorLinks prefix table exact. - **Tests:** ☐ supplier ☐ claims ☐ colorLinks gate ☐ computed."
+Story,SPARK-SRCH-G03,(Search) SearchCombination + SearchPalette field resolvers [SPARK-SRCH-G03],,Federate BreakDown Product,G,M,dgs-migration,search,field-resolver,,,To Do,"*Current Behaviour:*
+* brands (🔵 brand), business/dropped partners (🔵 vmm), department/division (🔵 ig), designCycles/materialCategory/tags (🔵 tag), `fabricSpec` (🔵 fabric); palette: brands/tags/designCycles/departments/partners. **Acceptance:** 1. each resolves; empty → []. **Tests:** ☐ combination ☐ palette."
+Story,SPARK-SRCH-G04,(Search) SearchWatchlist + SearchComponent field resolvers [SPARK-SRCH-G04],,Federate BreakDown Product,G,M,dgs-migration,search,field-resolver,,,To Do,"*Current Behaviour:*
+* Watchlist: businessPartners (🔵 vmm), created/updatedBy (🟡 user), attachments (own), - workspaces (🟡 workspace), participantDetails (🔵 userGroup), product (🟡 product, PID); Component: created/updatedBy (🟡 user), workspaces (🟡 workspace), materials (🟡 bom, BOM/PKGBOM/PRDBOM prefix). - **Acceptance:** 1. each resolves; prefix gates preserved. - **Tests:** ☐ watchlist ☐ component materials."
+Story,SPARK-SRCH-G05,(Search) Access + report-group + paging field resolvers [SPARK-SRCH-G05],,Federate BreakDown Product,G,M,dgs-migration,search,field-resolver,,,To Do,"*Current Behaviour:*
+* `SearchAttachmentAccess.bps` (union)/`partnerNamesMap` (🔵 vmm); - `ConnectedBOMGroup.groupBy` (🔵 ig division name)/`…GroupResult.designCycle` (🔵 tag); `Requested_Evaluated_Samples_By_User.user` (🟡 user); `SearchProductDivision/DepartmentCount` (🔵 ig); paged-type `paging`/`counts` (computed; `MaterialsPaged.counts` → `getCounts`). - **Acceptance:** 1. each resolves. - **Tests:** ☐ access ☐ report groups ☐ paging."
+Story,SPARK-SRCH-G06,"(Search) Tests, parity harness, schema-conformance CI [SPARK-SRCH-G06]",,Federate BreakDown Product,G,L,dgs-migration,search,field-resolver,,,To Do,"*Target:*
+* ≥80% unit coverage; parity harness across the search families + enriched result types; **schema- - conformance CI** (every SDL type present, no stray placeholders); load test p95 for `searchAttachments`/ material/sample search. - **Acceptance:** 1. unit ≥80%. - 2. parity green. - 3. schema-conformance passes. - 4. load p95 parity. - **Tests:** ☐ parity ☐ conformance ☐ load. --- ## 4. Risk Register | Risk | Likelihood | Impact | Mitigation | Owner | |------|-----------|--------|------------|-------| | Type-surface breadth under-scoped (A02) | High | Medium | Expand all SDL types; conformance CI (G06) | Product Owner | | Enrichment field resolvers fan-out (G01/G02) | Medium | Medium | DataLoader batching; cache platform lookups | Backend Eng | | Ownership drift (searchProducts/ES, *Suggestions) (F01) | Medium | Medium | Reconcile before exposing | Product Owner | | Read-hub cutover coordination | High | High | Migrate early or dual-run; sequence dependents | Tech Lead + Platform | ## 5. Summary - **Stories:** 25 (A:4 · B:3 · C:10 · D:1 · F:1 · G:6) covering ~48 queries + 1 mutation (Phase-C grouped by family). - **Critical path:** A01→A02/A04→C01/C02→G01/G02→G06. - **Highest cost:** the type surface (A02) + enrichment field resolvers (G01/G02); not orchestration. - **Read hub:** every product-family domain's `search` calls resolve against this subgraph — sequence the cutover. --- - **Phase Completed:** Phase 4 — Migration Stories · **Domain:** `search` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md."

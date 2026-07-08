@@ -5,7 +5,7 @@
 > **Use this folder:** the problem brief — the research so far for this case. Product Owner → §1 (the problem) · Engineer → §2 (what must be decided).
 
 > **Home domains:** product (`plm-product`), workspace (`plm-workspace`), search (`plm-elastic-search`), bom (`plm-product`)
-> **Stub stories:** `SPARK-PROD-C01` (two-stage hydration) · `SPARK-WS-D04` (later phase)/`G04` (workspace↔product) · `SPARK-SRCH-F01` (later phase) (read-hub) · bom material rollout
+> **Stub stories:** `SPARK-PROD-C01` (two-stage hydration) · `SPARK-WS-D04`/`G04` (workspace↔product) · `SPARK-SRCH-F01` (read-hub) · bom material rollout
 
 ## 1. The problem (it recurs wherever one domain needs another's data)
 
