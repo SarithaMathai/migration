@@ -1,0 +1,393 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-BOM-A04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [SPARK-BOM-A04],,Federate BreakDown Product,A,M,dgs-migration,bom,schema,,SPARK-SPIKE-05,To Do,"*Requires spike:* SPARK-SPIKE-05 (Polymorphic Type Resolution) — see program spike
+
+*Current Behaviour:*
+* - Material: switch on `material.materialCategory.code` → 4→Trim, 6→Wash, 2→Fabric, 15→Combination, 16→FabricSpec, {10,11,12,13,14,17–24}→Packaging, **default (1,5,9)→BomMaterial**. - Impression: switch on `impression.type` → 603→Trim, 605→TrimZipper, 604→Wash, 602→Fabric, **default 601→Base**.
+
+*Target:*
+* Two `@DgsTypeResolver(name=...)` functions mirroring the switches. Keep the default branches exactly (HUB code 9 must fall through to `BomMaterial`). Source the category codes from a `BomConstants.kt` enum (replaces the resolver's `MATERIAL_CATEGORY_ID` — fixes the circular import). - **Files to Create / Modify:** `dataFetcher/BomTypeResolvers.kt`; `model/BomConstants.kt`.
+
+*Acceptance Criteria:*
+1. Each `materialCategory.code` maps to the type in the table above; unknown codes → `BomMaterial`
+2. Each impression `type` maps correctly; unknown → `BomBaseImpressionDetails`
+3. `BomConstants` holds all 21 category codes + 5 impression codes (verify values against backend)"
+Story,SPARK-BOM-B01,(BOM) getBomByIds data fetcher [SPARK-BOM-B01],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+* if `ids` empty → `[]`; else `GET {base}/…/bom/v1?ids={ids}` → `deepToCamelCase`. - **ACL note (context):** current impl gets a capability token for `ids` because boms are resource-scoped; ACL ignored in DGS.
+
+*Target:*
+* `@DgsQuery fun getBomByIds(ids): List<Bom>` → `bomService.getByIds(ids)`. Add a request-scoped `BomDataLoader` keyed on id (the source isn't batched — improve here). Empty list → `[]`. - **Files to Create / Modify:** `dataFetcher/BomQueryDataFetcher.kt` (+ `dataloader/BomDataLoader.kt`).
+
+*Acceptance Criteria:*
+1. `getBomByIds([""B1"",""B2""])` returns mapped `Bom` objects from the REST list endpoint
+2. Empty `ids` → returns `[]` with **no** REST call
+3. Response snake_case → camelCase per schema"
+Story,SPARK-BOM-B03,(BOM) getBomStatus (cacheable master data) [SPARK-BOM-B03],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+* `GET {base}/masterData?name=BomStatus`; transform `{key:value}` map → `[{code,description}]`. No ACL.
+
+*Target:*
+* `@DgsQuery getBomStatus(): List<CodeDescription>` → `@Cacheable(""bomMasterData"", key=""'status'"")` service method that maps the map to the list. - **Files / Dependencies:** `BomQueryDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Returns `[{code,description}]` from the status map
+2. Second call served from cache (no REST)
+3. Map key→`code`, value→`description`"
+Story,SPARK-BOM-B04,(BOM) getBomByParentId data fetcher [SPARK-BOM-B04],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+* today, the gateway fetches boms for a product and sorts them by `createdAt` DESC itself, in application code — the backend returns them unsorted. **ACL note (context):** capability token for `parentId`; ignored in DGS. - **Decision (resolved — was Decision #6):** push the sort to the backend. The Kotlin service **no longer** replicates `sortedByDescending { it.createdAt }` client-side — the REST call now asks the backend to sort.
+
+*Target:*
+* `@DgsQuery getBomByParentId(parentId): BomPaged` → `GET …/bom/v1/byProductId/{parentId}?sort=createdAt,desc` (backend-sorted); return `BomPaged{content}` as-is, no in-memory re-sort. - **Files / Dependencies:** `BomQueryDataFetcher.kt`. - **Example (before → after):** ``` // before (B04 as originally written) val boms = restClient.getByProductId(parentId) // unsorted return boms.sortedByDescending { it.createdAt } // client-side sort // after (this story) val boms = restClient.getByProductId(parentId, sort = ""createdAt,desc"") // backend-sorted return boms // no client-side re-sort ```
+
+*Acceptance Criteria:*
+1. Returns boms for `parentId` sorted `createdAt` DESC, sorted by the **backend**, not client code
+2. Empty → `{content: []}`
+3. No `sortedByDescending` (or equivalent) remains in the Kotlin data fetcher — sorting happens once, server-side"
+Story,SPARK-BOM-B05,(BOM) getBomMaterialTypes (merge with Material Hub) [SPARK-BOM-B05],,Federate BreakDown Product,B,M,dgs-migration,bom,query,,SPARK-SPIKE-06a,To Do,"*Requires spike:* SPARK-SPIKE-06a (Hydration) — see program spike
+
+*Current Behaviour:*
+* load bom material types (`GET …/master_data/bom_material_types[?ids]`) **and** `materialHub.getHubMaterialTypes` (today sequential), concat; map each hub type → `{code:9, description:type, bomType:{code:1,description:'Product'}, libraryLink:true, freeText:true}`. - **EXT Service Calls:** **EXT** → key: `materialHub` · severity: 🟡 — hub material type list to merge into bom types.
+
+*Target:*
+* `@DgsQuery getBomMaterialTypes(ids): List<BomMaterialType>`. Fetch both sources **in parallel** (`coroutineScope`), concat, synthesize hub rows as above. Hub fetch via federated `materialHub` reference or a `MaterialHubClient`. - **Files / Dependencies:** `BomQueryDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Returns bom types + synthesized hub types
+2. Hub rows carry `code=9, libraryLink=true, freeText=true, bomType={1,'Product'}`
+3. The two fetches run concurrently
+4. EXT hub failure → return bom types only (partial), logged"
+Story,SPARK-BOM-B06,(BOM) getBomPackagingMaterialTypes (cacheable) [SPARK-BOM-B06],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+* `GET …/master_data/packaging_bom_material_types` → camelCase. No ACL.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` service method. - **Files / Dependencies:** `BomQueryDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Returns packaging material types
+2. Cached on second call"
+Story,SPARK-BOM-B07,(BOM) getBomPackagingSubstrates (cacheable) [SPARK-BOM-B07],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+* `GET …/master_data/packaging_bom_substrate_types` → camelCase.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` service method returning `[BomPackagingSubstrate]`.
+
+*Acceptance Criteria:*
+1. Returns substrate list
+2. Cached"
+Story,SPARK-BOM-B08,(BOM) getBomPackagingUnitOfMeasure (cacheable) [SPARK-BOM-B08],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+* `GET …/master_data/packaging_unit_of_measure` → camelCase (`units_of_measure`).
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` returning `[UnitsOfMeasure]`.
+
+*Acceptance Criteria:*
+1. Returns UoM list
+2. Cached"
+Story,SPARK-BOM-C01,(BOM) getBomElastic data fetcher [SPARK-BOM-C01],,Federate BreakDown Product,C,XS,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
+* `{content} = search.getBomElastic.load(query)`; return `content`. The **entire `query` object** is passed to elastic — document the exact field set. - **EXT Service Calls:** **EXT** → key: `search` · severity: 🔴 — elastic bom search index.
+
+*Target:*
+* `@DgsQuery getBomElastic(q): List<Bom>` → `searchClient.bomElastic(query)`; return `content`. Define the query DTO from the fields the backend expects (verify). - **Files / Dependencies:** `BomSearchDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Returns `content` boms for a query
+2. Query DTO field set documented + matches backend
+3. Empty → `[]`"
+Story,SPARK-BOM-C02,(BOM) searchMaterialsBom data fetcher [SPARK-BOM-C02],,Federate BreakDown Product,C,M,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
+* in plain terms — before hitting the search backend, this resolver (1) looks up fabric suppliers by calling straight into another domain's resolver code (not a clean service call), and (2) if the caller passed `nestedSearchFilters`, flattens each filter object into 5 separate query-string keys (`nestedSearchFilters[i].type`, `...fieldPath`, `...nestedFieldPath`, `...operator`, `...values`) because that's the shape the old gateway happened to build. 1. `fabricSuppliers = VMM_BusinessPartner.getRelatedFabricSuppliersByMerchVendors({merchVendorIds: partnerIds})` (cross-resolver import — replace with a service/federation call). 2. Build `queryPayload` from args. 3. If `nestedSearchFilters` present: flatten each `[i]` into 5 keys `nestedSearchFilters[i].{type|fieldPath|nestedFieldPath|operator|values}`, then delete the array key. 4. `search.searchMaterialsBom.load(queryPayload)`. - **EXT Service Calls:** **EXT** → key: `search` · 🔴; **EXT** → key: `vmm` · 🔵 (fabric-supplier lookup).
+
+*Target:*
+* `@DgsQuery searchMaterialsBom(...): BomMaterialSearch`. Fetch fabric suppliers - via a `VmmClient`/federation (not a resolver import). - **Request shape is per `SPARK-BOM-S03`'s outcome** — until that spike concludes, implement the flatten (below) so this story isn't blocked on the spike's timeline; swap to the structured DTO only if S03 lands during this story's PR. - **Example (today's flatten, to preserve until S03 says otherwise):** ``` input: nestedSearchFilters: [{type: ""trim"", fieldPath: ""size"", operator: ""eq"", values: [""4""]}] output query string: nestedSearchFilters[0].type=trim nestedSearchFilters[0].fieldPath=size nestedSearchFilters[0].operator=eq nestedSearchFilters[0].values=4 ``` - **Files / Dependencies:** `BomSearchDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Returns `BomMaterialSearch{content,paging}`
+2. With `nestedSearchFilters`, the request serializes to the same `nestedSearchFilters[i].*` keys as today (or the agreed structured DTO, once the search-request-shape decision has landed)
+3. `size` defaults to 20
+4. Fabric-supplier prefetch via service/federation, not a resolver import"
+Story,SPARK-BOM-C03,(BOM) getComboSupplierForBom data fetcher [SPARK-BOM-C03],,Federate BreakDown Product,C,M,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
+* 1. `fabricSpecCombos = SPARK_Combination.searchFabricSpecCombos({q:`parentComboId:${comboId}`, page:0, size:100})` (cross-resolver import). 2. Filter combos: keep where `fsId` set AND ((`partnerIds` non-empty & `mvIds.length===1` & `partnerIds.includes(mvIds[0])`) OR `partnerIds` empty). 3. For each (parallel): `fs = vmm.getByID.load(fsId)`; if `fs.bpName`, push `{fabricSupplier:{id:fsId,name:fs.bpName}, fabricSpecCombo}`. - **EXT Service Calls:** **EXT** → key: `combination` · 🟡; **EXT** → key: `vmm` · 🔵.
+
+*Target:*
+* `@DgsQuery getComboSupplierForBom(comboId, partnerIds): List<BomComboSupplier>`. Call combination via `CombinationClient`/federation. VMM lookups in parallel (`coroutineScope`/`async`). - **PO decision:** the `mvIds.length===1` filter silently drops multi-MV combos — confirm intended. - **Files / Dependencies:** `BomSearchDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Returns suppliers only for combos with a resolvable `fsId` and `bpName`
+2. Filter logic matches the rule above (document the `mvIds.length===1` behaviour)
+3. VMM lookups run concurrently"
+Story,SPARK-BOM-C04,(BOM) getValidTrimSuppliersForBom data fetcher [SPARK-BOM-C04],,Federate BreakDown Product,C,XS,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
+* `getRelatedSuppliersForMVs(ctx, merchVendorIds, [TRIM_SUPPLIER.code])` → `[Int]` partner ids. - **EXT Service Calls:** **EXT** → key: `vmm` · 🔵.
+
+*Target:*
+* `@DgsQuery` delegating to a `VmmSupplierService.relatedSuppliers(merchVendorIds, roles=[TRIM_SUPPLIER])`. Source the role code from `BomConstants` (confirm code value).
+
+*Acceptance Criteria:*
+1. Returns related trim-supplier partner ids
+2. Role filter = TRIM_SUPPLIER only
+3. Empty input → `[]`"
+Story,SPARK-BOM-C05,(BOM) getValidRawMaterialSuppliersForBom data fetcher [SPARK-BOM-C05],,Federate BreakDown Product,C,XS,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
+* same as C04 with roles `[RAW_MATERIAL_SUPPLIER, FABRIC_SUPPLIER, TRIM_SUPPLIER]`.
+
+*Target:*
+* `@DgsQuery` delegating with the three roles.
+
+*Acceptance Criteria:*
+1. Returns ids matching the 3 roles
+2. Empty input → `[]`"
+Story,SPARK-BOM-D01,(BOM) addBom mutation [SPARK-BOM-D01],,Federate BreakDown Product,D,M,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+* `bom = bomService.addBom(sparkBom)` → `POST {base}/…/bom/v1` (`transformRequest: deepToSnakeCase`, `primeKey: humanId`); if `bom.validationErrors || bom.message` → throw. No ACL (new resource). - **Input validation:** `name` and `parentId` required (schema `String!`).
+
+*Target:*
+* `@DgsMutation addBom(sparkBom: BomInput): Bom` → `bomService.add(...)`. Map camelCase→snake_case. On `validationErrors`/`message` in the response → throw typed `BomValidationException`. After success, `bomDataLoader.prime(humanId, bom)`. - **Files / Dependencies:** `BomMutationDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. POST creates a bom and returns it mapped to `Bom`
+2. Backend `validationErrors`/`message` → `BomValidationException` (not a silent return)
+3. Request body is snake_case
+4. Read cache primed with `humanId`"
+Story,SPARK-BOM-D02,(BOM) manageBomWorkspaces mutation [SPARK-BOM-D02],,Federate BreakDown Product,D,XS,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+* if `toAdd`/`toRemove` non-empty → `workspaceAssociationHelper(BOM, bomId, toAdd, toRemove)` → PUT `…/{bomId}/{associate|dissociate}_workspace`; else returns `undefined`. - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association). **ACL note (context):** capability token for `bomId`; ignored in DGS.
+
+*Target:*
+* `@DgsMutation manageBomWorkspaces(bomId, workspacesToAdd, workspacesToRemove): Bom` → `bomService.manageWorkspaceAssociations(...)`. Both empty → return `null` (document for clients).
+
+*Acceptance Criteria:*
+1. Adds/removes workspace associations via the correct endpoint
+2. Both lists empty → `null`, no REST call
+3. Returns the updated bom"
+Story,SPARK-BOM-D03,(BOM) lockBom mutation [SPARK-BOM-D03],,Federate BreakDown Product,D,XS,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+* `PUT …/{bomId}/lock`. **ACL note (context):** capability token for `bomId`; ignored in DGS.
+
+*Target:*
+* `@DgsMutation lockBom(bomId): Bom` → `bomService.lock(bomId)`.
+
+*Acceptance Criteria:*
+1. PUT to `/lock` returns the locked bom
+2. 404 → null"
+Story,SPARK-BOM-D04,(BOM) unlockBom mutation [SPARK-BOM-D04],,Federate BreakDown Product,D,XS,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+* `PUT …/{bomId}/unlock`. ACL note as D03.
+
+*Target:*
+* `@DgsMutation unlockBom(bomId): Bom` → `bomService.unlock(bomId)`.
+
+*Acceptance Criteria:*
+1. PUT to `/unlock` returns the unlocked bom
+2. 404 → null"
+Story,SPARK-BOM-D05,(BOM) updateBomComponentStatus mutation [SPARK-BOM-D05],,Federate BreakDown Product,D,XS,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+* `PUT …/bom/v1/component_status_update` body `{productId, ids, status}`. **No ACL token** — the only write without one (every other BOM write obtains one).
+
+*Target:*
+* `@DgsMutation updateBomComponentStatus(productId, ids, status): BomPaged` → `bomService.updateComponentStatus({...})`; wrap result as `{content}`.
+
+*Acceptance Criteria:*
+1. PUT sends `{productId, ids, status}` (snake_case)
+2. Returns `BomPaged{content}`"
+Story,SPARK-BOM-E01,(BOM) updateBom — 3-step orchestrated write [SPARK-BOM-E01],,Federate BreakDown Product,E,XL,dgs-migration,bom,complex,,"SPARK-SPIKE-01, D02",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* editing a bom today is really three separate backend calls made one - after another, with no undo button: (1) if the caller changed which workspaces the bom belongs to, save that first; (2) save the actual bom fields; (3) if the caller changed business-partner permissions, save that last. - If call 2 or 3 fails, call 1 has already gone through — there's no way today to detect or undo that. 1. (ACL note — context) capability token obtained for `humanId` because the update is resource-scoped; ignored in DGS. 2. **If** `workspaceContext` has add/remove → `workspaceAssociationHelper(BOM, humanId, add, remove)` (**commits first**) → PUT `…/{bomId}/{associate|dissociate}_workspace`. 3. `bomService.updateBom(sparkBom)` → `PUT {base}/…/bom/v1/{humanId}` (`omitParamsInBody: true`). 4. If `validationErrors || message` → throw. 5. **If** `businessPartners` present → `bomService.updatePermissions().load(sparkBom)` → PUT `…/{humanId}/permission`. 6. Return the updated bom. - **Risk 🔴:** three sequential writes, **no rollback** today. Step-2 workspace change persists even if step 3 fails; step-5 permission update can leave ACL stale. - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association step).
+
+*Target:*
+* `BomUpdateOrchestrator` running steps in order: workspace assoc → body PUT - (`omitParamsInBody`) → optional permissions PUT. - **Failure strategy is whatever `SPARK-BOM-S01` concludes** (saga / compensation-log / best-effort) — see that spike for the reasoning; this story implements the choice. - Replace the `validationErrors||message` shape-sniff with a typed `BomValidationException`. - Prime the read cache on success. - **Files / Dependencies:** `service/BomUpdateOrchestrator.kt`, `BomMutationDataFetcher.kt`; D02 (shares the workspace step); reuses the shared `WriteSaga` framework from `../../complexStories/non-atomic-write-saga/` if `S01` adopts it. - **Pseudocode (shape only — exact compensation depends on `S01`'s answer):** ```kotlin class BomUpdateOrchestrator(private val saga: WriteSaga) { fun updateBom(humanId: String, body: BomInput, workspaceCtx: WorkspaceContext?, partners: List<BusinessPartner>?): Bom { saga.step(""workspace-assoc"", // do: { workspaceCtx?.let { manageBomWorkspaces(humanId, it.toAdd, it.toRemove) } }, // compensate (undo), only meaningful if S01 picks the saga pattern: { workspaceCtx?.let { manageBomWorkspaces(humanId, toAdd = it.toRemove, toRemove = it.toAdd) } } ) saga.step(""body-put"", { restClient.putBom(humanId, body.omit(""humanId"")) }, // throws BomValidationException on validationErrors/message { /* no compensation — this step throwing means nothing after it ran */ } ) saga.step(""permissions-put"", { partners?.let { restClient.putPermissions(humanId, it) } }, { /* compensation TBD by S01: restore previous partner list, or log+alert */ } ) val result = saga.finish() // COMMITTED | COMPENSATED | PARTIAL_FAILURE bomCache.prime(humanId, result.bom) // only on COMMITTED return result.bom } } ```
+
+*Acceptance Criteria:*
+1. Parity for 5 fixtures: body-only; body+workspace-add; body+workspace-remove; body+partners; body+workspace+partners
+2. Workspace step runs **before** the body PUT; permissions step only when `businessPartners` present
+3. Body PUT omits `humanId` from the body
+4. Chosen failure strategy implemented; partial failure emits a compensation-log entry (if (b)/(c)) or compensates (if (a))
+5. Backend `validationErrors`/`message` → `BomValidationException`
+6. Read cache updated with the returned bom
+
+*Test Cases:*
+* [ ] Unit: order workspace→body→perms
+* [ ] Unit: no-workspace skip
+* [ ] Unit: no-partners skip
+* [ ] Unit: step-3 failure path (strategy)
+* [ ] Parity: 5 fixtures
+
+*Complex — broken into sub-tasks:* E01-1 workspace-assoc + body PUT · E01-2 permissions PUT + rollback framework
+
+*Detailed cross-domain case:* complexStories/non-atomic-write-saga/ (import non-atomic-write-saga.csv for the sub-tasks)"
+Story,SPARK-BOM-F01,(BOM) Implement Product.productBoms / boms / packagingBoms (internal) [SPARK-BOM-F01],,Federate BreakDown Product,F,M,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* when a client asks a `Product` for its boms today, that resolver lives - in *product's* code and reaches across to BOM's data loader. - After migration, product and bom live in the same service (`plm-product`), so there's no reason for that indirection — BOM's own code should just answer the field directly. - `ctx.loaders.bom.getActiveBomsByProductId(...)` / `...AndBomType(...)`.
+
+*Target:*
+* plain `@DgsData` field resolvers on the `Product` type (same subgraph) → `bomService.getActiveBomsByProductId` (and `...AndBomType` for `boms(types)`). **No** `@DgsEntityFetcher` / `@extends @external` — `Product` is an internal type, so this is a normal in-process method call, not a federation hop. - **Example (Kotlin, same-subgraph field resolver — no federation annotations needed):** ```kotlin @DgsComponent class ProductBomFieldResolver(private val bomService: BomService) { @DgsData(parentType = ""Product"", field = ""productBoms"") fun productBoms(dfe: DgsDataFetchingEnvironment): List<Bom> { val product = dfe.getSource<Product>() return bomService.getActiveBomsByProductId(product.id) } @DgsData(parentType = ""Product"", field = ""boms"") fun boms(dfe: DgsDataFetchingEnvironment, @InputArgument types: List<Int>?): List<Bom> { val product = dfe.getSource<Product>() return bomService.getActiveBomsByProductIdAndBomType(product.id, types) } } ```
+
+*Acceptance Criteria:*
+1. `Product.productBoms/boms/packagingBoms` resolve via `bomService` internally
+2. the equivalent product-side resolvers are removed
+3. `boms(types)` filters by bom type
+4. no gateway hop"
+Story,SPARK-BOM-F02,(BOM) Fill ResourcesCount.bomsCount (internal) [SPARK-BOM-F02],,Federate BreakDown Product,F,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* the TechPack summary panel shows ""12 boms"" for a product today by having *product's* orchestration code run an elastic count query. Once BOM owns this field, BOM's own code answers it directly — same count, just answered by the team that actually owns bom data.
+
+*Target:*
+* `@DgsData bomsCount` on the `ResourcesCount` type (owned by `product` in the **same subgraph**) → internal bom elastic count. **No** entity fetcher / federation — only the *externally* owned `ResourcesCount` fields (attachments/discussions/etc.) need real federation. - **EXT:** 🔴 `search` (count query, the search DGS). - **Example:** ```kotlin @DgsData(parentType = ""ResourcesCount"", field = ""bomsCount"") fun bomsCount(dfe: DgsDataFetchingEnvironment): Int { val productId = dfe.getSource<ResourcesCount>().productId return searchClient.countBomsByProductId(productId) // same elastic query product used to run } ```
+
+*Acceptance Criteria:*
+1. `bomsCount` resolves internally on `ResourcesCount`
+2. count matches current elastic semantics
+3. no gateway hop for this field"
+Story,SPARK-BOM-G01,(BOM) Bom field resolvers (9 shared fields) [SPARK-BOM-G01],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* 9 fields — `humanId`, `access`, `currentUserPermissions`, `businessPartners`, `createdBy`, `updatedBy`, `product`, `workspaces`, `participantDetails` — that all need a little lookup logic rather than being plain pass-throughs (C1): `humanId` (`humanId ?? id`), `access` & `currentUserPermissions` (accessControl — **ACL context only, ignore in impl**), `businessPartners` (`loadBusinessPartners`), `createdBy`/`updatedBy` (`getUser`), `product` (if `parentId` starts `PID` → `product.getByID`, else null), `workspaces` (`getWorkspacesByIdsV2`), `participantDetails` (`getUserGroup`). - **EXT Service Calls:** 🟡 `workspaceV2`; 🔵 user-profile (`createdBy`/`updatedBy`/`participantDetails`); 🔵 teams (`businessPartners`). `product` is an internal same-DGS call.
+
+*Target:*
+* One `@DgsData` set on `Bom`. Sibling fields → federated references; `product` → internal `productService.getById`. `access`/`currentUserPermissions` — omit ACL work; if surfaced, resolve via the platform-provided permission context (no plumbing). - **Confirmed (was Decision #8):** `parentId` only ever starts with `PID` — no longer an open question. - **Files / Dependencies:** `BomEntityFieldDataFetcher.kt`. - **Example:** ``` Bom{ parentId: ""PID90210"" }.product → productService.getById(""PID90210"") → Product{...} Bom{ parentId: ""SOMETHINGELSE"" }.product → null (never observed in practice per the confirmed decision, but the code still guards on the PID prefix defensively) ```
+
+*Acceptance Criteria:*
+1. All 9 fields resolve on `Bom` from one impl
+2. `product` null when `parentId` not `PID*` (defensive guard; in practice always `PID*`, per the confirmed decision)
+3. Sibling fields emit correct `@key`s for federation
+4. No ACL plumbing introduced"
+Story,SPARK-BOM-G03,(BOM) BomMaterial field resolvers (8 fields) [SPARK-BOM-G03],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* `BomMaterial` is the generic (""hub"") material row. Two of its fields — - `libraryResource` and `genericMaterialType` — both need the same lookup from the Material Hub service, but today's code fetches the hub row twice (once per field) instead of once and reusing it. - (C4): `libraryResource` (H5 hub), `genericMaterialType` (hub `baseMaterial.relatedMaterialType` precedence over local), `origins`/`certifications` (H3 coded-options filter+enrich), `weight` (H1), `sizeUnitOfMeasure` (H2), `countryOfOrigin` (tag), `parentLibraryResourceId`/`libraryResourceId` (Direct), `impressionDetails` (`material.impressions`). - Hub resource loaded twice (libraryResource + genericMaterialType) — DataLoader-memoized; consolidate. - **ACL context:** hub uses a capability token; ignore in impl. - **EXT:** 🟡 materialHub; 🔵 tag.
+
+*Target:*
+* `BomMaterialFieldDataFetcher` with a single memoized hub fetch reused by `libraryResource` + `genericMaterialType`. Coded-options cached per request (`@Cacheable`). - **Example — consolidating the double-fetch:** ```kotlin // one memoized fetch per material, reused by both fields in the same request private val hubLoader = DataLoader<String, HubMaterial> { ids -> materialHubClient.batchGet(ids) } fun libraryResource(material: BomMaterial) = hubLoader.load(material.libraryResourceId) fun genericMaterialType(material: BomMaterial): String { val hub = hubLoader.load(material.libraryResourceId).join() // same in-flight request as libraryResource return hub.baseMaterial?.relatedMaterialType ?: material.genericMaterialType } ```
+
+*Acceptance Criteria:*
+1. `genericMaterialType` returns hub value when `relatedMaterialType` differs from local, else local
+2. `origins`/`certifications` filtered to known codes and enriched to `{code,description}`
+3. `weight` uses UoM fallback code 23 (grams)
+4. Hub fetched once per material"
+Story,SPARK-BOM-G04,(BOM) BomPackagingMaterial field resolvers (2 fields) [SPARK-BOM-G04],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* `impressionDetails` (`material.impressions`), `countryOfOrigin` (tag).
+
+*Target:*
+* two `@DgsData` fields; `countryOfOrigin` via `tag` reference. - **Example:** `BomPackagingMaterial{ countryOfOriginIds: [""US"",""CN""] }.countryOfOrigin` → `[Tag{code:""US"",...}, Tag{code:""CN"",...}]`; empty `countryOfOriginIds` → `[]`.
+
+*Acceptance Criteria:*
+1. `impressionDetails` = parent impressions
+2. `countryOfOrigin` resolves from `countryOfOriginIds` (empty → `[]`)"
+Story,SPARK-BOM-G05,(BOM) BomFabricMaterial field resolvers (4 fields) [SPARK-BOM-G05],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* `libraryResource` = `search.searchFabricSpecCombos({q:`id:${fscId}`,page:0,size:1})` → `content[0] ?? {id:fscId}`; `weight` (H1), `countryOfOrigin`, `impressionDetails`, `libraryResourceId`. - **EXT:** 🔴 search; 🟡 materialHub (weight); 🔵 tag.
+
+*Target:*
+* `libraryResource` via `searchClient.fabricSpecCombos(...)` with `{id}` fallback. - **Example:** `libraryResourceId: ""FSC-99""` → search returns a match → `libraryResource = FabricSpecCombo{id:""FSC-99"", name:""Denim 12oz""}`; no match → `libraryResource = {id:""FSC-99""}` only (fallback shell, same convention as G06/G07/G09).
+
+*Acceptance Criteria:*
+1. Returns the matched fabricSpecCombo or `{id}`
+2. `weight`/`countryOfOrigin` as G03"
+Story,SPARK-BOM-G06,(BOM) BomFabricSpecMaterial field resolvers (4 fields) [SPARK-BOM-G06],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* `libraryResource` = `fabric.getSpecificationByID.load(id) ?? {id}`; `weight`, `countryOfOrigin`, `impressionDetails`. - **EXT:** 🟡 fabric, materialHub; 🔵 tag.
+
+*Target:*
+* `libraryResource` via `FabricClient.getSpecificationById` with `{id}` fallback. - **Example:** same fallback shape as G05/G07/G09 — `libraryResource(id)` found → full object; not found → `{id}` only, never `null`.
+
+*Acceptance Criteria:*
+1. Returns fabric spec or `{id}`
+2. weight/countryOfOrigin as G03"
+Story,SPARK-BOM-G07,(BOM) BomCombinationMaterial field resolvers (4 fields) [SPARK-BOM-G07],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* `libraryResource` = `combination.getById.load(id) ?? {id}`; `weight`, `countryOfOrigin`.
+
+*Target:*
+* `libraryResource` via `CombinationClient.getById` with `{id}` fallback. - **Example:** same fallback shape as G05/G06/G09 — combination found → full object; not found → `{id}` only.
+
+*Acceptance Criteria:*
+1. Returns combination or `{id}`
+2. weight/countryOfOrigin as G03"
+Story,SPARK-BOM-G08,(BOM) BomTrimMaterial field resolvers (7 fields) — trim size dispatchers [SPARK-BOM-G08],,Federate BreakDown Product,G,L,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* - `libraryResource` = `trim.getTrimBatch.load(trimId)`. - `materialLibraryUom` = trim UoMs, find by `materialLibraryUomId.toString()` (preserve int→string coercion). - `sizeValue` = reload trim → match size by `librarySizeId` → `getTrimSizeValue(trimType, trimSubType, size)` — **15-case TRIM_TYPES** (`utils/bomUtils.js:57-114`). - `sizeCaption` = reload trim → `getBomSizeCaption(trim, size)` — **15-case**, returns `{edit, view}` (`utils/bomUtils.js:116-187`). - `facilityName` = if already set return it; else reload trim → find supplier by `supplierId` → facility by `facilityId` → `location.getLocationById(facilityId)` → `vmmFacility.name`. - `weight`, `countryOfOrigin` as G03. The trim is loaded 3× (memoized) — consolidate. - **EXT:** 🟡 trim; 🔵 location (facility); 🔵 tag.
+
+*Target:*
+* `TrimEnrichmentService.enrich(material)` does **one** `getTrimBatch` and feeds - `libraryResource`/`sizeValue`/`sizeCaption`/`materialLibraryUom`. - Port the two 15-case dispatchers into a single Kotlin `TrimSizePresentation` table (`sizeValue` + `{edit,view}` caption per trim type/subtype). - Preserve `materialLibraryUomId.toString()`. - `facilityName` 2-level lookup via `LocationClient`. - **Files / Dependencies:** `BomTrimMaterialFieldDataFetcher.kt`, `TrimSizePresentation.kt`, `TrimEnrichmentService.kt`. - **Pseudocode — table-driven dispatch instead of a 15-branch if/else (this is the whole point of the port):** ```kotlin data class TrimSizeRule( val sizeValue: (trim: Trim, size: TrimSize) -> String, val caption: (trim: Trim, size: TrimSize) -> BomSizeCaption // {edit, view} ) val TRIM_SIZE_TABLE: Map<Pair<TrimType, TrimSubType?>, TrimSizeRule> = mapOf( (BUTTON to null) to TrimSizeRule({ _, s -> s.ligne.toString() }, { _, s -> BomSizeCaption(""${s.ligne}L"", ""${s.ligne} ligne"") }), (THREAD to WEIGHT) to TrimSizeRule({ _, s -> s.weight }, { _, s -> BomSizeCaption(s.weight, ""${s.weight} wt"") }), (THREAD to LENGTH) to TrimSizeRule({ _, s -> s.length }, { _, s -> BomSizeCaption(s.length, ""${s.length} yds"") }), (LABEL to COMPATIBLE) to TrimSizeRule({ t, s -> compatibleSize(t, s) }, { t, s -> compatibleCaption(t, s) }), // … remaining 11 (trimType, subType) entries, one row per case in the original 15-case switch ) class TrimEnrichmentService(private val trimClient: TrimClient, private val locationClient: LocationClient) { fun enrich(material: BomTrimMaterial): EnrichedTrim { val trim = trimClient.getTrimBatch(material.libraryResourceId) // ONE fetch, reused below (was 3x) val size = trim.sizes.find { it.id == material.librarySizeId } val rule = TRIM_SIZE_TABLE[trim.type to trim.subType] ?: TRIM_SIZE_TABLE[trim.type to null]!! return EnrichedTrim( libraryResource = trim, sizeValue = size?.let { rule.sizeValue(trim, it) }, sizeCaption = size?.let { rule.caption(trim, it) }, materialLibraryUom = trim.uoms.find { it.code.toString() == material.materialLibraryUomId?.toString() }, facilityName = material.facilityName ?: locationClient.getFacilityName(trim.supplierId, trim.facilityId) ) } } ```
+
+*Acceptance Criteria:*
+1. `sizeValue` matches `getTrimSizeValue` for all 15 trim types (parity table) incl. THREAD/LABEL subtype branches
+2. `sizeCaption` returns the correct `{edit,view}` per type incl. compatible-size and finished-size cases
+3. `materialLibraryUom` matches via string-coerced code
+4. `facilityName` returns the pre-set value if present, else the resolved VMM facility name
+5. Trim is fetched once per material (one REST call)
+
+*Test Cases:*
+* [ ] Unit: 15 trim-type `sizeValue` cases
+* [ ] Unit: caption edit/view per type
+* [ ] Unit: UoM string coercion
+* [ ] Unit: facilityName pre-set vs resolved
+* [ ] Unit: single trim fetch
+* [ ] Parity: recorded trim fixtures
+
+*Complex — broken into sub-tasks:* G08-1 dispatcher scaffold + type resolution · G08-2 7 TrimMaterial field resolvers"
+Story,SPARK-BOM-G09,(BOM) BomWashMaterial field resolvers (4 fields) [SPARK-BOM-G09],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* `libraryResource` = `wash.getWash(jwt).load(washId) ?? {id}`; `weight`, `countryOfOrigin`, `impressionDetails`. **ACL context:** wash uses a capability token; ignore in impl.
+
+*Target:*
+* `libraryResource` via `WashClient.getWash(washId)` with `{id}` fallback. - **Example:** same fallback shape as G05/G06/G07 — wash found → full object; not found → `{id}` only.
+
+*Acceptance Criteria:*
+1. Returns wash or `{id}`
+2. weight/countryOfOrigin as G03"
+Story,SPARK-BOM-G10,(BOM) Impression library-resource resolution (shared internal/external branch + MaterialDataLoader) [SPARK-BOM-G10],,Federate BreakDown Product,G,L,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* resolving ""what material does this impression's color/library field - point to"" needs to behave differently depending on who's asking. - An **internal** user gets the material looked up directly by id. - An **external** (e.g. supplier-portal) user doesn't have direct access to that id space, so the lookup goes through a proxy-id search instead, scoped to the boms they're allowed to see. - `libraryResource`: **internal** (`currentUser.internal`) → `searchMaterialById('libraryResource', detail)`; **external** → `bomIds = args.ids`; if no `libraryResource.id` → null; else `searchMaterialsByProxyIds.load({q:`id:(${id})`, proxyIds: bomIds, page:0, size:1})` → `content[0] ?? {id}`. - `groundColor`/`textColor`/`sliderColor`/`tapeColor`/`teethColor` → `searchMaterialById(name, detail)` (5 loader calls). - **Risk 🔴:** the external branch reads `args.ids` — only present when the parent query carried `ids`, a fragile implicit contract. **ACL context:** external path obtains a capability token for `bomIds`; ignore in impl, but keep `proxyIds`. - **EXT:** 🔴 search.
+
+*Target:*
+* Pass `bomIds` via `DgsDataFetchingEnvironment` **local context** set by the parent query — **do not** read `args.ids`. Branch on the user-internal flag from the request context. Color fields via a `MaterialDataLoader` keyed on id. - **Files / Dependencies:** `ImpressionLibraryResourceResolver.kt` (renamed from `BomImpressionDetailsFieldDataFetcher.kt` to reflect that it's a shared service now, not a single type's field resolver), `MaterialDataLoader.kt`. - **Pseudocode — the shared helper `G11`/`G12`/`G13` call into:** ```kotlin class ImpressionLibraryResourceResolver(private val searchClient: SearchClient, private val materialLoader: MaterialDataLoader) { // one branch, reused by every impression-detail type that has a libraryResource field fun resolveLibraryResource(detail: ImpressionDetail, dfe: DgsDataFetchingEnvironment): Material? { val isInternal = dfe.requestContext.currentUser.internal return if (isInternal) { searchClient.searchMaterialById(""libraryResource"", detail) } else { val bomIds = dfe.localContext<BomLocalContext>().bomIds // NOT args.ids — the fixed contract val id = detail.libraryResource?.id ?: return null searchClient.searchMaterialsByProxyIds(q = ""id:($id)"", proxyIds = bomIds, page = 0, size = 1) .content.firstOrNull() ?: Material(id = id) } } fun resolveColor(name: String, detail: ImpressionDetail): Material? = materialLoader.load(detail.colorIdFor(name)) } ```
+
+*Acceptance Criteria:*
+1. Internal path resolves `libraryResource` via material-by-id; external path via proxy-id search
+2. `bomIds` come from DGS local context, not field args (the fragile `args.ids` contract is removed)
+3. Missing `libraryResource.id` → null
+4. 5 color fields resolve via batched material loader
+5. `G11`/`G12`/`G13` call this shared service rather than re-implementing the branch
+
+*Test Cases:*
+* [ ] Unit: internal branch
+* [ ] Unit: external branch (proxyIds)
+* [ ] Unit: null id
+* [ ] Unit: color batch
+* [ ] Parity: internal vs external"
+Story,SPARK-BOM-G11,(BOM) BomFabricLibraryImpressionDetails.libraryResource [SPARK-BOM-G11],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,G10,To Do,"*Current Behaviour:*
+* single `libraryResource` field with the same internal/external branch as G10.
+
+*Target:*
+* thin `@DgsData` that calls `ImpressionLibraryResourceResolver.resolveLibraryResource(detail, dfe)` (the `G10` shared service) — no branch logic duplicated here. - **Example:** ```kotlin @DgsData(parentType = ""BomFabricLibraryImpressionDetails"", field = ""libraryResource"") fun libraryResource(dfe: DgsDataFetchingEnvironment) = impressionLibraryResourceResolver.resolveLibraryResource(dfe.getSource(), dfe) ```
+
+*Acceptance Criteria:*
+1. Same behaviour as `G10`'s `libraryResource` for this type
+2. Uses local-context `bomIds`"
+Story,SPARK-BOM-G12,(BOM) BomTrimLibraryImpressionDetails field resolvers (3 fields) [SPARK-BOM-G12],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,G10,To Do,"*Current Behaviour:*
+* `libraryResource` (G10 branch) + `groundColor`, `textColor` via `searchMaterialById`.
+
+*Target:*
+* reuse `G10`'s `resolveLibraryResource` + 2 color fields via `resolveColor`. - **Example:** `groundColor` → `impressionLibraryResourceResolver.resolveColor(""groundColor"", detail)`; same pattern for `textColor`, each a batched lookup through the shared `MaterialDataLoader`, not a separate call.
+
+*Acceptance Criteria:*
+1. `libraryResource` behaves as `G10`
+2. `groundColor`/`textColor` resolve via material loader"
+Story,SPARK-BOM-G13,(BOM) BomTrimZipperLibraryImpressionDetails field resolvers (3 colors) [SPARK-BOM-G13],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,G10,To Do,"*Current Behaviour:*
+* `sliderColor`, `tapeColor`, `teethColor` via `searchMaterialById`. Unlike `G11`/`G12`, this type has no `libraryResource` field at all — just three colors — so it only needs `G10`'s color loader, not the internal/external branch.
+
+*Target:*
+* 3 `@DgsData` fields via `impressionLibraryResourceResolver.resolveColor(name, detail)`. - **Example:** `sliderColor` → `resolveColor(""sliderColor"", detail)`; missing `sliderColorRowId` → `null`, no call made.
+
+*Acceptance Criteria:*
+1. Three color fields resolve by id
+2. Missing id → null"
+Story,SPARK-BOM-G14,(BOM) Trivial pass-through fields (bundle) [SPARK-BOM-G14],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+* the only allowed bundle — fields that return a parent value with no service call: `BomMaterialType.id` = `` `${code}_${description}` `` (computed); `BomMaterialSearch.paging` = whole-object passthrough; every material type's `impressionDetails` = `parent.impressions` (rename); `*.libraryResourceId` = `get(parent,'libraryResource.id')`; `*.parentLibraryResourceId`; and ~30 scalar pass-throughs per material type covered by DTO mapping.
+
+*Target:*
+* Jackson DTO mapping for scalars; tiny `@DgsData` for the 3 computed/renamed fields. - **Example:** `BomMaterialType{code: 4, description: ""Zipper""}.id` → `""4_Zipper""` (no service call, pure string concat).
+
+*Acceptance Criteria:*
+1. `BomMaterialType.id` = `code_description`
+2. `impressionDetails` maps from `impressions`
+3. `libraryResourceId` from nested id
+4. No EXT calls"
+Story,SPARK-BOM-G15,(BOM) BomMaterialSearchResult field resolvers (5 fields) [SPARK-BOM-G15],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,C02,To Do,"*Current Behaviour:*
+* `description` (`description ?? name`), `status` (`status?.description ?? status`), - `fabricSpec` (if `type==='fabric_spec_combo'` & `fabricSpecId` → `fabric.getSpecificationByID`), `fabric` (if `type==='combination'` & `fabricRecordHumanId` → `fabric.getByID(jwt)`), `fabricId` (combination → `fabricRecordHumanId`), `relatedMaterials` (2-branch internal/external elastic by `relatedAssetIds` buckets). - **Bug 🟡:** external branch does `proxyIds.push(detail.parentComboId)` — mutates the args array; defensive-copy. - **ACL context:** `fabric.getByID` and external branch use a capability token; ignore in impl, keep `proxyIds`. - **EXT:** 🟡 fabric; 🔴 search.
+
+*Target:*
+* field resolvers as above; `relatedMaterials` builds buckets from `intentLineIds` (`split('.')[0]`, unique) and runs the internal (`getPage`) or external (`searchMaterialsByProxyIds`) query. - **Defensive-copy** `proxyIds` before appending `parentComboId`. - **Example (the mutation bug being fixed on port):** ```kotlin // before (bug): mutates the caller's args list — a second field resolver reading the same args sees the mutated list fun relatedMaterialsExternalBuggy(args: SearchArgs, detail: SearchResult) { args.proxyIds.add(detail.parentComboId) // mutates args.proxyIds in place searchClient.searchMaterialsByProxyIds(args) } // after (fixed): copy first, mutate the copy fun relatedMaterialsExternal(args: SearchArgs, detail: SearchResult) { val proxyIds = args.proxyIds.toMutableList().apply { add(detail.parentComboId) } // defensive copy searchClient.searchMaterialsByProxyIds(args.copy(proxyIds = proxyIds)) } ```
+
+*Acceptance Criteria:*
+1. `description`/`status` handle both shapes
+2. `fabricSpec`/`fabric`/`fabricId` gated by `type`
+3. `relatedMaterials` buckets `intentLineIds` correctly
+4. `proxyIds` not mutated (copy used)"
+Story,SPARK-BOM-G16,(BOM) Test coverage & parity harness [SPARK-BOM-G16],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,"E01, G08, G10",To Do,"*Target:*
+* ≥80% unit coverage on fetchers/services; a parity harness recording ≥30 query/mutation fixtures (all 7 material variants + both impression branches represented) and diffing JSON; a CI schema-conformance check across the 7 material impls.
+
+*Acceptance Criteria:*
+1. Unit coverage ≥80%
+2. Parity harness covers all 7 material types + internal/external impression branch + `updateBom` 5 fixtures
+3. Schema-conformance check fails the build if an impl misses an interface field"

@@ -23,11 +23,11 @@ This template defines the format for Phase 4 story generation output.
 |-------|------|------------|-------------|-------------|
 | A | Foundation & Schema | {n} | {range}d | CAT-1 schema file, shared DTOs, Feign client base |
 | B | Core Reads | {n} | {range}d | Highest-priority query data fetchers |
-| C | Mutations | {n} | {range}d | CRUD mutations + side effects |
-| D | Search & Listing | {n} | {range}d | Paginated/filtered queries |
+| C | Search & Listing | {n} | {range}d | Paginated/filtered queries |
+| D | Mutations | {n} | {range}d | CRUD mutations + side effects |
 | E | Complex Operations | {n} | {range}d | Orchestration, ACL, parallel calls |
 | F | Federation & Stitching | {n} | {range}d | CAT-4 Hive Gateway + entity fetchers |
-| G | Test & Parity | {n} | {range}d | Unit, integration, parity tests |
+| G | Field Resolvers & Parity | {n} | {range}d | Field resolvers (incl. heavy ones) + unit/integration/parity tests |
 | **Total** | | **{n}** | **{range}d** (+20% → **{range}d**) | |
 
 ---
@@ -218,11 +218,11 @@ BOM features independently."}
 |-------|------|---------|--------|-----------|-----------|
 | A | Foundation & Schema | {n} | {range}d | Nothing | Sprint 1 |
 | B | Core Reads | {n} | {range}d | Phase A | Sprint 1–2 |
-| C | Mutations | {n} | {range}d | Phase A | Sprint 2 |
-| D | Search & Listing | {n} | {range}d | Phases A+B | Sprint 2–3 |
-| E | Complex Operations | {n} | {range}d | Phases B+C | Sprint 3 |
-| F | Federation & Stitching | {n} | {range}d | Phases B+C | Sprint 3 |
-| G | Test & Parity | {n} | {range}d | Phases B+F | Sprint 3–4 |
+| C | Search & Listing | {n} | {range}d | Phases A+B | Sprint 2 |
+| D | Mutations | {n} | {range}d | Phase A | Sprint 2–3 |
+| E | Complex Operations | {n} | {range}d | Phases B+D | Sprint 3 |
+| F | Federation & Stitching | {n} | {range}d | Phases B+D | Sprint 3 |
+| G | Field Resolvers & Parity | {n} | {range}d | Phases B+F | Sprint 3–4 |
 | **Total** | | **{n}** | **{range}d** | | |
 
 ---
@@ -252,13 +252,13 @@ Phase A (Schema) ─────────────────────
                   │
                   ├── Phase B (Core Reads) ───────────────────────►
                   │         │
-                  │         ├── Phase C (Mutations) ──────────────►
+                  │         ├── Phase C (Search & Listing) ───────►
                   │         │
-                  │         ├── Phase D (Search) ─────────────────►
+                  │         ├── Phase D (Mutations) ──────────────►
                   │         │
                   │         └── Phase F (Federation) ─────────────►
                   │                   │
-                  └───────────────────┴── Phase G (Tests) ────────►
+                  └───────────────────┴── Phase G (Field Resolvers + Parity) ──►
 ```
 
 ---
@@ -270,9 +270,9 @@ Assumes ~2–3 stories per sprint unless parallelism allows more.
 | Sprint | Stories | Focus | Team Size Notes |
 |--------|---------|-------|----------------|
 | Sprint 1 | {STORY-IDs} | Phase A (schema) | 1–2 engineers |
-| Sprint 2 | {STORY-IDs} | Phase B + C starts | 2 engineers can parallelize B and C |
-| Sprint 3 | {STORY-IDs} | Phase D + E + F | 3 engineers: one each on D, E, F |
-| Sprint 4 | {STORY-IDs} | Phase G (tests) | 1–2 engineers |
+| Sprint 2 | {STORY-IDs} | Phase B + C starts (reads, search) | 2 engineers can parallelize B and C |
+| Sprint 3 | {STORY-IDs} | Phase D + E + F (mutations, complex, federation) | 3 engineers: one each on D, E, F |
+| Sprint 4 | {STORY-IDs} | Phase G (field resolvers + parity) | 1–2 engineers |
 
 ---
 

@@ -1,0 +1,111 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-WL-B01,(Watchlist) getWatchlistByIds(ids) [SPARK-WL-B01],,Federate BreakDown Product,B,XS,dgs-migration,watchlist,query,,,To Do,"*Current Behaviour:*
+* (ACL context) token → `GET watchlist/v1?watchlistIds={csv}` → camelCase.
+
+*Target:*
+* `@DgsQuery → [Watchlist]`.
+
+*Acceptance Criteria:*
+1. returns entries for ids; empty → []"
+Story,SPARK-WL-B02,(Watchlist) getWatchlistReasons (cacheable) [SPARK-WL-B02],,Federate BreakDown Product,B,XS,dgs-migration,watchlist,query,,B01,To Do,"*Current Behaviour:*
+* (own) `GET watchlist/v1/watchlist_reasons`.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` → `[CodeDescription]`.
+
+*Acceptance Criteria:*
+1. returns reasons; cached"
+Story,SPARK-WL-B03,(Watchlist) getWatchlistInspectionActions (cacheable) [SPARK-WL-B03],,Federate BreakDown Product,B,XS,dgs-migration,watchlist,query,,B01,To Do,"*Current Behaviour:*
+* (own) `GET watchlist/v1/watchlist_inspection_action_types`.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` → `[WatchlistInspectionAction]`.
+
+*Acceptance Criteria:*
+1. returns actions; cached"
+Story,SPARK-WL-C01,(Watchlist) getWatchlistByFilter(...) (4-step read) [SPARK-WL-C01],,Federate BreakDown Product,C,M,dgs-migration,watchlist,search,,B01,To Do,"*Current Behaviour:*
+* (internal) `product.getWorkspaceProducts({q,filter,workspaceId,page,size})` → product `humanId`s → (🔴 search) `searchWatchlist({ q:""parentId:(... OR ...) AND workspaceContext: {workspaceId} AND statusId: 501"", page, size })` → watchlist ids → (ACL) token → (own) `getWatchlistByIds`. - **EXT:** 🔴 search · product internal.
+
+*Target:*
+* `@DgsQuery → [Watchlist]`; chain the 4 calls.
+
+*Acceptance Criteria:*
+1. product→search→watchlist chain preserved
+2. elastic query string exact (incl. `statusId: 501`)"
+Story,SPARK-WL-D01,(Watchlist) createWatchlistEntries [SPARK-WL-D01],,Federate BreakDown Product,D,M,dgs-migration,watchlist,mutation,,B01,To Do,"*Current Behaviour:*
+* `Promise.all(entries.map(w => { (own) createWatchlistEntries([w]); **throw on validationErrors/message**; then (🔵 user-group) addUserGroup({resourceId:humanId, participantDetails, relatedResources}); **throw on error** }))`, flatten. **EXT:** 🔵 user-group.
+
+*Target:*
+* per-entry create + user-group; port both throw contracts.
+
+*Acceptance Criteria:*
+1. creates each entry + its user group
+2. either failure → exception"
+Story,SPARK-WL-D02,(Watchlist) cloneFilesForWatchlist [SPARK-WL-D02],,Federate BreakDown Product,D,M,dgs-migration,watchlist,mutation,,B01,To Do,"*Current Behaviour:*
+* (ACL) token → `Promise.all(attachmentIds.map((id,i) => (🔴 attachment) cloneAttachmentV3({cloneReferences:[cloneReference[i]]}, id)))`, stamp `parentResource=id`, flatten. **EXT:** 🔴 attachment.
+
+*Target:*
+* structured-concurrency fan-out.
+
+*Acceptance Criteria:*
+1. clones each id with its paired cloneReference; `parentResource` stamped"
+Story,SPARK-WL-E01,(Watchlist) updateWatchlistEntries (multi-step write) [SPARK-WL-E01],,Federate BreakDown Product,E,L,dgs-migration,watchlist,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* 1) **per-entry (currently NOT awaited — bug):** `getUserGroups([humanId])`; if existing participants → `updateUserGroup`, else (🔵 user-group) `addUserGroup` (throw on error); 2) (own) `updateWatchlistEntries(entries)` (throw on error); 3) collect `removedAttachmentIds` → (ACL) token → (🔴 attachment) `archiveAttachmentBulkV3`. **No rollback.** - **EXT:** 🔴 attachment · 🔵 user-group.
+
+*Target:*
+* **await** the per-entry user-group upserts (fix the race) before/with the body update; chosen failure strategy (**PO decision**).
+
+*Acceptance Criteria:*
+1. user-group upserts complete before the watchlist update (race fixed)
+2. removed attachments archived
+3. partial-failure strategy
+
+*Test Cases:*
+* [ ] existing-participants path
+* [ ] new-participants path
+* [ ] attachment archive
+* [ ] ordering/await
+* [ ] partial-failure
+* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+Story,SPARK-WL-F01,(Watchlist) Product.watchlists (internal) [SPARK-WL-F01],,Federate BreakDown Product,F,XS,dgs-migration,watchlist,field-resolver,,B01,To Do,"*Current Behaviour:*
+* Product exposes `watchlists` resolved from the co-located watchlist service.
+
+*Target:*
+* **internal** `@DgsData` on `Product` calling `WatchlistService` in-process (not gateway federation).
+
+*Acceptance Criteria:*
+1. resolves in-process; no gateway hop"
+Story,SPARK-WL-F02,(Watchlist) ResourcesCount.watchlists (internal — TechPack) [SPARK-WL-F02],,Federate BreakDown Product,F,XS,dgs-migration,watchlist,field-resolver,,B01,To Do,"*Target:*
+* fill the TechPack `ResourcesCount.watchlists` count **internally** (same subgraph) — the watchlist side of product's `SPARK-PROD-F08`. **This is CAT-2 internal, not gateway federation** (watchlist is co-located; analogous to `SPARK-BOM-F06` / `SPARK-MEAS-F04`).
+
+*Acceptance Criteria:*
+1. count resolves in-process; parity vs the TechPack facade"
+Story,SPARK-WL-G01,(Watchlist) Computed flatteners (status/reasons/inspection action) [SPARK-WL-G01],,Federate BreakDown Product,G,XS,dgs-migration,watchlist,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `statusId`=`status.code`, `statusName`=`status.description`, `reasonIds`=`reasons[].code`, `reasons`=`reasons[].description`; `WatchlistInspection.actionId`=`action.code`, `action`=`action.description`.
+
+*Target:*
+* computed `@DgsData` (no I/O).
+
+*Acceptance Criteria:*
+1. each flattener maps correctly"
+Story,SPARK-WL-G02,(Watchlist) createdBy + updatedBy + workspaces + participantDetails + partnerName [SPARK-WL-G02],,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `createdBy`/`updatedBy` (🟡 user-profile); `workspaces` (🟡 workspaceV2 by `workspaceContext`); `participantDetails` (🔵 user-group `getUserGroups([humanId])[0].participantDetails`); `WatchlistPartner.partnerName` (🔵 vmm `getByID(partnerId).bpName`, null-safe).
+
+*Acceptance Criteria:*
+1. each resolves; null-safe"
+Story,SPARK-WL-G03,(Watchlist) attachments + product [SPARK-WL-G03],,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `attachments` → (🔴 search) `searchAttachmentsByRelatedResource(humanId)`; `product` (internal, only if `parentId` starts `'PID'`).
+
+*Acceptance Criteria:*
+1. attachments via elastic
+2. `product` null when not `PID*`"
+Story,SPARK-WL-G04,"(Watchlist) Tests, parity harness [SPARK-WL-G04]",,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,"B01, C01, E01, G02",To Do,"*Target:*
+* ≥80% unit coverage; parity fixtures (incl. `getWatchlistByFilter` chain, the multi-step `updateWatchlistEntries` with the await fix, create+user-group, computed flatteners); contract test (schema diff intentional-only).
+
+*Acceptance Criteria:*
+1. unit ≥80%
+2. parity green
+3. schema-diff intentional"

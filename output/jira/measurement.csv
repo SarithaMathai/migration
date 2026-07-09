@@ -1,0 +1,200 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,SPARK-MEAS-B01,(Measurement) getMeasurementByIds data fetcher [SPARK-MEAS-B01],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,,To Do,"*Current Behaviour:*
+* `GET {base}/…/measurements/v1?ids=&calculated=&mustHaveRows=` → camelCase. **ACL note (context):** token for `ids`; ignored in DGS.
+
+*Target:*
+* `@DgsQuery getMeasurementByIds(ids, calculated): MeasurementPaged` (SDL: paged `{content}`, not a bare list) → `measurementService.getByIds(ids, calculated)`. Add a `MeasurementDataLoader` keyed on id. - **Files:** `dataFetcher/MeasurementQueryDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Returns measurements for ids with `calculated` flag forwarded
+2. Empty ids → `[]`
+3. snake→camel mapping"
+Story,SPARK-MEAS-B02,(Measurement) getUnitsOfMeasure (cacheable) [SPARK-MEAS-B02],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B01,To Do,"*Current Behaviour:*
+* `GET {base}/…/master_data/unit_of_measure[?ids=]` → `units_of_measure` camelCase.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` service method returning `[UnitOfMeasure]`.
+
+*Acceptance Criteria:*
+1. Returns UoM list (optionally filtered by ids)
+2. Cached"
+Story,SPARK-MEAS-B03,(Measurement) getThicknessUnitsOfMeasure (cacheable) [SPARK-MEAS-B03],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B01,To Do,"*Current Behaviour:*
+* `GET {base}/…/master_data/thickness_uom` → `units_of_measure`.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` returning `[UnitOfMeasure]`.
+
+*Acceptance Criteria:*
+1. Returns thickness UoM list
+2. Cached"
+Story,SPARK-MEAS-B04,(Measurement) getMeasurementSetStatus (cacheable) [SPARK-MEAS-B04],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B01,To Do,"*Current Behaviour:*
+* `GET {base}/masterData?name=MeasurementSetStatus` → `{key:value}` map → `[{code, description}]`.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` mapping the map to the list.
+
+*Acceptance Criteria:*
+1. Returns statuses
+2. Cached
+3. key→code, value→description"
+Story,SPARK-MEAS-B05,(Measurement) getSampleMeasurement data fetcher [SPARK-MEAS-B05],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B01,To Do,"*Current Behaviour:*
+* `GET {base}/…/measurements/v1/sample/{sampleId}` → camelCase. **ACL note (context):** token for `sampleId`; ignored in DGS.
+
+*Target:*
+* `@DgsQuery getSampleMeasurement(sampleId): SampleMeasurementSet` (SDL: a single object, not a list).
+
+*Acceptance Criteria:*
+1. Returns the sample measurement set for `sampleId`
+2. Not found → `null`"
+Story,SPARK-MEAS-C01,(Measurement) getMeasurements data fetcher (relationship + listing) [SPARK-MEAS-C01],,Federate BreakDown Product,C,M,dgs-migration,measurement,search,,B01,To Do,"*Current Behaviour:*
+* 1. `relationships = relationship.findRelationships(resourceId, {includeNodeTypes:['measurement_set'], maxDepth:0})`. 2. `ids = relationships.map(n => n.id)`; if empty → `[]`. 3. (ACL context) token for `ids`. 4. `{content} = getMeasurementByIds(ids, calculated, businessPartnerIds, mustHaveRows)`. 5. Return `{content: orderBy(content, createdAt DESC)}` (client-side). - **EXT Service Calls:** **EXT** → key: `relationship` · severity: 🔴 — resolves the measurement_set ids for a resource.
+
+*Target:*
+* `@DgsQuery getMeasurements(resourceId, businessPartnerIds, calculated, mustHaveRows): MeasurementPaged`. Call relationship via `RelationshipClient`/federation, then the service. **PO decision:** push the `createdAt DESC` sort to the backend. - **Files:** `dataFetcher/MeasurementQueryDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Resolves ids via relationship then fetches measurements
+2. No ids → `{content:[]}` (no measurement call)
+3. Sorted `createdAt DESC` (location documented)"
+Story,SPARK-MEAS-C02,(Measurement) getMeasurementsElastic data fetcher [SPARK-MEAS-C02],,Federate BreakDown Product,C,XS,dgs-migration,measurement,search,,B01,To Do,"*Current Behaviour:*
+* `{content} = search.getMeasurementSets.load({q:`parentId: ${resourceId}`})` → sort `createdAt DESC` → `{content}`. - **EXT Service Calls:** **EXT** → key: `search` · severity: 🔴 — elastic measurement-set index.
+
+*Target:*
+* `@DgsQuery getMeasurementsElastic(resourceId): MeasurementPaged` → `searchClient.measurementSets(""parentId: $resourceId"")`; sort `createdAt DESC` (or backend).
+
+*Acceptance Criteria:*
+1. Returns elastic content for `parentId`
+2. Sorted `createdAt DESC`
+3. Empty → `{content:[]}`"
+Story,SPARK-MEAS-D01,(Measurement) addMeasurement mutation [SPARK-MEAS-D01],,Federate BreakDown Product,D,M,dgs-migration,measurement,mutation,,B01,To Do,"*Current Behaviour:*
+* `POST {base}/…/measurements/v1` (snake_case request, `primeKey: humanId`); on `validationErrors||message` → throw. No ACL (new resource).
+
+*Target:*
+* `@DgsMutation addMeasurement(sparkMeasurement): Measurement` → typed `MeasurementValidationException`; prime read cache.
+
+*Acceptance Criteria:*
+1. POST creates + returns mapped `Measurement`
+2. `validationErrors`/`message` → exception
+3. Cache primed with `humanId`"
+Story,SPARK-MEAS-D02,(Measurement) updateMeasurementAccess mutation [SPARK-MEAS-D02],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B01,To Do,"*Current Behaviour:*
+* `PUT …/{id}/permission` body `{systemTeamIds}` **or** `{systemTeamDto}` (whichever provided). **ACL note (context):** token for `id`; ignored in DGS.
+
+*Target:*
+* `@DgsMutation updateMeasurementAccess(measurementSetId, systemTeamIds, systemTeamDto): Measurement`. **PO decision:** adopt tagged `MeasurementAccessInput` (keep wire format).
+
+*Acceptance Criteria:*
+1. Sends `{systemTeamIds}` when provided, else `{systemTeamDto}`
+2. Returns updated measurement
+3. Input-shape decision recorded"
+Story,SPARK-MEAS-D03,(Measurement) lockMeasurementSet mutation [SPARK-MEAS-D03],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B01,To Do,"*Current Behaviour:*
+* `PUT …/{id}/lock`. **ACL note (context):** token for `id`; ignored in DGS.
+
+*Target:*
+* `@DgsMutation lockMeasurementSet(measurementSetId): Measurement`.
+
+*Acceptance Criteria:*
+1. PUT `/lock` returns locked set
+2. 404 → null"
+Story,SPARK-MEAS-D04,(Measurement) unlockMeasurementSet mutation [SPARK-MEAS-D04],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B01,To Do,"*Current Behaviour:*
+* `PUT …/{id}/unlock`. ACL note as D03.
+
+*Target:*
+* `@DgsMutation unlockMeasurementSet(measurementSetId): Measurement`.
+
+*Acceptance Criteria:*
+1. PUT `/unlock` returns unlocked set
+2. 404 → null"
+Story,SPARK-MEAS-D05,(Measurement) updateMeasurementComponentStatus mutation [SPARK-MEAS-D05],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B01,To Do,"*Current Behaviour:*
+* `PUT …/component_status_update` body `{productId, ids, status}`. **No ACL token** — confirm backend enforces (like BOM D05).
+
+*Target:*
+* `@DgsMutation updateMeasurementComponentStatus(productId, ids, status): MeasurementPaged`; wrap result `{content}`.
+
+*Acceptance Criteria:*
+1. PUT sends `{productId, ids, status}` snake_case
+2. Returns `MeasurementPaged{content}`
+3. Auth decision recorded"
+Story,SPARK-MEAS-D06,(Measurement) putSampleMeasurementSet mutation [SPARK-MEAS-D06],,Federate BreakDown Product,D,M,dgs-migration,measurement,mutation,,B01,To Do,"*Current Behaviour:*
+* `PUT …/sample` (`primeKey: sampleId`); token for `[measurementSetId, sampleId]`; on `validationErrors||message` → throw.
+
+*Target:*
+* `@DgsMutation putSampleMeasurementSet(sampleMeasurementSet): SampleMeasurementSet` → typed exception; prime by `sampleId`.
+
+*Acceptance Criteria:*
+1. PUT upserts the sample set
+2. `validationErrors`/`message` → exception
+3. Cache primed by `sampleId`"
+Story,SPARK-MEAS-D07,(Measurement) deleteSampleMeasurementSet mutation [SPARK-MEAS-D07],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B01,To Do,"*Current Behaviour:*
+* `DELETE …/sample/{sampleId}`. **ACL note (context):** token for `sampleId`; ignored in DGS.
+
+*Target:*
+* `@DgsMutation deleteSampleMeasurementSet(sampleId): SampleMeasurementSet`.
+
+*Acceptance Criteria:*
+1. DELETE removes the sample set; returns the deleted/empty result
+2. 404 → null"
+Story,SPARK-MEAS-E01,(Measurement) updateMeasurement — 2-step orchestrated write [SPARK-MEAS-E01],,Federate BreakDown Product,E,L,dgs-migration,measurement,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* 1. `workspaceAssociations = sparkMeasurement.updateWorkspaceAssociations || {}`. (ACL context) token for `[humanId]`. 2. **If** add/remove workspaces → `workspaceAssociationHelper(MEASUREMENT, humanId, add, remove)`; on its `validationErrors||message` → throw. **(commits first)** 3. `measurement.updateMeasurement(sparkMeasurement)` → `PUT …/measurements/v1/{humanId}` (`omitParamsInBody`). 4. On `validationErrors||message` → throw. Return measurement. - **Risk 🟡:** 2 sequential writes, no rollback — workspace change persists if body PUT fails. - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association).
+
+*Target:*
+* `MeasurementUpdateOrchestrator`: workspace assoc → body PUT. **PO decision E01:** failure strategy (saga / compensation log / best-effort). Typed exception replaces shape-sniff; prime cache on success. - **Files:** `service/MeasurementUpdateOrchestrator.kt`, `MeasurementMutationDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Parity for 3 fixtures: body-only; body+workspace-add; body+workspace-remove
+2. Workspace step runs before body PUT
+3. Body PUT omits `humanId`
+4. Chosen failure strategy implemented
+5. `validationErrors`/`message` → exception
+
+*Test Cases:*
+* [ ] Unit: order workspace→body
+* [ ] Unit: no-workspace skip
+* [ ] Unit: body-failure path
+* [ ] Parity: 3 fixtures"
+Story,SPARK-MEAS-F01,(Measurement) Implement Product.measurementSets (internal) [SPARK-MEAS-F01],,Federate BreakDown Product,F,M,dgs-migration,measurement,field-resolver,,B01,To Do,"*Current Behaviour:*
+* product navigates to measurement sets via the relationship + getMeasurements flow.
+
+*Target:*
+* plain `@DgsData measurementSets(...)` on the internal `Product` type (same subgraph) reusing the C01 relationship+listing logic. **No** `@DgsEntityFetcher`/`@extends @external`. Depends on `Product` existing (product A02), not on a separate deployment.
+
+*Acceptance Criteria:*
+1. `Product.measurementSets` resolves internally via `measurementService`
+2. no gateway hop
+3. Parity vs current product resolver"
+Story,SPARK-MEAS-F02,(Measurement) Contribute sampleMeasurement to the SampleV2 entity [SPARK-MEAS-F02],,Federate BreakDown Product,F,XS,dgs-migration,measurement,field-resolver,,"B01, sample",To Do,"*Current Behaviour:*
+* sample navigates to its measurement set via `getSampleMeasurement`.
+
+*Target:*
+* `extend type SampleV2 @key(fields:""id"")` with `@DgsData sampleMeasurement` → `getSampleMeasurement(sampleId)`. **BLOCKED-BY** sample domain Phase 3.
+
+*Acceptance Criteria:*
+1. `SampleV2.sampleMeasurement` resolves
+2. Parity vs current"
+Story,SPARK-MEAS-G01,(Measurement) Measurement field resolvers (13 fields) [SPARK-MEAS-G01],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,B01,To Do,"*Current Behaviour:*
+* `access`/`currentUserPermissions` (ACL — context only), `businessPartners` (loadBps), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`), `product` (PID-prefixed → internal `product.getByID`), `workspaces` (`getWorkspacesByIdsV2` or null), `status` (`{code:statusId, description:statusName}` computed), `updatedFromResource` (switch type='sample' → `sampleV2.getSampleById`), `measurementTemplates` (`measurementTemplate.getMeasurementTemplatesByIds(...).content`), `sizeTemplate` (`sizeTemplate.getSizeTemplates([id])[0]`), `tightFitTemplate` (`tightFit.getTightFitByIdAndVersion({id,version})`), `participantDetails` (`getUserGroup`). - **EXT:** 🟡 workspaceV2/sampleV2/measurementTemplate/sizeTemplate/tightFit; 🔵 vmm/user-profile.
+
+*Target:*
+* one `@DgsData` set; sibling fields → federated references; `product` internal; `status` computed; `updatedFromResource` switch preserved (only `sample` realized). - **Files:** `dataFetcher/MeasurementFieldDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. All 13 fields resolve
+2. `product` null when `resourceId` not `PID*`
+3. `status` = `{statusId, statusName}`
+4. `workspaces` empty → null
+5. `updatedFromResource` resolves only for `type==='sample'`"
+Story,SPARK-MEAS-G02,(Measurement) SampleMeasurementSet field resolvers (2 fields) [SPARK-MEAS-G02],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B01,To Do,"*Target:*
+* 2 `@DgsData` fields.
+
+*Acceptance Criteria:*
+1. `createdBy` resolves by user id (null id → null)
+2. `measurementSizeId` = `measurementSize.code`"
+Story,SPARK-MEAS-G03,(Measurement) Test coverage & parity [SPARK-MEAS-G03],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,"B01, C01, E01, G01",To Do,"*Target:*
+* ≥80% unit coverage; parity fixtures for the 7 queries + 8 mutations + `updateMeasurement` 3 fixtures + the relationship path.
+
+*Acceptance Criteria:*
+1. Unit ≥80%
+2. Parity green for reads/writes incl. `getMeasurements` relationship path
+3. `updateMeasurement` failure path covered"

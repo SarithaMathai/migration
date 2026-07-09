@@ -49,7 +49,8 @@ fedMigrationScripts/
 │   ├── federation-schema-derivation/  ← Derive target DGS GraphQL schema
 │   ├── federation-candidate-detection/← Identify entity boundaries and @key candidates
 │   ├── stitching-pattern-analysis/    ← Analyze cross-domain joins and gateway stitching
-│   └── migration-story-generation/    ← Generate Jira-ready engineering stories
+│   ├── migration-story-generation/    ← Generate Jira-ready engineering stories
+│   └── oneStopDoc-generation/         ← Regenerate all 4 publication artifacts per domain
 │
 ├── agents/                            ← Multi-skill orchestrators for investigation goals
 │   ├── full-migration-investigation.agent.md  ← Complete 4-phase domain analysis
@@ -85,7 +86,9 @@ fedMigrationScripts/
 
 ## What You Get Per Domain
 
-Running the full pipeline produces six artifacts:
+Running the full pipeline produces **six analysis artifacts** plus **two publication artifacts**:
+
+### Analysis artifacts (source of truth — in `finalOutput/{domain}/`)
 
 | File | Purpose | Audience |
 |------|---------|---------|
@@ -95,6 +98,28 @@ Running the full pipeline produces six artifacts:
 | `03-schema-analysis.md` | Type classification, federation boundaries, gap analysis | Architects |
 | `04-stories.md` | Jira-ready engineering tickets | Engineering Team |
 | `04-po-summary.md` | Sprint planning table with effort estimates | Product Owner |
+
+### Publication artifacts (generated — in `finalOutput/oneStopDoc/`)
+
+Run `python finalOutput/oneStopDoc/generate_all.py` to produce all five for all 13 domains.
+Each domain's artifacts are in their own subfolder: `finalOutput/oneStopDoc/{domain}/`.
+
+| File | Purpose | Audience |
+|------|---------|---------|
+| `{domain}/FederatedGqlBrakDown-{domain}.docx` | **Primary — Word doc with full formatting**: navy blue headers, metrics banner, colored story tables, icons (🔷🔶🔸 🔴🟠🟡🟢) | PO + Engineers (open in Word or paste into Confluence) |
+| `{domain}/FederatedGqlBrakDown-{domain}.md` | Markdown fallback — same content and table format as the Word doc | PO + Engineers (paste raw Markdown into Confluence) |
+| `{domain}/{domain}-comprehensive.md` | Full engineering doc — all stories, AC, test cases (High/VH only), complex story callouts | Engineers + Tech Leads |
+| `{domain}/{domain}-po-review.md` | Executive PO review — scope, risks, decisions, sprint capacity, Phase 2 breakdowns | Product Owner + Stakeholders |
+| `{domain}/{domain}.csv` | Jira import CSV — Epic + stories; schema init excluded; tests for High/VH only | Jira admin |
+
+Plus program-level docs at the `oneStopDoc/` root:
+- `Federated+Graphql+Stories+-+BreakDown.docx` — All 325 stories in one Word doc: domain index table + per-domain story tables (primary)
+- `Federated+Graphql+Stories+-+BreakDown.md` — Same content as Markdown (Confluence paste fallback)
+- `00-executive-summary.md` — Cross-domain scope, risks, migration sequence, per-domain quick reference
+- `00-portfolio.md` — Program portfolio table for Confluence space home
+- `jira/all-stories.csv` — All 325 stories in one Jira import file
+
+See [`skills/oneStopDoc-generation/SKILL.md`](./skills/oneStopDoc-generation/SKILL.md) for full details.
 
 ---
 

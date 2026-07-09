@@ -69,11 +69,15 @@ Stories are grouped by **functional phase** (what they deliver), not by technica
 
 - **Phase A — Foundation & Schema** (CAT-1, shared infra, DTOs)
 - **Phase B — Core Reads** (highest-priority queries)
-- **Phase C — Mutations** (CRUD + side effects)
-- **Phase D — Search & Listing** (paginated/filtered queries)
+- **Phase C — Search & Listing** (paginated/filtered queries)
+- **Phase D — Mutations** (CRUD + side effects)
 - **Phase E — Complex Operations** (orchestration, ACL, parallel calls, composite key stub resolvers + aggregation facades)
 - **Phase F — Federation & Stitching** (CAT-4: entity fetchers, Hive Gateway config, per-subgraph extensions of composite key types)
-- **Phase G — Test & Parity** (CAT-5)
+- **Phase G — Field Resolvers & Parity** (CAT-2 field resolvers incl. the heavy ones + CAT-5 domain parity harness)
+
+> ⚠ Letter assignments are load-bearing: the generated output, the Confluence breakdowns, and the
+> `plm-product` Copilot instructions all key off them (e.g. "Phase D/E write story → `@DgsMutation`").
+> Do not reorder — C is *search/listing reads*, D is *mutations*, in every domain.
 
 Technical category (CAT-1–5) is metadata on each story, not the grouping key.
 
