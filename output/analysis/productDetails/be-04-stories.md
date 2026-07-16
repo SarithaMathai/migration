@@ -2,11 +2,11 @@
 
 > **Domain:** `productDetails` · **Target DGS:** `ProductDetailsService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-27
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md), [05-attribute-inventory.md](./05-attribute-inventory.md)
-> **Index:** `04-stories-index.yaml`
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md), [be-05-attribute-inventory.md](./be-05-attribute-inventory.md)
+> **Index:** `be-04-stories-index.yaml`
 
 - Each story is self-contained (Current Behaviour → Target → Files → Acceptance → Tests).
-- Full pseudo-logic in [02-resolver-analysis.md](./02-resolver-analysis.md).
+- Full pseudo-logic in [be-02-resolver-analysis.md](./be-02-resolver-analysis.md).
 - **ACL is context-only** — no ACL work in any story.
 - Backend path is `construction/v1`.
 
@@ -41,7 +41,7 @@ graph TD
 
 - **In plain terms:** Fetch product-detail (construction) sets by id.
 
-> **Note — DGS Module Init (this PR only):** Creates `productDetails.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [03-schema.graphql](./03-schema.graphql).
+> **Note — DGS Module Init (this PR only):** Creates `productDetails.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [be-03-schema.graphql](./be-03-schema.graphql).
 - **Current Behaviour (Q1):** (ACL context) token for `ids` → `GET construction/v1?ids={csv}` → camelCase list.
 - **Target:** `@DgsQuery getProductDetailsById(ids): [ProductDetails]`. 
 
@@ -61,7 +61,7 @@ graph TD
 - **In plain terms:** Search a product's product-detail sets via elastic.
 
 - **Current Behaviour (Q2):** (🔴 search) `search.getProductDetailsElastic.load({ q:"parentId: {resourceId}" })` → paged.
-- **EXT:** 🔴 search. **Target:** `@DgsQuery → ProductDetailsPaged`. **Note:** the source resolver reads a `types` arg not in the SDL — drop (or add to schema) per [03-analysis §2](./03-schema-analysis.md).
+- **EXT:** 🔴 search. **Target:** `@DgsQuery → ProductDetailsPaged`. **Note:** the source resolver reads a `types` arg not in the SDL — drop (or add to schema) per [03-analysis §2](./be-03-schema-analysis.md).
 
 #### Acceptance Criteria
 
@@ -276,4 +276,4 @@ create error-contract, attachment-by-search fields); contract test (schema diff 
 - **Co-located:** productDetails is in the `plm-product` monorepo; `Product.productDetails` resolves internally.
 
 ---
-- **Phase Completed:** Phase 4 — Migration Stories · **Domain:** `productDetails` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md.
+- **Phase Completed:** Phase 4 — Migration Stories · **Domain:** `productDetails` · **Outputs:** be-04-stories.md, be-04-stories-index.yaml, be-04-po-summary.md.

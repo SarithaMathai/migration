@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-Generate FederatedGqlBrakDown-{domain}.md and Federated+Graphql+Stories+-+BreakDown.md.
+Generate FederatedGqlBrakDown-BE-{domain}.md and Federated+Graphql+Stories+-+BreakDown.md.
 
 Format mirrors the reference Word docs in 'final PO BreakDown Doc/':
   - Compact header banner
-  - Scope · Effort · Sprint Sequencing · Capacity sections (from 04-po-summary.md)
+  - Scope · Effort · Sprint Sequencing · Capacity sections (from be-04-po-summary.md)
   - Stories rendered as TABLES (one row per story) grouped by phase — Confluence-ready
   - High/VH tests shown beneath the phase table, not inline
 
-Output:
-  oneStopDoc/{domain}/FederatedGqlBrakDown-{domain}.md   (per domain)
-  oneStopDoc/Federated+Graphql+Stories+-+BreakDown.md    (global)
+Output (flat in output/summary/ — BE artifacts carry -BE- in the name, next to the
+FederatedGqlBrakDown-FE-{domain} frontend breakdowns from generate_frontend.py):
+  output/summary/FederatedGqlBrakDown-BE-{domain}.md   (per domain)
+  output/summary/Federated+Graphql+Stories+-+BreakDown.md    (global)
 
 Run:
     python generate_breakdown.py              # all domains + global
@@ -26,8 +27,8 @@ from datetime import date
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 HERE      = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
-UPD_SRC   = HERE.parent.parent / "output" / "initial-analysis"
-FALLBACK  = HERE.parent.parent / "output" / "initial-analysis"
+UPD_SRC   = HERE.parent.parent / "output" / "analysis"
+FALLBACK  = HERE.parent.parent / "output" / "analysis"
 OUT_DIR   = HERE.parent.parent / "output" / "summary"
 
 # Published pages (Confluence/Jira) must link to the repo on GitHub, not a local file path.
@@ -182,7 +183,7 @@ SPIKE_OVERRIDES = {
     # 06a (Hydration — reads) and 06b (Association — mutation link side-effects). Raised in
     # PO review (PRODUCT-BE-S-01 "association pattern" → 06b, PRODUCT-BE-S-02 "two-stage hydration"
     # → 06a, BOM-BE-S-02 "material federation rollout order" → 06a). See each domain's
-    # 04-po-summary.md "Decisions Required" table for the source of truth.
+    # be-04-po-summary.md "Decisions Required" table for the source of truth.
     "PRODUCT-BE-C-01": "06a",  # getProducts two-stage hydration          — PRODUCT-BE-S-02
     "PRODUCT-BE-D-01": "06b",  # addProduct (workspace + attachment assoc) — PRODUCT-BE-S-01
     "PRODUCT-BE-D-02": "06b",  # addProducts bulk (attachment links)      — PRODUCT-BE-S-01
@@ -505,7 +506,7 @@ def build_spike_detail(domain_data: list[tuple]) -> list[str]:
 # ─── Source resolution ─────────────────────────────────────────────────────────
 def get_domain_dir(domain: str) -> Path:
     for src in [FALLBACK / domain]:
-        if (src / "04-stories.md").exists():
+        if (src / "be-04-stories.md").exists():
             return src
     raise FileNotFoundError(f"No source for '{domain}'")
 
@@ -749,6 +750,120 @@ def group_by_phase(stories: list[dict]) -> dict[str, list]:
     return dict(sorted(g.items()))
 
 
+# ─── Recommended implementation order (story map) ─────────────────────────────
+PHASE_SEQ = "ABCDEFG"
+
+
+def _short_id(full_id: str) -> str:
+    m = re.search(r"-BE-([A-G]-\d+(?:-\d+)?)$", full_id)
+    return m.group(1) if m else full_id
+
+
+def compute_implementation_order(stories: list[dict]):
+    """Layer the domain's stories into dependency steps (Kahn levels).
+
+    Returns (waves, gates, crit_path):
+      waves     – list of story-dict lists; a story in step N depends only on steps < N
+      gates     – {short_id: [gate strings]} — spike gates / cross-subgraph blocks
+                  (entry criteria, NOT ordering edges)
+      crit_path – the longest dependency chain, as short ids
+    """
+    by_short = {_short_id(s["id"]): s for s in stories}
+
+    # The module-init scaffold story (see the B-01 note) is a prerequisite for every
+    # operation story but deliberately not repeated in each `Depends On` — restore that
+    # implicit edge so the map starts where the work starts.
+    scaffold = {k for k, s in by_short.items()
+                if "module init" in (s.get("note", "") + " " + s["title"]).lower()}
+
+    deps:  dict[str, set]  = {}
+    gates: dict[str, list] = {}
+    for k, s in by_short.items():
+        d = set()
+        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-G]-\d+(?:-\d+)?)\b", s["depends"]):
+            if m.group(1) in by_short and m.group(1) != k:
+                d.add(m.group(1))
+        spike = spike_for(s)
+        if spike:
+            gates.setdefault(k, []).append(f"🔬 SPIKE-{spike}")
+        for m in re.finditer(r"\bSPIKE-\w+\b", s["depends"]):
+            tag = f"🔬 {m.group(0)}"
+            if tag not in gates.get(k, []):
+                gates.setdefault(k, []).append(tag)
+        if s.get("blocked"):
+            gates.setdefault(k, []).append(f"⛔ BLOCKED-BY {clean_plain(s['blocked'])}")
+        if scaffold and k not in scaffold:
+            d |= scaffold
+        deps[k] = d
+
+    level: dict[str, int] = {}
+    pending = dict(deps)
+    while pending:
+        ready = [k for k, d in pending.items() if all(x in level for x in d)]
+        if not ready:            # dependency cycle — dump the remainder into one final step
+            for k in pending:
+                level[k] = max(level.values(), default=0) + 1
+            break
+        for k in ready:
+            level[k] = (max(level[x] for x in deps[k]) + 1) if deps[k] else 1
+            del pending[k]
+
+    def wave_key(s: dict):
+        return (PHASE_SEQ.find(s["phase"]) if s["phase"] in PHASE_SEQ else 99,
+                _short_id(s["id"]))
+
+    waves = [sorted((by_short[k] for k in level if level[k] == n), key=wave_key)
+             for n in range(1, max(level.values(), default=0) + 1)]
+
+    # Longest dependency chain (critical path), reconstructed through the DAG.
+    chain: dict[str, list] = {}
+    def chain_for(k: str) -> list:
+        if k not in chain:
+            chain[k] = []                       # cycle guard
+            best = max((chain_for(d) for d in deps[k]), key=len, default=[])
+            chain[k] = best + [k]
+        return chain[k]
+    crit = max((chain_for(k) for k in by_short), key=len, default=[])
+
+    return waves, gates, crit
+
+
+def implementation_order_md(stories: list[dict]) -> list[str]:
+    """Markdown lines for the 'Recommended Implementation Order' section — shared by the
+    .md breakdown and the .docx renderer so both stay identical."""
+    if not stories:
+        return []
+    waves, gates, crit = compute_implementation_order(stories)
+    lines = [
+        "## Recommended Implementation Order",
+        "",
+        "> Derived from each story's `Depends On` edges (plus the module-init scaffold as the "
+        "implicit first step). A story appears in the earliest step where everything it depends "
+        "on is already done; **stories in the same step are independent of each other and "
+        "parallelize across engineers**.",
+        "",
+        "> 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — "
+        "a gated story slides later without reshuffling the map.",
+        "",
+        "| Step | Stories (parallel set) | Entry gates in this step |",
+        "|---|---|---|",
+    ]
+    for i, wave in enumerate(waves, 1):
+        cell = ", ".join(f"{COMPLEXITY_ICONS.get(s['complexity'], '⚪')} `{_short_id(s['id'])}`"
+                         for s in wave)
+        gate_bits = [f"`{_short_id(s['id'])}` → " + " · ".join(gates[_short_id(s["id"])])
+                     for s in wave if _short_id(s["id"]) in gates]
+        lines.append(f"| {i} | {cell} | {'<br>'.join(gate_bits) or '—'} |")
+    if crit:
+        lines += [
+            "",
+            "**Critical path:** " + " → ".join(f"`{k}`" for k in crit) +
+            f" — {len(crit)} sequential stories; everything else hangs off this chain in parallel.",
+        ]
+    lines += ["", "---", ""]
+    return lines
+
+
 # ─── PO summary parser ────────────────────────────────────────────────────────
 def read_po_sections(po_path: Path) -> dict[str, str]:
     if not po_path.exists():
@@ -904,8 +1019,8 @@ def build_breakdown(domain: str) -> str:
     src_dir  = get_domain_dir(domain)
     # Spike (Phase-S) stories are no longer domain-local — they are centralized as
     # program spikes on the global overview page, so drop them from every count and table.
-    stories  = [s for s in parse_stories(src_dir / "04-stories.md") if s["phase"] != "S"]
-    po       = read_po_sections(src_dir / "04-po-summary.md")
+    stories  = [s for s in parse_stories(src_dir / "be-04-stories.md") if s["phase"] != "S"]
+    po       = read_po_sections(src_dir / "be-04-po-summary.md")
     by_phase = group_by_phase(stories)
 
     total = len(stories)
@@ -1033,6 +1148,9 @@ def build_breakdown(domain: str) -> str:
             "---",
             "",
         ]
+
+    # §4b — Recommended Implementation Order (dependency-derived story map)
+    lines += implementation_order_md(stories)
 
     # §5 — Jira Stories by Phase (TABLE format)
     lines += [
@@ -1171,8 +1289,8 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
         try:
             src_dir  = get_domain_dir(domain)
             # Exclude Phase-S spikes — they are centralized as program spikes, not domain stories.
-            stories  = [s for s in parse_stories(src_dir / "04-stories.md") if s["phase"] != "S"]
-            po       = read_po_sections(src_dir / "04-po-summary.md")
+            stories  = [s for s in parse_stories(src_dir / "be-04-stories.md") if s["phase"] != "S"]
+            po       = read_po_sections(src_dir / "be-04-po-summary.md")
         except FileNotFoundError:
             stories = []
             po      = {}
@@ -1202,7 +1320,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
          f"({', '.join(DOMAIN_LABELS[d] for d in domains)}). The full-program overview is the untouched "
          "`Federated+Graphql+Stories+-+BreakDown` page." if is_custom else
          "> **Program overview** — the full `spark-internal-graphql` → Netflix DGS migration at a glance. "
-         "Each domain's phase tables live in its own FederatedGqlBrakDown-<domain> breakdown page (see the Domain "
+         "Each domain's phase tables live in its own FederatedGqlBrakDown-BE-<domain> breakdown page (see the Domain "
          "Index); the complex, cross-cutting problems are centralized here as **program spikes** (below)."),
         "",
         "| | |",
@@ -1236,7 +1354,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     for i, (domain, label, dgs, ts, total, vh, hi, me, lo) in enumerate(all_stats, 1):
         lines.append(
             f"| {i} | **{label}** | `{dgs}` | **{ts}** | "
-            f"**{total}** | {vh} | {hi} | {me} | {lo} | `FederatedGqlBrakDown-{domain}` |"
+            f"**{total}** | {vh} | {hi} | {me} | {lo} | `FederatedGqlBrakDown-BE-{domain}` |"
         )
 
     lines += [
@@ -1251,7 +1369,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     lines += build_spike_detail(domain_data)
 
     # Per-domain story detail intentionally NOT included here — this is an overview.
-    # Each domain's phase tables live in its own FederatedGqlBrakDown-<domain> breakdown.
+    # Each domain's phase tables live in its own FederatedGqlBrakDown-BE-<domain> breakdown.
 
     text = re.sub(r"\n+(?:---\s*)+$", "\n", "\n".join(lines))   # drop any trailing horizontal rule
     return strip_relative_links(repo_linkify(text))
@@ -1259,12 +1377,13 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
 
 # ─── Runner ────────────────────────────────────────────────────────────────────
 def generate_breakdown_for(domain: str) -> None:
-    out_subdir = OUT_DIR / domain
-    out_subdir.mkdir(parents=True, exist_ok=True)
+    # Backend artifacts carry -BE- in the name and live flat in output/summary/
+    # (no per-domain subfolder), next to their -FE- frontend counterparts.
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
     content  = build_breakdown(domain)
-    out_file = out_subdir / f"FederatedGqlBrakDown-{domain}.md"
+    out_file = OUT_DIR / f"FederatedGqlBrakDown-BE-{domain}.md"
     out_file.write_text(content, encoding="utf-8")
-    print(f"  OK {domain}/FederatedGqlBrakDown-{domain}.md ({len(content):,} chars)")
+    print(f"  OK FederatedGqlBrakDown-BE-{domain}.md ({len(content):,} chars)")
 
 
 def generate_global() -> None:

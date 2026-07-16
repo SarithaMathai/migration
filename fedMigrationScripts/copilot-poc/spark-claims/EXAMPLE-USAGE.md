@@ -1,6 +1,6 @@
 # Example usage — chat modes, prompts, and instructions in action
 
-Two worked sessions: a simple story that goes straight through, and the one complex story in this domain that gets blocked at the spike gate. Both use real content from `output/initial-analysis/claims/04-stories.md`.
+Two worked sessions: a simple story that goes straight through, and the one complex story in this domain that gets blocked at the spike gate. Both use real content from `output/analysis/claims/be-04-stories.md`.
 
 ---
 

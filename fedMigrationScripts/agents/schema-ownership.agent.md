@@ -41,7 +41,7 @@ Schema analyst for the spark-internal-graphql → DGS migration. Reads domain sc
 | Cross-domain reference summary | In-chat table | Tech Lead + Architects |
 | Co-located domain siblings | In-chat list | Tech Lead |
 
-A file is written (`output/{domain}/01-schema-inventory.md`) if Phase 1 has not already been run.
+A file is written (`output/{domain}/be-01-schema-inventory.md`) if Phase 1 has not already been run.
 If Phase 1 is already complete, loads the existing file and extracts ownership data.
 
 ---
@@ -66,14 +66,14 @@ If Phase 1 is already complete, loads the existing file and extracts ownership d
 
 ### Step 1: Check for Existing Phase 1 Output
 
-If `output/{domain}/01-schema-inventory.md` exists — load it. Skip to Step 3.
+If `output/{domain}/be-01-schema-inventory.md` exists — load it. Skip to Step 3.
 If it does not exist — proceed to Step 2.
 
 ### Step 2: Run Schema Inventory
 
 Invoke `graphql-schema-inventory` skill.
 
-This builds the complete file manifest, import graph, and cross-domain reference table. Writes `output/{domain}/01-schema-inventory.md`.
+This builds the complete file manifest, import graph, and cross-domain reference table. Writes `output/{domain}/be-01-schema-inventory.md`.
 
 ### Step 3: Extract Type Ownership Data
 

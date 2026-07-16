@@ -1,4 +1,4 @@
-Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
 Story,PKG-BE-B-01,(Packaging) getPackagings(...) [PKG-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,,To Do,"*Current Behaviour:*
 * (own) `getPackagings().load({page,size,packagingIds,parentIds,workspaceIds,partnerIds,statusIds})` → paged.
@@ -206,3 +206,117 @@ Story,PKG-BE-G-06,"(Packaging) Tests, parity harness [PKG-BE-G-06]",,Federate Br
 1. unit ≥80%
 2. parity green
 3. schema-diff intentional"
+Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
+Story,PKG-FE-001,[Packaging FE] Migrate packaging reads [PKG-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-01 PKG-BE-B-02,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* packaging
+* *Depends on:* PKG-BE-B-01, PKG-BE-B-02
+* *Operations:* {{getPackagings}}, {{getPackagingById}}, {{getPackagingComponentStatus}}
+
+* *Business objective:*
+** Packaging detail and listing screens read from the federated graph unchanged.
+* *Technical objective:*
+** Migrate the 3 {{getPackagings}} variants and 2 {{getPackagingById}} documents across {{product-packaging}} and {{spark-packaging-base}} (fragment factories {{GET_PACKAGING_DETAIL_FRAGMENT(...)}} become static per the delivered platform dynamic-gql expansion pattern).
+* *Background / current implementation:*
+** Duplicate {{PackagingDetailsQueries}} files exist in {{product-packaging}} and {{spark-packaging-base}} — consolidation candidate.
+* *Required changes:*
+** Static fragment expansion; document re-point; consolidate duplicate documents where selections match.
+
+*Acceptance Criteria*
+
+1. Packaging screens render identically under the flag.
+2. Duplicate documents consolidated or explicitly justified.
+
+*Testing*
+
+* Response JSON diffs; packaging screen integration suite.
+
+* *Risk:* Medium.
+* *Estimated effort:* 5–8 days"
+Story,PKG-FE-002,[Packaging FE] Migrate packaging master-data reads and retire deprecated fields [PKG-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-04 PKG-BE-B-06,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* packaging
+* *Depends on:* PKG-BE-B-04, PKG-BE-B-06
+* *Operations:* {{getCountries}}, {{getPackagingFieldValuesByType}}
+
+* *Business objective:*
+** Packaging editors keep their reference data; deprecated selections are gone before cutover.
+* *Technical objective:*
+** Re-point the 2 master-data queries; drop the deprecated {{SPARK_PackagingFieldValues.resourceType}} selection.
+* *Required changes:*
+** Endpoint + types; remove {{resourceType}} from selections and models.
+
+*Acceptance Criteria*
+
+1. Reference data identical; no {{resourceType}} selection remains.
+
+*Testing*
+
+* Fixture equality tests; selection lint.
+
+* *Risk:* Low.
+* *Estimated effort:* 2–3 days"
+Story,PKG-FE-003,[Packaging FE] Migrate dieline flows [PKG-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-+-mutation-migration,,PKG-BE-B-03 PKG-BE-B-05 PKG-BE-D-02,To Do,"* *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* packaging
+* *Depends on:* PKG-BE-B-03, PKG-BE-B-05, PKG-BE-D-02
+* *Operations:* {{getDielines}}, {{getDielineEvaluationStatuses}}, {{evaluateDieline}}
+
+* *Business objective:*
+** Dieline browsing and evaluation keep working end-to-end.
+* *Technical objective:*
+** Migrate the 2 dieline reads and the evaluation mutation; replace the deprecated {{SPARK_Dieline.attachments}} selection with attachment entity selections.
+* *Required changes:*
+** Attachment selections move to the stitched entity shape; evaluation status polling unchanged.
+
+*Acceptance Criteria*
+
+1. Dieline list, preview and evaluation statuses match legacy.
+2. No {{attachments}} selection remains on the dieline type.
+
+*Testing*
+
+* Dieline flow integration tests; evaluation E2E.
+
+* *Risk:* Medium.
+* *Estimated effort:* 4–6 days"
+Story,PKG-FE-004,[Packaging FE] Migrate packaging simple mutations and export [PKG-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,mutation-migration,,PKG-BE-D-01 PKG-BE-D-03 PKG-BE-D-04 PKG-BE-D-05 PKG-BE-D-06 PKG-BE-D-07 PKG-BE-D-09,To Do,"* *Type:* Mutation migration · *Impact:* Medium · *Domain:* packaging
+* *Depends on:* PKG-BE-D-01, PKG-BE-D-03, PKG-BE-D-04, PKG-BE-D-05, PKG-BE-D-06, PKG-BE-D-07, PKG-BE-D-09
+* *Operations:* {{addPackaging}}, {{bulkAddPackagings}}, {{bulkUpdatePackagings}}, {{exportPackaging}}, {{lockPackaging}}, {{unlockPackaging}}, {{updatePackagingComponentStatus}}
+
+* *Business objective:*
+** Packaging create, bulk, lock and export flows write through the federated graph.
+* *Technical objective:*
+** Migrate the 7 single-step mutations with response-driven cache updates.
+* *Required changes:*
+** Input renames; per-item results rendered on bulk paths; export request/ack flow unchanged.
+
+*Acceptance Criteria*
+
+1. Each flow completes with UI reflecting the write; bulk flows show per-item outcomes.
+
+*Testing*
+
+* Mutation unit tests; bulk-path fixtures; export smoke test.
+
+* *Risk:* Medium — bulk surface.
+* *Estimated effort:* 5–8 days"
+Story,PKG-FE-005,[Packaging FE] Migrate `updatePackaging` saga handling and packet information [PKG-FE-005],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,packaging,mutation-migration-(complex),,PKG-BE-E-01,To Do,"* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* packaging
+* *Depends on:* PKG-BE-E-01
+* *Operations:* {{updatePackaging}}, {{getPackagingPacketsInformation}}, {{getPackagingPacketInformation}}
+
+* *Business objective:*
+** Packaging saves surface partial failures explicitly; packet information stays consistent after saves.
+* *Technical objective:*
+** Adopt the multi-step write contract for {{updatePackaging}} (elastic step included — ADR-013 scope, 🟠 draft); migrate the packet-information reads that render post-save state.
+* *Required changes:*
+** Saga-status rendering; packet reads re-pointed with the save flow to avoid mixed-endpoint reads of just-written data.
+
+*Acceptance Criteria*
+
+1. Partial failure visible and actionable; packet info reflects the save without endpoint mixing.
+
+*Testing*
+
+* Induced step-failure tests; save-then-read consistency test.
+
+* *Risk:* High — write-then-read consistency across the cutover boundary.
+* *Estimated effort:* 5–8 days
+
+---
+
+## Watchlist"

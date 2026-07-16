@@ -35,7 +35,7 @@ this.endpoint = `${endpoint}/enterprise_product_development_products/packaging/v
 | `services/product/Packaging.js` | 164 | REST methods on `packaging/v1` + dielines + export |
 | **Total** | **890** | mid domain — no chunked reading |
 
-- Schema: **`schemas/SPARK_Packaging.graphqls` (453 lines)** — target schema in [03-schema.graphql](./03-schema.graphql) translated from it (nullability from the SDL).
+- Schema: **`schemas/SPARK_Packaging.graphqls` (453 lines)** — target schema in [be-03-schema.graphql](./be-03-schema.graphql) translated from it (nullability from the SDL).
 - The SDL is **wide** (~24 object types, ~20 inputs).
 
 ## 3. Import Graph

@@ -1,6 +1,6 @@
 # Example usage — chat modes, prompts, and instructions in action
 
-Two worked sessions: a simple story that goes straight through, and a complex story that gets blocked at the spike gate. Both use real content from `output/initial-analysis/product/04-stories.md`.
+Two worked sessions: a simple story that goes straight through, and a complex story that gets blocked at the spike gate. Both use real content from `output/analysis/product/be-04-stories.md`.
 
 ---
 
@@ -20,7 +20,7 @@ Implement PRODUCT-BE-B-01
 
 1. **`copilot-instructions.md`** is already loaded for every request in this repo — Copilot knows this is `apps/app` of the `plm-product` monorepo, that stories are self-contained one-PR units, and that ACL is context-only.
 2. The chat mode's workflow step 1 (**gate check**) runs: `PRODUCT-BE-B-01` is Phase B, not Phase E, no `SPIKE-0x` in *Depends on* → not gated → proceeds.
-3. Step 2 (**read the contract**) — the Engineer pastes the Jira ticket text (or Copilot is pointed at `output/initial-analysis/product/04-stories.md#PRODUCT-BE-B-01` in the linked analysis repo):
+3. Step 2 (**read the contract**) — the Engineer pastes the Jira ticket text (or Copilot is pointed at `output/analysis/product/be-04-stories.md#PRODUCT-BE-B-01` in the linked analysis repo):
 
    > **`getProduct(id)`** · Type: Query · Phase: B · Complexity: Low · Depends on: —
    > **Current Behaviour:** `getByID.load(id)` → `GET ${v1}?productId={id}` → camelCase or null; DataLoader-batched.

@@ -1,161 +1,9 @@
 # Frontend Migration Stories — Phase-1 Domains
 
 > Phase 8 deliverable · Hand-authored source of truth (parsed by `generate_frontend.py` for Jira CSVs, the dependency matrix and traceability) · 2026-07-16
-> Story id format: `<DOMAIN>-FE-<NNN>` (domain tokens match the backend ids: PRODUCT, BOM, MST, PDTL, PKG, WATCHLIST, IMPRESSION, CLAIM; PLATFORM = cross-cutting).
+> Story id format: `<DOMAIN>-FE-<NNN>` (domain tokens match the backend ids: PRODUCT, BOM, MST, PDTL, PKG, WATCHLIST, IMPRESSION, CLAIM).
 > Rule: a frontend story is Done only after every backend story it depends on has been delivered.
-
----
-
-## Platform (cross-cutting — delivered once, consumed by every domain story)
-
-### PLATFORM-FE-001 · Federated router endpoint behind a feature flag
-
-- **Type:** Platform enablement · **Impact:** High · **Domain:** platform
-- **Depends on:** —
-- **Operations:** —
-
-- **Business objective:**
-  - Enable a reversible, per-environment switch from spark-internal-graphql to the federated router with zero user-visible change.
-- **Technical objective:**
-  - Add a flag-gated Apollo `HttpLink` so any operation set can be routed to the federated endpoint during dual-run.
-- **Background / current implementation:**
-  - The Apollo client posts every operation to the single spark-internal-graphql gateway URL.
-- **Required changes:**
-  - Introduce the router URL as environment configuration.
-  - Flag-gated link selection (per-domain allowlist, so domains cut over independently).
-  - Auth header pass-through verified against the router (`SPARK-Capability-Token` header remains context-only for phase 1).
-
-#### Acceptance Criteria
-
-1. With the flag off, all traffic goes to spark-internal-graphql (bit-identical behaviour).
-2. With the flag on for a domain, that domain's operations reach the router; all others are unaffected.
-3. Flag flip requires no rebuild (runtime configuration).
-
-#### Testing
-
-- Integration test per routing branch; smoke suite runs once per endpoint in CI.
-
-- **Risk:** Low — additive; the legacy path is untouched.
-- **Estimated effort:** 3–5 days
-
-### PLATFORM-FE-002 · Codegen against the federated schema
-
-- **Type:** Platform enablement · **Impact:** High · **Domain:** platform
-- **Depends on:** PLATFORM-FE-001
-- **Operations:** —
-
-- **Business objective:**
-  - Guarantee compile-time safety for every migrated operation before any cutover.
-- **Technical objective:**
-  - Point GraphQL codegen at the federated router schema; regenerate TypeScript types and the `possibleTypes` map.
-- **Background / current implementation:**
-  - Generated types derive from spark-internal-graphql introspection; type names carry the `SPARK_` prefix.
-- **Required changes:**
-  - Dual-schema codegen during migration (legacy + federated outputs side by side).
-  - Regenerated `possibleTypes` for interfaces/unions (impression sub-types, `IG_Clazz_Filter`).
-  - CI check: migrated documents must validate against the federated schema.
-
-#### Acceptance Criteria
-
-1. Codegen produces federated-schema types alongside legacy types without name collisions.
-2. `possibleTypes` map is generated, not hand-maintained.
-3. A document that selects a field absent from the federated schema fails CI.
-
-#### Testing
-
-- CI validation job; type-level compile tests for one pilot document per domain.
-
-- **Risk:** Medium — dual-output wiring touches every package's build.
-- **Estimated effort:** 5–8 days
-
-### PLATFORM-FE-003 · Apollo cache identity remap and cutover reset
-
-- **Type:** Platform enablement · **Impact:** High · **Domain:** platform
-- **Depends on:** PLATFORM-FE-002
-- **Operations:** —
-
-- **Business objective:**
-  - Prevent silent cache corruption when `__typename`s change at cutover.
-- **Technical objective:**
-  - Re-key `typePolicies` for federated type names and reset persisted cache state at flag flip.
-- **Background / current implementation:**
-  - Cache normalization is keyed by `SPARK_*` typenames; `keyFields` assume legacy ids.
-- **Required changes:**
-  - `typePolicies` for `Product`, `Bom`, `Claims`, `Measurements`, `Packaging`, `Watchlist`, `Impression`, `ProductDetail` with `keyFields` mirroring federation `@key`s (`TeamV2.teamId`, `Discussion.discussionId` where selected).
-  - Versioned cache key (or explicit purge) tied to the endpoint flag.
-  - Error policy default `all` for migrated queries (partial data + per-subgraph errors).
-
-#### Acceptance Criteria
-
-1. Entities cached under federated typenames normalize and dedupe across domains.
-2. Flag flip never mixes legacy and federated objects in one cache instance.
-3. A failing subgraph yields partial render, not a full-page error, on a pilot screen.
-
-#### Testing
-
-- Cache unit tests per typePolicy; manual dual-run on the product detail screen.
-
-- **Risk:** High — cache identity errors are silent and user-visible.
-- **Estimated effort:** 5–8 days
-
-### PLATFORM-FE-004 · Phase-1 fragment rename sweep (`on SPARK_*` → federated types)
-
-- **Type:** Refactor · **Impact:** Medium · **Domain:** platform
-- **Depends on:** PLATFORM-FE-002
-- **Operations:** —
-
-- **Business objective:**
-  - Make every shared fragment reusable against the federated schema in one coordinated change.
-- **Technical objective:**
-  - Re-target the 22 phase-1 fragments (type conditions, names kept) and update all import sites.
-- **Background / current implementation:**
-  - Fragments declare `on SPARK_Product`, `on SPARK_Claims`, etc.; they are imported across 11 client libraries.
-- **Required changes:**
-  - Rename type conditions per the federated schema (prefix drop).
-  - Keep fragment names stable to minimize snapshot churn.
-  - Coordinate with each domain cutover story (fragment flips with its domain's flag).
-
-#### Acceptance Criteria
-
-1. Every phase-1 fragment validates against the federated schema.
-2. No orphan `on SPARK_*` conditions remain in migrated documents.
-
-#### Testing
-
-- Codegen validation (PLATFORM-FE-002 CI check) is the gate; snapshot regeneration per consuming package.
-
-- **Risk:** Low — mechanical, CI-guarded.
-- **Estimated effort:** 3–5 days
-
-### PLATFORM-FE-005 · Statically expand runtime-composed gql factories
-
-- **Type:** Refactor · **Impact:** High · **Domain:** platform
-- **Depends on:** —
-- **Operations:** —
-
-- **Business objective:**
-  - Remove the documents that can never be validated, generated or persisted, before any domain cutover depends on them.
-- **Technical objective:**
-  - Replace runtime template factories with enumerated static documents.
-- **Background / current implementation:**
-  - `BUILD_FILES_FRAGMENT(on)` and `BOM_FABRIC_SPEC_COMBO_DETAILS` (BomQueries) interpolate type names into fragments at runtime.
-  - `FULL_CLAIM_DETAILS(includeWorkspaces)` (ClaimQueries) conditionally includes a `workspaces` selection.
-- **Required changes:**
-  - Expand `BUILD_FILES_FRAGMENT` into named static fragments per target type (`SPARK_BaseMaterial`, `SPARK_FabricSpecification`, `SPARK_Wash`).
-  - Split `FULL_CLAIM_DETAILS` into `FullClaimDetailsFragment` and `FullClaimDetailsWithWorkspacesFragment`; select at the hook call site.
-  - Same pattern for `BOM_FABRIC_SPEC_COMBO_DETAILS`.
-
-#### Acceptance Criteria
-
-1. No `gql` document in phase-1 scope is composed at runtime.
-2. All expanded documents pass codegen validation on the legacy schema (pre-cutover, behaviour-neutral).
-
-#### Testing
-
-- Snapshot the generated document text before/after to prove selection equivalence; existing component tests unchanged.
-
-- **Risk:** Medium — conditional branches must be enumerated exactly.
-- **Estimated effort:** 4–6 days
+> Platform enablement (former PLATFORM-FE-001…005: router flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is **complete** — it is an assumed baseline, not a dependency, for every story below.
 
 ---
 
@@ -164,7 +12,7 @@
 ### PRODUCT-FE-001 · Migrate `getProduct` documents in product-queries
 
 - **Type:** Query migration · **Impact:** High · **Domain:** product
-- **Depends on:** PRODUCT-BE-B-01, PLATFORM-FE-003, PLATFORM-FE-004
+- **Depends on:** PRODUCT-BE-B-01
 - **Operations:** `getProduct`
 
 - **Business objective:**
@@ -174,7 +22,7 @@
 - **Background / current implementation:**
   - 10+ documents in `src/libs/product-queries/src/queries/ProductQueries.tsx`, `ProductFilesQueries.tsx`, `TeamTabQueries.ts`, `WorkspaceFilesQueries.ts` share the `getProduct` resolver; widest selections in the estate (`getProductScaffolding` 131 fields).
 - **Required changes:**
-  - Fragment re-targeting (with PLATFORM-FE-004); nested-entity selections for `createdBy`/`brand`/`department`.
+  - Fragment re-targeting; nested-entity selections for `createdBy`/`brand`/`department`.
   - TypeScript model and hook generic updates; mock/snapshot regeneration.
   - Attachment/discussion sub-selections stay entity-stitched — no document split.
 
@@ -221,7 +69,7 @@
 ### PRODUCT-FE-003 · Migrate product list and bulk reads
 
 - **Type:** Query migration · **Impact:** High · **Domain:** product
-- **Depends on:** PRODUCT-BE-S-02, PRODUCT-BE-B-02, PLATFORM-FE-003
+- **Depends on:** PRODUCT-BE-S-02, PRODUCT-BE-B-02
 - **Operations:** `getProducts`, `getProductsByIds`
 
 - **Business objective:**
@@ -249,7 +97,7 @@
 ### PRODUCT-FE-004 · Migrate product status and workspace-context reads
 
 - **Type:** Query migration · **Impact:** Medium · **Domain:** product
-- **Depends on:** PRODUCT-BE-B-03, PLATFORM-FE-003
+- **Depends on:** PRODUCT-BE-B-03
 - **Operations:** `getProductStatus`
 
 - **Business objective:**
@@ -259,7 +107,7 @@
 - **Background / current implementation:**
   - `getFormData` (132 fields, 5 root fields) is the widest multi-root document in the estate; also selects a tags root (out of scope).
 - **Required changes:**
-  - Migrate product roots; hold `getFormData` on the legacy gateway until its tags root migrates, or split into two documents (per [07-network-call-analysis.md §2.1](./07-network-call-analysis.md)).
+  - Migrate product roots; hold `getFormData` on the legacy gateway until its tags root migrates, or split into two documents (per [fe-07-network-call-analysis.md §2.1](./fe-07-network-call-analysis.md)).
   - Workspace-filter arguments (`workspaceIdFilter`, `partnerIdFilter`) unchanged — verify against federated `ProductStatus`.
 
 #### Acceptance Criteria
@@ -277,7 +125,7 @@
 ### PRODUCT-FE-005 · Migrate template library and categories reads
 
 - **Type:** Query migration · **Impact:** Medium · **Domain:** product
-- **Depends on:** PRODUCT-BE-C-02, PRODUCT-BE-C-03, PLATFORM-FE-004
+- **Depends on:** PRODUCT-BE-C-02, PRODUCT-BE-C-03
 - **Operations:** `getProductTemplates`, `getCategories`
 
 - **Business objective:**
@@ -345,7 +193,7 @@
   - Spread across `product-queries`, `product-common`, `spark-legacy`; several rely on `refetchQueries` after thin responses.
 - **Required changes:**
   - Input type renames (`SPARK_*Input` → federated inputs); response selections aligned to returned entities.
-  - Replace blanket `refetchQueries` with `update`-function cache writes where the mutation returns the entity (per [07-network-call-analysis.md §2.3](./07-network-call-analysis.md)).
+  - Replace blanket `refetchQueries` with `update`-function cache writes where the mutation returns the entity (per [fe-07-network-call-analysis.md §2.3](./fe-07-network-call-analysis.md)).
 
 #### Acceptance Criteria
 
@@ -390,7 +238,7 @@
 ### PRODUCT-FE-009 · Migrate partner drop/undrop orchestration
 
 - **Type:** Mutation migration (complex) · **Impact:** High · **Domain:** product
-- **Depends on:** PRODUCT-BE-S-03, PRODUCT-BE-D-09, PLATFORM-FE-003
+- **Depends on:** PRODUCT-BE-S-03, PRODUCT-BE-D-09
 - **Operations:** `productBusinessPartnerActions`, `updateBusinessPartnerStatuses`
 
 - **Business objective:**
@@ -478,13 +326,13 @@
 ### BOM-FE-001 · Statically expand BOM fragment factories (pre-cutover)
 
 - **Type:** Refactor · **Impact:** High · **Domain:** bom
-- **Depends on:** PLATFORM-FE-005
+- **Depends on:** —
 - **Operations:** —
 
 - **Business objective:**
   - Unblock codegen and validation for every BOM document before cutover work starts.
 - **Technical objective:**
-  - Land the BOM share of PLATFORM-FE-005 (`BUILD_FILES_FRAGMENT`, `BOM_FABRIC_SPEC_COMBO_DETAILS`) and regenerate all embedding documents in `product-queries/BomQueries.ts`.
+  - Land the BOM share of the dynamic-gql static expansion (delivered platform pattern: `BUILD_FILES_FRAGMENT`, `BOM_FABRIC_SPEC_COMBO_DETAILS`) and regenerate all embedding documents in `product-queries/BomQueries.ts`.
 - **Background / current implementation:**
   - The factories are embedded in the widest BOM read documents (`getBomByIds` variants); every downstream BOM story depends on their static form.
 - **Required changes:**
@@ -504,7 +352,7 @@
 ### BOM-FE-002 · Migrate BOM core reads
 
 - **Type:** Query migration · **Impact:** High · **Domain:** bom
-- **Depends on:** BOM-BE-B-01, BOM-BE-B-03, BOM-BE-B-04, BOM-FE-001, PLATFORM-FE-003
+- **Depends on:** BOM-BE-B-01, BOM-BE-B-03, BOM-BE-B-04, BOM-FE-001
 - **Operations:** `getBomByIds`, `getBomByParentId`, `getBomStatus`, `getBomComponentStatus`
 
 - **Business objective:**
@@ -531,7 +379,7 @@
 ### BOM-FE-003 · Migrate BOM search and elastic reads
 
 - **Type:** Query migration · **Impact:** High · **Domain:** bom
-- **Depends on:** BOM-BE-C-01, BOM-BE-S-03, PLATFORM-FE-003
+- **Depends on:** BOM-BE-C-01, BOM-BE-S-03
 - **Operations:** `getBomElastic`, `searchMaterialsBom`
 
 - **Business objective:**
@@ -609,7 +457,7 @@
 ### BOM-FE-006 · Migrate BOM mutations including `updateBom` saga handling
 
 - **Type:** Mutation migration (complex) · **Impact:** High · **Domain:** bom
-- **Depends on:** BOM-BE-D-01, BOM-BE-D-03, BOM-BE-D-04, BOM-BE-D-05, BOM-BE-S-01, PLATFORM-FE-003
+- **Depends on:** BOM-BE-D-01, BOM-BE-D-03, BOM-BE-D-04, BOM-BE-D-05, BOM-BE-S-01
 - **Operations:** `addBom`, `lockBom`, `unlockBom`, `updateBom`, `updateBomComponentStatus`
 
 - **Business objective:**
@@ -641,7 +489,7 @@
 ### MST-FE-001 · Migrate measurement reads and retire `humanId`
 
 - **Type:** Query migration · **Impact:** Medium · **Domain:** measurement
-- **Depends on:** MST-BE-B-01, MST-BE-B-04, PLATFORM-FE-004
+- **Depends on:** MST-BE-B-01, MST-BE-B-04
 - **Operations:** `getMeasurementByIds`, `getMeasurementSetStatus`, `getMeasurementComponentStatus`
 
 - **Business objective:**
@@ -718,7 +566,7 @@
 ### MST-FE-004 · Migrate measurement mutations
 
 - **Type:** Mutation migration · **Impact:** Medium · **Domain:** measurement
-- **Depends on:** MST-BE-D-03, MST-BE-D-04, MST-BE-D-06, MST-BE-D-07, PLATFORM-FE-003
+- **Depends on:** MST-BE-D-03, MST-BE-D-04, MST-BE-D-06, MST-BE-D-07
 - **Operations:** `lockMeasurementSet`, `unlockMeasurementSet`, `putSampleMeasurementSet`, `deleteSampleMeasurementSet`
 
 - **Business objective:**
@@ -747,7 +595,7 @@
 ### PDTL-FE-001 · Migrate product-details reads
 
 - **Type:** Query migration · **Impact:** Low · **Domain:** productDetails
-- **Depends on:** PDTL-BE-B-01, PLATFORM-FE-004
+- **Depends on:** PDTL-BE-B-01
 - **Operations:** `getProductDetailsById`, `getProductDetailComponentStatus`
 
 - **Business objective:**
@@ -795,7 +643,7 @@
 ### PDTL-FE-003 · Migrate `updateProductDetailsSet` saga handling
 
 - **Type:** Mutation migration (complex) · **Impact:** Medium · **Domain:** productDetails
-- **Depends on:** PDTL-BE-E-01, PLATFORM-FE-003
+- **Depends on:** PDTL-BE-E-01
 - **Operations:** `updateProductDetailsSet`
 
 - **Business objective:**
@@ -823,13 +671,13 @@
 ### PKG-FE-001 · Migrate packaging reads
 
 - **Type:** Query migration · **Impact:** Medium · **Domain:** packaging
-- **Depends on:** PKG-BE-B-01, PKG-BE-B-02, PLATFORM-FE-004
+- **Depends on:** PKG-BE-B-01, PKG-BE-B-02
 - **Operations:** `getPackagings`, `getPackagingById`, `getPackagingComponentStatus`
 
 - **Business objective:**
   - Packaging detail and listing screens read from the federated graph unchanged.
 - **Technical objective:**
-  - Migrate the 3 `getPackagings` variants and 2 `getPackagingById` documents across `product-packaging` and `spark-packaging-base` (fragment factories `GET_PACKAGING_DETAIL_FRAGMENT(...)` become static per PLATFORM-FE-005 pattern).
+  - Migrate the 3 `getPackagings` variants and 2 `getPackagingById` documents across `product-packaging` and `spark-packaging-base` (fragment factories `GET_PACKAGING_DETAIL_FRAGMENT(...)` become static per the delivered platform dynamic-gql expansion pattern).
 - **Background / current implementation:**
   - Duplicate `PackagingDetailsQueries` files exist in `product-packaging` and `spark-packaging-base` — consolidation candidate.
 - **Required changes:**
@@ -923,7 +771,7 @@
 ### PKG-FE-005 · Migrate `updatePackaging` saga handling and packet information
 
 - **Type:** Mutation migration (complex) · **Impact:** High · **Domain:** packaging
-- **Depends on:** PKG-BE-E-01, PLATFORM-FE-003
+- **Depends on:** PKG-BE-E-01
 - **Operations:** `updatePackaging`, `getPackagingPacketsInformation`, `getPackagingPacketInformation`
 
 - **Business objective:**
@@ -951,7 +799,7 @@
 ### WATCHLIST-FE-001 · Migrate watchlist reads
 
 - **Type:** Query migration · **Impact:** Low · **Domain:** watchlist
-- **Depends on:** WATCHLIST-BE-B-01, WATCHLIST-BE-C-01, PLATFORM-FE-004
+- **Depends on:** WATCHLIST-BE-B-01, WATCHLIST-BE-C-01
 - **Operations:** `getWatchlistByIds`, `getWatchlistByFilter`
 
 - **Business objective:**
@@ -999,7 +847,7 @@
 ### WATCHLIST-FE-003 · Migrate `updateWatchlistEntries` saga handling
 
 - **Type:** Mutation migration (complex) · **Impact:** Medium · **Domain:** watchlist
-- **Depends on:** WATCHLIST-BE-E-01, PLATFORM-FE-003
+- **Depends on:** WATCHLIST-BE-E-01
 - **Operations:** `updateWatchlistEntries`
 
 - **Business objective:**
@@ -1027,13 +875,13 @@
 ### IMPRESSION-FE-001 · Migrate `getBomDataAndImpressions` (with BOM wave)
 
 - **Type:** Query migration · **Impact:** Low · **Domain:** impression
-- **Depends on:** IMPRESSION-BE-B-01, BOM-BE-B-01, BOM-FE-002, PLATFORM-FE-003
+- **Depends on:** IMPRESSION-BE-B-01, BOM-BE-B-01, BOM-FE-002
 - **Operations:** `searchImpressionsByProductId`, `getBomByIds`
 
 - **Business objective:**
   - The combined BOM + impressions view keeps one round trip and identical data.
 - **Technical objective:**
-  - Migrate the cross-domain document when both roots are on the router (per [07-network-call-analysis.md §2.1](./07-network-call-analysis.md) — no interim split).
+  - Migrate the cross-domain document when both roots are on the router (per [fe-07-network-call-analysis.md §2.1](./fe-07-network-call-analysis.md) — no interim split).
 - **Background / current implementation:**
   - One document selects `getBomByIds` and `searchImpressionsByProductId`; impression sub-type polymorphism (5 types) needs the regenerated `possibleTypes` map (ADR-017 — 🟠 draft).
 - **Required changes:**
@@ -1082,13 +930,13 @@
 ### CLAIM-FE-001 · Split the claim fragment factory and re-target claim fragments
 
 - **Type:** Refactor · **Impact:** Medium · **Domain:** claims
-- **Depends on:** PLATFORM-FE-005
+- **Depends on:** —
 - **Operations:** —
 
 - **Business objective:**
   - Claim documents become statically valid before the first cross-subgraph cutover.
 - **Technical objective:**
-  - Land the claims share of PLATFORM-FE-005: `FULL_CLAIM_DETAILS(includeWorkspaces)` → two static fragments; re-target `CLAIM_DETAILS_FRAGMENT` / `CLAIM_WORKSPACE_PRODUCT_FRAGMENT`.
+  - Land the claims share of the dynamic-gql static expansion (delivered platform pattern): `FULL_CLAIM_DETAILS(includeWorkspaces)` → two static fragments; re-target `CLAIM_DETAILS_FRAGMENT` / `CLAIM_WORKSPACE_PRODUCT_FRAGMENT`.
 - **Background / current implementation:**
   - The factory is consumed from `claims` and `spark-legacy` template-library flows.
 - **Required changes:**
@@ -1108,7 +956,7 @@
 ### CLAIM-FE-002 · Migrate claim reads (first cross-subgraph cutover)
 
 - **Type:** Query migration · **Impact:** High · **Domain:** claims
-- **Depends on:** CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-FE-001, PLATFORM-FE-003
+- **Depends on:** CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-FE-001
 - **Operations:** `getClaims`, `getClaimByIds`, `getCommunicationChannels`, `getAllClaimsAbout`, `getClaimComponentStatus`
 
 - **Business objective:**
@@ -1159,7 +1007,7 @@
 ### CLAIM-FE-004 · Migrate `updateClaim` multi-step write handling
 
 - **Type:** Mutation migration (complex) · **Impact:** High · **Domain:** claims
-- **Depends on:** CLAIM-BE-E-01, PLATFORM-FE-003
+- **Depends on:** CLAIM-BE-E-01
 - **Operations:** `updateClaim`
 
 - **Business objective:**

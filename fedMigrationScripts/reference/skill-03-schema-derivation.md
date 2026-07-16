@@ -1,13 +1,13 @@
 # Skill 03 — Federation Target-Schema Derivation (Pipeline 2.0)
 
-> **Outputs:** `output/{domain}/03-schema.graphql` + `output/{domain}/03-schema-analysis.md`
+> **Outputs:** `output/{domain}/be-03-schema.graphql` + `output/{domain}/be-03-schema-analysis.md`
 > **Audience:** Architects (schema), plus the **Confluence "approach" page** (analysis).
 > **Source of truth:** the **source SDL** at `code/schemas/SPARK_{Domain}.txt` (now present in the
-> snapshot). The `03-schema.graphql` is the **federated target** schema you *translate* from that SDL —
+> snapshot). The `be-03-schema.graphql` is the **federated target** schema you *translate* from that SDL —
 > renamed/restructured for Netflix DGS — verified against the resolver for behaviour. (It is still
 > "derived" in the sense that it is a transform of the source; it is no longer guessed from resolver shapes.)
 
-## 03-schema.graphql — translate the source SDL into the federated target
+## be-03-schema.graphql — translate the source SDL into the federated target
 
 Start from `code/schemas/SPARK_{Domain}.txt` (the real SDL: it already gives you operations, args,
 nullability, types, inputs, `union`/`interface`, and `@deprecated`). Then transform for federation:
@@ -26,7 +26,7 @@ nullability, types, inputs, `union`/`interface`, and `@deprecated`). Then transf
 7. Header note: `# TARGET schema translated from code/schemas/SPARK_{Domain}.txt — nullability from SDL`.
    Where the SDL and resolver disagree on behaviour, the resolver wins; note the discrepancy.
 
-## 03-schema-analysis.md — sections (mandatory)
+## be-03-schema-analysis.md — sections (mandatory)
 
 1. Header block.
 2. **Type Classification** table — every type → Owned / Embedded / External-stub / Shared / Input / Enum.

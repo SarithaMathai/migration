@@ -7,7 +7,7 @@
 > **Home domain:** product (`plm-product`) · **Stub story:** `PRODUCT-BE-E-03` / `E-04`
 
 > **Migrates (source resolvers → this case):** product **Q8 `getProductTechPackCountV1`** + **Q9
-> `getProductTechPackBulkCountV1`** + helper **`getTechPackResourceCountMap`** (`product/02-resolver-analysis.md`),
+> `getProductTechPackBulkCountV1`** + helper **`getTechPackResourceCountMap`** (`product/be-02-resolver-analysis.md`),
 > fanning out to the per-domain ID-list reads (attachment, discussion, sample, claims; co-located bom/measurement/
 > construction/watchlist). Home stub **`PRODUCT-BE-E-03/E-04`**.
 

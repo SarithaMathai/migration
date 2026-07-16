@@ -2,10 +2,10 @@
 
 > **Domain:** `claims` · **Target DGS:** `ClaimService` → separate `claims` subgraph (repo `spark-claims`)
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-27
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md), [05-attribute-inventory.md](./05-attribute-inventory.md)
-> **Index:** `04-stories-index.yaml`
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md), [be-05-attribute-inventory.md](./be-05-attribute-inventory.md)
+> **Index:** `be-04-stories-index.yaml`
 
-Each story is self-contained. Full pseudo-logic in [02-resolver-analysis.md](./02-resolver-analysis.md).
+Each story is self-contained. Full pseudo-logic in [be-02-resolver-analysis.md](./be-02-resolver-analysis.md).
 - **ACL is context-only** — no ACL work in any story. **Claims is its own subgraph** (Product/search/etc. are
 cross-subgraph).
 
@@ -40,7 +40,7 @@ graph TD
 
 - **In plain terms:** List claims for a product / set of partners.
 
-> **Note — DGS Module Init (this PR only):** Creates `claims.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [03-schema.graphql](./03-schema.graphql).
+> **Note — DGS Module Init (this PR only):** Creates `claims.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [be-03-schema.graphql](./be-03-schema.graphql).
 - **Current Behaviour (Q1):** (own) `claim.getClaims.load({parentHumanId, claimHumanIds, partnerIds})` `GET {base}` (filtered) → camelCase. **No ACL token.** **Target:** `@DgsQuery → [Claims]`. 
 
 #### Acceptance Criteria
@@ -377,4 +377,4 @@ camelCase fix, the `businessPartner` 3-way fallback, `parentDetails` elastic loo
 - **Separate subgraph:** claims contributes `Product.claims` + TechPack `ResourcesCount.claims` (Phase F).
 
 ---
-- **Phase Completed:** Phase 4 — Migration Stories · **Domain:** `claims` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md.
+- **Phase Completed:** Phase 4 — Migration Stories · **Domain:** `claims` · **Outputs:** be-04-stories.md, be-04-stories-index.yaml, be-04-po-summary.md.

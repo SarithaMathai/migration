@@ -3,7 +3,7 @@
 > **Domain:** `measurement` · **Target DGS:** `MeasurementService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
 > **Source of truth:** `schemas/SPARK_Measurement.graphqls` (SDL), `resolvers/product/SPARK_Measurement.js`, `services/product/Measurement.js`
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md) · **Mode:** Full
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md) · **Mode:** Full
 
 ## Summary Statistics
 | Metric | Count |

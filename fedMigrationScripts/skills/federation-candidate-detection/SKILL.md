@@ -25,8 +25,8 @@ This skill answers the architecture question: **"Where are the federation bounda
 
 ## Cannot Run Without
 
-- `output/{domain}/01-schema-inventory.md` (for the type list and cross-domain ref table)
-- `output/{domain}/02-resolver-analysis.md` (for EXT call details — preferred but not blocking)
+- `output/{domain}/be-01-schema-inventory.md` (for the type list and cross-domain ref table)
+- `output/{domain}/be-02-resolver-analysis.md` (for EXT call details — preferred but not blocking)
 
 If Phase 2 is not complete, this skill can derive candidates from Phase 1 alone, with reduced accuracy on EXT severity.
 
@@ -110,13 +110,13 @@ For every Owned type, determine the right `@key` directive:
 
 ### Step 1: Load Type List from Phase 1
 
-From `output/{domain}/01-schema-inventory.md`, collect every type defined in the source schema.
+From `output/{domain}/be-01-schema-inventory.md`, collect every type defined in the source schema.
 
 ### Step 2: Load EXT Service References
 
 From either:
-- `output/{domain}/01-schema-inventory.md` Cross-Domain Reference table (if Phase 2 not done)
-- `output/{domain}/02-resolver-analysis.md` EXT Service Call Inventory (preferred — more accurate severity)
+- `output/{domain}/be-01-schema-inventory.md` Cross-Domain Reference table (if Phase 2 not done)
+- `output/{domain}/be-02-resolver-analysis.md` EXT Service Call Inventory (preferred — more accurate severity)
 
 ### Step 3: Classify Each Type
 
@@ -166,8 +166,8 @@ When invoked **standalone** (no Phase 3 running):
 - No file written (unless engineer requests one)
 
 When invoked **as part of** `federation-schema-derivation`:
-- Feeds type classification and @key decisions into `03-schema.graphql`
-- Feeds cross-domain decisions into `03-schema-analysis.md` Type Classification table
+- Feeds type classification and @key decisions into `be-03-schema.graphql`
+- Feeds cross-domain decisions into `be-03-schema-analysis.md` Type Classification table
 
 When invoked **as part of** `federation-readiness` agent:
 - Combined with stitching-pattern-analysis output

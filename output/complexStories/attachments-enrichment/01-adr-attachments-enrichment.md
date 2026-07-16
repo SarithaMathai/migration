@@ -265,6 +265,6 @@ pattern-at-cutover):
    (`status: Accepted`, `chosen: "A — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the per-surface policy table and the deviation list).
-3. Update `output/initial-analysis/product/04-stories.md` (`G-01`, `G-03`) with the concrete pattern;
+3. Update `output/analysis/product/be-04-stories.md` (`G-01`, `G-03`) with the concrete pattern;
    workspace stories follow in their phase.
 4. Regenerate domain + global docs; push to Jira/Confluence.

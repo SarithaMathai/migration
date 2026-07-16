@@ -6,23 +6,34 @@ Inputs (all relative to the migration repo root):
   ClientCallingGqlQueries/*.txt         Client-side gql tagged-template sources (pdex-ui-react)
   ClientCallingGqlQueries/QUERY_INVENTORY.md  Usage index (definition -> consuming files)
   code/schemas/*.txt                    spark-internal-graphql SDL (local copies of schemas/*.graphqls)
-  output/initial-analysis/*/04-stories.md     Backend story ids (for FE->BE traceability)
-  output/frontend-analysis/08-frontend-stories.md  Hand-authored FE stories (parsed for Jira CSV)
+  output/analysis/*/be-04-stories.md     Backend story ids (for FE->BE traceability)
+  output/analysis/program/fe-08-frontend-stories.md  Hand-authored FE stories (parsed for Jira CSV)
 
 Outputs:
-  output/frontend-analysis/01-client-inventory.md
-  output/frontend-analysis/02-backend-schema-inventory.md
-  output/frontend-analysis/03-merged-inventory.md
-  output/frontend-analysis/04-domain-analysis.md
-  output/frontend-analysis/11-traceability-matrix.md
-  output/frontend-analysis/frontend-inventory.json      (machine-readable master data)
-  output/jira/frontend/{domain}-fe.csv + all-frontend-stories.csv   (only when 08 exists)
+  output/analysis/program/fe-00-executive-summary.md      (narrative templated below, numbers computed)
+  output/analysis/program/fe-01-client-inventory.md
+  output/analysis/program/fe-02-backend-schema-inventory.md
+  output/analysis/program/fe-03-merged-inventory.md
+  output/analysis/program/fe-04-domain-analysis.md
+  output/analysis/program/fe-09-story-dependency-matrix.md
+  output/analysis/program/fe-10-migration-sequencing.md   (narrative templated below, effort computed)
+  output/analysis/program/fe-11-traceability-matrix.md
+  output/analysis/program/frontend-inventory.json      (machine-readable master data)
+  output/confluence/frontend-confluence-documentation.md
+  output/jira/{domain}.csv     COMBINED backend + frontend rows (FE rows appended to the
+      backend CSV written by generate_jira; idempotent) + all-frontend-stories.csv
+  output/summary/FederatedGqlBrakDown-FE-{domain}.md|.docx   per-domain FE breakdown pages,
+      flat next to the FederatedGqlBrakDown-BE-{domain} backend breakdowns; the same page
+      is co-located as output/analysis/{domain}/fe-{domain}-breakdown.md (only when 08 exists)
 
 Run (from anywhere — paths resolve relative to this script):
     python fedMigrationScripts/generatescripts/generate_frontend.py
 
 ⚠ Regeneration overwrites the generated docs above — hand edits belong in the
-  hand-authored deliverables (00, 05, 06, 07, 08, 10) which are never overwritten.
+  hand-authored deliverables (05, 06, 07, 08) which are never overwritten, or in
+  the narrative template blocks in this script (FE_WAVES, emit_executive_summary,
+  emit_sequencing, emit_confluence_fe). 00/10/Confluence numbers are computed —
+  never hand-edit a count there.
 """
 
 import csv
@@ -40,15 +51,15 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 CLIENT_DIR = ROOT / "ClientCallingGqlQueries"
 SCHEMA_DIR = ROOT / "code" / "schemas"
-BE_ANALYSIS = ROOT / "output" / "initial-analysis"
-FE_OUT = ROOT / "output" / "frontend-analysis"
-JIRA_OUT = ROOT / "output" / "jira" / "frontend"
+BE_ANALYSIS = ROOT / "output" / "analysis"
+FE_OUT = ROOT / "output" / "analysis" / "program"
+JIRA_OUT = ROOT / "output" / "jira"
 
 TODAY = date.today().isoformat()
 
 # ─── Domain catalogue ────────────────────────────────────────────────────────
 # Phase-1 backend domains and the schema file that owns each (1:1, mirrors
-# output/initial-analysis/*/01-schema-inventory.md).
+# output/analysis/*/be-01-schema-inventory.md).
 PHASE1_SCHEMA_DOMAIN = {
     "SPARK_Product":       "product",
     "SPARK_Bom":           "bom",
@@ -512,7 +523,7 @@ def load_be_stories():
     """-> {domain: {op_name: story_id}}"""
     out = defaultdict(dict)
     for domain in PHASE1_ORDER:
-        p = BE_ANALYSIS / domain / "04-stories.md"
+        p = BE_ANALYSIS / domain / "be-04-stories.md"
         if not p.exists():
             continue
         for sid, op in BE_STORY_RE.findall(p.read_text(encoding="utf-8", errors="replace")):
@@ -798,7 +809,7 @@ def emit_client_inventory(ops, frags, dynamics=()):
                 used = "<br>".join(f"`{Path(u).name}`" for u in f["used_in"][:6]) or "—"
                 L.append(f"| `{f['name']}` | `{f['on']}` | `{f['const']}` | `{f['src']}` | {f['field_count']} | {used} |")
         L.append("")
-    write(FE_OUT / "01-client-inventory.md", "\n".join(L))
+    write(FE_OUT / "fe-01-client-inventory.md", "\n".join(L))
 
 
 # ─── Doc 02: backend schema inventory ────────────────────────────────────────
@@ -828,7 +839,7 @@ def emit_backend_inventory(registry, ops, coverage):
     L.append("# Backend GraphQL Schema Inventory — spark-internal-graphql (Phase-1 Domains)")
     L.append("")
     L.append(f"> Source: `schemas/*.graphqls` (spark-internal-graphql) · Generated: {TODAY}")
-    L.append("> Scope: the 8 phase-1 domain schemas. Cross-referenced against the frontend client inventory (01-client-inventory.md).")
+    L.append("> Scope: the 8 phase-1 domain schemas. Cross-referenced against the frontend client inventory (fe-01-client-inventory.md).")
     L.append("")
     L.append("## Summary")
     L.append("")
@@ -900,7 +911,7 @@ def emit_backend_inventory(registry, ops, coverage):
     L.append("")
     L.append(f"- The remaining {len(list(SCHEMA_DIR.glob('*.txt'))) - len(p1_files)} schema files (later-phase and platform-stitched domains) are excluded per program scope.")
     L.append("")
-    write(FE_OUT / "02-backend-schema-inventory.md", "\n".join(L))
+    write(FE_OUT / "fe-02-backend-schema-inventory.md", "\n".join(L))
 
 
 # ─── Doc 03: merged inventory ────────────────────────────────────────────────
@@ -912,7 +923,7 @@ def emit_merged_inventory(ops, frags, registry, coverage):
     L.append("# Merged GraphQL Inventory — Frontend Usage × Backend Schema")
     L.append("")
     L.append(f"> Authoritative migration-planning inventory · Generated: {TODAY}")
-    L.append("> One row per frontend operation × backend root field. FE story ids resolve in 08-frontend-stories.md; BE story ids in output/initial-analysis/{{domain}}/04-stories.md.")
+    L.append("> One row per frontend operation × backend root field. FE story ids resolve in fe-08-frontend-stories.md; BE story ids in output/analysis/{{domain}}/be-04-stories.md.")
     L.append("")
 
     rows = []
@@ -944,8 +955,8 @@ def emit_merged_inventory(ops, frags, registry, coverage):
             continue
         L.append(f"### {DOMAIN_LABELS[dom]} (`{dom}`) — {len(drows)} rows · DGS: `{DOMAIN_DGS[dom]}`")
         L.append("")
-        L.append("| Backend resolver (root field) | GraphQL kind | BE story | Client operation | Client file | Components | Fields req. | Missing fields | Notes |")
-        L.append("|---|---|---|---|---|---|---|---|---|")
+        L.append("| Backend resolver (root field) | GraphQL kind | BE story | Client operation | Client constant | Client file | Components | Fields req. | Missing fields | Notes |")
+        L.append("|---|---|---|---|---|---|---|---|---|---|")
         for o, r in sorted(drows, key=lambda x: (x[1]["field"], x[0]["const"])):
             miss = "; ".join(f"`{t}.{f}`" for t, f in o["missing"][:5]) or "—"
             if len(o["missing"]) > 5:
@@ -956,7 +967,7 @@ def emit_merged_inventory(ops, frags, registry, coverage):
             if o["fragments"]:
                 note.append(f"{len(o['fragments'])} fragment(s)")
             L.append(f"| `{r['field']}` | {o['kind']} | {r['be_story'] or '—'} "
-                     f"| `{o['op_name'] or o['const']}` | `{o['src']}` "
+                     f"| `{o['op_name'] or o['const']}` | `{o['const']}` | `{o['src']}` "
                      f"| {len(o['components'])} | {o['field_count']} | {miss} | {'; '.join(note) or '—'} |")
         L.append("")
 
@@ -994,7 +1005,7 @@ def emit_merged_inventory(ops, frags, registry, coverage):
         elif unused:
             L.append(f"| `{tname}` | *(entire type unreferenced by FE selections)* |")
     L.append("")
-    write(FE_OUT / "03-merged-inventory.md", "\n".join(L))
+    write(FE_OUT / "fe-03-merged-inventory.md", "\n".join(L))
 
 
 # ─── Doc 04: domain-level analysis ───────────────────────────────────────────
@@ -1058,7 +1069,7 @@ def emit_domain_analysis(ops, frags, registry):
         if len(type_clients[tname]) > 1:
             L.append(f"| `{tname}` | {', '.join(sorted(type_clients[tname]))} |")
     L.append("")
-    write(FE_OUT / "04-domain-analysis.md", "\n".join(L))
+    write(FE_OUT / "fe-04-domain-analysis.md", "\n".join(L))
 
 
 # ─── Doc 11: traceability matrix ─────────────────────────────────────────────
@@ -1075,8 +1086,8 @@ def emit_traceability(ops, fe_story_index):
             continue
         L.append(f"## {DOMAIN_LABELS[dom]}")
         L.append("")
-        L.append("| Backend schema | Resolver | Frontend operation | Components / hooks | FE story | BE story |")
-        L.append("|---|---|---|---|---|---|")
+        L.append("| Backend schema | Resolver | Frontend operation | Client constant | Components / hooks | FE story | BE story |")
+        L.append("|---|---|---|---|---|---|---|")
         for o, r in sorted(rows, key=lambda x: (x[1]["field"], x[0]["const"])):
             consumers = o["components"] + o["hooks"]
             cons = "<br>".join(f"`{Path(c).name}`" for c in consumers[:4]) or "—"
@@ -1084,9 +1095,9 @@ def emit_traceability(ops, fe_story_index):
                 cons += f"<br>(+{len(consumers)-4})"
             fe = fe_story_index.get((dom, o["const"])) or fe_story_index.get((dom, r["field"])) or "—"
             L.append(f"| `schemas/{r['schema_file']}.graphqls` | `{r['field']}` "
-                     f"| `{o['op_name'] or o['const']}` | {cons} | {fe} | {r['be_story'] or '—'} |")
+                     f"| `{o['op_name'] or o['const']}` | `{o['const']}` | {cons} | {fe} | {r['be_story'] or '—'} |")
         L.append("")
-    write(FE_OUT / "11-traceability-matrix.md", "\n".join(L))
+    write(FE_OUT / "fe-11-traceability-matrix.md", "\n".join(L))
 
 
 # ─── FE stories parsing + Jira CSV ───────────────────────────────────────────
@@ -1094,7 +1105,7 @@ FE_STORY_RE = re.compile(r'^### ([A-Z]+-FE-\d+)\s*·\s*(.+)$', re.M)
 
 
 def parse_fe_stories():
-    p = FE_OUT / "08-frontend-stories.md"
+    p = FE_OUT / "fe-08-frontend-stories.md"
     if not p.exists():
         return []
     text = p.read_text(encoding="utf-8", errors="replace")
@@ -1128,8 +1139,9 @@ FE_EPIC_NAME = "Federate BreakDown Product — Frontend"
 FE_EPIC_DESC = (
     "Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL "
     "gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, "
-    "BOM, Measurement, Product Details, Packaging, Watchlist, Claims) plus the shared "
-    "platform enablement stories. Every story lists the backend stories it depends on; "
+    "BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform "
+    "enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is "
+    "already complete. Every story lists the backend stories it depends on; "
     "a frontend story is Done only after its backend dependencies are delivered."
 )
 CSV_HEADER = ["Issue Type", "Story ID", "Summary", "Epic Name", "Epic Link", "Phase",
@@ -1150,9 +1162,39 @@ def md_to_jira(md):
     return t
 
 
+def _fe_epic_row():
+    return ["Epic", "", FE_EPIC_NAME, FE_EPIC_NAME, "", "", "",
+            "fed-graphql-fe", "frontend", "epic", "", "", "", FE_EPIC_DESC]
+
+
+def _fe_story_rows(stories_group):
+    rows = []
+    for s in stories_group:
+        dom = domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])
+        label = DOMAIN_LABELS.get(dom, dom.title())
+        rows.append([
+            "Story", s["id"], f"[{label} FE] {s['title']} [{s['id']}]",
+            "", FE_EPIC_NAME, "FE", impact_to_tshirt(s["impact"]),
+            "fed-graphql-fe", dom, (s["type"] or "migration").lower().replace(" ", "-"),
+            "", " ".join(s["depends"]), "To Do", md_to_jira(s["body"]),
+        ])
+    return rows
+
+
+def _is_fe_row(r):
+    """A row previously appended by this script (FE story or FE epic)."""
+    if len(r) < 4:
+        return False
+    return "-FE-" in (r[1] or "") or (r[0] == "Epic" and "Frontend" in (r[3] or r[2]))
+
+
 def emit_jira(stories):
+    """Combined per-domain CSVs: jira/{domain}.csv = backend rows (written by
+    generate_jira) + the FE epic + that domain's FE stories. Idempotent — FE rows
+    from a previous run are dropped before re-appending, so BE and FE generators
+    can rerun in any order."""
     if not stories:
-        print("  (08-frontend-stories.md not found — skipping Jira CSVs)")
+        print("  (fe-08-frontend-stories.md not found — skipping Jira CSVs)")
         return
     JIRA_OUT.mkdir(parents=True, exist_ok=True)
     by_dom = defaultdict(list)
@@ -1160,35 +1202,30 @@ def emit_jira(stories):
         token = s["id"].rsplit("-FE-", 1)[0]
         by_dom[domain_key_from_token(token)].append(s)
 
-    def rows_for(stories_group, include_epic):
-        rows = []
-        if include_epic:
-            rows.append(["Epic", "", FE_EPIC_NAME, FE_EPIC_NAME, "", "", "",
-                         "fed-graphql-fe", "frontend", "epic", "", "", "", FE_EPIC_DESC])
-        for s in stories_group:
-            dom = domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])
-            label = DOMAIN_LABELS.get(dom, dom.title())
-            rows.append([
-                "Story", s["id"], f"[{label} FE] {s['title']} [{s['id']}]",
-                "", FE_EPIC_NAME, "FE", impact_to_tshirt(s["impact"]),
-                "fed-graphql-fe", dom, (s["type"] or "migration").lower().replace(" ", "-"),
-                "", " ".join(s["depends"]), "To Do", md_to_jira(s["body"]),
-            ])
-        return rows
-
     for dom, group in sorted(by_dom.items()):
-        out = JIRA_OUT / f"{dom}-fe.csv"
+        out = JIRA_OUT / f"{dom}.csv"
+        be_rows = []
+        if out.exists():
+            with out.open(encoding="utf-8-sig", newline="") as fh:
+                be_rows = [r for r in list(csv.reader(fh))[1:] if r and not _is_fe_row(r)]
+        else:
+            print(f"  ({out.name} missing — writing frontend rows only; run generate_jira for the backend rows)")
         with out.open("w", newline="", encoding="utf-8-sig") as fh:
             w = csv.writer(fh)
             w.writerow(CSV_HEADER)
-            for r in rows_for(sorted(group, key=lambda s: s["id"]), include_epic=False):
+            for r in be_rows:
                 w.writerow(r)
-        print(f"  wrote {out.relative_to(ROOT)}")
+            w.writerow(_fe_epic_row())
+            for r in _fe_story_rows(sorted(group, key=lambda s: s["id"])):
+                w.writerow(r)
+        print(f"  wrote {out.relative_to(ROOT)} ({len(be_rows)} backend rows + {len(group)} frontend stories)")
+
     out = JIRA_OUT / "all-frontend-stories.csv"
     with out.open("w", newline="", encoding="utf-8-sig") as fh:
         w = csv.writer(fh)
         w.writerow(CSV_HEADER)
-        for r in rows_for(sorted(stories, key=lambda s: s["id"]), include_epic=True):
+        w.writerow(_fe_epic_row())
+        for r in _fe_story_rows(sorted(stories, key=lambda s: s["id"])):
             w.writerow(r)
     print(f"  wrote {out.relative_to(ROOT)}")
 
@@ -1200,7 +1237,7 @@ def emit_dependency_matrix(stories):
     L = []
     L.append("# Story Dependency Matrix — Frontend × Backend")
     L.append("")
-    L.append(f"> Generated from 08-frontend-stories.md · {TODAY}")
+    L.append(f"> Generated from fe-08-frontend-stories.md · {TODAY}")
     L.append("> A frontend story is not Done until every backend story it depends on has been delivered.")
     L.append("")
     L.append("| FE story | Title | Impact | Depends on (BE / FE) | Domain |")
@@ -1222,7 +1259,509 @@ def emit_dependency_matrix(stories):
     for d in sorted(rev):
         L.append(f"| {d} | {', '.join(sorted(rev[d]))} |")
     L.append("")
-    write(FE_OUT / "09-story-dependency-matrix.md", "\n".join(L))
+    write(FE_OUT / "fe-09-story-dependency-matrix.md", "\n".join(L))
+
+
+# ─── Per-domain FE breakdown pages (output/summary/FederatedGqlBrakDown-FE-*) ─
+SUMMARY_OUT = ROOT / "output" / "summary"
+IMPACT_ICONS = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}
+
+# Backend-readiness tier of a BE dependency's phase letter — used to stage the FE
+# cutover order (reads before writes before sagas), mirroring 10-migration-sequencing.
+BE_TIER = {"A": 1, "B": 1, "C": 2, "D": 3, "E": 4, "F": 4, "G": 4, "S": 5}
+STAGE_LABELS = {
+    1: "Reads cutover — needs backend phase A/B reads live",
+    2: "Search & listing — needs backend phase C",
+    3: "Writes — needs backend phase D mutations",
+    4: "Complex writes / sagas — needs backend phase E + ADR ratification",
+    5: "Externally gated — search/read-hub decision",
+}
+
+
+def _impact_icon(impact):
+    return IMPACT_ICONS.get((impact or "").split()[0] if impact else "", "⚪")
+
+
+def _effort_range(txt):
+    m = re.search(r"(\d+)\s*[–—-]\s*(\d+)", txt or "")
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    m = re.search(r"(\d+)", txt or "")
+    return (int(m.group(1)), int(m.group(1))) if m else (0, 0)
+
+
+def fe_stages(group):
+    """Stage number per FE story: max backend-readiness tier of its BE deps, pushed
+    later by in-domain FE→FE dependency chains. Stories in the same stage parallelize."""
+    by_id = {s["id"]: s for s in group}
+    stage = {}
+
+    def calc(sid, seen=()):
+        if sid in stage:
+            return stage[sid]
+        st = 1
+        for d in by_id[sid]["depends"]:
+            m = re.search(r"-BE-([A-Z])-", d)
+            if m:
+                st = max(st, BE_TIER.get(m.group(1), 1))
+            elif d in by_id and d != sid and sid not in seen:
+                st = max(st, calc(d, seen + (sid,)) + 1)
+        stage[sid] = st
+        return st
+
+    for sid in by_id:
+        calc(sid)
+    return stage
+
+
+def fe_order_map_lines(group):
+    """Markdown lines for the FE 'Recommended Implementation Order' section."""
+    stage = fe_stages(group)
+    L = [
+        "## Recommended Implementation Order",
+        "",
+        "> Staged from each story's dependencies: the backend phase its BE stories sit in "
+        "(reads → search → writes → sagas) plus in-domain FE→FE chains. "
+        "**Stories in the same step are independent of each other and parallelize.** "
+        "ADR ratifications are entry gates, not ordering edges.",
+        "",
+        "| Step | Stories (parallel set) | Waits for | Focus |",
+        "|---|---|---|---|",
+    ]
+    for n in sorted(set(stage.values())):
+        rows = sorted((s for s in group if stage[s["id"]] == n), key=lambda s: s["id"])
+        cell = ", ".join(f"{_impact_icon(s['impact'])} `{s['id']}`" for s in rows)
+        gates = []
+        for s in rows:
+            ext = [d for d in s["depends"] if not any(d == o["id"] for o in group)]
+            if ext:
+                shown = ", ".join(f"`{d}`" for d in ext[:4]) + (f" (+{len(ext)-4})" if len(ext) > 4 else "")
+                gates.append(f"`{s['id']}` → {shown}")
+        label = STAGE_LABELS.get(n, "Follow-on cutover — after the stories it depends on")
+        L.append(f"| {n} | {cell} | {'<br>'.join(gates) or '—'} | {label} |")
+    chain = " → ".join(f"`{s['id']}`" for s in sorted(group, key=lambda s: (stage[s["id"]], s["id"])))
+    L += ["", f"**Cutover flow:** {chain}.", ""]
+    return L
+
+
+def emit_fe_breakdowns(stories, ops):
+    """One FederatedGqlBrakDown-FE-{domain} page per phase-1 domain, flat in
+    output/summary/ next to the FederatedGqlBrakDown-BE-{domain} backend breakdowns."""
+    if not stories:
+        print("  (fe-08-frontend-stories.md not found — skipping FE breakdowns)")
+        return
+    SUMMARY_OUT.mkdir(parents=True, exist_ok=True)
+
+    by_dom = defaultdict(list)
+    for s in stories:
+        by_dom[domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])].append(s)
+
+    # Optional .docx twin — reuses generate_word's Markdown→Word renderer.
+    try:
+        import importlib.util as _ilu
+        spec = _ilu.spec_from_file_location("generate_word", HERE / "generate_word.py")
+        gw = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(gw)
+    except Exception as e:
+        gw = None
+        print(f"  (docx renderer unavailable — FE breakdowns as .md only: {type(e).__name__}: {e})")
+
+    for dom in [d for d in PHASE1_ORDER if d in by_dom]:
+        group = sorted(by_dom.get(dom, []), key=lambda s: s["id"])
+        if not group:
+            continue
+        label = DOMAIN_LABELS.get(dom, dom.title())
+        dgs = DOMAIN_DGS.get(dom, "?")
+        hi = sum(1 for s in group if (s["impact"] or "").startswith("High"))
+        me = sum(1 for s in group if (s["impact"] or "").startswith("Medium"))
+        lo = sum(1 for s in group if (s["impact"] or "").startswith("Low"))
+        e_lo = sum(_effort_range(s["effort"])[0] for s in group)
+        e_hi = sum(_effort_range(s["effort"])[1] for s in group)
+
+        title = f"Federated GraphQL Breakdown — {label} · Frontend"
+        L = [
+            f"# {title}",
+            "",
+            "| | |",
+            "|---|---|",
+            "| **Client** | `pdex-ui-react` (Apollo Client) |",
+            f"| **Backend subgraph** | `{dgs}` |",
+            f"| **Total FE Stories** | {len(group)} |",
+            f"| **Impact** | 🔴 {hi} High · 🟡 {me} Medium · 🟢 {lo} Low |",
+            f"| **Estimated effort** | {e_lo}–{e_hi} days (single-engineer) |",
+        ]
+        rows = [(o, r) for o in ops for r in o["roots"] if r["phase1"] and r["domain"] == dom]
+        files = {o["src"] for o, _ in rows}
+        comps = {c for o, _ in rows for c in o["components"]}
+        L.append(f"| **Phase-1 surface** | {len(rows)} operation-to-root-field rows · "
+                 f"{len(files)} client files · {len(comps)} components |")
+        L += [
+            f"| **Generated** | {TODAY} |",
+            "",
+            "> A frontend story is **Done only after every backend story it depends on has been "
+            "delivered**. Full story text (objectives, required changes, AC, testing) lives in "
+            "fe-08-frontend-stories.md — the hand-authored source of truth; this page is the "
+            "per-domain planning view.",
+            "",
+            "---",
+            "",
+            "## What Are We Changing?",
+            "",
+        ]
+        L += [
+            f"- Point the **{label}** GraphQL operations in `pdex-ui-react` at the federated "
+            f"router (subgraph `{dgs}`) behind the platform feature flag, then remove "
+            "legacy-gateway assumptions (typenames, cache keys, fragments).",
+            "- Cutover is per-domain and reversible: dual-run first, flag flip after parity, "
+            "legacy path kept until the exit criterion holds.",
+        ]
+        L += [
+            "",
+            "---",
+            "",
+            "## Stories",
+            "",
+            "| Story | Title | Type | Impact | Effort | Depends on | Operations |",
+            "|---|---|---|---|---|---|---|",
+        ]
+        for s in group:
+            deps = ", ".join(f"`{d}`" for d in s["depends"]) or "—"
+            ops_cell = ", ".join(f"`{x}`" for x in s["operations"] if x and x != "—") or "—"
+            L.append(f"| `{s['id']}` | {md_escape(s['title'])} | {s['type'] or '—'} "
+                     f"| {_impact_icon(s['impact'])} {s['impact'] or '—'} | {s['effort'] or '—'} "
+                     f"| {deps} | {ops_cell} |")
+        L += ["", "---", ""]
+        L += fe_order_map_lines(group)
+        L += [
+            "---",
+            "",
+            "## References",
+            "",
+            "- fe-08-frontend-stories.md — full story text (source of truth).",
+            "- fe-09-story-dependency-matrix.md — FE ↔ BE dependency matrix.",
+            "- fe-10-migration-sequencing.md — program-level waves and external gates.",
+            "- fe-03-merged-inventory.md — every operation × backend root field for this domain.",
+            f"- FederatedGqlBrakDown-BE-{dom}.md — the backend breakdown this cutover follows.",
+            "",
+        ]
+        out = SUMMARY_OUT / f"FederatedGqlBrakDown-FE-{dom}.md"
+        out.write_text("\n".join(L), encoding="utf-8")
+        print(f"  wrote {out.relative_to(ROOT)}")
+
+        # same page co-located with the domain's backend analysis (domain-first reading)
+        dom_copy = BE_ANALYSIS / dom / f"fe-{dom}-breakdown.md"
+        if dom_copy.parent.is_dir():
+            dom_copy.write_text("\n".join(L), encoding="utf-8")
+            print(f"  wrote {dom_copy.relative_to(ROOT)}")
+
+        if gw is not None:
+            doc = gw.Document()
+            style = doc.styles["Normal"]
+            style.font.name = "Calibri"
+            style.font.size = gw.Pt(10)
+            tp = doc.add_paragraph()
+            gw.add_run(tp, title, bold=True, size_pt=20, color_hex=gw.C_TITLE)
+            gw.render_md_block(doc, L[1:])
+            doc.save(str(SUMMARY_OUT / f"FederatedGqlBrakDown-FE-{dom}.docx"))
+            print(f"  wrote output/summary/FederatedGqlBrakDown-FE-{dom}.docx")
+
+
+# ─── Docs 00 / 10 / Confluence index — narrative templated here, numbers computed ─
+CONFLUENCE_OUT = ROOT / "output" / "confluence"
+
+PLATFORM_DONE = ("Platform enablement (router flag, codegen, cache remap, fragment sweep, "
+                 "dynamic-gql expansion) is **complete** — every domain cutover reuses it "
+                 "as a delivered baseline.")
+
+# (section heading for 10, effort-table label, domain keys, 00 sequence blurb, 10 wave bullets)
+FE_WAVES = [
+    ("Wave 1 — Pilot: Watchlist 🟢", "1 — Watchlist pilot", ["watchlist"],
+     "Wave 1 — Watchlist pilot (smallest isolated domain).",
+     ["- WATCHLIST-FE-001 → WATCHLIST-FE-002 → WATCHLIST-FE-003 (003 gated on ADR-013 ratification).",
+      "- Smallest isolated surface (5 operations, 1 library, 4 components) — proves entity caching, flag flip and rollback.",
+      "- Exit criterion: watchlist runs on the router in production for one full sprint without regression."]),
+    ("Wave 2 — Low/medium isolated domains", "2 — PDTL + MST + PKG",
+     ["productDetails", "measurement", "packaging"],
+     "Wave 2 — Product Details, Measurement, Packaging (parallel).",
+     ["- Product Details: PDTL-FE-001 → PDTL-FE-002 → PDTL-FE-003.",
+      "- Measurement: MST-FE-003 → MST-FE-001 → MST-FE-004 → MST-FE-002 (002 gated on search cutover).",
+      "- Packaging: PKG-FE-002 → PKG-FE-001 → PKG-FE-003 → PKG-FE-004 → PKG-FE-005.",
+      "- These three domains are parallelizable across engineers; no shared blocking dependencies between them."]),
+    ("Wave 3 — High-complexity domains", "3 — BOM + Claims", ["bom", "claims"],
+     "Wave 3 — BOM, then Claims (first cross-subgraph cutover).",
+     ["- BOM: BOM-FE-001 (early, no gate) → BOM-FE-004 → BOM-FE-005 → BOM-FE-002 → BOM-FE-003 (search gate) → BOM-FE-006 (ADR-013 gate).",
+      "- Claims: CLAIM-FE-001 (early) → CLAIM-FE-002 (first cross-subgraph cutover — schedule when `spark-claims` subgraph is stable) → CLAIM-FE-003 → CLAIM-FE-004."]),
+    ("Wave 4 — Product (largest surface, incremental)", "4 — Product + Impression",
+     ["product", "impression"],
+     "Wave 4 — Product incrementally (rules/templates first, core reads, lists after the "
+     "search gate, orchestrated writes last), with Impression documents riding their "
+     "partner domain's flip.",
+     ["- Independent slices first: PRODUCT-FE-006 (rules admin) and PRODUCT-FE-005 (templates) — low coupling, early wins.",
+      "- Core reads: PRODUCT-FE-001 → PRODUCT-FE-002 → PRODUCT-FE-004.",
+      "- Lists/search: PRODUCT-FE-003 (search gate, aligns with BOM-FE-003 / MST-FE-002).",
+      "- Writes: PRODUCT-FE-007 → PRODUCT-FE-008 → PRODUCT-FE-011 (ADR-014 gate) → PRODUCT-FE-009 (ADR-012/016 gate).",
+      "- Staged: PRODUCT-FE-010 step 1 (facade) can ride with PRODUCT-FE-001; step 2 lands after counts federate.",
+      "- Impression riders: IMPRESSION-FE-001 flips with BOM-FE-002; IMPRESSION-FE-002 flips with PRODUCT-FE-001."]),
+]
+
+
+def program_stats(ops, frags, stories, registry, coverage):
+    p1_ops = [o for o in ops if any(r["phase1"] for r in o["roots"])]
+    p1_files = set(PHASE1_SCHEMA_DOMAIN)
+    dep_sel = sorted(
+        (t, f) for t, tt in registry["types"].items()
+        for f, fd in tt["fields"].items()
+        if fd["deprecated"] and fd["file"] in p1_files and (t, f) in coverage)
+    by_dom = defaultdict(list)
+    for s in stories:
+        by_dom[domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])].append(s)
+    waves = []
+    for heading, label, doms, blurb, lines in FE_WAVES:
+        ws = [s for d in doms for s in by_dom.get(d, [])]
+        waves.append({"heading": heading, "label": label, "blurb": blurb, "lines": lines,
+                      "count": len(ws),
+                      "e_lo": sum(_effort_range(s["effort"])[0] for s in ws),
+                      "e_hi": sum(_effort_range(s["effort"])[1] for s in ws)})
+    return {
+        "q": sum(1 for o in p1_ops if o["kind"] == "query"),
+        "m": sum(1 for o in p1_ops if o["kind"] == "mutation"),
+        "p1_ops": len(p1_ops),
+        "out_of_scope": len(ops) - len(p1_ops),
+        "libs": len({o["lib"] for o in p1_ops}),
+        "comps": len({c for o in p1_ops for c in o["components"] + o["hooks"]}),
+        "frags": sum(1 for f in frags if f["phase1"]),
+        "dep_sel": dep_sel,
+        "stories": len(stories),
+        "story_ids": {s["id"] for s in stories},
+        "e_lo": sum(_effort_range(s["effort"])[0] for s in stories),
+        "e_hi": sum(_effort_range(s["effort"])[1] for s in stories),
+        "domains_line": f"{len(PHASE1_ORDER)} — " + ", ".join(DOMAIN_LABELS[d] for d in PHASE1_ORDER),
+        "waves": waves,
+    }
+
+
+def check_fe_ids(doc_name, text, story_ids):
+    """Authored narrative must only reference FE story ids that exist in 08."""
+    for sid in sorted(set(re.findall(r"\b[A-Z]+-FE-\d{3}\b", text)) - story_ids):
+        print(f"  ⚠ {doc_name}: references unknown FE story id {sid} (not in fe-08-frontend-stories.md)")
+
+
+def emit_executive_summary(stats):
+    dep_names = ", ".join(f"`{t}.{f}`" for t, f in stats["dep_sel"])
+    L = [
+        "# Executive Summary — Frontend Federated GraphQL Migration (Phase 1)",
+        "",
+        f"> Generated by `generate_frontend.py` (narrative maintained in the script; numbers computed from fe-08-frontend-stories.md + the inventory) · {TODAY} · Scope: the 8 phase-1 domains",
+        "> Full document set: see the [deliverables index](../confluence/frontend-confluence-documentation.md)",
+        "",
+        "## Numbers",
+        "",
+        "| Measure | Value |",
+        "|---|---|",
+        f"| GraphQL queries analyzed (in scope) | {stats['q']} |",
+        f"| GraphQL mutations analyzed (in scope) | {stats['m']} |",
+        f"| Domains analyzed | {stats['domains_line']} |",
+        f"| Client libraries involved | {stats['libs']} |",
+        f"| Frontend components/hooks affected | ~{stats['comps']} (some consume several domains) |",
+        f"| Fragments to re-target | {stats['frags']} phase-1 fragments |",
+        "| Dynamic gql documents to refactor | 3 (BOM ×2, Claims ×1) |",
+        f"| Deprecated fields still selected | {len(stats['dep_sel'])} in phase-1 domains |",
+        f"| Frontend stories | {stats['stories']} domain stories (platform enablement — flag, codegen, cache remap, fragment sweep, dynamic-gql expansion — already complete) |",
+        "| Backend stories referenced | every phase-1 operation maps to a `*-BE-*` story — no orphans |",
+        f"| Estimated frontend effort | {stats['e_lo']}–{stats['e_hi']} engineer-days over {len(stats['waves'])} waves |",
+        f"| Out of scope | {stats['out_of_scope']} client operations on later-phase domains / other services |",
+        "",
+        "## Backend schema changes the frontend absorbs",
+        "",
+        "- `SPARK_` prefix drop on owned types — fragments, generated types and cache identities all change.",
+        "- Flat id fields become hydrated entity references (`createdBy`, `brand`, `department`, partners).",
+        "- Cross-domain data resolves via `@key`-stitched entities across subgraphs (`plm-product`, `spark-claims`).",
+        "- Multi-step writes return saga status instead of thin/unreliable payloads.",
+        f"- {len(stats['dep_sel'])} deprecated field selections must be replaced before their domain cuts over ({dep_names}).",
+        "",
+        "## High-impact migrations",
+        "",
+        "- `getProduct` family — 20+ documents across 5 libraries back the product detail, files, teams and scaffolding screens (PRODUCT-FE-001/002).",
+        "- Partner drop/undrop orchestration — behavioural change, gated on ADR-012/016 ratification (PRODUCT-FE-009).",
+        "- `updateBom` saga — partial-failure UI is new behaviour, gated on ADR-013 (BOM-FE-006).",
+        "- Claims reads — the program's first production cross-subgraph entity resolution (CLAIM-FE-002).",
+        "- Search-backed lists (`getProducts`, `getBomElastic`, `getMeasurementsElastic`) — gated on the elastic read-hub decision.",
+        "",
+        "## Additional network calls",
+        "",
+        "- Default: none — federation fan-out moves server-side into the router.",
+        "- Temporary +1 request only if a cross-domain document (4 exist) is split across waves; the plan avoids splits by migrating each with the later of its two domains.",
+        "- Net reductions available: TechPack counts fold into product documents (−1 to −2 requests per screen), mutation responses replace refetches, hydrated entities remove lookup queries.",
+        "",
+        "## High-risk areas",
+        "",
+        "1. Apollo cache identity: `__typename` renames silently corrupt normalization — the typePolicies remap is delivered (platform enablement), but every flag flip must still reset the cache in both directions.",
+        "2. Dynamic gql factories: the BOM and Claims shares of the static expansion (BOM-FE-001, CLAIM-FE-001) must land before those domains cut over.",
+        "3. Draft-ADR gates: 6 stories are blocked on unratified write-saga / drop-undrop / rollup / techpack decisions.",
+        "4. Write-then-read consistency across the cutover boundary (packaging packet info; PKG-FE-005).",
+        "5. Inventory gaps: 2 template fragments are defined outside the snapshot libraries — locate before PRODUCT-FE-005.",
+        "",
+        "## Recommended migration sequence",
+        "",
+        f"> {PLATFORM_DONE}",
+        "",
+    ]
+    L += [f"{i}. {w['blurb']}" for i, w in enumerate(stats["waves"], 1)]
+    L += [
+        "",
+        "## Key architectural findings",
+        "",
+        "- The frontend already treats spark-internal-graphql as one graph — federation is invisible at the transport level, so the migration cost concentrates in type identity (renames), shapes (entity nesting) and write semantics (sagas), not in networking.",
+        "- 8 phase-1 backend root fields have no frontend caller — deprecation-review candidates before they are ported ([fe-03-merged-inventory.md](./fe-03-merged-inventory.md)).",
+        "- Fragment reuse across client libraries is high (e.g. `PRODUCT_BASE_INFO_FRAGMENT` used by product and watchlist) — the shared-fragment sweep must be coordinated, not per-team.",
+        "- Cross-domain documents are few (4) and known — sequencing them with the later domain eliminates the interim dual-endpoint problem almost entirely.",
+        "",
+    ]
+    text = "\n".join(L)
+    check_fe_ids("00-executive-summary", text, stats["story_ids"])
+    write(FE_OUT / "fe-00-executive-summary.md", text)
+
+
+def emit_sequencing(stats):
+    L = [
+        "# Frontend Migration Sequencing Plan — Phase-1 Domains",
+        "",
+        f"> Generated by `generate_frontend.py` (narrative maintained in the script; effort table computed from fe-08-frontend-stories.md) · {TODAY}",
+        "> Inputs: [fe-08-frontend-stories.md](./fe-08-frontend-stories.md), [fe-09-story-dependency-matrix.md](./fe-09-story-dependency-matrix.md)",
+        "> Backend sequencing reference: `output/summary/00-program-overview.md`",
+        "",
+        "## 1. Sequencing principles",
+        "",
+        f"- {PLATFORM_DONE}",
+        "- Cut over the smallest isolated domain first to validate the platform stack in production before high-risk domains move.",
+        "- A domain's frontend cutover follows its backend phase-B/C delivery; complex writes follow their ADR ratification.",
+        "- Cross-domain documents migrate with the **later** of their two domains — no interim document splits unless a wave gap forces one.",
+        "- Dual-run (flag off/on comparison) precedes every domain's flag flip.",
+        "",
+        "## 2. Waves",
+        "",
+    ]
+    for w in stats["waves"]:
+        L += [f"### {w['heading']}", ""] + w["lines"] + [""]
+    L += [
+        "## 3. External gates",
+        "",
+        "| Gate | Blocks | Status convention |",
+        "|---|---|---|",
+        "| Search / elastic read-hub decision (S-phase stories) | PRODUCT-FE-003, BOM-FE-003, MST-FE-002 | carried by the corresponding `*-BE-S-*` stories |",
+        "| ADR-012 partner drop/undrop + ADR-016 not-removable | PRODUCT-FE-009 | 🟠 draft — ratification pending |",
+        "| ADR-013 non-atomic write saga | BOM-FE-006, PKG-FE-005, PDTL-FE-003, WATCHLIST-FE-003, CLAIM-FE-004, MST-FE-004 (partial) | 🟠 draft — ratification pending |",
+        "| ADR-014 components & counts rollups | PRODUCT-FE-011 | 🟠 draft — ratification pending |",
+        "| ADR-015 TechPack facade-then-federate | PRODUCT-FE-010 step 2 | 🟠 draft — ratification pending |",
+        "| ADR-017 polymorphic type resolution | IMPRESSION-FE-001/002 (`possibleTypes`) | 🟠 draft — ratification pending |",
+        "| `spark-claims` subgraph production stability | CLAIM-FE-002 | first cross-subgraph cutover |",
+        "",
+        "## 4. Effort summary",
+        "",
+        "| Wave | Stories | Estimated effort |",
+        "|---|---|---|",
+    ]
+    for w in stats["waves"]:
+        L.append(f"| {w['label']} | {w['count']} | {w['e_lo']}–{w['e_hi']} days |")
+    L += [
+        f"| **Total** | **{stats['stories']}** | **{stats['e_lo']}–{stats['e_hi']} days** (single-engineer days; waves 2–4 parallelize across domains) |",
+        "",
+        "## 5. Rollback posture",
+        "",
+        "- Every wave keeps the legacy path alive behind the flag until the exit criterion holds.",
+        "- Cache reset on every flag transition (both directions) — no mixed-typename cache state.",
+        "- Cross-domain documents are the only places where rollback granularity is coarser than one domain — their stories carry an explicit rollback note.",
+        "",
+    ]
+    text = "\n".join(L)
+    check_fe_ids("10-migration-sequencing", text, stats["story_ids"])
+    write(FE_OUT / "fe-10-migration-sequencing.md", text)
+
+
+def emit_confluence_fe(stats):
+    L = [
+        "# Federated GraphQL Migration — Frontend Documentation",
+        "",
+        f"> Confluence-ready page · Generated by `generate_frontend.py` · {TODAY} · Scope: the 8 phase-1 domains",
+        "> Companion page: [Backend Documentation](./backend-confluence-documentation.md)",
+        "",
+        "## Purpose",
+        "",
+        "- Single reference for the pdex-ui-react migration from the spark-internal-graphql gateway to the federated GraphQL router.",
+        "- Audience: Engineers implementing frontend stories; Product Owner tracking scope and sequencing.",
+        "",
+        "## Scope",
+        "",
+        "- In scope: every frontend query/mutation whose root field belongs to a phase-1 domain — Product, BOM, Measurement, Product Details, Packaging, Watchlist, Impression, Claims — and the fields those operations select.",
+        f"- Out of scope: {stats['out_of_scope']} further client operations resolving to later-phase domains or services outside spark-internal-graphql; they migrate with their own subgraph phase.",
+        "",
+        "## Inventory at a glance",
+        "",
+        "| Stat | Value |",
+        "|---|---|",
+        f"| Phase-1 frontend operations | {stats['p1_ops']} ({stats['q']} queries, {stats['m']} mutations) |",
+        f"| Fragments on phase-1 types | {stats['frags']} |",
+        f"| Client libraries involved | {stats['libs']} |",
+        "| Dynamic (runtime-composed) documents to refactor | 3 |",
+        f"| Frontend migration stories | {stats['stories']} domain stories (platform enablement complete) |",
+        f"| Estimated effort | {stats['e_lo']}–{stats['e_hi']} engineer-days across {len(stats['waves'])} waves |",
+        "",
+        "## What changes for the frontend",
+        "",
+        "- Endpoint: one federated router URL replaces the spark-internal-graphql gateway (flag-gated dual-run).",
+        "- Type names: owned types drop the `SPARK_` prefix — fragments, generated TypeScript types and Apollo cache identities all change.",
+        "- Shapes: flat id fields become entity references (`createdBy`, `brand`, `department`); cross-domain data resolves through `@key`-stitched entities.",
+        "- Writes: multi-step backend writes (`updateBom`, `updatePackaging`, `updateClaim`, …) surface saga status — partial failures become explicit UI states.",
+        "- Errors: partial data + per-subgraph `errors[]` replaces all-or-nothing responses.",
+        "",
+        "## Deliverables index",
+        "",
+        "| Document | Content |",
+        "|---|---|",
+        "| [Executive summary](../analysis/program/fe-00-executive-summary.md) | Program-level findings and numbers |",
+        "| [01 Client inventory](../analysis/program/fe-01-client-inventory.md) | Every phase-1 operation: variables, fields, fragments, consumers |",
+        "| [02 Backend schema inventory](../analysis/program/fe-02-backend-schema-inventory.md) | Phase-1 SDL: types, root fields, deprecations, FE-usage flags |",
+        "| [03 Merged inventory](../analysis/program/fe-03-merged-inventory.md) | Authoritative operation × resolver × BE-story table |",
+        "| [04 Domain analysis](../analysis/program/fe-04-domain-analysis.md) | Per-domain grouping, shared fragments/types, cross-domain documents |",
+        "| [05 Federation impact](../analysis/program/fe-05-federation-impact.md) | Structural schema differences and per-domain impact |",
+        "| [06 UI impact](../analysis/program/fe-06-ui-impact.md) | Component/hook/cache/test impact per domain with levels |",
+        "| [07 Network call analysis](../analysis/program/fe-07-network-call-analysis.md) | Request-count and latency changes, caching strategy |",
+        f"| [08 Frontend stories](../analysis/program/fe-08-frontend-stories.md) | The {stats['stories']} implementation stories (source of truth) |",
+        "| [09 Dependency matrix](../analysis/program/fe-09-story-dependency-matrix.md) | FE ↔ BE story dependencies, reverse index |",
+        "| [10 Sequencing plan](../analysis/program/fe-10-migration-sequencing.md) | Waves, gates, rollback posture |",
+        "| [11 Traceability matrix](../analysis/program/fe-11-traceability-matrix.md) | Domain → schema → resolver → query → component → stories |",
+        "",
+        "## Story waves (summary)",
+        "",
+        f"> {PLATFORM_DONE}",
+        "",
+        "1. **Wave 1 — Watchlist pilot**: smallest isolated domain proves the stack.",
+        "2. **Wave 2 — Product Details, Measurement, Packaging**: parallelizable medium domains.",
+        "3. **Wave 3 — BOM, Claims**: saga writes; first cross-subgraph cutover (claims).",
+        "4. **Wave 4 — Product (+ Impression riders)**: largest surface, incremental slices.",
+        "",
+        "## Rules of engagement",
+        "",
+        "- A frontend story is Done only after every backend story it depends on has been delivered ([dependency matrix](../analysis/program/fe-09-story-dependency-matrix.md)).",
+        "- Cross-domain documents migrate with the later of their two domains — no interim splits unless a wave gap forces one.",
+        "- Every flag flip is preceded by a dual-run comparison and accompanied by a cache reset.",
+        "",
+        "## Jira import",
+        "",
+        "- Per-domain CSVs: `output/jira/{domain}.csv` — **combined**: the domain's backend stories and frontend stories (both epics) in one file.",
+        "- Frontend-only full import: `output/jira/all-frontend-stories.csv` (includes the frontend epic); backend-only: `output/jira/all-stories.csv`.",
+        "- All frontend stories hang off the epic \"Federate BreakDown Product — Frontend\".",
+        "",
+        "## Regeneration",
+        "",
+        "- Generated docs (00, 01–04, 09, 10, 11, the Jira CSVs, the FE breakdown pages and this page) rebuild via `python fedMigrationScripts/generatescripts/generate_frontend.py` (also runs inside `generate_all.py`). Narrative blocks for 00/10/this page live in the script; every count and effort figure is computed.",
+        "- Hand-authored docs (05–08) are never overwritten; fe-08-frontend-stories.md is the parsed source of truth.",
+        "- Source repo: `https://github.com/XXX`.",
+        "",
+    ]
+    text = "\n".join(L)
+    check_fe_ids("frontend-confluence-documentation", text, stats["story_ids"])
+    write(CONFLUENCE_OUT / "frontend-confluence-documentation.md", text)
 
 
 # ─── main ────────────────────────────────────────────────────────────────────
@@ -1267,6 +1806,15 @@ def main():
     emit_traceability(ops, fe_story_index)
     emit_dependency_matrix(stories)
     emit_jira(stories)
+    emit_fe_breakdowns(stories, ops)
+
+    if stories:
+        stats = program_stats(ops, frags, stories, registry, coverage)
+        emit_executive_summary(stats)
+        emit_sequencing(stats)
+        emit_confluence_fe(stats)
+    else:
+        print("  (fe-08-frontend-stories.md not found — skipping 00, 10 and the Confluence index)")
 
     # machine-readable master data
     data = {

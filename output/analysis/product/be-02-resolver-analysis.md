@@ -3,7 +3,7 @@
 > **Domain:** `product` · **Target DGS:** `ProductService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
 > **Source of truth:** `schemas/SPARK_Product.graphqls` (SDL), `resolvers/SPARK_Product.js` (2,629), `services/Product.js` (589), product utils
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md) · **Mode:** Full (large-file protocol)
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md) · **Mode:** Full (large-file protocol)
 
 This is the implementation spec for the largest domain. ACL/JWT usage is **context-only** (ignored in impl).
 

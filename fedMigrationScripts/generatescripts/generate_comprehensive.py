@@ -8,7 +8,7 @@ breakdowns (§8b), all stories with AC + test cases (High/VH only), and a
 story reference table.
 
 Source priority:
-  1. output/initial-analysis/{domain}/  (updated, Phase A dissolved where applicable)
+  1. output/analysis/{domain}/  (updated, Phase A dissolved where applicable)
   2. migration/finalOutput/{domain}/         (fallback; used for search)
 
 Output → migration/finalOutput/oneStopDoc/{domain}-comprehensive.md
@@ -27,8 +27,8 @@ from datetime import date
 # ─── Path setup ──────────────────────────────────────────────────────────────
 HERE = Path(__file__).resolve().parent                   # .../finalOutput/oneStopDoc/
 REPO_ROOT = HERE.parent.parent                    # c:\Saritha\jun30\
-UPDATED_SOURCE = HERE.parent.parent / "output" / "initial-analysis"
-FALLBACK_SOURCE = HERE.parent.parent / "output" / "initial-analysis"       # .../finalOutput/initial-analysis/
+UPDATED_SOURCE = HERE.parent.parent / "output" / "analysis"
+FALLBACK_SOURCE = HERE.parent.parent / "output" / "analysis"       # .../finalOutput/analysis/
 OUT_DIR = HERE.parent.parent / "output" / "summary"
 
 # ─── Domain catalogue ─────────────────────────────────────────────────────────
@@ -185,7 +185,7 @@ def complexity_badge(c: str) -> str:
 # ─── Source file resolution ───────────────────────────────────────────────────
 def get_domain_dir(domain: str) -> Path:
     for src in [FALLBACK_SOURCE / domain]:
-        if (src / "04-po-summary.md").exists():
+        if (src / "be-04-po-summary.md").exists():
             return src
     raise FileNotFoundError(f"No source found for domain '{domain}'. Checked: {UPDATED_SOURCE / domain}, {FALLBACK_SOURCE / domain}")
 
@@ -378,8 +378,8 @@ def build_comprehensive(domain: str) -> str:
     src_dir = get_domain_dir(domain)
     today   = date.today().isoformat()
 
-    po_text     = (src_dir / "04-po-summary.md").read_text(encoding="utf-8")
-    stories_path = src_dir / "04-stories.md"
+    po_text     = (src_dir / "be-04-po-summary.md").read_text(encoding="utf-8")
+    stories_path = src_dir / "be-04-stories.md"
     stories      = parse_stories(stories_path)
     phases       = group_by_phase(stories)
 

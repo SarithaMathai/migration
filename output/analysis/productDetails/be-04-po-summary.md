@@ -1,7 +1,7 @@
 # Phase 4: PO Sprint Planning Summary — ProductDetails
 
 > **Domain:** `productDetails` · **Target DGS:** `plm-product` · **Pipeline Version:** 2.0 · **Generated:** 2026-06-27
-> **Stories:** [04-stories.md](./04-stories.md)
+> **Stories:** [be-04-stories.md](./be-04-stories.md)
 > Day-ranges are **AI-estimated — confirm in refinement.** Stories carry complexity only.
 
 ## What Are We Building?

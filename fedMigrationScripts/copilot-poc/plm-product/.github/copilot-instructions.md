@@ -18,11 +18,11 @@
 
 ## Sources of truth (read before implementing)
 
-- Story text: the Jira ticket, generated from `output/initial-analysis/{domain}/04-stories.md` at https://github.com/XXX.
-- Per-operation pseudo-logic of the legacy resolver: `output/initial-analysis/{domain}/02-resolver-analysis.md`.
-- Target subgraph schema: `output/initial-analysis/{domain}/03-schema.graphql`.
+- Story text: the Jira ticket, generated from `output/analysis/{domain}/be-04-stories.md` at https://github.com/XXX.
+- Per-operation pseudo-logic of the legacy resolver: `output/analysis/{domain}/be-02-resolver-analysis.md`.
+- Target subgraph schema: `output/analysis/{domain}/be-03-schema.graphql`.
 - Complex-case research briefs: `output/complexStories/<case>/`.
-- Confluence: `FederatedGqlBrakDown-{domain}` pages + the global overview holding **Phase 0 — Program Spikes**.
+- Confluence: `FederatedGqlBrakDown-BE-{domain}` pages + the global overview holding **Phase 0 — Program Spikes**.
 
 ## Hard rules
 

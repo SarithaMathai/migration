@@ -3,7 +3,7 @@
 Generate clean Jira-import CSVs for every domain.
 
 Rules applied:
-- Source: output/initial-analysis/{domain}/ (updated, Phase A dissolved)
+- Source: output/analysis/{domain}/ (updated, Phase A dissolved)
   Fallback: migration/finalOutput/{domain}/ (search only)
 - Phase A stories are excluded (they are a one-time B-01 checklist, not Jira tickets)
 - Test cases included in Description only for High / Very High complexity stories
@@ -25,8 +25,8 @@ from pathlib import Path
 # ─── Path setup ──────────────────────────────────────────────────────────────
 HERE          = Path(__file__).resolve().parent
 REPO_ROOT     = HERE.parent.parent
-UPDATED_SRC   = HERE.parent.parent / "output" / "initial-analysis"
-FALLBACK_SRC  = HERE.parent.parent / "output" / "initial-analysis"
+UPDATED_SRC   = HERE.parent.parent / "output" / "analysis"
+FALLBACK_SRC  = HERE.parent.parent / "output" / "analysis"
 JIRA_OUT      = HERE.parent.parent / "output" / "jira"
 
 # ─── Domain catalogue ─────────────────────────────────────────────────────────
@@ -143,9 +143,9 @@ def dedupe_ids(raw: str) -> str:
 
 def get_domain_dir(domain: str) -> Path:
     for src in (FALLBACK_SRC / domain,):
-        if (src / "04-stories.md").exists():
+        if (src / "be-04-stories.md").exists():
             return src
-    raise FileNotFoundError(f"No 04-stories.md found for domain '{domain}'")
+    raise FileNotFoundError(f"No be-04-stories.md found for domain '{domain}'")
 
 
 def extract_named_section(body: str, header: str) -> str:
@@ -390,7 +390,7 @@ def build_story_rows(domain: str) -> list[list]:
     """Story/spike rows for one domain — summary tagged with the domain, linked to the shared epic."""
     tag     = DOMAIN_TAG.get(domain, domain)
     src_dir = get_domain_dir(domain)
-    stories = parse_stories(src_dir / "04-stories.md")
+    stories = parse_stories(src_dir / "be-04-stories.md")
     cref    = complex_ref_map(domain)
 
     rows = []

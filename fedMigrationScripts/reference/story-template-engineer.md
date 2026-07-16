@@ -1,6 +1,6 @@
 # Story template — engineer-ready (Pipeline 2.0)
 
-Every story in `04-stories.md` MUST use this exact template. It supersedes the draft
+Every story in `be-04-stories.md` MUST use this exact template. It supersedes the draft
 `templates/story-format.md`. Three rules changed for Pipeline 2.0:
 
 1. **One operation per story.** A story covers exactly one query, one mutation, or one complex field
@@ -8,7 +8,7 @@ Every story in `04-stories.md` MUST use this exact template. It supersedes the d
    field resolvers (no service call, no transform) — see the trivial-bundle story at the end of Phase G.
 2. **YAML front-matter** opens every story so Copilot/agents can parse it. Human-readable body follows.
 3. **Complexity tiers only — no day-ranges inside stories.** Use `Low | Medium | High | Very High`.
-   (Rough day-ranges live only in `04-po-summary.md`, labeled "AI-estimated, confirm in refinement".)
+   (Rough day-ranges live only in `be-04-po-summary.md`, labeled "AI-estimated, confirm in refinement".)
 
 ---
 
@@ -41,7 +41,7 @@ blocked_by: {none | domain-name}
 ---
 
 **Current Behaviour (from Phase 2 — {Q/M/F id}):**
-{Copy the numbered pseudo-logic from 02-resolver-analysis.md. This IS the spec — a junior implements
+{Copy the numbered pseudo-logic from be-02-resolver-analysis.md. This IS the spec — a junior implements
 from this without opening the .txt resolver. Include the REST endpoint, headers, transform, and every
 error/empty/branch path. Never write "standard error handling".}
 
@@ -83,7 +83,7 @@ OR
 ---
 
 **Acceptance Criteria:** (every item objectively verifiable by a reviewer who hasn't seen the story)
-1. {e.g. "`{operation}` schema matches `03-schema.graphql`."}
+1. {e.g. "`{operation}` schema matches `be-03-schema.graphql`."}
 2. {e.g. "Service calls `GET {base}/{path}` with `Authorization` + `SPARK-Capability-Token`."}
 3. {request/response transform rule, specific}
 4. {error path: "404 → returns null; 5xx → throws DgsEntityNotFoundException"}

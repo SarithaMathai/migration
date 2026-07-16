@@ -4,7 +4,7 @@
 > **Target DGS:** `ProductService` (repo: `plm-product`, url: `https://spark-product.dev.target.com`)
 > **Pipeline Version:** 1.1
 > **Generated:** 2026-05-01
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema-analysis.md](./03-schema-analysis.md)
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema-analysis.md](./be-03-schema-analysis.md)
 > **DGS Target Status:** Green-field (no existing DGS schema)
 
 ---
@@ -86,7 +86,7 @@
 **Dependencies:** PRODUCT-BE-A-01
 
 **Acceptance criteria:**
-- All 38 owned types defined (see [03-schema-analysis.md](./03-schema-analysis.md) Type Classification table)
+- All 38 owned types defined (see [be-03-schema-analysis.md](./be-03-schema-analysis.md) Type Classification table)
 - All 30 input types defined
 - `@shareable` applied correctly
 - `@key(fields: "id")` on `Product` only; no `@key` on embedded types
@@ -416,7 +416,7 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 
 ## Phase F: Federation & Stitching (TechPack Option D Phase 2 — excerpt)
 
-> **Note:** These are the per-subgraph CAT-4 stories for Option D Phase 2. Each one migrates a set of stub fields from the aggregation facade to the owning domain subgraph. Stories PRODUCT-BE-F-01 through F-08 are **placeholder stubs** — they will be fully written when each domain is in migration scope. The full story bodies are written in the OWNING domain's `04-stories.md`.
+> **Note:** These are the per-subgraph CAT-4 stories for Option D Phase 2. Each one migrates a set of stub fields from the aggregation facade to the owning domain subgraph. Stories PRODUCT-BE-F-01 through F-08 are **placeholder stubs** — they will be fully written when each domain is in migration scope. The full story bodies are written in the OWNING domain's `be-04-stories.md`.
 
 ### PRODUCT-BE-F-01 · CAT-4 · Medium (2–4d)
 **Title:** [PLACEHOLDER] Migrate `productAttachments` + `discussionAttachments` to Attachment subgraph — BLOCKED-BY: attachment migration
@@ -426,7 +426,7 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 - Attachment subgraph adds `extend type ResourcesCount @key(fields: "productId partnerId")` with `@DgsEntityFetcher` + `@DgsData` for `productAttachments` and `discussionAttachments`.
 - Implements ACL tree traversal + `product_packet_props` criticality filter and critical discussion → attachment path.
 - Aggregation facade stops populating these two fields.
-- Full story in: `output/attachment/04-stories.md`.
+- Full story in: `output/attachment/be-04-stories.md`.
 
 **Dependencies:** PRODUCT-BE-E-02, Attachment domain Phase 3 complete.
 
@@ -434,43 +434,43 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 
 ### PRODUCT-BE-F-02 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `discussions` to Discussion subgraph — BLOCKED-BY: discussion migration
-**Phase:** F · Full story in: `output/discussion/04-stories.md`.
+**Phase:** F · Full story in: `output/discussion/be-04-stories.md`.
 
 ---
 
 ### PRODUCT-BE-F-03 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `sample` to Sample subgraph — BLOCKED-BY: sample migration
-**Phase:** F · Full story in: `output/sample/04-stories.md`.
+**Phase:** F · Full story in: `output/sample/be-04-stories.md`.
 
 ---
 
 ### PRODUCT-BE-F-04 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `measurementSets` to Measurement subgraph — BLOCKED-BY: measurement migration
-**Phase:** F · Full story in: `output/measurement/04-stories.md`.
+**Phase:** F · Full story in: `output/measurement/be-04-stories.md`.
 
 ---
 
 ### PRODUCT-BE-F-05 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `claims` to Claims subgraph — BLOCKED-BY: claims migration
-**Phase:** F · Full story in: `output/claims/04-stories.md`.
+**Phase:** F · Full story in: `output/claims/be-04-stories.md`.
 
 ---
 
 ### PRODUCT-BE-F-06 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `productBoms` + `packagingBoms` to BOM subgraph — BLOCKED-BY: bom migration
-**Phase:** F · Full story in: `output/bom/04-stories.md`.
+**Phase:** F · Full story in: `output/bom/be-04-stories.md`.
 
 ---
 
 ### PRODUCT-BE-F-07 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `constructions` to Construction subgraph — BLOCKED-BY: construction migration
-**Phase:** F · Full story in: `output/construction/04-stories.md`.
+**Phase:** F · Full story in: `output/construction/be-04-stories.md`.
 
 ---
 
 ### PRODUCT-BE-F-08 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `watchlists` to Watchlist subgraph — BLOCKED-BY: watchlist migration
-**Phase:** F · Full story in: `output/watchlist/04-stories.md`.
+**Phase:** F · Full story in: `output/watchlist/be-04-stories.md`.
 
 ---
 
@@ -533,7 +533,7 @@ This document contains 63 stories across 9 phases (A–I). For the complete brea
 **Target Service:** `ProductService` (plm-product)
 **EXT Service Calls Found:** 29 (from Phase 2)
 **Output Files Written:**
-- `output/product/04-stories.md`
-- `output/product/04-po-summary.md`
+- `output/product/be-04-stories.md`
+- `output/product/be-04-po-summary.md`
 **Next Phase:** Pipeline complete — all 6 artifacts ready.
-**Open Questions:** None — see Decisions Required in `04-po-summary.md` for PO action items.
+**Open Questions:** None — see Decisions Required in `be-04-po-summary.md` for PO action items.

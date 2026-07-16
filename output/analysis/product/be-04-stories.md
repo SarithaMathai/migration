@@ -1,11 +1,11 @@
 # Phase 4: Migration Plan & Stories — Product
 
 > **Domain:** `product` · **Target DGS:** `ProductService` → `plm-product` · **Generated:** 2026-06-26
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md), [05-attribute-inventory.md](./05-attribute-inventory.md)
-> **Index:** `04-stories-index.yaml`
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md), [be-05-attribute-inventory.md](./be-05-attribute-inventory.md)
+> **Index:** `be-04-stories-index.yaml`
 
 - Engineers: each story is self-contained (read *Current Behaviour → Target → Files → Acceptance → Tests*).
-- Detailed pseudo-logic for every operation is in [02-resolver-analysis.md](./02-resolver-analysis.md) (referenced per story).
+- Detailed pseudo-logic for every operation is in [be-02-resolver-analysis.md](./be-02-resolver-analysis.md) (referenced per story).
 - **ACL is context-only** — no ACL work in any story.
 
 ## 1. Phases Overview
@@ -195,7 +195,7 @@ one that fits a fan-out (not sequential) shape.
 
 ### Phase B — Core Reads (one query per story)
 
-> Pattern: each story adds `@DgsQuery` + its `ProductReadService` method (calling the backend REST endpoint) + the returned GraphQL types + Hive schema push. Full pseudo-logic in [02 §Query Resolvers](./02-resolver-analysis.md). All depend on B-01 (module init).
+> Pattern: each story adds `@DgsQuery` + its `ProductReadService` method (calling the backend REST endpoint) + the returned GraphQL types + Hive schema push. Full pseudo-logic in [02 §Query Resolvers](./be-02-resolver-analysis.md). All depend on B-01 (module init).
 
 ---
 
@@ -204,7 +204,7 @@ one that fits a fan-out (not sequential) shape.
 
 - **In plain terms:** Looks up a single product by id (the core product read everything else builds on).
 
-> **Note — DGS Module Init (this PR only):** Creates `product.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [03-schema.graphql](./03-schema.graphql). **This scaffold is a prerequisite for every B/C/D/G story** — they need the module + schema file to compile their DGS wrapper — so it is assumed globally (shown once in the dependency graph) and **not repeated** in each story's `Depends On`. After it lands, the wrappers parallelize.
+> **Note — DGS Module Init (this PR only):** Creates `product.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [be-03-schema.graphql](./be-03-schema.graphql). **This scaffold is a prerequisite for every B/C/D/G story** — they need the module + schema file to compile their DGS wrapper — so it is assumed globally (shown once in the dependency graph) and **not repeated** in each story's `Depends On`. After it lands, the wrappers parallelize.
 - **Current Behaviour (Q3):** `getByID.load(id)` `GET ${v1}?productId={id}` → camelCase or null; DataLoader-batched.
 - **Target:** `@DgsQuery getProduct(id): Product` via `ProductDataLoader` keyed on id. 
 
@@ -443,7 +443,7 @@ returns canonical records enriched with elastic flags.
 
 ### Phase D — Mutations (simple, one per story)
 
-> Pattern: each story adds `@DgsMutation` + its `ProductWriteService` method (calling the backend REST endpoint) + the input/payload types + Hive schema push. Pseudo-logic in [02 §Mutation Resolvers](./02-resolver-analysis.md). All depend on B-01. ACL is context-only.
+> Pattern: each story adds `@DgsMutation` + its `ProductWriteService` method (calling the backend REST endpoint) + the input/payload types + Hive schema push. Pseudo-logic in [02 §Mutation Resolvers](./be-02-resolver-analysis.md). All depend on B-01. ACL is context-only.
 
 ---
 
@@ -822,7 +822,7 @@ coroutineScope {
 - **In plain terms:** Build the TechPack panel's badge counts by aggregating across ~8 domains.
 
 > **Direction already resolved — not an open Phase 0 item.** The "Node extract vs Kotlin aggregation" facade
-> decision (previously Decision #1 in `04-po-summary.md`) has already concluded: **facade-then-federate** —
+> decision (previously Decision #1 in `be-04-po-summary.md`) has already concluded: **facade-then-federate** —
 > ship a thin query over a temporary aggregation facade now, federate each piece to its owning domain later,
 > retire the facade last (`F-09`). This is draft **ADR-015 Option B** (the pattern
 > `techpack-migration-options.md` labels "Option D (hybrid)"); ADR ratification is pending. Research:
@@ -835,7 +835,7 @@ it works on day 1 while per-subgraph federation is sequenced.
 - samples, boms, claims, etc.) for a product.
 - Getting those counts today means walking the *entire* product relationship graph in memory, checking permissions node-by-node (serially — one call per node), and — if the product has a parent — doing the whole walk again for the parent.
 - It's an 8-domain, ~200-line function doing work that really belongs to 8 different teams: the 14-step `getTechPackResourceCountMap` (relationship walk + ACL filter ×2, attachment hydration, 7 elastic slice queries — sequential today, critical-discussion→attachment join, packet filter, build `ResourcesCount`). 8 domains' data, but only 4 physical services called (relationship, ACL, attachment, elastic) — see [ADR-015 §1](../../complexStories/techpack/01-adr-techpack.md).
-- See [02 §Helper](./02-resolver-analysis.md).
+- See [02 §Helper](./be-02-resolver-analysis.md).
 - **Target (facade-then-federate Phase 1, ADR-015 Option B):** `@DgsQuery getProductTechPackCountV1(...)` → `TechPackAggregatorClient.getCount(...)` (Feign to a facade extracted from `getTechPackResourceCountMap`, behavior-frozen except the pinned deviations in ADR-015 §4); `@DgsEntityFetcher(name="ResourcesCount")` rebuilds the entity from `_entities`. See [reference-federation-patterns.md §3](../../../fedMigrationScripts/reference/reference-federation-patterns.md).
 
 - **Example — the eventual target shape (each domain answers its own slice, no relationship-graph walk; see `F-01`-`F-08`):**

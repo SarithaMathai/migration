@@ -2,12 +2,14 @@
 """
 Master runner — regenerates the publication artifacts for every phase-1 domain.
 
-Output structure (all paths relative to the migration repo root):
-  output/summary/{domain}/
-    FederatedGqlBrakDown-{domain}.docx Word/Confluence-ready breakdown (tables, icons, formatting)
-    FederatedGqlBrakDown-{domain}.md   Confluence-ready breakdown (Markdown fallback)
-    {domain}-comprehensive.md          Full engineering doc (OPT-IN: --full)
-    {domain}-po-review.md              PO/stakeholder executive review (OPT-IN: --full)
+Output structure (all paths relative to the migration repo root — breakdowns are FLAT in
+output/summary/, backend artifacts carry -BE- in the name; the -FE- frontend counterparts
+come from generate_frontend.py into the same folder):
+  output/summary/
+    FederatedGqlBrakDown-BE-{domain}.docx Word/Confluence-ready breakdown (tables, icons, formatting)
+    FederatedGqlBrakDown-BE-{domain}.md   Confluence-ready breakdown (Markdown fallback)
+    {domain}/{domain}-comprehensive.md    Full engineering doc (OPT-IN: --full)
+    {domain}/{domain}-po-review.md        PO/stakeholder executive review (OPT-IN: --full)
   output/jira/{domain}.csv             Jira-import CSV per domain
 
 Program-level:
@@ -22,7 +24,7 @@ Run (from anywhere — paths resolve relative to this script):
     python fedMigrationScripts/generatescripts/generate_all.py --no-summary # skip program-level docs
 
 ⚠ Regeneration overwrites output/summary/* and output/jira/* — any hand edits to those
-  generated files must first be folded back into the source (initial-analysis/*/04-stories.md
+  generated files must first be folded back into the source (analysis/*/be-04-stories.md
   or the tables in generate_breakdown.py) or they will be lost.
 """
 
@@ -55,7 +57,7 @@ ALL_DOMAINS = comp_mod.ALL_DOMAINS
 
 # ─── Program-level domain metadata (feeds build_program_overview) ────────────
 # Only the effort/sprint/decision/risk columns are read from here — story counts and
-# complexity are computed live from each domain's 04-stories.md so totals reconcile.
+# complexity are computed live from each domain's be-04-stories.md so totals reconcile.
 DOMAIN_META = [
     # (key, label, dgs, stories, effort_lo, effort_hi, sprints_1eng_lo, sprints_1eng_hi,
     #  queries, mutations, field_blocks, open_decisions, top_risk, risk_level)
@@ -88,17 +90,17 @@ def tshirt(stories: int, effort_hi: int) -> str:
 
 
 # build_executive_summary() / build_portfolio() were deleted: superseded by
-# build_program_overview() below (which computes live counts from 04-stories.md
+# build_program_overview() below (which computes live counts from be-04-stories.md
 # instead of hardcoded snapshots) and never called since the merge.
 
 def build_program_overview() -> str:
     today = date.today().isoformat()
-    # Live per-domain counts + complexity from the actual 04-stories.md → program totals always reconcile
+    # Live per-domain counts + complexity from the actual be-04-stories.md → program totals always reconcile
     # with the global breakdown and the Jira CSVs (all use the same parser).
     live: dict[str, tuple] = {}
     for key in (d[0] for d in DOMAIN_META):
         try:
-            st = breakdown_mod.parse_stories(breakdown_mod.get_domain_dir(key) / "04-stories.md")
+            st = breakdown_mod.parse_stories(breakdown_mod.get_domain_dir(key) / "be-04-stories.md")
         except Exception:
             st = []
         # Build stories only — S-phase spike stubs are tracked as Phase-0 program spikes,
@@ -166,13 +168,13 @@ def build_program_overview() -> str:
     for (key,label,dgs,stories,elo,ehi,slo,shi,q,mut,fb,dec,risk,rl) in DOMAIN_META:
         total, vh, h, m, lo = live[key]
         ts = tshirt(total, ehi)
-        L.append(f"| [{label}](./{key}/FederatedGqlBrakDown-{key}.md) | `{dgs}` | **{total}** | {ts} | "
+        L.append(f"| [{label}](./FederatedGqlBrakDown-BE-{key}.md) | `{dgs}` | **{total}** | {ts} | "
                  f"{vh} | {h} | {m} | {lo} | {elo}–{ehi}d | {rl} {risk} |")
     L += [
         f"| **TOTAL** | — | **{total_stories}** | — | **{tvh}** | **{th}** | **{tm}** | **{tl}** | "
         f"**{total_lo}–{total_hi}d** | — |",
         "",
-        "> All counts + complexity are computed live from each domain's `04-stories.md` (same parser as the "
+        "> All counts + complexity are computed live from each domain's `be-04-stories.md` (same parser as the "
         "breakdown + Jira CSVs), so these totals always reconcile.",
         "",
         "---",
@@ -189,7 +191,7 @@ def build_program_overview() -> str:
         "| `plm-attachment` | later | Attachment | ~26 (estimate) |",
         "| `plm-elastic-search` | later | Search | ~21 (estimate) |",
         "",
-        "> Phase-1 rows are computed live from `04-stories.md`; later-phase rows are earlier-pass estimates,",
+        "> Phase-1 rows are computed live from `be-04-stories.md`; later-phase rows are earlier-pass estimates,",
         "> re-baselined when those domains' analyses are regenerated.",
         "",
         "---",
@@ -222,12 +224,13 @@ def build_program_overview() -> str:
         "",
         "## How to consume",
         "",
-        "- **Per domain:** open `summary/{domain}/FederatedGqlBrakDown-{domain}.md` (or the `.docx` for Confluence/Word).",
+        "- **Per domain (backend):** open `summary/FederatedGqlBrakDown-BE-{domain}.md` (or the `.docx` for Confluence/Word).",
+        "- **Per domain (frontend):** open `summary/FederatedGqlBrakDown-FE-{domain}.md` (generated by `generate_frontend.py`).",
         "- **Jira:** import `jira/{domain}.csv` (or `jira/all-stories.csv`). See `PUSH-TO-JIRA-CONFLUENCE.md`.",
         "- **Read order by role + regeneration:** see `README.md`.",
         "",
         "---",
-        f"*Program overview · generated {today} from `output/initial-analysis/*/04-*.md`.*",
+        f"*Program overview · generated {today} from `output/analysis/*/04-*.md`.*",
     ]
     return "\n".join(L)
 
@@ -249,9 +252,6 @@ def main() -> None:
             print(f"  UNKNOWN domain '{domain}' — skipping")
             continue
 
-        domain_dir = OUTPUT / domain
-        domain_dir.mkdir(parents=True, exist_ok=True)
-
         # Word doc (primary: .docx with full formatting, tables, icons)
         try:
             word_mod.generate_word_for(domain)
@@ -265,8 +265,10 @@ def main() -> None:
             print(f"  FAIL {domain} breakdown: {type(e).__name__}: {e}")
 
         # Deep-dives are OPT-IN (--full): the default deliverable is ONE breakdown
-        # per domain — engineers work from initial-analysis/{domain}/04-stories.md.
+        # per domain — engineers work from analysis/{domain}/be-04-stories.md.
         if full:
+            domain_dir = OUTPUT / domain
+            domain_dir.mkdir(parents=True, exist_ok=True)
             # Comprehensive
             try:
                 content  = comp_mod.build_comprehensive(domain)
@@ -337,7 +339,8 @@ def main() -> None:
         except Exception as e:
             print(f"  FAIL all-stories.csv: {type(e).__name__}: {e}")
 
-        # Frontend inventory docs + FE Jira CSVs (output/frontend-analysis + output/jira/frontend)
+        # Frontend inventory docs + FE Jira rows appended into output/jira/{domain}.csv
+        # (runs AFTER the backend jira CSVs above so the combined files carry both)
         try:
             frontend_mod.main()
         except Exception as e:

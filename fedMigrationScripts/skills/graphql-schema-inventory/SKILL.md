@@ -1,6 +1,6 @@
 ---
 name: graphql-schema-inventory
-description: "Discovers, reads, and catalogs every source file related to a domain before analysis begins — schema, resolver, service, utils, config, and cross-domain references. Builds a complete file manifest, import dependency graph, and cross-domain reference table. Output: output/{domain}/01-schema-inventory.md"
+description: "Discovers, reads, and catalogs every source file related to a domain before analysis begins — schema, resolver, service, utils, config, and cross-domain references. Builds a complete file manifest, import dependency graph, and cross-domain reference table. Output: output/{domain}/be-01-schema-inventory.md"
 argument-hint: "Provide the domain (loader key). Example: 'Run schema inventory for bom' or 'Inventory the measurement domain files'."
 ---
 
@@ -173,7 +173,7 @@ SPARK_{Domain}.js (resolver)
 
 ## Output Format
 
-Write to: `output/{domain}/01-schema-inventory.md`
+Write to: `output/{domain}/be-01-schema-inventory.md`
 
 Follow the Phase 1 section of `templates/migration-report.md` for exact section ordering and table structures.
 
@@ -198,7 +198,7 @@ Mandatory sections (in order):
 - [ ] Target DGS section is present (green-field marker or existing-files scan)
 - [ ] Summary Statistics block is complete
 - [ ] Large file warnings are noted (⚠️)
-- [ ] Output written to `output/{domain}/01-schema-inventory.md`
+- [ ] Output written to `output/{domain}/be-01-schema-inventory.md`
 - [ ] Response footer included (per `reference/output-conventions.md` §10)
 
 ## Next Skill

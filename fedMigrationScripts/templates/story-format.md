@@ -1,10 +1,10 @@
-# Template: Migration Stories and PO Summary (`04-stories.md` + `04-po-summary.md`)
+# Template: Migration Stories and PO Summary (`be-04-stories.md` + `be-04-po-summary.md`)
 
 This template defines the format for Phase 4 story generation output.
 
 ---
 
-## `04-stories.md` — Structure
+## `be-04-stories.md` — Structure
 
 ```markdown
 # {Domain Display Name} — Migration Plan & Stories
@@ -13,7 +13,7 @@ This template defines the format for Phase 4 story generation output.
 > **Target DGS:** `{ServiceClassName}` (repo: `{repo-name}`)
 > **Pipeline Version:** 1.1
 > **Generated:** {YYYY-MM-DD}
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md)
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md)
 
 ---
 
@@ -95,7 +95,7 @@ Every story uses this exact template. All sections are required.
 ---
 
 **Current Behavior (from Phase 2):**
-{Copy the relevant pseudo-logic from 02-resolver-analysis.md verbatim or lightly edited.
+{Copy the relevant pseudo-logic from be-02-resolver-analysis.md verbatim or lightly edited.
 This IS the implementation spec. Include:
 - Full step-by-step logic (numbered)
 - REST endpoint details (verb, URL, headers)
@@ -141,7 +141,7 @@ OR:
 ---
 
 **Acceptance Criteria:**
-1. GraphQL schema for `{operation}` matches `output/{domain}/03-schema.graphql`.
+1. GraphQL schema for `{operation}` matches `output/{domain}/be-03-schema.graphql`.
 2. Data fetcher is annotated with `{@DgsQuery|@DgsMutation|@DgsData}` and delegates to the service layer.
 3. Service layer makes `{HTTP verb}` call to `{base-url}/{endpoint}` with headers `Authorization` and `{SPARK-Capability-Token if applicable}`.
 4. Request transformation: `{specific rule — e.g., "camelCase input fields are converted to snake_case via Jackson NamingStrategies"}`.
@@ -177,7 +177,7 @@ OR:
 
 ---
 
-## `04-po-summary.md` — Structure
+## `be-04-po-summary.md` — Structure
 
 ```markdown
 # {Domain Display Name} — PO Sprint Planning Summary

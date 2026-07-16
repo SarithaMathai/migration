@@ -40,9 +40,9 @@ four never check a response, one never awaits a write.
 | `bulkEvaluateSamples` (`SMPL-E-02`) | Recording evaluations for many samples at once and opening new review rounds | evaluation + new-rounds util (bulk) | partial bulk |
 | `updateComponentStatuses` (`PROD-E-02`) | Setting a status across all of a product's components (BOMs, measurements, details, packaging, claims) | 5-loader fan-out (+ shadow-var bug) | partial status fan-out |
 
-> Step sequences above are taken from each domain's `02-resolver-analysis.md` code deep-dive (e.g.
-> [bom M2](../../initial-analysis/bom/02-resolver-analysis.md), [measurement M3](../../initial-analysis/measurement/02-resolver-analysis.md),
-> [watchlist M2](../../initial-analysis/watchlist/02-resolver-analysis.md), [product M20](../../initial-analysis/product/02-resolver-analysis.md));
+> Step sequences above are taken from each domain's `be-02-resolver-analysis.md` code deep-dive (e.g.
+> [bom M2](../../analysis/bom/be-02-resolver-analysis.md), [measurement M3](../../analysis/measurement/be-02-resolver-analysis.md),
+> [watchlist M2](../../analysis/watchlist/be-02-resolver-analysis.md), [product M20](../../analysis/product/be-02-resolver-analysis.md));
 > the descriptions summarize the same source.
 
 - The program already lists *"Non-atomic write failure strategy (saga / compensation / best-effort)"* as a cross-domain decision.

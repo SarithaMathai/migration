@@ -23,53 +23,81 @@ output, then let it write.
 
 ---
 
-## 1. Jira — create the epic + stories from the CSV
+## 1. Jira — create the epics + stories from the CSV
 
-**Source of truth:** `output/jira/{domain}.csv` (per domain) or `output/jira/all-stories.csv` (all 13 domains +
-the 6 program spikes). Columns: `Issue Type, Story ID, Summary, Epic Name, Epic Link, Phase, T-shirt size,
+**Source of truth:** `output/jira/{domain}.csv` — one file per domain, **combined**: the domain's
+**backend** stories (epic "Federate BreakDown Product", ids `*-BE-*`) followed by its **frontend**
+stories (epic "Federate BreakDown Product — Frontend", ids `*-FE-*`). Program-wide files:
+`output/jira/all-stories.csv` (all backend + the program spikes) and
+`output/jira/all-frontend-stories.csv` (all frontend). Columns everywhere:
+`Issue Type, Story ID, Summary, Epic Name, Epic Link, Phase, T-shirt size,
 Labels, Labels, Labels, Parent Link, Depends On, Status, Description`.
 
-### Prompt — dry run first
+### Prompt — push ONE domain (backend + frontend), dry run first
+
+Replace `<DOMAIN>` with one of: `product, bom, claims, measurement, impression, productDetails,
+packaging, watchlist` — then repeat the same prompt for the next domain.
 
 ```
 Using the Jira MCP tools, prepare (DO NOT CREATE YET) an import plan from
-output/jira/bom.csv into Jira project <PROJECT_KEY>.
+output/jira/<DOMAIN>.csv into Jira project <PROJECT_KEY>.
+
+This CSV holds ONE domain, in two blocks:
+- backend stories (Story IDs like <TOKEN>-BE-B-01) under the epic "Federate BreakDown Product";
+- frontend stories (Story IDs like <TOKEN>-FE-001) under the epic
+  "Federate BreakDown Product — Frontend".
 
 Rules:
-- The row with Issue Type=Epic becomes one Epic (Summary = its Summary).
+- The CSV contains TWO Issue Type=Epic rows (backend + frontend). For each: if an epic with that
+  exact Summary already exists in <PROJECT_KEY> (created by an earlier domain's import), REUSE it —
+  do not create a duplicate. Otherwise plan to create it.
 - Each Issue Type=Story row → a Story; each Issue Type=Spike row → a Spike (or a Story labelled
   "spike" if Spike isn't an available issue type in this project — tell me which).
+- Attach every Story to the epic named in ITS OWN "Epic Link" column (backend stories → backend
+  epic, frontend stories → frontend epic).
 - Map fields: Summary→summary, Description→description, T-shirt size→a label like "size-XS",
-  the three Labels columns→labels, Phase→a label like "phase-B".
+  the three Labels columns→labels, Phase→a label like "phase-B" (frontend rows have Phase=FE →
+  label "phase-FE").
 - FORMATTING: the Description is multi-paragraph (blank-line separated sections such as *Current
   Behaviour:*, *Target:*, *Acceptance Criteria:*) with light markup (*emphasis*, **bold**, `code`,
   "- " bullets, [ ] checklist items). Preserve the paragraph breaks and convert the markup to this
   Jira's description format (wiki markup or rich text). Do NOT collapse it to one line, strip
   emphasis/code marks, or reword anything.
-- Set the Epic Link on every Story/Spike to the created Epic.
 - Do NOT invent fields the project doesn't have; list any you had to drop.
-- The "Depends On" column lists other Story IDs in THIS csv (e.g. "B-01, S-01"). Don't resolve them yet —
-  just keep them; we'll link after all issues exist (their real Jira keys don't exist until creation).
+- The "Depends On" column lists other Story IDs (e.g. "B-01" or "PRODUCT-BE-B-01").
+  Don't resolve them yet — we'll link after creation. Most targets are in THIS csv; a few
+  frontend stories depend on ANOTHER domain's stories (e.g. IMPRESSION-FE-001 → BOM-BE-B-01) —
+  flag those rows in the plan.
 
-Output a table: Story ID | proposed issue type | summary | labels | depends-on. Then STOP and wait.
+Output a table: Story ID | proposed issue type | epic | summary | labels | depends-on.
+Then STOP and wait for my approval.
 ```
 
 ### Prompt — create, then link dependencies
 
 ```
 Looks good. Now:
-1. Create the Epic, then all Stories/Spikes, in Jira project <PROJECT_KEY>.
-2. Keep a map of Story ID (e.g. BOM-BE-B-04) → created Jira key (e.g. PROJ-123).
+1. Find-or-create the two Epics, then create all Stories/Spikes, in Jira project <PROJECT_KEY>.
+2. Keep a map of Story ID (e.g. BOM-BE-B-04, BOM-FE-002) → created Jira key (e.g. PROJ-123).
 3. For each row's "Depends On" IDs, create a Jira issue link of type "Blocks"/"is blocked by"
    (blocker = the dependency, blocked = the dependent) using that map.
-4. Report the Story ID → Jira key table and any links you could not create.
+4. If a "Depends On" id is NOT in this CSV (cross-domain dependency), jira_search for an issue
+   whose summary contains that id in [brackets] — it was imported with its own domain. Link it if
+   found; if not found (that domain not yet imported), list it under "pending links — import
+   <that domain> then rerun step 4".
+5. Report the Story ID → Jira key table, the links created, and any pending links.
 ```
 
 > **Why link after creation:** the CSV references stories by **our IDs** (`BOM-BE-B-04`), not Jira keys —
 > Jira keys don't exist until the issue is created. The agent builds the ID→key map on creation, then wires
 > the "Depends On" links. This is also why the docs cross-reference by ID, not URL.
 
-Repeat both prompts for `output/jira/product.csv` (or point at `output/jira/all-stories.csv` for everything).
+> **Domain-by-domain order tip:** import in the frontend wave order — watchlist → productDetails →
+> measurement → packaging → bom → claims → product → impression — and the cross-domain "pending links"
+> list stays near-empty (each domain's dependencies are mostly already imported).
+
+Repeat both prompts per domain, or point at `output/jira/all-stories.csv` + `output/jira/all-frontend-stories.csv`
+for a single whole-program import.
 
 > **Complex cross-domain cases import SEPARATELY.** Each `output/complexStories/<case>/<case>.csv` holds that
 > case's sub-tasks; import it **under its home stub story** (e.g. the techpack sub-tasks nest under
@@ -80,8 +108,10 @@ Repeat both prompts for `output/jira/product.csv` (or point at `output/jira/all-
 
 ## 2. Confluence — publish the breakdown & PO pages
 
-**Source:** `output/summary/{domain}/FederatedGqlBrakDown-{domain}.md` (engineering/PO breakdown) and
-`output/summary/{domain}/{domain}-po-review.md` (PO review). They are already Confluence-safe (no relative links).
+**Source:** `output/summary/FederatedGqlBrakDown-BE-{domain}.md` (backend breakdown) and
+`output/summary/FederatedGqlBrakDown-FE-{domain}.md` (frontend breakdown), flat in `output/summary/`.
+They are already Confluence-safe (no relative links). (PO-review deep-dives exist only after a
+`generate_all.py --full` run, under `output/summary/{domain}/`.)
 
 ### Prompt — create/update pages by name
 
@@ -89,14 +119,14 @@ Repeat both prompts for `output/jira/product.csv` (or point at `output/jira/all-
 Using the Confluence MCP tools, publish these pages into space <SPACE_KEY> under the parent page
 "Federation Graph Migration ▸ Domains" (find the parent by title; create it if missing):
 
-- Title: "BOM — Federated GraphQL Breakdown"
-  Body: the markdown in output/summary/bom/FederatedGqlBrakDown-bom.md
-- Title: "BOM — Migration PO Review"
-  Body: the markdown in output/summary/bom/bom-po-review.md
-- Title: "Product — Federated GraphQL Breakdown"
-  Body: output/summary/product/FederatedGqlBrakDown-product.md
-- Title: "Product — Migration PO Review"
-  Body: output/summary/product/product-po-review.md
+- Title: "BOM — Federated GraphQL Breakdown (Backend)"
+  Body: the markdown in output/summary/FederatedGqlBrakDown-BE-bom.md
+- Title: "BOM — Federated GraphQL Breakdown (Frontend)"
+  Body: the markdown in output/summary/FederatedGqlBrakDown-FE-bom.md
+- Title: "Product — Federated GraphQL Breakdown (Backend)"
+  Body: output/summary/FederatedGqlBrakDown-BE-product.md
+- Title: "Product — Federated GraphQL Breakdown (Frontend)"
+  Body: output/summary/FederatedGqlBrakDown-FE-product.md
 
 Rules:
 - FORMATTING — convert Markdown to Confluence storage format faithfully and completely:
@@ -130,7 +160,7 @@ PAGES (9) — create under a parent page "Federation Graph Migration" (find by t
    (the overview breakdown for the 8 modules below — make it the parent's first child)
 2–9. One page per module, under a child parent "Domains", titled
    "<Domain> — Federated GraphQL Breakdown", from
-   output/summary/<domain>/FederatedGqlBrakDown-<domain>.md, for exactly these 8:
+   output/summary/FederatedGqlBrakDown-BE-<domain>.md, for exactly these 8:
    product, bom, claims, productDetails, packaging, watchlist, measurement, impression
    (display names: Product, BOM, Claims, Product Details, Packaging, Watchlist,
    Measurement, Impression).
@@ -180,9 +210,10 @@ Update by exact title if the page exists. Report the page URLs.
 
 ## 3. Handy variations
 
-- **One domain only:** replace the file list with just that domain's two files.
-- **All stories at once:** point the Jira prompt at `output/jira/all-stories.csv` (all 13 domains + 6 program
-  spikes) and tell it to create one Epic per `Epic Name` value.
+- **One domain only:** replace the file list with just that domain's two breakdown pages (BE + FE).
+- **All stories at once:** point the Jira prompt at `output/jira/all-stories.csv` (all backend + program
+  spikes) plus `output/jira/all-frontend-stories.csv` (all frontend) and tell it to create one Epic per
+  `Epic Name` value.
 - **Re-sync after edits:** re-run the generators
   (`python fedMigrationScripts/generatescripts/generate_all.py bom product`), then re-run the Confluence
   prompt — it UPDATES existing pages by title. For Jira, only push *new/changed* rows (ask the agent to

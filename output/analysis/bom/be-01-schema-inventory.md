@@ -46,7 +46,7 @@ constructor (endpoint, headers, logContext) {
 | `resolvers/activityLogUtilities/bomActivityModifiedDataHelper.js` | 31 | Activity-log diff helper (referenced cross-domain) |
 | **Total** | **2,263** | No file > 1000 lines — no chunked reading required |
 
-Schema: **`schemas/SPARK_Bom.graphqls` (988 lines)** — target schema in [03-schema.graphql](./03-schema.graphql) translated from it (nullability/return-types from the SDL).
+Schema: **`schemas/SPARK_Bom.graphqls` (988 lines)** — target schema in [be-03-schema.graphql](./be-03-schema.graphql) translated from it (nullability/return-types from the SDL).
 
 ## 3. Import Graph
 

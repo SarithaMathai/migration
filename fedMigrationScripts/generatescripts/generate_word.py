@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate FederatedGqlBrakDown-{domain}.docx — Microsoft Word format.
+Generate FederatedGqlBrakDown-BE-{domain}.docx — Microsoft Word format.
 
 Styles match the reference docs in 'final PO BreakDown Doc/':
   - Title: bold 20pt blue
@@ -9,7 +9,7 @@ Styles match the reference docs in 'final PO BreakDown Doc/':
   - Story tables with colored headers and complexity-coded text
   - Emoji icons throughout (paste into Confluence cleanly)
 
-Output:  oneStopDoc/{domain}/FederatedGqlBrakDown-{domain}.docx
+Output:  output/summary/FederatedGqlBrakDown-BE-{domain}.docx  (flat — no per-domain subfolder)
          oneStopDoc/Federated+Graphql+Stories+-+BreakDown.docx  (global)
 
 Run:
@@ -589,8 +589,8 @@ def build_word_doc(domain: str) -> Document:
     label   = DOMAIN_LABELS[domain]
     src_dir = bd.get_domain_dir(domain)
     # Drop Phase-S spikes — centralized as program spikes (see global doc).
-    stories = [s for s in bd.parse_stories(src_dir / "04-stories.md") if s["phase"] != "S"]
-    po      = bd.read_po_sections(src_dir / "04-po-summary.md")
+    stories = [s for s in bd.parse_stories(src_dir / "be-04-stories.md") if s["phase"] != "S"]
+    po      = bd.read_po_sections(src_dir / "be-04-po-summary.md")
     by_phase = bd.group_by_phase(stories)
 
     doc = Document()
@@ -671,6 +671,9 @@ def build_word_doc(domain: str) -> Document:
         add_md_section(doc, "Recommended Sprint Sequencing", po["sprints"],
                        col_widths=[0.9, 1.5, 5.5])
 
+    # ── §4b Recommended Implementation Order (same builder as the .md) ─────
+    render_md_block(doc, bd.implementation_order_md(stories))
+
     # ── §5 Stories by Phase ────────────────────────────────────────────────
     section_heading(doc, "Jira Stories by Phase")
     note_p = doc.add_paragraph()
@@ -727,7 +730,7 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
     _g = [0, 0, 0, 0, 0]
     for _d in domains:
         try:
-            _st = [s for s in bd.parse_stories(bd.get_domain_dir(_d) / "04-stories.md") if s["phase"] != "S"]
+            _st = [s for s in bd.parse_stories(bd.get_domain_dir(_d) / "be-04-stories.md") if s["phase"] != "S"]
         except Exception:
             _st = []
         _g[0] += len(_st)
@@ -760,7 +763,7 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         ts    = bd.tshirt(domain)
         try:
             src_dir = bd.get_domain_dir(domain)
-            stories = [s for s in bd.parse_stories(src_dir / "04-stories.md") if s["phase"] != "S"]
+            stories = [s for s in bd.parse_stories(src_dir / "be-04-stories.md") if s["phase"] != "S"]
         except FileNotFoundError:
             stories = []
         domain_story_map[domain] = stories
@@ -772,7 +775,7 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         grand[0] += total; grand[1] += vh; grand[2] += hi; grand[3] += me; grand[4] += lo
         idx_rows.append([str(i), label, DGS_MAP[domain], ts,
                          str(total), str(vh), str(hi), str(me), str(lo),
-                         f"FederatedGqlBrakDown-{domain}"])
+                         f"FederatedGqlBrakDown-BE-{domain}"])
     idx_rows.append(["", "TOTAL", "—", "—",
                      str(grand[0]), str(grand[1]), str(grand[2]), str(grand[3]), str(grand[4]), "—"])
 
@@ -794,19 +797,20 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
     render_md_block(doc, bd.build_spike_detail(dd))
 
     # Per-domain story detail intentionally NOT included — this is an overview.
-    # Each domain's phase tables are in its own FederatedGqlBrakDown-<domain> breakdown.
+    # Each domain's phase tables are in its own FederatedGqlBrakDown-BE-<domain> breakdown.
 
     return doc
 
 
 # ─── Runner ────────────────────────────────────────────────────────────────────
 def generate_word_for(domain: str) -> None:
-    out_dir  = OUTPUT / domain
-    out_dir.mkdir(parents=True, exist_ok=True)
+    # Backend artifacts carry -BE- in the name and live flat in output/summary/
+    # (no per-domain subfolder), next to their -FE- frontend counterparts.
+    OUTPUT.mkdir(parents=True, exist_ok=True)
     doc      = build_word_doc(domain)
-    out_file = out_dir / f"FederatedGqlBrakDown-{domain}.docx"
+    out_file = OUTPUT / f"FederatedGqlBrakDown-BE-{domain}.docx"
     doc.save(str(out_file))
-    print(f"  OK {domain}/FederatedGqlBrakDown-{domain}.docx")
+    print(f"  OK FederatedGqlBrakDown-BE-{domain}.docx")
 
 
 def generate_global_word() -> None:

@@ -4,7 +4,7 @@
 > **Target DGS:** `ProductService` (repo: `plm-product`, url: `https://spark-product.dev.target.com`)
 > **Pipeline Version:** 1.1
 > **Generated:** 2026-05-01
-> **Depends on:** [04-stories.md](./04-stories.md)
+> **Depends on:** [be-04-stories.md](./be-04-stories.md)
 > **DGS Target Status:** Green-field (no existing DGS schema)
 
 ---

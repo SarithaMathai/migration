@@ -14,7 +14,7 @@ You review subgraph schema changes; you do not implement stories. Output is a re
 ## Workflow
 
 1. **Collect the diff** — every changed `.graphqls` file on this branch.
-2. **Check against the target** — `03-schema.graphql` in `output/initial-analysis/claims/` at https://github.com/XXX. Flag any divergence not called out in the PR description.
+2. **Check against the target** — `be-03-schema.graphql` in `output/analysis/claims/` at https://github.com/XXX. Flag any divergence not called out in the PR description.
 3. **Federation review** — for each changed type:
    - `Claims` (owned here) → has `@key` if referenced by another subgraph, matching the documented fields.
    - Reference to another subgraph's entity (`Product`, `Workspace`, …) → id-only `@extends @key @external` stub, Kotlin stub class named with the entity's simple class name.

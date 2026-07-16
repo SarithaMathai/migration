@@ -2,8 +2,8 @@
 
 > **Domain:** `impression`  ·  **Target DGS:** `ImpressionService` → `plm-product`
 > **Pipeline Version:** 2.0  ·  **Generated:** 2026-06-26
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md), [05-attribute-inventory.md](./05-attribute-inventory.md)
-> **Index:** `04-stories-index.yaml`
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md), [be-05-attribute-inventory.md](./be-05-attribute-inventory.md)
+> **Index:** `be-04-stories-index.yaml`
 
 Each story is self-contained: read *Current Behaviour → Target → Acceptance Criteria → Test Cases*.
 - **ACL is context-only** — no ACL work in any story. Impression is the **lowest-risk** domain and the recommended first migration / team warm-up.
@@ -50,7 +50,7 @@ graph TD
 > `CountsByBp`, 3 inputs, `@shareable CountsByBp`, plus external stubs for `VMM_BusinessPartner`,
 > `Product`, `WorkspaceV2`, `UserProfileAttributes`) + registers the scalar in `ScalarConfig.kt` +
 > wires `ImpressionClient` (Feign, GET repeated params + PUT snake/camel) and `ImpressionService`
-> (`searchByProductId`, `update`). Full type list: [03-schema.graphql](./03-schema.graphql).
+> (`searchByProductId`, `update`). Full type list: [be-03-schema.graphql](./be-03-schema.graphql).
 
 ---
 

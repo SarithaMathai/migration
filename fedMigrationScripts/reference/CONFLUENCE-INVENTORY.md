@@ -21,19 +21,19 @@ Titles follow one convention: `{Domain} — Federated GraphQL Breakdown` (engine
 
 | Domain | Breakdown page (source) | PO review page (source) |
 |---|---|---|
-| Attachment | `output/summary/attachment/FederatedGqlBrakDown-attachment.md` | `output/summary/attachment/attachment-po-review.md` |
-| BOM | `output/summary/bom/FederatedGqlBrakDown-bom.md` | `output/summary/bom/bom-po-review.md` |
-| Claims | `output/summary/claims/FederatedGqlBrakDown-claims.md` | `output/summary/claims/claims-po-review.md` |
-| Discussion | `output/summary/discussion/FederatedGqlBrakDown-discussion.md` | `output/summary/discussion/discussion-po-review.md` |
-| Impression | `output/summary/impression/FederatedGqlBrakDown-impression.md` | `output/summary/impression/impression-po-review.md` |
-| Measurement | `output/summary/measurement/FederatedGqlBrakDown-measurement.md` | `output/summary/measurement/measurement-po-review.md` |
-| Packaging | `output/summary/packaging/FederatedGqlBrakDown-packaging.md` | `output/summary/packaging/packaging-po-review.md` |
-| Product | `output/summary/product/FederatedGqlBrakDown-product.md` | `output/summary/product/product-po-review.md` |
-| Product Details | `output/summary/productDetails/FederatedGqlBrakDown-productDetails.md` | `output/summary/productDetails/productDetails-po-review.md` |
-| Sample | `output/summary/sample/FederatedGqlBrakDown-sample.md` | `output/summary/sample/sample-po-review.md` |
-| Search | `output/summary/search/FederatedGqlBrakDown-search.md` | `output/summary/search/search-po-review.md` |
-| Watchlist | `output/summary/watchlist/FederatedGqlBrakDown-watchlist.md` | `output/summary/watchlist/watchlist-po-review.md` |
-| Workspace | `output/summary/workspace/FederatedGqlBrakDown-workspace.md` | `output/summary/workspace/workspace-po-review.md` |
+| Attachment | `output/summary/attachment/FederatedGqlBrakDown-BE-attachment.md` | `output/summary/attachment/attachment-po-review.md` |
+| BOM | `output/summary/FederatedGqlBrakDown-BE-bom.md` | `output/summary/bom/bom-po-review.md` |
+| Claims | `output/summary/FederatedGqlBrakDown-BE-claims.md` | `output/summary/claims/claims-po-review.md` |
+| Discussion | `output/summary/discussion/FederatedGqlBrakDown-BE-discussion.md` | `output/summary/discussion/discussion-po-review.md` |
+| Impression | `output/summary/FederatedGqlBrakDown-BE-impression.md` | `output/summary/impression/impression-po-review.md` |
+| Measurement | `output/summary/FederatedGqlBrakDown-BE-measurement.md` | `output/summary/measurement/measurement-po-review.md` |
+| Packaging | `output/summary/FederatedGqlBrakDown-BE-packaging.md` | `output/summary/packaging/packaging-po-review.md` |
+| Product | `output/summary/FederatedGqlBrakDown-BE-product.md` | `output/summary/product/product-po-review.md` |
+| Product Details | `output/summary/FederatedGqlBrakDown-BE-productDetails.md` | `output/summary/productDetails/productDetails-po-review.md` |
+| Sample | `output/summary/sample/FederatedGqlBrakDown-BE-sample.md` | `output/summary/sample/sample-po-review.md` |
+| Search | `output/summary/search/FederatedGqlBrakDown-BE-search.md` | `output/summary/search/search-po-review.md` |
+| Watchlist | `output/summary/FederatedGqlBrakDown-BE-watchlist.md` | `output/summary/watchlist/watchlist-po-review.md` |
+| Workspace | `output/summary/workspace/FederatedGqlBrakDown-BE-workspace.md` | `output/summary/workspace/workspace-po-review.md` |
 
 Each breakdown page contains: the domain's story list by phase (A–G) with acceptance criteria, the spike-gated
 stories flagged with their program spike, complexity/T-shirt sizing, and dependency mapping. Each PO review
@@ -80,7 +80,7 @@ Page title = the case's `00-overview.md` H1. Optional child page per case from i
 |---|---|
 | `output/jira/*.csv` (343 issues) | Jira, via the push runbook |
 | `output/summary/{domain}/{domain}-comprehensive.md` | Working reference — publish on request only (large; the breakdown page is the Confluence face) |
-| `output/initial-analysis/**` | Source analyses — remain in the repository (pages link to them on GitHub) |
+| `output/analysis/**` | Source analyses — remain in the repository (pages link to them on GitHub) |
 | `.docx` variants | Distribution copies; attach to pages only if a stakeholder needs Word |
 | `output/complexStories/**/01-stories.md`, `implementation/`, case CSVs | Engineering working files; the case CSV imports to Jira under its home stub |
 

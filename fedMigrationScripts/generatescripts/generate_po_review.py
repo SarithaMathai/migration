@@ -9,7 +9,7 @@ and complex story breakdowns (where applicable). No per-story engineering detail
 Format mirrors the confluence pages — Confluence-paste ready.
 
 Source priority:
-  1. output/initial-analysis/{domain}/  (updated, Phase A dissolved where applicable)
+  1. output/analysis/{domain}/  (updated, Phase A dissolved where applicable)
   2. migration/finalOutput/{domain}/         (fallback; used for search)
 
 Output → migration/finalOutput/oneStopDoc/{domain}-po-review.md
@@ -28,8 +28,8 @@ from datetime import date
 # ─── Path setup ──────────────────────────────────────────────────────────────
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
-UPDATED_SOURCE = HERE.parent.parent / "output" / "initial-analysis"
-FALLBACK_SOURCE = HERE.parent.parent / "output" / "initial-analysis"
+UPDATED_SOURCE = HERE.parent.parent / "output" / "analysis"
+FALLBACK_SOURCE = HERE.parent.parent / "output" / "analysis"
 OUT_DIR = HERE.parent.parent / "output" / "summary"
 
 # ─── Domain catalogue ─────────────────────────────────────────────────────────
@@ -187,7 +187,7 @@ PHASE2_BREAKDOWNS: dict[str, dict] = {
 # ─── Source file resolution ───────────────────────────────────────────────────
 def get_domain_dir(domain: str) -> Path:
     for src in [FALLBACK_SOURCE / domain]:
-        if (src / "04-po-summary.md").exists():
+        if (src / "be-04-po-summary.md").exists():
             return src
     raise FileNotFoundError(
         f"No source found for '{domain}'. Checked: "
@@ -233,13 +233,13 @@ def build_migration_approach(po_text: str, domain: str) -> str:
         if p.strip() in "BCDEFG" and "Phase" not in n and "Name" not in n
     ]
     if not filtered:
-        return f"See [`03-schema-analysis.md §Migration Approach`](../finalOutput/{domain}/03-schema-analysis.md)."
+        return f"See [`be-03-schema-analysis.md §Migration Approach`](../finalOutput/{domain}/be-03-schema-analysis.md)."
 
     parts = [f"**{p}** {n.rstrip(';')}" for p, n in filtered]
     return (
         "; ".join(parts) + ". "
-        f"Full detail: [`03-schema-analysis.md §Migration Approach`]"
-        f"(../finalOutput/{domain}/03-schema-analysis.md)."
+        f"Full detail: [`be-03-schema-analysis.md §Migration Approach`]"
+        f"(../finalOutput/{domain}/be-03-schema-analysis.md)."
     )
 
 
@@ -280,7 +280,7 @@ def build_po_review(domain: str) -> str:
     src_dir = get_domain_dir(domain)
     today   = date.today().isoformat()
 
-    po_text = (src_dir / "04-po-summary.md").read_text(encoding="utf-8")
+    po_text = (src_dir / "be-04-po-summary.md").read_text(encoding="utf-8")
     # Strip the trailing "*Pipeline 2.0 ...*" colophon and any stray "Pipeline Version:" line —
     # these are internal pipeline bookkeeping, not PO-facing content, and used to leak through
     # into whichever section happened to be last in the source file (Capacity Planning).
@@ -297,9 +297,9 @@ def build_po_review(domain: str) -> str:
         f"**Confluence location:** *Federation Graph Migration ▸ Domains ▸ {domain}*",
         "",
         f"> **Paste this page into Confluence.** Audience: Product Owner / stakeholders.  ",
-        f"> Deep dives: [migration approach & schema](../finalOutput/{domain}/03-schema-analysis.md) · "
-        f"[field inventory](../finalOutput/{domain}/05-attribute-inventory.md) · "
-        f"[engineering stories](../finalOutput/{domain}/04-stories.md).  ",
+        f"> Deep dives: [migration approach & schema](../finalOutput/{domain}/be-03-schema-analysis.md) · "
+        f"[field inventory](../finalOutput/{domain}/be-05-attribute-inventory.md) · "
+        f"[engineering stories](../finalOutput/{domain}/be-04-stories.md).  ",
         f"> Create tickets from [`../finalOutput/jira/{domain}.csv`](../finalOutput/jira/{domain}.csv). "
         f"Effort is **AI-estimated — confirm in refinement.**",
         "",
@@ -344,8 +344,8 @@ def build_po_review(domain: str) -> str:
     if "Phase 0" in decisions or "SPIKE" in decisions:
         lines += [
             f"> 🔬 Open decisions marked **Spike** are tracked as real, estimable Phase 0 stories — "
-            f"see *Phase 0 — Spikes* in [`../finalOutput/{domain}/04-stories.md`](../finalOutput/{domain}/04-stories.md) "
-            f"and [`{domain}/FederatedGqlBrakDown-{domain}.md`](./{domain}/FederatedGqlBrakDown-{domain}.md) "
+            f"see *Phase 0 — Spikes* in [`../finalOutput/{domain}/be-04-stories.md`](../finalOutput/{domain}/be-04-stories.md) "
+            f"and [`FederatedGqlBrakDown-BE-{domain}.md`](../FederatedGqlBrakDown-BE-{domain}.md) "
             f"for the full write-up (unknowns, candidate patterns, examples).",
             "",
         ]

@@ -3,7 +3,7 @@
 > **Domain:** `impression` · **Target DGS:** `ImpressionService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
 > **Source of truth:** `schemas/SPARK_Impression.graphqls` (SDL), `resolvers/product/SPARK_Impression.js`, `services/product/Impression.js`
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md) · **Mode:** Full
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md) · **Mode:** Full
 
 ## Summary Statistics
 

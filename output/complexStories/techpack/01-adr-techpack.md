@@ -288,6 +288,6 @@ Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the pin-down table as the facade's deviation list).
-3. Replace the techpack placeholders in `output/initial-analysis/product/04-stories.md`
+3. Replace the techpack placeholders in `output/analysis/product/be-04-stories.md`
    (`E-03`, `E-04`, `F-01–F-09`) with the concrete pattern above.
 4. Regenerate domain + global docs; push to Jira/Confluence.

@@ -142,7 +142,7 @@ Recurring shapes the grid exposes:
 ### Assumptions, constraints & success criteria
 
 **Assumptions**
-- The step sequences in §1 (from each domain's `02-resolver-analysis.md`) are the behavioral authority;
+- The step sequences in §1 (from each domain's `be-02-resolver-analysis.md`) are the behavioral authority;
   sample-domain steps are unverified in this pass and are re-confirmed when that domain migrates.
 - Existing inverse endpoints (associate↔dissociate, relationship add↔remove) behave as inverses; the
   compensation inventory (pin-down 1) verifies this before any policy relies on it.
@@ -304,6 +304,6 @@ Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the §4-B policy table as the per-step reference).
 3. Replace the *"per `SPIKE-01`"* placeholders in each affected domain's
-   `output/initial-analysis/{domain}/04-stories.md` (bom, measurement, packaging, productDetails,
+   `output/analysis/{domain}/be-04-stories.md` (bom, measurement, packaging, productDetails,
    watchlist, claims, product `E-02`).
 4. Regenerate domain + global docs; push to Jira/Confluence.

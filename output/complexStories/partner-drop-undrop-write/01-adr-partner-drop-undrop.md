@@ -326,5 +326,5 @@ Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the per-step failure-policy table from pin-down 3).
 3. Replace the *"per `SPIKE-03`"* placeholders in
-   `output/initial-analysis/product/04-stories.md` (`E-01`) — workspace's stories follow in its phase.
+   `output/analysis/product/be-04-stories.md` (`E-01`) — workspace's stories follow in its phase.
 4. Regenerate domain + global docs; push to Jira/Confluence.

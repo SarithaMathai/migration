@@ -1,7 +1,7 @@
 # Phase 5: Attribute (Field) Inventory — BOM
 
 > **Domain:** `bom` · **Target DGS:** `plm-product` · **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
-> **Source:** [03-schema.graphql](./03-schema.graphql) + [02-resolver-analysis.md](./02-resolver-analysis.md)
+> **Source:** [be-03-schema.graphql](./be-03-schema.graphql) + [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > GraphQL types/nullability are taken from the source SDL (`schemas/SPARK_Bom.graphqls`).
 
 Every field, classified by **how it is resolved** and tied to the story that delivers it.

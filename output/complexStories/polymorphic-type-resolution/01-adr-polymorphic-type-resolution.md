@@ -272,6 +272,6 @@ Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the seeded `code → type` registry as its own artifact).
 3. Replace the *"per `SPIKE-05`"* placeholders in the affected
-   `output/initial-analysis/{bom,product}/04-stories.md` stories (`A-04`, `G-08`); sample/search follow in
+   `output/analysis/{bom,product}/be-04-stories.md` stories (`A-04`, `G-08`); sample/search follow in
    their phases.
 4. Regenerate domain + global docs; push to Jira/Confluence.

@@ -1,6 +1,6 @@
 ---
 name: resolver-dependency-analysis
-description: "Reads every source file identified in the schema inventory and produces plain-English pseudo-logic for every resolver, service method, and util. Tags every cross-domain HTTP call as EXT Service with severity 🔴/🟡/🔵. Rates every operation by complexity. Supports Full mode (complete pseudo-logic) and Quick Scan mode (top-level summary). Output: output/{domain}/02-resolver-analysis.md"
+description: "Reads every source file identified in the schema inventory and produces plain-English pseudo-logic for every resolver, service method, and util. Tags every cross-domain HTTP call as EXT Service with severity 🔴/🟡/🔵. Rates every operation by complexity. Supports Full mode (complete pseudo-logic) and Quick Scan mode (top-level summary). Output: output/{domain}/be-02-resolver-analysis.md"
 argument-hint: "Provide the domain whose schema inventory is complete. Example: 'Run resolver analysis for bom' or 'Quick scan of product domain'."
 ---
 
@@ -21,7 +21,7 @@ This skill is the most detailed analysis in the pipeline. It tags every cross-do
 
 ## Cannot Run Without
 
-- `output/{domain}/01-schema-inventory.md` from `graphql-schema-inventory` skill
+- `output/{domain}/be-01-schema-inventory.md` from `graphql-schema-inventory` skill
 - Read access to resolver, service, and utils files listed in the manifest
 
 ## Reference Files to Read First
@@ -82,7 +82,7 @@ For files >2000 lines, offer to run in sections:
 
 ### Step 1: Read File Manifest from Phase 1
 
-Open `output/{domain}/01-schema-inventory.md`. Note:
+Open `output/{domain}/be-01-schema-inventory.md`. Note:
 - All resolver, service, and util files to analyze
 - Large file warnings (⚠️) that require chunked reading
 - The import graph (which utils are needed)
@@ -237,7 +237,7 @@ When running in Quick Scan mode:
 
 ## Output Format
 
-Write to: `output/{domain}/02-resolver-analysis.md`
+Write to: `output/{domain}/be-02-resolver-analysis.md`
 
 Section order (full mode — per `reference/output-conventions.md` §7):
 1. Header block
@@ -269,7 +269,7 @@ Full mode:
 - [ ] Complexity Assessment table is complete with bump rules applied
 - [ ] Key Findings section covers: highest risk, migration blockers, refactor recommendations, quick wins
 - [ ] No vague language ("various transformations", "standard error handling") in any pseudo-logic block
-- [ ] Output written to `output/{domain}/02-resolver-analysis.md`
+- [ ] Output written to `output/{domain}/be-02-resolver-analysis.md`
 - [ ] Response footer included
 
 ## Next Skill

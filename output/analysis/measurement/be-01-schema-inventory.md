@@ -37,7 +37,7 @@ this.masterDataEndpoint = `${endpoint}/masterData`
 | `services/product/Measurement.js` | 181 | 18 REST methods (`measurements/v1` + master data) |
 | **Total** | **575** | no chunked reading |
 
-Schema: **`schemas/SPARK_Measurement.graphqls` (219 lines)** — target schema in [03-schema.graphql](./03-schema.graphql) is translated from it (nullability/return-types from the SDL).
+Schema: **`schemas/SPARK_Measurement.graphqls` (219 lines)** — target schema in [be-03-schema.graphql](./be-03-schema.graphql) is translated from it (nullability/return-types from the SDL).
 
 ## 3. Import Graph
 ```

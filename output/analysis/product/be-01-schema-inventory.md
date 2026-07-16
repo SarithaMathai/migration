@@ -33,7 +33,7 @@
 | **⚠️ Large file** | 2,629 | Phase 2 read in 500-line windows (queries → mutations → fields → service/utils) |
 
 Schema: **`schemas/SPARK_Product.graphqls` (802 lines)** — the federated target schema in
-[03-schema.graphql](./03-schema.graphql) is translated from it (nullability taken from the SDL).
+[be-03-schema.graphql](./be-03-schema.graphql) is translated from it (nullability taken from the SDL).
 
 ## 3. Co-located Siblings (same `plm-product` DGS — sibling field resolvers become same-service `@DgsData`)
 - `pom`, `fileLibrary`, `measurement`, `bom`, `impression`, `measurementTemplate`, `sizeTemplate`, `specificationsTemplate`, `productDetails`, `watchlist`, `tightFit`, `packaging`, `productPlan`, `productAsk`, `productVariation`.

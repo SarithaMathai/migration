@@ -1,7 +1,7 @@
 # Phase 5: Attribute (Field) Inventory — Product
 
 > **Domain:** `product` · **Target DGS:** `plm-product` · **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
-> **Source:** [03-schema.graphql](./03-schema.graphql) + [02-resolver-analysis.md](./02-resolver-analysis.md)
+> **Source:** [be-03-schema.graphql](./be-03-schema.graphql) + [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > Field types/nullability are taken from the source SDL (`schemas/SPARK_Product.graphqls`). `Product` is
 > wide (~90 fields); this lists the **non-trivial** field resolvers and groups the direct pass-throughs.
 

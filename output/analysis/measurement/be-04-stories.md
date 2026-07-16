@@ -2,8 +2,8 @@
 
 > **Domain:** `measurement` · **Target DGS:** `MeasurementService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md), [05-attribute-inventory.md](./05-attribute-inventory.md)
-> **Index:** `04-stories-index.yaml`
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md), [be-05-attribute-inventory.md](./be-05-attribute-inventory.md)
+> **Index:** `be-04-stories-index.yaml`
 
 Engineers: read *Current Behaviour → Target → Files → Acceptance → Tests*. **ACL is context-only**
 (no ACL work). One operation per story; field resolvers grouped one-story-per-type.
@@ -41,7 +41,7 @@ graph TD
 
 - **In plain terms:** Fetch measurement sets by id.
 
-> **Note — DGS Module Init (this PR only):** Creates `measurement.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [03-schema.graphql](./03-schema.graphql).
+> **Note — DGS Module Init (this PR only):** Creates `measurement.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [be-03-schema.graphql](./be-03-schema.graphql).
 - **Current Behaviour (Q1):** `GET {base}/…/measurements/v1?ids=&calculated=&mustHaveRows=` → camelCase. **ACL note (context):** token for `ids`; ignored in DGS.
 - **Target DGS Implementation:** `@DgsQuery getMeasurementByIds(ids, calculated): MeasurementPaged` (SDL: paged `{content}`, not a bare list) → `measurementService.getByIds(ids, calculated)`. Add a `MeasurementDataLoader` keyed on id.
 - **Files:** `dataFetcher/MeasurementQueryDataFetcher.kt`.
@@ -343,7 +343,7 @@ Depends on `Product` existing (product A-02), not on a separate deployment.
 
 - **In plain terms:** Resolve the everyday measurement fields (people, product, partners).
 
-- **Current Behaviour (field table in [02](./02-resolver-analysis.md)):** `access`/`currentUserPermissions`
+- **Current Behaviour (field table in [02](./be-02-resolver-analysis.md)):** `access`/`currentUserPermissions`
 (ACL — context only), `businessPartners` (loadBps), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`),
 `product` (PID-prefixed → internal `product.getByID`), `workspaces` (`getWorkspacesByIdsV2` or null),
 `status` (`{code:statusId, description:statusName}` computed), `updatedFromResource` (switch type='sample' →

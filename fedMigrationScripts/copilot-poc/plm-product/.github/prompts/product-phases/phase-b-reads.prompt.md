@@ -10,7 +10,7 @@ Phase B is **Core Reads** — simple query wrappers, usually Low/Medium complexi
 
 Steps:
 
-1. Read the story's *Current Behaviour* (the legacy loader call — e.g. `getByID.load(id)` → `GET {v1}?productId={id}`) and *Target* (`@DgsQuery` signature) from the Jira ticket or `output/initial-analysis/{domain}/04-stories.md` at https://github.com/XXX.
+1. Read the story's *Current Behaviour* (the legacy loader call — e.g. `getByID.load(id)` → `GET {v1}?productId={id}`) and *Target* (`@DgsQuery` signature) from the Jira ticket or `output/analysis/{domain}/be-04-stories.md` at https://github.com/XXX.
 2. If this is the domain's `B-01`, it also carries the **one-time module scaffold** note — build that first (see the `phase-a-scaffold` prompt), it's a prerequisite for this and every later story in the domain.
 3. Add the query to the domain's `.graphqls` file, the `@DgsQuery` fetcher, and a `DataLoader` if the story's AC mentions batching (most B-phase reads are DataLoader-batched — check for "batches N ids in 1 call" in the AC).
 4. Implement per `.github/instructions/kotlin/datafetcher.instructions.md` and `.github/instructions/kotlin/service.instructions.md` — this is a thin wrapper over an existing REST call, do not add logic beyond what the legacy loader does.

@@ -1,7 +1,7 @@
 # Phase 4: PO Sprint Planning Summary — BOM
 
 > **Domain:** `bom` · **Target DGS:** `plm-product` (co-located) · **Generated:** 2026-06-26
-> **Stories:** [04-stories.md](./04-stories.md)
+> **Stories:** [be-04-stories.md](./be-04-stories.md)
 > Day-ranges below are **AI-estimated — confirm in refinement.** Stories themselves carry complexity only.
 
 ---
@@ -17,7 +17,7 @@
 
 - The schema is **wide but shallow**: the large majority of attributes are direct pass-throughs (cheap to migrate).
 - Risk concentrates in ~38 cross-domain field resolvers (material-library and color lookups) and the 2 polymorphic interfaces.
-- See [05-attribute-inventory.md](./05-attribute-inventory.md).
+- See [be-05-attribute-inventory.md](./be-05-attribute-inventory.md).
 
 **Note on ACL:** the current gateway uses ACL to obtain a per-resource capability token. Per decision,
 Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
@@ -91,7 +91,7 @@ rest of the phase to finish.
 
 > Reviewed and updated. Open items that need real research are now **Phase 0 spike stories** (estimable,
 > assignable, trackable) rather than a flat decision list — see *Phase 0 — Spikes* in
-> [`04-stories.md`](./04-stories.md) for the full write-up of each. The rest were resolved directly.
+> [`be-04-stories.md`](./be-04-stories.md) for the full write-up of each. The rest were resolved directly.
 
 | # | Decision | Status | Detail |
 |---|----------|--------|--------|

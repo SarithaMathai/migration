@@ -1,4 +1,4 @@
-Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
 Story,BOM-BE-A-04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [BOM-BE-A-04],,Federate BreakDown Product,A,M,dgs-migration,bom,schema,,SPIKE-05,To Do,"*Requires spike:* SPIKE-05 (Polymorphic Type Resolution) — see program spike
 
@@ -391,3 +391,149 @@ Story,BOM-BE-G-16,(BOM) Test coverage & parity harness [BOM-BE-G-16],,Federate B
 1. Unit coverage ≥80%
 2. Parity harness covers all 7 material types + internal/external impression branch + `updateBom` 5 fixtures
 3. Schema-conformance check fails the build if an impl misses an interface field"
+Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
+Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover) [BOM-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,refactor,,,To Do,"* *Type:* Refactor · *Impact:* High · *Domain:* bom
+* *Depends on:* —
+* *Operations:* —
+
+* *Business objective:*
+** Unblock codegen and validation for every BOM document before cutover work starts.
+* *Technical objective:*
+** Land the BOM share of the dynamic-gql static expansion (delivered platform pattern: {{BUILD_FILES_FRAGMENT}}, {{BOM_FABRIC_SPEC_COMBO_DETAILS}}) and regenerate all embedding documents in {{product-queries/BomQueries.ts}}.
+* *Background / current implementation:*
+** The factories are embedded in the widest BOM read documents ({{getBomByIds}} variants); every downstream BOM story depends on their static form.
+* *Required changes:*
+** Behaviour-neutral expansion on the legacy schema; document-text snapshot proves equivalence.
+
+*Acceptance Criteria*
+
+1. {{BomQueries.ts}} contains only static documents; codegen validates all of them.
+
+*Testing*
+
+* Document-text snapshots; existing BOM screen tests unchanged.
+
+* *Risk:* Medium.
+* *Estimated effort:* 3–4 days"
+Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-B-01 BOM-BE-B-03 BOM-BE-B-04 BOM-FE-001,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* bom
+* *Depends on:* BOM-BE-B-01, BOM-BE-B-03, BOM-BE-B-04, BOM-FE-001
+* *Operations:* {{getBomByIds}}, {{getBomByParentId}}, {{getBomStatus}}, {{getBomComponentStatus}}
+
+* *Business objective:*
+** BOM detail and status views read from the federated graph with unchanged behaviour.
+* *Technical objective:*
+** Migrate the by-id/by-parent reads and status reads (3 {{getBomByIds}} variants with different selection widths).
+* *Background / current implementation:*
+** {{product-queries/BomQueries.ts}} + {{spark-ui-admin}}; heavy fragment composition ({{BomDetails}}, {{MaterialDetails}}, supplier/combo fragments).
+* *Required changes:*
+** Fragment re-target; nested entity selections for material/supplier references per the federated {{Bom}} schema.
+
+*Acceptance Criteria*
+
+1. BOM detail renders identically under the flag across fixture BOMs (fabric, trim, packaging component mixes).
+2. One {{Bom}} cache entity is shared across all migrated documents.
+
+*Testing*
+
+* Response JSON diff per variant; BOM screen integration suite.
+
+* *Risk:* High — widest fragment graph after product.
+* *Estimated effort:* 6–10 days"
+Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-C-01 BOM-BE-S-03,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* bom
+* *Depends on:* BOM-BE-C-01, BOM-BE-S-03
+* *Operations:* {{getBomElastic}}, {{searchMaterialsBom}}
+
+* *Business objective:*
+** BOM listing and material search inside BOM keep parity through the search cutover.
+* *Technical objective:*
+** Migrate {{getBomElastic}} and {{searchMaterialsBom}} after the elastic read-hub decision lands (BOM-BE-S-03 carries the spike outcome).
+* *Background / current implementation:*
+** List screens page through elastic-backed results; {{MAX_BOM_SEARCH_SIZE}} constant caps page size client-side.
+* *Required changes:*
+** Adopt ratified search shapes; verify paging/caps unchanged.
+
+*Acceptance Criteria*
+
+1. Search results, ordering and paging match legacy fixtures.
+
+*Testing*
+
+* Search fixture parity tests; list-screen pagination tests.
+
+* *Risk:* High — blocked on the search spike.
+* *Estimated effort:* 5–8 days"
+Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,bom,query-migration,,BOM-BE-B-05 BOM-BE-B-06 BOM-BE-B-07 BOM-BE-B-08,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* bom
+* *Depends on:* BOM-BE-B-05, BOM-BE-B-06, BOM-BE-B-07, BOM-BE-B-08
+* *Operations:* {{getBomMaterialTypes}}, {{getBomPackagingMaterialTypes}}, {{getBomPackagingSubstrates}}, {{getBomPackagingUnitOfMeasure}}
+
+* *Business objective:*
+** BOM editors keep their dropdown/master data.
+* *Technical objective:*
+** Re-point the 4 master-data queries ({{getBomPackagingMasterData}} document bundles several of them).
+* *Background / current implementation:*
+** Static reference data, cached client-side per session.
+* *Required changes:*
+** Endpoint re-point + type regeneration only; {{cache-first}} policy retained.
+
+*Acceptance Criteria*
+
+1. Dropdown contents identical; one fetch per session per master-data set.
+
+*Testing*
+
+* Fixture equality tests.
+
+* *Risk:* Low.
+* *Estimated effort:* 2–3 days"
+Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,bom,query-migration,,BOM-BE-C-03 BOM-BE-C-04 BOM-BE-C-05,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* bom
+* *Depends on:* BOM-BE-C-03, BOM-BE-C-04, BOM-BE-C-05
+* *Operations:* {{getComboSupplierForBom}}, {{getValidTrimSuppliersForBom}}, {{getValidRawMaterialSuppliersForBom}}
+
+* *Business objective:*
+** Supplier pickers in the BOM editor stay accurate.
+* *Technical objective:*
+** Migrate the 3 supplier-lookup queries ({{getValidSuppliersForBom}} document).
+* *Background / current implementation:*
+** Supplier results join VMM business-partner data — flat partner fields may become {{VMM_BusinessPartner}} stubs.
+* *Required changes:*
+** Selection updates for partner entity nesting; picker component model updates.
+
+*Acceptance Criteria*
+
+1. Picker options and disabled states match legacy fixtures.
+
+*Testing*
+
+* Picker component tests across fixture partner sets.
+
+* *Risk:* Medium.
+* *Estimated effort:* 3–5 days"
+Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handling [BOM-FE-006],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,mutation-migration-(complex),,BOM-BE-D-01 BOM-BE-D-03 BOM-BE-D-04 BOM-BE-D-05 BOM-BE-S-01,To Do,"* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* bom
+* *Depends on:* BOM-BE-D-01, BOM-BE-D-03, BOM-BE-D-04, BOM-BE-D-05, BOM-BE-S-01
+* *Operations:* {{addBom}}, {{lockBom}}, {{unlockBom}}, {{updateBom}}, {{updateBomComponentStatus}}
+
+* *Business objective:*
+** BOM create/edit/lock flows write through the federated graph with explicit partial-failure behaviour.
+* *Technical objective:*
+** Migrate the 5 BOM mutations; adopt the saga contract for {{updateBom}} (3-step write, no rollback today — ADR-013, 🟠 draft; BOM-BE-S-01 carries the decision).
+* *Background / current implementation:*
+** {{updateBom}} failures today can leave partial state that the UI cannot detect; the editor refetches after every save.
+* *Required changes:*
+** Saga-status rendering on save (per-step success/failure); retry affordance per the ratified contract.
+** Lock/unlock and component-status mutations are single-step re-points with cache writes.
+
+*Acceptance Criteria*
+
+1. Save surfaces per-step outcomes; a partial failure is visible and actionable, never silent.
+2. Lock state renders from the mutation response without refetch.
+
+*Testing*
+
+* Induced step-failure tests against the saga contract; editor E2E save flows.
+
+* *Risk:* High — blocked on ADR-013 ratification.
+* *Estimated effort:* 8–12 days
+
+---
+
+## Measurement"

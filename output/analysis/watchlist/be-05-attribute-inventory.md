@@ -1,7 +1,7 @@
 # Phase 5: Attribute (Field) Inventory — Watchlist
 
 > **Domain:** `watchlist` · **Target DGS:** `plm-product` · **Pipeline Version:** 2.0 · **Generated:** 2026-06-27
-> **Source:** [03-schema.graphql](./03-schema.graphql) + [02-resolver-analysis.md](./02-resolver-analysis.md)
+> **Source:** [be-03-schema.graphql](./be-03-schema.graphql) + [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > Field types/nullability are taken from the source SDL (`schemas/SPARK_Watchlist.graphqls`).
 
 Resolution kinds: `Direct` · `Computed` · `Field-resolver` (internal) · `EXT` (severity) · `Polymorphic`.

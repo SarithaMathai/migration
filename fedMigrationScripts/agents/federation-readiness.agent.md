@@ -69,12 +69,12 @@ No files are written unless the engineer requests one.
 
 ### Step 1: Check for Existing Phase 1 Output
 
-If `output/{domain}/01-schema-inventory.md` exists — load it and skip schema inventory.
+If `output/{domain}/be-01-schema-inventory.md` exists — load it and skip schema inventory.
 If it does not exist — invoke `graphql-schema-inventory` skill to build the type list and cross-domain refs.
 
 ### Step 2: Check for Existing Phase 2 Output
 
-If `output/{domain}/02-resolver-analysis.md` exists — load the EXT Service Call Inventory section for accurate severity ratings.
+If `output/{domain}/be-02-resolver-analysis.md` exists — load the EXT Service Call Inventory section for accurate severity ratings.
 If it does not exist — use Phase 1's Cross-Domain Reference table as input (reduced accuracy on severity).
 
 ### Step 3: Run Federation Candidate Detection

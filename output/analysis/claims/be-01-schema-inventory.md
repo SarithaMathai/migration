@@ -32,7 +32,7 @@ injected by the loader registry. Treat the base as the **`spark-claims`** backen
 | `services/Claim.js` | 151 | 13 REST methods — 2 unused (versions) |
 | **Total** | **472** | small/mid domain — no chunked reading |
 
-Schema: **`schemas/SPARK_Claims.graphqls` (157 lines)** — target schema in [03-schema.graphql](./03-schema.graphql)
+Schema: **`schemas/SPARK_Claims.graphqls` (157 lines)** — target schema in [be-03-schema.graphql](./be-03-schema.graphql)
 translated from it (nullability from the SDL).
 
 ## 3. Import Graph

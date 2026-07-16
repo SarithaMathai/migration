@@ -1,6 +1,6 @@
 # Copilot walkthrough — Phase A through G, `product` domain
 
-Seven worked sessions, one per migration phase, each using a real story from `output/initial-analysis/product/04-stories.md` (Phase A example is from `bom`, since `product`'s own scaffold is folded into `B-01`). Each section shows: which prompt/chat mode to use, what the Engineer types, what Copilot does step by step, and where it stops to ask vs proceeds on its own.
+Seven worked sessions, one per migration phase, each using a real story from `output/analysis/product/be-04-stories.md` (Phase A example is from `bom`, since `product`'s own scaffold is folded into `B-01`). Each section shows: which prompt/chat mode to use, what the Engineer types, what Copilot does step by step, and where it stops to ask vs proceeds on its own.
 
 Phase-specific prompts live in `.github/prompts/product-phases/`:
 

@@ -1,8 +1,8 @@
 # Phase 4: Migration Plan & Stories — BOM
 
 > **Domain:** `bom` · **Target DGS:** `BomService` → `plm-product` · **Generated:** 2026-06-26
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md), [05-attribute-inventory.md](./05-attribute-inventory.md)
-> **Machine-readable index:** `04-stories-index.yaml`
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md), [be-05-attribute-inventory.md](./be-05-attribute-inventory.md)
+> **Machine-readable index:** `be-04-stories-index.yaml`
 
 - **How to use this file (Engineers):** find your story ID, read *Current Behaviour* → *Target DGS
 Implementation* → *Files* → *Acceptance Criteria* → *Test Cases*. You should not need to open the `.js`
@@ -31,7 +31,7 @@ resolver. **ACL note:** where a story says the current code obtains a capability
 > repurposed to own just that shared logic; see its story body below.
 
 Effort/day-ranges are intentionally **not** in stories (complexity tier only). See
-[04-po-summary.md](./04-po-summary.md) for AI-estimated ranges and sprint sequencing.
+[be-04-po-summary.md](./be-04-po-summary.md) for AI-estimated ranges and sprint sequencing.
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories. The BOM material `@DgsTypeResolver` (A-04) remains a dedicated story.
 
@@ -154,7 +154,7 @@ placeholder documented in each `G0x` story's Target section.
 
 1. A rollout order for hub/trim/wash/fabric/combination is agreed with Platform + each sibling team and
    recorded here.
-2. The order is reflected in the sprint sequencing table in `04-po-summary.md`.
+2. The order is reflected in the sprint sequencing table in `be-04-po-summary.md`.
 3. `B-01`'s DGS-module-init checklist and each affected `G0x` story note which siblings are expected to be
    `{id}`-only at BOM's launch date.
 
@@ -235,7 +235,7 @@ default branches exactly (HUB code 9 must fall through to `BomMaterial`). Source
 
 - **In plain terms:** Looks up full BOM records for a set of BOM ids (the core 'give me these BOMs' read).
 
-> **Note — DGS Module Init (this PR only):** Creates `bom.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [03-schema.graphql](./03-schema.graphql). **This scaffold is a prerequisite for every B/C/D/G story** — they need the module + schema file to compile their DGS wrapper — so it is assumed globally (shown once in the dependency graph) and **not repeated** in each story's `Depends On`. After it lands, the wrappers parallelize.
+> **Note — DGS Module Init (this PR only):** Creates `bom.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [be-03-schema.graphql](./be-03-schema.graphql). **This scaffold is a prerequisite for every B/C/D/G story** — they need the module + schema file to compile their DGS wrapper — so it is assumed globally (shown once in the dependency graph) and **not repeated** in each story's `Depends On`. After it lands, the wrappers parallelize.
 - **As a** DGS migration engineer **I want** the `getBomByIds` query **so that** clients can fetch boms by id list.
 
 - **Current Behaviour (Q1):** if `ids` empty → `[]`; else `GET {base}/…/bom/v1?ids={ids}` → `deepToCamelCase`.

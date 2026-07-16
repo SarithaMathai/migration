@@ -36,7 +36,7 @@ class ImpressionService extends SparkService {
 | `services/product/Impression.js` | 44 | 2 REST methods (search GET, update PUT) |
 | **Total** | **169** | small domain — no chunked reading |
 
-Schema: **`schemas/SPARK_Impression.graphqls` (59 lines)** — the target schema in [03-schema.graphql](./03-schema.graphql) is translated from it (nullability from the SDL).
+Schema: **`schemas/SPARK_Impression.graphqls` (59 lines)** — the target schema in [be-03-schema.graphql](./be-03-schema.graphql) is translated from it (nullability from the SDL).
 
 ## 3. Import Graph
 ```

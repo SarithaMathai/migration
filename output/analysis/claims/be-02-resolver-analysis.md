@@ -3,7 +3,7 @@
 > **Domain:** `claims` · **Target DGS:** `ClaimService` → separate `claims` subgraph (repo `spark-claims`)
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-27
 > **Source of truth:** `schemas/SPARK_Claims.graphqls` (SDL), `resolvers/product/SPARK_Claims.js`, `services/Claim.js`
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md) · **Mode:** Full
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md) · **Mode:** Full
 
 Implementation spec. ACL/JWT usage is **context-only** (ignored in impl). `claims` is its **own subgraph**.
 

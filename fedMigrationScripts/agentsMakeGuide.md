@@ -94,7 +94,7 @@ argument-hint: {example invocations}
 **Why it's a skill, not an agent:**
 - It does one thing: reads source code and produces pseudo-logic
 - Its input is well-defined: the output of `graphql-schema-inventory`
-- Its output is well-defined: `02-resolver-analysis.md`
+- Its output is well-defined: `be-02-resolver-analysis.md`
 - It can be run independently: `"Run the resolver analysis for the bom domain"`
 - It can be composed: the `full-migration-investigation` agent calls it as Phase 2
 
@@ -110,7 +110,7 @@ argument-hint: {example invocations}
 name: resolver-dependency-analysis
 description: "Reads every resolver, service method, and util in a domain and produces
   plain-English pseudo-logic with step-numbered logic, REST endpoint details, and
-  EXT service call tagging. Output: output/{domain}/02-resolver-analysis.md"
+  EXT service call tagging. Output: output/{domain}/be-02-resolver-analysis.md"
 argument-hint: "Provide the domain: 'Run resolver analysis for bom'"
 ---
 
@@ -122,13 +122,13 @@ pseudo-logic that engineers can implement from — without reading JavaScript.
 Tags every cross-domain HTTP call with severity 🔴/🟡/🔵.
 
 ## Cannot Run Without
-- output/{domain}/01-schema-inventory.md (from graphql-schema-inventory skill)
+- output/{domain}/be-01-schema-inventory.md (from graphql-schema-inventory skill)
 - Read access to resolver, service, and utils files listed in the manifest
 
 ## Step-by-Step Procedure
 
 ### Step 1: Read the file manifest
-Open output/{domain}/01-schema-inventory.md and note all files to analyze.
+Open output/{domain}/be-01-schema-inventory.md and note all files to analyze.
 
 ### Step 2: Analyze each query resolver
 For every query, produce a pseudo-logic block: schema signature, numbered steps,
@@ -136,7 +136,7 @@ REST endpoint details, error handling, EXT service calls with severity.
 ...
 
 ## Output Format
-Write to: output/{domain}/02-resolver-analysis.md
+Write to: output/{domain}/be-02-resolver-analysis.md
 Follow the format in templates/resolver-analysis.md
 ```
 
@@ -484,7 +484,7 @@ Templates use `{placeholders}` for variable content and `[Description of what go
 > **Target DGS:** `{ServiceClassName}` (repo: `{repo}`)
 > **Pipeline Version:** 1.1
 > **Generated:** {YYYY-MM-DD}
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md)
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md)
 > **DGS Target Status:** {Green-field | Existing schema found}
 
 ---

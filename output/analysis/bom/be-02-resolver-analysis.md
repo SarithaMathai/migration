@@ -5,7 +5,7 @@
 > **Pipeline Version:** 2.0
 > **Generated:** 2026-06-26
 > **Source of truth:** `schemas/SPARK_Bom.graphqls` (SDL), `resolvers/product/SPARK_Bom.js`, `services/product/Bom.js`, `utils/bomUtils.js`
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md)
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md)
 > **DGS Target Status:** Green-field · **Analysis Mode:** Full
 
 This is the implementation spec. A Engineer implements each operation from the pseudo-logic here
@@ -27,7 +27,7 @@ without opening the `.js` resolver. Every cross-domain call is tagged 🔴/🟡/
 | Very High complexity ops | 1 (updateBom) |
 | High complexity ops | 2 (BomTrimMaterial, ImpressionDetails_Unified) |
 
-> **Estimates:** complexity tiers only (per Pipeline 2.0). Rough day-ranges live in `04-po-summary.md`.
+> **Estimates:** complexity tiers only (per Pipeline 2.0). Rough day-ranges live in `be-04-po-summary.md`.
 
 ---
 

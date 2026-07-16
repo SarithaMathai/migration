@@ -58,7 +58,7 @@ filled from attachment/discussion/sample/measurement/claim/bom/…):
    (fastest: extract the existing Node orchestration into a small service). Works on day 1.
 2. **Phase F — federate per subgraph (Option D Phase 2):** each owning subgraph adds
    `extend type ResourcesCount @key(...) { itsFields }` with a `@DgsEntityFetcher`. These are
-   **placeholder stories** `BLOCKED-BY: {domain} migration`, written in the owning domain's `04-stories.md`.
+   **placeholder stories** `BLOCKED-BY: {domain} migration`, written in the owning domain's `be-04-stories.md`.
 3. **Phase F — retire facade:** once all subgraphs are live, delete the facade; the gateway fans out.
 
 ## 4. ACL / capability-token (JWT) calls — **context only, not build work**

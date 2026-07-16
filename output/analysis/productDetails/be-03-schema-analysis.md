@@ -2,7 +2,7 @@
 
 > **Domain:** `productDetails` · **Target DGS:** `ProductDetailsService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-27
-> **Schema:** [03-schema.graphql](./03-schema.graphql) · **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md)
+> **Schema:** [be-03-schema.graphql](./be-03-schema.graphql) · **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > **DGS Target Status:** Green-field · Gap: **0 ✅ | 8 🔜 | 0 ⏭ — 8 operations**
 
 The target schema is translated from the source SDL (`schemas/SPARK_ProductDetail.graphqls`), verified

@@ -3,7 +3,7 @@
 > **Domain:** `bom`
 > **Target DGS:** `BomService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
-> **Schema:** [03-schema.graphql](./03-schema.graphql) · **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md)
+> **Schema:** [be-03-schema.graphql](./be-03-schema.graphql) · **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > **DGS Target Status:** Green-field · Gap summary: **0 ✅ | 19 🔜 | 0 ⏭ — 19 operations**
 
 This is the design view and the **Confluence "approach" page** for BOM. The target schema is translated

@@ -2,7 +2,7 @@
 
 > **Domain:** `impression` · **Target DGS:** `ImpressionService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-26
-> **Schema:** [03-schema.graphql](./03-schema.graphql) · **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md)
+> **Schema:** [be-03-schema.graphql](./be-03-schema.graphql) · **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > **DGS Target Status:** Green-field · Gap: **0 ✅ | 3 🔜 | 0 ⏭ — 3 operations**
 
 ## 1. Type Classification

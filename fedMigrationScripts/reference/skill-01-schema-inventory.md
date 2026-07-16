@@ -1,6 +1,6 @@
 # Skill 01 — Schema Inventory (Pipeline 2.0, snapshot-adapted)
 
-> **Output:** `output/{domain}/01-schema-inventory.md` · **Audience:** Tech Lead
+> **Output:** `output/{domain}/be-01-schema-inventory.md` · **Audience:** Tech Lead
 > **Reads from:** `code/schemas`, `code/resolvers`, `code/services`, `code/utils` (the `.txt` snapshot).
 > See [`00-adapting-to-this-repo.md`](./00-adapting-to-this-repo.md) — there is **no** `context.js`
 > (read endpoint/auth facts from the service constructor), but the **schema SDL is now present** at

@@ -260,6 +260,6 @@ Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the lane contract table: lane field · owning domain · phase-1 client call · federation trigger).
-3. Replace the *"per `SPIKE-04`"* placeholders in `output/initial-analysis/product/04-stories.md`
+3. Replace the *"per `SPIKE-04`"* placeholders in `output/analysis/product/be-04-stories.md`
    (`G-07`, `G-11-1`); workspace stories follow in their phase.
 4. Regenerate domain + global docs; push to Jira/Confluence.

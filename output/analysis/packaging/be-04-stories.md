@@ -2,10 +2,10 @@
 
 > **Domain:** `packaging` · **Target DGS:** `PackagingService` → `plm-product`
 > **Pipeline Version:** 2.0 · **Generated:** 2026-06-27
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md), [05-attribute-inventory.md](./05-attribute-inventory.md)
-> **Index:** `04-stories-index.yaml`
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md), [be-05-attribute-inventory.md](./be-05-attribute-inventory.md)
+> **Index:** `be-04-stories-index.yaml`
 
-Each story is self-contained. Full pseudo-logic in [02-resolver-analysis.md](./02-resolver-analysis.md).
+Each story is self-contained. Full pseudo-logic in [be-02-resolver-analysis.md](./be-02-resolver-analysis.md).
 - **ACL is context-only** — no ACL work in any story. Base path `packaging/v1`.
 
 ## 1. Phases Overview
@@ -39,7 +39,7 @@ graph TD
 
 - **In plain terms:** List packagings with paging and filters.
 
-> **Note — DGS Module Init (this PR only):** Creates `packaging.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [03-schema.graphql](./03-schema.graphql).
+> **Note — DGS Module Init (this PR only):** Creates `packaging.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: [be-03-schema.graphql](./be-03-schema.graphql).
 - **Current Behaviour (Q1):** (own) `getPackagings().load({page,size,packagingIds,parentIds,workspaceIds,partnerIds,statusIds})` → paged. **Target:** `@DgsQuery → PackagingPaged`. 
 
 #### Acceptance Criteria
@@ -434,4 +434,4 @@ incl. `@deprecated`).
 - **Co-located:** packaging is in the `plm-product` monorepo; Product packaging links resolve internally.
 
 ---
-- **Phase Completed:** Phase 4 — Migration Stories · **Domain:** `packaging` · **Outputs:** 04-stories.md, 04-stories-index.yaml, 04-po-summary.md.
+- **Phase Completed:** Phase 4 — Migration Stories · **Domain:** `packaging` · **Outputs:** be-04-stories.md, be-04-stories-index.yaml, be-04-po-summary.md.

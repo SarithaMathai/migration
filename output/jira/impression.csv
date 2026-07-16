@@ -1,4 +1,4 @@
-Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
 Story,IMPRESSION-BE-B-01,(Impression) searchImpressionsByProductId data fetcher [IMPRESSION-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,impression,query,,,To Do,"*Current Behaviour:*
 * 1. `GET {base}/…/impressions/product/{id}?workspaceIds=…&partnerIds=…` → camelCase list. 2. `partnerIds` and `workspaceIds` forwarded as **repeated** query-string params. 3. `enableWorkspaceContextFiltering` is accepted but **not forwarded** to the backend today — intent must be confirmed.
@@ -66,3 +66,53 @@ Story,IMPRESSION-BE-G-03,(Impression) Test coverage & parity [IMPRESSION-BE-G-03
 1. Unit test coverage ≥ 80% for all impression data fetchers
 2. Parity tests are green for search, counts, and the update mutation
 3. The `counts` error-fallback path is explicitly covered by a unit test"
+Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
+Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with BOM wave) [IMPRESSION-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 BOM-BE-B-01 BOM-FE-002,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* impression
+* *Depends on:* IMPRESSION-BE-B-01, BOM-BE-B-01, BOM-FE-002
+* *Operations:* {{searchImpressionsByProductId}}, {{getBomByIds}}
+
+* *Business objective:*
+** The combined BOM + impressions view keeps one round trip and identical data.
+* *Technical objective:*
+** Migrate the cross-domain document when both roots are on the router (per [fe-07-network-call-analysis.md §2.1](./fe-07-network-call-analysis.md) — no interim split).
+* *Background / current implementation:*
+** One document selects {{getBomByIds}} and {{searchImpressionsByProductId}}; impression sub-type polymorphism (5 types) needs the regenerated {{possibleTypes}} map (ADR-017 — 🟠 draft).
+* *Required changes:*
+** Re-point after BOM-FE-002 lands; inline-fragment selections verified against federated impression sub-types.
+
+*Acceptance Criteria*
+
+1. Combined view renders identically in one request under the flag.
+2. All 5 impression sub-types resolve correctly in cache.
+
+*Testing*
+
+* Fixtures covering each sub-type; view integration test.
+
+* *Risk:* Low.
+* *Estimated effort:* 2–3 days"
+Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with Product wave) [IMPRESSION-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 PRODUCT-BE-B-01 PRODUCT-FE-001,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* impression
+* *Depends on:* IMPRESSION-BE-B-01, PRODUCT-BE-B-01, PRODUCT-FE-001
+* *Operations:* {{searchImpressionsByProductId}}, {{getProduct}}
+
+* *Business objective:*
+** Carry-forward form keeps its combined product + impressions data.
+* *Technical objective:*
+** Migrate the cross-domain document when both roots are on the router.
+* *Required changes:*
+** Re-point after PRODUCT-FE-001; sub-type handling as IMPRESSION-FE-001.
+
+*Acceptance Criteria*
+
+1. Carry-forward form renders identically in one request under the flag.
+
+*Testing*
+
+* Carry-forward flow E2E.
+
+* *Risk:* Low.
+* *Estimated effort:* 1–2 days
+
+---
+
+## Claims"

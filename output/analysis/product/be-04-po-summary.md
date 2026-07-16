@@ -1,7 +1,7 @@
 # Phase 4: PO Sprint Planning Summary — Product
 
 > **Domain:** `product` · **Target DGS:** `plm-product` (host DGS) · **Generated:** 2026-06-26
-> **Stories:** [04-stories.md](./04-stories.md)
+> **Stories:** [be-04-stories.md](./be-04-stories.md)
 > Day-ranges are **AI-estimated — confirm in refinement.** Stories carry complexity only.
 
 ## What Are We Building?
@@ -77,7 +77,7 @@ global decision. ACL steps are noted in stories for context only.
 ## Decisions Required
 
 > Reviewed and updated. Open items needing real research are now **Phase 0 spike stories** — see
-> *Phase 0 — Spikes* in [`04-stories.md`](./04-stories.md) for the full write-up of each.
+> *Phase 0 — Spikes* in [`be-04-stories.md`](./be-04-stories.md) for the full write-up of each.
 
 | # | Decision | Status | Detail |
 |---|---|---|---|

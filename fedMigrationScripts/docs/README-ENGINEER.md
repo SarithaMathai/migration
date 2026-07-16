@@ -13,12 +13,12 @@
      **Current Behaviour** (what the gateway does today), **examples + pseudocode**, target DGS
      implementation, files to touch, **Acceptance Criteria**, and tests (High/VH).
 
-2. **Go to source when you implement:** `initial-analysis/{domain}/`
-   - `04-stories.md` — the story specs (source of truth; the comprehensive doc is generated from this).
-   - `02-resolver-analysis.md` — the **per-resolver logic of the current `spark-internal-graphql` gateway**
+2. **Go to source when you implement:** `analysis/{domain}/`
+   - `be-04-stories.md` — the story specs (source of truth; the comprehensive doc is generated from this).
+   - `be-02-resolver-analysis.md` — the **per-resolver logic of the current `spark-internal-graphql` gateway**
      (the `(Qn/Mn)` tag in a story's Current Behaviour points here).
-   - `03-schema.graphql` — the **target federated SDL** you're building toward.
-   - `01-schema-inventory.md` / `05-attribute-inventory.md` — the type/field surface + attribute mapping.
+   - `be-03-schema.graphql` — the **target federated SDL** you're building toward.
+   - `be-01-schema-inventory.md` / `be-05-attribute-inventory.md` — the type/field surface + attribute mapping.
 
 3. **For the hard cross-domain stories:** `output/complexStories/{case}/`
    - `00-overview.md` (banner: Summary · Spike/ADR · Status · who-reads-what) · `ARCHITECTURE.md`
@@ -49,5 +49,5 @@ BOM-BE-B-04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: �
 ```
 Phase 🔬0 🧱A 📖B 🔍C ✏️D ⚙️E 🔗F 🧪G · Type 🔷Query 🔶Mutation 🔸Resolver · Size 🟢XS 🟡M 🟠L 🔴XL.
 
-> **Do not edit** the generated `summary/` docs — edit `initial-analysis/{domain}/04-*.md` and regenerate
+> **Do not edit** the generated `summary/` docs — edit `analysis/{domain}/04-*.md` and regenerate
 > (see the Script Runner section in [`README.md`](./README.md)).

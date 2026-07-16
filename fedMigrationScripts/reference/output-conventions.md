@@ -17,12 +17,12 @@ Every domain produces these files under `output/{domain}/`:
 
 | Phase | File | Generator Skill |
 |-------|------|----------------|
-| 1 | `01-schema-inventory.md` | `skills/graphql-schema-inventory/SKILL.md` |
-| 2 | `02-resolver-analysis.md` | `skills/resolver-dependency-analysis/SKILL.md` |
-| 3 | `03-schema.graphql` | `skills/federation-schema-derivation/SKILL.md` |
-| 3 | `03-schema-analysis.md` | `skills/federation-schema-derivation/SKILL.md` |
-| 4 | `04-stories.md` | `skills/migration-story-generation/SKILL.md` |
-| 4 | `04-po-summary.md` | `skills/migration-story-generation/SKILL.md` |
+| 1 | `be-01-schema-inventory.md` | `skills/graphql-schema-inventory/SKILL.md` |
+| 2 | `be-02-resolver-analysis.md` | `skills/resolver-dependency-analysis/SKILL.md` |
+| 3 | `be-03-schema.graphql` | `skills/federation-schema-derivation/SKILL.md` |
+| 3 | `be-03-schema-analysis.md` | `skills/federation-schema-derivation/SKILL.md` |
+| 4 | `be-04-stories.md` | `skills/migration-story-generation/SKILL.md` |
+| 4 | `be-04-po-summary.md` | `skills/migration-story-generation/SKILL.md` |
 
 **Domain directory naming:** kebab-case matching the loader key (e.g., `product`, `bom`, `product-details`).
 
@@ -45,7 +45,7 @@ Every `.md` output file MUST start with this exact metadata block:
 
 Rules:
 - Use blockquote (`>`) for metadata — never a table, never a code block
-- `Depends on` uses relative file links (e.g., `[01-schema-inventory.md](./01-schema-inventory.md)`)
+- `Depends on` uses relative file links (e.g., `[be-01-schema-inventory.md](./be-01-schema-inventory.md)`)
 - Phase 1's `Depends on` is `None (entry phase)`
 - **Always include `DGS Target Status`** — tracks whether a green-field or gap analysis was done
 - Include `Pipeline Version: 1.1` so future re-runs can be diffed
@@ -122,7 +122,7 @@ Severity is mandatory on every EXT call — never omit.
 
 ---
 
-## 7. Section Ordering (Phase 2 — `02-resolver-analysis.md`)
+## 7. Section Ordering (Phase 2 — `be-02-resolver-analysis.md`)
 
 Sections MUST appear in this exact order:
 
@@ -142,7 +142,7 @@ ID prefixes: `H{n}` helpers, `Q{n}` queries, `M{n}` mutations, `F{n}` field reso
 
 ---
 
-## 8. Schema File Conventions (`03-schema.graphql`)
+## 8. Schema File Conventions (`be-03-schema.graphql`)
 
 Every schema file MUST begin with:
 
@@ -178,9 +178,9 @@ Every query, mutation, and field MUST be preceded by a `#` comment with status s
 
 ## 9. Link Conventions
 
-- All inter-output links use **relative paths** with `./` (e.g., `[02-resolver-analysis.md](./02-resolver-analysis.md)`)
+- All inter-output links use **relative paths** with `./` (e.g., `[be-02-resolver-analysis.md](./be-02-resolver-analysis.md)`)
 - Story IDs in PO summary are bold text, not links (`**PRODUCT-BE-A-01**`)
-- Story IDs in `04-stories.md` are headings (`### PRODUCT-BE-A-01 · {title}`) so anchor links work
+- Story IDs in `be-04-stories.md` are headings (`### PRODUCT-BE-A-01 · {title}`) so anchor links work
 
 ---
 

@@ -1,7 +1,7 @@
 # Skill 02 — Resolver Dependency Analysis (Pipeline 2.0)
 
-> **Output:** `output/{domain}/02-resolver-analysis.md` · **Audience:** Engineers (the implementation spec)
-> **Depends on:** `01-schema-inventory.md`. **Source of truth:** the `.txt` resolver/service/utils.
+> **Output:** `output/{domain}/be-02-resolver-analysis.md` · **Audience:** Engineers (the implementation spec)
+> **Depends on:** `be-01-schema-inventory.md`. **Source of truth:** the `.txt` resolver/service/utils.
 
 Produce plain-English **pseudo-logic** for every operation so a junior implements without reading JS.
 This artifact is later embedded into each Jira story's "Current Behaviour". If it is vague here, the
@@ -25,7 +25,7 @@ For **utils**: each used function's steps + its DGS equivalent.
 
 ## Trivial field resolvers
 Group pass-throughs (`field: (p) => p.field`, no service call) in one table at the end — do **not** give
-them pseudo-logic blocks. They still appear in `05-attribute-inventory.md` as `Direct`.
+them pseudo-logic blocks. They still appear in `be-05-attribute-inventory.md` as `Direct`.
 
 ## Section order (mandatory)
 Header → Summary Statistics → Helper Functions (only if shared by ≥2) → Query Resolvers → Mutation

@@ -8,7 +8,7 @@ Write the parity tests for **${input:operation:getProduct}** (story ${input:stor
 
 Steps:
 
-1. Pull the legacy contract from the operation's section in `output/initial-analysis/{domain}/02-resolver-analysis.md` at https://github.com/XXX: backend call sequence, response mapping (camelCase conversions), null/empty handling, error behaviour.
+1. Pull the legacy contract from the operation's section in `output/analysis/{domain}/be-02-resolver-analysis.md` at https://github.com/XXX: backend call sequence, response mapping (camelCase conversions), null/empty handling, error behaviour.
 2. Pull the story's *Test Cases* checklist — for High / Very High stories every checklist item becomes one named test; Medium / Low get happy path + one backend-error path.
 3. Write Kotlin tests per `.github/instructions/kotlin/testing.instructions.md`:
    - execute through `DgsQueryExecutor` (`@SpringBootTest`), mock the REST layer

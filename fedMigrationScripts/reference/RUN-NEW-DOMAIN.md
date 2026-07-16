@@ -6,8 +6,8 @@ a new domain end-to-end and produce all audience artifacts. The framework lives 
 ## What a run produces
 
 For domain `{X}` it creates `finalOutput/{x}/` with the 8 analysis files
-(`01-schema-inventory`, `02-resolver-analysis`, `03-schema.graphql`, `03-schema-analysis`,
-`04-stories`, `04-stories-index.yaml`, `04-po-summary`, `05-attribute-inventory`), then the consumption
+(`01-schema-inventory`, `02-resolver-analysis`, `be-03-schema.graphql`, `03-schema-analysis`,
+`04-stories`, `be-04-stories-index.yaml`, `04-po-summary`, `05-attribute-inventory`), then the consumption
 layer (`confluence/{x}.md`, refreshed `jira/` via `generate.py`), and refreshes the program rollups.
 
 ## Generic prompt (template)
@@ -97,5 +97,5 @@ python finalOutput/jira/generate.py, and refresh the program rollups. Follow the
 ```
 
 ---
-*After any run, `jira/generate.py` auto-discovers the new `finalOutput/{domain}/04-stories-index.yaml` —
+*After any run, `jira/generate.py` auto-discovers the new `finalOutput/{domain}/be-04-stories-index.yaml` —
 no generator change needed. See [`skill-06-consumption-artifacts.md`](./skill-06-consumption-artifacts.md).*

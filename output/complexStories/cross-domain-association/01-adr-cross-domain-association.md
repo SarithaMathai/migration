@@ -239,6 +239,6 @@ Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 1. Copy this write-up to `adrs/`; add the `SPIKE-06b` block to `adrs/adr-index.yaml`
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 (06b half) to **Decided**; add `01-stories.md` + implementation notes.
-3. Replace the *"per `PRODUCT-BE-S-01`"* placeholders in `output/initial-analysis/product/04-stories.md`
+3. Replace the *"per `PRODUCT-BE-S-01`"* placeholders in `output/analysis/product/be-04-stories.md`
    (D-01–D-04, D-06, D-07, D-11) with the concrete pattern.
 4. Regenerate domain + global docs; push to Jira/Confluence.
