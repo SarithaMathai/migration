@@ -1,0 +1,57 @@
+import { gql } from '@apollo/client'
+
+export const GET_MATERIAL_FROM_SERVICE = gql`
+  query getMaterialByIdFromService($id: ID!, $accessResourceIds: [ID]!, $humanId: String!) {
+    getMaterialByIdFromService(id: $id) {
+      thumbnailId
+      designThumbnailId
+      businessPartners {
+        id
+        name
+        role {
+          bpRoleName
+          bpRoleId
+          status {
+            id
+          }
+        }
+      }
+      droppedPartnerIds
+      # Used for hub materials
+      baseMaterial {
+        thumbnailId
+        designThumbnailId
+        colorways {
+          name
+          humanId
+          thumbnailId
+        }
+      }
+      colorways {
+        name
+        humanId
+        thumbnailId
+      }
+    }
+    getUserAccessUnencoded(resourceIds: $accessResourceIds) {
+      resourcePermissions {
+        permissions
+      }
+    }
+    getPermissions(resourceIds: [$humanId]) {
+      resourceId
+      permissions {
+        id
+        permission
+        droppedIds
+        abstractAccessGroup {
+          id
+          type
+          grantees
+        }
+      }
+    }
+  }
+`
+
+export default GET_MATERIAL_FROM_SERVICE

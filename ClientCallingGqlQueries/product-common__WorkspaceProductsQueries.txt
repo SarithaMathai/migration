@@ -1,0 +1,988 @@
+import { gql } from '@apollo/client'
+import { LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT } from '@spark/product-queries'
+import { PRODUCT_COMPONENT_FRAGMENT, ATTACHMENTS_WITH_META_DATA_FRAGMENT } from '@spark/product-queries'
+
+export const WORKSPACE_PRODUCT_FRAGMENT = gql`
+  fragment WorkspaceProductFragment on SPARK_Product {
+    id
+    createdAt
+    status(workspaceIdFilter: $workspaceIdFilter) {
+      id
+      name
+    }
+    vendorAttributes(workspaceIdFilter: $workspaceIdFilter) {
+      partnerId
+      status {
+        id
+        name
+        workspaceId
+      }
+      statusCount
+    }
+    comments
+    tags {
+      id
+      name
+      type
+    }
+    clazz {
+      id
+      displayText
+      classId
+      name
+    }
+    department {
+      id
+      name
+      divisionName
+      divisionId
+      displayText
+    }
+    departments {
+      id
+      department {
+        id
+        name
+        displayText
+      }
+      division {
+        id
+        name
+        displayText
+      }
+      clazzes {
+        id
+        classId
+        name
+        displayText
+      }
+      primaryCapacityTypeId
+      secondaryCapacityTypeId
+    }
+    brand {
+      id
+      name
+    }
+    resources {
+      mappings {
+        team
+      }
+    }
+    editable
+    description
+    primaryMaterial
+    secondaryMaterial
+    preferredStyle
+    productMaterials {
+      name
+      primary
+      libraryResource {
+        id
+      }
+    }
+    thumbnailId
+    productWorkspaceInfo {
+      humanId
+      carryForwardReason
+      linkedAttributes
+    }
+    attachmentSummary {
+      isThumbnailPreviewable
+      totalAttachmentCount
+    }
+    businessPartners {
+      id
+      name
+    }
+    droppedPartners {
+      id
+      name
+    }
+    teams {
+      content {
+        id
+        teamId: id
+        name
+        partnerName: partner_name
+        partnerId: partner_id
+        partnerType {
+          code
+          description
+        }
+        purpose
+        members {
+          user_profile_id
+          roles
+          memberDetails {
+            ...LegacyUserProfileAttributesFragment
+          }
+        }
+      }
+    }
+    droppedPartnerIds
+    parentProductId
+    vendorStyleNumber
+    numberOfPieces
+    developmentCost
+    presentationDimensions
+    presentationHeight
+    presentationWidth
+    presentationDepth
+    packagingAttributes {
+      formatId
+      formatName
+      spgLibraryId
+      spg {
+        humanId
+        name
+        description
+        packagingFormat {
+          code
+          description
+        }
+      }
+    }
+    components(workspaceId: $workspaceIdFilter, partnerId: $partnerId) {
+      content {
+        id
+        name
+        type
+        archived
+        status {
+          description
+        }
+        statuses {
+          workspaceId
+          overallStatus {
+            code
+            description
+          }
+          status {
+            code
+            description
+          }
+        }
+        parentResource
+        access {
+          bps
+        }
+        createdAt
+        createdBy {
+          firstName
+          lastName
+          isInternal
+          businessPartner {
+            name
+          }
+        }
+      }
+    }
+  }
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+
+export const GET_WORKSPACE_PRODUCTS_IDS = gql`
+  query getWorkspaceProductIdsV2(
+    $page: Int
+    $size: Int
+    $id: ID!
+    $q: String
+    $filter: [String]
+    $metric: Boolean
+    $workspaceIdFilter: String
+    $prodSamplePage: Int
+    $prodSampleSize: Int
+    $prodSampleTrackingQuery: String
+    $partnerId: ID
+  ) {
+    getWorkspaceV2(id: $id, metric: $metric) {
+      products(page: $page, size: $size, q: $q, filter: $filter) {
+        content {
+          id
+          thumbnailId
+          description
+          businessPartners {
+            id
+            name
+          }
+          status {
+            id
+            name
+          }
+          vendorAttributes(workspaceIdFilter: $workspaceIdFilter) {
+            name
+            partnerId
+            status {
+              statusId: id
+              name
+              workspaceId
+            }
+          }
+          components(workspaceId: $workspaceIdFilter, partnerId: $partnerId) {
+            content {
+              id
+            }
+          }
+          elasticSamplesList(page: $prodSamplePage, size: $prodSampleSize, query: $prodSampleTrackingQuery) {
+            paging {
+              totalElements
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_WORKSPACE_DASHBOARD_STATUSES = gql`
+  query getWorkspaceDashboardStatuses($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      counts {
+        workspaceProductDashboard {
+          sampleStatusSummary {
+            statusCounts {
+              statusId
+              count
+            }
+            totalCount
+          }
+          sampleTrackingStatusSummary {
+            statusCounts {
+              statusId
+              count
+            }
+            totalCount
+          }
+          productBomStatusSummary {
+            statusCounts {
+              statusId
+              count
+            }
+            totalCount
+          }
+          packagingBomStatusSummary {
+            statusCounts {
+              statusId
+              count
+            }
+            totalCount
+          }
+          claimsStatusSummary {
+            statusCounts {
+              statusId
+              count
+            }
+            totalCount
+          }
+          constructionSetStatusSummary {
+            statusCounts {
+              statusId
+              count
+            }
+            totalCount
+          }
+          measurementsStatusSummary {
+            statusCounts {
+              statusId
+              count
+            }
+            totalCount
+          }
+          packagingStatusSummary {
+            statusCounts {
+              statusId
+              count
+            }
+            totalCount
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_WORKSPACE_PRODUCTS_WITH_IDS_NO_SAMPLES_NO_COUNTS = gql`
+  query getWorkspaceV2($page: Int, $size: Int, $id: ID!, $q: String, $filter: [String], $metric: Boolean, $workspaceIdFilter: String, $partnerId: ID) {
+    getWorkspaceV2(id: $id, metric: $metric) {
+      id
+      description
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      designCycles {
+        id
+        name
+      }
+      brands {
+        id
+        name
+      }
+      resources {
+        mappings {
+          product
+        }
+      }
+      products(page: $page, size: $size, q: $q, filter: $filter) {
+        paging {
+          totalElements
+          totalPages
+        }
+        content {
+          ...WorkspaceProductFragment
+        }
+      }
+    }
+  }
+  ${WORKSPACE_PRODUCT_FRAGMENT}
+`
+
+export const GET_WORKSPACE_PRODUCTS_WITH_IDS = gql`
+  query getWorkspaceV2(
+    $page: Int
+    $size: Int
+    $id: ID!
+    $q: String
+    $filter: [String]
+    $metric: Boolean
+    $workspaceIdFilter: String
+    $prodSamplePage: Int
+    $prodSampleSize: Int
+    $prodSampleTrackingQuery: String
+    $partnerId: ID
+  ) {
+    getWorkspaceV2(id: $id, metric: $metric) {
+      id
+      description
+      workspaceType {
+        code
+      }
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      designCycles {
+        id
+        name
+      }
+      brands {
+        id
+        name
+      }
+      teams(includeSystemTeams: true) {
+        content {
+          id
+          name
+          partner_id
+          partner_name
+          status_id
+          status_name
+          status {
+            id
+            description
+          }
+          partnerType {
+            code
+            description
+          }
+          teamType
+          purpose
+        }
+      }
+      resources {
+        mappings {
+          product
+        }
+      }
+      counts {
+        nonEvaluatedRecievedSamplesCount
+        productsCount
+        productsDiscussionsCount {
+          resourceId
+          count
+        }
+        productsSamplesCount {
+          resourceId
+          count
+        }
+      }
+      products(page: $page, size: $size, q: $q, filter: $filter) {
+        paging {
+          totalElements
+          totalPages
+          size
+          number
+        }
+        content {
+          ...WorkspaceProductFragment
+          elasticSamplesList(page: $prodSamplePage, size: $prodSampleSize, query: $prodSampleTrackingQuery) {
+            paging {
+              totalElements
+            }
+            content {
+              id
+              evaluationStatus {
+                code
+                description
+                disabled
+              }
+              tracking {
+                status {
+                  code
+                  description
+                  disabled
+                }
+              }
+            }
+          }
+          sampleIds
+        }
+      }
+    }
+  }
+  ${WORKSPACE_PRODUCT_FRAGMENT}
+`
+export const GET_WORKSPACE_PRODUCTS_HIDDEN = gql`
+  query getWorkspaceV2($size: Int, $id: ID!, $filter: [String]) {
+    getWorkspaceV2(id: $id) {
+      id
+      products(size: $size, filter: $filter) {
+        paging {
+          totalElements
+        }
+      }
+    }
+  }
+`
+
+export const SEARCH_WORKSPACE_PRODUCTS_SUGGESTIONS = gql`
+  query searchWorkspaceProductsSuggestions($q: String!, $workspaceId: ID, $associatedProducts: [ID]) {
+    searchWorkspaceProductsSuggestions(q: $q, workspaceId: $workspaceId, associatedProducts: $associatedProducts) {
+      suggestion
+    }
+  }
+`
+
+export const GET_WORKSPACE_CATEGORY = gql`
+  query getCategories($resourceId: String, $resourceType: String, $type: String!) {
+    getCategories(resourceId: $resourceId, resourceType: $resourceType, type: $type) {
+      count
+      categoryIds
+      categories(type: $type) {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_WORKSPACE_CATEGORY_CLAZZ = gql`
+  query getCategories($resourceId: String, $resourceType: String, $type: String!) {
+    getCategories(resourceId: $resourceId, resourceType: $resourceType, type: $type) {
+      count
+      categoryIds
+      categories(type: $type) {
+        id
+        name
+        ... on IG_Clazz_Filter {
+          classId
+          departmentId
+          departmentName
+        }
+      }
+    }
+  }
+`
+
+export const MANAGE_PRODUCT_WORKSPACES = gql`
+  mutation updateComponentWorkspaceAssociation($input: SPARK_UpdateWorkspaceAssociationsInput) {
+    updateComponentWorkspaceAssociation(input: $input) {
+      ... on SPARK_Measurements {
+        humanId
+        name
+        workspaceContext
+        __typename
+      }
+      ... on SPARK_Bom {
+        humanId
+        name
+        workspaces {
+          id
+          description
+        }
+        __typename
+      }
+    }
+  }
+`
+
+export const SAMPLE_LIST_FRAGMENT = gql`
+  fragment SampleListFragment on SPARK_SampleV2 {
+    id
+    description
+    primaryThumbnailId
+    product {
+      id
+      vendorStyleNumber
+      description
+      brand {
+        id
+        name
+      }
+      status {
+        id
+        name
+      }
+      department {
+        id
+        name
+      }
+      division {
+        id
+        name
+      }
+      businessPartners {
+        id
+        name
+      }
+    }
+    notes
+    dueDate
+    businessPartner {
+      id
+      name
+    }
+    address
+    deliverTo
+    quantity
+    parentId
+    createdAt
+    updatedAt
+    sampleType {
+      code
+      description
+    }
+    sampleFormat {
+      code
+      description
+    }
+    sampleEvaluationPurposes {
+      code
+      description
+    }
+    evaluationStatus {
+      code
+      description
+    }
+
+    evaluatedDate
+    evaluatedBy {
+      id
+      firstName
+      lastName
+    }
+
+    tracking {
+      number
+      etaDate
+      receivedDate
+      status {
+        code
+        description
+      }
+      lateReason {
+        code
+        description
+      }
+      lateReasonText
+    }
+    sampleRound {
+      roundNumber
+      originSampleId
+      parent
+    }
+    createdBy {
+      companyName
+      id
+      firstName
+      lastName
+    }
+    updatedBy {
+      companyName
+      id
+      firstName
+      lastName
+    }
+  }
+`
+
+export const GET_SAMPLES_BY_ID_LIST = gql`
+  query getSamplesByIdsV2($ids: [ID!]) {
+    getSamplesByIdsV2(ids: $ids) {
+      ...SampleListFragment
+    }
+  }
+  ${SAMPLE_LIST_FRAGMENT}
+`
+export const GET_PRODUCT_SAMPLES = gql`
+  query getSamplesByParentId($humanId: [ID!]) {
+    getSamplesByParentId(humanId: $humanId) {
+      ...SampleListFragment
+    }
+  }
+  ${SAMPLE_LIST_FRAGMENT}
+`
+
+export const EXPORT_PACKAGING = gql`
+  mutation exportPackagingFiles($workspaceId: String!, $workspaceDescription: String!, $exportContext: String, $exportType: String!, $q: String, $filter: [String]) {
+    exportPackagingFiles(workspaceId: $workspaceId, workspaceDescription: $workspaceDescription, exportContext: $exportContext, exportType: $exportType, q: $q, filter: $filter) {
+      requestId
+      attachmentCount
+    }
+  }
+`
+
+export const PACKAGING_EXCEL_EXPORT = gql`
+  mutation exportPackaging($workspaceId: String!, $workspaceDescription: String!, $ids: [String]) {
+    exportPackaging(workspaceId: $workspaceId, workspaceDescription: $workspaceDescription, ids: $ids)
+  }
+`
+
+export const EXPORT_WORKSPACE_EXCEL = gql`
+  mutation exportWorkspaceExcel($workspaceExportOptions: SPARK_WorkspaceExportOptions!) {
+    exportWorkspaceExcel(workspaceExportOptions: $workspaceExportOptions) {
+      requestId
+    }
+  }
+`
+
+export const EXPORT_WORKSPACE = gql`
+  mutation exportWorkspace($workspaceId: String!, $exportType: String!, $onlyIncludeAttachmentIds: [String], $includeOnlyPrimaryThumbnails: Boolean, $q: String, $filter: [String]) {
+    exportWorkspace(
+      workspaceId: $workspaceId
+      exportType: $exportType
+      onlyIncludeAttachmentIds: $onlyIncludeAttachmentIds
+      includeOnlyPrimaryThumbnails: $includeOnlyPrimaryThumbnails
+      q: $q
+      filter: $filter
+    ) {
+      requestId
+      attachmentCount
+    }
+  }
+`
+
+export const GET_FILES = gql`
+  query getAttachmentsV3($ids: [ID]!) {
+    getAttachmentsV3(ids: $ids) {
+      documentId
+      humanId
+    }
+  }
+`
+
+export const GET_FILES_WITH_METADATA = gql`
+  query getFilesWithMetaData($productIds: [ID]!) {
+    getProductsByIds(ids: $productIds) {
+      content {
+        id
+        businessPartners {
+          id
+          name
+          associatedPartnerType
+        }
+        droppedPartnerIds
+        droppedPartners {
+          id
+          name
+        }
+        attachmentsWithMetaData {
+          ...AttachmentsWithMetaData
+        }
+      }
+    }
+  }
+  ${ATTACHMENTS_WITH_META_DATA_FRAGMENT}
+`
+
+export const GET_BULK_CREATE_FORM_DATA = gql`
+  query getFormData($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      id
+      protoApprovalDueDate
+      setDates
+      designCycles {
+        id
+        name
+      }
+      brands {
+        id
+        name
+      }
+      tags {
+        id
+        name
+        type
+      }
+      departments {
+        node {
+          id
+          displayText
+        }
+      }
+      teams {
+        content {
+          id
+          name
+          businessPartnerName: partner_name
+          businessPartnerId: partner_id
+          statusName: status_name
+          partnerType {
+            code
+            description
+          }
+          members {
+            user_profile_id
+            roles
+          }
+        }
+      }
+      droppedPartnerIds
+      droppedPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const PRODUCT_BULK = gql`
+  mutation addProducts($workspaceId: ID!, $products: [SPARK_ProductInput]) {
+    addProducts(workspaceId: $workspaceId, products: $products) {
+      products {
+        id
+        description
+      }
+    }
+  }
+`
+
+export const GET_PRODUCTS_BY_ID_LIST = gql`
+  query getFormData($productIds: [ID]!, $workspaceId: ID!, $strWorkspaceId: String) {
+    getWorkspaceV2(id: $workspaceId) {
+      id
+      description
+      departments {
+        node {
+          id
+          displayText
+        }
+      }
+    }
+    getTags(type: "PRODUCT", page: 0, size: 1000) {
+      content {
+        id
+        name
+      }
+    }
+    getDesignCycles: getTags(archived: false, type: "DESIGN_CYCLE", page: 0, size: 1000) {
+      content {
+        id
+        name
+      }
+    }
+    getProductStatus {
+      id
+      name
+    }
+    getProductsByIds(ids: $productIds) {
+      paging {
+        totalElements
+        totalPages
+      }
+      content {
+        designPartnerId
+        id
+        editable
+        createdAt
+        createdBy {
+          id
+          businessPartner {
+            id
+          }
+        }
+        status {
+          id
+          name
+        }
+        vendorAttributes(workspaceIdFilter: $strWorkspaceId) {
+          name
+          partnerId
+          status {
+            statusId: id
+            name
+            workspaceId
+          }
+        }
+        comments
+        tags {
+          id
+          name
+          type
+        }
+        clazz {
+          id
+          name
+          displayText
+        }
+        department {
+          displayText
+          id
+          name
+          divisionName
+          divisionId
+        }
+        departments {
+          id
+          department {
+            id
+            name
+            displayText
+          }
+          division {
+            id
+            name
+            displayText
+          }
+          clazzes {
+            id
+            displayText
+          }
+          primaryCapacityTypeId
+          secondaryCapacityTypeId
+        }
+        brand {
+          id
+          name
+        }
+        description
+        primaryMaterial
+        secondaryMaterial
+        thumbnailId
+        teams(workspaceId: $strWorkspaceId) {
+          content {
+            id
+            businessPartnerId: partner_id
+            businessPartnerName: partner_name
+            name
+          }
+        }
+        productWorkspaceInfo {
+          teams
+          protoApprovalDueDate
+          workspaceId
+          setDates
+          designCycle {
+            id
+            name
+          }
+        }
+        businessPartners {
+          name
+          id
+        }
+        droppedPartners {
+          id
+          name
+        }
+        droppedPartnerIds
+        vendorStyleNumber
+        developmentCost
+        numberOfPieces
+        workspaces {
+          content {
+            id
+          }
+        }
+        attachments {
+          id
+          documentId
+          humanId
+          previewable
+        }
+        productMaterials {
+          name
+          primary
+          libraryResource {
+            id
+          }
+        }
+        components(workspaceId: $strWorkspaceId) {
+          content {
+            ...productComponentFragment
+          }
+        }
+        preferredStyle
+        packagingAttributes {
+          formatId
+          formatName
+          spgLibraryId
+          spgStatus {
+            code
+            description
+          }
+          spg {
+            humanId
+            name
+            description
+            packagingFormat {
+              code
+              description
+            }
+          }
+        }
+      }
+    }
+  }
+  ${PRODUCT_COMPONENT_FRAGMENT}
+`
+
+export const PRODUCT_BULK_UPDATE = gql`
+  mutation bulkUpdateProducts($products: [SPARK_ProductUpdateInput]!) {
+    bulkUpdateProducts(products: $products) {
+      products {
+        id
+        description
+      }
+    }
+  }
+`
+
+export const BULK_GENERATE_TECHPACK = gql`
+  mutation generateCoreTechPacksBulk($sparkBulkTechpackContent: SPARK_BulkTechpackInput!) {
+    generateCoreTechPacksBulk(sparkBulkTechpackContent: $sparkBulkTechpackContent) {
+      id
+    }
+  }
+`
+
+export const BULK_TECHPACK_COUNTS = gql`
+  query getTechPackBulkCount($bulkTechPackCountResource: [SPARK_ProductTechPackCountInput]) {
+    getProductTechPackBulkCountV1(bulkTechPackCountResource: $bulkTechPackCountResource) {
+      productId
+      productThumbnailId
+      productBoms
+      packagingBoms
+      claims
+      constructions
+      measurementSets
+      productAttachments
+      discussionAttachments
+      discussions
+      watchlists
+      sample
+    }
+  }
+`

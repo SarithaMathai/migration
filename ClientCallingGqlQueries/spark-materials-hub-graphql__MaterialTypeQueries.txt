@@ -1,0 +1,164 @@
+import { gql } from '@apollo/client'
+import { MATERIAL_TEMPLATE_DETAILS, MATERIAL_TEMPLATE_PERMISSIONS_DETAILS } from './materialsFragments'
+
+export const GET_MATERIAL_HUB_TYPES = gql`
+  query getHubMaterialTypes {
+    getHubMaterialTypes
+  }
+`
+
+export const ADD_MATERIAL_TEMPLATE = gql`
+  mutation addMaterialTemplate($template: SPARK_MaterialTemplateInput!) {
+    addMaterialTemplate(template: $template) {
+      ...MaterialTemplateDetails
+    }
+  }
+  ${MATERIAL_TEMPLATE_DETAILS}
+`
+
+export const GET_TEMPLATE_DETAILS_FOR_FORM = gql`
+  query getMaterialTemplate($name: ID!, $inheritAttributes: Boolean) {
+    getMaterialTemplate(name: $name, inheritAttributes: $inheritAttributes) {
+      ...MaterialTemplateDetails
+    }
+    getHubMaterialTypes
+    originConfigurationOptions: getHubCodedOptions(type: "Origin") {
+      description
+      code
+    }
+    certificationConfigurationOptions: getHubCodedOptions(type: "Certification") {
+      description
+      code
+    }
+    statuses: getHubCodedOptions(type: "Status") {
+      code
+      description
+    }
+    visualDescriptions: getHubCodedOptions(type: "VisualDescription") {
+      code
+      description
+    }
+    unitsOfMeasure: getHubUnitsOfMeasure {
+      code
+      description
+      symbol
+    }
+    brands: getHubCodedOptions(type: "Brand") {
+      code
+      description
+    }
+    countriesOfOrigin: getTags(archived: false, type: "COUNTRY_OF_PRODUCTION", page: 0, size: 1000) {
+      content {
+        id
+        name
+        archived
+      }
+    }
+  }
+  ${MATERIAL_TEMPLATE_DETAILS}
+`
+
+export const GET_TEMPLATE_PERMISSIONS_AND_GALLERY_TAXONOMY = gql`
+  query getMaterialTemplate($name: ID!, $inheritAttributes: Boolean) {
+    getMaterialTemplate(name: $name, inheritAttributes: $inheritAttributes) {
+      galleryTaxonomyMapping {
+        code
+        description
+      }
+      permissions {
+        ...MaterialTemplatePermissionsDetails
+      }
+    }
+  }
+  ${MATERIAL_TEMPLATE_PERMISSIONS_DETAILS}
+`
+
+export const GET_TEMPLATE_HIERARCHY = gql`
+  query getMaterialTemplateHierarchy {
+    getMaterialTemplateHierarchy {
+      name
+      parent
+      status {
+        code
+        description
+      }
+      permissions {
+        businessPartnerPermissions {
+          canWrite
+          allowedPartnerTypes
+        }
+      }
+      attributes {
+        type
+        name
+        label
+        udfMaterialKey
+        required
+        includeInDescription
+        includeTolerance
+      }
+    }
+    originConfigurationOptions: getHubCodedOptions(type: "Origin") {
+      description
+      code
+    }
+    certificationConfigurationOptions: getHubCodedOptions(type: "Certification") {
+      description
+      code
+    }
+    galleryTaxonomyOptions: getHubCodedOptions(type: "GalleryTaxonomy") {
+      description
+      code
+    }
+    countriesOfOrigin: getTags(archived: false, type: "COUNTRY_OF_PRODUCTION", page: 0, size: 1000) {
+      content {
+        id
+        name
+        archived
+      }
+    }
+  }
+`
+
+export const UPDATE_MATERIAL_TEMPLATE = gql`
+  mutation updateMaterialTemplate($template: SPARK_MaterialTemplateInput!) {
+    updateMaterialTemplate(template: $template) {
+      ...MaterialTemplateDetails
+    }
+  }
+  ${MATERIAL_TEMPLATE_DETAILS}
+`
+
+export const GET_NUMERIC_DIMENSION_ATTRIBUTE_UNITS_OF_MEASURE = gql`
+  query getMaterialHubUnitsOfMeasure {
+    unitsOfMeasure: getHubUnitsOfMeasure {
+      code
+      description
+      symbol
+    }
+  }
+`
+
+export const GET_TEMPLATE_STATUSES = gql`
+  query getTemplateStatuses {
+    getHubCodedOptions(type: "TemplateStatus") {
+      code
+      description
+    }
+  }
+`
+
+export const GET_MATERIAL_TEMPLATE_TYPES = gql`
+  query getMaterialTemplateTypes($statuses: [String]) {
+    getMaterialTemplateTypes(statuses: $statuses)
+  }
+`
+
+export const GET_TEMPLATE_BY_ID = gql`
+  query getMaterialTemplate($name: ID!, $inheritAttributes: Boolean) {
+    getMaterialTemplate(name: $name, inheritAttributes: $inheritAttributes) {
+      ...MaterialTemplateDetails
+    }
+  }
+  ${MATERIAL_TEMPLATE_DETAILS}
+`

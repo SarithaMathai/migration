@@ -1,0 +1,583 @@
+import { gql } from '@apollo/client'
+import {
+  DISCUSSION_DETAILS_FRAGMENT_V3,
+  DISCUSSION_ATTACHMENT_DETAILS_FRAGMENT,
+  DISCUSSION_LIST_FRAGMENT_V2,
+  DISCUSSION_TEAMS_FRAGMENT,
+  REPLY_DETAILS_FRAGMENT_V2,
+  USER_PROFILE_ATTRIBUTES_FRAGMENT,
+} from './DiscussionFragments'
+import { VMM_BUSINESS_PARTNER_ON_PRODUCT } from '@spark/product-queries'
+
+export const CORE_GET_DISCUSSION_V2 = gql`
+  query coreGetDiscussionV2($id: ID!) {
+    coreGetDiscussionV2(id: $id) {
+      attachmentsV2 {
+        ...DiscussionAttachmentDetailsFragment
+      }
+      discussions {
+        ...DiscussionDetailsFragmentV3
+      }
+    }
+  }
+  ${DISCUSSION_ATTACHMENT_DETAILS_FRAGMENT}
+  ${DISCUSSION_DETAILS_FRAGMENT_V3}
+`
+export const CORE_GET_DISCUSSION_V2_EDITABLE_CHECK = gql`
+  query coreGetDiscussionV2($id: ID!) {
+    coreGetDiscussionV2(id: $id) {
+      discussions {
+        isEditable: editable
+        repliesV2 {
+          ...ReplyDetailsFragmentV3
+        }
+      }
+    }
+  }
+  ${REPLY_DETAILS_FRAGMENT_V2}
+`
+
+export const GET_VERSIONED_DISCUSSIONS = gql`
+  query getVersionedDiscussions($id: ID!) {
+    getVersionedDiscussions(id: $id) {
+      version
+      updatedBy {
+        id
+        firstName
+        lastName
+      }
+      updatedAt
+    }
+  }
+`
+export const GET_DISCUSSION_ON_RESOURCE = gql`
+  query getDiscussionOnResource($resourceId: String!) {
+    getDiscussionOnResource(resourceId: $resourceId) {
+      id
+      isAnnouncement: announcement
+      isEditable: editable
+      readByUserList
+      lastReplyBy {
+        ...UserProfileAttributesFragment
+      }
+      businessPartner {
+        id
+        name
+        associatedPartnerType
+      }
+      designPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+      }
+      createdUser {
+        ...UserProfileAttributesFragment
+      }
+      repliesV2 {
+        ...ReplyDetailsFragmentV3
+      }
+    }
+  }
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+  ${REPLY_DETAILS_FRAGMENT_V2}
+`
+
+export const CORE_GET_DISCUSSION_ON_RESOURCE_EDITABLE_CHECK = gql`
+  query getDiscussionOnResource($resourceId: String!) {
+    getDiscussionOnResource(resourceId: $resourceId) {
+      isEditable: editable
+      lastReplyBy {
+        ...UserProfileAttributesFragment
+      }
+      repliesV2 {
+        ...ReplyDetailsFragmentV3
+      }
+    }
+  }
+  ${REPLY_DETAILS_FRAGMENT_V2}
+`
+
+export const GET_VERSIONED_DISCUSSION_THREADS = gql`
+  query getVersionedDiscussionThreads($id: ID!) {
+    getVersionedDiscussionThreads(id: $id) {
+      version
+      updatedBy {
+        id
+        firstName
+        lastName
+      }
+      updatedAt
+    }
+  }
+`
+
+export const GET_SPARK_PRODUCT_V2 = gql`
+  query getProduct($id: ID!, $partnerId: ID) {
+    getProduct(id: $id) {
+      id
+      businessPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+      droppedPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+      discussionsV2(partnerId: $partnerId) {
+        content {
+          discussionDto {
+            ...DiscussionListFragmentV2
+          }
+        }
+      }
+    }
+  }
+  ${VMM_BUSINESS_PARTNER_ON_PRODUCT}
+  ${DISCUSSION_LIST_FRAGMENT_V2}
+`
+
+export const GET_SPARK_WORKSPACE_V2 = gql`
+  query getWorkspaceV2($id: ID!, $partnerId: ID) {
+    getWorkspaceV2(id: $id) {
+      id
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      discussionsV2(partnerId: $partnerId) {
+        content {
+          discussionDto {
+            ...DiscussionListFragmentV2
+          }
+        }
+      }
+    }
+  }
+  ${DISCUSSION_LIST_FRAGMENT_V2}
+`
+
+export const GET_SPARK_PRODUCT_BP = gql`
+  query getProduct($id: ID!) {
+    getProduct(id: $id) {
+      id
+      businessPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+      droppedPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+    }
+  }
+  ${VMM_BUSINESS_PARTNER_ON_PRODUCT}
+`
+export const BULK_UPDATE_PRODUCT_PROPS = gql`
+  mutation bulkUpdateAttributes($attachments: SPARK_BulkAttributesUpdateInput) {
+    bulkUpdateAttributes(attachments: $attachments) {
+      humanId
+      documentId
+    }
+  }
+`
+
+export const GET_PRODUCT_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getProduct(id: $id) {
+      id
+      teams {
+        content {
+          ...DiscussionTeamsFragment
+        }
+      }
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_SPARK_WORKSPACE_BP = gql`
+  query getWorkspaceV2($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      id
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+      }
+    }
+  }
+`
+export const GET_WORKSPACE_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      id
+      teams {
+        content {
+          ...DiscussionTeamsFragment
+        }
+      }
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_SPARK_COLOR_BP = gql`
+  query getColor($id: ID!) {
+    getColor(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+export const GET_COLOR_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getColor(id: $id) {
+      humanId
+      teams {
+        ...DiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_SPARK_COLOR_ARCHROMA_BP = gql`
+  query getColor($id: ID!) {
+    getColorArchroma(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+export const GET_COLOR_ARCHROMA_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getColorArchroma(id: $id) {
+      humanId
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+`
+export const GET_SPARK_ARTWORK_BP = gql`
+  query getArtwork($id: ID!) {
+    getArtwork(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+export const GET_ARTWORK_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getArtwork(id: $id) {
+      humanId
+      teams {
+        ...DiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_SPARK_FABRIC_BP = gql`
+  query getFabric($id: ID!) {
+    getFabric(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+export const GET_FABRIC_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getFabric(id: $id) {
+      humanId
+      teams {
+        ...DiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_SPARK_TRIM_BP = gql`
+  query getTrim($id: ID!) {
+    getTrim(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+export const GET_TRIM_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getTrim(id: $id) {
+      humanId
+      teams {
+        ...DiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_SPARK_COMBINATION_BP = gql`
+  query getCombination($id: ID!) {
+    getCombination(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+    }
+  }
+`
+export const GET_COMBINATION_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getCombination(id: $id) {
+      humanId
+      teams {
+        ...DiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_DISCUSSIONS_V2 = gql`
+  query getDiscussionsV2($resourceType: String!, $resourceId: String!, $partnerId: ID) {
+    getDiscussionsV2(resourceType: $resourceType, resourceId: $resourceId, partnerId: $partnerId) {
+      content {
+        discussionDto {
+          ...DiscussionListFragmentV2
+        }
+      }
+    }
+  }
+  ${DISCUSSION_LIST_FRAGMENT_V2}
+`
+export const GET_SPARK_WASH_BP = gql`
+  query getWash($id: ID!) {
+    getWash(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+export const GET_WASH_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getWash(id: $id) {
+      humanId
+      teams {
+        ...DiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_SPARK_PALETTE_BP = gql`
+  query getPalette($id: ID!) {
+    getPalette(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+export const GET_PALETTE_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getPalette(id: $id) {
+      humanId
+      teams {
+        ...DiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_HUB_MATERIAL_TEAMS = gql`
+  query getHubMaterialTeams($id: ID!) {
+    getHubMaterial(id: $id) {
+      __typename
+      humanId
+      baseMaterial {
+        teams {
+          ...DiscussionTeamsFragment
+        }
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${DISCUSSION_TEAMS_FRAGMENT}
+`
+export const GET_HUB_MATERIAL_BP = gql`
+  query getHubMaterialTeams($id: ID!) {
+    getHubMaterial(id: $id) {
+      __typename
+      humanId
+      baseMaterial {
+        businessPartners {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+export const GET_WORKSPACE_PRODUCTS = gql`
+  query getWorkspaceV2($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      id
+      description
+      businessPartners {
+        id
+        name
+      }
+      products {
+        content {
+          id
+          description
+          businessPartners {
+            id
+            name
+          }
+          designPartnerId
+          thumbnailId
+          attachmentsV3 {
+            content {
+              humanId: id
+              documentId
+              previewable
+            }
+          }
+        }
+      }
+      combinations {
+        content {
+          id: humanId
+          description
+          businessPartners {
+            id
+            name
+          }
+          designPartnerId: dpPartnerIds
+        }
+      }
+    }
+  }
+`
+export const GET_FILES = gql`
+  query getAttachmentsV3($ids: [ID]!) {
+    getAttachmentsV3(ids: $ids) {
+      previewable
+      documentId
+      humanId
+      documentName
+      documentType
+      documentSize
+      createdAt
+    }
+  }
+`

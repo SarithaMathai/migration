@@ -1,0 +1,118 @@
+import { gql } from '@apollo/client'
+
+export const TIGHT_FIT_FRAGMENT = gql`
+  fragment tightFitFragment on SPARK_TightFit {
+    humanId
+    name
+    version
+    statusName
+    statusId
+    brands {
+      id
+      name
+    }
+    divisions {
+      id
+      name
+    }
+    departments {
+      id
+      name
+    }
+    coreSizes {
+      coreSizeId
+      sizeGroupId
+      baseSize {
+        id: code
+        value: code
+        label: description
+        code
+        description
+        enabled
+        hidden
+        source
+      }
+      sizes {
+        id: code
+        value: code
+        label: description
+        code
+        description
+        enabled
+        hidden
+        source
+      }
+    }
+    updatedAt
+    updatedBy {
+      firstName
+      lastName
+    }
+    createdBy {
+      firstName
+      lastName
+    }
+    createdAt
+    rows {
+      rowId
+      critical
+      notes
+      toleranceOver
+      toleranceUnder
+      baseSizeValue
+      unitOfMeasure {
+        name
+        description
+        shortDescription
+        code
+      }
+      sizeValues {
+        code
+        description
+        diffFromNeighbor
+        manualValue
+        calculatedValue
+      }
+      pointOfMeasure {
+        pomId
+        pomName
+        critical
+        referenceId
+        version
+        specialInstructions
+        section {
+          code
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_TIGHT_FITS = gql`
+  ${TIGHT_FIT_FRAGMENT}
+  query getTightFits($ids: [String], $name: String, $statusIds: [Int], $brandIds: [Int], $divisionIds: [Int], $departmentIds: [Int]) {
+    getTightFits(ids: $ids, name: $name, statusIds: $statusIds, brandIds: $brandIds, divisionIds: $divisionIds, departmentIds: $departmentIds) {
+      tightFits {
+        ...tightFitFragment
+      }
+    }
+  }
+`
+
+export const ADD_TIGHT_FIT = gql`
+  mutation addTightFit($tightFit: SPARK_TightFitInput) {
+    addTightFit(tightFit: $tightFit) {
+      humanId
+    }
+  }
+`
+
+export const UPDATE_TIGHT_FIT = gql`
+  ${TIGHT_FIT_FRAGMENT}
+  mutation updateTightFit($tightFit: SPARK_TightFitInput) {
+    updateTightFit(tightFit: $tightFit) {
+      ...tightFitFragment
+    }
+  }
+`

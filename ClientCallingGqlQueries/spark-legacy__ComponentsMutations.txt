@@ -1,0 +1,131 @@
+import { gql } from '@apollo/client'
+
+export const PUBLISH_ATTACHMENT_TO_GALLERY = gql`
+  mutation publishAttachmentToGallery($attachmentId: ID!) {
+    publishAttachmentToGallery(attachmentId: $attachmentId)
+  }
+`
+
+export const UNPUBLISH_ATTACHMENT_TO_GALLERY = gql`
+  mutation unpublishAttachmentToGallery($attachmentId: ID!) {
+    unpublishAttachmentToGallery(attachmentId: $attachmentId)
+  }
+`
+
+export const ADD_TODO = gql`
+  mutation addToDo($toDo: SPARK_ToDoInput!) {
+    addToDo(toDo: $toDo) {
+      id
+      description
+      userProfileId
+      partnerId
+    }
+  }
+`
+
+export const ARCHIVE_ATTACHMENT = gql`
+  mutation archiveAttachmentV3($id: ID!) {
+    archiveAttachmentV3(id: $id) {
+      id
+    }
+  }
+`
+
+export const UPDATE_DEFAULT_PARTNER_ATTRIBUTES = gql`
+  mutation updateDefaultPartnerAttributes($userDefaultPartnerAttributes: SPARK_UserDefaultPartnerAttributes!) {
+    updateDefaultPartnerAttributes(userDefaultPartnerAttributes: $userDefaultPartnerAttributes) {
+      userProfileId
+    }
+  }
+`
+
+export const GET_USERS = gql`
+  query getUsers($name: String, $excludeIds: [String], $partnerId: [ID]) {
+    getUsers(page: 0, size: 7, name: $name, excludeIds: $excludeIds, partnerId: $partnerId) {
+      content {
+        userProfileId
+        firstName
+        lastName
+        companyName
+        internal: isInternal
+        partnerId
+        primaryRole
+        currentVMMRole
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+        accreditations {
+          code
+          description
+          status
+        }
+      }
+    }
+  }
+`
+
+export const UPDATE_USER_ATTRIBUTES = gql`
+  mutation updateUserAttributes($userAttributes: SPARK_UserProfileAttributesInput!) {
+    updateUserAttributes(userAttributes: $userAttributes) {
+      userProfileId
+      firstName
+      lastName
+      notificationAttributes {
+        optedBatching
+        optedOutNotifications
+      }
+    }
+  }
+`
+
+export const ADD_USER_SETTINGS = gql`
+  mutation addUserSettings($userSettings: SPARK_User_Settings_Input!) {
+    addUserSettings(userSettings: $userSettings) {
+      betaTester
+    }
+  }
+`
+
+export const CREATE_USER_VIEW = gql`
+  mutation createUserView($userView: SPARK_UserViewInput!) {
+    createUserView(userView: $userView) {
+      id
+      resourceType
+      name
+      userProfileId
+      columns {
+        colId: id
+        enabled
+      }
+    }
+  }
+`
+export const UPDATE_USER_VIEW = gql`
+  mutation updateUserView($userView: SPARK_UserViewInput!) {
+    updateUserView(userView: $userView) {
+      id
+      resourceType
+      name
+      userProfileId
+      columns {
+        colId: id
+        enabled
+      }
+    }
+  }
+`
+
+export const MANAGE_USER_VIEWS = gql`
+  mutation manageUserViews($views: [SPARK_ManageUserViewInput]!, $resourceType: String!) {
+    manageUserViews(views: $views, resourceType: $resourceType) {
+      id
+      resourceType
+      name
+      userProfileId
+      columns {
+        colId: id
+        enabled
+      }
+    }
+  }
+`

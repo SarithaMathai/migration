@@ -1,0 +1,69 @@
+import { gql } from '@apollo/client'
+
+export const GET_BULK_DISCUSSION_DATA = gql`
+  query getBulkDiscussionData($productIds: [ID]!, $workspaceId: String) {
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+    getProductsByIds(ids: $productIds) {
+      paging {
+        totalElements
+        totalPages
+      }
+      content {
+        id
+        description
+        thumbnailId
+        teams(workspaceId: $workspaceId) {
+          content {
+            id
+            partnerId: partner_id
+            partnerName: partner_name
+            partnerType {
+              code
+            }
+            name
+            members {
+              roles
+              memberDetails {
+                id
+                active
+                companyName
+                firstName
+                lastName
+              }
+            }
+          }
+        }
+        businessPartners {
+          id
+          name
+          associatedPartnerType
+        }
+        droppedPartnerIds
+      }
+    }
+  }
+`
+
+export const BULK_CREATE_DISCUSSIONS = gql`
+  mutation addBulkDiscussionV3($sparkDiscussions: SPARK_BulkDiscussionInputV3!, $attachments: [SPARK_BulkAttachmentInput]) {
+    addBulkDiscussionV3(sparkDiscussions: $sparkDiscussions, attachments: $attachments) {
+      discussionDtoList {
+        id
+      }
+    }
+  }
+`
+
+export const CLONE_BULK_DISCUSSIONS_ATTACHMENTS = gql`
+  mutation cloneFilesForBulkDiscussion($attachmentIds: [String!], $cloneReferences: [BulkDiscussionAttachCloneRef]) {
+    cloneFilesForBulkDiscussion(attachmentIds: $attachmentIds, cloneReferences: $cloneReferences) {
+      id
+      parentResource
+    }
+  }
+`

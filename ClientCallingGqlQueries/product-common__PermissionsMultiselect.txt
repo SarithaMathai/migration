@@ -1,0 +1,172 @@
+import React, { useCallback, useMemo } from 'react'
+import { C8CompatibleAutocomplete } from '@spark/canvas-7-compat'
+import { Anchor, Tooltip, TooltipProps } from '@design-systems/canvas-ui'
+import { ConfirmationModal } from '@spark/legacy/components/ConfirmationModal'
+import _ from 'lodash'
+import useVisibilityState from '@spark/legacy/customHooks/useVisibilityState'
+import { VMM_BusinessPartner } from 'VMM'
+import { useQuery, gql } from '@apollo/client'
+
+// TODO: Ideally this query lives in @core/discussions, but that creates a circular dep:
+// @spark/product-common → @core/discussions → DiscussionQueries → @spark/product-common
+// This minimal inline query breaks the cycle. Only `id` is needed — the component only
+// checks for the existence of a discussion, not its full shape.
+const GET_DISCUSSION_ON_RESOURCE = gql`
+  query getDiscussionOnResource($resourceId: String!) {
+    getDiscussionOnResource(resourceId: $resourceId) {
+      id
+    }
+  }
+`
+
+type Props = {
+  values: VMM_BusinessPartner[]
+  vendorFile?: boolean
+  businessPartners: (VMM_BusinessPartner & { label?: string })[]
+  droppedPartners: VMM_BusinessPartner[]
+  id?: string
+  disabled?: boolean
+  hideClear?: boolean
+  addDisabled?: boolean
+  onUpdate?: (id, value) => void
+  label?: string
+  humanId?: string
+}
+
+export const PermissionsMultiSelect: React.FC<Props> = ({
+  values: permissions,
+  vendorFile = false,
+  businessPartners,
+  droppedPartners,
+  id: fieldId,
+  disabled = false,
+  hideClear,
+  addDisabled,
+  onUpdate,
+  label,
+  humanId,
+}) => {
+  const discussionResponse = useQuery(GET_DISCUSSION_ON_RESOURCE, {
+    variables: { resourceId: humanId },
+    fetchPolicy: 'network-only',
+    skip: !humanId,
+  })
+
+  const disableForDiscussion = useMemo(() => {
+    const existingDiscussion = discussionResponse.data?.getDiscussionOnResource[0]
+    return !!(discussionResponse.loading || discussionResponse.error || existingDiscussion)
+  }, [discussionResponse])
+  const confirmModalVisibility = useVisibilityState()
+  const droppedBPIds = useMemo(() => droppedPartners.map((partner) => partner.id), [droppedPartners])
+
+  const permissionOptions = useMemo(() => {
+    return businessPartners.map((partner) => {
+      return {
+        id: partner.id,
+        value: partner.id,
+        label: partner.name || partner.label,
+        associatedPartnerType: partner.associatedPartnerType,
+        disabled: _.get(partner, 'disabled', false),
+        removable: _.get(partner, 'removable', true),
+      }
+    })
+  }, [businessPartners])
+
+  const values = useMemo(
+    () =>
+      permissions.reduce((allPermissions, bp) => {
+        if (!droppedBPIds.includes(bp.id)) {
+          if (typeof bp === 'string') {
+            const fullBP = _.find(businessPartners, { id: bp })
+            allPermissions.push({
+              id: fullBP.id,
+              value: fullBP.id,
+              label: fullBP.name,
+              disabled: _.get(fullBP, 'disabled', false),
+              removable: _.get(fullBP, 'removable', true),
+            })
+          } else {
+            allPermissions.push({
+              ...bp,
+              disabled: _.get(bp, 'disabled', false),
+              removable: _.get(bp, 'removable', true),
+            })
+          }
+        }
+        return allPermissions
+      }, []),
+    [businessPartners, droppedBPIds, permissions],
+  )
+
+  const updateField = useCallback(
+    (id, value) => {
+      let removedPartner
+      const isPartnerRemoved = permissionOptions.length === value.length + 1
+      if (isPartnerRemoved) {
+        removedPartner = _.differenceBy(permissionOptions, value, 'id')[0]
+        if (!removedPartner.removable) {
+          return
+        }
+      }
+
+      onUpdate(id, value)
+    },
+    [permissionOptions, onUpdate],
+  )
+
+  const clearField = useCallback(() => {
+    const nonRemovableFields = permissionOptions.filter((bp) => !bp.removable)
+    !vendorFile && onUpdate(fieldId, nonRemovableFields)
+  }, [permissionOptions, vendorFile, onUpdate, fieldId])
+
+  const submitConfirmationModal = useCallback(() => {
+    const deleteChip = confirmModalVisibility.context?.deleteChip
+    confirmModalVisibility.hide({ deleteChip: undefined })
+    deleteChip && deleteChip()
+  }, [confirmModalVisibility])
+
+  const Wrapper = vendorFile ? Tooltip : React.Fragment
+  const wrapperProps: TooltipProps = vendorFile
+    ? {
+        location: 'right',
+        content: 'Permissions are locked for files uploaded by Business Partners',
+      }
+    : {}
+  return (
+    <Wrapper {...wrapperProps}>
+      {confirmModalVisibility.visible && (
+        <ConfirmationModal
+          isVisible
+          heading="Confirm Removal"
+          text="Once the Merchandise Vendor has been removed it cannot be added back."
+          handleOnSubmit={submitConfirmationModal}
+          handleOnCancel={confirmModalVisibility.hide}
+          isCancelButton
+          buttonText="Confirm"
+        />
+      )}
+      <C8CompatibleAutocomplete
+        rightContent={
+          !disabled &&
+          !hideClear && (
+            <Anchor data-test="permissionsClear" onClick={clearField}>
+              {permissions.length === 0 ? '' : 'Clear'}
+            </Anchor>
+          )
+        }
+        showSearchIcon
+        loadOnce
+        id={fieldId}
+        onUpdate={updateField}
+        value={values}
+        label={label || 'Permissions'}
+        options={addDisabled ? [] : permissionOptions}
+        multiselect
+        disabled={vendorFile || disabled || disableForDiscussion}
+      />
+    </Wrapper>
+  )
+}
+
+PermissionsMultiSelect.displayName = 'PermissionsMultiSelect'
+export default React.memo(PermissionsMultiSelect)

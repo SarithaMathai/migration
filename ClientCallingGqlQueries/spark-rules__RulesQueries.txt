@@ -1,0 +1,119 @@
+import { gql } from '@apollo/client'
+
+const RULE_LIBRARY_FRAGMENT = gql`
+  fragment RuleLibrary on SPARK_RuleLibrary {
+    id
+    active
+    criteria {
+      departmentClasses {
+        department {
+          id
+          name
+          divisionId
+          divisionName
+          displayText
+        }
+        clazzes {
+          id
+          classId
+          name
+          displayText
+        }
+        brandComplianceRule
+      }
+      businessPartners {
+        id
+        name
+        role {
+          bpRoleId
+          bpRoleName
+        }
+      }
+    }
+    rule {
+      code
+      description
+    }
+    version
+    createdAt
+    updatedAt
+    updatedBy {
+      userProfileId
+      firstName
+      lastName
+    }
+  }
+`
+
+export const GET_ALL_RULE_LIBRARIES = gql`
+  query getAllRuleLibraries {
+    getAllRuleLibraries {
+      paging {
+        size
+        numberOfElements
+        totalPages
+        totalElements
+        number
+      }
+      content {
+        ...RuleLibrary
+      }
+    }
+  }
+  ${RULE_LIBRARY_FRAGMENT}
+`
+
+export const GET_ALL_RULE_OPTIONS = gql`
+  query getAllRuleOptions {
+    getAllRuleOptions {
+      id
+      name
+      orderBy
+      ruleType
+      overriddenBy {
+        id
+        name
+        orderBy
+        ruleType
+      }
+    }
+  }
+`
+
+export const UPDATE_RULE_LIBRARIES = gql`
+  mutation updateRuleLibraries($id: String!, $ruleLibrary: SPARK_RuleLibrary_Input!) {
+    updateRuleLibrary(id: $id, ruleLibrary: $ruleLibrary) {
+      ...RuleLibrary
+    }
+  }
+  ${RULE_LIBRARY_FRAGMENT}
+`
+export const ADD_RULE_LIBRARIES = gql`
+  mutation addRuleLibraries($ruleLibrary: SPARK_RuleLibrary_Input!) {
+    addRuleLibrary(ruleLibrary: $ruleLibrary) {
+      ...RuleLibrary
+    }
+  }
+  ${RULE_LIBRARY_FRAGMENT}
+`
+
+export const SEARCH_RULE_LIBRARIES = gql`
+  query searchRuleLibrary($productIds: [String], $departmentIds: [Int], $businessPartnerIds: [ID], $activeOnly: Boolean) {
+    searchRuleLibrary(productIds: $productIds, departmentIds: $departmentIds, businessPartnerIds: $businessPartnerIds, activeOnly: $activeOnly) {
+      ...RuleLibrary
+    }
+  }
+  ${RULE_LIBRARY_FRAGMENT}
+`
+
+export const SEARCH_RULE_LIBRARIES_GROUPED_BY_PIDS = gql`
+  query searchRuleLibraryGroupedByPIDS($productIds: [String], $departmentIds: [Int], $businessPartnerIds: [ID], $activeOnly: Boolean) {
+    searchRuleLibraryGroupedByPIDS(productIds: $productIds, departmentIds: $departmentIds, businessPartnerIds: $businessPartnerIds, activeOnly: $activeOnly) {
+      productId
+      rules {
+        ...RuleLibrary
+      }
+    }
+  }
+  ${RULE_LIBRARY_FRAGMENT}
+`

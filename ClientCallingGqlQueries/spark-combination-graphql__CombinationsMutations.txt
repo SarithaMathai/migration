@@ -1,0 +1,199 @@
+import { gql } from '@apollo/client'
+import { COMBINATION_DETAILS_FRAGMENT, IMPRESSION_INTENT_LINE_DETAILS } from './CombinationsFragments'
+import { MATERIAL_DETAILS } from '@spark/materials-graphql'
+
+export const ADD_IMPRESSION_INTENT = gql`
+  mutation addImpressionIntentBucket($impressionIntentBucket: SPARK_ImpressionIntentBucketInput!) {
+    addImpressionIntentBucket(impressionIntentBucket: $impressionIntentBucket) {
+      humanId
+      parentComboId
+    }
+  }
+`
+
+export const SAMPLE_BULK_CREATE = gql`
+  mutation createSamplesV2($samples: SPARK_CreateSamplesInputV2!) {
+    createSamplesV2(samples: $samples) {
+      description
+      id
+      dueDate
+      parentId
+      assetHumanId
+      designCycle {
+        id
+        name
+      }
+      businessPartner {
+        name
+        id
+      }
+      evaluationStatus {
+        code
+        description
+      }
+      notes
+      sampleType {
+        code
+        description
+      }
+      tracking {
+        status {
+          code
+          description
+        }
+      }
+    }
+  }
+`
+
+export const ADD_PARTNERS = gql`
+  mutation addBusinessPartners($humanId: ID!, $partnerIds: [ID]) {
+    addBPsToCombination(humanId: $humanId, partnerIds: $partnerIds) {
+      humanId
+    }
+  }
+`
+
+export const ADD_COMBINATION = (isInternalUser: boolean) => gql`
+  mutation addCombination($combination: SPARK_CombinationInput!) {
+    addCombination(combination: $combination) {
+      ...CombinationDetailsFragment
+    }
+  }
+  ${COMBINATION_DETAILS_FRAGMENT(isInternalUser)}
+`
+
+export const UPDATE_COMBINATION = (isInternalUser: boolean) => gql`
+  mutation updateCombination($combination: SPARK_UpdateCombinationInput!, $isFabricChanged: Boolean, $updateImpressionIntentLineDtoList: [SPARK_UpdateImpressionIntentLineInput]) {
+    updateCombination(combination: $combination, isFabricChanged: $isFabricChanged, updateImpressionIntentLineDtoList: $updateImpressionIntentLineDtoList) {
+      ...CombinationDetailsFragment
+    }
+  }
+  ${COMBINATION_DETAILS_FRAGMENT(isInternalUser)}
+`
+
+export const BULK_UPDATE_COMBINATION = gql`
+  mutation bulkUpdateCombination($bulkCombinationUpdates: SPARK_BulkUpdateCombinationInput!) {
+    bulkUpdateCombination(bulkCombinationUpdates: $bulkCombinationUpdates)
+  }
+`
+
+export const SEND_BULK_UPDATE_COMBINATIONS = gql`
+  mutation sendBulkUpdateCombinations($combinationUpdates: SPARK_UpdateCombinationQueryInput) {
+    sendBulkCombinationUpdates(combinationUpdates: $combinationUpdates) {
+      requestId
+    }
+  }
+`
+
+export const UPDATE_IMPRESSION_INTENT_BUCKET = gql`
+  mutation updateImpressionIntentBucket($impressionIntentBucket: SPARK_UpdateImpressionIntentBucketInput!) {
+    updateImpressionIntentBucket(impressionIntentBucket: $impressionIntentBucket) {
+      humanId
+      parentComboId
+      impressionIntent {
+        description
+        code
+      }
+      impressionIntentLines {
+        ...ImpressionIntentLineDetails
+      }
+    }
+  }
+  ${IMPRESSION_INTENT_LINE_DETAILS}
+`
+
+export const ADD_MATERIALS_TO_COMBINATION = (isInternalUser: boolean) => gql`
+  mutation addMaterialsToCombination($parentComboId: ID! $materialImpressionIntentList: [SPARK_ComboRelatedMaterialsInput]) {
+    addMaterialsToCombination(parentComboId: $parentComboId, materialImpressionIntentList: $materialImpressionIntentList) {
+      humanId
+      relatedMaterials @include(if: ${isInternalUser}) {
+        ...MaterialDetails
+      }
+    }
+  }
+  ${MATERIAL_DETAILS}
+`
+export const BULK_ADD_MERCH_VENDOR_TO_BUCKETS = gql`
+  mutation bulkAddMerchVendorsToBuckets($parentComboId: ID!, $impressionIntentLine: SPARK_ImpressionIntentLineInput) {
+    bulkAddMerchVendorsToBuckets(parentComboId: $parentComboId, impressionIntentLine: $impressionIntentLine) {
+      humanId
+      parentComboId
+      impressionIntent {
+        description
+        code
+      }
+      impressionIntentLines {
+        ...ImpressionIntentLineDetails
+      }
+    }
+  }
+  ${IMPRESSION_INTENT_LINE_DETAILS}
+`
+export const ADD_IMPRESSION_INTENT_LINE = gql`
+  mutation addImpressionIntentLine($intentHumanId: ID!, $impressionIntentLine: SPARK_ImpressionIntentLineInput) {
+    addImpressionIntentLine(intentHumanId: $intentHumanId, impressionIntentLine: $impressionIntentLine) {
+      humanId
+      impressionIntentLines {
+        ...ImpressionIntentLineDetails
+      }
+    }
+  }
+  ${IMPRESSION_INTENT_LINE_DETAILS}
+`
+export const UPDATE_IMPRESSION_INTENT_LINE = gql`
+  mutation updateImpressionIntentLine($lineHumanId: ID!, $impressionIntentLine: SPARK_UpdateImpressionIntentLineInput) {
+    updateImpressionIntentLine(lineHumanId: $lineHumanId, impressionIntentLine: $impressionIntentLine) {
+      humanId
+      impressionIntentLines {
+        ...ImpressionIntentLineDetails
+      }
+    }
+  }
+  ${IMPRESSION_INTENT_LINE_DETAILS}
+`
+export const UPDATE_IMPRESSION_INTENT_LINE_STATUS = gql`
+  mutation updateImpressionIntentLineStatus($lineHumanId: ID!, $impressionIntentLineStatus: SPARK_UpdateImpressionIntentLineStatusInput) {
+    updateImpressionIntentLineStatus(lineHumanId: $lineHumanId, impressionIntentLineStatus: $impressionIntentLineStatus) {
+      humanId
+      impressionIntentLines {
+        ...ImpressionIntentLineDetails
+      }
+    }
+  }
+  ${IMPRESSION_INTENT_LINE_DETAILS}
+`
+export const DELETE_IMPRESSION_INTENT_LINE = gql`
+  mutation deleteImpressionIntentLine($humanId: ID!) {
+    deleteImpressionIntentLine(humanId: $humanId) {
+      humanId
+      impressionIntentLines {
+        ...ImpressionIntentLineDetails
+      }
+    }
+  }
+  ${IMPRESSION_INTENT_LINE_DETAILS}
+`
+
+export const DELETE_IMPRESSION_INTENT_BUCKET = gql`
+  mutation deleteImpressionIntentBucket($humanId: ID!) {
+    deleteImpressionIntentBucket(humanId: $humanId)
+  }
+`
+export const UPDATE_TEAMS_COMBINATION = gql`
+  mutation updateCombinationTeams($humanId: ID!, $teamsToUpdate: SPARK_UpdateBPInput) {
+    updateCombinationTeams(humanId: $humanId, teamsToUpdate: $teamsToUpdate)
+  }
+`
+export const ARCHIVE_FABRIC_SPEC_COMBO = gql`
+  mutation archiveFabricSpecCombo($fabricSpecComboId: ID!) {
+    archiveFabricSpecCombo(fabricSpecComboId: $fabricSpecComboId) {
+      humanId
+    }
+  }
+`
+export const CREATE_FABRIC_SPEC_COMBOS = gql`
+  mutation createFabricSpecCombos($humanId: ID!) {
+    createFabricSpecCombos(humanId: $humanId)
+  }
+`

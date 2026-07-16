@@ -1,0 +1,44 @@
+import { gql } from '@apollo/client'
+
+export const GET_USER_ACESS_GROUPS = gql`
+  query getAccessControlGroups($groupIds: [ID], $userProfileIds: [String]) {
+    getAccessControlGroups(groupIds: $groupIds, userProfileIds: $userProfileIds) {
+      accessGroups {
+        id
+        groupName
+        users {
+          id
+          firstName
+          lastName
+          email
+          active
+          companyName
+          isInternal
+        }
+        accreditations
+        userCount
+      }
+    }
+  }
+`
+export const UPDATE_ACCESS_CONTROL_GROUPS = gql`
+  mutation updateAccessControlGroups($groupId: ID!, $userIdsToAdd: [String!], $userIdsToRemove: [String!]) {
+    updateAccessControlGroups(groupId: $groupId, userIdsToAdd: $userIdsToAdd, userIdsToRemove: $userIdsToRemove) {
+      accessGroups {
+        id
+        groupName
+        users {
+          id
+          firstName
+          lastName
+          email
+          active
+          companyName
+          isInternal
+        }
+        accreditations
+        userCount
+      }
+    }
+  }
+`

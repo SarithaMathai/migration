@@ -1,0 +1,176 @@
+import { gql } from '@apollo/client'
+import { ATTACHMENT_V3_FRAGMENT } from './ProductFilesQueries'
+
+export const GET_WORKSPACE_WITH_ATTACHMENTS = gql`
+  query getWorkspaceV2($id: ID!, $resourceString: ID, $partnerId: ID, $type: String, $tags: [String]) {
+    getUserAccessUnencoded(resourceIds: [$resourceString]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+    getWorkspaceV2(id: $id) {
+      id
+      description
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartnerIds
+      droppedPartners {
+        id
+        name
+      }
+      attachmentsV3(partnerId: $partnerId, type: $type, tags: $tags) {
+        counts {
+          attachmentCount(skipQuery: true) {
+            bpType
+            counts
+          }
+        }
+        content {
+          ...AttachmentV3Fragment
+        }
+      }
+    }
+  }
+  ${ATTACHMENT_V3_FRAGMENT}
+`
+
+export const ATTACHMENTS_WITH_META_DATA_FRAGMENT = gql`
+  fragment AttachmentsWithMetaData on SPARK_Attachment_With_Meta_Data {
+    currentUserPermissions {
+      permissions
+    }
+    linkedResourceId
+    resourceTitle
+    isResourceCritical
+    attachment {
+      id
+      documentId
+      humanId
+      documentName
+      documentType
+      documentSize
+      createdAt
+      createdBy {
+        firstName
+        lastName
+        isInternal
+        companyName
+        partnerId
+        defaultPartnerTypeDetails {
+          code
+          description
+        }
+      }
+      productPacketProps {
+        partnerId
+        critical
+      }
+      updatedAt
+      updatedBy {
+        firstName
+        lastName
+        isInternal
+        companyName
+      }
+      businessPartnersFull {
+        id
+        name
+      }
+      previewable
+      access {
+        locked
+        permissions {
+          abstractAccessGroup {
+            id
+            grantees
+            type
+            dropped
+          }
+        }
+      }
+      canShareWithGallery
+      galleryDetails {
+        published
+        publishedAt
+        fileValid
+      }
+      finalVirtualFile
+      mediaType
+      resource {
+        type
+        id
+      }
+      tags {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_WORKSPACE_WITH_ATTACHMENT_META_DATA = gql`
+  query getWorkspaceV2($id: ID!, $resourceString: ID) {
+    getUserAccessUnencoded(resourceIds: [$resourceString]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+    getWorkspaceV2(id: $id) {
+      id
+      description
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartnerIds
+      droppedPartners {
+        id
+        name
+      }
+      attachmentsWithMetaData {
+        ...AttachmentsWithMetaData
+      }
+    }
+  }
+  ${ATTACHMENTS_WITH_META_DATA_FRAGMENT}
+`
+export const GET_PRODUCT_WITH_META_DATA = gql`
+  query getProduct($id: ID!, $resourceString: ID) {
+    getUserAccessUnencoded(resourceIds: [$resourceString]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+    getProduct(id: $id) {
+      id
+      description
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartnerIds
+      droppedPartners {
+        id
+        name
+      }
+      attachmentsWithMetaData {
+        ...AttachmentsWithMetaData
+      }
+    }
+  }
+  ${ATTACHMENTS_WITH_META_DATA_FRAGMENT}
+`
+
+export const FILES_BULK_UPDATE = gql`
+  mutation bulkUpdateAttachmentsV2($attachments: [SPARK_UpdateAttachmentV2]) {
+    bulkUpdateAttachmentsV2(attachments: $attachments) {
+      documentId
+      humanId
+    }
+  }
+`

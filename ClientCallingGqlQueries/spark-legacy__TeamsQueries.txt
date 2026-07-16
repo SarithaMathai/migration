@@ -1,0 +1,197 @@
+import { gql } from '@apollo/client'
+import { SPARK_Team_Elastic } from 'Team'
+import { SPARK_Paging } from 'Base'
+
+export type SPARK_Result_SEARCH_TEAMS = {
+  searchTeamsElastic: {
+    content: SPARK_Team_Elastic[]
+    paging: SPARK_Paging
+  }
+}
+
+export const SEARCH_TEAMS = gql`
+  query searchTeamsElastic($page: Int, $size: Int, $q: String) {
+    searchTeamsElastic(page: $page, size: $size, q: $q) {
+      content {
+        id
+        name
+        purpose
+        partner_id
+        partner_name
+        business_partner {
+          id
+          name
+          partnerTypes: role {
+            bpRoleName
+            bpRoleId
+            status {
+              id
+            }
+          }
+        }
+        members {
+          user_profile_id
+          roles
+        }
+        status_name
+      }
+      paging {
+        first
+        last
+        number
+        size
+        totalElements
+        totalPages
+      }
+    }
+  }
+`
+export const GET_TEAM_COMMON_BPS = gql`
+  query getTeamCommonBPs {
+    getTeamCommonBPs {
+      id
+      name
+    }
+  }
+`
+export const SEARCH_TEAMS_SUGGESTIONS = gql`
+  query searchTeamsSuggestions($q: String!) {
+    searchTeamsSuggestions(q: $q) {
+      suggestion
+    }
+  }
+`
+
+export const BULK_UPDATE_TEAMS = gql`
+  mutation bulkUpdateTeams($teamsToUpdate: [SPARK_TeamsToUpdateInput]) {
+    bulkUpdateTeams(teamsToUpdate: $teamsToUpdate)
+  }
+`
+
+export const GET_USERS = gql`
+  query getUsers($partnerId: [ID], $name: String, $excludeIds: [String], $onlyInternal: Boolean, $dpSecurity: Boolean, $excludeInactive: Boolean) {
+    getUsers(partnerId: $partnerId, page: 0, size: 5, name: $name, excludeIds: $excludeIds, onlyInternal: $onlyInternal, dpSecurity: $dpSecurity, excludeInactive: $excludeInactive) {
+      content {
+        userProfileId
+        firstName
+        internal: isInternal
+        lastName
+        companyName
+        partnerId
+        primaryRole
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+        accreditations {
+          code
+          description
+          status
+        }
+      }
+    }
+  }
+`
+
+export const MANAGE_TEAMS_WORKSPACES = gql`
+  mutation updateProductTeamsWorkspaceContext($productId: ID!, $teamWorkspacesToAdd: [WorkspaceTeamPair], $teamWorkspacesToRemove: [WorkspaceTeamPair]) {
+    updateProductTeamsWorkspaceContext(productId: $productId, teamWorkspacesToAdd: $teamWorkspacesToAdd, teamWorkspacesToRemove: $teamWorkspacesToRemove) {
+      id
+      description
+      productWorkspaceInfo {
+        humanId
+        teams
+      }
+    }
+  }
+`
+
+export const UPDATE_TEAM = gql`
+  mutation updateTeamV2($teamInput: SPARK_TeamUpdateInputV2!) {
+    updateTeamV2(teamInput: $teamInput) {
+      id
+    }
+  }
+`
+
+export const GET_ROLES = gql`
+  query getRoles {
+    getRoles {
+      roles {
+        id
+        value
+        label: value
+      }
+    }
+  }
+`
+export const CREATE_TEAM = gql`
+  mutation createTeamV2($teamInput: SPARK_TeamInputV2!) {
+    createTeamV2(teamInput: $teamInput) {
+      id
+    }
+  }
+`
+
+export const GET_CURRENT_TEAM = gql`
+  query getTeam($id: ID!) {
+    getTeam(id: $id) {
+      id
+      name
+      status_id
+      status_name
+      partnerType {
+        code
+        description
+      }
+      updatedBy: updated_by {
+        id
+        lastName
+        firstName
+      }
+      updatedAt: updated_at
+      members {
+        roles
+        user_profile_id
+        memberDetails {
+          id
+          userProfileId
+          lastName
+          internal: isInternal
+          firstName
+          companyName
+          primaryRole
+          active
+          accreditations {
+            code
+            description
+            status
+          }
+        }
+      }
+      businessPartner: business_partner {
+        id
+        name
+        partnerType: role {
+          bpRoleId
+          bpRoleName
+          status {
+            id
+          }
+        }
+      }
+      purpose
+      teamType
+      partnerType {
+        code
+        description
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+        label: value
+      }
+    }
+  }
+`

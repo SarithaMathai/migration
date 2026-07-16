@@ -1,0 +1,691 @@
+import { gql } from '@apollo/client'
+
+export const MATERIALS_SEARCH_PAGING_FRAGMENT = gql`
+  fragment MaterialsSearchPagingDetails on SPARK_Paging {
+    size
+    numberOfElements
+    totalPages
+    totalElements
+    number
+  }
+`
+
+export const MATERIALS_SEARCH_CONTENT_FRAGMENT = gql`
+  fragment MaterialsSearchContentDetails on SPARK_Material {
+    id
+    name
+    supplierId
+    supplierName
+    is3D
+    relatedFileTypes {
+      id
+      types
+    }
+    businessPartners @include(if: $isInternal) {
+      id
+      name
+    }
+    baseMaterial {
+      description
+      thumbnailId
+      designThumbnailId
+      status {
+        code
+        description
+      }
+      baseAssetType
+      suppliers @include(if: $isInternal) {
+        id
+        materialId
+        supplier {
+          id
+          name
+        }
+      }
+    }
+    droppedPartnerIds @include(if: $isInternal)
+    type
+    red
+    green
+    blue
+    thumbnailId
+    designThumbnailId
+    additionalReferenceId
+    referenceId
+    targetStandard
+    digital
+    gvs
+    parentHumanId
+    tgtCode
+    targetSourced
+    status {
+      code
+      description
+    }
+    externalStatus {
+      code
+      description
+    }
+    tags {
+      name
+    }
+    description
+    trimType {
+      description
+    }
+    layers {
+      fabricType
+    }
+    monoMaterial
+    # Impression Intent Info
+    applicationTechnique
+    impressionIntent
+    solid
+    icsPoly
+    icsNylon
+    icsCotton
+    readyForReview
+    platformFabric
+    providerName
+    substrate {
+      code
+      description
+    }
+    colorForAll {
+      code
+      description
+    }
+    evaluation {
+      aesthaticStatus {
+        code
+        description
+      }
+      testingStatus {
+        code
+        description
+      }
+      finalApproved
+      userId
+    }
+    attachments {
+      id
+    }
+    createdBy {
+      companyName
+    }
+    relatedBomIds
+    additionalDescription
+    inspiration
+    colorLinks {
+      humanId
+      linkType
+      color {
+        humanId
+        name
+        referenceId
+      }
+    }
+  }
+`
+
+export const MATERIALS_SEARCH_COUNTS_FRAGMENT = gql`
+  fragment MaterialsSearchCountsDetails on SPARK_MaterialCounts {
+    artworks
+    colorsReferenceLibrary
+    colorsStandardLibrary
+    fabrics
+    fabricSpec
+    digitalFabrics
+    trim
+    wash
+  }
+`
+
+export const MATERIALS_SEARCH_FRAGMENT = gql`
+  fragment MaterialsSearchDetails on SPARK_MaterialsPaged {
+    paging {
+      ...MaterialsSearchPagingDetails
+    }
+    content {
+      ...MaterialsSearchContentDetails
+    }
+    counts {
+      ...MaterialsSearchCountsDetails
+    }
+  }
+  ${MATERIALS_SEARCH_PAGING_FRAGMENT}
+  ${MATERIALS_SEARCH_CONTENT_FRAGMENT}
+  ${MATERIALS_SEARCH_COUNTS_FRAGMENT}
+`
+
+export const GET_FACILITIES = gql`
+  query getFabricFacilitiesByBpId($id: ID) {
+    getFabricFacilitiesByBpId(id: $id) {
+      id
+      name
+      status
+      authorized
+      countryOfOrigin
+      capabilityTypes
+    }
+  }
+`
+
+export const GET_COMBO_FROM_SAMPLE = gql`
+  query getComboForSample($sampleId: ID!) {
+    getSamplesByIdsV2(ids: [$sampleId]) {
+      fabricSpecCombo {
+        parentComboId
+      }
+    }
+  }
+`
+
+export const SEARCH_MATERIALS_PAGINATED = gql`
+  query searchMaterials($q: String!, $page: Int!) {
+    searchMaterials(q: $q, page: $page, size: 50) {
+      content {
+        id
+        name
+        type
+        status {
+          code
+          description
+        }
+        externalStatus {
+          code
+          description
+        }
+        red
+        green
+        blue
+        thumbnailId
+      }
+    }
+  }
+`
+
+export const EXPORT_MATERIALS = gql`
+  query exportMaterials($exportSearchParams: SPARK_MaterialExportSearchParamsInput) {
+    exportMaterials(exportSearchParams: $exportSearchParams) {
+      requestId
+    }
+  }
+`
+
+export const GET_HIERARCHY_AND_FAVORITE_MATERIALS = gql`
+  query getMaterialTemplateHierarchy {
+    getMaterialTemplateHierarchy {
+      name
+      parent
+      status {
+        code
+        description
+      }
+      permissions {
+        businessPartnerPermissions {
+          canWrite
+          allowedPartnerTypes
+        }
+      }
+    }
+    getUserSettings {
+      favoriteMaterialTypes
+    }
+  }
+`
+
+export const GET_MATERIAL_HUB_TYPES_FOR_PARENT = gql`
+  query getMaterialTemplateTypes($parent: String!) {
+    getMaterialTemplateTypes(searchCriteria: { parent: $parent, hasParent: true })
+  }
+`
+
+export const GET_FABRIC_CONNECTION_ENUMS = gql`
+  query getFabricConnectionEnums {
+    getMaterialSampleEvaluationTypesV2 {
+      code
+      description
+    }
+  }
+`
+
+export const GET_MATERIAL_RELATED_PALETTES = gql`
+  query getMaterialByIdFromService($id: ID!) {
+    getMaterialByIdFromService(id: $id) {
+      humanId
+      relatedPalettes {
+        humanId
+        description
+        paletteTypes {
+          code
+          description
+        }
+        brands {
+          id
+          name
+        }
+        designCycles {
+          id
+          name
+        }
+        departments {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_RELATED_BOMS = gql`
+  query getMaterialByIdFromService($id: ID!) {
+    getMaterialByIdFromService(id: $id) {
+      humanId
+      relatedBoms {
+        content {
+          humanId
+          name
+          businessPartners {
+            id
+            name
+          }
+          product {
+            id
+            thumbnailId
+            description
+            brand {
+              id
+              name
+            }
+            department {
+              id
+              name
+            }
+            workspaces {
+              content {
+                id
+                designCycles {
+                  name
+                  id
+                }
+              }
+            }
+            vendorAttributes {
+              allStatuses {
+                statusName
+                statusId
+                workspaceId
+              }
+            }
+          }
+        }
+        paging {
+          totalPages
+          totalElements
+          last
+          size
+        }
+      }
+    }
+  }
+`
+
+export const GET_MATERIAL_BY_IDS_FROM_SERVICE = gql`
+  query getMaterialByIdsFromService($ids: [ID]) {
+    getMaterialByIdsFromService(ids: $ids) {
+      humanId
+      name
+      description
+      additionalDescription
+      claims {
+        status {
+          code
+          description
+        }
+        claimDetails {
+          guestFacingClaim
+        }
+      }
+      mechanicalFinishes {
+        code
+        description
+      }
+      chemicalFinishes {
+        code
+        description
+      }
+      thumbnailId
+      trimType {
+        code
+        description
+      }
+      trimSubType {
+        code
+        description
+      }
+      trimShapes {
+        code
+        description
+      }
+      trimConstruction {
+        code
+        description
+      }
+      fiberDetails {
+        fiberContent {
+          code
+          description
+        }
+        percentage
+      }
+      recycledContent
+      baseMaterial {
+        description
+        name
+      }
+    }
+  }
+`
+
+export const GET_TRIM_LABEL_TYPE_ENUMS = gql`
+  query getLabelTypeEnums($subTypeCode: Int) {
+    getTrimLabelTypesBySubtype(subTypeCode: $subTypeCode) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_FIBER_CONTENT_ENUMS = (trimType, trimSubType) => gql`
+  query getUnitOfMeasureEnums {
+    getFiberContentsByTypeAndSubtype(typeCode: ${trimType}, subTypeCode: ${trimSubType}) {
+      code
+      description
+    }
+  }
+`
+export const GET_UNIT_OF_MEASURE_ENUMS = (uomEnumQuery, trimType) => gql`
+  query getUnitOfMeasureEnums {
+    ${uomEnumQuery}(typeCode: ${trimType}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_MATERIALS_WITH_PERMISSIONS = gql`
+  query searchMaterials(
+    $q: String!
+    $nestedQueryList: [SPARK_NestedQueryInput]
+    $page: Int!
+    $id: ID!
+    $sortField: String
+    $sortDirection: SPARK_SortDirection
+    $options: SPARK_MaterialsSearchOptions
+    $isInternal: Boolean = false
+  ) {
+    searchMaterialsNested(q: $q, nestedQueryList: $nestedQueryList, page: $page, size: 48, sortField: $sortField, sortDirection: $sortDirection, options: $options) {
+      ...MaterialsSearchDetails
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+    getUserSettings {
+      materialListView
+    }
+  }
+  ${MATERIALS_SEARCH_FRAGMENT}
+`
+
+// TODO: this should be handled with a single query that uses the @include directive
+// to conditionally fetch businessPartner field based on isInternal variable
+export const GET_MATERIAL_TEAMS_WITHOUT_BP = gql`
+  query getTeams($id: ID!) {
+    getMaterialByIdFromService(id: $id) {
+      humanId
+      teams {
+        id
+        accessControlGroupIds
+        teamType
+        name
+        partner_name
+        partner_id
+        partnerType {
+          code
+          description
+        }
+        members {
+          user_profile_id
+          roles
+        }
+        status_name
+      }
+      droppedPartnerIds
+      businessPartners {
+        id
+        name
+        role {
+          bpRoleName
+          bpRoleId
+          status {
+            id
+          }
+        }
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+`
+
+export const GET_MATERIAL_TEAMS_WITH_BP = gql`
+  query getTeams($id: ID!) {
+    getMaterialByIdFromService(id: $id) {
+      humanId
+      teams {
+        id
+        accessControlGroupIds
+        teamType
+        name
+        partner_name
+        partner_id
+        partnerType {
+          code
+          description
+        }
+        members {
+          user_profile_id
+          roles
+        }
+        status_name
+        business_partner {
+          id
+          name
+          role {
+            bpRoleId
+            bpRoleName
+            status {
+              id
+            }
+          }
+        }
+      }
+      droppedPartnerIds
+      businessPartners {
+        id
+        name
+        role {
+          bpRoleName
+          bpRoleId
+          status {
+            id
+          }
+        }
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+`
+
+export const GET_HUB_MATERIAL_STATUS = gql`
+  query getHubMaterialStatus($id: ID!) {
+    getHubMaterial(id: $id) {
+      ... on SPARK_HubMaterialInterface {
+        baseMaterial {
+          status {
+            code
+            description
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_MATERIAL_FILTER_INFORMATION = gql`
+  query getHubMaterialTypes {
+    getHubMaterialTypes
+    getUserSettings {
+      favoriteMaterialTypes
+    }
+    getMaterialTemplateHierarchy {
+      name
+      parent
+      status {
+        code
+        description
+      }
+    }
+  }
+`
+
+export const GET_MATERIAL_SAMPLE_CONNECTIONS = gql`
+  query getMaterialSampleConnections($id: ID!) {
+    getMaterialByIdFromService(id: $id) {
+      humanId
+      name
+      red
+      green
+      blue
+      thumbnailId
+      samples {
+        id
+        assetHumanId
+        evaluationStatus {
+          code
+          description
+        }
+        clmPackageIdentifier
+        clmPackage {
+          id
+          requestStatus
+          colors {
+            color {
+              id
+              name
+            }
+            requestStatus
+          }
+        }
+        merchandiseVendors {
+          id
+          name
+        }
+        fabricSupplier {
+          id
+          name
+        }
+        fabricSpecCombo {
+          humanId
+          parentCombo {
+            humanId
+            description
+          }
+          fabricSpecId
+          fabricSpec {
+            humanId
+            name
+            thumbnailId
+            supplierName
+            readyForReview
+            evaluation {
+              aesthaticStatus {
+                code
+                description
+              }
+              testingStatus {
+                code
+                description
+              }
+              finalApproved
+            }
+            impressions {
+              facilities {
+                type {
+                  code
+                  description
+                }
+                facility {
+                  countryOfOrigin
+                }
+              }
+            }
+            parentRecord {
+              humanId
+              name
+              thumbnailId
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_DIVISIONS = gql`
+  query getDivisions {
+    getDivisions {
+      id
+      name
+      displayText
+    }
+  }
+`
+
+export const MULTIPLE_REQUEST_MATERIAL_SEARCH = gql`
+  query multiRequestMaterialSearch($requestDTOs: [SPARK_SearchMultipleMaterialRequest]) {
+    multiRequestMaterialSearch(requestDTOs: $requestDTOs) {
+      requestKey
+      searchResult {
+        content {
+          id
+          name
+          red
+          green
+          blue
+          targetStandard
+          providerName
+          substrate {
+            description
+          }
+          icsPoly
+          icsNylon
+          icsCotton
+          colorForAll {
+            description
+          }
+        }
+      }
+    }
+  }
+`

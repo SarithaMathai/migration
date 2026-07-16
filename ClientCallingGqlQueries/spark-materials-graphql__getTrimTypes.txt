@@ -1,0 +1,18 @@
+import { gql } from '@apollo/client'
+
+export const GET_TRIM_TYPES = gql`
+  query getTrimTypes {
+    getTrimTypes {
+      code
+      description
+    }
+    getStatuses {
+      code
+      description
+    }
+    getTrimBrands {
+      code
+      description
+    }
+  }
+`

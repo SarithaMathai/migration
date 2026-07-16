@@ -104,7 +104,7 @@ Stories are grouped into phases that encode the replacement order within a domai
 | `SPARK-SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which partners cannot be removed/dropped because still referenced (cross-domain `@requires` union). | product `E01` · workspace `E01` | partner-read fields | [`complexStories/notRemovable-undroppable-partners`](https://github.com/XXX/tree/main/output/complexStories/notRemovable-undroppable-partners) | 🔴 Open — contribution contract to agree |
 | `SPARK-SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant + CI schema-conformance. | bom `A04` | type-resolver + variant fields | [`complexStories/polymorphic-type-resolution`](https://github.com/XXX/tree/main/output/complexStories/polymorphic-type-resolution) | 🔴 Open — code→type table to confirm |
 | `SPARK-SPIKE-06a` | 🔬 **Hydration** — how a domain *reads* another's entity (federated `@key` ref vs REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product `S02` (gates `C01`) · bom `B05` | hydration + rollout (reads) | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — per-edge rule to decide |
-| `SPARK-SPIKE-06b` | 🔬 **Cross-Domain Association** — one pattern for a mutation that also *links* its record into a sibling domain (workspace/attachment/team/partner), incl. sync-vs-async and partial-failure handling. | product `S01` (gates `D01`/`D02`/`D03`/`D04`/`D06`/`D07`/`D11`) | association-side writes | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — pattern to choose |
+| `SPARK-SPIKE-06b` | 🔬 **Cross-Domain Association** — one pattern for a mutation that also *links* its record into a sibling domain (workspace/attachment), incl. sync-vs-async and partial-failure handling. `D03` is a pure passthrough (no cross-domain call). `D06`/`D07`/`D11` are single-backend writes — product backend owns all endpoints, no sibling service called. | product `S01` (gates `D01`/`D02`/`D04` only — see scope note) | association-side writes (D01/D02/D04) | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — pattern to choose |
 
 > **Sequencing:** `SPARK-SPIKE-01/02/03` are on the critical path (they block `E`-phase writes and TechPack); run them in Sprint 0 alongside each domain's `B01` module scaffold. `04/05/06a/06b` block specific reads/writes and can run in parallel. Each spike concludes with the decision recorded back into the affected domain stories.
 >
@@ -299,22 +299,23 @@ Stories are grouped into phases that encode the replacement order within a domai
 - A mutation on one domain’s record often also has to **link** that record into a sibling domain — attach files, put it in a workspace, add teams, add partners.
 - This spike decides the **one pattern** every such mutation should follow (sync direct call / event-driven / shared `AssociationService`), instead of each mutation inventing its own "write, then also link" logic.
 - Unlike `06a`, there is no read-hydration or federated-reference question here — this is purely about how a *write* fans out to a sibling domain.
+- **Scope (per ADR-011 draft):** `D03` (`bulkUpdateProducts`) is a pure passthrough — no cross-domain call. `D06`/`D07`/`D11` ("Collab Canvas") are cross-domain in concept but all three endpoints are on the product backend; no external workspace/partner service is called. Only **D01, D02, D04** are in scope.
 
-**Decision to make:** Pick the association pattern (see `SPARK-PROD-S01`’s three candidates) and how a mid-flight association failure is handled.
+**Decision to make:** Pick the association pattern (see `SPARK-PROD-S01`'s three candidates) and how a mid-flight association failure is handled.
 
 **Intended cross-domain steps:**
 
-1. Primary mutation writes its own record (product create/update/bulk-update)
-2. If the input carries a cross-domain link (`workspaceId`, `copyProduct`, template attachments, teams, partners) → build the association per the **chosen S01 pattern** (sync call / event / shared service)
-3. Apply the link to the target domain (workspace, attachment, team, partner)
+1. Primary mutation writes its own record (product create/update)
+2. If the input carries a cross-domain link (`workspaceId`, `copyProduct`, template attachments) → build the association per the **chosen S01 pattern** (sync call / event / shared service)
+3. Apply the link to the target domain (workspace, attachment)
 4. Record what happens if the link step fails after the primary write succeeded (today: mostly silent/undocumented)
 
 | Resolver (home story) | Domain | Kind | Calls (external services) | What it does today (minimal) |
 |---|---|---|---|---|
 | 🔴🔬 `SPARK-PROD-D01` `addProduct` | product | Mutation | `workspaceV2`, `attachment` | POST ${v1} + optional copyProductToProduct(copyProduct) + workspace association |
 | 🔴🔬 `SPARK-PROD-D02` `addProducts` (bulk) | product | Mutation | `attachment` | bulk POST ${v1}/bulk + attachment-link side-effects (no rollback — preserve, flag) |
-| 🔴🔬 `SPARK-PROD-D03` `bulkUpdateProducts` | product | Mutation | — (internal only) | PUT ${v1}/mass_update |
 | 🔴🔬 `SPARK-PROD-D04` `updateProduct` | product | Mutation | `attachment` | PUT ${v1}/{id} + optional copy + archive removed-template attachments (template branch) |
-| 🔴🔬 `SPARK-PROD-D06` `addTeamsToProduct` 🔀 Collab Canvas | product | Mutation | — (internal only) | POST ${v1}/{productId}/resources/bulk + manage_workspace_teams |
-| 🔴🔬 `SPARK-PROD-D07` `addBusinessPartnersToProductWithType` 🔀 Collab Canvas | product | Mutation | — (internal only) | POST ${v1}/{productId}/partners-add/bulk |
-| 🔴🔬 `SPARK-PROD-D11` `updateWorkspaceAttributes` 🔀 Collab Canvas | product | Mutation | — (internal only) | PUT ${v1}/{productId} workspace attrs |
+| ~~`SPARK-PROD-D03` `bulkUpdateProducts`~~ | ~~product~~ | ~~Mutation~~ | ~~— (internal only)~~ | ~~Pure passthrough `PUT ${v1}/mass_update` — no cross-domain call; **not in scope** for this spike~~ |
+| ~~`SPARK-PROD-D06` `addTeamsToProduct` 🔀 Collab Canvas~~ | ~~product~~ | ~~Mutation~~ | ~~— (internal only)~~ | ~~Single-backend write; all 3 endpoints on product backend — **not in scope** for this spike~~ |
+| ~~`SPARK-PROD-D07` `addBusinessPartnersToProductWithType` 🔀 Collab Canvas~~ | ~~product~~ | ~~Mutation~~ | ~~— (internal only)~~ | ~~Single-backend write — **not in scope** for this spike~~ |
+| ~~`SPARK-PROD-D11` `updateWorkspaceAttributes` 🔀 Collab Canvas~~ | ~~product~~ | ~~Mutation~~ | ~~— (internal only)~~ | ~~Single-backend write — **not in scope** for this spike~~ |

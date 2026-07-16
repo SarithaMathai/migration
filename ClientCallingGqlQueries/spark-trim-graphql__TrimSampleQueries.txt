@@ -1,0 +1,224 @@
+import { gql } from '@apollo/client'
+
+export const TRIM_SIZE_DETAILS_M = gql`
+  fragment TrimSizeDetailsMinified on SPARK_TrimSize {
+    sizeId
+    innerWidth
+    width
+    height
+    outsideEdge
+    size
+    uom {
+      code
+      description
+    }
+  }
+`
+export const TRIM_COLOR_DETAILS_M_FRAGMENT = gql`
+  fragment TrimColorDetailsMinifiedFragment on SPARK_TrimColorRow {
+    colorId
+    colorType {
+      code
+      description
+    }
+    color {
+      humanId
+      id
+      referenceId
+      red
+      green
+      blue
+      thumbnailId
+      name
+      type
+    }
+  }
+`
+export const TRIM_FINISH_DETAILS_M = gql`
+  fragment TrimFinishDetailsMinified on SPARK_TrimFinishRow {
+    rowId
+    finishType {
+      code
+      description
+    }
+    coating {
+      color {
+        ...TrimColorDetailsMinifiedFragment
+      }
+      coatingType {
+        code
+        description
+      }
+    }
+    finishOption {
+      code
+      description
+    }
+  }
+  ${TRIM_COLOR_DETAILS_M_FRAGMENT}
+`
+
+export const TRIM_DETAILS_M = gql`
+  fragment TrimDetailsMinified on SPARK_Trim {
+    humanId
+    id: humanId
+    tgtCode
+    thumbnailId
+    description
+    trimType {
+      code
+      description
+    }
+    trimSubType {
+      code
+      description
+    }
+    trimFurtherSubType {
+      code
+      description
+    }
+    trimLabelTypes {
+      code
+      description
+    }
+    trimSizes {
+      ...TrimSizeDetailsMinified
+    }
+    businessPartners {
+      id
+      name
+      associatedPartnerType
+    }
+    droppedPartnerIds
+    pyramid {
+      code
+      description
+    }
+    droppedPartnerIds
+    brand {
+      code
+      description
+    }
+    adjacency {
+      code
+      description
+    }
+    # Additional Info Form Section
+    designCycle {
+      id
+      name
+    }
+    # Trim Color and Finish Section
+    colors {
+      ...TrimColorDetailsMinifiedFragment
+    }
+    finishes {
+      ...TrimFinishDetailsMinified
+    }
+    teams {
+      id
+      name
+      companyName: partner_name
+      partnerName: partner_name
+      partnerId: partner_id
+      partnerType {
+        code
+        description
+      }
+      teamType
+      members {
+        roles
+        memberDetails {
+          id
+          active
+          firstName
+          lastName
+          companyName
+          partnerId
+          userProfileId
+          outOfOfficeAttributes {
+            userOutOfOffice
+          }
+        }
+      }
+    }
+    suppliers {
+      supplierId
+      supplierItemCode
+      supplier {
+        id
+        name
+      }
+      facilities {
+        facilityId
+        facility {
+          id
+          name
+          countryOfOrigin
+          status
+          authorized
+        }
+      }
+    }
+  }
+  ${TRIM_SIZE_DETAILS_M}
+  ${TRIM_COLOR_DETAILS_M_FRAGMENT}
+  ${TRIM_FINISH_DETAILS_M}
+`
+
+export const GET_TRIM_BY_ID_MIN = gql`
+  query getTrim($id: ID!) {
+    getTrim(id: $id) {
+      ...TrimDetailsMinified
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${TRIM_DETAILS_M}
+`
+
+export const GET_TRIM_AND_OPTIONS = gql`
+  query getTrim($id: ID!, $resourceTypes: String = "trim_sample", $type: String) {
+    getTrim(id: $id) {
+      ...TrimDetailsMinified
+    }
+    getSampleTypesV2(resourceTypes: $resourceTypes) {
+      code
+      description
+    }
+    getSampleFormats(type: $type) {
+      code
+      description
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${TRIM_DETAILS_M}
+`
+
+export const GET_SELECT_OPTIONS_FOR_TRIM_SAMPLE = gql`
+  query getTypesForTrimSampleForm($resourceTypes: String = "trim_sample", $type: String) {
+    getSampleTypesV2(resourceTypes: $resourceTypes) {
+      code
+      description
+    }
+    getSampleTrackingTypesV2 {
+      code
+      description
+    }
+    getSampleLateReasonTypesV2 {
+      code
+      description
+    }
+    getSampleFormats(type: $type) {
+      code
+      description
+    }
+  }
+`

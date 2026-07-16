@@ -1,0 +1,33 @@
+import { gql } from '@apollo/client'
+
+export const BEST_MATCH_COLOR_SEARCH = gql`
+  query bestMatchColorSearch($q: String, $searchArguments: SPARK_MaterialSearchArguments) {
+    searchMaterialsV2(q: $q, page: 0, size: 4, searchArguments: $searchArguments) {
+      content {
+        id
+        name
+        red
+        green
+        blue
+        targetStandard
+        providerName
+        substrate {
+          description
+        }
+        icsPoly
+        icsNylon
+        icsCotton
+        status {
+          description
+        }
+        externalStatus {
+          description
+        }
+        colorForAll {
+          description
+        }
+        referenceId
+      }
+    }
+  }
+`

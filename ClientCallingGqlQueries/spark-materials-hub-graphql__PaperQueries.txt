@@ -1,0 +1,150 @@
+import { gql } from '@apollo/client'
+import { FILE_FIELDS } from '@spark/legacy/components/graphql/ComponentsFragments'
+import { BASE_MATERIAL_DETAILS } from './BaseMaterialQueries'
+
+export const PAPER_DETAILS = gql`
+  fragment PaperDetails on SPARK_Paper {
+    humanId
+    type
+    classification
+    baseMaterial {
+      ...BaseMaterialDetails
+    }
+    subType {
+      code
+      description
+    }
+
+    bleaching {
+      code
+      description
+    }
+    coating {
+      code
+      description
+    }
+    pulpType {
+      code
+      description
+    }
+    lamination {
+      code
+      description
+    }
+    paperGrade {
+      code
+      description
+    }
+    paperboardGrade {
+      code
+      description
+    }
+    corrugateFluting {
+      code
+      description
+    }
+    tissueGrade {
+      code
+      description
+    }
+    dryingType {
+      code
+      description
+    }
+    nonWoodFiberContent
+  }
+  ${FILE_FIELDS}
+  ${BASE_MATERIAL_DETAILS}
+`
+
+export const ADD_PAPER = gql`
+  mutation addPaper($material: SPARK_PaperInput!) {
+    addMaterial: addPaper(material: $material) {
+      ...PaperDetails
+    }
+  }
+  ${PAPER_DETAILS}
+`
+
+export const UPDATE_PAPER = gql`
+  mutation updatePaper($material: SPARK_PaperInput!) {
+    updatePaper(material: $material) {
+      ...PaperDetails
+    }
+  }
+  ${PAPER_DETAILS}
+`
+
+export const GET_PAPER_BY_ID = gql`
+  query getHubMaterial($id: ID!) {
+    getHubMaterial(id: $id) {
+      ... on SPARK_Paper {
+        ...PaperDetails
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${PAPER_DETAILS}
+`
+
+export const GET_PAPER_ENUMS = gql`
+  query getPaperEnums {
+    subtypes: getHubCodedOptions(type: "PaperSubtype") {
+      code
+      description
+    }
+    bleaching: getHubCodedOptions(type: "Bleaching") {
+      code
+      description
+    }
+    coating: getHubCodedOptions(type: "Coating") {
+      code
+      description
+    }
+    pulpType: getHubCodedOptions(type: "PaperPulpType") {
+      code
+      description
+    }
+    lamination: getHubCodedOptions(type: "Lamination") {
+      code
+      description
+    }
+    paperGrades: getHubCodedOptions(type: "PaperGrade") {
+      code
+      description
+    }
+    paperboardGrades: getHubCodedOptions(type: "PaperboardGrade") {
+      code
+      description
+    }
+    corrugateFlutings: getHubCodedOptions(type: "PaperCorrugateFluting") {
+      code
+      description
+    }
+    tissueGrades: getHubCodedOptions(type: "PaperTissueGrade") {
+      code
+      description
+    }
+    dryingType: getHubCodedOptions(type: "PaperDryingType") {
+      code
+      description
+    }
+    statuses: getHubCodedOptions(type: "Status") {
+      code
+      description
+    }
+    unitsOfMeasure: getHubUnitsOfMeasure {
+      code
+      description
+      symbol
+    }
+    originConfigurationOptions: getHubCodedOptions(type: "Origin") {
+      description
+      code
+    }
+  }
+`

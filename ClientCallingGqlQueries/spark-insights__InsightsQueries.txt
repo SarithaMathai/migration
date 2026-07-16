@@ -1,0 +1,1593 @@
+import { gql } from '@apollo/client'
+
+export const GET_CARD_BY_ID = (fragment, queryName = 'getCard') => {
+  const fragmentName = fragment.definitions[0].name.value
+  return gql`
+    query ${queryName}($id: String!, $filtersInput: Spark_Greenfield_Filters_Input) {
+      getCard(id: $id, filtersInput: $filtersInput) {
+        queryResults {
+          ...${fragmentName}
+        }
+        lastUpdatedTimeStamp
+      }
+    }
+    ${fragment}
+  `
+}
+
+export const GET_CARD_BY_ID_WITH_TOTAL_RESULTS = (fragment, queryName = 'getCardWithTotalResults') => {
+  const fragmentName = fragment.definitions[0].name.value
+  return gql`
+    query ${queryName}($id: String!, $filtersInput: Spark_Greenfield_Filters_Input) {
+      getCard(id: $id, filtersInput: $filtersInput) {
+        queryResults {
+          ...${fragmentName}
+        }
+        totalResults {
+          ...${fragmentName}
+        }
+        lastUpdatedTimeStamp
+      }
+    }
+    ${fragment}
+  `
+}
+
+export const GET_BYO_FILTERS = () => gql`
+  query getByoFilters($design_cycle_filter_id: String!, $division_filter_id: String!, $department_filter_id: String!, $brand_filter_id: String!, $merch_vendor_filter_id: String!) {
+    cycles: getCard(id: $design_cycle_filter_id) {
+      queryResults {
+        designCycleN
+        designCycleC
+        designCycleYearN
+      }
+    }
+    divisions: getCard(id: $division_filter_id) {
+      queryResults {
+        divisionN
+        productDivisionId
+        productDepartmentId
+      }
+    }
+    departments: getCard(id: $department_filter_id) {
+      queryResults {
+        departmentNumberN
+        count
+        productDepartmentId
+      }
+    }
+    brands: getCard(id: $brand_filter_id) {
+      queryResults {
+        brandN
+        productBrandId
+      }
+    }
+    merchVendors: getCard(id: $merch_vendor_filter_id) {
+      queryResults {
+        businessPartners {
+          name
+          id
+        }
+      }
+    }
+  }
+`
+
+export const GET_BYO_FILTERS_BY_MATERIAL_TYPE = () => gql`
+  query getByoMaterialFilters($supplier_filter_id: String!, $material_design_cycle_filter_id: String!) {
+    materialDesignCycles: getCard(id: $material_design_cycle_filter_id) {
+      queryResults {
+        materialDesignCycleN
+      }
+    }
+    suppliers: getCard(id: $supplier_filter_id) {
+      queryResults {
+        supplierId
+        supplierN
+      }
+    }
+  }
+`
+
+export const DEPARTMENT_FILTER_FRAGMENT = gql`
+  fragment DepartmentFilterFragment on SPARK_Greenfield_Query_Results {
+    departmentNumberN
+    count
+    productDepartmentId
+  }
+`
+
+export const PYRAMID_FILTER_FRAGMENT = gql`
+  fragment PyramidFilterFragment on SPARK_Greenfield_Query_Results {
+    groupN
+  }
+`
+export const DIVISION_FILTER_FRAGMENT = gql`
+  fragment DivisionFilterFragment on SPARK_Greenfield_Query_Results {
+    divisionN
+    productDivisionId
+    productDepartmentId
+  }
+`
+
+export const BRAND_FILTER_FRAGMENT = gql`
+  fragment BrandFilterFragment on SPARK_Greenfield_Query_Results {
+    brandN
+    productBrandId
+  }
+`
+
+export const DESIGN_CYCLE_FILTER_FRAGMENT = gql`
+  fragment DesignCycleFilterFragment on SPARK_Greenfield_Query_Results {
+    designCycleN
+    designCycleC
+    designCycleYearN
+    tagDesignCycleId
+  }
+`
+
+export const MATERIAL_DIVISION_FILTER_FRAGMENT = gql`
+  fragment MaterialDivisionFilterFragment on SPARK_Greenfield_Query_Results {
+    materialDivisionN
+  }
+`
+
+export const MATERIAL_DEPARTMENT_FILTER_FRAGMENT = gql`
+  fragment MaterialDepartmentFilterFragment on SPARK_Greenfield_Query_Results {
+    departmentNumberN
+    materialDepartmentId
+  }
+`
+
+export const MATERIAL_BRAND_FILTER_FRAGMENT = gql`
+  fragment MaterialBrandFilterFragment on SPARK_Greenfield_Query_Results {
+    brandN
+    materialBrandId
+  }
+`
+
+export const MATERIAL_DESIGN_CYCLE_FILTER_FRAGMENT = gql`
+  fragment MaterialDesignCycleFilterFragment on SPARK_Greenfield_Query_Results {
+    materialDesignCycleN
+  }
+`
+
+export const BP_FILTER_FRAGMENT = gql`
+  fragment BPFilterFragment on SPARK_Greenfield_Query_Results {
+    businessPartners {
+      name
+      id
+    }
+  }
+`
+export const SUPPLIER_FILTER_FRAGMENT = gql`
+  fragment SupplierFilterFragment on SPARK_Greenfield_Query_Results {
+    supplierId
+    supplierN
+  }
+`
+
+export const CLASS_FILTER_FRAGMENT = gql`
+  fragment ClassFilterFragment on SPARK_Greenfield_Query_Results {
+    classN
+    productDepartmentId
+    productClassId
+  }
+`
+
+export const WORKSPACE_FILTER_FRAGMENT = gql`
+  fragment WorkspaceFilterFragment on SPARK_Greenfield_Query_Results {
+    workspaceId
+    workspaceDesc
+  }
+`
+
+export const PRODUCT_SAMPLE_TYPE_FILTER_FRAGMENT = gql`
+  fragment ProductSampleTypeFilterFragment on SPARK_Greenfield_Query_Results {
+    sampleTypeC
+    sampleTypeDesc
+  }
+`
+
+export const PRODUCT_SAMPLE_FORMAT_FILTER_FRAGMENT = gql`
+  fragment ProductSampleFormatFilterFragment on SPARK_Greenfield_Query_Results {
+    sampleFormatC
+    sampleFormatDesc
+  }
+`
+
+export const EVALUATION_FRAGMENT = gql`
+  fragment EvaluationFragment on SPARK_Greenfield_Query_Results {
+    photovideoSampleType
+    threeDSampleType
+    otherSampleType
+    physicalSampleType
+    sampleEvaluationStatusDesc
+  }
+`
+export const MATERIAL_EVALUATION_FRAGMENT = gql`
+  fragment MaterialEvaluationFragment on SPARK_Greenfield_Query_Results {
+    countOfRows
+    sampleEvaluationStatusDesc
+    sampleTypeDesc
+  }
+`
+
+export const DUE_DATES_FRAGMENT = gql`
+  fragment DueDatesFragment on SPARK_Greenfield_Query_Results {
+    sampleDueD
+    sampleId
+    sampleDesc
+    sampleTrackingStatusDesc
+    sampleProductId
+    workspaceId
+    sampleTypeDesc
+  }
+`
+export const DUE_DATES_FABRIC_FRAGMENT = gql`
+  fragment DueDatesFabricFragment on SPARK_Greenfield_Query_Results {
+    sampleDueD
+    sampleId
+    sampleDesc
+    sampleTrackingStatusDesc
+    fabricSpecId
+    fabricId
+    sampleTypeDesc
+  }
+`
+
+export const TREND_FRAGMENT = gql`
+  fragment TrendFragment on SPARK_Greenfield_Query_Results {
+    designCycleN
+    physicalSampleType
+    nonphysicalSampleType
+    totalProductSampleType
+  }
+`
+
+export const WASH_TREND_FRAGMENT = gql`
+  fragment WashTrendFragment on SPARK_Greenfield_Query_Results {
+    designCycleN
+    legPanelSampleType
+    fullGarmentSampleType
+  }
+`
+export const SAMPLE_TYPE_FRAGMENT = gql`
+  fragment SampleTypeFragment on SPARK_Greenfield_Query_Results {
+    countOfRows
+    sampleTypeDesc
+  }
+`
+export const SAMPLE_TRACKING_FRAGMENT = gql`
+  fragment SampleTrackingFragment on SPARK_Greenfield_Query_Results {
+    sampleTrackingStatusC
+    sampleTrackingStatusDesc
+    countOfRows
+  }
+`
+
+export const PAST_DUE_DATES_WITH_BP = gql`
+  fragment PastDueDatesWithBPFragment on SPARK_Greenfield_Query_Results {
+    sampleId
+    sampleDesc
+    businessPartners {
+      id
+      name
+    }
+    sampleProductId
+    workspaceId
+    sampleTypeDesc
+  }
+`
+export const PAST_DUE_DATES_FABRIC = gql`
+  fragment PastDueDatesFabricFragment on SPARK_Greenfield_Query_Results {
+    sampleId
+    sampleDesc
+    businessPartners {
+      id
+      name
+    }
+    fabricSpecId
+    fabricId
+    sampleTypeDesc
+  }
+`
+
+export const PERCENTAGE_CLAIMS_FRAGMENT = gql`
+  fragment PercentageClaimsFragment on SPARK_Greenfield_Query_Results {
+    claimsProductPercentage
+  }
+`
+export const ACTIVE_CLAIMS_FRAGMENT = gql`
+  fragment ActiveClaimsFragment on SPARK_Greenfield_Query_Results {
+    activeClaims
+  }
+`
+export const SUBSTANTIATED_CLAIMS_FRAGMENT = gql`
+  fragment SubstantiatedClaimsFragment on SPARK_Greenfield_Query_Results {
+    substantiatedClaims
+  }
+`
+export const AVERAGE_CLAIMS_FRAGMENT = gql`
+  fragment AverageClaimsFragment on SPARK_Greenfield_Query_Results {
+    avgActiveClaims
+  }
+`
+
+export const FREQUENTLY_USED_CLAIMS = gql`
+  fragment FrequentlyUsedClaimsFragment on SPARK_Greenfield_Query_Results {
+    claim
+    uniqueProductCount
+    claimCount
+    substantiatedClaims
+  }
+`
+
+export const FREQUENTLY_USED_CLAIMS_BY_PID = gql`
+  fragment FrequentlyUsedClaimsByPidFragment on SPARK_Greenfield_Query_Results {
+    productId
+    productDescription
+    claim
+    claimId
+    uniqueProductCount
+    claimCount
+    substantiatedClaims
+  }
+`
+export const PARTNER_PERFORMANCE_CLAIMS = gql`
+  fragment PartnerPerformanceClaimsFragment on SPARK_Greenfield_Query_Results {
+    businessPartners {
+      id
+      name
+    }
+    substantiatedClaimCount
+    claimGuestFacingT
+    percentageToTotalSubstantiated
+  }
+`
+export const ACCREDITED_DEPTH_OF_BP_USERS_FRAGMENT = gql`
+  fragment AccreditedDepthOfBPUsersFragment on SPARK_Greenfield_Query_Results {
+    totalActiveUsers
+    accreditedUsers
+  }
+`
+export const ACCREDITED_PARTNERS_EVALUATIONS = gql`
+  fragment AccreditedPartnersEvaluationsFragment on SPARK_Greenfield_Query_Results {
+    accreditedSampleEvaluationsCount
+    totalEvaluationsCount
+    technicalTotalEvaluationsCount
+  }
+`
+
+export const ACCREDITED_SCOPE_OF_BP_USERS = gql`
+  fragment AccreditedScopeOfBPUsersFragment on SPARK_Greenfield_Query_Results {
+    scopeOfBps
+    totalActiveUsers
+  }
+`
+
+export const ACCREDITED_PARTNERS_COUNT = gql`
+  fragment AccreditedPartnersCountFragment on SPARK_Greenfield_Query_Results {
+    accreditedUsers
+  }
+`
+
+export const TOTAL_CLAIMS = gql`
+  fragment TotalClaimsFragment on SPARK_Greenfield_Query_Results {
+    prodPreProdCount
+    activeClaimsPercent
+    claimVendorSubstantiatedF
+    designCycleN
+  }
+`
+
+export const COMMUNICATING_CHANNEL_FRAGMENT = gql`
+  fragment CommunicatingChannelFragment on SPARK_Greenfield_Query_Results {
+    claimCommunicationChannelDesc
+    claimsCommunicationChannelPercentage
+  }
+`
+export const ACCREDITED_BP_PERFORMANCE = gql`
+  fragment AccreditedBPPerformanceFragment on SPARK_Greenfield_Query_Results {
+    businessPartners {
+      id
+      name
+    }
+    uniqueProductCount
+    awardedProductsCount
+    accreditedSampleEvaluationsCount
+    technicalTotalEvaluationsCount
+    accreditedSampleEvaluationsPercent
+    technicalAccreditedSamplesPercent
+    accreditedSampleEvaluationsRound1Percent
+    sampleDesc
+    statusPercent
+    submittedOnTimePercent
+  }
+`
+
+export const ACCREDITED_EVALUATION_TRENDS = gql`
+  fragment AccreditedEvaluationTrendsFragment on SPARK_Greenfield_Query_Results {
+    accreditedSampleEvaluationsCount
+    technicalTotalEvaluationsCount
+    technicalAccreditedSamplesPercent
+    accreditedSamplesPercent
+    totalEvaluationsCount
+    designCycleN
+  }
+`
+export const CLAIMS_HEIRARCHY = gql`
+  fragment ClaimsHierarchyFragment on SPARK_Greenfield_Query_Results {
+    activeClaims
+    percentageProductWithClaims
+    departmentNumberN
+    departmentClassNumberN
+  }
+`
+export const DEV_RATIO_ADOPTION_CARD = gql`
+  query getDevRatioAndAdoption($filtersInput: Spark_Greenfield_Filters_Input) {
+    getDevRatioAndAdoption(filtersInput: $filtersInput) {
+      devRatio
+      adoptionRatio
+    }
+  }
+`
+export const UTILIZATION_3D = gql`
+  fragment Utilization3DFragment on SPARK_Greenfield_Query_Results {
+    threeDTotalPercentage
+    apparelPercentage
+    accessoriesShoesPercentage
+    decorativeHomesPercentage
+    essentialsBeautyPercentage
+  }
+`
+
+export const BP_VIEW_3D = gql`
+  fragment BPView3DFragment on SPARK_Greenfield_Query_Results {
+    businessPartners {
+      id
+      name
+    }
+    uniqueProductCount
+    threeDProductsPercentage
+    threeDAwardedPercentage
+    threeDSamplesCount
+    threeDProductsCount
+    sampleTrackingAvgLos
+  }
+`
+
+export const BP_PRODUCTS_3D = gql`
+  fragment BPProducts3DFragment on SPARK_Greenfield_Query_Results {
+    productDescription
+    productId
+    businessPartners {
+      id
+      name
+    }
+    divisionN
+    productDepartmentId
+    threeDProductsPercentage
+    productPartnerWorkspaceStatusN
+  }
+`
+
+export const BP_CATEGORY_VIEW_3D = gql`
+  fragment BPCategoryView3DFragment on SPARK_Greenfield_Query_Results {
+    uniqueProductCount
+    threeDProductsPercentage
+    threeDAwardedPercentage
+    uniqueProductionProductCount
+    threeDProductionProductsCount
+    threeDSamplesCount
+    divisionN
+    departmentNumberN
+    threeDProductsCount
+    sampleTrackingAvgLos
+    productDepartmentId
+  }
+`
+export const SAMPLE_SAVINGS_3D = gql`
+  fragment SampleSavings3DFragment on SPARK_Greenfield_Query_Results {
+    threeDSamplePercentage
+    nonThreeDSamplePercentage
+    photoVideoSamplePercentage
+    totalSamplesCount
+    designCycleN
+  }
+`
+export const SAMPLE_RATIO_3D = gql`
+  fragment SampleRatio3DFragment on SPARK_Greenfield_Query_Results {
+    threeDSampleCount
+    physicalSampleCount
+    threeDSampleRatio
+    threeDTotalPercentage
+    designCycleN
+  }
+`
+export const UTILIZATION_3D_TREND = gql`
+  fragment Utilization3DTrendFragment on SPARK_Greenfield_Query_Results {
+    threeDProductUtilizationPercentage
+    threeDAwardedUtilizationPercentage
+    threeDSampleProductsCount
+    designCycleN
+  }
+`
+export const PROCESS_ADHERENCE_3D = gql`
+  fragment ProcessAdherence3DFragment on SPARK_Greenfield_Query_Results {
+    requestedCount
+    receivedCount
+    reviewedCount
+    reviewedPercentage
+    receivedPercentage
+    designCycleN
+  }
+`
+
+export const DIGITAL_TWIN_SAMPLE_METRICS = gql`
+  fragment DigitalTwinSampleMetricsFragment on SPARK_Greenfield_Query_Results {
+    requestedCount
+    fulfilledCount
+    reviewedCount
+    reviewedPercentage
+    fulfilledPercentage
+    designCycleN
+  }
+`
+
+export const APPROVAL_BY_ROUND_FRAGMENT = gql`
+  fragment ApprovalByRoundFragment on SPARK_Greenfield_Query_Results {
+    sampleRoundNumber
+    count: threeDSampleCount
+    percentage: threeDSamplePercentage
+  }
+`
+
+export const PHYSICAL_APPROVAL_BY_ROUND_FRAGMENT = gql`
+  fragment PhysicalApprovalByRoundFragment on SPARK_Greenfield_Query_Results {
+    sampleRoundNumber
+    count: physicalSampleCount
+    percentage: physicalSamplePercentage
+  }
+`
+
+export const PHOTO_VIDEO_APPROVAL_BY_ROUND_FRAGMENT = gql`
+  fragment PhotoVideoApprovalByRoundFragment on SPARK_Greenfield_Query_Results {
+    sampleRoundNumber
+    count: photoVideoSampleCount
+    percentage: photoVideoSamplePercentage
+  }
+`
+
+export const FABRIC_DEV_RATIO_FRAGMENT = gql`
+  fragment FabricDevRatioFragment on SPARK_Greenfield_Query_Results {
+    devRatio
+  }
+`
+
+export const FABRIC_ADOPTION_RATE_FRAGMENT = gql`
+  fragment FabricAdoptionRateFragment on SPARK_Greenfield_Query_Results {
+    adoptionRate
+  }
+`
+
+export const GET_USER_SETTINGS = gql`
+  query getUserSettings {
+    getUserSettings {
+      filters {
+        category
+        name
+        filterOptions {
+          departments {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          divisions {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          cycles {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          brands {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          classes {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          tags {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          workspaces {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          businessPartners {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          dueDates {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          sampleTypes {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          sampleFormats {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialSampleTypes {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          suppliers {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialBrands {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialDesignCycles {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialDepartments {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialDivisions {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          merchVendors {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+        }
+      }
+      theme
+    }
+  }
+`
+export const SET_USER_SETTINGS = gql`
+  mutation addUserSettings($userSettings: SPARK_User_Settings_Input!) {
+    addUserSettings(userSettings: $userSettings) {
+      filters {
+        category
+        name
+        filterOptions {
+          departments {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          divisions {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          cycles {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          brands {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          classes {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          tags {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          workspaces {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          businessPartners {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          dueDates {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          sampleTypes {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          sampleFormats {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialSampleTypes {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          suppliers {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialBrands {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialDesignCycles {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialDepartments {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          materialDivisions {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+          merchVendors {
+            id
+            label
+            additionalFilters {
+              id
+              label
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const WORKLOAD_PRODUCT_STATUS = gql`
+  fragment WorkloadProductStatusFragment on SPARK_Greenfield_Query_Results {
+    productCount
+    productPartnerWorkspaceStatusN
+    designCycleN
+  }
+`
+export const WORKLOAD_PRODUCT_COUNT_AND_DEV_RATIO = gql`
+  fragment WorkloadProductCountAndDevRatioFragment on SPARK_Greenfield_Query_Results {
+    devRatio
+    productsDeveloped
+    designCycleN
+    productPartnerWorkspaceStatusN
+    productsCountPreprodProd
+    averageBp
+  }
+`
+
+export const WORKLOAD_PRODUCT_COUNT_AND_DEV_RATIO_BP_AVERAGE = gql`
+  fragment WorkloadProductCountAndDevRatioBpAverageFragment on SPARK_Greenfield_Query_Results {
+    uniqueBps
+    uniqueProducts
+    designCycleN
+  }
+`
+
+export const WORKLOAD_PRODUCT_SAMPLE_TO_RATIO = gql`
+  fragment WorkloadProductSampleToRatioFragment on SPARK_Greenfield_Query_Results {
+    ratio
+    requestedSamples
+    designCycleN
+    preProdProdRatio
+  }
+`
+export const WORKLOAD_SAMPLE_REQUEST_BY_TYPE_PURPOSE = gql`
+  fragment WorkloadSampleRequestByTypePurposeFragment on SPARK_Greenfield_Query_Results {
+    sampleTypeDesc
+    onlyDesignPurposeCount
+    onlyTechnicalPurposeCount
+    emptyEvaluationPurposeCount
+    technicalAndDesignCount
+  }
+`
+
+export const WORKLOAD_SAMPLE_REQUEST_BY_ROLE_FORMAT = gql`
+  fragment WorkloadSampleRequestByRoleFormatFragment on SPARK_Greenfield_Query_Results {
+    count
+    sampleFormatDesc
+    sampleCreatedByUserN
+    sampleCreatedByPrimaryRoleN
+    sampleCreatedUserInternalF
+  }
+`
+export const WORKLOAD_SAMPLE_REQUEST_BY_USER = gql`
+  fragment WorkloadSampleRequestByUserFragment on SPARK_Greenfield_Query_Results {
+    count
+    sampleCreatedByUserN
+    businessPartners {
+      name
+    }
+
+    sampleFormatDesc
+  }
+`
+
+export const WORKLOAD_SAMPLE_TYPES_BY_PURPOSE = gql`
+  fragment WorkloadSampleTypesByPurposeFragment on SPARK_Greenfield_Query_Results {
+    sampleTypeDesc
+    sampleFormatDesc
+    onlyDesignPurposeCount
+    onlyTechnicalPurposeCount
+    emptyEvaluationPurposeCount
+    totalEvaluationPurposeCount
+  }
+`
+
+export const WORKLOAD_SAMPLE_TYPES_BY_USERS = gql`
+  fragment WorkloadSampleTypesByUsersFragment on SPARK_Greenfield_Query_Results {
+    count
+    sampleEvaluatedUserCompanyN
+    sampleEvaluatedByUserN
+  }
+`
+export const WORKLOAD_SAMPLE_ASSIGNED_BY_PURPOSE = gql`
+  fragment WorkloadSampleAssignedByPurposeFragment on SPARK_Greenfield_Query_Results {
+    sampleTypeDesc
+    onlyDesignPurposeCount
+    onlyTechnicalPurposeCount
+    emptyEvaluationPurposeCount
+    technicalAndDesignCount
+  }
+`
+
+export const WORKLOAD_SAMPLE_ASSIGNED_BY_USER_AND_FORMAT = gql`
+  fragment WorkloadSampleAssignedByUserAndFormatFragment on SPARK_Greenfield_Query_Results {
+    count
+    sampleFormatDesc
+    technicalEvaluator1N
+    technicalEvaluator2N
+    designEvaluator1N
+    designEvaluator2N
+  }
+`
+
+export const WORKLOAD_SAMPLE_ASSIGNED_BY_USER = gql`
+  fragment WorkloadSampleAssignedByUserFragment on SPARK_Greenfield_Query_Results {
+    productId
+    productDescription
+    sampleId
+    sampleTypeFormat
+    sampleDesc
+    sampleDueD
+    designCycleN
+    sampleTrackingSentD
+    sampleTrackingStatusDesc
+    sampleTrackingEstimatedArrivalD
+    technicalEvaluator1N
+    technicalEvaluator2N
+    designEvaluator1N
+    designEvaluator2N
+  }
+`
+
+export const WORKLOAD_SAMPLE_TYPES_BY_ROLE = gql`
+  fragment WorkloadSampleTypesByRoleFragment on SPARK_Greenfield_Query_Results {
+    count
+    sampleEvaluatedByPrimaryRoleN
+    sampleEvaluatedUserInternalF
+  }
+`
+
+export const SAMPLE_EVALUATED_BY_USER = gql`
+  fragment SampleEvaluatedByUserFragment on SPARK_Greenfield_Query_Results {
+    evaluatedCount
+    user {
+      firstName
+      lastName
+      businessPartner {
+        id
+        name
+      }
+    }
+    sampleEvaluatedUserInternalF
+    designCycleN
+  }
+`
+export const SAMPLE_TYPE_EVALUATED_BY_USER = gql`
+  fragment SampleTypeEvaluatedByUserFragment on SPARK_Greenfield_Query_Results {
+    evaluatedCount
+    user {
+      firstName
+      lastName
+      businessPartner {
+        id
+        name
+      }
+    }
+    sampleEvaluatedUserInternalF
+    sampleTypeDesc
+  }
+`
+
+export const GET_BUSINESS_PARTNERS_BY_IDS = gql`
+  query getBusinessPartnersByIds($ids: [String]!) {
+    getBusinessPartnersByIds(ids: $ids) {
+      id
+      name
+    }
+  }
+`
+
+export const CONNECTED_BOM_FRAGMENT = gql`
+  fragment ConnectedBomFragment on SPARK_Greenfield_Query_Results {
+    departmentNumberN
+    divisionN
+    uniqueConnectedBomProductCount
+    uniqueDigitalBomProductCount
+    totalConnectedBomLines
+    totalBomLines
+    designCycleN
+    totalUniqueProductCount
+  }
+`
+
+export const CONNECTED_BOM_BY_GROUP_N = gql`
+  fragment ConnectedBomByGroupNFragment on SPARK_Greenfield_Query_Results {
+    groupN
+    uniqueConnectedBomProductCount
+    uniqueDigitalBomProductCount
+    totalConnectedBomLines
+    totalBomLines
+    designCycleN
+    totalUniqueProductCount
+    noStatusCount
+    inProgressCount
+    changesNeededCount
+    readyForReviewCount
+    acceptedCount
+    uniqueCompletedBomProductCount
+  }
+`
+
+export const CONNECTED_BOM_BP_TABLE = gql`
+  fragment ConnectedBomBpTableFragment on SPARK_Greenfield_Query_Results {
+    totalConnectedBomLines
+    totalBomLines
+    uniqueDigitalBomProductCount
+    uniqueConnectedBomProductCount
+    uniqueCompletedBomProductCount
+    totalUniqueProductCount
+    businessPartners {
+      name
+      id
+    }
+  }
+`
+
+export const CONNECTED_BOM_ALL_CYCLES_BP_TABLE = gql`
+  fragment ConnectedBomAllCyclesBpTableFragment on SPARK_Greenfield_Query_Results {
+    totalConnectedBomLines
+    totalBomLines
+    uniqueDigitalBomProductCount
+    uniqueConnectedBomProductCount
+    uniqueCompletedBomProductCount
+    totalUniqueProductCount
+    businessPartners {
+      name
+      id
+    }
+  }
+`
+
+export const CONNECTED_BOM_BP_PRODUCT = gql`
+  fragment ConnectedBomBpProductFragment on SPARK_Greenfield_Query_Results {
+    productId
+    productDescription
+    digitalBomPercent
+    connectedBomPercent
+    completedBomPercent
+    connectivityDepth
+    businessPartners {
+      name
+      id
+    }
+  }
+`
+
+export const CONNECTED_PRODUCTS_NO_ACTIVE_BOM = gql`
+  fragment ConnectedProductsNoActiveBomFragment on SPARK_Greenfield_Query_Results {
+    productId
+    productDescription
+    businessPartners {
+      name
+      id
+    }
+  }
+`
+export const PACKAGING_DIGITAL_BOM = gql`
+  fragment PackagingDigitalBomFragment on SPARK_Greenfield_Query_Results {
+    departmentNumberN
+    divisionN
+    uniqueDigitalBomProductCount
+    totalBomLines
+    designCycleN
+    totalUniqueProductCount
+  }
+`
+export const PACKAGING_DIGITAL_BOM_BP = gql`
+  fragment PackagingDigitalBomBpFragment on SPARK_Greenfield_Query_Results {
+    businessPartners {
+      name
+      id
+    }
+    uniqueDigitalBomProductCount
+    digitalBomPackagingCount
+    totalBomLines
+    designCycleN
+    totalUniqueProductCount
+  }
+`
+
+export const PACKAGING_BOM_PRODUCTS = gql`
+  fragment PackagingBomProductsFragment on SPARK_Greenfield_Query_Results {
+    productId
+    productDescription
+    digitalBomPercent
+    digitalBomPackagingCount
+    businessPartners {
+      name
+      id
+    }
+  }
+`
+
+export const PACKAGING_PRODUCTS_NO_ACTIVE_BOM = gql`
+  fragment PackagingProductsNoActiveBomFragment on SPARK_Greenfield_Query_Results {
+    productId
+    productDescription
+    businessPartners {
+      name
+      id
+    }
+  }
+`
+
+export const CONNECTED_BOM_PRODUCTS = gql`
+  fragment ConnectedBomProductsFragment on SPARK_Greenfield_Query_Results {
+    productId
+    productDescription
+    businessPartners {
+      name
+      id
+    }
+  }
+`
+
+export const CONNECTED_BOM_DEPTH_MATERIAL_TYPE_FRAGMENT = gql`
+  fragment ConnectedBomDepthMaterialTypeFragment on SPARK_Greenfield_Query_Results {
+    materialTypeDescription
+    designCycleN
+    percentageOfConnectedMaterials
+  }
+`
+
+export const CONNECTED_COMPLETED_BOM = gql`
+  fragment ConnectedCompletedBomFragment on SPARK_Greenfield_Query_Results {
+    departmentNumberN
+    divisionN
+    noStatusCount
+    inProgressCount
+    changesNeededCount
+    readyForReviewCount
+    acceptedCount
+    totalUniqueProductCount
+    uniqueCompletedBomProductCount
+  }
+`
+
+export const CONNECTED_BOM_BP_PERFORMANCE = gql`
+  fragment ConnectedBomBpPerformanceFragment on SPARK_Greenfield_Query_Results {
+    productId
+    productDescription
+    bomName
+    materialRowsCount
+    connectedMaterialsCount
+    connectedMaterialsPercent
+    designCycleN
+    materialTypeDescription
+    bomId
+  }
+`
+
+export const GET_REQUESTED_SAMPLE_BY_USER = gql`
+  query getRequestedSamplesByUser($q: String!, $filter: String) {
+    getRequestedSamplesByUser(q: $q, filter: $filter) {
+      requestedSamplesByUser {
+        count
+        user
+      }
+      evaluatedSamplesByUser {
+        count
+        user
+      }
+    }
+  }
+`
+
+export const GET_BYO_FRAGMENT = gql`
+  query getCard($id: String!, $filtersInput: Spark_Greenfield_Filters_Input) {
+    getCard(id: $id, filtersInput: $filtersInput) {
+      queryResults {
+        bomName
+      }
+      queryBLOB
+      cardConfig {
+        cardQueryAttribute {
+          columns {
+            fieldName
+            columnDisplayName
+            description
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_BYO_TEMPLATES = gql`
+  query getByoTemplates($userAttributes: SPARK_UserProfileAttributesInput!) {
+    getByoTemplates(userAttributes: $userAttributes) {
+      id
+      userProfileId
+      name
+      resourceType
+      connectedProducts
+      rowResource
+      filters {
+        materialTypes {
+          code
+          description
+        }
+        cycles {
+          code
+          description
+        }
+        divisions {
+          code
+          description
+        }
+        brands {
+          code
+          description
+        }
+        departments {
+          code
+          description
+        }
+        merchVendors {
+          code
+          description
+        }
+        suppliers {
+          code
+          description
+        }
+        materialDesignCycles {
+          code
+          description
+        }
+      }
+      grouping
+      refreshDetail {
+        gfReportId
+        reportStatus
+        lastRefreshTS
+        lastRefreshCompletedTS
+      }
+      version
+      createdBy {
+        id
+        userProfileId
+        createdBy
+        createdDate
+        lastUpdatedDate
+        firstName
+        lastName
+        betaTester
+      }
+      updatedBy {
+        id
+        userProfileId
+        createdBy
+        createdDate
+        lastUpdatedDate
+        firstName
+        lastName
+        betaTester
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`
+export const GET_BYO_TEMPLATE_BY_ID = gql`
+  query getByoTemplateById($id: ID!) {
+    getByoTemplateById(id: $id) {
+      id
+      userProfileId
+      name
+      resourceType
+      connectedProducts
+      rowResource
+      filters {
+        materialTypes {
+          code
+          description
+        }
+        cycles {
+          code
+          description
+        }
+        divisions {
+          code
+          description
+        }
+        brands {
+          code
+          description
+        }
+        departments {
+          code
+          description
+        }
+        merchVendors {
+          code
+          description
+        }
+        suppliers {
+          code
+          description
+        }
+        materialDesignCycles {
+          code
+          description
+        }
+      }
+      fields {
+        colId
+        hide
+        sort
+        sortIndex
+        rowGroup
+        rowGroupIndex
+      }
+      gridFilters {
+        key
+        value {
+          filterType
+          type
+          filter
+          operator
+          condition1 {
+            filterType
+            type
+            filter
+          }
+          condition2 {
+            filterType
+            type
+            filter
+          }
+        }
+      }
+      grouping
+    }
+  }
+`
+
+export const ADD_BYO_TEMPLATES = gql`
+  mutation addByoTemplate($sparkByoTemplate: SPARK_ByoTemplateInput!) {
+    addByoTemplate(sparkByoTemplate: $sparkByoTemplate) {
+      id
+      userProfileId
+    }
+  }
+`
+
+export const UPDATE_BYO_TEMPLATES = gql`
+  mutation updateByoTemplate($id: ID!, $sparkByoTemplate: SPARK_ByoTemplateInput!) {
+    updateByoTemplate(id: $id, sparkByoTemplate: $sparkByoTemplate) {
+      id
+      userProfileId
+    }
+  }
+`
+
+export const SHARE_BYO_TEMPLATES = gql`
+  mutation shareByoTemplate($id: ID!, $userProfileIds: [String]) {
+    shareByoTemplate(id: $id, userProfileIds: $userProfileIds) {
+      id
+      userProfileId
+    }
+  }
+`
+
+export const DELETE_BYO_TEMPLATES = gql`
+  mutation deleteByoTemplate($id: ID!) {
+    deleteByoTemplate(id: $id)
+  }
+`
+export const SAMPLE_APPROVAL_ROUND = gql`
+  fragment SampleApprovalRoundFragment on SPARK_Greenfield_Query_Results {
+    count
+    sampleRoundNumber
+  }
+`
+
+export const SAMPLE_APPROVAL_BY_ROUND = gql`
+  fragment SampleApprovalByRoundFragment on SPARK_Greenfield_Query_Results {
+    samplePercentage
+    sampleRoundNumber
+  }
+`
+export const CREATE_EXPORT_REQUEST = gql`
+  mutation createExportRequest($id: String!, $exportType: String!, $filtersInput: Spark_Greenfield_Filters_Input) {
+    createExportRequest(id: $id, exportType: $exportType, filtersInput: $filtersInput) {
+      requestId
+      status
+    }
+  }
+`
+
+export const FABRIC_DEVELOPMENT_BY_ROLE = gql`
+  fragment FabricDevelopmentByRoleFragment on SPARK_Greenfield_Query_Results {
+    countOfFabricsDeveloped
+    countOfFabricsAdopted
+    fabricAdoptionPercentage
+    fabricCreatorPrimaryRoleName
+    fabricCreatedByInternal
+  }
+`
+
+export const FABRIC_DEVELOPMENT_BY_ENGINEER = gql`
+  fragment FabricDevelopmentByEngineerFragment on SPARK_Greenfield_Query_Results {
+    countOfFabricsDeveloped
+    countOfFabricsAdopted
+    fabricAdoptionPercentage
+    fabricCreatedByN
+    fabricSupplierN
+  }
+`
+
+export const FABRIC_DEVELOPMENT_BY_ENGINEER_BRAND = gql`
+  fragment FabricDevelopmentByEngineerBrandFragment on SPARK_Greenfield_Query_Results {
+    countOfFabricsDeveloped
+    countOfFabricsAdopted
+    fabricAdoptionPercentage
+    materialBrandN
+  }
+`
+
+export const FABRIC_DEVELOPMENT_BY_ENGINEER_BRAND_AND_REASON = gql`
+  fragment FabricDevelopmentByEngineerBrandAndReasonFragment on SPARK_Greenfield_Query_Results {
+    countOfFabricsDeveloped
+    countOfFabricsAdopted
+    fabricAdoptionPercentage
+    developmentReason
+  }
+`
+
+export const HEALTH_CHECK_FRAGMENT = gql`
+  fragment HealthCheckFragment on SPARK_Greenfield_Query_Results {
+    departmentNumberN
+    divisionN
+    componentCount
+    componentPercentage
+    designCycleN
+    uniqueProducts
+  }
+`
+
+export const PACKAGING_DIELINE_PRODUCTS = gql`
+  fragment PackagingDielineProductsFragment on SPARK_Greenfield_Query_Results {
+    requestedDielineCount
+    readyForEvalCount
+    evaluatedCount
+  }
+`
+
+export const PACKAGING_DIELINE_DUE_DATES = gql`
+  fragment PackagingDielineDueDatesFragment on SPARK_Greenfield_Query_Results {
+    dielineCount
+  }
+`
+export const PACKAGING_DIELINE_EVALUATORS = gql`
+  fragment PackagingDielineEvaluatorsFragment on SPARK_Greenfield_Query_Results {
+    dielineEvaluator
+  }
+`
+export const PACKAGING_DIELINE_REQUESTS = gql`
+  fragment PackagingDielineRequestsFragment on SPARK_Greenfield_Query_Results {
+    packagingId
+    readyForEvalCount
+  }
+`
+
+export const PACKAGING_PRODUCT_INFO = gql`
+  fragment PackagingProductInfoFragment on SPARK_Greenfield_Query_Results {
+    productId
+    packagingId
+    packagingDescription
+    dielineCount
+  }
+`
+
+export const PACKAGING_DIELINE_EVALUATIONS = gql`
+  fragment PackagingDielineEvaluationsFragment on SPARK_Greenfield_Query_Results {
+    dielineCount
+    dielineStatus
+  }
+`
+export const PACKAGING_COPY_SPECS = gql`
+  fragment PackagingCopySpecsFragment on SPARK_Greenfield_Query_Results {
+    pkgSpecCount
+    reviewedDielines
+    readyForReview
+  }
+`
+
+export const PACKAGING_COPY_WORKSPACE = gql`
+  fragment PackagingCopyWorkspaceFragment on SPARK_Greenfield_Query_Results {
+    workspaceId
+    workspaceDesc
+    cCode
+    specCt
+    readyForReview
+    countOfRows
+    dielineDueDate
+    outstandingDielines
+  }
+`
+export const PACKAGING_COPY_DUE_DATES = gql`
+  fragment PackagingCopyDueDatesFragment on SPARK_Greenfield_Query_Results {
+    packagingId
+  }
+`

@@ -1,0 +1,605 @@
+import { gql } from '@apollo/client'
+import { CLAIM_DETAILS_FRAGMENT, FULL_CLAIM_DETAILS } from '@spark/claims'
+import { MEASUREMENT_TEMPLATE_FRAGMENT, TIGHT_FIT_FRAGMENT, SIZE_TEMPLATE_FRAGMENT_WITH_ROWS } from '@spark/product-common'
+import { BOM_DETAILS_FRAGMENT } from '@spark/product-queries'
+import { ATTACHMENT_V3_FRAGMENT, IMPRESSION_FRAGMENT } from '@spark/product-queries'
+
+export const SEARCH_TEMPLATE_SUGGESTIONS = gql`
+  query getTemplateSuggestions($q: String!) {
+    getTemplateSuggestions(q: $q, types: [101]) {
+      suggestion
+    }
+  }
+`
+
+export const GET_PRODUCT_TEMPLATE_CATEGORY = gql`
+  query getCategories($resourceId: String, $resourceType: String, $type: String!, $productType: Int) {
+    getCategories(resourceId: $resourceId, resourceType: $resourceType, type: $type, productType: $productType) {
+      count
+      categoryIds
+      categories(type: $type) {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_ALL_PRODUCTS_TEMPLATES = gql`
+  query getProductTemplates($page: Int, $size: Int, $q: String, $filter: [String], $types: [Int], $includeProductComponentsCount: Boolean = true) {
+    getProductTemplates(page: $page, size: $size, q: $q, filter: $filter, types: $types, includeProductComponentsCount: $includeProductComponentsCount) {
+      paging {
+        number
+        size
+        totalElements
+        totalPages
+      }
+      content {
+        id: humanId
+        description
+        tags {
+          id
+          name
+        }
+        productTemplateDepartments {
+          id
+          name
+          displayText
+        }
+        brands {
+          id
+          name
+        }
+        divisions {
+          id
+          name
+          displayText
+        }
+        productComponentsCounts {
+          name
+          count
+        }
+        createdBy {
+          firstName
+          lastName
+          isInternal
+          companyName
+        }
+        productTemplateStatus {
+          code
+        }
+        editable
+      }
+    }
+  }
+`
+
+const PRODUCT_TEMPLATE_DETAILS = gql`
+  fragment productTemplateDetails on SPARK_Product {
+    id
+    humanId
+    description
+    divisions {
+      id
+      name
+      displayText
+    }
+    brands {
+      id
+      name
+    }
+    tags {
+      id
+      name
+    }
+    productTemplateDepartments {
+      id
+      name
+      displayText
+    }
+    productTemplateStatus {
+      code
+    }
+    productComponentsCounts {
+      name
+      count
+    }
+    editable
+  }
+`
+
+export const GET_PRODUCT_TEMPLATE = gql`
+  query getProductTemplates(
+    $page: Int
+    $size: Int
+    $q: String
+    $filter: [String]
+    $types: [Int]
+    $resourceId: String
+    $resourceType: String
+    $includeProductDetailTemplates: Boolean
+    $includeProductComponentsCount: Boolean
+    $includeClaimTemplates: Boolean = false
+    $includeMeasurementSetTemplates: Boolean = false
+    $includeBomTemplates: Boolean = false
+    $includeAttachmentsTemplates: Boolean = false
+  ) {
+    getProductTemplates(
+      page: $page
+      size: $size
+      q: $q
+      filter: $filter
+      types: $types
+      resourceId: $resourceId
+      resourceType: $resourceType
+      includeProductDetailTemplates: $includeProductDetailTemplates
+      includeProductComponentsCount: $includeProductComponentsCount
+      includeClaimTemplates: $includeClaimTemplates
+      includeMeasurementSetTemplates: $includeMeasurementSetTemplates
+      includeBomTemplates: $includeBomTemplates
+    ) {
+      paging {
+        totalElements
+        totalPages
+      }
+      content {
+        ...productTemplateDetails
+        attachmentsV3 @include(if: $includeAttachmentsTemplates) {
+          content {
+            ...AttachmentV3Fragment
+          }
+        }
+        attachmentsData {
+          attachmentIds
+          attachments {
+            humanId
+            documentId
+            previewable
+            documentSize
+            documentName
+            mediaType
+            documentType
+            createdAt
+            createdBy {
+              id
+              firstName
+              lastName
+            }
+          }
+        }
+        claims(includeClaims: true) @include(if: $includeClaimTemplates) {
+          ...FullClaimDetailsFragment
+          access {
+            permissions {
+              permission
+            }
+          }
+        }
+        bom(includeBoms: true) @include(if: $includeBomTemplates) {
+          content {
+            humanId
+          }
+        }
+        productBom @include(if: $includeBomTemplates) {
+          content {
+            humanId
+          }
+        }
+        packagingBom @include(if: $includeBomTemplates) {
+          content {
+            humanId
+          }
+        }
+        measurementSets(includeMeasurements: true) @include(if: $includeMeasurementSetTemplates) {
+          content {
+            humanId
+            resourceId
+            version
+            name
+            type
+            notes
+            status {
+              code
+              description
+            }
+            manualLock
+            sizeTemplate {
+              ...sizeTemplateFragmentWithRows
+            }
+            measurementTemplates {
+              ...measurementTemplateFragment
+            }
+            tightFitTemplate {
+              ...tightFitFragment
+            }
+            createdBy {
+              id
+              firstName
+              lastName
+            }
+            updatedAt
+            updatedBy {
+              id
+              firstName
+              lastName
+            }
+            coreSizes {
+              coreSizeId
+              sizeGroupId
+              baseSize {
+                id: code
+                value: code
+                label: description
+                code
+                description
+                enabled
+                hidden
+                source
+              }
+              sizes {
+                id: code
+                value: code
+                label: description
+                code
+                description
+                enabled
+                hidden
+                source
+              }
+            }
+            rows {
+              rowId
+              critical
+              notes
+              toleranceOver
+              toleranceUnder
+              baseSizeValue
+              unitOfMeasure {
+                name
+                description
+                shortDescription
+                code
+              }
+              sizeValues {
+                code
+                description
+                diffFromNeighbor
+                manualValue
+                calculatedValue
+              }
+              pointOfMeasure {
+                pomId
+                pomName
+                critical
+                referenceId
+                version
+                specialInstructions
+                section {
+                  code
+                  description
+                }
+              }
+            }
+            toleranceSet {
+              id: code
+              value: code
+              label: description
+            }
+          }
+        }
+        productDetails {
+          access {
+            permissions {
+              abstractAccessGroup {
+                id
+                grantees
+                type
+              }
+            }
+          }
+          currentUserPermissions {
+            permissions
+          }
+          humanId: id
+          version
+          status {
+            code
+            description
+          }
+          manualLock
+          notes
+          name
+          parentId
+          rows {
+            templateId
+            section
+            criticalFromLibrary
+            category {
+              code
+              description
+              subCategories {
+                code
+                description
+              }
+            }
+            subCategory {
+              code
+              description
+            }
+            detail
+            critical
+            specialInstructions
+            attachment {
+              documentId
+              humanId
+              documentName
+              documentSize
+              previewable
+              attachmentId
+              mediaType
+              id: documentId
+            }
+            constructionSetAttachments {
+              documentId
+              humanId
+              documentName
+              documentSize
+              previewable
+              attachmentId
+              mediaType
+            }
+            id
+          }
+          createdBy {
+            id
+            firstName
+            lastName
+            internal: isInternal
+            companyName
+            partnerId
+            defaultPartnerTypeDetails {
+              code
+              description
+            }
+          }
+          updatedBy {
+            id
+            firstName
+            lastName
+            internal: isInternal
+            companyName
+            partnerId
+            defaultPartnerTypeDetails {
+              code
+              description
+            }
+          }
+          createdAt
+          updatedAt
+          archived
+          relatedResources
+          currentUserPermissions {
+            permissions
+            resourceId
+          }
+          attachment {
+            documentId
+            humanId
+            documentName
+            documentSize
+            previewable
+            attachmentId
+            mediaType
+            id
+          }
+        }
+        productComponentsCounts {
+          name
+          count
+        }
+        createdBy {
+          firstName
+          lastName
+          isInternal
+          companyName
+        }
+      }
+    }
+  }
+  ${SIZE_TEMPLATE_FRAGMENT_WITH_ROWS}
+  ${MEASUREMENT_TEMPLATE_FRAGMENT}
+  ${PRODUCT_TEMPLATE_DETAILS}
+  ${FULL_CLAIM_DETAILS(true)}
+  ${TIGHT_FIT_FRAGMENT}
+  ${ATTACHMENT_V3_FRAGMENT}
+`
+
+export const GET_PRODUCT_TEMPLATE_MEASUREMENTS = gql`
+  query getMeasurementsElastic($resourceId: String) {
+    getMeasurementsElastic(resourceId: $resourceId) {
+      content {
+        humanId
+        resourceId
+        version
+        name
+        type
+        notes
+        status {
+          code
+          description
+        }
+        manualLock
+        sizeTemplate {
+          ...sizeTemplateFragmentWithRows
+        }
+        measurementTemplates {
+          ...measurementTemplateFragment
+        }
+        tightFitTemplate {
+          ...tightFitFragment
+        }
+        createdBy {
+          id
+          firstName
+          lastName
+        }
+        updatedAt
+        updatedBy {
+          id
+          firstName
+          lastName
+        }
+        coreSizes {
+          coreSizeId
+          sizeGroupId
+          baseSize {
+            id: code
+            value: code
+            label: description
+            code
+            description
+            enabled
+            hidden
+            source
+          }
+          sizes {
+            id: code
+            value: code
+            label: description
+            code
+            description
+            enabled
+            hidden
+            source
+          }
+        }
+        rows {
+          rowId
+          critical
+          notes
+          toleranceOver
+          toleranceUnder
+          baseSizeValue
+          unitOfMeasure {
+            name
+            description
+            shortDescription
+            code
+          }
+          sizeValues {
+            code
+            description
+            diffFromNeighbor
+            manualValue
+            calculatedValue
+          }
+          pointOfMeasure {
+            pomId
+            pomName
+            critical
+            referenceId
+            version
+            specialInstructions
+            section {
+              code
+              description
+            }
+          }
+        }
+        toleranceSet {
+          id: code
+          value: code
+          label: description
+        }
+      }
+    }
+  }
+  ${SIZE_TEMPLATE_FRAGMENT_WITH_ROWS}
+  ${MEASUREMENT_TEMPLATE_FRAGMENT}
+  ${TIGHT_FIT_FRAGMENT}
+`
+
+export const GET_PRODUCT_TEMPLATE_CLAIMS = gql`
+  query getClaims($parentHumanId: String) {
+    getClaims(parentHumanId: $parentHumanId) {
+      ...ClaimDetailsFragment
+      claimDetails {
+        claimName
+        claimDescription
+        guestFacingClaim
+        appliesTo
+        shareWithGuests
+        vendorSubstantiate {
+          substantiated
+        }
+        status {
+          code
+          description
+        }
+        claimsAbout {
+          code
+          description
+        }
+      }
+      status {
+        code
+        description
+      }
+      updatedAt
+      createdAt
+      createdBy {
+        id
+        firstName
+        lastName
+        internal: isInternal
+      }
+      updatedBy {
+        id
+        firstName
+        lastName
+        internal: isInternal
+      }
+      access {
+        permissions {
+          permission
+        }
+      }
+    }
+  }
+  ${CLAIM_DETAILS_FRAGMENT}
+`
+
+export const UPDATE_PRODUCT_TEMPLATE = gql`
+  mutation updateProduct($sparkProduct: SPARK_ProductUpdateInput!, $copyProduct: SPARK_CopyProductInput) {
+    updateProduct(input: $sparkProduct, copyProduct: $copyProduct) {
+      id
+    }
+  }
+`
+
+export const GET_CLAIM_TEMPLATE_BY_ID = gql`
+  query getClaimByIds($claimHumanIds: [String]) {
+    getClaimByIds(claimHumanIds: $claimHumanIds) {
+      ...FullClaimDetailsFragment
+    }
+  }
+  ${FULL_CLAIM_DETAILS(true)}
+`
+
+export const GET_BOM_TEMPLATES_AND_IMPRESSIONS = gql`
+  query getBomDataAndImpressions($ids: [String!], $productTemplateId: ID!, $includeLiveMaterialData: Boolean = true) {
+    getBomByIds(ids: $ids) {
+      ...BomDetails
+      access {
+        permissions {
+          permission
+        }
+      }
+    }
+    searchImpressionsByProductId(id: $productTemplateId) {
+      ...ImpressionFragment
+    }
+  }
+  ${IMPRESSION_FRAGMENT()}
+  ${BOM_DETAILS_FRAGMENT}
+`

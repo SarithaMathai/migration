@@ -1,0 +1,35 @@
+import { gql } from '@apollo/client'
+import { TypedDocumentNode } from '@graphql-typed-document-node/core'
+
+/**
+ * Interim internalClient queries used during the migration era (SPARK-30367).
+ *
+ * These queries fire on internalClient (spark-internal-graphql) in parallel with
+ * federated plmClient queries while the federated gateway catches up.
+ * Remove this file when SPARK-30366 is complete.
+ */
+
+// ── getUserAccessUnencoded ─────────────────────────────────────────────────────
+
+export interface GetUserAccessUnencodedVariables {
+  id: string
+}
+
+export interface GetUserAccessUnencodedData {
+  getUserAccessUnencoded: {
+    resourcePermissions: Array<{
+      resourceId?: string
+      permissions: string[]
+    }>
+  }
+}
+
+export const GET_USER_ACCESS_UNENCODED: TypedDocumentNode<GetUserAccessUnencodedData, GetUserAccessUnencodedVariables> = gql`
+  query getUserAccessUnencoded($id: ID!) {
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+`

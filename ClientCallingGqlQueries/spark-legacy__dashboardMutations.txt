@@ -1,0 +1,42 @@
+import { gql } from '@apollo/client'
+import { internalClient } from '@network/library'
+
+export const DELETE_TODO = gql`
+  mutation deleteToDo($toDoId: ID!) {
+    deleteToDo(toDoId: $toDoId)
+  }
+`
+
+export const UPDATE_NOTIFICATION = gql`
+  mutation updateNotificationStatus($notificationStatusInput: SPARK_Bulk_Notification_Status!) {
+    updateNotificationStatus(notificationStatusInput: $notificationStatusInput) {
+      content {
+        id
+        read
+        complete
+        flagged
+      }
+    }
+  }
+`
+export const UPDATE_NOTIFICATION_GROUPS = gql`
+  mutation updateNotificationGroups($input: [SPARK_UpdateNotificationGroup]!) {
+    updateNotificationGroups(input: $input)
+  }
+`
+
+export const mutationUpdateNotification = (callbackFunction) => async (newData) => {
+  if (newData.notificationId) {
+    await internalClient.mutate({
+      mutation: UPDATE_NOTIFICATION,
+      variables: {
+        notificationStatusInput: {
+          updates: [newData],
+        },
+      },
+    })
+    if (typeof callbackFunction === 'function') {
+      callbackFunction()
+    }
+  }
+}

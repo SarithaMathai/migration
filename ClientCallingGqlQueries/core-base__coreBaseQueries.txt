@@ -1,0 +1,160 @@
+import { gql } from '@apollo/client'
+
+const ATTACHMENT_FRAGMENT = gql`
+  fragment AttachmentDetails on SPARK_SearchAttachment {
+    id
+    documentId
+    humanId: id
+    documentSize
+    documentType
+    name
+    parentResource
+    relatedResources
+    previewable
+    galleryOnlyAttachment
+    galleryDetails {
+      assetId
+      fileValid
+      transcoded
+      published
+      publishedAt
+      validations {
+        name
+        message
+        description
+        classification
+      }
+    }
+    mediaType
+    sharedWithGallery
+    canShareWithGallery
+    attachmentCanShowdog
+    productPacketProps {
+      partnerId
+      critical
+    }
+    isResourceCritical
+    tags {
+      id
+      name
+      type
+    }
+    createdBy {
+      firstName
+      lastName
+      companyName
+      isInternal
+    }
+    updatedBy {
+      firstName
+      lastName
+      companyName
+      isInternal
+    }
+    createdAt
+    access {
+      bps
+      ids
+      merchVendors
+      fabSuppliers
+      designPartners
+      external
+      locked
+      partnerNamesMap {
+        id
+        name
+      }
+      mvExternal
+    }
+    resource {
+      id
+      type
+    }
+    relatedProduct {
+      id
+      description
+    }
+    relatedWorkspace {
+      id
+      description
+    }
+    currentUserFileAccess
+    canOpenInShowDog
+    modelFile {
+      fileId
+      fileName
+    }
+    galleryFiles {
+      attachmentId
+      renders {
+        fileId
+        fileName
+        primary
+        renderType
+      }
+      relatedFiles {
+        fileId
+        fileName
+        canOpenInShowDog
+        presignedUrl
+      }
+    }
+    finalVirtualFile
+  }
+`
+
+export const GET_TAGS_BY_TYPE = gql`
+  query getTagsByType($type: String!, $archived: Boolean) {
+    getTags(archived: $archived, type: $type, page: 0, size: 1000) {
+      content {
+        id
+        name
+        archived
+      }
+    }
+  }
+`
+
+export const GET_ATTACHMENTS_FROM_RELATED_RESOURCE = gql`
+  query getAttachmentsfromRelatedResource($relatedResourceId: ID!, $parentResourceId: ID) {
+    getAttachmentsfromRelatedResource(relatedResourceId: $relatedResourceId, parentResourceId: $parentResourceId) {
+      ...AttachmentDetails
+    }
+  }
+  ${ATTACHMENT_FRAGMENT}
+`
+
+export const SEARCH_ATTACHMENTS = gql`
+  query searchAttachments($q: String, $parentIds: [String], $relatedIds: [String], $partnerId: ID, $page: Int, $size: Int, $sortField: String, $sortDirection: String) {
+    searchAttachments(q: $q, parentIds: $parentIds, relatedIds: $relatedIds, partnerId: $partnerId, page: $page, size: $size, sortField: $sortField, sortDirection: $sortDirection) {
+      content {
+        ...AttachmentDetails
+      }
+      paging {
+        totalPages
+        totalElements
+        first
+        numberOfElements
+        page
+        size
+        number
+        last
+      }
+      counts {
+        attachmentCount(parentIds: $parentIds, relatedIds: $relatedIds) {
+          bpType
+          counts
+        }
+      }
+    }
+  }
+  ${ATTACHMENT_FRAGMENT}
+`
+
+export const GET_USER_SETTINGS = gql`
+  query getUserSettings {
+    getUserSettings {
+      theme
+    }
+  }
+`

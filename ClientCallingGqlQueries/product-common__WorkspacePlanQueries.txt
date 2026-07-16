@@ -1,0 +1,446 @@
+import { gql } from '@apollo/client'
+
+export const BID_FRAGMENT = gql`
+  fragment Bid on Negotiator_Bid {
+    id
+    eventId
+    eventItemId
+    bidId
+    buyersChoice
+    awardBusiness
+    exposeToBp
+    deleted
+    createdUserId
+    updateUserId
+    createdAt
+    updatedAt
+    units {
+      forecastedUnits
+      estTotalUnits
+    }
+    item {
+      systemStatus
+      description
+      programName
+      impressionId
+      impressionSourceId
+      impression
+      size
+      impressionType
+      sizeId
+    }
+    sparkData {
+      pid
+      description
+      thumbnailId
+    }
+    importVendor {
+      id
+      vendorName
+      percentFreeCarrierUnits
+      freeCarrierUnitCost
+      freeCarrierFactoryCity
+      dutyRate
+      portOfExport
+      countryOfOrigin
+      inlandRate
+      oceanRate
+      portToDcRate
+    }
+    cost {
+      imu
+      pmu
+      totalNetCost
+      totalDutyCost
+      fees
+      totalFirstCost
+      totalDvsCost
+      avgFirstCost
+      avgNetCost
+      netPmu
+      totalFreightCost
+      totalFactoryFreightCost
+      totalDomesticFreightCost
+      totalImportFreightCost
+      totalRetail
+    }
+    shipping {
+      factories {
+        id
+        name
+      }
+    }
+    status
+    businessPartner {
+      id
+      name
+    }
+  }
+`
+
+const PRODUCT_ASK_FRAGMENT = (includeBids = false) => gql`
+  fragment ProductAskFragment on SPARK_ProductAsk {
+    humanId
+    description
+    status
+    brandType
+    brand {
+      id
+      name
+    }
+    divisionId
+    department {
+      id
+      name
+    }
+    requestType
+    startDate
+    intendedRegRetail
+    sellingChannel
+    projectedUnits
+    clazz {
+      id
+      name
+    }
+    subClassId
+    styleId
+    itemTypeId
+    itemType
+    merchTypeId
+    merchType
+    associatedProducts {
+      productId
+      product {
+        description
+        businessPartners {
+          id
+          name
+        }
+      primaryMaterial
+      }
+      businessPartners {
+        partnerId
+        recommendationStatus
+        selected
+      }
+    }
+    carryForwardTcins
+    variations { 
+    tcin
+    businessPartnerId
+    vendorId
+    isCarryForward
+    itemType
+    itemState
+    costConfirmed
+    units {
+        forecastUnits
+    commitUnits
+    }
+    merchandiseTypeAttributes {
+        name
+    id
+    value {
+    id
+     name
+    }
+    }
+    }
+    variationThemes {
+      name
+      count
+      values {
+        id
+        name
+        group {
+          id
+          name
+        }
+       }
+    }
+    ${includeBids ? 'bids { ...Bid }' : ''}
+  }
+  ${includeBids ? BID_FRAGMENT : ''}
+`
+
+const FIND_PRODUCT_ASK_FRAGMENT = () => gql`
+  fragment FindProductAskFragment on ProductAsk {
+    humanId
+    description
+    status
+    brandType
+    brand {
+      id
+      name
+    }
+    divisionId
+    department {
+      id
+    }
+    requestType
+    startDate
+    intendedRegRetail
+    sellingChannel
+    projectedUnits
+    subClassId
+    styleId
+    itemTypeId
+    itemType
+    merchTypeId
+    merchType
+    associatedProducts {
+      productId
+      product {
+        businessPartners {
+          partner {
+            id
+            name
+          }
+        }
+      }
+    }
+    carryForwardTcins {
+      tcin
+      variation {
+        id
+        impression {
+          id
+          attachment {
+            id
+          }
+          businessPartners {
+            id
+            name
+            associatedPartnerType
+          }
+
+          createdAt
+          deletable
+          name
+
+          owningBusinessPartner {
+            id
+            name
+            associatedPartnerType
+          }
+          owningPartnerId
+
+          owningPartnerType
+        }
+        parentResource
+        size
+        sizeId
+        status {
+          code
+          description
+        }
+        workspaceContext {
+          id
+        }
+      }
+    }
+    variationThemes {
+      count
+      name
+      newCount
+      newValues {
+        id
+        name
+      }
+      values {
+        id
+        name
+      }
+    }
+    variations {
+      merchandiseTypeAttributes {
+        name
+        id
+        value {
+          id
+          name
+        }
+      }
+      businessPartnerId
+      vendorId
+      tcinInfo {
+        tcin
+        variation {
+          parentResource
+          id
+          impression {
+            id
+            name
+            attachment {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const PRODUCT_ASK_ASSOCIATION = gql`
+  mutation associateProductsToAsk($askId: String, $productIds: [String]) {
+    associateProductsToAsk(askId: $askId, productIds: $productIds) {
+      ...ProductAskFragment
+    }
+  }
+  ${PRODUCT_ASK_FRAGMENT()}
+`
+
+export const GET_WORKSPACE_PLAN = gql`
+  query getWorkspaceProductPlan($from: String!, $to: String!, $page: Int, $size: Int, $classIds: [Int], $departmentIds: [Int], $sortBy: String, $sortOrder: String) {
+    getWorkspaceProductPlan(from: $from, to: $to, page: $page, size: $size, classIds: $classIds, departmentIds: $departmentIds, sortBy: $sortBy, sortOrder: $sortOrder) {
+      content {
+        ...ProductAskFragment
+      }
+      totalPages
+      totalElements
+      size
+      last
+    }
+  }
+  ${PRODUCT_ASK_FRAGMENT()}
+`
+
+export const FIND_PRODUCT_ASKS_PLM = gql`
+  query findProductAsks($workspaceId: String!) {
+    findProductAsks(workspaceId: $workspaceId) {
+      content {
+        ...FindProductAskFragment
+      }
+      totalPages
+      totalElements
+      size
+      last
+    }
+  }
+  ${FIND_PRODUCT_ASK_FRAGMENT()}
+`
+
+export const GET_PRODUCT_ASK_PLM = gql`
+  query getProductAsk($askId: String!) {
+    getProductAsk(askId: $askId) {
+      ...FindProductAskFragment
+    }
+  }
+  ${FIND_PRODUCT_ASK_FRAGMENT()}
+`
+
+export const GET_WORKSPACE_ASK_IDS = gql`
+  query getWorkspaceProductPlan($from: String!, $to: String!, $page: Int, $size: Int, $classIds: [Int], $departmentIds: [Int]) {
+    getWorkspaceProductPlan(from: $from, to: $to, page: $page, size: $size, classIds: $classIds, departmentIds: $departmentIds) {
+      content {
+        humanId
+        description
+      }
+      totalPages
+      totalElements
+      size
+      last
+    }
+  }
+`
+
+export const GET_PRODUCT_ASK = gql`
+  query getProductAskById($askId: String!) {
+    getProductAskById(askId: $askId) {
+      ...ProductAskFragment
+    }
+  }
+  ${PRODUCT_ASK_FRAGMENT(true)}
+`
+
+export const UPDATE_RECOMMENDATION_STATUS = gql`
+  mutation updateRecommendationStatus($statusInput: [SPARK_RecommendationStatusInput]) {
+    updateRecommendationStatus(statusInput: $statusInput)
+  }
+`
+
+export const COMPARE_VERSIONS = gql`
+  mutation compareAskVersions($askIds: [String]!, $startDate: String!, $endDate: String!) {
+    compareAskVersions(askIds: $askIds, startDate: $startDate, endDate: $endDate) {
+      modifiedAttributes {
+        attributeName
+        attributeNewValue
+        attributeOldValue
+      }
+      action
+      toVersion {
+        snapshot {
+          humanId
+        }
+        updatedByUserId
+        versionCreateTimestamp
+      }
+    }
+  }
+`
+
+export const SEARCH_ASK_ACTIVITY = gql`
+  query searchAskActivities($askIds: [String]!, $page: Int, $size: Int, $startDate: String, $sortOrder: String, $sortBy: String) {
+    searchAskActivities(askIds: $askIds, size: $size, page: $page, startDate: $startDate, sortOrder: $sortOrder, sortBy: $sortBy) {
+      content {
+        id
+        resourceId
+        eventDate
+        userId
+        user {
+          firstName
+          lastName
+        }
+        subEventType
+        eventSummary {
+          humanId
+          description
+          modifiedAttributes {
+            attributeName
+            attributeNewValue
+            attributeOldValue
+          }
+        }
+      }
+      totalElements
+      totalPages
+    }
+  }
+`
+
+export const GET_USERS_BY_IDS = gql`
+  query getUsers($lanIds: [String], $uuid: [String]) {
+    getUsers(landIds: $lanIds, uuid: $uuid) {
+      content {
+        firstName
+        lastName
+      }
+    }
+  }
+`
+
+export const MOVE_PRODUCTS_TO = gql`
+  mutation moveProductsTo($fromAskId: String!, $toAskId: String, $productIds: [String]!) {
+    moveProductsTo(fromAskId: $fromAskId, toAskId: $toAskId, productIds: $productIds) {
+      ...ProductAskFragment
+    }
+  }
+  ${PRODUCT_ASK_FRAGMENT()}
+`
+
+export const REMOVE_PRODUCTS = gql`
+  mutation removeProductsFromAsk($fromAskId: String!, $productIds: [String]!) {
+    removeProductsFromAsk(fromAskId: $fromAskId, productIds: $productIds) {
+      ...ProductAskFragment
+    }
+  }
+  ${PRODUCT_ASK_FRAGMENT()}
+`
+export const GET_BUSINESS_PARTNER_BY_ID = gql`
+  query getBusinessPartner($id: String!) {
+    getBusinessPartner(id: $id) {
+      id
+      name
+    }
+  }
+`

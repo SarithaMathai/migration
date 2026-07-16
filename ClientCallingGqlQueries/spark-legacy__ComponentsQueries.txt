@@ -1,0 +1,290 @@
+import { gql } from '@apollo/client'
+import { getUserProfile } from '@spark/legacy/services/getUserProfile'
+
+export const GET_ACCREDITATION_TYPES = gql`
+  query getAccreditationTypes($userType: String!) {
+    getAccreditationTypes(userType: $userType) {
+      accredTypes {
+        code
+        description
+        info
+      }
+    }
+  }
+`
+
+export const SEARCH_ATTACHMENTS_TAGS = gql`
+  query searchAttachments($q: String, $parentIds: [String], $relatedIds: [String], $partnerId: ID, $page: Int, $size: Int) {
+    searchAttachments(q: $q, parentIds: $parentIds, relatedIds: $relatedIds, partnerId: $partnerId, page: $page, size: $size) {
+      content {
+        id
+        tags {
+          id
+          name
+          type
+        }
+      }
+    }
+  }
+`
+
+export const GET_USERS = gql`
+  query getUsers($partnerId: [ID], $name: String, $excludeIds: [String], $onlyInternal: Boolean, $dpSecurity: Boolean, $excludeInactive: Boolean) {
+    getUsers(partnerId: $partnerId, page: 0, size: 5, name: $name, excludeIds: $excludeIds, onlyInternal: $onlyInternal, dpSecurity: $dpSecurity, excludeInactive: $excludeInactive) {
+      content {
+        accreditations {
+          code
+          description
+          status
+        }
+        userProfileId
+        firstName
+        lastName
+        companyName
+        internal: isInternal
+        partnerId
+        primaryRole
+        currentVMMRole
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+      }
+    }
+  }
+`
+
+const COMPONENT_ATTACHMENT_DETAILS_FRAGMENT = gql`
+  fragment ComponentAttachmentDetailsFragment on SPARK_Attachment {
+    id
+    humanId
+    attachmentId
+    previewable
+    documentId
+    documentName
+    documentType
+    documentSize
+    createdAt
+    updatedAt
+    mediaType
+    sharedWithGallery
+    canShareWithGallery
+    attachmentCanShowdog
+    resource {
+      id
+      type
+    }
+    createdBy {
+      firstName
+      lastName
+    }
+    galleryDetails {
+      assetId
+      fileValid
+      validations {
+        name
+        description
+        message
+        classification
+      }
+    }
+    finalVirtualFile
+  }
+`
+
+export const GET_FILE = gql`
+  query getAttachmentsV3($ids: [ID]!) {
+    getAttachmentsV3(ids: $ids) {
+      ...ComponentAttachmentDetailsFragment
+    }
+  }
+  ${COMPONENT_ATTACHMENT_DETAILS_FRAGMENT}
+`
+
+export const GET_USERS_LIST = gql`
+  query getUsersElasticSearch($page: Int, $size: Int, $q: String, $accreditation: [String], $accreditations: [String], $dpSecurity: Boolean, $excludeInactive: Boolean, $partnerId: [ID]) {
+    getUsersElasticSearch(
+      page: $page
+      size: $size
+      q: $q
+      accreditation: $accreditation
+      accreditations: $accreditations
+      dpSecurity: $dpSecurity
+      excludeInactive: $excludeInactive
+      partnerId: $partnerId
+    ) {
+      content {
+        userProfileId
+        firstName
+        lastName
+        internal: isInternal
+        companyName
+        email
+        accreditations {
+          code
+          description
+          status
+        }
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+        active
+      }
+      paging {
+        totalPages
+        totalElements
+        size
+        number
+      }
+    }
+  }
+`
+
+export const GET_IMPRESSION_INTENTS = gql`
+  query getImpressionIntents {
+    getApplicationTechnique {
+      code
+      description
+    }
+  }
+`
+
+export const GET_VMM_PARTNER = gql`
+  query getBusinessPartnerById($bpId: String!) {
+    getBusinessPartnerById(bpId: $bpId) {
+      id
+      roles {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_ROLES = gql`
+  query getRoles {
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+`
+
+export const GET_ROLES_W_LABEL = gql`
+  query getRoles {
+    getRoles {
+      roles {
+        id
+        value
+        label: value
+      }
+    }
+  }
+`
+
+export const USER_PROFILE = gql`
+  query getUsers($userProfileId: String!) {
+    getUsers(userProfileId: $userProfileId) {
+      content {
+        userProfileId
+        firstName
+        lastName
+        isInternal
+        companyName
+        defaultPartnerType: currentVMMRole
+        businessPartner {
+          id
+          name
+        }
+        email
+        accreditations {
+          code
+          description
+          status
+        }
+        mailingAddress
+        primaryRole
+        outOfOfficeAttributes {
+          fromDate
+          message
+          toDate
+          userOutOfOffice
+        }
+        notificationAttributes {
+          optedOutNotifications
+          optedBatching
+        }
+        notificationTypes
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+`
+
+export const GET_USER_VIEWS = gql`
+  query getUserViews($ids: [String], $resourceType: String!) {
+    getUserViews(ids: $ids, resourceType: $resourceType) {
+      id
+      name
+      resourceType
+      columns {
+        colId: id
+        enabled
+      }
+    }
+  }
+`
+
+const isInternal = getUserProfile()?.internal || false
+export const SEARCH_MATERIALS_V2 = gql`
+  query searchMaterials($q: String, $sortField: String, $sortDirection: SPARK_SortDirection, $searchArguments: SPARK_MaterialSearchArguments) {
+    searchMaterialsV2(
+      q: $q
+      page: 0
+      size: 15
+      sortField: $sortField
+      sortDirection: $sortDirection
+      searchArguments: $searchArguments
+    ) {
+      content {
+        humanId: id
+        type
+        baseMaterial {
+          name
+          description
+          thumbnailId
+          designThumbnailId
+          additionalInfo
+          status {
+            code
+            description
+          }
+          measurement {
+            size {
+              value
+              unitOfMeasure {
+                code
+                description
+              }
+            }
+          }
+          baseAssetType
+          suppliers @include(if:${isInternal}) {
+            id
+            materialId
+            supplier {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`

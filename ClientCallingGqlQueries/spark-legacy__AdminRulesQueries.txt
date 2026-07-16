@@ -1,0 +1,120 @@
+import { gql } from '@apollo/client'
+
+const PRODUCT_RULES_FIELDS_FRAGMENT = gql`
+  fragment ProductRules on SPARK_ProductRules {
+    id
+    active
+    departments {
+      id
+      name
+      displayText
+    }
+    businessPartners {
+      id
+      name
+    }
+    rules
+    insightsClassExclusion {
+      department {
+        id
+      }
+      id
+      name
+      displayText
+    }
+    productId
+    rule {
+      code
+      description
+    }
+  }
+`
+
+export const GET_RULES = gql`
+  query getProductRules {
+    getProductRules {
+      ...ProductRules
+    }
+  }
+  ${PRODUCT_RULES_FIELDS_FRAGMENT}
+`
+
+export const GET_RULE = gql`
+  query getProductRule($id: ID!) {
+    getProductRulesById(id: $id) {
+      ...ProductRules
+    }
+  }
+  ${PRODUCT_RULES_FIELDS_FRAGMENT}
+`
+
+export const ADD_PRODUCT_RULE = gql`
+  mutation addProductRule($rule: SPARK_ProductRuleCreateInput) {
+    addProductRule(rule: $rule) {
+      ...ProductRules
+    }
+  }
+  ${PRODUCT_RULES_FIELDS_FRAGMENT}
+`
+
+export const UPDATE_PRODUCT_RULE = gql`
+  mutation updateProductRule($rule: SPARK_ProductRuleUpdateInput) {
+    updateProductRule(rule: $rule) {
+      ...ProductRules
+    }
+  }
+  ${PRODUCT_RULES_FIELDS_FRAGMENT}
+`
+
+export const DELETE_PRODUCT_RULE = gql`
+  mutation deleteProductRule($ruleId: ID!) {
+    deleteProductRule(ruleId: $ruleId)
+  }
+`
+
+export const GET_PRODUCT_DEPARTMENT_RULES = gql`
+  query getProductDeptRules($productIds: [String], $departmentIds: [Int], $activeOnly: Boolean) {
+    getProductDeptRules(productIds: $productIds, departmentIds: $departmentIds, activeOnly: $activeOnly) {
+      ...ProductRules
+    }
+  }
+  ${PRODUCT_RULES_FIELDS_FRAGMENT}
+`
+export const GET_SEARCH_PRODUCT_DEPARTMENT_RULES = gql`
+  query searchProductRules($productIds: [String], $departmentIds: [Int], $businessPartnerIds: [Int]) {
+    searchProductRules(productIds: $productIds, departmentIds: $departmentIds, businessPartnerIds: $businessPartnerIds) {
+      ...ProductRules
+    }
+  }
+  ${PRODUCT_RULES_FIELDS_FRAGMENT}
+`
+
+export const GET_ALL_AVAILABLE_RULES = gql`
+  query getAllAvailableRules {
+    getAllAvailableRules {
+      id
+      name
+    }
+  }
+`
+export const GET_PRODUCT_BUSINESS_PARTNER_RULES = gql`
+  query getProductBPRules($businessPartnerIds: [Int], $activeOnly: Boolean) {
+    getProductBPRules(businessPartnerIds: $businessPartnerIds, activeOnly: $activeOnly) {
+      ...ProductRules
+    }
+  }
+  ${PRODUCT_RULES_FIELDS_FRAGMENT}
+`
+
+export const GET_BUSINESS_PARTNERS = gql`
+  query getBusinessPartners($query: String!, $bpRoleIds: [Int]) {
+    getBusinessPartnersByTypesAndQuery(query: $query, bpRoleIds: $bpRoleIds) {
+      id
+      name
+      roles {
+        name
+        id
+      }
+    }
+  }
+`

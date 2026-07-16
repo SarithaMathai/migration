@@ -1,0 +1,39 @@
+import { gql } from '@apollo/client'
+
+export const UPDATE_USER_ACCREDITATION = gql`
+  mutation addAccreditation($accreditationRoles: SPARK_AccreditationInput!) {
+    addAccreditation(accreditationRoles: $accreditationRoles) {
+      userProfileId
+      accreditations {
+        code
+        description
+        status
+      }
+    }
+  }
+`
+
+export const ADD_FAVORITE = gql`
+  mutation addFavorite($resource: SPARK_FavoriteResourceInput!) {
+    addFavorite(resource: $resource) {
+      id
+      resource {
+        id
+      }
+    }
+  }
+`
+
+export const DELETE_FAVORITE = gql`
+  mutation deleteFavorite($type: String!, $id: ID!) {
+    deleteFavorite(type: $type, id: $id)
+  }
+`
+
+export const TOGGLE_VIEW_SWITCH = gql`
+  mutation updateViewToggle($toggleInput: SPARK_ToggleInput!) {
+    updateViewToggle(toggleInput: $toggleInput) {
+      id
+    }
+  }
+`

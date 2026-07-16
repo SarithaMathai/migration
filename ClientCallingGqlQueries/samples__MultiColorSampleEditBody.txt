@@ -1,0 +1,333 @@
+import React, { useEffect } from 'react'
+import _ from 'lodash'
+import { Card, Grid, Heading } from '@design-systems/canvas-ui'
+import { gql, useLazyQuery, useQuery, useMutation } from '@apollo/client'
+import Loading from '@spark/legacy/components/Loading'
+import Message from '@spark/legacy/components/Message'
+import SampleEditForm from './SampleEditForm'
+import { ERROR_MESSAGE, SAMPLE_TYPES, WORKSPACE_PRODUCTS_LIST_PAGE_SIZE, RESOURCE_TYPES } from '@spark/static'
+import { GET_SAMPLE_OVERVIEW, SAMPLE_DISCUSSION_FRAGMENT, UPDATE_SAMPLE } from '@spark/samples'
+import { GET_WORKSPACE_PRODUCTS_WITH_IDS } from '@spark/product-common'
+import { GET_COMBINATION_BY_ID, GET_FABRIC_SPEC_COMBO_BY_ID } from '@spark/combination-graphql'
+import { useAccreditation } from '@spark/legacy/customHooks/useAccreditation'
+import { useLocation } from 'react-router-dom'
+
+export const UPDATE_MCE_SAMPLE = gql`
+  mutation updateSamplesV2($sparkSample: SPARK_UpdateSamplesInputV2!) {
+    updateSamplesV2(samples: $sparkSample) {
+      id
+    }
+  }
+`
+
+export const GET_MCE_SAMPLE_WITH_TYPES = gql`
+  query getSampleWithAllSampleTypes($ids: [ID!]) {
+    getSamplesByIdsV2(ids: $ids) {
+      id
+      parentId
+      assetHumanId
+      clmPackageIdentifier
+      libraryColors {
+        id
+        status
+        explanations
+        notes
+        colorApproval
+        dyedGround
+        other
+        evaluatedDate
+        color {
+          thumbnailId
+          name
+          red
+          green
+          blue
+        }
+      }
+      preEvaluationComments
+      description
+      notes
+      createdAt
+      dueDate
+      address
+      deliverTo
+      quantity
+      updatedAt
+      rfidTagIds
+      designCycle {
+        id
+        name
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+        companyName
+      }
+      sampleType {
+        code
+        description
+      }
+      sampleFormat {
+        code
+        description
+      }
+      sampleEvaluationPurposes {
+        code
+        description
+      }
+      designEvaluators {
+        firstName
+        lastName
+        userProfileId
+      }
+      technicalEvaluators {
+        firstName
+        lastName
+        userProfileId
+      }
+      participants {
+        ...SampleDiscussionParticipants
+        users {
+          primaryRole
+        }
+      }
+      sampleRound {
+        originSampleId
+        parent
+        roundNumber
+      }
+      evaluationStatus {
+        code
+        description
+      }
+      evaluatedDate
+      evaluatedBy {
+        id
+        firstName
+        companyName
+        lastName
+      }
+      businessPartner {
+        id
+        name
+      }
+      tracking {
+        number
+        etaDate
+        receivedDate
+        sentDate
+        status {
+          code
+          description
+        }
+        lateReason {
+          code
+          description
+        }
+        lateReasonText
+      }
+      relatedResources
+      artworkId
+      dyeTypes
+      printTypes
+      deviationFromSpec
+      bestCanDo
+      dyeTypeOther
+      printTypeOther
+      product {
+        id
+        description
+        brand {
+          id
+          name
+        }
+        department {
+          id
+          name
+        }
+        division {
+          id
+          name
+        }
+        businessPartners {
+          id
+          name
+          associatedPartnerType
+        }
+      }
+      aestheticEvaluations {
+        aesthetic
+        keyName
+        other
+        status
+        explanations
+        evaluatedDate
+      }
+      colors {
+        id
+        name
+        status
+        explanations
+        notes
+        other
+        evaluatedDate
+      }
+    }
+    getSampleTrackingTypesV2 {
+      code
+      description
+    }
+    getSampleLateReasonTypesV2 {
+      code
+      description
+    }
+    getProductSampleEvaluationTypesV2 {
+      code
+      description
+    }
+    getSampleProductTypesV2 {
+      code
+      description
+      disabled
+    }
+    getSampleMaterialTypesV2 {
+      code
+      description
+    }
+    getSampleFormats {
+      code
+      description
+      dueDate
+    }
+    getSampleEvaluationPurposes {
+      code
+      description
+    }
+  }
+  ${SAMPLE_DISCUSSION_FRAGMENT}
+`
+
+export const MultiColorSampleEditBody = ({
+  formatValues,
+  sampleType,
+  resetSampleType,
+  isInternal,
+  currentUser,
+  sampleId,
+  workspaceId,
+  filterCriteria,
+  productDetailsExpandable,
+  onExpand,
+  parentResourceType,
+  parentHumanId,
+  fabricSpecComboId,
+  accreditations = [],
+}) => {
+  const { currentUserAccessToEvaluate, accreditationsWithStatus } = useAccreditation()
+
+  const [loadCombination, { data: combination, called: loadCombinationCalled }] = useLazyQuery(GET_COMBINATION_BY_ID(isInternal), { variables: { id: parentHumanId } })
+
+  const [loadFabricSpecCombo, { data: fabricSpecCombo, called: loadFabricSpecComboCalled }] = useLazyQuery(GET_FABRIC_SPEC_COMBO_BY_ID(isInternal), { variables: { id: fabricSpecComboId } })
+
+  const location = useLocation()
+
+  const { loading, error, data } = useQuery(GET_MCE_SAMPLE_WITH_TYPES, {
+    variables: { ids: [sampleId] },
+    fetchPolicy: 'network-only',
+  })
+
+  const [updateSample, { error: mutationError }] = useMutation(
+    sampleType === `${SAMPLE_TYPES.MultiColorSample}` || sampleType === `${SAMPLE_TYPES.MaterialMultiColorSample}` || sampleType === `${SAMPLE_TYPES.Colors}` ? UPDATE_MCE_SAMPLE : UPDATE_SAMPLE,
+    {
+      awaitRefetchQueries: true,
+      refetchQueries: [
+        {
+          query: GET_SAMPLE_OVERVIEW,
+          variables: {
+            ids: [sampleId],
+          },
+        },
+        {
+          query: GET_MCE_SAMPLE_WITH_TYPES,
+          variables: {
+            ids: [sampleId],
+          },
+        },
+        ...(workspaceId
+          ? [
+              {
+                query: GET_WORKSPACE_PRODUCTS_WITH_IDS,
+                variables: {
+                  page: 0,
+                  size: WORKSPACE_PRODUCTS_LIST_PAGE_SIZE,
+                  id: workspaceId,
+                  q: '',
+                  filter: filterCriteria,
+                },
+              },
+            ]
+          : []),
+      ],
+    },
+  )
+
+  useEffect(() => {
+    if (parentResourceType === RESOURCE_TYPES.Combinations && !loadCombinationCalled) {
+      loadCombination()
+    }
+  }, [parentResourceType, loadCombinationCalled, loadCombination])
+
+  useEffect(() => {
+    if (parentResourceType === RESOURCE_TYPES.Combinations && !loadFabricSpecComboCalled && fabricSpecComboId) {
+      loadFabricSpecCombo()
+    }
+  }, [parentResourceType, loadFabricSpecComboCalled, fabricSpecComboId, loadFabricSpecCombo])
+
+  if (loading) return <Loading>Loading multi-Color sample</Loading>
+  if (error) return <Message>{ERROR_MESSAGE.MESSAGE_OTHER}</Message>
+  if (mutationError) return <Message>{ERROR_MESSAGE.MESSAGE_OTHER}</Message>
+
+  const sample = data && data.getSamplesByIdsV2 && data.getSamplesByIdsV2[0]
+
+  const sampleEvalStatus = _.get(data, 'getProductSampleEvaluationTypesV2', [])
+  const lateReason = _.get(data, 'getSampleLateReasonTypesV2', [])
+  const trackingStatus = _.get(data, 'getSampleTrackingTypesV2', [])
+
+  return (
+    <Card className="hc8-pa-3x">
+      <Grid.Container>
+        <Grid.Item size={{ xs: 12 }}>
+          <Heading size={4}>
+            Editing {sample && sample.id} &mdash; {sample && sample.description}
+          </Heading>
+        </Grid.Item>
+        <Grid.Item size={{ xs: 12 }}>
+          <SampleEditForm
+            partnerName={sample?.businessPartner?.name || ''}
+            parentResourceType={parentResourceType}
+            resetSampleType={resetSampleType}
+            sampleTypeOptions={_.get(data, parentResourceType === RESOURCE_TYPES.Combinations ? 'getSampleMaterialTypesV2' : 'getSampleProductTypesV2', [])}
+            trackingOptions={formatValues(trackingStatus, 'Status')}
+            lateReasonOptions={lateReason}
+            sampleFormats={_.get(data, parentResourceType === RESOURCE_TYPES.Product && 'getSampleFormats', [])}
+            evaluationPurposes={_.get(data, parentResourceType === RESOURCE_TYPES.Product && 'getSampleEvaluationPurposes', [])}
+            evaluationOptions={formatValues(sampleEvalStatus, 'Status')}
+            updateSample={updateSample}
+            isInternal={isInternal}
+            currentUser={currentUser}
+            sample={sample}
+            combination={(combination && combination.getCombination) || {}}
+            fabricSpecCombo={fabricSpecCombo}
+            expandable={productDetailsExpandable}
+            onExpand={onExpand}
+            accreditationsWithStatus={accreditationsWithStatus}
+            currentUserAccessToEvaluate={currentUserAccessToEvaluate}
+            accreditations={accreditations}
+            location={location}
+          />
+        </Grid.Item>
+      </Grid.Container>
+    </Card>
+  )
+}

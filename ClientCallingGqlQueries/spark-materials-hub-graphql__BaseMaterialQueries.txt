@@ -1,0 +1,544 @@
+import { gql } from '@apollo/client'
+import { FILE_FIELDS } from '@spark/legacy/components/graphql/ComponentsFragments'
+import { MATERIAL_TEMPLATE_DETAILS } from './materialsFragments'
+import { HubMaterial } from 'BaseMaterial'
+import { SPARK_CodeDescription } from 'Base'
+import { MaterialsHubUnitOfMeasure, MaterialTemplate, ResourceLinkSearch } from 'MaterialTypes'
+
+export const BASE_MATERIAL_DETAILS = gql`
+  fragment BaseMaterialDetails on SPARK_BaseMaterial {
+    name
+    description
+    additionalInfo
+    notes
+    designCycles {
+      id
+      name
+    }
+    tags {
+      id
+      name
+    }
+    departments {
+      id
+      name
+    }
+    countryOfOrigin {
+      id
+      name
+    }
+    status {
+      code
+      description
+    }
+    thumbnailId
+    designThumbnailId
+    files {
+      id: humanId
+      ...FileDetails
+    }
+    recycledContent
+    baseAssetType
+    supplierInfo {
+      id
+      materialId
+      businessPartnerDetails {
+        id
+        name
+      }
+    }
+    inspiration
+    colorways {
+      humanId
+      name
+      thumbnailId
+      files {
+        ...FileDetails
+      }
+      tags {
+        id
+        name
+      }
+      archived
+    }
+    composition {
+      material {
+        id
+        type
+      }
+      hubMaterial {
+        humanId
+        type
+        subType {
+          code
+          description
+        }
+        baseMaterial {
+          name
+          description
+          thumbnailId
+          designThumbnailId
+          baseAssetType
+        }
+      }
+      quantity
+      contentPercentage
+      weight {
+        value
+        unitOfMeasure {
+          code
+          description
+        }
+      }
+      size {
+        value
+        unitOfMeasure {
+          code
+          description
+        }
+      }
+      conventionalOrigin
+      origins {
+        origin {
+          code
+          description
+        }
+        percentage
+      }
+      conventionalCertification
+      certifications {
+        code
+        description
+      }
+      countryOfOrigin {
+        id
+        name
+      }
+      template {
+        name
+        certification {
+          allowedCertificationTypes
+        }
+        origin {
+          allowedOriginTypes
+        }
+      }
+    }
+    measurement {
+      weight {
+        value
+        unitOfMeasure {
+          code
+          description
+        }
+      }
+      size {
+        value
+        unitOfMeasure {
+          code
+          description
+        }
+      }
+    }
+    visualDescriptions {
+      code
+      description
+    }
+    brands {
+      code
+      description
+    }
+    visualDescriptionComment
+    productType
+    suppliers {
+      id
+      materialId
+      businessPartnerDetails {
+        id
+        name
+      }
+      supplier {
+        id
+        name
+      }
+      facilities {
+        facilityId
+        facility {
+          id
+          name
+          countryOfOrigin
+          status
+          authorized
+        }
+      }
+    }
+    droppedPartnerIds
+    createdBy {
+      id
+      firstName
+      lastName
+      companyName
+    }
+    createdAt
+    updatedBy {
+      id
+      firstName
+      lastName
+      companyName
+    }
+    updatedAt
+  }
+  ${FILE_FIELDS}
+`
+export const SHOW_CONNECTEDBOMS = gql`
+  fragment ShowConnectedBoms on SPARK_BaseMaterial {
+    connectedBoms {
+      humanId
+      name
+      businessPartners {
+        id
+        name
+      }
+      product {
+        id
+        thumbnailId
+        description
+        attachmentsV3 {
+          content {
+            humanId: id
+            documentId
+            previewable
+            mediaType
+          }
+        }
+        brand {
+          id
+          name
+        }
+        department {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+export const SEARCH_MATERIAL_RESOURCE_LINKS_DETAILS = gql`
+  fragment SearchMaterialResourceLinksDetails on SPARK_ResourceLinkSearch {
+    resourceLinks {
+      reason
+      targetMaterial {
+        humanId
+        baseMaterial {
+          description
+          thumbnailId
+          designThumbnailId
+        }
+      }
+      sourceMaterial {
+        humanId
+        baseMaterial {
+          description
+          thumbnailId
+          designThumbnailId
+        }
+      }
+    }
+  }
+`
+
+export const GET_HUB_MATERIAL_BY_ID = gql`
+  query getHubMaterial($id: ID!, $name: ID!, $inheritAttributes: Boolean) {
+    getHubMaterial(id: $id) {
+      humanId
+      type
+      classification
+      baseMaterial {
+        ...BaseMaterialDetails
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+    getUserAccessByIds(ids: [$id])
+    getHubMaterialTypes
+    originConfigurationOptions: getHubCodedOptions(type: "Origin") {
+      description
+      code
+    }
+    certificationConfigurationOptions: getHubCodedOptions(type: "Certification") {
+      description
+      code
+    }
+    statuses: getHubCodedOptions(type: "Status") {
+      code
+      description
+    }
+    visualDescriptions: getHubCodedOptions(type: "VisualDescription") {
+      code
+      description
+    }
+    brands: getHubCodedOptions(type: "Brand") {
+      code
+      description
+    }
+    getMaterialTemplate(name: $name, inheritAttributes: $inheritAttributes) {
+      ...MaterialTemplateDetails
+    }
+  }
+  ${BASE_MATERIAL_DETAILS}
+  ${MATERIAL_TEMPLATE_DETAILS}
+`
+
+export interface GetHubMaterialAndTemplate {
+  getHubMaterial: HubMaterial
+  unitsOfMeasure: MaterialsHubUnitOfMeasure[]
+  originConfigurationOptions: SPARK_CodeDescription[]
+  certificationConfigurationOptions: SPARK_CodeDescription[]
+  getMaterialTemplate: MaterialTemplate
+  getHubMaterialTypes: string[]
+  searchResourceLinks?: ResourceLinkSearch
+  visualDescriptions: SPARK_CodeDescription[]
+  brands: SPARK_CodeDescription[]
+}
+
+export const DEVELOPED_BASE_MATERIALS_FRAGMENT = gql`
+  fragment DevelopedBaseMaterialsDetails on SPARK_BaseMaterial {
+    developedBaseMaterials @include(if: $showDevelopedBaseMaterials) {
+      humanId
+      baseMaterial {
+        name
+        description
+        thumbnailId
+        designThumbnailId
+        ...ShowConnectedBoms
+      }
+    }
+  }
+  ${SHOW_CONNECTEDBOMS}
+`
+export const GET_HUB_MATERIAL_AND_TEMPLATE_PERMISSIONS = gql`
+  query getHubMaterialAndTemplate(
+    $id: ID!
+    $name: ID!
+    $inheritAttributes: Boolean
+    $targetIds: [String]
+    $sourceIds: [String]
+    $filterType: String
+    $shouldSearchResourceLinks: Boolean = false
+    $showDevelopedBaseMaterials: Boolean = false
+  ) {
+    getHubMaterial(id: $id) {
+      humanId
+      type
+      classification
+      baseMaterial {
+        ...BaseMaterialDetails
+        ...DevelopedBaseMaterialsDetails
+      }
+      ... on SPARK_UserDefinedMaterial {
+        details
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+    unitsOfMeasure: getHubUnitsOfMeasure {
+      code
+      description
+      symbol
+    }
+    getHubMaterialTypes
+    originConfigurationOptions: getHubCodedOptions(type: "Origin") {
+      description
+      code
+    }
+    certificationConfigurationOptions: getHubCodedOptions(type: "Certification") {
+      description
+      code
+    }
+    visualDescriptions: getHubCodedOptions(type: "VisualDescription") {
+      description
+      code
+    }
+    brands: getHubCodedOptions(type: "Brand") {
+      description
+      code
+    }
+    getUserAccessByIds(ids: [$id])
+    getMaterialTemplate(name: $name, inheritAttributes: $inheritAttributes) {
+      ...MaterialTemplateDetails
+    }
+    searchResourceLinks(targetIds: $targetIds, sourceIds: $sourceIds, filterType: $filterType) @include(if: $shouldSearchResourceLinks) {
+      ...SearchMaterialResourceLinksDetails
+    }
+  }
+  ${BASE_MATERIAL_DETAILS}
+  ${MATERIAL_TEMPLATE_DETAILS}
+  ${SEARCH_MATERIAL_RESOURCE_LINKS_DETAILS}
+  ${DEVELOPED_BASE_MATERIALS_FRAGMENT}
+`
+
+export const GET_ACL_RESOURCE_TOKEN = gql`
+  query aclResourceToken($id: ID) {
+    getUserAccessByIds(ids: [$id])
+  }
+`
+
+export const SLIM_GET_HUB_MATERIAL_BY_ID = gql`
+  query slimGetHubMaterial($id: ID!) {
+    getHubMaterial(id: $id) {
+      humanId
+      type
+      classification
+      baseMaterial {
+        ...BaseMaterialDetails
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${BASE_MATERIAL_DETAILS}
+`
+
+export const GET_BASE_MATERIAL_ENUMS = gql`
+  query getBaseMaterialEnums {
+    statuses: getHubCodedOptions(type: "Status") {
+      code
+      description
+    }
+    unitsOfMeasure: getHubUnitsOfMeasure {
+      code
+      description
+      symbol
+    }
+    originConfigurationOptions: getHubCodedOptions(type: "Origin") {
+      description
+      code
+    }
+    certificationConfigurationOptions: getHubCodedOptions(type: "Certification") {
+      description
+      code
+    }
+    visualDescriptions: getHubCodedOptions(type: "VisualDescription") {
+      code
+      description
+    }
+    brands: getHubCodedOptions(type: "Brand") {
+      code
+      description
+    }
+    countriesOfOrigin: getTags(archived: false, type: "COUNTRY_OF_PRODUCTION", page: 0, size: 1000) {
+      content {
+        id
+        name
+        archived
+      }
+    }
+  }
+`
+
+export interface GetUnitsOfMeasure {
+  getHubUnitsOfMeasure: MaterialsHubUnitOfMeasure[]
+}
+
+export const GET_UNITS_OF_MEASURE = gql`
+  query getUnitsOfMeasure {
+    getHubUnitsOfMeasure {
+      code
+      description
+      symbol
+      measurementCategories
+    }
+  }
+`
+
+interface SparkBusinessPartner {
+  id: string
+  roles: {
+    id: string
+    name: string
+  }[]
+  relationships: {
+    relatedBpId: string
+    relatedBpName: string
+    type: {
+      relatedBpRole: {
+        id: number
+        name: string
+      }
+    }
+  }[]
+}
+
+export const UPDATE_HUB_MATERIAL_TEAMS = gql`
+  mutation updateTeams($id: ID!, $teamsToUpdate: SPARK_TeamsToUpdateInput) {
+    updateTeams(id: $id, teamsToUpdate: $teamsToUpdate)
+  }
+`
+
+export const ASSOCIATE_HUB_MATERIAL_ATTACHMENT_TEAMS = gql`
+  mutation associateAttachmentTeams($id: ID!, $files: [String]!, $teamsToUpdate: SPARK_TeamsToUpdateInput!, $relatedResourceIds: [String]) {
+    associateAttachmentTeams(parentId: $id, files: $files, teamsToUpdate: $teamsToUpdate, relatedResourceIds: $relatedResourceIds) {
+      humanId
+    }
+  }
+`
+
+export const SEARCH_MATERIALS_BY_CRITERIA = gql`
+  query searchMaterialsByCriteria($searchCriteria: SPARK_SearchMaterialQueryOptions) {
+    searchMaterialsByCriteria(searchCriteria: $searchCriteria) {
+      humanId
+      baseMaterial {
+        name
+      }
+    }
+  }
+`
+
+export const GET_HUB_MATERIALS = gql`
+  query getHubMaterials($materialIds: [String]!) {
+    getHubMaterials(materialIds: $materialIds) {
+      humanId
+      baseMaterial {
+        name
+        thumbnailId
+        description
+        status {
+          code
+          description
+        }
+      }
+    }
+  }
+`
+
+export const REMOVE_RESOURCES_V3 = gql`
+  mutation removeResourcesV3($associateAttachmentInput: SPARK_AssociateResourceAttachmentInput) {
+    removeResourcesV3(associateAttachmentInput: $associateAttachmentInput) {
+      id
+      humanId
+      resource {
+        id
+      }
+    }
+  }
+`
+
+export const VALIDATE_MATERIAL_UNIQUENESS = gql`
+  mutation validateMaterialUniqueness($material: SPARK_NewHubMaterialInput!, $page: Int) {
+    validateMaterialUniqueness(material: $material, page: $page) {
+      duplicatedIds
+      totalElements
+      totalPages
+      currentPage
+    }
+  }
+`

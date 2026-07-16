@@ -1,0 +1,405 @@
+import { gql } from '@apollo/client'
+import { PRODUCT_BASE_INFO_FRAGMENT, VMM_BUSINESS_PARTNER_ON_PRODUCT } from '@spark/product-queries'
+
+const WATCHLIST_PARTICIPANT_FRAGMENT = gql`
+  fragment WatchlistParticipants on SPARK_UserGroup_Participants {
+    teams {
+      name: teamName
+      partnerType
+      businessPartner {
+        id
+        companyName: name
+      }
+      id: teamId
+      edited
+      members: usersInfo {
+        userProfileId: userId
+        roles
+        memberDetails: userDetails {
+          accreditations {
+            code
+            description
+            status
+          }
+          id
+          userProfileId
+          firstName
+          lastName
+          internal: isInternal
+          companyName
+          partnerId
+          outOfOfficeAttributes {
+            userOutOfOffice
+          }
+        }
+      }
+    }
+    users {
+      userDetails {
+        accreditations {
+          code
+          description
+          status
+        }
+        id
+        userProfileId
+        firstName
+        lastName
+        companyName
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+        roles {
+          id
+          value
+        }
+        primaryRole
+      }
+      userProfileId: userId
+    }
+  }
+`
+
+const WATCHLIST_FORM_CONSTANTS = `
+  getWatchlistReasons {
+    value: code
+    label: description
+  }
+  getWatchlistInspectionActions {
+    value: code
+    label: description
+    types
+  }
+  searchWatchlist(q: $q) {
+    content {
+      humanId: id
+      parentId
+      workspaceContext
+      businessPartners @skip(if: $skipPartners){
+        id
+        associatedPartnerType
+      }
+    }
+  }
+`
+
+export const GET_WATCHLIST_FORM_CONSTANTS = gql`
+  query getWatchlistFormConstants($q: String, $skipPartners: Boolean!) {
+    ${WATCHLIST_FORM_CONSTANTS}
+  }
+`
+
+const WATCHLIST_FRAGMENT = gql`
+  fragment WatchlistFields on SPARK_Watchlist {
+    humanId
+    parentId
+    workspaceContext
+    businessPartners {
+      partnerId
+      partnerName
+      partnerType
+      systemTeamId
+    }
+    statusId
+    reasonIds
+    reasons
+    status: statusName
+    otherReason
+    notes
+    inspections {
+      id
+      actionId
+      action
+      type
+      instructions
+    }
+    participantDetails {
+      ...WatchlistParticipants
+    }
+    product {
+      ...ProductBaseInfoFragment
+    }
+    workspaces {
+      id
+      description
+    }
+    attachments {
+      humanId: id
+      documentId
+      documentName: name
+      documentSize
+      previewable
+      relatedResources
+      createdAt
+      createdBy {
+        firstName
+        lastName
+      }
+    }
+    createdAt
+    createdBy {
+      firstName
+      lastName
+    }
+    updatedAt
+    updatedBy {
+      firstName
+      lastName
+    }
+    __typename
+  }
+`
+
+export const GET_WATCHLIST_BY_IDS = gql`
+  query getWatchlistByIds($ids: [String!], $q: String, $skipPartners: Boolean!) {
+    ${WATCHLIST_FORM_CONSTANTS}
+    getWatchlistByIds(ids: $ids) {
+      ...WatchlistFields
+    }
+  }
+  ${WATCHLIST_FRAGMENT}
+  ${WATCHLIST_PARTICIPANT_FRAGMENT}
+  ${PRODUCT_BASE_INFO_FRAGMENT}
+`
+
+export const CREATE_WATCHLIST_ENTRIES = gql`
+  mutation createWatchlistEntries($watchlistEntries: [SPARK_WatchlistInput!]!) {
+    createWatchlistEntries(watchlistEntries: $watchlistEntries) {
+      humanId
+    }
+  }
+`
+
+export const UPDATE_WATCHLIST_ENTRIES = gql`
+  mutation updateWatchlistEntries($watchlistEntries: [SPARK_WatchlistInput!]!) {
+    updateWatchlistEntries(watchlistEntries: $watchlistEntries) {
+      humanId
+    }
+  }
+`
+
+export const SEARCH_WATCHLIST = gql`
+  query searchWatchlist($q: String, $baseQuery: String, $skipPartners: Boolean!) {
+    summaryByPartner: searchWatchlist(q: $baseQuery) {
+      content {
+        humanId: id
+        businessPartners @skip(if: $skipPartners) {
+          ...VmmBusinessPartnerOnProduct
+        }
+      }
+    }
+    searchWatchlist(q: $q) {
+      content {
+        humanId: id
+        parentId
+        workspaceContext
+        businessPartners {
+          ...VmmBusinessPartnerOnProduct
+        }
+        status: statusName
+        reasons
+        otherReason
+        notes
+        inspections {
+          id
+          action
+          type
+          instructions
+        }
+        attachments {
+          humanId: id
+          documentId
+          documentName: name
+          documentSize
+          createdBy {
+            firstName
+            lastName
+          }
+          createdAt
+          previewable
+          relatedResources
+        }
+        participantDetails {
+          ...WatchlistParticipants
+        }
+        product {
+          ...ProductBaseInfoFragment
+        }
+        workspaces {
+          id
+          description
+          businessPartners {
+            ...VmmBusinessPartnerOnProduct
+          }
+        }
+        createdAt
+        createdBy {
+          firstName
+          lastName
+        }
+        updatedAt
+        updatedBy {
+          firstName
+          lastName
+        }
+      }
+    }
+  }
+  ${WATCHLIST_PARTICIPANT_FRAGMENT}
+  ${PRODUCT_BASE_INFO_FRAGMENT}
+  ${VMM_BUSINESS_PARTNER_ON_PRODUCT}
+`
+
+export const GET_WATCHLIST_VERSION = gql`
+  query getComponentVersion($id: String!, $version: Int!) {
+    getComponentVersion(id: $id, version: $version) {
+      ... on SPARK_Watchlist {
+        ...WatchlistFields
+      }
+    }
+  }
+  ${WATCHLIST_FRAGMENT}
+  ${WATCHLIST_PARTICIPANT_FRAGMENT}
+  ${PRODUCT_BASE_INFO_FRAGMENT}
+`
+
+export const GET_WATCHLIST_FOR_BULK_UPDATE = gql`
+  query getWatchlistForBulkUpdate($q: String, $query: String, $filter: [String], $workspaceId: ID!, $skipPartners: Boolean!) {
+    ${WATCHLIST_FORM_CONSTANTS}
+    getWatchlistByFilter(q: $query, filter: $filter, workspaceId: $workspaceId) {
+      ...WatchlistFields
+    }
+    getWorkspaceV2(id: $workspaceId) {
+      id
+      description
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      products(q: $query, filter: $filter) {
+        content {
+          id
+          description
+          businessPartners {
+            id
+            name
+            associatedPartnerType
+          }
+          droppedPartnerIds
+          thumbnailId
+        }
+      }
+    }
+  }
+  ${WATCHLIST_FRAGMENT}
+  ${WATCHLIST_PARTICIPANT_FRAGMENT}
+  ${PRODUCT_BASE_INFO_FRAGMENT}
+`
+
+export const GET_WATCHLIST_FOR_BULK_CREATE = gql`
+  query getWatchlistForBulkCreate($q: String, $query: String, $filter: [String], $workspaceId: ID!, $skipPartners: Boolean!) {
+    ${WATCHLIST_FORM_CONSTANTS}
+    getWorkspaceV2(id: $workspaceId) {
+      id
+      description
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      teams (includeSystemTeams: true) {
+        content{
+          id
+          name
+          companyName: partner_name
+          partnerName: partner_name
+          partnerId: partner_id
+          partnerType{
+            code
+            description
+          }
+          members{
+            userProfileId: user_profile_id
+            roles
+            memberDetails{
+              accreditations{
+                code
+                description
+                status
+              }
+              id
+              active
+              firstName
+              lastName
+              companyName
+              partnerId
+              userProfileId
+              outOfOfficeAttributes {
+                userOutOfOffice
+              }
+            }
+          }
+          status_name
+        }
+      }
+      products(q: $query, filter: $filter) {
+        content {
+          id
+          description
+          businessPartners {
+            id
+            name
+            associatedPartnerType
+          }
+          droppedPartnerIds
+          thumbnailId
+          teams{
+            content{
+              id
+              name
+              companyName: partner_name
+              partnerName: partner_name
+              partnerId: partner_id
+              partnerType{
+                code
+                description
+              }
+              members{
+                userProfileId: user_profile_id
+                roles
+                memberDetails{
+                  accreditations{
+                    code
+                    description
+                    status
+                  }
+                  id
+                  active
+                  firstName
+                  lastName
+                  companyName
+                  partnerId
+                  userProfileId
+                  outOfOfficeAttributes {
+                    userOutOfOffice
+                  }
+                }
+              }
+              status_name
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const CLONE_WATCHLIST_ATTACHMENTS = gql`
+  mutation cloneFilesForWatchlist($attachmentIds: [String!], $cloneReference: [WatchlistAttachmentCloneRef]) {
+    cloneFilesForWatchlist(attachmentIds: $attachmentIds, cloneReference: $cloneReference) {
+      humanId
+      parentResource
+    }
+  }
+`

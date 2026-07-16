@@ -1,0 +1,36 @@
+import { gql } from '@apollo/client'
+
+export const SEARCH_ATTACHMENTS = gql`
+  query searchAttachments($q: String, $parentIds: [String], $relatedIds: [String], $partnerId: ID, $page: Int, $size: Int) {
+    searchAttachments(q: $q, parentIds: $parentIds, relatedIds: $relatedIds, partnerId: $partnerId, page: $page, size: $size) {
+      paging {
+        size
+        totalPages
+        totalElements
+        number
+      }
+      content {
+        id
+        documentId
+        humanId
+        documentType
+        name
+        resource {
+          id
+          type
+        }
+        parentResource
+        relatedProduct {
+          id
+          description
+        }
+        relatedWorkspace {
+          id
+          description
+        }
+        relatedResources
+        previewable
+      }
+    }
+  }
+`

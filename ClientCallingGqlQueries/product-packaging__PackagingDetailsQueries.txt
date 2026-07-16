@@ -1,0 +1,717 @@
+import { gql } from '@apollo/client'
+import { VMM_ROLE_TYPE } from '@spark/static'
+import { LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT } from '@spark/product-queries'
+import { DIELINE_STATUS } from '@spark/product-specs-common'
+
+const GET_PACKAGING_DETAIL_FRAGMENT = (includeInternalData = false) => {
+  return gql`
+  fragment PackagingDetailsFragment on SPARK_Packaging {
+    humanId
+    archived
+    parentId
+    description
+    promoDescription
+    projectType
+    projectTypeName
+    projectItemType
+    projectItemTypeName
+    projectLevel
+    projectLevelName
+    creativePath
+    creativePathName
+    requiresSuggestedRetailPrice
+    suggestedRetailPriceByDPCI {
+      dpci
+      suggestedRetailPrice
+    }
+    group
+    groupName
+    wave
+    waveDescription
+    fulfillmentTypeId
+    orderCode
+    manualLock
+    dielineEvaluators {
+      id
+      firstName
+      lastName
+    }
+    dielineDueDate
+    handoffDueDate
+    workspaceIds
+    photoRequired
+    illustrationRequired
+    notes
+    status {
+      code
+      description
+    }
+    businessPartner {
+      id
+      name
+      associatedPartnerType
+    }
+    version
+    createdAt
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    updatedAt
+    updatedBy {
+      id
+      firstName
+      lastName
+    }
+    contactInformation {
+      companyName
+      email
+      address
+      phone
+      softproofing {
+        name
+        email
+      }
+    }
+    copyWriterEditAndApproved
+    warningsAndCautions {
+      countryOfOrigin
+      countryOfOriginName
+      front
+      back
+      sizing
+      netQuantity
+      comparedToCopy
+      additionalMiscCopy
+      copywriterNotes
+    }
+    warningsAndCautionsList {
+      countryOfOrigin
+      countryOfOriginName
+      front
+      back
+      sizing
+      netQuantity
+      comparedToCopy
+      additionalMiscCopy
+      copywriterNotes
+      reservedDpcis {
+        dpci
+      }
+      descriptor
+      warningCaution
+    }
+  ${
+    includeInternalData
+      ? `packagingInternalData {
+      internalNotes
+  attachmentIds
+}`
+      : ''
+  }
+    packagingElements {
+      id
+      selectedComponentId
+      selectedComponentName
+      packagingLibrary {
+        humanId
+        description
+        name
+        passThrough
+        printed {
+          description
+          code
+        }
+        attachment{
+          id
+          name
+          documentId
+          humanId
+          previewable
+        }
+        status {
+          code
+        }
+        packagingFormat {
+          code
+          description
+        }
+      }
+      printers {
+        printerId
+        dielineContactName
+        dielineEmail
+        printerCompanyName
+        printerContactEmail
+        printerPhoneNumber
+        printerCode
+        printerAddress
+        printerCountry
+        printerCountryName
+        printerCity
+        printerState
+        printerZipcode
+        printerLocationId
+        reservedDpcis {
+          dpci
+        }
+        dielines {
+          humanId
+          printerId
+          reservedDpcis {
+            dpci
+          }
+          attachmentId
+          statusId
+          statusName
+          round {
+            originDielineId
+            roundNumber
+          }
+        }
+        printingProcess {
+          substrate {
+            freeText
+            substrateId
+            substrateName
+            substrateShortName
+          }
+          substrateColorId
+          substrateColorName
+          printProcessId
+          printProcessName
+          printOrientationId
+          ${includeInternalData ? 'internalPrintingProcessNotes' : ''}
+          printOrientationName
+          quotedInkStation
+          iccProfile
+        }
+        printerSoftproofing {
+          name
+          email
+        }
+        fileDeliveryEmailList
+        shippingDestination {
+          shippingCompanyName
+          shippingContactName
+          shippingEmail
+          streetAddress
+          phoneNumber
+          fileDeliveryEmail
+        }
+        shippingAddressSameAsPrinterAddress
+      ${
+        includeInternalData
+          ? `isPrintInformationReviewed
+          attachmentIds
+        `
+          : ''
+      }
+
+      }
+    }
+    product {
+      id
+      description
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      workspaces {
+        content {
+          id
+          description
+        }
+      }
+      tcins {
+        partnerId
+        tcin {
+          dpci
+          tcinId
+          createdAt
+          itemDetails {
+            primaryImage
+            description
+            launchDateTime
+            onlineUrl
+            color
+            size
+          }
+        }
+      }
+      reservedDpcis {
+        partnerId
+        reservedDpcis {
+          apexId
+          apexDescription
+          dpci
+          dpciStatus
+          dept
+          clazz
+          subClass
+          tcin
+        }
+      }
+    }
+    workspaces {
+      id
+      description
+    }
+    attachments {
+      access {
+        ids
+        bps
+        merchVendors
+        fabSuppliers
+        designPartners
+        internal
+        external
+        locked
+      }
+      createdAt
+      createdBy {
+        firstName
+        lastName
+      }
+      documentId
+      humanId
+      documentType
+      documentSize
+      id
+      isResourceCritical
+      mediaType
+      name
+      parentResource
+      previewable
+      relatedResources
+      tags{
+        id
+        name
+      }
+      updatedAt
+      updatedBy{
+        firstName
+        lastName
+      }
+    }
+    participantDetails {
+      ...LegacyComponentDiscussionParticipantsFragment
+    }
+    access {
+      permissions {
+        abstractAccessGroup {
+          id
+          grantees
+          type
+        }
+      }
+    }
+  }
+  ${LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT}
+`
+}
+
+const PACKAGING_PACKET_INFORMATION_FRAGMENT = gql`
+fragment packagePacketInformation on SPARK_Packaging {
+  humanId
+  description
+  businessPartner {
+    id
+    name
+  }
+  packagingElements {
+    packagingLibrary {
+      printed {
+        code
+        description
+      }
+    }
+    printers {
+      dielines(statusIdFilter: ["${DIELINE_STATUS.ACTIVE}"]) {
+          attachments {
+          id
+        }
+      }
+      attachmentIds
+    }
+  }
+  product {
+    id
+    description
+    attachmentsV3 {
+      content {
+        documentId
+        humanId: id
+        access {
+          bps
+        }
+      }
+    }
+    claims {
+      humanId
+      claimName
+      status {
+        code
+        description
+      }
+      statuses {
+        workspaceId
+        status {
+          code
+          description
+        }
+      }
+      businessPartner {
+        id
+        name
+      }
+      claimDetails {
+        shareWithGuests
+      }
+    }
+    discussionsV2 {
+      content {
+        discussionDto {
+          id
+          subject
+          businessPartner {
+            id
+            name
+          }
+          critical
+        }
+      }
+    }
+  }
+}
+`
+
+export const GET_PACKAGING_PACKETS_INFORMATION = gql`
+  query getPackagingPacketsInformation($packagingIds: [String], $workspaceIds: [String], $partnerIds: [String]) {
+    getPackagings(packagingIds: $packagingIds, workspaceIds: $workspaceIds, partnerIds: $partnerIds) {
+      content {
+        ...packagePacketInformation
+      }
+    }
+  }
+  ${PACKAGING_PACKET_INFORMATION_FRAGMENT}
+`
+
+export const GET_PACKAGING_PACKET_INFORMATION = gql`
+  query getPackagingPacketInformation($packagingId: String!) {
+    getPackagingById(packagingId: $packagingId) {
+      ...packagePacketInformation
+    }
+  }
+  ${PACKAGING_PACKET_INFORMATION_FRAGMENT}
+`
+
+export const ADD_PACKAGING_DETAIL = gql`
+  mutation addPackaging($sparkPackaging: SPARK_PackagingInput!) {
+    addPackaging(sparkPackaging: $sparkPackaging) {
+      humanId
+    }
+  }
+`
+
+export const BULK_ADD_PACKAGING_DETAILS = gql`
+  mutation bulkAddPackagings($bulkPackagingInput: SPARK_PackagingBulkInput!) {
+    bulkAddPackagings(bulkPackagingInput: $bulkPackagingInput) {
+      packaging {
+        humanId
+      }
+    }
+  }
+`
+
+export const UPDATE_PACKAGING_DETAIL = gql`
+  mutation updatePackaging($packagingId: String!, $sparkPackaging: SPARK_PackagingInput!) {
+    updatePackaging(packagingId: $packagingId, sparkPackaging: $sparkPackaging) {
+      humanId
+    }
+  }
+`
+
+export const BULK_UPDATE_PACKAGING_DETAILS = gql`
+  mutation bulkUpdatePackagings($bulkPackagingInput: SPARK_PackagingBulkInput!) {
+    bulkUpdatePackagings(bulkPackagingInput: $bulkPackagingInput) {
+      packaging {
+        humanId
+      }
+    }
+  }
+`
+
+export const GET_PACKAGING_DETAIL = gql`
+  query getPackagingById($packagingId: String!) {
+    getPackagingById(packagingId: $packagingId) {
+      ...PackagingDetailsFragment
+    }
+  }
+  ${GET_PACKAGING_DETAIL_FRAGMENT(false)}
+`
+
+export const GET_PACKAGING_DETAIL_WITH_INTERNAL_DATA = gql`
+  query getPackagingById($packagingId: String!) {
+    getPackagingById(packagingId: $packagingId) {
+      ...PackagingDetailsFragment
+    }
+  }
+  ${GET_PACKAGING_DETAIL_FRAGMENT(true)}
+`
+
+export const GET_PACKAGING_DETAILS_BY_PARENTS = gql`
+  query getPackagings($parentIds: [String]!, $workspaceIds: [String]) {
+    getPackagings(parentIds: $parentIds, workspaceIds: $workspaceIds) {
+      content {
+        ...PackagingDetailsFragment
+      }
+    }
+  }
+  ${GET_PACKAGING_DETAIL_FRAGMENT()}
+`
+
+export const GET_PACKAGING_DETAILS_BY_PARENTS_INTERNAL = gql`
+  query getPackagings($parentIds: [String]!, $workspaceIds: [String]) {
+    getPackagings(parentIds: $parentIds, workspaceIds: $workspaceIds) {
+      content {
+        ...PackagingDetailsFragment
+      }
+    }
+  }
+  ${GET_PACKAGING_DETAIL_FRAGMENT(true)}
+`
+export const GET_PRINTER_INFORMATION = gql`
+  query getPackagingFacilitiesByBpId($id: ID!) {
+    getFacilityByCapTypesAndBpId(id: $id, query: "", impression: "Packaging") {
+      id
+      name
+      countryOfOrigin
+      status
+      authorized
+      address {
+        countryCode
+        countryName
+        city
+        line1
+        line2
+        postalCode
+        subdivisionCode
+        subdivisionName
+      }
+    }
+  }
+`
+
+export const GET_PACKAGING_SUPPLIERS = gql`
+  query getPackagingSuppliers($query: String!) {
+    getBusinessPartnersByTypeAndQuery(query: $query, type: ${VMM_ROLE_TYPE.PACKAGING_SUPPLIER}) {
+      id
+      name
+      role{
+        bpRoleName
+        bpRoleId
+      }
+    }
+  }
+`
+
+export const LOCK_PACKAGING = gql`
+  mutation lockPackaging($packagingId: String!) {
+    lockPackaging(packagingId: $packagingId) {
+      humanId
+      manualLock
+    }
+  }
+`
+
+export const UNLOCK_PACKAGING = gql`
+  mutation unlockPackaging($packagingId: String!) {
+    unlockPackaging(packagingId: $packagingId) {
+      humanId
+      manualLock
+    }
+  }
+`
+
+export const GET_LOCATION_INFO = gql`
+  query getLocationById($id: ID) {
+    getLocationById(id: $id) {
+      id
+      name
+      countryOfOrigin
+      status
+      authorized
+    }
+  }
+`
+
+export const USE_DPCI_INFO = gql`
+  query getDpciInfo($productId: ID!) {
+    getProduct(id: $productId) {
+      reservedDpcis {
+        partnerId
+        reservedDpcis {
+          apexId
+          dpci
+          dpciStatus
+          dept
+          clazz
+          subClass
+          tcin
+        }
+      }
+      tcins {
+        partnerId
+        tcin {
+          tcinId
+          dpci
+        }
+      }
+    }
+  }
+`
+
+export const GET_DIELINES = gql`
+  query getDielines($printerIds: [String], $packagingIds: [String], $parentIds: [String], $statusIds: [Int]) {
+    getDielines(printerIds: $printerIds, packagingIds: $packagingIds, parentIds: $parentIds, statusIds: $statusIds) {
+      humanId
+      printerId
+      parentId
+      dielineDueDate
+      dielineContactName
+      dielineEmail
+      printerCompanyName
+      printerContactEmail
+      printerCode
+      printerAddress
+      printerCountry
+      printerCountryName
+      printerCity
+      printerState
+      printerZipcode
+      evalFailedReasons {
+        code
+        description
+        resourceType
+      }
+      statusId
+      statusName
+      round {
+        originDielineId
+        roundNumber
+        isParent
+      }
+      evaluatedBy {
+        id
+        firstName
+        lastName
+        companyName
+      }
+      evaluatedDate
+      comments
+      version
+      attachments {
+        id
+        documentSize
+        name
+        documentId
+        humanId
+        createdBy {
+          firstName
+          lastName
+        }
+        createdAt
+      }
+      attachment {
+        id
+        documentSize
+        documentName
+        documentId
+        humanId
+        createdBy {
+          firstName
+          lastName
+        }
+        createdAt
+      }
+      reservedDpcis {
+        dpci
+      }
+    }
+  }
+`
+
+export const GET_DIELINE_STATUS_LIST = gql`
+  query getDielineEvaluationStatuses {
+    getDielineEvaluationStatuses {
+      code
+      description
+    }
+  }
+`
+
+export const GET_FILES = gql`
+  query getAttachmentsV3($ids: [ID]!) {
+    getAttachmentsV3(ids: $ids) {
+      previewable
+      documentId
+      documentName
+      humanId
+      documentType
+      documentSize
+      createdAt
+      relatedResources
+    }
+  }
+`
+
+export const EVALUATE_DIELINE = gql`
+  mutation evaluateDieline($dielineId: String!, $dielineEvaluation: SPARK_DielineEvaluationInput) {
+    evaluateDieline(dielineId: $dielineId, dielineEvaluation: $dielineEvaluation) {
+      humanId
+      statusId
+    }
+  }
+`
+
+export const GENERATE_PACKAGING_PACKET = gql`
+  mutation generateCoreTechPack($packetInput: SPARK_TechPackInput!) {
+    generateCoreTechPack(sparkTechpackContent: $packetInput) {
+      id
+      name
+      status
+      owner
+    }
+  }
+`
+
+export const GENERATE_PACKAGING_PACKETS_BULK = gql`
+  mutation generateCoreTechPacksBulk($sparkBulkTechpackContent: SPARK_BulkTechpackInput!) {
+    generateCoreTechPacksBulk(sparkBulkTechpackContent: $sparkBulkTechpackContent) {
+      id
+      name
+      status
+      owner
+    }
+  }
+`
+
+export const GET_WORKSPACES_DESCRIPTION = gql`
+  query getWorkspaceV2($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      description
+    }
+  }
+`
+export const UPDATE_PACKAGING_COMPONENT_STATUS = gql`
+  mutation updatePackagingComponentStatus($productId: String!, $ids: [String]!, $status: SPARK_ComponentStatusInput) {
+    updatePackagingComponentStatus(productId: $productId, ids: $ids, status: $status) {
+      content {
+        humanId
+      }
+    }
+  }
+`

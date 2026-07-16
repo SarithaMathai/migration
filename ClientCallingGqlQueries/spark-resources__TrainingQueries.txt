@@ -1,0 +1,170 @@
+import { gql } from '@apollo/client'
+
+export const GET_RESOURCE_TRAINING_LABELS = gql`
+  query getTrainingLabels {
+    getTrainingLabels {
+      id
+      name
+    }
+  }
+`
+
+export const SEARCH_RESOURCE_TRAINING_DOCUMENTS = gql`
+  query searchTrainingDocuments($topics: [String]) {
+    searchTrainingDocuments(topics: $topics) {
+      id
+      title
+      createdBy
+      createdDate
+      updatedDate
+      attachment {
+        id
+        type
+        title
+        extensions {
+          mediaType
+          fileSize
+        }
+      }
+      labels {
+        id
+        name
+      }
+      content
+    }
+  }
+`
+
+export const GET_ALL_RESOURCE_TRAINING_DOCUMENTS = gql`
+  query getAllTrainingDocuments($userType: String) {
+    getAllTrainingDocuments {
+      labels {
+        id
+        name
+      }
+      documents(userType: $userType) {
+        searchResults {
+          id
+          title
+          content
+          labels {
+            id
+            name
+          }
+          updatedDate
+          createdDate
+          tags
+          topics {
+            name
+            isIgnore
+          }
+          verificationGroup
+          contentTypes
+          attachments {
+            attachmentId
+            attachmentName
+            extensions {
+              fileSize
+              mediaType
+            }
+          }
+          updatedBy {
+            firstName
+            lastName
+            isInternal
+          }
+          createdBy {
+            firstName
+            lastName
+            isInternal
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_IMAGE = gql`
+  query getImage($imageId: String, $imageName: String, $imageType: String, $attachmentType: String) {
+    getImage(imageId: $imageId, imageName: $imageName, imageType: $imageType, attachmentType: $attachmentType)
+  }
+`
+
+export const GET_VIDEO = gql`
+  query getVideo($videoId: String, $videoName: String, $type: String) {
+    getVideo(videoId: $videoId, videoName: $videoName, type: $type)
+  }
+`
+
+export const GET_TRAINING_TOPICS = gql`
+  query getTrainingTopics {
+    getTrainingTopics {
+      entities {
+        entityType
+        values
+        documents {
+          name
+          childDocuments
+        }
+      }
+    }
+  }
+`
+
+export const SET_TRAINING_TOPICS = gql`
+  mutation setTrainingTopics($topics: [SPARK_TrainingTopicsInput]) {
+    setTrainingTopics(topics: $topics) {
+      entities {
+        entityType
+        values
+      }
+    }
+  }
+`
+
+export const SEND_NOTIFICATION = gql`
+  mutation sendResourceNotifications($notificationDetails: [SPARK_ResourceNotificationDetails]) {
+    sendResourceNotifications(notificationDetails: $notificationDetails)
+  }
+`
+
+export const GET_RESOURCE_TRAINING_DOCUMENT = gql`
+  query getTrainingDocumentById($documentId: ID) {
+    getTrainingDocumentById(documentId: $documentId) {
+      id
+      title
+      content
+      labels {
+        id
+        name
+      }
+      updatedDate
+      createdDate
+      tags
+      topics {
+        name
+        isIgnore
+      }
+      verificationGroup
+      contentTypes
+      attachments {
+        attachmentId
+        attachmentName
+        extensions {
+          fileSize
+          mediaType
+        }
+      }
+      updatedBy {
+        firstName
+        lastName
+        isInternal
+      }
+      createdBy {
+        firstName
+        lastName
+        isInternal
+      }
+    }
+  }
+`

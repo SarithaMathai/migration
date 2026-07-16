@@ -1,0 +1,1591 @@
+import { gql } from '@apollo/client'
+import { MATERIAL_DETAILS, MATERIAL_DETAILS_SLIM_BOM } from '@spark/materials-graphql'
+import { LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT } from './legacyDiscussionFragments'
+import { PRODUCT_BASE_INFO_FRAGMENT } from './ProductFragments'
+
+const BOM_COLOR_FRAGMENT = gql`
+  fragment BOMColorDetailsFragment on SPARK_Material {
+    id
+    name
+    thumbnailId
+    red
+    green
+    blue
+    type
+  }
+`
+
+const BUILD_FILES_FRAGMENT = (on) => gql`
+fragment ${on}_Files on ${on} {
+  files {
+    documentId
+    humanId
+    documentName
+    documentSize
+    previewable
+    resource {
+      type
+      id
+    }
+  }
+}
+`
+
+export const BOM_WASH_DETAILS_FRAGMENT = ({ includeFilesFragment = true }) => gql`
+  fragment BomWashDetailsFragment${includeFilesFragment ? 'WFiles' : ''} on SPARK_Wash {
+    id: humanId
+    washDescription
+    status {
+      code
+      description
+    }
+    thumbnailId
+    ${includeFilesFragment ? '...SPARK_Wash_Files' : ''}
+    washType {
+      code
+      description
+    }
+    isTargetRecipe
+    teams {
+      partner_id
+      partnerType {
+        code
+        description
+      }
+      business_partner {
+        id
+        associatedPartnerType
+      }
+    }
+    laundry {
+      id
+      name
+      authorized
+      status
+    }
+    fabricRecordInfo {
+      humanId
+      name
+    }
+    fabricSpec {
+      humanId
+      supplierId
+      supplierName
+      additionalInfoSpecification {
+        referenceId
+      }
+      ${includeFilesFragment ? '...SPARK_FabricSpecification_Files' : ''}
+    }
+  }
+  ${includeFilesFragment ? BUILD_FILES_FRAGMENT('SPARK_FabricSpecification') : ``}
+  ${includeFilesFragment ? BUILD_FILES_FRAGMENT('SPARK_Wash') : ``}
+
+`
+
+const ORIGIN_COMPOSITION_FRAGMENT = gql`
+  fragment MaterialOrigins on SPARK_MaterialOrigin {
+    origin {
+      code
+      description
+    }
+    percentage
+  }
+`
+
+export const BOM_HUB_BASE_MATERIAL_FRAGMENT = gql`
+  fragment BomHubBaseMaterial on SPARK_BaseMaterial {
+    relatedMaterialType
+    description
+    recycledContent
+    status {
+      code
+      description
+    }
+    supplier {
+      id
+      name
+    }
+    suppliers {
+      id
+      dropped
+      supplier {
+        id
+        name
+      }
+      facilities {
+        facilityId
+        facility {
+          id
+          name
+        }
+      }
+      supplier {
+        role {
+          bpRoleName
+          bpRoleId
+        }
+      }
+    }
+    supplierMillArticleNumber
+    measurement {
+      weight {
+        value
+        unitOfMeasure {
+          code
+          description
+        }
+      }
+      size {
+        value
+        unitOfMeasure {
+          code
+          description
+        }
+      }
+    }
+    thumbnailId
+    ...SPARK_BaseMaterial_Files
+    baseAssetType
+    countryOfOrigin {
+      id
+      name
+    }
+  }
+  ${BUILD_FILES_FRAGMENT('SPARK_BaseMaterial')}
+`
+
+export const BOM_HUB_MATERIAL_COMPOSITION_FRAGMENT = gql`
+  fragment BomHubMaterialComposition on SPARK_MaterialComposition {
+    material {
+      id
+      type
+    }
+    hubMaterial {
+      humanId
+      type
+      subType {
+        code
+        description
+      }
+    }
+    quantity
+    contentPercentage
+    weight {
+      value
+      unitOfMeasure {
+        code
+        description
+      }
+    }
+    size {
+      value
+      unitOfMeasure {
+        code
+        description
+      }
+    }
+    origins {
+      ...MaterialOrigins
+    }
+    certifications {
+      code
+      description
+    }
+    countryOfOrigin {
+      id
+      name
+    }
+    template {
+      name
+      certification {
+        allowedCertificationTypes
+      }
+      origin {
+        allowedOriginTypes
+      }
+    }
+  }
+  ${ORIGIN_COMPOSITION_FRAGMENT}
+`
+
+export const BOM_HUB_MATERIAL_FRAGMENT = gql`
+  fragment HubMaterial on SPARK_HubMaterial {
+    humanId
+    type
+    subType {
+      code
+      description
+    }
+  }
+`
+
+const WEIGHT_FRAGMENT = gql`
+  fragment MaterialWeight on SPARK_ValueWithUnit {
+    value
+    unitOfMeasure {
+      code
+      description
+    }
+  }
+`
+
+export const BOM_HUB_MATERIAL_DETAILS_FRAGMENT = gql`
+  fragment HubMaterialDetails on SPARK_HubMaterialInterface {
+    humanId
+    type
+    classification
+    baseMaterial {
+      ...BomHubBaseMaterial
+      composition {
+        ...BomHubMaterialComposition
+        hubMaterial {
+          ...HubMaterial
+          baseMaterial {
+            ...BomHubBaseMaterial
+            composition {
+              ...BomHubMaterialComposition
+              hubMaterial {
+                ...HubMaterial
+                baseMaterial {
+                  ...BomHubBaseMaterial
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ${BOM_HUB_MATERIAL_FRAGMENT}
+  ${BOM_HUB_BASE_MATERIAL_FRAGMENT}
+  ${BOM_HUB_MATERIAL_COMPOSITION_FRAGMENT}
+`
+
+export const BOM_COMBO_SUPPLIER_FRAGMENT = gql`
+  fragment BomComboSupplier on SPARK_BomComboSupplier {
+    fabricSupplier {
+      id
+      name
+    }
+    fabricSpecCombo {
+      id
+      parentComboId
+      fabricId
+      fabricSpecId
+      merchVendors {
+        id
+        name
+      }
+      status
+      relatedMaterials {
+        ...MaterialDetails
+      }
+      intentLineIds
+      sentToFpf
+      fabricSpecForBom {
+        name
+        fabricRecordDetail {
+          layers {
+            totalContent
+            weightImperial
+            weightMetric
+          }
+        }
+      }
+    }
+  }
+  ${MATERIAL_DETAILS}
+`
+
+export const VMM_LOCATION_FIELDS = gql`
+  fragment VmmLocationFields on VMM_Location {
+    id
+    name
+    countryOfOrigin
+    status
+    authorized
+  }
+`
+
+const TRIM_SUPPLIER_DETAILS = gql`
+  fragment TrimSupplierDetails on SPARK_TrimSupplier {
+    supplierId
+    supplier {
+      id
+      name
+    }
+    dropped
+    developmentSupplier
+    supplierItemCode
+    facilities {
+      facilityId
+      sizeIds
+      approvedColorRowIds
+      approvedFinishRowIds
+      facility {
+        ...VmmLocationFields
+      }
+    }
+  }
+  ${VMM_LOCATION_FIELDS}
+`
+const WASH_IMPRESSION_DETAILS_FRAGMENT = gql`
+  fragment WashLibraryImpressionDetails on SPARK_BomWashLibraryImpressionDetails {
+    __typename
+    id
+    type
+    applies
+  }
+`
+const BASE_IMPRESSION_DETAILS_FRAGMENT = gql`
+  fragment BaseImpressionDetails on SPARK_BomBaseImpressionDetails {
+    __typename
+    id
+    type
+    description
+  }
+`
+
+const FABRIC_LIBRARY_IMPRESSION_DETAILS_FRAGMENT = gql`
+  fragment FabricLibraryImpressionDetails on SPARK_BomFabricLibraryImpressionDetails {
+    __typename
+    id
+    type
+    description
+  }
+`
+
+const TRIM_LIBRARY_IMPRESSION_DETAILS_FRAGMENT = gql`
+  fragment TrimLibraryImpressionDetails on SPARK_BomTrimLibraryImpressionDetails {
+    __typename
+    id
+    type
+    finishRowId
+    colorRowId
+    dyedToMatch
+    textColor {
+      ...BOMColorDetailsFragment
+    }
+    groundColor {
+      ...BOMColorDetailsFragment
+    }
+    groundColorRowId
+    textColorRowId
+    groundColorDyedToMatch
+    textColorDyedToMatch
+    groundColorAvailable
+    textColorAvailable
+  }
+  ${BOM_COLOR_FRAGMENT}
+`
+
+const TRIM_ZIPPER_LIBRARY_IMPRESSION_DETAILS_FRAGMENT = gql`
+  fragment TrimZipperLibraryImpressionDetails on SPARK_BomTrimZipperLibraryImpressionDetails {
+    __typename
+    id
+    type
+    sliderColorRowId
+    sliderFinishRowId
+    tapeColorRowId
+    teethColorRowId
+    teethFinishRowId
+    sliderColor {
+      ...BOMColorDetailsFragment
+    }
+    tapeColor {
+      ...BOMColorDetailsFragment
+    }
+    teethColor {
+      ...BOMColorDetailsFragment
+    }
+    sliderColorDyedToMatch
+    tapeColorDyedToMatch
+    teethColorDyedToMatch
+    sliderColorAvailable
+    tapeColorAvailable
+    teethColorAvailable
+    libraryResourceAvailable
+  }
+  ${BOM_COLOR_FRAGMENT}
+`
+
+export const BOM_ELASTIC_TRIM_FIELDS_FRAGMENT = gql`
+  fragment TrimElasticFields on SPARK_Material {
+    id
+    description
+    thumbnailId
+    tgtCode
+    targetSourced
+    longLeadTime
+    trimType {
+      description
+    }
+    status {
+      description
+    }
+    brand {
+      description
+    }
+    additionalInfo
+    trimSubType
+  }
+`
+
+export const BOM_ELASTIC_WASH_FIELDS_FRAGMENT = gql`
+  fragment BomWashElasticFields on SPARK_Material {
+    id
+    washDescription: description
+    thumbnailId
+    status {
+      description
+    }
+  }
+`
+
+export const BOM_ELASTIC_HUB_MATERIAL_FIELDS_FRAGMENT = gql`
+  fragment BomHubMaterialElasticFields on SPARK_Material {
+    id
+    type
+    baseMaterial {
+      description
+      status {
+        code
+        description
+      }
+    }
+  }
+`
+
+export const BOM_TRIM_DETAILS_FRAGMENT = ({ includeFilesFragment = true }) => gql`
+  fragment BOMTrimDetailsFragment${includeFilesFragment ? 'WFiles' : ''} on SPARK_Trim {
+    id: humanId
+    description
+    status {
+      code
+      description
+    }
+    thumbnailId
+    tgtCode
+    targetSourced
+    targetBranded
+    longLeadTime
+    teams {
+      partner_id
+      partnerType {
+        code
+        description
+      }
+      business_partner {
+        id
+        associatedPartnerType
+      }
+    }
+    trimType {
+      code
+      description
+    }
+    trimSubType {
+      code
+      description
+    }
+    brand {
+      description
+    }
+    additionalInfo
+    trimSuppliers: suppliers {
+      ...TrimSupplierDetails
+    }
+    gvs
+    colors {
+      rowId
+      colorId
+      dyedToMatch
+      colorType {
+        code
+        description
+      }
+      color {
+        id
+        name
+        thumbnailId
+        red
+        green
+        blue
+        referenceId
+      }
+    }
+    finishes {
+      rowId
+      finishType {
+        code
+        description
+      }
+      finishOption {
+          code
+          description
+        }
+      coating {
+        coatingType {
+          code
+          description
+        }
+        color {
+          dyedToMatch
+          color {
+            id
+            name
+          }
+        }
+      }
+    }
+    trimSizes {
+      uom {
+        code
+        description
+      }
+      finishedUom {
+        code
+        description
+      }
+      compatibleSizeUom {
+        code
+        description
+      }
+      sizeId
+      innerWidth
+      size
+      width
+      length
+      height
+      finishedLength
+      finishedWidth
+      fixedSize {
+        code
+        description
+      }
+      compatibleSizes {
+        code
+        description
+      }
+    }
+    baseSizeCaption {
+      edit
+      view
+    }
+    bomSizeOptions {
+      id
+      label
+      value
+      uom {
+        code
+        description
+      }
+    }
+    bomUomOptions {
+      id
+      label
+      value
+    }
+    ${includeFilesFragment ? '...SPARK_Trim_Files' : ''}
+  }
+  ${includeFilesFragment ? BUILD_FILES_FRAGMENT('SPARK_Trim') : ''}
+  ${TRIM_SUPPLIER_DETAILS}
+`
+
+export const BOM_FABRIC_SPEC_COMBO_DETAILS = ({ slimMaterialDetails = false } = {}) => gql`
+  fragment BomFabricSpecCombo${slimMaterialDetails ? 'Slim' : ''}Details on SPARK_FabricSpecCombo {
+    id
+    fabricSpecId
+    parentComboDescription
+    fabricId
+    parentComboId
+    statusString: status
+    merchVendors {
+      id
+    }  
+    fabricSpec: fabricSpecForBom {
+      humanId
+      thumbnailId
+      name
+      supplierName
+      supplierId
+      parentHumanId
+      additionalInfoSpecification {
+        referenceId
+      }
+      fabricRecordDetail {
+        layers {
+          totalContent
+          weightImperial
+          weightMetric
+        }
+      }
+    }
+    relatedMaterials {
+      ${slimMaterialDetails ? '...MaterialDetailsSlim' : '...MaterialDetails'}
+    }
+  }
+  ${slimMaterialDetails ? MATERIAL_DETAILS_SLIM_BOM : MATERIAL_DETAILS}
+`
+
+export const BOM_COMBO_SLIM_DETAILS = gql`
+  fragment BomComboSlimDetails on SPARK_Combination {
+    humanId
+    description
+    statusString: status
+    fabricRecordHumanId
+    fabricRecord {
+      layers {
+        totalContent
+        weightImperial
+        weightMetric
+      }
+    }
+    fabricSpecCombos {
+      content {
+        id
+        fabricSpecId
+        fabricSupplier {
+          id
+          name
+        }
+        merchVendors {
+          id
+          name
+        }
+        status
+        relatedMaterials {
+          ...MaterialDetailsSlim
+        }
+        intentLineIds
+        sentToFpf
+        fabricSpecForBom {
+          name
+        }
+      }
+    }
+  }
+  ${MATERIAL_DETAILS_SLIM_BOM}
+`
+
+export const BOM_FABRIC_SPEC_DETAILS = gql`
+  fragment BomFabricSpecDetails on SPARK_FabricSpecification {
+    humanId
+    name
+    parentHumanId
+    status {
+      code
+      description
+    }
+    fabricSpecThumbnailId: thumbnailId
+    ...SPARK_FabricSpecification_Files
+    fabricRecordDetail {
+      name
+      humanId
+      layers {
+        totalContent
+        weightImperial
+        weightMetric
+      }
+    }
+  }
+  ${BUILD_FILES_FRAGMENT('SPARK_FabricSpecification')}
+`
+
+export const BOM_DETAILS_FRAGMENT = gql`
+  fragment BomDetails on SPARK_Bom {
+    access {
+      permissions {
+        abstractAccessGroup {
+          id
+          grantees
+          type
+        }
+      }
+    }
+    participantDetails {
+      ...LegacyComponentDiscussionParticipantsFragment
+    }
+    manualLock
+    workspaces {
+      id
+      description
+    }
+    currentUserPermissions {
+      permissions
+    }
+    businessPartners {
+      id
+      name
+      associatedPartnerType
+    }
+    createdAt
+    createdBy {
+      firstName
+      lastName
+      partnerId
+    }
+    updatedAt
+    updatedBy {
+      firstName
+      lastName
+    }
+    humanId
+    id: humanId
+    name
+    notes
+    status {
+      code
+      description
+    }
+    statuses {
+      workspaceId
+      type
+      status {
+        code
+        description
+      }
+    }
+    parentId
+    groupMode {
+      code
+      description
+    }
+    sections {
+      id
+      description
+    }
+    materials {
+      rowId
+      description
+      additionalMaterialDetails
+      attachmentIds
+      primaryMaterialAttachmentId
+      notes
+      quantity
+      tcinDpcis {
+        tcin
+        dpci
+      }
+      recycledContent
+      quantityUom {
+        code
+        description
+        shortDescription
+      }
+      criticalToQuality
+      supplierId
+      supplierName
+      componentLocation
+      supplierArticleNumber
+      size
+      sizeUom {
+        code
+        description
+        shortDescription
+      }
+      sectionId
+      sectionName
+      weight {
+        ...MaterialWeight
+      }
+      weightInGrams
+      thickness
+      thicknessInMillimeters
+      thicknessUom {
+        code
+        description
+      }
+      length
+      lengthInMillimeters
+      lengthUom {
+        code
+        description
+      }
+      width
+      widthInMillimeters
+      widthUom {
+        code
+        description
+      }
+      materialCategory {
+        code
+        description
+      }
+      genericMaterialType
+      ... on SPARK_BomMaterial {
+        countryOfOrigin {
+          id
+          name
+        }
+        isParent
+        parentRowId
+        level
+        impressionDetails {
+          ...BaseImpressionDetails
+        }
+        origins {
+          ...MaterialOrigins
+        }
+        originsUserOverride
+        certifications {
+          code
+          description
+        }
+        certificationsUserOverride
+        weightUserOverride
+        sizeUserOverride
+        libraryResource @include(if: $includeLiveMaterialData) {
+          id: humanId
+          type
+          baseMaterial {
+            description
+            recycledContent
+            thumbnailId
+            supplierMillArticleNumber
+            measurement {
+              weight {
+                ...MaterialWeight
+              }
+              size {
+                value
+                unitOfMeasure {
+                  code
+                  description
+                }
+              }
+            }
+            baseAssetType
+            status {
+              code
+              description
+            }
+            suppliers {
+              id
+              supplier {
+                id
+                name
+              }
+              facilities {
+                facilityId
+                facility {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+        facilityId
+        facilityName
+      }
+      ... on SPARK_BomPackagingMaterial {
+        countryOfOrigin {
+          id
+          name
+        }
+        packagingFormat {
+          code
+          description
+        }
+        substrateType {
+          code
+          description
+        }
+        orderCode
+        tcinDpcis {
+          tcin
+          dpci
+        }
+        emptyPackageWeight
+        postIndustrialRecycledContentPercentage
+        impressionDetails {
+          ...BaseImpressionDetails
+        }
+        isParent
+        parentRowId
+        level
+      }
+      ... on SPARK_BomFabricMaterial {
+        countryOfOrigin {
+          id
+          name
+        }
+        isParent
+        parentRowId
+        level
+        libraryResourceId
+        libraryResource @include(if: $includeLiveMaterialData) {
+          ...BomFabricSpecComboSlimDetails
+        }
+        impressionDetails {
+          ...BaseImpressionDetails
+          ... on SPARK_BomFabricLibraryImpressionDetails {
+            ...FabricLibraryImpressionDetails
+            libraryResource(ids: $ids) @include(if: $includeLiveMaterialData) {
+              ...BOMColorDetailsFragment
+            }
+          }
+        }
+        yieldConsumption
+        cuttableWidth
+      }
+      ... on SPARK_BomFabricSpecMaterial {
+        countryOfOrigin {
+          id
+          name
+        }
+        libraryResourceId
+        libraryResource @include(if: $includeLiveMaterialData) {
+          ...BomFabricSpecDetails
+        }
+        impressionDetails {
+          ...BaseImpressionDetails
+        }
+        yieldConsumption
+        cuttableWidth
+        isParent
+        parentRowId
+        level
+      }
+      ... on SPARK_BomCombinationMaterial {
+        countryOfOrigin {
+          id
+          name
+        }
+        libraryResourceId
+        libraryResource @include(if: $includeLiveMaterialData) {
+          ...BomComboSlimDetails
+        }
+        yieldConsumption
+        cuttableWidth
+        isParent
+        parentRowId
+        level
+      }
+      ... on SPARK_BomTrimMaterial {
+        countryOfOrigin {
+          id
+          name
+        }
+        supplierId
+        facilityId
+        facilityName
+        librarySizeId
+        libraryResource @include(if: $includeLiveMaterialData) {
+          ...BOMTrimDetailsFragment
+        }
+        materialLibraryUom {
+          code
+          description
+        }
+        sizeValue
+        sizeCaption {
+          edit
+          view
+        }
+        impressionDetails {
+          ...BaseImpressionDetails
+          ... on SPARK_BomTrimLibraryImpressionDetails {
+            ...TrimLibraryImpressionDetails
+            libraryResource(ids: $ids) @include(if: $includeLiveMaterialData) {
+              ...BOMColorDetailsFragment
+            }
+          }
+          ... on SPARK_BomTrimZipperLibraryImpressionDetails {
+            ...TrimZipperLibraryImpressionDetails
+          }
+        }
+        isParent
+        parentRowId
+        level
+      }
+      ... on SPARK_BomWashMaterial {
+        countryOfOrigin {
+          id
+          name
+        }
+        laundryId
+        laundryName
+        libraryResource @include(if: $includeLiveMaterialData) {
+          ...BomWashDetailsFragment
+        }
+        impressionDetails {
+          ...BaseImpressionDetails
+          ...WashLibraryImpressionDetails
+        }
+        isParent
+        parentRowId
+        level
+      }
+    }
+    selectedProductImpressionIds
+    bomType
+  }
+  ${BOM_FABRIC_SPEC_COMBO_DETAILS({
+    slimMaterialDetails: true,
+  })}
+  ${BOM_COMBO_SLIM_DETAILS}
+  ${BOM_TRIM_DETAILS_FRAGMENT({ includeFilesFragment: false })}
+  ${BOM_WASH_DETAILS_FRAGMENT({ includeFilesFragment: false })}
+  ${BASE_IMPRESSION_DETAILS_FRAGMENT}
+  ${FABRIC_LIBRARY_IMPRESSION_DETAILS_FRAGMENT}
+  ${TRIM_LIBRARY_IMPRESSION_DETAILS_FRAGMENT}
+  ${TRIM_ZIPPER_LIBRARY_IMPRESSION_DETAILS_FRAGMENT}
+  ${WASH_IMPRESSION_DETAILS_FRAGMENT}
+  ${BOM_COLOR_FRAGMENT}
+  ${LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT}
+  ${ORIGIN_COMPOSITION_FRAGMENT}
+  ${BOM_FABRIC_SPEC_DETAILS}
+  ${WEIGHT_FRAGMENT}
+`
+
+export const ADD_BOM = gql`
+  mutation addBom($sparkBom: SPARK_BomInput) {
+    addBom(sparkBom: $sparkBom) {
+      humanId
+    }
+  }
+`
+
+export const UPDATE_BOM = gql`
+  mutation updateBom($sparkBom: SPARK_UpdateBomInput) {
+    updateBom(sparkBom: $sparkBom) {
+      humanId
+    }
+  }
+`
+
+export const GET_BOM_VERSION = gql`
+  query getComponentVersion($id: String!, $version: Int!, $ids: [String!], $includeLiveMaterialData: Boolean = true) {
+    getComponentVersion(id: $id, version: $version, ids: $ids) {
+      ... on SPARK_Bom {
+        ...BomDetails
+      }
+    }
+  }
+  ${BOM_DETAILS_FRAGMENT}
+`
+
+export const GET_BOMS_BY_IDS = gql`
+  query getBomByIds($ids: [String!], $includeLiveMaterialData: Boolean = true) {
+    getBomByIds(ids: $ids) {
+      ...BomDetails
+    }
+  }
+  ${BOM_DETAILS_FRAGMENT}
+`
+
+// Please use above on any product-contexted page.
+// This is meant only for workspace + inbox pages that do not have productContext
+export const GET_BOMS_BY_IDS_WITH_PRODUCT_INFO = gql`
+  query getBomByIds($ids: [String!], $includeLiveMaterialData: Boolean = true) {
+    getBomByIds(ids: $ids) {
+      ...BomDetails
+      product {
+        id
+        ...ProductBaseInfoFragment
+      }
+    }
+  }
+  ${PRODUCT_BASE_INFO_FRAGMENT}
+  ${BOM_DETAILS_FRAGMENT}
+`
+
+export const GET_BOM_MATERIAL_TYPES = gql`
+  query getBomMaterialTypes($ids: [String]) {
+    getBomMaterialTypes(ids: $ids) {
+      id
+      value: id
+      label: description
+      bomType {
+        code
+        description
+      }
+      code
+      description
+      libraryLink
+      freeText
+    }
+  }
+`
+export const GET_BOM_PACKAGING_MASTER_DATA = gql`
+  query getBomPackagingMasterData {
+    getBomPackagingMaterialTypes {
+      id
+      value: id
+      label: description
+      bomType {
+        code
+        description
+      }
+      code
+      description
+      libraryLink
+      freeText
+    }
+    getBomPackagingUnitOfMeasure {
+      shortDescription
+      label: description
+      code
+      description
+    }
+  }
+`
+export const GET_BOM_PACKAGING_SUBSTRATES = gql`
+  query getBomPackagingSubstrates {
+    getBomPackagingSubstrates {
+      id: code
+      value: description
+      label: description
+      code
+      description
+      materialType {
+        code
+        description
+      }
+    }
+  }
+`
+
+export const GET_BOM_STATUS = gql`
+  query getBomStatus {
+    getBomStatus {
+      code
+      description
+    }
+  }
+`
+
+export const SEARCH_FABRIC_SPEC_COMBOS = gql`
+  query searchFabricSpecCombos($q: String!, $page: Int!, $size: Int!) {
+    searchFabricSpecCombos(q: $q, page: $page, size: $size) {
+      content {
+        ...BomFabricSpecComboDetails
+      }
+      paging {
+        first
+        last
+        totalElements
+        totalPages
+        number
+      }
+    }
+  }
+  ${BOM_FABRIC_SPEC_COMBO_DETAILS()}
+`
+
+export const BOM_SEARCH_TRIMS_SLIM = gql`
+  query searchTrims($q: String!, $page: Int!) {
+    searchMaterialsNested(q: $q, page: $page, size: 10, nestedQueryList: []) {
+      paging {
+        size
+        numberOfElements
+        totalPages
+        totalElements
+        number
+        first
+        last
+      }
+      content {
+        ...TrimElasticFields
+      }
+    }
+  }
+  ${BOM_ELASTIC_TRIM_FIELDS_FRAGMENT}
+`
+
+export const BOM_SEARCH_WASH_SLIM = gql`
+  query searchWashes($q: String!, $page: Int!) {
+    searchMaterialsNested(q: $q, page: $page, size: 10, nestedQueryList: []) {
+      paging {
+        size
+        numberOfElements
+        totalPages
+        totalElements
+        number
+        first
+        last
+      }
+      content {
+        ...BomWashElasticFields
+      }
+    }
+  }
+  ${BOM_ELASTIC_WASH_FIELDS_FRAGMENT}
+`
+
+export const BOM_SEARCH_HUB_MATERIAL_SLIM = gql`
+  query searchHubMaterial($q: String!, $page: Int!) {
+    searchMaterialsNested(q: $q, page: $page, size: 10, nestedQueryList: []) {
+      paging {
+        size
+        numberOfElements
+        totalPages
+        totalElements
+        number
+        first
+        last
+      }
+      content {
+        ...BomHubMaterialElasticFields
+      }
+    }
+  }
+  ${BOM_ELASTIC_HUB_MATERIAL_FIELDS_FRAGMENT}
+`
+
+const MAX_BOM_SEARCH_SIZE = 32 // maximum materials that can be fetched without erroring
+export const BOM_SEARCH_MATERIALS = gql`
+  query searchMaterialsBom(
+    $searchString: String, 
+    $materialType: String, 
+    $partnerIds: [ID], 
+    $internalOnly: Boolean,
+    $excludedTypes: [String], 
+    $size: Int = ${MAX_BOM_SEARCH_SIZE}, 
+    $sortField: String = null, 
+    $sortDirection: SPARK_SortDirection = null,
+    $nestedSearchFilters: [SPARK_MaterialNestedSearchFilter] = []
+  ) {
+    searchMaterialsBom(
+      searchString: $searchString, 
+      materialType: $materialType, 
+      partnerIds: $partnerIds, 
+      internalOnly: $internalOnly,
+      excludedTypes: $excludedTypes, 
+      size: $size, 
+      sortField: $sortField, 
+      sortDirection: $sortDirection,
+      nestedSearchFilters: $nestedSearchFilters
+    ) {
+      paging {
+        size
+        numberOfElements
+        totalPages
+        totalElements
+        number
+        first
+        last
+      }
+      content {
+        id
+        type
+        description
+        washDescription: description
+        thumbnailId
+        status
+
+        tgtCode
+        targetSourced
+        targetBranded
+        longLeadTime
+        trimType {
+          description
+        }
+        brand {
+          description
+        }
+        additionalInfo
+        trimSubType
+        gvs
+        baseMaterial {
+          baseAssetType
+          description
+          relatedMaterialType
+          status {
+            description
+          }
+          thumbnailId
+          ...SPARK_BaseMaterial_Files
+        }
+        fabric {
+          layers {
+            totalContent
+            weightMetric
+            weightImperial
+          }
+        }
+        fabricId
+        fabricSpecId
+        parentComboId
+        parentComboDescription
+        parentHumanId
+        fabricSpec {
+          ...SPARK_FabricSpecification_Files
+          humanId
+          name
+          supplierName
+          supplierId
+          parentHumanId
+          thumbnailId
+          additionalInfoSpecification {
+            referenceId
+          }
+          fabricRecordDetail {
+            layers {
+              totalContent
+              weightMetric
+              weightImperial
+            }
+          }
+        }
+        relatedMaterials{
+          ...MaterialDetails
+        }
+      }
+    }
+  }
+  ${MATERIAL_DETAILS}
+  ${BUILD_FILES_FRAGMENT('SPARK_BaseMaterial')}
+  ${BUILD_FILES_FRAGMENT('SPARK_FabricSpecification')}
+`
+
+export const GET_TRIMS_BY_ID = gql`
+  query getTrims($ids: [ID]!) {
+    getTrims(ids: $ids) {
+      ...BOMTrimDetailsFragmentWFiles
+    }
+  }
+  ${BOM_TRIM_DETAILS_FRAGMENT({ includeFilesFragment: true })}
+`
+
+export const GET_VALID_SUPPLIERS_FOR_BOM = gql`
+  query getValidSuppliersForBom($merchVendorIds: [ID]!) {
+    getValidRawMaterialSuppliersForBom(merchVendorIds: $merchVendorIds)
+    getValidTrimSuppliersForBom(merchVendorIds: $merchVendorIds)
+  }
+`
+
+export const GET_WASHES_BY_ID = gql`
+  query getAllWashByIds($ids: [ID]!) {
+    getAllWashByIds(ids: $ids) {
+      ...BomWashDetailsFragmentWFiles
+    }
+  }
+  ${BOM_WASH_DETAILS_FRAGMENT({ includeFilesFragment: true })}
+`
+
+export const GET_HUB_MATERIALS_BY_IDS = gql`
+  query getHubMaterials($materialIds: [String]!) {
+    getHubMaterials(materialIds: $materialIds) {
+      ...HubMaterialDetails
+    }
+  }
+  ${BOM_HUB_MATERIAL_DETAILS_FRAGMENT}
+`
+
+export const GET_COMBINATION_SUPPLIER_FOR_BOM = gql`
+  query getComboSupplierForBom($comboId: String, $partnerIds: [ID]) {
+    getComboSupplierForBom(comboId: $comboId, partnerIds: $partnerIds) {
+      ...BomComboSupplier
+    }
+  }
+  ${BOM_COMBO_SUPPLIER_FRAGMENT}
+`
+
+export const BOM_ACCESS_FRAGMENT = gql`
+  fragment BomAccessFragment on SPARK_Bom {
+    humanId
+    name
+    access {
+      permissions {
+        permission
+        abstractAccessGroup {
+          grantees
+          id
+        }
+      }
+      accessControlId
+    }
+    manualLock
+  }
+`
+
+export const LOCK_BOM = gql`
+  mutation lockBom($bomId: String!) {
+    lockBom(bomId: $bomId) {
+      ...BomAccessFragment
+    }
+  }
+  ${BOM_ACCESS_FRAGMENT}
+`
+
+export const UNLOCK_BOM = gql`
+  mutation unlockBom($bomId: String!) {
+    unlockBom(bomId: $bomId) {
+      ...BomAccessFragment
+    }
+  }
+  ${BOM_ACCESS_FRAGMENT}
+`
+
+export const GET_BOMS_BY_PARENT_ID = gql`
+  query getBomByParentId($parentId: String!, $includeLiveMaterialData: Boolean = true) {
+    getBomByParentId(parentId: $parentId) {
+      content {
+        ... on SPARK_Bom {
+          humanId
+          bomType
+          businessPartners {
+            id
+          }
+          status {
+            code
+          }
+          statuses {
+            type
+            status {
+              code
+              description
+            }
+          }
+          workspaces {
+            id
+          }
+          materials {
+            rowId
+            materialCategory {
+              code
+              description
+            }
+            ... on SPARK_BomMaterial {
+              libraryResourceId
+            }
+            ... on SPARK_BomTrimMaterial {
+              libraryResourceId
+            }
+            ... on SPARK_BomWashMaterial {
+              libraryResourceId
+            }
+            ... on SPARK_BomFabricSpecMaterial {
+              libraryResourceId
+            }
+            ... on SPARK_BomFabricMaterial {
+              libraryResourceId
+              libraryResource @include(if: $includeLiveMaterialData) {
+                ...BomFabricSpecComboDetails
+              }
+            }
+          }
+          bomType
+        }
+      }
+    }
+  }
+  ${BOM_FABRIC_SPEC_COMBO_DETAILS()}
+`
+export const GET_BOMS_FROM_ES_BY_PARENT_IDS = gql`
+  query getBomElastic($q: String!) {
+    getBomElastic(q: $q) {
+      ... on SPARK_Bom {
+        humanId
+        businessPartners {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const GET_ATTACHMENTS_BY_RESOURCE = gql`
+  query getAttachmentsByResource($resourceId: [ID]) {
+    getAttachmentsByResource(resourceId: $resourceId) {
+      id
+      previewable
+      documentId
+      humanId
+      documentName
+      documentType
+      documentSize
+      createdAt
+      galleryDetails {
+        assetId
+        transcoded
+        fileValid
+        validations {
+          name
+          description
+          message
+          classification
+        }
+      }
+      mediaType
+      name: documentName
+      createdBy {
+        firstName
+        lastName
+      }
+      finalVirtualFile
+      canShareWithGallery
+      attachmentCanShowdog
+      sharedWithGallery
+    }
+  }
+`
+export const GET_HUB_MATERIAL_INFO_OPTIONS = gql`
+  query getHubCodedOptions($type: String!) {
+    getHubCodedOptions(type: $type) {
+      description
+      code
+    }
+  }
+`
+
+export const GET_MATERIAL_TEMPLATE = gql`
+  query getMaterialTemplate($name: ID!, $inheritAttributes: Boolean = true) {
+    getMaterialTemplate(name: $name, inheritAttributes: $inheritAttributes) {
+      name
+      parent
+      origin {
+        allowedOriginTypes
+      }
+      certification {
+        allowedCertificationTypes
+      }
+    }
+  }
+`
+
+export const GET_FILES_V3 = gql`
+  query getAttachmentsV3($ids: [ID]!) {
+    getAttachmentsV3(ids: $ids) {
+      previewable
+      documentId
+      humanId
+      id
+      documentName
+      documentType
+      documentSize
+      createdAt
+    }
+  }
+`
+
+export const GET_TRIM_TYPES = gql`
+  query getTrimTypes {
+    getTrimTypes {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_UNIT_OF_MEASURES = gql`
+  query getTrimUnitOfMeasures {
+    getTrimUnitOfMeasures {
+      code
+      description
+    }
+  }
+`
+
+export const UPDATE_BOM_COMPONENT_STATUS = gql`
+  mutation updateBomComponentStatus($productId: String!, $ids: [String]!, $status: SPARK_ComponentStatusInput) {
+    updateBomComponentStatus(productId: $productId, ids: $ids, status: $status) {
+      content {
+        humanId
+      }
+    }
+  }
+`

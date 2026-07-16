@@ -1,0 +1,165 @@
+import { gql } from '@apollo/client'
+
+const MATERIAL_TEMPLATE_ATTRIBUTE_DETAILS = gql`
+  fragment MaterialTemplateAttributeDetails on SPARK_MaterialTemplateAttribute {
+    type
+    name
+    label
+    udfMaterialKey
+    required
+    selectOptions {
+      code
+      description
+      name
+      deprecated
+    }
+    includeInDescription
+    includeTolerance
+    tooltip {
+      enabled
+      copy
+    }
+    context {
+      design
+      technical
+    }
+  }
+`
+
+const MATERIAL_TEMPLATE_DEFINED_BASE_ATTRIBUTE_CONFIGURATIONS = gql`
+  fragment MaterialTemplateDefinedBaseAttributeConfigurations on SPARK_DefinedBaseAttributeConfigurationsRootAttribute {
+    nameConfig {
+      tooltip {
+        enabled
+        copy
+      }
+    }
+    additionalInformationConfig {
+      tooltip {
+        enabled
+        copy
+      }
+    }
+    disableSubtypeInDescription
+    disableMaterialContentInDescription
+  }
+`
+
+const MATERIAL_TEMPLATE_SUPPLIER_DETAILS = gql`
+  fragment MaterialTemplateSuppliersDetails on SPARK_SupplierRootAttribute {
+    active
+    allowedPartnerTypes
+    includeMaterialId
+  }
+`
+
+export const MATERIAL_TEMPLATE_PERMISSIONS_DETAILS = gql`
+  fragment MaterialTemplatePermissionsDetails on SPARK_PermissionsRootAttribute {
+    businessPartnerPermissions {
+      canWrite
+      bpAssetPublic
+      allowedPartnerTypes
+    }
+    merchandiseVendorPermissions {
+      canRead
+    }
+  }
+`
+
+export const MATERIAL_TEMPLATE_COMPOSITION_DETAILS = gql`
+  fragment MaterialTemplateCompositionDetails on SPARK_CompositionRootAttribute {
+    totalWeightRequired
+    hideWeightDetails
+    hideSizeDetails
+    minimumOneBaseAssetRequired
+  }
+`
+
+export const MATERIAL_TEMPLATE_ORIGIN_DETAILS = gql`
+  fragment MaterialTemplateOriginDetails on SPARK_OriginRootAttribute {
+    allowedOriginTypes
+    originTypes {
+      code
+      description
+    }
+  }
+`
+
+export const MATERIAL_TEMPLATE_CERTIFICATION_DETAILS = gql`
+  fragment MaterialTemplateCertificationDetails on SPARK_CertificationRootAttribute {
+    allowedCertificationTypes
+    certificationTypes {
+      code
+      description
+    }
+  }
+`
+
+export const MATERIAL_TEMPLATE_DETAILS = gql`
+  fragment MaterialTemplateDetails on SPARK_MaterialTemplate {
+    name
+    parent
+    parentTemplate {
+      definedBaseAttributeConfigurations {
+        ...MaterialTemplateDefinedBaseAttributeConfigurations
+      }
+      permissions {
+        ...MaterialTemplatePermissionsDetails
+      }
+      suppliers {
+        ...MaterialTemplateSuppliersDetails
+      }
+      attributes {
+        ...MaterialTemplateAttributeDetails
+      }
+      composition {
+        ...MaterialTemplateCompositionDetails
+      }
+      origin {
+        ...MaterialTemplateOriginDetails
+      }
+      certification {
+        ...MaterialTemplateCertificationDetails
+      }
+    }
+    notes
+    attributes {
+      ...MaterialTemplateAttributeDetails
+    }
+    version
+    status {
+      code
+      description
+    }
+    definedBaseAttributeConfigurations {
+      ...MaterialTemplateDefinedBaseAttributeConfigurations
+    }
+    permissions {
+      ...MaterialTemplatePermissionsDetails
+    }
+    suppliers {
+      ...MaterialTemplateSuppliersDetails
+    }
+    composition {
+      ...MaterialTemplateCompositionDetails
+    }
+    origin {
+      ...MaterialTemplateOriginDetails
+    }
+    certification {
+      ...MaterialTemplateCertificationDetails
+    }
+    galleryTaxonomyMapping {
+      code
+      description
+    }
+  }
+
+  ${MATERIAL_TEMPLATE_ATTRIBUTE_DETAILS}
+  ${MATERIAL_TEMPLATE_SUPPLIER_DETAILS}
+  ${MATERIAL_TEMPLATE_PERMISSIONS_DETAILS}
+  ${MATERIAL_TEMPLATE_COMPOSITION_DETAILS}
+  ${MATERIAL_TEMPLATE_ORIGIN_DETAILS}
+  ${MATERIAL_TEMPLATE_CERTIFICATION_DETAILS}
+  ${MATERIAL_TEMPLATE_DEFINED_BASE_ATTRIBUTE_CONFIGURATIONS}
+`

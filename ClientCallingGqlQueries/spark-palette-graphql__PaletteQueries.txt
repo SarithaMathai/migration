@@ -1,0 +1,354 @@
+import { gql } from '@apollo/client'
+import { FABRIC_LAYERS } from '@spark/fabric-graphql'
+import { MATERIALS_SEARCH_CONTENT_FRAGMENT, MATERIALS_SEARCH_COUNTS_FRAGMENT, MATERIALS_SEARCH_PAGING_FRAGMENT } from '@spark/materials-graphql'
+import { PALETTE_TEAM_FIELDS } from '@spark/legacy/components/graphql/ComponentsFragments'
+
+export const MATERIALS_PALETTE_SEARCH_FRAGMENT = gql`
+  fragment MaterialsPaletteSearchDetails on SPARK_PaletteMaterialsPaged {
+    paging {
+      ...MaterialsSearchPagingDetails
+    }
+    content {
+      ...MaterialsSearchContentDetails
+    }
+    counts {
+      ...MaterialsSearchCountsDetails
+    }
+  }
+  ${MATERIALS_SEARCH_PAGING_FRAGMENT}
+  ${MATERIALS_SEARCH_CONTENT_FRAGMENT}
+  ${MATERIALS_SEARCH_COUNTS_FRAGMENT}
+`
+
+export const SPARK_Material_DETAILS = gql`
+  fragment sparkMaterialDetails on SPARK_Material {
+    id
+    name
+    description
+    type
+    status {
+      code
+      description
+    }
+    externalStatus {
+      code
+      description
+    }
+    impressionIntent
+    applicationTechnique
+    placed
+    supplierId
+    thumbnailId
+    red
+    green
+    blue
+    solid
+    icsPoly
+    icsNylon
+    icsCotton
+    droppedPartnerIds
+    is3D
+    teams {
+      id
+      name
+      teamType
+      partner_id
+      accessControlGroupIds
+    }
+  }
+`
+export const PALETTE_DETAILS = gql`
+  fragment PaletteDetails on SPARK_Palette {
+    humanId
+    description
+    additionalInfo
+    thumbnailId
+    paletteTypes {
+      code
+      description
+    }
+    brands {
+      id
+      name
+    }
+    designCycles {
+      id
+      name
+    }
+    tags {
+      id
+      name
+    }
+    departments {
+      id
+      name
+      displayText
+    }
+    notes
+    createdBy {
+      firstName
+      lastName
+    }
+    createdAt
+    updatedBy {
+      firstName
+      lastName
+    }
+    updatedAt
+    businessPartners {
+      id
+      name
+    }
+    droppedPartnerIds
+    masterFabric {
+      layers {
+        ...FabricLayers
+      }
+    }
+    status {
+      code
+      description
+    }
+  }
+  ${FABRIC_LAYERS}
+`
+
+export const GET_PALETTE_BY_ID = gql`
+  query getPalette($id: ID!) {
+    getPalette(id: $id) {
+      ...PaletteDetails
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+        resourceId
+      }
+    }
+  }
+  ${PALETTE_DETAILS}
+`
+
+export const GET_PALETTE_DROPDOWN_OPTIONS = gql`
+  query getPaletteDropdownOptions {
+    getPaletteTypes {
+      code
+      description
+    }
+    getPaletteStatusOptions {
+      code
+      description
+    }
+  }
+`
+export const ADD_PALETTE = gql`
+  mutation addPalette($sparkPalette: SPARK_PaletteInput!) {
+    addPalette(sparkPalette: $sparkPalette) {
+      ...PaletteDetails
+    }
+  }
+  ${PALETTE_DETAILS}
+`
+
+export const UPDATE_PALETTE = gql`
+  mutation updatePalette($sparkPalette: SPARK_PaletteInput!) {
+    updatePalette(sparkPalette: $sparkPalette) {
+      ...PaletteDetails
+    }
+  }
+  ${PALETTE_DETAILS}
+`
+
+export const SEARCH_MATERIALS = gql`
+  query searchMaterials($q: String!, $page: Int, $options: SPARK_MaterialsSearchOptions) {
+    searchMaterials(q: $q, page: $page, size: 10, options: $options) {
+      content {
+        ...sparkMaterialDetails
+      }
+      paging {
+        totalPages
+        totalElements
+        number
+        last
+        first
+      }
+    }
+  }
+  ${SPARK_Material_DETAILS}
+`
+
+export const SEARCH_PALETTES = gql`
+  query searchPalettes($q: String!, $page: Int) {
+    searchPalettes(q: $q, page: $page) {
+      content {
+        humanId: id
+        description
+        brands {
+          id
+          name
+        }
+        designCycles {
+          id
+          name
+        }
+        tags {
+          id
+          name
+        }
+        departments {
+          id
+          name
+        }
+        status {
+          description
+        }
+      }
+      paging {
+        totalElements
+        totalPages
+        number
+      }
+    }
+  }
+`
+
+export const SEARCH_Palette_SUGGESTIONS = gql`
+  query searchPaletteSuggestions($q: String!) {
+    searchPaletteSuggestions(q: $q) {
+      suggestion
+    }
+  }
+`
+
+export const GET_PALETTE_STATUS = gql`
+  query getPalette($id: ID!) {
+    getPalette(id: $id) {
+      humanId
+      status {
+        code
+        description
+      }
+    }
+  }
+`
+
+export const DELETE_PALETTE = gql`
+  mutation deletePalette($humanId: ID!) {
+    deletePalette(humanId: $humanId) {
+      humanId
+    }
+  }
+`
+export const ADD_MATERIALS_TO_PALETTE = gql`
+  mutation addMaterialsToPalette($humanId: ID!, $materialsToAdd: [String]) {
+    addMaterialsToPalette(humanId: $humanId, materialsToAdd: $materialsToAdd) {
+      humanId
+    }
+  }
+`
+export const REMOVE_MATERIALS_FROM_PALETTE = gql`
+  mutation removeMaterialsFromPalette($humanId: ID!, $materialsToRemove: [String]) {
+    removeMaterialsFromPalette(humanId: $humanId, materialsToRemove: $materialsToRemove) {
+      ...PaletteDetails
+    }
+  }
+  ${PALETTE_DETAILS}
+`
+
+export const SEARCH_PALETTE_MATERIALS = gql`
+  query ($q: String!, $paletteId: ID!, $page: Int, $options: SPARK_MaterialsSearchOptions) {
+    searchMaterialsForPalette(q: $q, paletteId: $paletteId, page: $page, size: 10, options: $options) {
+      content {
+        ...sparkMaterialDetails
+      }
+      paging {
+        totalPages
+        totalElements
+        number
+        last
+        first
+      }
+    }
+  }
+  ${SPARK_Material_DETAILS}
+`
+
+export const GET_PALETTE_MATERIALS_WITH_PERMISSIONS = gql`
+  query searchMaterialsForPalette(
+    $q: String!
+    $nestedQueryList: [SPARK_NestedQueryInput]
+    $page: Int!
+    $size: Int
+    $id: ID!
+    $paletteId: ID!
+    $sortField: String
+    $sortDirection: SPARK_SortDirection
+    $options: SPARK_MaterialsSearchOptions
+    $isInternal: Boolean = false
+  ) {
+    searchMaterialsForPalette(q: $q, nestedQueryList: $nestedQueryList, page: $page, size: $size, paletteId: $paletteId, sortField: $sortField, sortDirection: $sortDirection, options: $options) {
+      ...MaterialsPaletteSearchDetails
+    }
+    getUserSettings {
+      materialListView
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${MATERIALS_PALETTE_SEARCH_FRAGMENT}
+`
+
+export const GET_PALETTE_RELATED_MATERIALS = gql`
+  query getPalette($id: ID!) {
+    getPalette(id: $id) {
+      relatedMaterials
+    }
+  }
+`
+
+export const GET_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getPalette(id: $id) {
+      ...PaletteTeamDetailsFragment
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${PALETTE_TEAM_FIELDS}
+`
+
+export const REFRESH_TEAMS = gql`
+  query updateTeams($id: ID!) {
+    getPalette(id: $id) {
+      ...PaletteTeamDetailsFragment
+    }
+  }
+  ${PALETTE_TEAM_FIELDS}
+`
+
+export const REFRESH_PARTNERS = gql`
+  query updatePartners($id: ID!) {
+    getPalette(id: $id) {
+      ...PaletteTeamDetailsFragment
+    }
+  }
+  ${PALETTE_TEAM_FIELDS}
+`
+
+export const UPDATE_TEAMS = gql`
+  mutation addTeams($humanId: ID!, $teamsToUpdate: SPARK_TeamsToUpdateInput!) {
+    updatePaletteTeams(humanId: $humanId, teamsToUpdate: $teamsToUpdate)
+  }
+`
+export const ADD_PARTNERS = gql`
+  mutation addBusinessPartners($humanId: ID!, $partnerIds: [ID]) {
+    addBPsToPalette(humanId: $humanId, partnerIds: $partnerIds) {
+      humanId
+    }
+  }
+`

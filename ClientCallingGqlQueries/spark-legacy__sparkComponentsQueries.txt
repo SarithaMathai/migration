@@ -1,0 +1,30 @@
+import { gql } from '@apollo/client'
+// import { GET_PRODUCT_SEARCH } from '@spark/legacy/Spark-Components/graphql/sparkComponentsQueries'
+
+export const GET_PRODUCT_SEARCH = gql`
+  query searchProductByField($q: String, $page: Int, $size: Int) {
+    searchProductByField(q: $q, page: $page, size: $size) {
+      paging {
+        totalElements
+        totalPages
+      }
+      content {
+        id: humanId
+        thumbnailId
+        tags {
+          id
+          name
+        }
+        description
+        businessPartners {
+          name
+          id
+        }
+        childProducts {
+          id
+        }
+        parentProductId
+      }
+    }
+  }
+`

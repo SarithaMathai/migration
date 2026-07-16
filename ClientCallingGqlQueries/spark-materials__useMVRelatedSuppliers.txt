@@ -1,0 +1,58 @@
+import { ApolloError, gql, useQuery } from '@apollo/client'
+import { isMerchVendor, getUserProfile } from '@spark/legacy/services/getUserProfile'
+import { GetBusinessPartnerById, SparkBusinessPartnerRelationShip } from 'MaterialQueries'
+
+export const GET_BUSINESS_PARTNER_BY_ID = gql`
+  query getBusinessPartnerById($bpId: String!) {
+    getBusinessPartnerById(bpId: $bpId) {
+      id
+      roles {
+        id
+        name
+      }
+      relationships {
+        relatedBpId
+        relatedBpName
+        type {
+          relatedBpRole {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`
+
+const useMVRelatedSuppliers = (): {
+  relatedSuppliersLoading: boolean
+  relatedSuppliersError?: ApolloError
+  relatedSuppliers: SparkBusinessPartnerRelationShip[]
+  getRelatedSuppliersBySupplierType: (supplierPartnerType: number) => SparkBusinessPartnerRelationShip[]
+} => {
+  const user = getUserProfile()
+  const { data, loading, error } = useQuery<GetBusinessPartnerById>(GET_BUSINESS_PARTNER_BY_ID, {
+    variables: { bpId: user?.partnerId?.toString() },
+    fetchPolicy: 'cache-and-network',
+    skip: !isMerchVendor(),
+  })
+  const relatedSuppliers =
+    data?.getBusinessPartnerById?.relationships?.map((rel) => ({
+      relatedBpId: rel.relatedBpId,
+      relatedBpName: rel.relatedBpName,
+      relatedBpRoleId: rel.type.relatedBpRole.id,
+      relatedBpRoleName: rel.type.relatedBpRole.name,
+    })) || []
+
+  const getRelatedSuppliersBySupplierType = (supplierPartnerType: number) => {
+    return relatedSuppliers.filter((supplier) => supplier.relatedBpRoleId === supplierPartnerType)
+  }
+
+  return {
+    relatedSuppliersLoading: loading,
+    relatedSuppliersError: error,
+    relatedSuppliers,
+    getRelatedSuppliersBySupplierType,
+  }
+}
+export default useMVRelatedSuppliers

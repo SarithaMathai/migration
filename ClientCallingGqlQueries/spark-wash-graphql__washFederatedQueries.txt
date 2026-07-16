@@ -1,0 +1,494 @@
+import { gql } from '@apollo/client'
+import { TypedDocumentNode } from '@graphql-typed-document-node/core'
+import { SPARK_CodeDescription } from 'Base'
+import type { I_PLM_WASH, PLM_Fabric, PLM_FabricSpecification } from 'Wash'
+
+// ── Query variable types ───────────────────────────────────────────────────────
+
+export interface PlmGetWashQueryVariables {
+  id: string
+  includeFabricData?: boolean
+  includeFabricSpecData?: boolean
+}
+
+export interface PlmGetWashStatusQueryVariables {
+  id: string
+}
+
+export interface PlmGetWashFabricQueryVariables {
+  id: string
+}
+
+export interface PlmExportWashQueryVariables {
+  q: string
+  nestedQueryList?: unknown[] | null
+  isThumbnailsRequired?: boolean
+}
+
+// ── Mutation input types (mirror WashInput in plm-materials schema) ────────────
+
+export interface PlmWashAdditionalInfoInput {
+  designCycles?: string[]
+  tags?: string[]
+  notes?: string
+  vendorWashCode?: string
+}
+
+export interface PlmWashDetailsInput {
+  washType?: number | null
+  sustainability?: number[]
+  washProcess?: number[]
+  garmentDye?: number[]
+  colors?: string[]
+  reasonForDeviation?: string
+  totalLiquorRatio?: number
+}
+
+export interface PlmWashEimScoreInput {
+  waterUse?: number | null
+  chemicalUse?: number | null
+  powerUse?: number | null
+  laborUse?: number | null
+  totalScore?: number | null
+  isDevelopmentSample?: boolean
+  isBulkProduction?: boolean
+}
+
+export interface PlmWashFabricDetailsInput {
+  fabricId?: string | null
+  fabricSpecificationIds?: string[]
+}
+
+export interface PlmTeamToAddInput {
+  teamId?: string
+  teamType?: string
+  accessControlGroupIds?: string[]
+  partnerId?: string
+  partnerType?: number
+}
+
+/** Matches the federated `WashInput` accepted by `addWash` / `updateWash` on plmClient. */
+export interface PlmWashInput {
+  /** Required for updateWash; omit for addWash */
+  id?: string | null
+  washDescription?: string
+  washNameOrColor?: string
+  brand?: string
+  departments?: string[]
+  laundryFacilityId?: string | null
+  isTargetRecipe?: boolean
+  isYarnDrivenProduct?: boolean
+  recipe?: number | null
+  status?: number | string
+  thumbnailId?: string | null
+  designThumbnailId?: string | null
+  silhouette?: string | null
+  energyUsed?: number | null
+  waterSavingPercent?: number | null
+  coTwoSavingPercent?: number | null
+  files?: string[]
+  additionalInfo?: PlmWashAdditionalInfoInput
+  washDetails?: PlmWashDetailsInput
+  eimScore?: PlmWashEimScoreInput
+  fabricDetails?: PlmWashFabricDetailsInput
+  teamsToAdd?: PlmTeamToAddInput[] | string[]
+}
+
+export interface PlmAddWashMutationVariables {
+  wash: PlmWashInput
+}
+
+export interface PlmUpdateWashMutationVariables {
+  updateWash: PlmWashInput
+}
+
+export interface PlmTeamsToUpdateInput {
+  teamsToAdd?: PlmTeamToAddInput[]
+  teamsToRemove?: PlmTeamToAddInput[]
+}
+
+export interface PlmUpdateWashTeamsMutationVariables {
+  id: string
+  teamsToUpdate?: PlmTeamsToUpdateInput
+}
+
+// ── patchWash input types ──────────────────────────────────────────────────────
+
+/**
+ * Wrapper for ID fields that support explicit clearing.
+ * - Set a value: { value: "ATT-ABC123" }
+ * - Clear the field: { clear: true }
+ * - Leave unchanged: omit the field from WashPatch entirely
+ */
+export interface PlmIDOrClear {
+  value?: string | null
+  clear?: boolean
+}
+
+/**
+ * Partial update input for patchWash.
+ * Only included fields are changed; omitted fields remain untouched.
+ */
+export interface PlmWashPatch {
+  thumbnailId?: PlmIDOrClear
+  designThumbnailId?: PlmIDOrClear
+}
+
+export interface PlmPatchWashMutationVariables {
+  id: string
+  patch: PlmWashPatch
+}
+
+export interface PlmPatchWashMutationData {
+  patchWash: I_PLM_WASH
+}
+
+export interface PlmUpdateWashTeamsMutationData {
+  updateWashTeams: boolean | null
+}
+
+// ── Mutation data types ────────────────────────────────────────────────────────
+
+export interface PlmAddWashMutationData {
+  addWash: I_PLM_WASH
+}
+
+export interface PlmUpdateWashMutationData {
+  updateWash: I_PLM_WASH
+}
+
+// ── Query data types ───────────────────────────────────────────────────────────
+
+export interface PlmGetWashQueryData {
+  wash: I_PLM_WASH | null
+}
+
+export interface PlmGetWashStatusQueryData {
+  wash: {
+    id: string
+    status: SPARK_CodeDescription
+  } | null
+}
+
+export interface PlmGetWashFabricQueryData {
+  wash: {
+    id: string
+    fabric?: PLM_Fabric | null
+    fabricSpecifications?: PLM_FabricSpecification[] | null
+  } | null
+}
+
+export interface PlmExportWashQueryData {
+  exportWash: { requestId: string }
+}
+
+// ── Fragments ─────────────────────────────────────────────────────────────────
+
+export const PLM_WASH_DETAILS_FRAGMENT = gql`
+  fragment PlmWashDetailsFragment on Wash {
+    id
+    description
+    additionalDescription
+    isTargetRecipe
+    primaryAttachment {
+      id
+    }
+    designAttachment {
+      id
+    }
+    status {
+      code
+      description
+    }
+    recipe {
+      code
+      description
+    }
+    brand {
+      id
+      name
+    }
+    departments {
+      id
+      name
+      displayText
+    }
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    createdAt
+    updatedBy {
+      id
+      firstName
+      lastName
+    }
+    updatedAt
+    laundryFacility {
+      id
+      name
+      countryOfOrigin
+      status {
+        id
+        name
+      }
+      authorized
+      circuitBroken
+    }
+    fabric @include(if: $includeFabricData) {
+      id
+      description
+      primaryAttachment {
+        id
+      }
+    }
+    fabricSpecifications @include(if: $includeFabricSpecData) {
+      id
+      description
+      gvs
+      supplier {
+        id
+        name
+      }
+      fabricRecordDetail {
+        description
+      }
+      evaluation {
+        aesthaticStatus {
+          code
+          description
+        }
+        testingStatus {
+          code
+          description
+        }
+        finalApproved
+      }
+    }
+    washProcesses {
+      code
+      description
+    }
+    washType {
+      code
+      description
+    }
+    sustainability {
+      code
+      description
+    }
+    garmentDye {
+      code
+      description
+    }
+    colors {
+      id
+      description
+      red
+      green
+      blue
+      primaryAttachment {
+        id
+      }
+    }
+    reasonForDeviation
+    totalLiquorRatio
+    designCycles {
+      id
+      name
+    }
+    tags {
+      id
+      name
+    }
+    notes
+    vendorWashCode
+    waterUse
+    chemicalUse
+    powerUse
+    laborUse
+    isDevelopmentSample
+    isBulkProduction
+    totalScore
+    silhouette
+    energyUsed
+    waterSavingPercent
+    coTwoSavingPercent
+    isYarnDrivenProduct
+    # TODO SPARK-30305/30354: teams, businessPartners, droppedPartners — unblocked, add when Story 1.1.5b lands
+  }
+`
+
+// ── Queries ────────────────────────────────────────────────────────────────────
+
+export const PLM_GET_WASH_BY_ID: TypedDocumentNode<PlmGetWashQueryData, PlmGetWashQueryVariables> = gql`
+  query plmGetWash($id: String!, $includeFabricData: Boolean = false, $includeFabricSpecData: Boolean = false) {
+    wash(id: $id) {
+      ...PlmWashDetailsFragment
+    }
+  }
+  ${PLM_WASH_DETAILS_FRAGMENT}
+`
+
+export const PLM_GET_WASH_STATUS: TypedDocumentNode<PlmGetWashStatusQueryData, PlmGetWashStatusQueryVariables> = gql`
+  query plmGetWashStatus($id: String!) {
+    wash(id: $id) {
+      id
+      status {
+        code
+        description
+      }
+    }
+  }
+`
+
+export const PLM_GET_WASH_FABRIC: TypedDocumentNode<PlmGetWashFabricQueryData, PlmGetWashFabricQueryVariables> = gql`
+  query plmGetWashFabric($id: String!) {
+    wash(id: $id) {
+      id
+      fabric {
+        id
+        description
+        primaryAttachment {
+          id
+        }
+      }
+      fabricSpecifications {
+        id
+        description
+        gvs
+        supplier {
+          id
+          name
+        }
+        fabricRecordDetail {
+          description
+        }
+        evaluation {
+          aesthaticStatus {
+            code
+            description
+          }
+          testingStatus {
+            code
+            description
+          }
+          finalApproved
+        }
+      }
+    }
+  }
+`
+
+export const PLM_EXPORT_WASH: TypedDocumentNode<PlmExportWashQueryData, PlmExportWashQueryVariables> = gql`
+  query plmExportWash($q: String!, $nestedQueryList: [NestedQueryInput], $isThumbnailsRequired: Boolean) {
+    exportWash(q: $q, nestedQueryList: $nestedQueryList, isThumbnailsRequired: $isThumbnailsRequired) {
+      requestId
+    }
+  }
+`
+
+export const PLM_GET_WASH_DROPDOWN_VALUES = gql`
+  query getWashFormOptions {
+    getWashStatus {
+      code
+      description
+    }
+    getWashTypes {
+      code
+      description
+    }
+    getSustainabilities {
+      code
+      description
+    }
+    getWashProcess {
+      code
+      description
+    }
+    getGarmentDye {
+      code
+      description
+    }
+    getTargetRecipe {
+      code
+      description
+    }
+  }
+`
+
+export const PLM_GET_BUSINESS_PARTNERS_BY_IDS = gql`
+  query getBusinessPartnersByIds($ids: [ID!]!) {
+    businessPartners(ids: $ids) {
+      name
+      id
+      relationship {
+        relatedName
+        relatedStatusId
+        relatedStatusName
+        relatedId
+        type {
+          relatedRole {
+            category
+            id
+            name
+            status {
+              id
+              name
+            }
+          }
+          role {
+            category
+            id
+            name
+            status {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+// ── Mutations ──────────────────────────────────────────────────────────────────
+
+export const PLM_ADD_WASH: TypedDocumentNode<PlmAddWashMutationData, PlmAddWashMutationVariables> = gql`
+  mutation plmAddWash($wash: WashInput!, $includeFabricData: Boolean = false, $includeFabricSpecData: Boolean = false) {
+    addWash(wash: $wash) {
+      ...PlmWashDetailsFragment
+    }
+  }
+  ${PLM_WASH_DETAILS_FRAGMENT}
+`
+
+export const PLM_UPDATE_WASH: TypedDocumentNode<PlmUpdateWashMutationData, PlmUpdateWashMutationVariables> = gql`
+  mutation plmUpdateWash($updateWash: WashInput!, $includeFabricData: Boolean = false, $includeFabricSpecData: Boolean = false) {
+    updateWash(updateWash: $updateWash) {
+      ...PlmWashDetailsFragment
+    }
+  }
+  ${PLM_WASH_DETAILS_FRAGMENT}
+`
+
+export const PLM_UPDATE_WASH_TEAMS: TypedDocumentNode<PlmUpdateWashTeamsMutationData, PlmUpdateWashTeamsMutationVariables> = gql`
+  mutation plmUpdateWashTeams($id: ID!, $teamsToUpdate: TeamsToUpdateInput) {
+    updateWashTeams(id: $id, teamsToUpdate: $teamsToUpdate)
+  }
+`
+
+export const PLM_PATCH_WASH: TypedDocumentNode<PlmPatchWashMutationData, PlmPatchWashMutationVariables> = gql`
+  mutation plmPatchWash($id: ID!, $patch: WashPatch!) {
+    patchWash(id: $id, patch: $patch) {
+      id
+      primaryAttachment {
+        id
+      }
+      designAttachment {
+        id
+      }
+    }
+  }
+`

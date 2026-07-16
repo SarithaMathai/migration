@@ -1,0 +1,12 @@
+import { gql } from '@apollo/client'
+
+export const RESOURCE_ACCESS_CHECK = gql`
+  query resourceAccessCheck($id: ID!) {
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+        resourceId
+      }
+    }
+  }
+`

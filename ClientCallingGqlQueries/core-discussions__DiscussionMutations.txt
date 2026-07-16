@@ -1,0 +1,136 @@
+import { gql } from '@apollo/client'
+import { USER_PROFILE_ATTRIBUTES_FRAGMENT, DISCUSSION_DETAILS_FRAGMENT_V3, REPLY_DETAILS_FRAGMENT_V2, DISCUSSION_PARTICIPANTS_FRAGMENT_NEW_WIP } from './DiscussionFragments'
+
+export const CORE_ADD_DISCUSSION_V3 = gql`
+  mutation coreAddDiscussionV3($discussion: SPARK_DiscussionInputV3!, $attachments: [SPARK_BulkAttachmentInput]) {
+    coreAddDiscussionV3(sparkDiscussion: $discussion, attachments: $attachments) {
+      id
+    }
+  }
+`
+export const CORE_UPDATE_PARTICIPANTS_V3 = gql`
+  mutation coreUpdateParticipantsV3($discussionId: ID!, $participants: SPARK_UserGroup_Participants_Input, $relatedResources: [String], $resourceType: String) {
+    coreUpdateParticipantsV3(id: $discussionId, participants: $participants, relatedResources: $relatedResources, resourceType: $resourceType) {
+      id
+      participants {
+        ...DiscussionParticipantsFragment_NEW_WIP
+      }
+    }
+  }
+  ${DISCUSSION_PARTICIPANTS_FRAGMENT_NEW_WIP}
+`
+export const CORE_DELETE_PARTICIPANTS_V3 = gql`
+  mutation coreDeleteParticipantsV3(
+    $discussionId: ID!
+    $participants: SPARK_UserGroup_Participants_Input
+    $relatedResources: [String]
+    $resourceType: String
+    $removedUserId: ID
+    $teamId: ID
+    $removedPartnerIds: [ID]
+    $removedDesignPartnerIds: [ID]
+  ) {
+    coreDeleteParticipantsV3(
+      id: $discussionId
+      participants: $participants
+      relatedResources: $relatedResources
+      resourceType: $resourceType
+      removedUserId: $removedUserId
+      teamId: $teamId
+      removedPartnerIds: $removedPartnerIds
+      removedDesignPartnerIds: $removedDesignPartnerIds
+    ) {
+      id
+      participants {
+        ...DiscussionParticipantsFragment_NEW_WIP
+      }
+    }
+  }
+  ${DISCUSSION_PARTICIPANTS_FRAGMENT_NEW_WIP}
+`
+export const DELETE_ATTACHMENTS = gql`
+  mutation archiveAttachmentV3($id: ID!) {
+    archiveAttachmentV3(id: $id) {
+      humanId
+      documentId
+    }
+  }
+`
+export const DELETE_DISCUSSION_V2 = gql`
+  mutation deleteDiscussionV2($resourceId: ID, $id: ID!) {
+    deleteDiscussionV2(id: $id, resourceId: $resourceId)
+  }
+`
+export const CORE_UPDATE_DISCUSSION_V3 = gql`
+  mutation coreUpdateDiscussionV3($id: ID!, $sparkDiscussion: SPARK_UpdateDiscussionInputV3!) {
+    coreUpdateDiscussionV3(id: $id, sparkDiscussion: $sparkDiscussion) {
+      ...DiscussionDetailsFragmentV3
+    }
+  }
+  ${DISCUSSION_DETAILS_FRAGMENT_V3}
+`
+export const ADD_DISCUSSION_REPLY_V2 = gql`
+  mutation addDiscussionReplyV2($sparkDiscussionReply: SPARK_DiscussionReplyInput!, $attachments: [SPARK_BulkAttachmentInput]) {
+    addDiscussionReplyV2(sparkDiscussionReply: $sparkDiscussionReply, attachments: $attachments, isAttachmentsV3: true) {
+      ...ReplyDetailsFragmentV3
+    }
+  }
+  ${REPLY_DETAILS_FRAGMENT_V2}
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+export const UPDATE_TAG_EXISTING = gql`
+  mutation updateTagExisting($tagUpdateObject: SPARK_DiscussionAsCritical) {
+    updateTagExisting(tagUpdateObject: $tagUpdateObject) {
+      id
+      discussionId
+    }
+  }
+`
+export const UPDATE_REPLY_V2 = gql`
+  mutation updateDiscussionReplyV2($sparkDiscussionReply: SPARK_DiscussionReplyInput!, $attachments: [SPARK_BulkAttachmentInput]) {
+    updateDiscussionReplyV2(sparkDiscussionReply: $sparkDiscussionReply, attachments: $attachments, isAttachmentsV3: true) {
+      ...ReplyDetailsFragmentV3
+    }
+  }
+  ${REPLY_DETAILS_FRAGMENT_V2}
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+export const DELETE_REPLY_V2 = gql`
+  mutation deleteDiscussionReplyV2($discussionId: ID!, $replyId: ID!) {
+    deleteDiscussionReplyV2(id: $discussionId, replyId: $replyId)
+  }
+`
+export const UPDATE_AS_CRITICAL = gql`
+  mutation updateAsCritical($criticalObject: SPARK_DiscussionAsCritical) {
+    updateAsCritical(criticalObject: $criticalObject) {
+      id
+      discussionId
+      critical
+      associations
+    }
+  }
+`
+export const UPDATE_DISCUSSION_EDITABLE = gql`
+  mutation updateDiscussionEditable($discussionEditableObject: SPARK_DiscussionAsCritical) {
+    updateDiscussionEditable(discussionEditableObject: $discussionEditableObject) {
+      id
+      discussionId
+      editable
+    }
+  }
+`
+
+export const DISCUSSION_READ_BY_USERS = gql`
+  mutation discussionReadByUsers($discussionIds: [String], $discussionThreadIds: [String], $readByUserList: [String]) {
+    discussionReadByUsers(discussionIds: $discussionIds, discussionThreadIds: $discussionThreadIds, readByUserList: $readByUserList) {
+      discussions {
+        ...DiscussionDetailsFragmentV3
+      }
+      discussionThreads {
+        ...ReplyDetailsFragmentV3
+      }
+    }
+  }
+  ${DISCUSSION_DETAILS_FRAGMENT_V3}
+  ${REPLY_DETAILS_FRAGMENT_V2}
+`

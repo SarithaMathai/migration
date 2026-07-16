@@ -1,0 +1,633 @@
+import { gql } from '@apollo/client'
+import { SAMPLE_LIST_FRAGMENT_V2 } from '@spark/samples'
+import { SLIM_COMBINATION_DETAILS_FRAGMENT, SLIM_FABRIC_SPEC_COMBO_DETAILS_FRAGMENT, COMBINATION_DETAILS_FRAGMENT, FABRIC_SPEC_COMBO_DETAILS_FRAGMENT } from './CombinationsFragments'
+import { MATERIAL_DETAILS } from '@spark/materials-graphql'
+import { COMBINATION_TEAM_FIELDS } from '@spark/legacy/components/graphql/ComponentsFragments'
+
+export const GET_IMPRESSION_INTENTS = gql`
+  query getImpressionIntents {
+    getApplicationTechnique {
+      code
+      description
+    }
+  }
+`
+
+export const GET_FABRIC_DETAILS = gql`
+  query getFabric($id: ID!) {
+    getFabric(id: $id) {
+      thumbnailId
+      humanId
+      name
+      gvs
+    }
+  }
+`
+
+export const GET_SAMPLE_LIST_COMBINATION_INTERNAL = gql`
+    query searchSamplesByParentId($id:ID!,$query: String, $page: Int,$size: Int){
+        searchSamplesByParentId(parentIds:[$id],query:$query,page:$page,size:$size){
+            content{
+                ...SampleListV2Fragment
+                assetId
+                designCycle {
+                    id
+                    name
+                }
+            }
+            paging{
+                number
+                totalPages
+                totalElements
+            }
+        }
+        getFabricSpecComboById(id: $id) {
+            humanId
+            relatedMaterials: ${'relatedMaterials'} {
+              ...MaterialDetails
+          }
+        }
+    }
+    ${SAMPLE_LIST_FRAGMENT_V2}
+  ${MATERIAL_DETAILS}
+`
+
+export const GET_SAMPLE_LIST_COMBINATION_EXTERNAL = gql`
+    query searchSamplesByParentId($id:ID!,$query: String, $page: Int,$size: Int){
+        searchSamplesByParentId(parentIds:[$id],query:$query,page:$page,size:$size){
+            content{
+                ...SampleListV2Fragment
+                assetId
+                designCycle {
+                    id
+                    name
+                }
+            }
+            paging{
+                number
+                totalPages
+                totalElements
+            }
+        }
+        getFabricSpecComboById(id: $id) {
+            humanId
+            relatedMaterials: ${'proxyRelatedMaterials'} {
+              ...MaterialDetails
+          }
+        }
+    }
+    ${SAMPLE_LIST_FRAGMENT_V2}
+  ${MATERIAL_DETAILS}
+`
+
+export const GET_WORKSPACES_BY_IDS = gql`
+  query getWorkspacesByIdsV2($ids: [ID]!) {
+    getWorkspacesByIdsV2(ids: $ids) {
+      id
+      description
+    }
+  }
+`
+
+export const SEARCH_SPECIFICATIONS = gql`
+  query searchMaterialsNested($q: String!, $nestedQueryList: [SPARK_NestedQueryInput]) {
+    searchMaterialsNested(q: $q, nestedQueryList: $nestedQueryList, size: 50) {
+      content {
+        id
+        name
+        type
+        gvs
+        thumbnailId
+        supplierId
+        supplierName
+        impressions {
+          intent {
+            code
+            description
+          }
+          facilities {
+            facility {
+              countryOfOrigin
+            }
+            type {
+              code
+            }
+          }
+        }
+        evaluation {
+          finalApproved
+        }
+      }
+    }
+  }
+`
+
+export const GET_FSC_IDS_FROM_COMBO_ID = gql`
+  query getFabricSpecCombosByComboId($id: ID!) {
+    getFabricSpecCombosByComboId(id: $id) {
+      content {
+        humanId: id
+        status
+        fabricSpec {
+          humanId
+          name
+        }
+      }
+      paging {
+        totalElements
+        totalPages
+        number
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+`
+
+export const SEARCH_TEAMS = gql`
+  query searchTeamsElastic($q: String) {
+    searchTeamsElastic(q: $q, page: 0, size: 100) {
+      content {
+        id
+        name
+        partnerType {
+          code
+        }
+        accessControlGroupIds
+        teamType
+        businessPartner: business_partner {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_COMBINATIONS_DETAILS = gql`
+  query getBulkCombinations($q: String, $page: Int) {
+    getBulkCombinations(q: $q, page: $page) {
+      content {
+        humanId
+        status
+        description
+        notes
+        designCycles {
+          id
+          name
+        }
+        department {
+          id
+          name
+        }
+        division {
+          id
+          name
+        }
+        clazz {
+          id
+          name
+        }
+        tags {
+          id
+          name
+        }
+        fabricRecord {
+          humanId
+          name
+          gvs
+        }
+        merchType
+        materialCategory {
+          id
+          name
+        }
+        brands {
+          id
+          name
+        }
+        fabricRecordHumanId
+        impressionIntentBucketList {
+          humanId
+          impressionIntent {
+            code
+            description
+          }
+          impressionIntentLines {
+            humanId
+            merchVendorTeamId
+            merchVendorTeam {
+              businessPartner {
+                partnerId
+                partnerName
+              }
+              teamName
+            }
+            countryOfProduction {
+              name
+            }
+            fabricSpecHumanId
+            fabricSpec {
+              evaluation {
+                aesthaticStatus {
+                  description
+                }
+                testingStatus {
+                  description
+                }
+                finalApproved
+              }
+              impressions {
+                intent {
+                  code
+                  description
+                }
+              }
+              humanId
+              name
+              label: name
+              supplierName
+              supplierId
+            }
+            fabricSupplierTeam {
+              teamName
+              teamId: id
+              label: teamName
+              businessPartner {
+                partnerName
+                partnerId
+              }
+            }
+            readyToSample {
+              description
+              code
+            }
+          }
+        }
+      }
+      paging {
+        number
+        totalPages
+        totalElements
+      }
+    }
+  }
+`
+
+export const SEARCH_COMBINATION_SUGGESTIONS = gql`
+  query searchCombinationSuggestions($q: String!) {
+    searchCombinationSuggestions(q: $q) {
+      suggestion
+    }
+  }
+`
+
+export const SEARCH_SUGGESTIONS = gql`
+  query searchSuggestions($q: String!, $type: String!) {
+    searchSuggestions(q: $q, type: $type) {
+      suggestion
+    }
+  }
+`
+export const GET_SAMPLE_OPTIONS = gql`
+  query getSampleOptions($type: String = "COLOR") {
+    getSampleTrackingTypesV2 {
+      code
+      description
+    }
+    getProductSampleEvaluationTypesV2 {
+      code
+      description
+    }
+    getSampleFormats(type: $type) {
+      code
+      description
+    }
+    getApplicationTechnique {
+      code
+      description
+    }
+  }
+`
+
+export const GET_COMBINATION_AND_SAMPLE_TYPES = (isInternalUser: boolean) => gql`
+  query getCombination($id: ID!, $type: String = "COLOR") {
+    getSampleMaterialTypesV2 {
+      code
+      description
+    }
+    getCombination(id: $id) {
+      ...CombinationDetailsFragment
+      fabricSpecCombos {
+        content {
+          ...FabricSpecComboDetailsFragment
+        }
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+    getSampleFormats(type: $type) {
+      code
+      description
+    }
+  }
+  ${COMBINATION_DETAILS_FRAGMENT(isInternalUser)}
+  ${FABRIC_SPEC_COMBO_DETAILS_FRAGMENT(isInternalUser)}
+`
+
+export const GET_ARTWORK_FOR_SAMPLE = gql`
+  query getArtworkById($id: ID!, $proxyIds: [String]) {
+    getArtwork(id: $id, proxyIds: $proxyIds) {
+      humanId
+      thumbnailId
+      name
+      additionalReferenceId
+      applicationTechnique {
+        code
+        description
+      }
+      colorways {
+        humanId
+        name
+        otherColors
+        libraryColors {
+          red
+          green
+          blue
+          value: id
+          id: id
+          humanId: id
+          label: name
+          name: name
+        }
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+`
+
+export const GET_COMBINATION_BY_ID = (isInternalUser: boolean) => gql`
+  query getCombination($id: ID!) {
+    getCombination(id: $id) {
+      ...CombinationDetailsFragment
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${COMBINATION_DETAILS_FRAGMENT(isInternalUser)}
+`
+
+export const GET_BULK_COMBINATIONS = (isInternalUser: boolean) => gql`
+  query getBulkCombinations($q: String!, $page: Int, $size: Int) {
+    ...CombinationDetailsFragment
+  }
+  ${COMBINATION_DETAILS_FRAGMENT(isInternalUser)}
+`
+
+export const GET_COMBINATION_STATUS = gql`
+  query getCombination($id: ID!) {
+    getCombination(id: $id) {
+      humanId
+      status
+      createdByPartnerId
+      dpPartnerIds
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+`
+export const GET_FABRIC_SPEC_COMBO_BY_ID = (isInternalUser: boolean) => gql`
+  query getFabricSpecComboById($id: ID!) {
+    getFabricSpecComboById(id: $id) {
+      ...FabricSpecComboDetailsFragment
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${FABRIC_SPEC_COMBO_DETAILS_FRAGMENT(isInternalUser)}
+`
+
+export const GET_FABRIC_SPEC_COMBOS_BY_COMBO_ID = (isInternalUser: boolean) => gql`
+  query getFabricSpecCombosByComboId($id: ID!) {
+    getFabricSpecCombosByComboId(id: $id) {
+      content {
+        ...FabricSpecComboDetailsFragment
+      }
+      paging {
+        totalElements
+        totalPages
+        number
+      }
+    }
+    getCombination(id: $id) {
+      humanId
+      impressionIntentBucketList {
+        humanId
+        relatedMaterialIds
+        impressionIntent {
+          code
+          description
+        }
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${FABRIC_SPEC_COMBO_DETAILS_FRAGMENT(isInternalUser)}
+`
+export const SEARCH_COMBINATIONS = gql`
+  query searchCombinations($q: String!, $page: Int) {
+    searchCombinations(q: $q, page: $page, size: 50) {
+      content {
+        humanId: id
+        status
+        brands {
+          id
+          name
+        }
+        businessPartners {
+          id
+          name
+          associatedPartnerType
+        }
+        droppedPartnerIds
+        department {
+          id
+          name
+        }
+        description: name
+        designCycles {
+          id
+          name
+        }
+        materialCategory {
+          id
+          name
+        }
+        division {
+          id
+          name
+        }
+        tags {
+          id
+          name
+        }
+        fabricRecordHumanId
+        notes
+      }
+      paging {
+        totalElements
+        totalPages
+        number
+      }
+    }
+  }
+`
+
+export const SEARCH_MORE_MATERIALS = gql`
+  query searchMaterials($q: String!, $page: Int) {
+    searchMaterials(q: $q, page: $page, size: 20) {
+      content {
+        id
+        name
+        thumbnailId
+        red
+        blue
+        green
+      }
+      paging {
+        number
+        totalElements
+      }
+    }
+  }
+`
+
+export const SEARCH_MORE_MATERIALS_PROXY = gql`
+  query searchMaterials($q: String!, $page: Int, $proxyIds: [String]) {
+    searchMaterials: searchMaterialsByProxyIds(q: $q, page: $page, proxyIds: $proxyIds, size: 20) {
+      content {
+        id
+        name
+        thumbnailId
+        red
+        blue
+        green
+      }
+      paging {
+        number
+        totalElements
+      }
+    }
+  }
+`
+export const GET_BUSINESS_PARTNER_DETAILS = gql`
+  query getRelatedFabricSuppliers($merchVendorId: String!) {
+    getRelatedFabricSuppliers(merchVendorId: $merchVendorId)
+  }
+`
+export const GET_RELATED_SUPPLIERS = gql`
+  query getRelatedFabricSuppliersByMerchVendors($merchVendorIds: [String]!) {
+    getRelatedFabricSuppliersByMerchVendors(merchVendorIds: $merchVendorIds)
+  }
+`
+export const GET_COMBINATION_TEAMS_AND_RELATED_SUPPLIERS = gql`
+  query getCombinationTeamsWithRelatedSuppliers($merchVendorIds: [String]!, $id: ID!) {
+    getCombination(id: $id) {
+      fabricRecordHumanId
+      humanId
+      teams {
+        id
+        partnerId: partner_id
+        partnerName: partner_name
+        partnerType {
+          code
+          description
+        }
+      }
+    }
+    getRelatedFabricSuppliersByMerchVendors(merchVendorIds: $merchVendorIds)
+  }
+`
+export const GET_WORKSPACE_COMBINATIONS_SAMPLES = gql`
+  query getWorkspaceV2($page: Int, $size: Int, $id: ID!, $q: String, $filter: [String], $comboSamplesQuery: String, $comboSamplesPage: Int, $comboSamplesSize: Int) {
+    getWorkspaceV2(id: $id) {
+      id
+      combinations(page: $page, size: $size, q: $q, filter: $filter) {
+        paging {
+          number
+          totalPages
+          totalElements
+        }
+        content {
+          ...SlimCombinationDetailsFragment
+          fabricSpecCombos {
+            content {
+              ...SlimFabricSpecComboDetailsFragment
+              samples(page: $comboSamplesPage, size: $comboSamplesSize, query: $comboSamplesQuery) {
+                paging {
+                  totalElements
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ${SLIM_COMBINATION_DETAILS_FRAGMENT}
+  ${SLIM_FABRIC_SPEC_COMBO_DETAILS_FRAGMENT}
+`
+
+export const GET_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getCombination(id: $id) {
+      ...CombinationTeamDetailsFragment
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${COMBINATION_TEAM_FIELDS}
+`
+export const REFRESH_TEAMS = gql`
+  query updateTeams($id: ID!) {
+    getCombination(id: $id) {
+      ...CombinationTeamDetailsFragment
+    }
+  }
+  ${COMBINATION_TEAM_FIELDS}
+`
+
+export const REFRESH_PARTNERS = gql`
+  query updatePartners($id: ID!) {
+    getCombination(id: $id) {
+      ...CombinationTeamDetailsFragment
+    }
+  }
+  ${COMBINATION_TEAM_FIELDS}
+`

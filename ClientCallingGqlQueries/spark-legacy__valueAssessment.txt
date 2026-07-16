@@ -1,0 +1,205 @@
+import { gql } from '@apollo/client'
+
+const FRAGMENT_VALUE_ASSESSMENT_ERRORS = gql`
+  fragment fragmentValueAssessmentErrors on SPARK_ValueAssessmentErrors {
+    code
+    field
+    reason
+    resource
+  }
+`
+
+const FRAGMENT_VALUE_ASSESSMENT_RECORD = gql`
+  fragment fragmentValueAssessmentRecord on SPARK_ValueAssessmentRecord {
+    id
+    name
+    isFavorite
+    isOriginal
+    consumptionUnitType
+    columns {
+      field
+      headerName
+    }
+    rows {
+      id
+      uuid
+      type
+      isResolved
+      costGroup
+      active
+      costs {
+        columnFieldId
+        cost
+        consumption
+      }
+    }
+  }
+`
+
+const FRAGMENT_VALUE_ASSESSMENT = gql`
+  fragment fragmentValueAssessment on SPARK_ValueAssessment {
+    id
+    createdAt
+    updatedAt
+    createdBy
+    plannedRetailPrice
+    originalAssessment {
+      ...fragmentValueAssessmentRecord
+    }
+    scenarioAssessments {
+      ...fragmentValueAssessmentRecord
+    }
+  }
+  ${FRAGMENT_VALUE_ASSESSMENT_RECORD}
+`
+
+export const GET_SAMPLE_VALUE_ASSESSMENT = gql`
+  query getSampleValueAssessment($sampleId: String!) {
+    getSampleValueAssessment(sampleId: $sampleId) {
+      message
+      errors {
+        ...fragmentValueAssessmentErrors
+      }
+      data {
+        ...fragmentValueAssessment
+      }
+    }
+  }
+  ${FRAGMENT_VALUE_ASSESSMENT_ERRORS}
+  ${FRAGMENT_VALUE_ASSESSMENT}
+`
+
+export const SEARCH_VALUE_ASSESSMENT_MATERIALS = gql`
+  query searchValueAssessmentMaterials($valueAssessmentId: String!, $q: String) {
+    searchValueAssessmentMaterials(valueAssessmentId: $valueAssessmentId, q: $q) {
+      message
+      totalItems
+      data {
+        id
+        description
+        humanId
+      }
+      errors {
+        ...fragmentValueAssessmentErrors
+      }
+    }
+  }
+  ${FRAGMENT_VALUE_ASSESSMENT_ERRORS}
+`
+
+export const SEARCH_VALUE_ASSESSMENT_FABRICS = gql`
+  query searchValueAssessmentFabrics($valueAssessmentId: String!, $q: String) {
+    searchValueAssessmentFabrics(valueAssessmentId: $valueAssessmentId, q: $q) {
+      message
+      totalItems
+      data {
+        id
+        description
+        materialCategory
+        requirementId
+        isMockFabric
+      }
+      errors {
+        ...fragmentValueAssessmentErrors
+      }
+    }
+  }
+  ${FRAGMENT_VALUE_ASSESSMENT_ERRORS}
+`
+
+export const GET_VALUE_ASSESSMENT_CATEGORIES = gql`
+  query getValueAssessmentCategories {
+    getValueAssessmentCategories {
+      data {
+        id
+        name
+      }
+      message
+      errors {
+        ...fragmentValueAssessmentErrors
+      }
+    }
+  }
+  ${FRAGMENT_VALUE_ASSESSMENT_ERRORS}
+`
+
+export const GET_ASSESSMENT_DETAILS = gql`
+  query getAssessmentDetails($assessmentId: String!) {
+    getAssessmentDetails(assessmentId: $assessmentId) {
+      message
+      errors {
+        ...fragmentValueAssessmentErrors
+      }
+      data {
+        ...fragmentValueAssessmentRecord
+      }
+    }
+  }
+  ${FRAGMENT_VALUE_ASSESSMENT_ERRORS}
+  ${FRAGMENT_VALUE_ASSESSMENT_RECORD}
+`
+
+export const CREATE_SCENARIO = gql`
+  mutation createScenario($valueAssessmentId: String!, $name: String!) {
+    createScenario(valueAssessmentId: $valueAssessmentId, name: $name) {
+      id
+    }
+  }
+`
+
+export const CREATE_VALUE_ASSESSMENT_MOCK_FABRIC = gql`
+  mutation createValueAssessmentMockFabric(
+    $valueAssessmentId: String!
+    $requirementId: String!
+    $materialCategoryId: String!
+    $fabricWidthUnit: String!
+    $description: String!
+    $cost: Float!
+    $fabricWidth: Float!
+  ) {
+    createValueAssessmentMockFabric(
+      valueAssessmentId: $valueAssessmentId
+      requirementId: $requirementId
+      materialCategoryId: $materialCategoryId
+      fabricWidthUnit: $fabricWidthUnit
+      description: $description
+      cost: $cost
+      fabricWidth: $fabricWidth
+    ) {
+      data {
+        id
+        requirementId
+        description
+      }
+      message
+      errors {
+        ...fragmentValueAssessmentErrors
+      }
+    }
+  }
+  ${FRAGMENT_VALUE_ASSESSMENT_ERRORS}
+`
+
+export const UPDATE_SCENARIO_REPLACE_FABRIC = gql`
+  mutation updateScenarioReplaceFabric($scenarioAssessmentId: String!, $fabricId: String!, $newFabricId: String!) {
+    updateScenarioReplaceFabric(scenarioAssessmentId: $scenarioAssessmentId, fabricId: $fabricId, newFabricId: $newFabricId) {
+      data {
+        ...fragmentValueAssessmentRecord
+      }
+      message
+      errors {
+        ...fragmentValueAssessmentErrors
+      }
+    }
+  }
+  ${FRAGMENT_VALUE_ASSESSMENT_ERRORS}
+  ${FRAGMENT_VALUE_ASSESSMENT_RECORD}
+`
+
+export const INCLUDE_OR_EXCLUDE_PATTERN = gql`
+  mutation includeOrExcludePattern($scenarioAssessmentId: String!, $patternId: String!, $action: String!) {
+    includeOrExcludePattern(scenarioAssessmentId: $scenarioAssessmentId, patternId: $patternId, action: $action) {
+      message
+    }
+  }
+`

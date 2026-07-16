@@ -1,0 +1,138 @@
+import { gql } from '@apollo/client'
+
+export const GET_CAPACITY_TYPES = gql`
+  query getCapacityTypes($departmentId: ID!) {
+    getCapacityTypes(departmentId: $departmentId) {
+      capacityTypePrimaryId
+      capacityTypePrimaryName
+      capacityTypeSecondaryId
+      capacityTypeSecondaryName
+    }
+  }
+`
+
+export const GET_BOM_COMPONENT_STATUS = gql`
+  query getBomComponentStatus($ids: [String!]) {
+    getBomByIds(ids: $ids) {
+      humanId
+      statuses {
+        workspaceId
+        type
+        status {
+          code
+          description
+        }
+      }
+    }
+  }
+`
+export const GET_MEASUREMENT_COMPONENT_STATUS = gql`
+  query getMeasurementComponentStatus($ids: [String!]) {
+    getMeasurementByIds(ids: $ids) {
+      content {
+        humanId
+        statuses {
+          workspaceId
+          status {
+            code
+            description
+          }
+        }
+      }
+    }
+  }
+`
+export const GET_PROUCT_DETAIL_COMPONENT_STATUS = gql`
+  query getProductDetailComponentStatus($ids: [String!]) {
+    getProductDetailsById(ids: $ids) {
+      humanId
+      statuses {
+        workspaceId
+        status {
+          code
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_CLAIM_COMPONENT_STATUS = gql`
+  query getClaimComponentStatus($ids: [String!]) {
+    getClaimByIds(claimHumanIds: $ids) {
+      humanId
+      statuses {
+        workspaceId
+        status {
+          code
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_PACKAGING_COMPONENT_STATUS = gql`
+  query getPackagingComponentStatus($packagingId: String!) {
+    getPackagingById(packagingId: $packagingId) {
+      humanId
+      statuses {
+        workspaceId
+        status {
+          code
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_VERSIONED_COMPONENT_STATUS = gql`
+  query getVersionedComponentStatus($id: String!, $version: Int!) {
+    getComponentVersion(id: $id, version: $version) {
+      ... on SPARK_Bom {
+        humanId
+        statuses {
+          workspaceId
+          status {
+            code
+            description
+          }
+        }
+      }
+      ... on SPARK_Measurements {
+        humanId
+        statuses {
+          workspaceId
+          status {
+            code
+            description
+          }
+        }
+      }
+      ... on SPARK_ProductDetails {
+        humanId
+        statuses {
+          workspaceId
+          status {
+            code
+            description
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_PERMISSIONS = gql`
+  query getPermissions($resourceIds: [String!]!) {
+    getPermissions(resourceIds: $resourceIds) {
+      permissions {
+        permission
+        abstractAccessGroup {
+          id
+        }
+      }
+    }
+  }
+`
