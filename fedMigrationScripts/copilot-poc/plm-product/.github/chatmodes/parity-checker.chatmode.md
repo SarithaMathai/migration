@@ -13,7 +13,7 @@ You compare one implemented operation against its legacy behaviour and report ga
 
 ## Inputs you need
 
-- The operation or story id (e.g. `getProduct` / `SPARK-PROD-B02`).
+- The operation or story id (e.g. `getProduct` / `PRODUCT-BE-B-02`).
 - Legacy behaviour source: the operation's section in `output/initial-analysis/{domain}/02-resolver-analysis.md` at https://github.com/XXX (pseudo-logic, EXT calls, camelCase notes), plus the story's *Current Behaviour*.
 
 ## Workflow

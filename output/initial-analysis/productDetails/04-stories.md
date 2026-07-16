@@ -13,19 +13,19 @@
 ## 1. Phases Overview
 | Phase | Name | Stories |
 |---|---|---|
-| B | Core Reads | B01 |
-| C | Search & Listing | C01 |
-| D | Mutations (simple) | D01–D05 |
-| E | Complex (multi-step write) | E01 |
-| F | Federation (internal) | F01 |
-| G | Field Resolvers & Tests | G01–G04 |
+| B | Core Reads | B-01 |
+| C | Search & Listing | C-01 |
+| D | Mutations (simple) | D-01–D-05 |
+| E | Complex (multi-step write) | E-01 |
+| F | Federation (internal) | F-01 |
+| G | Field Resolvers & Tests | G-01–G-04 |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## 2. Dependency Graph
 ```mermaid
 graph TD
-  B01 & E01 & G01 --> G04
+  B01["B-01"] & E01["E-01"] & G01["G-01"] --> G04["G-04"]
 ```
 
 ---
@@ -36,7 +36,7 @@ graph TD
 
 ---
 
-### SPARK-PDTL-B01 · `getProductDetailsById(ids)`
+### PDTL-BE-B-01 · `getProductDetailsById(ids)`
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Fetch product-detail (construction) sets by id.
@@ -55,8 +55,8 @@ graph TD
 
 ---
 
-### SPARK-PDTL-C01 · `getProductDetailsElastic(resourceId)`
-- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `search`
+### PDTL-BE-C-01 · `getProductDetailsElastic(resourceId)`
+- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `search`
 
 - **In plain terms:** Search a product's product-detail sets via elastic.
 
@@ -74,8 +74,8 @@ graph TD
 
 ---
 
-### SPARK-PDTL-D01 · `createProductDetailsSet`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### PDTL-BE-D-01 · `createProductDetailsSet`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Create a product-detail set.
 
@@ -88,8 +88,8 @@ graph TD
 
 ---
 
-### SPARK-PDTL-D02 · `updateProductDetailAccess`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PDTL-BE-D-02 · `updateProductDetailAccess`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Change who can access a product-detail set.
 
@@ -101,8 +101,8 @@ graph TD
 
 ---
 
-### SPARK-PDTL-D03 · `productDetailLockUnlock`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PDTL-BE-D-03 · `productDetailLockUnlock`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Lock or unlock a product-detail set.
 
@@ -114,8 +114,8 @@ graph TD
 
 ---
 
-### SPARK-PDTL-D04 · `cloneFilesForProductDetails`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `attachment`
+### PDTL-BE-D-04 · `cloneFilesForProductDetails`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment`
 
 - **In plain terms:** Copy attachment files for product details.
 
@@ -128,8 +128,8 @@ graph TD
 
 ---
 
-### SPARK-PDTL-D05 · `updateProductDetailComponentStatus`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PDTL-BE-D-05 · `updateProductDetailComponentStatus`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Update component status on product-detail sets.
 
@@ -146,8 +146,10 @@ graph TD
 
 ---
 
-### SPARK-PDTL-E01 · `updateProductDetailsSet` (multi-step write)
-- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `attachment` · 🟡 `workspaceV2`
+### PDTL-BE-E-01 · `updateProductDetailsSet` (multi-step write)
+- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment` · 🟡 `workspaceV2`
+
+> **Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — draft ADR-013, ratification pending.** Saga steps: workspace assoc `COMPENSATE` (fix the copy-paste 'measurement set' error text) → attachment archive `RECORD` (destructive step currently runs before the body — order preserved for parity, failure now visible) → body PUT checked (today returned unchecked, ADR-013 pin-down 5).
 
 - **In plain terms:** Edit a product-detail set — a multi-step write (workspace + body) with no rollback today.
 
@@ -181,8 +183,8 @@ workspace, attachment, and body changes stay consistent.
 
 ---
 
-### SPARK-PDTL-F01 · `Product.productDetails` (internal, same subgraph)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PDTL-BE-F-01 · `Product.productDetails` (internal, same subgraph)
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Expose a product's product-details on the Product type (same subgraph).
 
@@ -198,8 +200,8 @@ workspace, attachment, and body changes stay consistent.
 
 ---
 
-### SPARK-PDTL-G01 · `access` + `currentUserPermissions` + `participantDetails`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔵 `userGroup`
+### PDTL-BE-G-01 · `access` + `currentUserPermissions` + `participantDetails`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔵 `userGroup`
 
 - **In plain terms:** Resolve access / permission / participant fields.
 
@@ -212,8 +214,8 @@ workspace, attachment, and body changes stay consistent.
 
 ---
 
-### SPARK-PDTL-G02 · `product` + `createdBy` + `updatedBy` + `businessPartners` + `workspaces`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🟡 `userAttributes` · 🟡 `workspaceV2` · 🔵 `vmm`
+### PDTL-BE-G-02 · `product` + `createdBy` + `updatedBy` + `businessPartners` + `workspaces`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `userAttributes` · 🟡 `workspaceV2` · 🔵 `vmm`
 
 - **In plain terms:** Resolve the product, people, partner and workspace fields.
 
@@ -227,8 +229,8 @@ workspace, attachment, and body changes stay consistent.
 
 ---
 
-### SPARK-PDTL-G03 · `attachment` + item `attachment`/`constructionSetAttachments` + category `subCategories`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `search`
+### PDTL-BE-G-03 · `attachment` + item `attachment`/`constructionSetAttachments` + category `subCategories`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `search`
 
 - **In plain terms:** Resolve attachment and category fields on product details.
 
@@ -243,8 +245,8 @@ workspace, attachment, and body changes stay consistent.
 
 ---
 
-### SPARK-PDTL-G04 · Tests, parity harness
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B01, E01, G01
+### PDTL-BE-G-04 · Tests, parity harness
+- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B-01, E-01, G-01
 
 - **In plain terms:** Prove the product-details subgraph matches the old gateway.
 
@@ -262,15 +264,15 @@ create error-contract, attachment-by-search fields); contract test (schema diff 
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
-| `updateProductDetailsSet` multi-step partial failure (E01) | Medium | High | Saga / compensation — PO decision | Tech Lead + PO |
-| `updateProductDetailComponentStatus` no auth token (D05) | Low | Medium | Confirm backend-enforced | PO |
-| Attachment-by-search field perf (G03) | Low | Medium | Shared helper; batch | Backend Eng |
-| `getProductDetailsElastic.types` schema drift (C01) | Low | Low | Drop or add to schema | Backend Eng |
+| `updateProductDetailsSet` multi-step partial failure (E-01) | Medium | High | Saga / compensation — PO decision | Tech Lead + PO |
+| `updateProductDetailComponentStatus` no auth token (D-05) | Low | Medium | Confirm backend-enforced | PO |
+| Attachment-by-search field perf (G-03) | Low | Medium | Shared helper; batch | Backend Eng |
+| `getProductDetailsElastic.types` schema drift (C-01) | Low | Low | Drop or add to schema | Backend Eng |
 
 ## 5. Summary
 - **Stories:** 13 (B:1 · C:1 · D:5 · E:1 · F:1 · G:4).
-- **Critical path:** A02/E01→G01→G04.
-- **Highest risk:** `updateProductDetailsSet` (E01).
+- **Critical path:** A-02/E-01→G-01→G-04.
+- **Highest risk:** `updateProductDetailsSet` (E-01).
 - **Co-located:** productDetails is in the `plm-product` monorepo; `Product.productDetails` resolves internally.
 
 ---

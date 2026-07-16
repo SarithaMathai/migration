@@ -7,17 +7,17 @@ generated: 2026-06-26
 pipeline_version: "2.0"
 acl_policy: "ACL ignored in implementation; current-impl ACL usage noted as context only"
 stories:
-  - { id: SPARK-IMP-A01, summary: "Schema skeleton + DateTime scalar", phase: A, category: CAT-1, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-A02, summary: "Owned types + inputs", phase: A, category: CAT-1, complexity: Low, depends_on: [SPARK-IMP-A01], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-A03, summary: "External stubs", phase: A, category: CAT-1, complexity: Low, depends_on: [SPARK-IMP-A01], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-A04, summary: "ImpressionService Kotlin port (2 methods)", phase: A, category: CAT-3, complexity: Low, depends_on: [SPARK-IMP-A01], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-B01, summary: "searchImpressionsByProductId data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-IMP-A02, SPARK-IMP-A04], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-B02, summary: "getImpressionCountsByProductId data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [SPARK-IMP-A02, SPARK-IMP-A04], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-D01, summary: "updateImpressions mutation", phase: D, category: CAT-2, complexity: Medium, depends_on: [SPARK-IMP-A04], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-F01, summary: "Implement Product.impressions/impressionCounts (internal, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [SPARK-IMP-A04], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-G01, summary: "Impression field resolvers (5)", phase: G, category: CAT-2, complexity: Low, depends_on: [SPARK-IMP-A02, SPARK-IMP-A04], ext_services: [{key: workspaceV2, severity: YELLOW}, {key: vmm, severity: BLUE}, {key: userAttributes, severity: BLUE}], blocked_by: none }
-  - { id: SPARK-IMP-G02, summary: "ImpressionCount.counts aggregation", phase: G, category: CAT-2, complexity: Medium, depends_on: [SPARK-IMP-A02, SPARK-IMP-A04], ext_services: [], blocked_by: none }
-  - { id: SPARK-IMP-G03, summary: "Test coverage & parity", phase: G, category: CAT-5, complexity: Low, depends_on: [SPARK-IMP-B01, SPARK-IMP-B02, SPARK-IMP-D01, SPARK-IMP-G02], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-A-01, summary: "Schema skeleton + DateTime scalar", phase: A, category: CAT-1, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-A-02, summary: "Owned types + inputs", phase: A, category: CAT-1, complexity: Low, depends_on: [IMPRESSION-BE-A-01], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-A-03, summary: "External stubs", phase: A, category: CAT-1, complexity: Low, depends_on: [IMPRESSION-BE-A-01], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-A-04, summary: "ImpressionService Kotlin port (2 methods)", phase: A, category: CAT-3, complexity: Low, depends_on: [IMPRESSION-BE-A-01], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-B-01, summary: "searchImpressionsByProductId data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [IMPRESSION-BE-A-02, IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-B-02, summary: "getImpressionCountsByProductId data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [IMPRESSION-BE-A-02, IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-D-01, summary: "updateImpressions mutation", phase: D, category: CAT-2, complexity: Medium, depends_on: [IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-F-01, summary: "Implement Product.impressions/impressionCounts (internal, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-G-01, summary: "Impression field resolvers (5)", phase: G, category: CAT-2, complexity: Low, depends_on: [IMPRESSION-BE-A-02, IMPRESSION-BE-A-04], ext_services: [{key: workspaceV2, severity: YELLOW}, {key: vmm, severity: BLUE}, {key: userAttributes, severity: BLUE}], blocked_by: none }
+  - { id: IMPRESSION-BE-G-02, summary: "ImpressionCount.counts aggregation", phase: G, category: CAT-2, complexity: Medium, depends_on: [IMPRESSION-BE-A-02, IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
+  - { id: IMPRESSION-BE-G-03, summary: "Test coverage & parity", phase: G, category: CAT-5, complexity: Low, depends_on: [IMPRESSION-BE-B-01, IMPRESSION-BE-B-02, IMPRESSION-BE-D-01, IMPRESSION-BE-G-02], ext_services: [], blocked_by: none }
 totals:
   story_count: 11
   by_complexity: { Low: 9, Medium: 2, High: 0, "Very High": 0 }

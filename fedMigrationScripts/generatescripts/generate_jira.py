@@ -5,7 +5,7 @@ Generate clean Jira-import CSVs for every domain.
 Rules applied:
 - Source: output/initial-analysis/{domain}/ (updated, Phase A dissolved)
   Fallback: migration/finalOutput/{domain}/ (search only)
-- Phase A stories are excluded (they are a one-time B01 checklist, not Jira tickets)
+- Phase A stories are excluded (they are a one-time B-01 checklist, not Jira tickets)
 - Test cases included in Description only for High / Very High complexity stories
 - AC and test text preserves inline code (backticks) and bold
 - Output: migration/finalOutput/jira/{domain}.csv  + jira/all-stories.csv
@@ -55,7 +55,7 @@ DOMAIN_LABELS = {
 }
 
 # Short, readable tag prefixed to every story Summary so a domain is identifiable
-# under the single shared epic (e.g. "[BOM] SPARK-BOM-S01 · ...").
+# under the single shared epic (e.g. "[BOM] BOM-BE-S-01 · ...").
 DOMAIN_TAG = {
     "attachment":     "Attachment",
     "bom":            "BOM",
@@ -118,7 +118,7 @@ DEFAULT_STATUS = "To Do"
 
 # ─── Story parser ─────────────────────────────────────────────────────────────
 STORY_HEADER_RE = re.compile(
-    r"^### (SPARK-[A-Z]+-([A-Za-z])(\d+)(?:-\d+)?) · (.+)$", re.MULTILINE
+    r"^### ([A-Z]+-BE-([A-Za-z])-(\d+)(?:-\d+)?) · (.+)$", re.MULTILINE
 )
 METADATA_INLINE_RE = re.compile(
     r"\*\*Type:\*\*\s*([^·\n]+).*?\*\*Complexity:\*\*\s*([^·\n]+)", re.DOTALL
@@ -178,7 +178,7 @@ def parse_stories(stories_path: Path) -> list[dict]:
         phase = m.group(2).upper()
         title = m.group(4).strip()
 
-        # Phase A is a real story now (e.g. BOM A04 type-resolver) — no longer skipped.
+        # Phase A is a real story now (e.g. BOM A-04 type-resolver) — no longer skipped.
 
         start = m.end()
         end   = matches[i + 1].start() if i + 1 < len(matches) else len(text)
@@ -199,7 +199,7 @@ def parse_stories(stories_path: Path) -> list[dict]:
         status_m = STATUS_RE.search(body)
         status   = status_m.group(1).strip() if status_m else DEFAULT_STATUS
 
-        # Build depends list (may include blocked-by), deduped — fixes the 'B01, B01' class of bug
+        # Build depends list (may include blocked-by), deduped — fixes the 'B-01, B-01' class of bug
         dep_parts = [d.strip() for d in re.split(r"[,;]", depends) if d.strip() and d.strip() != "—"]
         if blocked:
             dep_parts += [b.strip() for b in re.split(r"[,;]", blocked) if b.strip()]
@@ -320,7 +320,7 @@ except Exception:                                    # pragma: no cover — fall
     SPIKE_STEPS      = {}
     SPIKE_CASE_FOLDER = {}
 
-_SPIKE_REF_RE = re.compile(r"\b(?:SPARK-[A-Z]+-)?S\d+\b")
+_SPIKE_REF_RE = re.compile(r"\b(?:[A-Z]+-BE-)?S-?\d+\b")
 
 
 def _strip_domain_spike_refs(dep: str) -> str:
@@ -347,8 +347,8 @@ def program_spike_rows() -> list[list]:
         desc = "\n\n".join(desc_sections)
         rows.append([
             "Spike",
-            f"SPARK-SPIKE-{b}",
-            f"(Program) {SPIKE_TITLES[b]} [SPARK-SPIKE-{b}]",
+            f"SPIKE-{b}",
+            f"(Program) {SPIKE_TITLES[b]} [SPIKE-{b}]",
             "", GLOBAL_EPIC_NAME, "S", "M",
             "dgs-migration", "all-domains", "spike",
             "", "", DEFAULT_STATUS, desc,
@@ -410,7 +410,7 @@ def build_story_rows(domain: str) -> list[list]:
         dep = _strip_domain_spike_refs(s["depends"])
         b   = _spike_for(s)
         if b:
-            spike_id = f"SPARK-SPIKE-{b}"
+            spike_id = f"SPIKE-{b}"
             dep      = spike_id if not dep else f"{spike_id}, {dep}"
             note     = f"*Requires spike:* {spike_id} ({SPIKE_TITLES.get(b, '')}) — see program spike"
             desc     = (note + "\n\n" + desc) if desc else note

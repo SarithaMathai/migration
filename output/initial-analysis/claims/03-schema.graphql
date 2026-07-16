@@ -144,31 +144,31 @@ input UserGroup_ParticipantsInput { _placeholder: String }
 
 # --- Queries (names + nullability preserved from the SDL) ---
 extend type Query {
-  getClaims(parentHumanId: String, claimHumanIds: [String], partnerIds: [String]): [Claims]   # 🔜 B01
-  getClaimByIds(claimHumanIds: [String]): [Claims]                                             # 🔜 B02
-  getCommunicationChannels: [CommunicationChannel]                                             # 🔜 B03 (cacheable)
-  getAllClaimsAbout: [CodeDescription]                                                         # 🔜 B04 (cacheable)
-  getClaimExports: [ClaimExport]                                                               # 🔜 B05
-  searchGuestFacing(queryParam: String): [Guest_Facing]                                        # 🔜 C01
-  getClaimsElastic(parentHumanId: String): [Claims]                                            # 🔜 C02 (🔴 search)
+  getClaims(parentHumanId: String, claimHumanIds: [String], partnerIds: [String]): [Claims]   # 🔜 B-01
+  getClaimByIds(claimHumanIds: [String]): [Claims]                                             # 🔜 B-02
+  getCommunicationChannels: [CommunicationChannel]                                             # 🔜 B-03 (cacheable)
+  getAllClaimsAbout: [CodeDescription]                                                         # 🔜 B-04 (cacheable)
+  getClaimExports: [ClaimExport]                                                               # 🔜 B-05
+  searchGuestFacing(queryParam: String): [Guest_Facing]                                        # 🔜 C-01
+  getClaimsElastic(parentHumanId: String): [Claims]                                            # 🔜 C-02 (🔴 search)
 }
 
 # --- Mutations (names + nullability preserved from the SDL) ---
 extend type Mutation {
-  createClaim(sparkClaim: ClaimsInput): [Claims]                       # 🔜 D01 (throws on validationErrors)
-  bulkUpdateClaim(sparkClaim: BulkClaimsUpdateInput): [Claims]         # 🔜 D02 (status_code error contract)
-  requestClaimExport: String                                          # 🔜 D03
-  lockClaim(claimId: String!): Claims                                 # 🔜 D04
-  unlockClaim(claimId: String!): Claims                               # 🔜 D05
-  updateClaim(sparkClaim: ClaimsUpdateInput): Claims                   # 🔜 E01 (proxy ACL + workspace + body, non-atomic)
+  createClaim(sparkClaim: ClaimsInput): [Claims]                       # 🔜 D-01 (throws on validationErrors)
+  bulkUpdateClaim(sparkClaim: BulkClaimsUpdateInput): [Claims]         # 🔜 D-02 (status_code error contract)
+  requestClaimExport: String                                          # 🔜 D-03
+  lockClaim(claimId: String!): Claims                                 # 🔜 D-04
+  unlockClaim(claimId: String!): Claims                               # 🔜 D-05
+  updateClaim(sparkClaim: ClaimsUpdateInput): Claims                   # 🔜 E-01 (proxy ACL + workspace + body, non-atomic)
 }
 
 # --- Federation: Claims contributes to Product + TechPack (Phase F, BLOCKED-BY product) ---
 # extend type Product @key(fields: "id") {
 #   id: ID! @external
-#   claims(partnerIds: [String], includeClaims: Boolean): [Claims]      # F01
+#   claims(partnerIds: [String], includeClaims: Boolean): [Claims]      # F-01
 # }
-# extend type ResourcesCount @key(fields: "productId partnerId") {       # F02 (TechPack — see SPARK-PROD-F05)
+# extend type ResourcesCount @key(fields: "productId partnerId") {       # F-02 (TechPack — see PRODUCT-BE-F-05)
 #   productId: ID! @external
 #   partnerId: ID! @external
 #   claims: [ID]

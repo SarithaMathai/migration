@@ -35,10 +35,10 @@ spark-claims/
 |---|---|---|
 | Repo shape | monorepo, stories land in `apps/app` | standalone repo, one subgraph |
 | Domains hosted | 7 co-located (product, bom, measurement, packaging, impression, productDetails, watchlist) | 1 (claims) |
-| Story id prefix | `SPARK-PROD-*`, `SPARK-BOM-*`, … | `SPARK-CLM-*` |
+| Story id prefix | `PRODUCT-BE-*`, `BOM-BE-*`, … | `CLAIM-BE-*` |
 | Cross-domain reference | co-located → plain type reference (in-process) | **always** a federation hop — no in-process shortcut |
-| Federation direction | mostly hosts entities others extend | **contributes into** `plm-product`'s `Product`/`ResourcesCount` (`SPARK-CLM-F01`/`F02`) |
-| Spike gating | 6 buckets across many stories | only `SPARK-CLM-E01` → `SPARK-SPIKE-01` |
+| Federation direction | mostly hosts entities others extend | **contributes into** `plm-product`'s `Product`/`ResourcesCount` (`CLAIM-BE-F-01`/`F-02`) |
+| Spike gating | 6 buckets across many stories | only `CLAIM-BE-E-01` → `SPIKE-01` |
 
 ## Source of truth this POC assumes
 
@@ -48,9 +48,9 @@ spark-claims/
 
 ## Try it
 
-1. `/check-spike-gate SPARK-CLM-E01` — confirm the one spike-gated story's status before starting.
-2. `/implement-story SPARK-CLM-B01` (or switch to the **story-implementer** chat mode) — schema + Kotlin fetcher + service + tests in one pass.
-3. `/write-parity-tests getClaims SPARK-CLM-B01` or the **parity-checker** chat mode — after implementing, verify response-shape parity with the legacy resolver.
-4. **schema-steward** chat mode on any PR touching `.graphqls` — federation-safety review before the Hive push, including the `SPARK-CLM-F01`/`F02` contributions into `plm-product`.
+1. `/check-spike-gate CLAIM-BE-E-01` — confirm the one spike-gated story's status before starting.
+2. `/implement-story CLAIM-BE-B-01` (or switch to the **story-implementer** chat mode) — schema + Kotlin fetcher + service + tests in one pass.
+3. `/write-parity-tests getClaims CLAIM-BE-B-01` or the **parity-checker** chat mode — after implementing, verify response-shape parity with the legacy resolver.
+4. **schema-steward** chat mode on any PR touching `.graphqls` — federation-safety review before the Hive push, including the `CLAIM-BE-F-01`/`F-02` contributions into `plm-product`.
 
 See **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** for two full worked sessions.

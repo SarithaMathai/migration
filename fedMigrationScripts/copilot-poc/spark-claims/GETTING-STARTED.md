@@ -79,12 +79,12 @@ If nothing above shows up: confirm you're on a Copilot plan/IDE version that sup
 
 ## 5. Implement your first story
 
-Now follow **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** — it walks `SPARK-CLM-B01` end-to-end using exactly the setup you just created. Short version:
+Now follow **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** — it walks `CLAIM-BE-B-01` end-to-end using exactly the setup you just created. Short version:
 
-1. Get your assigned story id from Jira (e.g. `SPARK-CLM-B02`).
+1. Get your assigned story id from Jira (e.g. `CLAIM-BE-B-02`).
 2. In Copilot Chat, switch to the **story-implementer** chat mode.
 3. Type `Implement {story-id}` and paste the Jira ticket text if asked.
-4. Follow along — gate check (including the `SPARK-CLM-F01`/`F02` federation-blocked check, distinct from spike gating), contract read, diff plan (confirm before it writes anything), implementation, verification, PR draft.
+4. Follow along — gate check (including the `CLAIM-BE-F-01`/`F-02` federation-blocked check, distinct from spike gating), contract read, diff plan (confirm before it writes anything), implementation, verification, PR draft.
 5. Before opening the PR, run the **parity-checker** chat mode to confirm response-shape parity with the legacy resolver, and **schema-steward** if you touched `claims.graphqls`.
 
 ## 6. Commit and push the Copilot setup itself (if you're the one introducing it)

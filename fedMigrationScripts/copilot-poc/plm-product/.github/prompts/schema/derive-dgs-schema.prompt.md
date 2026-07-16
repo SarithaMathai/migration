@@ -4,7 +4,7 @@ model: Claude Sonnet 4.5
 description: "Derive/extend a domain's .graphqls file in apps/app from the analysis target schema"
 ---
 
-Add the schema for story **${input:storyId:SPARK-PROD-B02}** (or the operation/type I name) to the owning domain's `.graphqls` file in `apps/app`.
+Add the schema for story **${input:storyId:PRODUCT-BE-B-02}** (or the operation/type I name) to the owning domain's `.graphqls` file in `apps/app`.
 
 Steps:
 

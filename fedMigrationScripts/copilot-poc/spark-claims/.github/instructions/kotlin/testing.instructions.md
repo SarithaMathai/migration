@@ -13,10 +13,10 @@ description: "Test rules for spark-claims migration stories"
 
 ## Complexity drives depth
 
-- **High / Very High** stories (e.g. `SPARK-CLM-E01`): implement every item in the story's *Test Cases* checklist. `E01`'s checklist is explicit — body-only, +workspace, validation-error→throw, partial-failure, parity — each becomes one named test.
+- **High / Very High** stories (e.g. `CLAIM-BE-E-01`): implement every item in the story's *Test Cases* checklist. `E-01`'s checklist is explicit — body-only, +workspace, validation-error→throw, partial-failure, parity — each becomes one named test.
 - **Medium / Low** stories: happy path + one backend-error path is enough.
 - Field-resolver stories (Phase F/G): include an N-parents test proving the DataLoader batches (one backend call, not N).
-- Federation-contribution stories (`SPARK-CLM-F01`/`F02`): test the `@DgsEntityFetcher`/`@DgsData` resolves given a representation for the owning type's key, plus a parity test against the current in-gateway resolver.
+- Federation-contribution stories (`CLAIM-BE-F-01`/`F-02`): test the `@DgsEntityFetcher`/`@DgsData` resolves given a representation for the owning type's key, plus a parity test against the current in-gateway resolver.
 
 ## Conventions
 

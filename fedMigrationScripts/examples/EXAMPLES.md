@@ -16,7 +16,7 @@ Analyze the bom domain for DGS migration — run all phases.
 2. Phase 1: Reads `context.js`, schema (BOM types, inputs, enums), resolver file, `BomService`, `bomUtils.js`, `commonLoaders.js`
 3. Phase 2: Documents every resolver method (`getBom`, `getBomByPartnerAndProduct`, `addBom`, etc.) with pseudo-logic, REST endpoints, error handling
 4. Phase 3: Derives `output/bom/03-schema.graphql` — classifies `Bom`, `BomMaterial`, `BomPaged` as Owned; `Product` as External stub
-5. Phase 4: Breaks into ~25–35 Jira stories with `SPARK-BOM-` prefix, grouped by phases A–G
+5. Phase 4: Breaks into ~25–35 Jira stories with `BOM-BE-` prefix, grouped by phases A–G
 
 **Files written:**
 ```
@@ -104,7 +104,7 @@ Run Phase 4 for the bom domain. Phases 1, 2, and 3 outputs are already in output
 - Reads `output/bom/02-resolver-analysis.md` for pseudo-logic
 - Reads `output/bom/03-schema.graphql` for schema contract
 - Reads `output/bom/03-schema-analysis.md` for type classifications and EXT stubs
-- Generates stories with `SPARK-BOM-` prefix, writes `04-stories.md` and `04-po-summary.md`
+- Generates stories with `BOM-BE-` prefix, writes `04-stories.md` and `04-po-summary.md`
 
 **Useful when:** Phases 1–3 already ran and you want to re-generate or refine stories.
 
@@ -285,10 +285,10 @@ getProductTechPackCountV1(input: SPARK_ProductTechPackCountInput!): SPARK_Resour
 ```markdown
 | Story ID | Title | Priority | Effort | Dependencies | Phase | Description |
 |----------|-------|----------|--------|-------------|-------|-------------|
-| SPARK-BOM-A01 | Schema: BOM domain in DGS | P0 | Small (1-2d) | None | A | Add bom.graphqls to plm-product with BOM types, queries, mutations |
-| SPARK-BOM-B01 | Query: getBom by ID | P0 | Small (1-2d) | A01 | B | Implement getBom data fetcher calling BOM REST API |
-| SPARK-BOM-C01 | Mutation: addBom | P0 | Medium (3-5d) | A01, B01 | C | Implement addBom with workspace association and ACL token |
-| SPARK-BOM-D01 | Federation: BOM ↔ Product | P1 | Medium (3-5d) | A01, B01 | D | Set up Hive Gateway type merging for BomPaged on Product |
+| BOM-BE-A-01 | Schema: BOM domain in DGS | P0 | Small (1-2d) | None | A | Add bom.graphqls to plm-product with BOM types, queries, mutations |
+| BOM-BE-B-01 | Query: getBom by ID | P0 | Small (1-2d) | A-01 | B | Implement getBom data fetcher calling BOM REST API |
+| BOM-BE-C-01 | Mutation: addBom | P0 | Medium (3-5d) | A-01, B-01 | C | Implement addBom with workspace association and ACL token |
+| BOM-BE-D-01 | Federation: BOM ↔ Product | P1 | Medium (3-5d) | A-01, B-01 | D | Set up Hive Gateway type merging for BomPaged on Product |
 ```
 
 ---
@@ -345,11 +345,11 @@ getProductTechPackCountV1 returns ResourcesCount which has stub fields for Attac
 - Agent detects `ResourcesCount` has `@key(fields: "productId partnerId")` composite key in the schema analysis.
 - Reads `reference/federation-patterns.md` §9 (Multi-Subgraph Composite Key Pattern).
 - Generates:
-  1. **SPARK-PROD-E01** (CAT-1): `ResourcesCount` schema with `@key(fields: "productId partnerId")`.
-  2. **SPARK-PROD-E02** (CAT-2+CAT-3): Product stub resolver + aggregation facade (Option D Phase 1). Includes `@DgsEntityFetcher` boilerplate.
-  3. **SPARK-PROD-E03** (CAT-2): `getProductTechPackBulkCountV1` bulk wrapper.
-  4. **SPARK-PROD-F01 through F08** (CAT-4): One placeholder per owning subgraph, each labeled `BLOCKED-BY: {domain} migration`. Full CAT-4 story goes in that domain's `04-stories.md`.
-  5. **SPARK-PROD-F09** (CAT-4): Retire aggregation facade once all sub-stories complete.
+  1. **PRODUCT-BE-E-01** (CAT-1): `ResourcesCount` schema with `@key(fields: "productId partnerId")`.
+  2. **PRODUCT-BE-E-02** (CAT-2+CAT-3): Product stub resolver + aggregation facade (Option D Phase 1). Includes `@DgsEntityFetcher` boilerplate.
+  3. **PRODUCT-BE-E-03** (CAT-2): `getProductTechPackBulkCountV1` bulk wrapper.
+  4. **PRODUCT-BE-F-01 through F-08** (CAT-4): One placeholder per owning subgraph, each labeled `BLOCKED-BY: {domain} migration`. Full CAT-4 story goes in that domain's `04-stories.md`.
+  5. **PRODUCT-BE-F-09** (CAT-4): Retire aggregation facade once all sub-stories complete.
 
 **What you get:**
 - All TechPack stories with full acceptance criteria and test cases.
@@ -373,4 +373,4 @@ getProductTechPackCountV1 returns ResourcesCount which has stub fields for Attac
 | Using quick-scope agent for story generation | Quick Scan doesn't produce complete pseudo-logic — run full Phase 2 before Phase 4 |
 | Skipping the response footer check | Every phase produces a mandatory footer — use it to confirm what was analyzed |
 | Treating `getProductTechPackCountV1` as a single story | It decomposes into 12+ sub-stories (schema + stub + facade + 8 per-subgraph CAT-4 + retirement). See `reference/federation-patterns.md` §9. |
-| Putting sub-subgraph CAT-4 stories in the Product domain's file | Per-subgraph extension stories (F01–F08) belong in the OWNING domain's `04-stories.md`. Product's file holds stubs only. |
+| Putting sub-subgraph CAT-4 stories in the Product domain's file | Per-subgraph extension stories (F-01–F-08) belong in the OWNING domain's `04-stories.md`. Product's file holds stubs only. |

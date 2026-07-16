@@ -9,7 +9,7 @@ pipeline_version: '2.0'
 acl_policy: ACL ignored in implementation; current-impl ACL usage noted as context
   only
 stories:
-- id: SPARK-CLM-A01
+- id: CLAIM-BE-A-01
   summary: Schema skeleton + DateTime scalar
   phase: A
   category: CAT-1
@@ -17,263 +17,263 @@ stories:
   depends_on: []
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-A02
+- id: CLAIM-BE-A-02
   summary: Owned types + inputs
   phase: A
   category: CAT-1
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A01
+  - CLAIM-BE-A-01
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-A03
+- id: CLAIM-BE-A-03
   summary: External stubs (Product + platform + sibling DGS)
   phase: A
   category: CAT-1
   complexity: Low
   depends_on:
-  - SPARK-CLM-A01
+  - CLAIM-BE-A-01
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-A04
+- id: CLAIM-BE-A-04
   summary: ClaimService Kotlin port
   phase: A
   category: CAT-3
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A01
+  - CLAIM-BE-A-01
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-B01
+- id: CLAIM-BE-B-01
   summary: getClaims
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-CLM-A02
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-02
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-B02
+- id: CLAIM-BE-B-02
   summary: getClaimByIds
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-CLM-A02
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-02
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-B03
+- id: CLAIM-BE-B-03
   summary: getCommunicationChannels (cacheable)
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-B04
+- id: CLAIM-BE-B-04
   summary: getAllClaimsAbout (cacheable)
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-B05
+- id: CLAIM-BE-B-05
   summary: getClaimExports
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-C01
+- id: CLAIM-BE-C-01
   summary: searchGuestFacing
   phase: C
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-C02
+- id: CLAIM-BE-C-02
   summary: getClaimsElastic
   phase: C
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services:
   - key: search
     severity: RED
   blocked_by: none
-- id: SPARK-CLM-D01
+- id: CLAIM-BE-D-01
   summary: createClaim (throws on validationErrors)
   phase: D
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-D02
+- id: CLAIM-BE-D-02
   summary: bulkUpdateClaim (status_code contract; fix snake-case response)
   phase: D
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-D03
+- id: CLAIM-BE-D-03
   summary: requestClaimExport
   phase: D
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-D04
+- id: CLAIM-BE-D-04
   summary: lockClaim
   phase: D
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-D05
+- id: CLAIM-BE-D-05
   summary: unlockClaim
   phase: D
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-CLM-E01
+- id: CLAIM-BE-E-01
   summary: updateClaim (proxy ACL + workspace + body, non-atomic)
   phase: E
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: &id001
   - key: workspaceV2
     severity: YELLOW
   blocked_by: none
   parent: null
   substories:
-  - SPARK-CLM-E01-1
-  - SPARK-CLM-E01-2
-- id: SPARK-CLM-E01-1
+  - CLAIM-BE-E-01-1
+  - CLAIM-BE-E-01-2
+- id: CLAIM-BE-E-01-1
   summary: body PUT + workspace call
   phase: E
   category: CAT-2
   complexity: Medium
-  parent: SPARK-CLM-E01
+  parent: CLAIM-BE-E-01
   substories: []
   depends_on:
-  - SPARK-CLM-E01
-  - SPARK-CLM-A04
+  - CLAIM-BE-E-01
+  - CLAIM-BE-A-04
   blocked_by: none
   ext_services: *id001
-- id: SPARK-CLM-E01-2
+- id: CLAIM-BE-E-01-2
   summary: ACL proxy + orchestration
   phase: E
   category: CAT-2
   complexity: Medium
-  parent: SPARK-CLM-E01
+  parent: CLAIM-BE-E-01
   substories: []
   depends_on:
-  - SPARK-CLM-E01
-  - SPARK-CLM-A04
+  - CLAIM-BE-E-01
+  - CLAIM-BE-A-04
   blocked_by: none
   ext_services: *id001
-- id: SPARK-CLM-F01
+- id: CLAIM-BE-F-01
   summary: Product.claims (federation contribution)
   phase: F
   category: CAT-4
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: product
-- id: SPARK-CLM-F02
-  summary: ResourcesCount.claims (TechPack — see SPARK-PROD-F05)
+- id: CLAIM-BE-F-02
+  summary: ResourcesCount.claims (TechPack — see PRODUCT-BE-F-05)
   phase: F
   category: CAT-4
   complexity: Low
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services: []
   blocked_by: product
-- id: SPARK-CLM-G01
+- id: CLAIM-BE-G-01
   summary: access + currentUserPermissions + participantDetails
   phase: G
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A02
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-02
+  - CLAIM-BE-A-04
   ext_services:
   - key: userGroup
     severity: BLUE
   blocked_by: none
-- id: SPARK-CLM-G02
+- id: CLAIM-BE-G-02
   summary: createdBy + updatedBy + businessPartner + designPartner (3-way fallback)
   phase: G
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services:
   - key: userAttributes
     severity: YELLOW
   - key: vmm
     severity: BLUE
   blocked_by: none
-- id: SPARK-CLM-G03
+- id: CLAIM-BE-G-03
   summary: product + parentDetails (otherClaimBps/systemTeams/droppedPartnerIds)
   phase: G
   category: CAT-2
   complexity: High
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services:
   - key: product
     severity: YELLOW
   - key: search
     severity: RED
   blocked_by: none
-- id: SPARK-CLM-G04
+- id: CLAIM-BE-G-04
   summary: workspaces + substantiatedBy + claimDetails.claimName
   phase: G
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-CLM-A04
+  - CLAIM-BE-A-04
   ext_services:
   - key: workspaceV2
     severity: YELLOW
   - key: userAttributes
     severity: YELLOW
   blocked_by: none
-- id: SPARK-CLM-G05
+- id: CLAIM-BE-G-05
   summary: Tests, parity harness
   phase: G
   category: CAT-5
   complexity: Medium
   depends_on:
-  - SPARK-CLM-B01
-  - SPARK-CLM-E01
-  - SPARK-CLM-G02
-  - SPARK-CLM-G03
+  - CLAIM-BE-B-01
+  - CLAIM-BE-E-01
+  - CLAIM-BE-G-02
+  - CLAIM-BE-G-03
   ext_services: []
   blocked_by: none
 totals:

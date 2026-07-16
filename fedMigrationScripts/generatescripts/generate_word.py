@@ -498,7 +498,7 @@ def add_story_table(doc: Document, phase_key: str, stories: list) -> None:
         if spk:
             cp = cells[0].add_paragraph()
             cp.paragraph_format.space_after = Pt(1)
-            add_run(cp, f"🔴🔬 Spike-gated on SPARK-SPIKE-{spk} ({bd.SPIKE_TITLES.get(spk, '')})",
+            add_run(cp, f"🔴🔬 Spike-gated on SPIKE-{spk} ({bd.SPIKE_TITLES.get(spk, '')})",
                     italic=True, size_pt=8, color_hex=CL_COLOR["very high"])
 
         # Complexity
@@ -516,7 +516,7 @@ def add_story_table(doc: Document, phase_key: str, stories: list) -> None:
         # Depends On
         dep = s["depends"] or "—"
         if spk:
-            sref = f"SPARK-SPIKE-{spk}"
+            sref = f"SPIKE-{spk}"
             dep  = sref if dep in ("—", "") else f"{sref}, {dep}"
         add_run(_first_para(cells[3]), dep, size_pt=8.5, color_hex=C_SUBTLE)
 
@@ -533,7 +533,7 @@ def add_story_table(doc: Document, phase_key: str, stories: list) -> None:
         set_col_widths(table, [1.7, 0.8, 1.3, 0.95, 4.15])
     doc.add_paragraph()
 
-    # DGS init notes (B01-type) — callouts beneath the table.
+    # DGS init notes (B-01-type) — callouts beneath the table.
     note_items = [s for s in stories if s["note"] and bd.strip_noise(s["note"]).strip()]
     for s in note_items:
         nc = bd.strip_noise(s["note"]).lstrip("> ").strip()
@@ -561,14 +561,14 @@ def add_domain_spike_map(doc: Document, stories: list) -> None:
             "breakdown — see 'Phase 0 — Program Spikes' and 'Spike Detail' (the brief, the decision, "
             "intended cross-domain steps, and every affected resolver's external deps + current logic) in "
             "Federated+Graphql+Stories+-+BreakDown. Nothing from there is repeated here; the stories below just "
-            "link to it. Follow a story's SPARK-SPIKE-0x id to the global Spike Detail for the target flow + the "
+            "link to it. Follow a story's SPIKE-0x id to the global Spike Detail for the target flow + the "
             "external services each resolver calls (see 'How to read the spikes & related stories' in the global doc).",
             size_pt=9, color_hex=C_SUBTLE, italic=True)
 
     if gated:
         add_plain_table(
             doc, ["Story", "Program spike", "Bucket"],
-            [[f"🔴🔬 {s['id']} — {re.sub('`', '', s['title'])}", f"SPARK-SPIKE-{b}", bd.SPIKE_TITLES[b]]
+            [[f"🔴🔬 {s['id']} — {re.sub('`', '', s['title'])}", f"SPIKE-{b}", bd.SPIKE_TITLES[b]]
              for s, b in gated],
             col_widths=[4.6, 1.5, 2.4],
         )

@@ -2,12 +2,12 @@
 
 > **Status:** 🔴 Proposed — draft for review
 > **Spike:** — (read pattern applied at cutover, not a research spike)
-> **Home stubs:** `SPARK-PROD-G02` · `SPARK-WS-G02` / `SPARK-WS-G04` (later phase)
+> **Home stubs:** `PRODUCT-BE-G-02` · `WORKSPACE-BE-G-02` / `WORKSPACE-BE-G-04` (later phase)
 > **Scope:** the two dashboard **read rollups** — a product's typed component list and a workspace's counts
 > strip — plus their list siblings (`products` / `productsCount` / `combinations`). Reads only; writes are
 > ADR-011/012/013.
-> **Related:** `SPARK-SPIKE-06a` (hydration — the search→canonical two-stage read recurs here) ·
-> `SPARK-SPIKE-05` (the `code → type` tagging table) · techpack case (same fan-out root).
+> **Related:** `SPIKE-06a` (hydration — the search→canonical two-stage read recurs here) ·
+> `SPIKE-05` (the `code → type` tagging table) · techpack case (same fan-out root).
 > **Evidence:** `resolvers/SPARK_Product.js` (components, ~190 ln) + `resolvers/SPARK_WorkspaceV2.js`
 > (counts, ~85 ln; verified from the jun30 snapshot) at `https://github.com/XXX`.
 
@@ -15,7 +15,7 @@
 
 ## 1. Today's behavior
 
-### `Product.components` (`SPARK-PROD-G02`) — 5-type merge + ACL rollup
+### `Product.components` (`PRODUCT-BE-G-02`) — 5-type merge + ACL rollup
 
 1. **Hydration short-circuit** — if the product already carries `boms` / `measurementSets` / `claims` /
    `productDetails` (e.g. it was fetched through `WorkspaceV2.products` with include-flags), use them;
@@ -42,7 +42,7 @@
 10. Rollups — `archivedCount` (re-filter with `archived: true`) · filtered content ordered by date ·
     `countByComponents` per type.
 
-### `WorkspaceV2.counts` (`SPARK-WS-G02`, later phase) — the dashboard rollup
+### `WorkspaceV2.counts` (`WORKSPACE-BE-G-02`, later phase) — the dashboard rollup
 
 1. No products mapped on the workspace → 🐞 **returns scalar `0`** (the field's type is an object).
 2. **Two-stage hydration** — `search.getFilteredProductsWithSummary` (elastic; filter/q/paging) →
@@ -60,7 +60,7 @@
    nonEvaluatedRecievedSamplesCount, workspaceProductDashboard}`; empty page → zeros object
    (without `workspaceProductDashboard`).
 
-### The list siblings (`SPARK-WS-G04`, later phase)
+### The list siblings (`WORKSPACE-BE-G-04`, later phase)
 
 - `WorkspaceV2.products` — delegates to `Product.Query.getProducts` (cross-resolver import) with
   `includeBoms/Claims/MeasurementSets/ProductDetails: true` — the hydration source for step 1 of
@@ -106,6 +106,31 @@ ACL → AccessControlService.
   **where the aggregation runs**.
 - `counts` lands with the workspace domain (later phase) — this ADR fixes the pattern now so
   `plm-workspace` inherits a decision, not a redesign.
+
+### Assumptions, constraints & success criteria
+
+**Assumptions**
+- The rollup quirks (+1 sample→discussion increment, `type 2 → packagingBom`, name/status fallbacks) are
+  UI-calibrated contract; fixtures encode today's numbers as the target.
+- UI queries can pass explicit `id`/`filter` field args (or will be updated to) — verified by a contract
+  test before cutover (pin-down 5).
+- bom/measurement/packaging/productDetail remain co-located in `plm-product`, so most of `components`
+  resolves in-process.
+
+**Constraints**
+- The `info.variableValues` coupling cannot be ported — explicit field args are mandatory, not optional.
+- Dashboard latency budget is one screen paint — fetches independent today (or needlessly sequential)
+  must run in parallel.
+- The merged, ACL-annotated list shape and the `countsByBp`/`archivedCount` rollups are the public
+  contract and may not change in phase 1.
+
+**Success criteria (measurable)**
+- Recorded-fixture parity for `Product.components` including a product with > 100 components (chunked
+  ACL) and a claim with a missing ACL record (the throw path); every rollup number identical to source.
+- Exactly one batched ACL call per `components` resolution (N+1 eliminated) — asserted by a call-count
+  test; the five component queries run in one parallel group.
+- The four fixes ship as documented deviations with PO sign-off; no other behavioral drift in fixtures.
+- The workspace stories inherit the pattern + deviation list with no new design decisions recorded.
 
 ---
 
@@ -168,7 +193,7 @@ ACL → AccessControlService.
   named fixes (batched claim ACL, full parallelization, explicit args, zeros-object) as accepted deviations.
 - **Option B/D recorded as later refinements** — per-aggregate, viewer-independent numbers first;
   never the ACL-dependent parts.
-- The `SPARK-WS-G02/G04` stories (later phase) inherit this pattern — no second decision round.
+- The `WORKSPACE-BE-G-02/G-04` stories (later phase) inherit this pattern — no second decision round.
 
 ### Pin-downs at ratification
 
@@ -179,16 +204,16 @@ ACL → AccessControlService.
 | 3 | `counts` scalar `0` 🐞 | — | return the zeros object (a scalar is schema-illegal in DGS); accepted deviation |
 | 4 | Sample→discussion **+1** roll-up 🐞 | preserve vs "fix" to real counts | **preserve exactly** — the UI is calibrated to it; document as intentional in the fixture notes |
 | 5 | `info.variableValues` coupling 🐞 | — | explicit field args; confirm UI queries pass `id`/`filter` before cutover (contract test) |
-| 6 | `type 2 → packagingBom` tagging | — | preserve; record in `SPARK-SPIKE-05`'s `code → type` table |
+| 6 | `type 2 → packagingBom` tagging | — | preserve; record in `SPIKE-05`'s `code → type` table |
 | 7 | Packaging fetch ordering | sequential vs parallel | join the `Promise.all`; deviation noted |
-| 8 | `WorkspaceV2.products` include-flags delegation | keep hydrated short-circuit vs always self-fetch | keep — it is the hydration edge `SPARK-SPIKE-06a` governs; align with 06a's per-edge rule |
+| 8 | `WorkspaceV2.products` include-flags delegation | keep hydrated short-circuit vs always self-fetch | keep — it is the hydration edge `SPIKE-06a` governs; align with 06a's per-edge rule |
 
 ---
 
 ## 5. Consequences
 
 - If accepted:
-  - `SPARK-PROD-G02` builds `components` mostly **in-process** (co-located children) + three sibling
+  - `PRODUCT-BE-G-02` builds `components` mostly **in-process** (co-located children) + three sibling
     clients (search, claims via search, ACL) — one batched ACL call total,
   - the workspace stories get a settled pattern and a settled deviation list before their phase starts,
   - dashboard latency improves (5-way parallel + batched ACL) without changing a single rollup number,
@@ -212,6 +237,6 @@ pattern-at-cutover):
    (`status: Accepted`, `chosen: "A — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the deviation list and the fixture-edge checklist from §5).
-3. Update `output/initial-analysis/product/04-stories.md` (`G02`) with the concrete pattern;
+3. Update `output/initial-analysis/product/04-stories.md` (`G-02`) with the concrete pattern;
    workspace stories follow in their phase.
 4. Regenerate domain + global docs; push to Jira/Confluence.

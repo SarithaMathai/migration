@@ -32,7 +32,7 @@
 ## 2. Impact on decision drivers
 
 - The retiring relationship walk loses its main remaining job in this flow — its quarantine gets smaller
-  and its deletion (`F09`) gets easier.
+  and its deletion (`F-09`) gets easier.
 - Parity nuance: today's semantics are "walk everything, then keep ids where the partner holds *any*
   surviving permission". The attachment service's ACL-scoped query must reproduce **that** visibility rule
   — record per-slice fixtures against today's output before swapping the source (new pin-down N1).
@@ -44,18 +44,18 @@
 | | Option | Change under domain-ACL | 01 verdict | Verdict now |
 |---|---|---|---|---|
 | A | Lift-and-shift into `plm-product` | **can't even lift as-is** — the ported helper's ACL-filter section is forbidden; A becomes "port minus ACL", inheriting the same contract work as B's facade with none of its exit path | viable | weaker — still re-freezes the 8-domain coupling |
-| B | Facade-then-federate | the facade thins (walk+ACL section → one attachment-service call); each `F0x` re-homing gets simpler because slices already arrive ACL-complete; `F09` gets closer | **recommended** | **recommended — unchanged** |
+| B | Facade-then-federate | the facade thins (walk+ACL section → one attachment-service call); each `F0x` re-homing gets simpler because slices already arrive ACL-complete; `F-09` gets closer | **recommended** | **recommended — unchanged** |
 | C | Federation-native day 1 | unchanged — still blocked on 7 subgraphs not being live; ACL was never its blocker | disqualified | unchanged |
 | D | Search-DGS / materialized counts | its "per-viewer ACL can't be precomputed" con technically softens (viewer scoping is the domains' job now) — but packet-critical needs attachment hydration, staleness is user-visible, and the business rules still land in the wrong owner | later refinement | unchanged — viewer-independent counts only |
 
 ## 4. Proposed decision — no change
 
-- **Option B** stands: thin `@DgsQuery` stub → frozen aggregation facade (`E03`), per-domain re-homing
-  (`F01–F08`), facade retirement (`F09`) — with the facade now built **without an ACL client**:
+- **Option B** stands: thin `@DgsQuery` stub → frozen aggregation facade (`E-03`), per-domain re-homing
+  (`F-01–F-08`), facade retirement (`F-09`) — with the facade now built **without an ACL client**:
   - attachment ids + packet props come from one ACL-scoped attachment-service query (replacing walk +
     batch filter + token + hydrate),
   - the seven elastic slice queries stay verbatim (quirks and all, per 01 pin-downs 4–8),
-  - bulk (`E04`) unchanged: same core, input-ordered.
+  - bulk (`E-04`) unchanged: same core, input-ordered.
 - The F-phase gets cheaper: each owner already answers ACL-scoped questions, so re-homing a slice is
   purely a transport flip.
 

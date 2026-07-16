@@ -36,8 +36,8 @@
   Behaviour* is its exact gateway logic today (DataLoader + REST endpoint).
 - **Thin wrapper:** the model, REST controller (GET/POST/PUT) and service already exist — you add only the
   Netflix-DGS layer (`@DgsQuery`/`@DgsMutation`/`@DgsData` + schema type + wiring).
-- **`B01` dependency = the module scaffold** (`{domain}.graphqls` + scalars + service/Feign wiring), landed once.
-  It's assumed, not repeated per row — after `B01`, B/C/D/G are parallel.
+- **`B-01` dependency = the module scaffold** (`{domain}.graphqls` + scalars + service/Feign wiring), landed once.
+  It's assumed, not repeated per row — after `B-01`, B/C/D/G are parallel.
 - **Ship on green:** merge + deploy a story once its own tests + parity pass. Exceptions are the
   cross-subgraph **BLOCKED-BY** field resolvers (wait for the owning subgraph).
 - **Acceptance Criteria + tests** are the definition of done; parity (new DGS output == old gateway output) is
@@ -45,7 +45,7 @@
 
 ## How to read a story row
 ```
-SPARK-BOM-B04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
+BOM-BE-B-04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
 ```
 Phase 🔬0 🧱A 📖B 🔍C ✏️D ⚙️E 🔗F 🧪G · Type 🔷Query 🔶Mutation 🔸Resolver · Size 🟢XS 🟡M 🟠L 🔴XL.
 

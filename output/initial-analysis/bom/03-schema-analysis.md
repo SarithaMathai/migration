@@ -64,10 +64,10 @@ from the source SDL (`schemas/SPARK_Bom.graphqls`), verified against the resolve
 - These resolve via the Hive Gateway; BOM emits only the `@key`.
 - **BOM contributes back to `Product` and `ResourcesCount` — but those are co-located**, so these are
   **internal field resolvers in the same subgraph**, not cross-subgraph entity extensions:
-  - `Product.productBoms` / `boms` / `packagingBoms` → internal `@DgsData` calling `bomService` (F01).
-  - `ResourcesCount.bomsCount` → internal `@DgsData` (F02). The TechPack `ResourcesCount` type is owned by
+  - `Product.productBoms` / `boms` / `packagingBoms` → internal `@DgsData` calling `bomService` (F-01).
+  - `ResourcesCount.bomsCount` → internal `@DgsData` (F-02). The TechPack `ResourcesCount` type is owned by
 - `product` in the same subgraph; only its *externally*-owned fields (attachments/discussions/etc.) need real federation.
-- **Neither F01 nor F02 is gateway-federated or blocked by a separate deployment** — they just depend on the `Product`/`ResourcesCount` types existing in the merged schema.
+- **Neither F-01 nor F-02 is gateway-federated or blocked by a separate deployment** — they just depend on the `Product`/`ResourcesCount` types existing in the merged schema.
 
 ## 5. Migration Approach  *(Confluence approach page)*
 
@@ -78,7 +78,7 @@ from the source SDL (`schemas/SPARK_Bom.graphqls`), verified against the resolve
 2. **Phase B (Core reads):** the 8 read queries, one per story. 4 master-data queries become `@Cacheable`.
    These unblock the UI's read paths first.
 3. **Phase C (Search/listing):** elastic + supplier lookups. `searchMaterialsBom` keeps the nested-filter
-   flatten unless backend accepts a structured DTO (PO decision C02).
+   flatten unless backend accepts a structured DTO (PO decision C-02).
 4. **Phase D (Mutations):** the 4 simple writes (add/lock/unlock/component-status).
 5. **Phase E (Complex):** `updateBom` — the one genuinely hard story (3-step non-atomic write). Pick a
    rollback strategy (saga / compensation log / best-effort) before starting.
@@ -98,8 +98,8 @@ from the source SDL (`schemas/SPARK_Bom.graphqls`), verified against the resolve
 
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
-| `updateBom` 3-step non-atomic write leaves bom/workspace/ACL inconsistent | Medium | High | Choose saga/compensation/best-effort before E01 | Tech Lead |
-| `BomImpressionDetails_Unified.libraryResource` reads `args.ids` (fragile contract) | Medium | Medium | Pass `bomIds` via DGS local context, not field args (G10) | Backend Eng |
+| `updateBom` 3-step non-atomic write leaves bom/workspace/ACL inconsistent | Medium | High | Choose saga/compensation/best-effort before E-01 | Tech Lead |
+| `BomImpressionDetails_Unified.libraryResource` reads `args.ids` (fragile contract) | Medium | Medium | Pass `bomIds` via DGS local context, not field args (G-10) | Backend Eng |
 | 7-variant polymorphism drifts as fields are added | Medium | Medium | CI schema-conformance check across all impls | Backend Eng |
 | Sibling material subgraphs not yet federated → material fields return stubs | High | Medium | Sequence material-hub/trim/wash/fabric/combination stubs first | Platform |
 | Latent bugs (`getHubMaterial` missing await; `getFabricMaterial` null-guard; array mutations) | Medium | Low | Fix on port; add unit tests | Backend Eng |

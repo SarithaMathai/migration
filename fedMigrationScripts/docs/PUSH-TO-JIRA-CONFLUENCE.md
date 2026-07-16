@@ -48,7 +48,7 @@ Rules:
   emphasis/code marks, or reword anything.
 - Set the Epic Link on every Story/Spike to the created Epic.
 - Do NOT invent fields the project doesn't have; list any you had to drop.
-- The "Depends On" column lists other Story IDs in THIS csv (e.g. "B01, S01"). Don't resolve them yet —
+- The "Depends On" column lists other Story IDs in THIS csv (e.g. "B-01, S-01"). Don't resolve them yet —
   just keep them; we'll link after all issues exist (their real Jira keys don't exist until creation).
 
 Output a table: Story ID | proposed issue type | summary | labels | depends-on. Then STOP and wait.
@@ -59,13 +59,13 @@ Output a table: Story ID | proposed issue type | summary | labels | depends-on. 
 ```
 Looks good. Now:
 1. Create the Epic, then all Stories/Spikes, in Jira project <PROJECT_KEY>.
-2. Keep a map of Story ID (e.g. SPARK-BOM-B04) → created Jira key (e.g. PROJ-123).
+2. Keep a map of Story ID (e.g. BOM-BE-B-04) → created Jira key (e.g. PROJ-123).
 3. For each row's "Depends On" IDs, create a Jira issue link of type "Blocks"/"is blocked by"
    (blocker = the dependency, blocked = the dependent) using that map.
 4. Report the Story ID → Jira key table and any links you could not create.
 ```
 
-> **Why link after creation:** the CSV references stories by **our IDs** (`SPARK-BOM-B04`), not Jira keys —
+> **Why link after creation:** the CSV references stories by **our IDs** (`BOM-BE-B-04`), not Jira keys —
 > Jira keys don't exist until the issue is created. The agent builds the ID→key map on creation, then wires
 > the "Depends On" links. This is also why the docs cross-reference by ID, not URL.
 
@@ -73,7 +73,7 @@ Repeat both prompts for `output/jira/product.csv` (or point at `output/jira/all-
 
 > **Complex cross-domain cases import SEPARATELY.** Each `output/complexStories/<case>/<case>.csv` holds that
 > case's sub-tasks; import it **under its home stub story** (e.g. the techpack sub-tasks nest under
-> `SPARK-PROD-E03`). These are deliberately **not** in `all-stories.csv` to avoid double-counting — see
+> `PRODUCT-BE-E-03`). These are deliberately **not** in `all-stories.csv` to avoid double-counting — see
 > [`fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`](../reference/SPIKE-ADR-LIFECYCLE.md).
 
 ---
@@ -108,7 +108,7 @@ Rules:
   - do NOT summarize, reword, reflow, or omit any section; the page must read exactly like the file.
 - If a page with that exact title already exists in the space, UPDATE it (new version) instead of
   creating a duplicate; otherwise create it under the parent.
-- These docs reference stories by ID (e.g. SPARK-PROD-F01) and other pages by name — leave those as text.
+- These docs reference stories by ID (e.g. PRODUCT-BE-F-01) and other pages by name — leave those as text.
   Do NOT try to convert them to links.
 - After publishing, give me the page URLs.
 ```

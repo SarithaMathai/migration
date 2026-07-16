@@ -179,8 +179,8 @@ Every query, mutation, and field MUST be preceded by a `#` comment with status s
 ## 9. Link Conventions
 
 - All inter-output links use **relative paths** with `./` (e.g., `[02-resolver-analysis.md](./02-resolver-analysis.md)`)
-- Story IDs in PO summary are bold text, not links (`**SPARK-PROD-A01**`)
-- Story IDs in `04-stories.md` are headings (`### SPARK-PROD-A01 · {title}`) so anchor links work
+- Story IDs in PO summary are bold text, not links (`**PRODUCT-BE-A-01**`)
+- Story IDs in `04-stories.md` are headings (`### PRODUCT-BE-A-01 · {title}`) so anchor links work
 
 ---
 

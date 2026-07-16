@@ -44,7 +44,11 @@ construct. Use this when writing CAT-4 (Phase F) stories.
 - A field that *contributes* to a type owned elsewhere → `extend type X { newField }` in this subgraph
   with a `@DgsEntityFetcher` keyed on `X`'s `@key`.
 
-## 3. Composite-key aggregate (the TechPack pattern) — Option D (hybrid)
+## 3. Composite-key aggregate (the TechPack pattern) — Option D (hybrid), a.k.a. **facade-then-federate**
+
+> **Naming note:** "Option D" is this catalogue's label (from `techpack-migration-options.md`). The same
+> pattern is **ADR-015 Option B** — ADR option letters are local to each ADR, so always cite them qualified.
+> The canonical prose name is **facade-then-federate**.
 
 When one query returns a type assembled from N subgraphs (e.g. `ResourcesCount @key(fields:"productId partnerId")`
 filled from attachment/discussion/sample/measurement/claim/bom/…):

@@ -59,9 +59,9 @@ Schema: **`schemas/SPARK_Product.graphqls` (802 lines)** — the federated targe
 
 ## 5. Hot Spots (drive complexity — full detail in Phase 2)
 
-1. **`getProductTechPackCountV1` / `…BulkCountV1`** — the single most complex operation: a 17-step
-- `getTechPackResourceCountMap` orchestrating ACL tree-walk (×2), attachment hydration, **7 parallel elastic queries**, critical-discussion→attachment join, building a `ResourcesCount`.
-- Composite-key aggregate → facade-then-federate (Option D).
+1. **`getProductTechPackCountV1` / `…BulkCountV1`** — the single most complex operation: a 14-step
+- `getTechPackResourceCountMap` orchestrating ACL tree-walk (×2), attachment hydration, **7 elastic slice queries (sequential today — a named perf defect, ADR-015 pin-down 2)**, critical-discussion→attachment join, building a `ResourcesCount`.
+- Composite-key aggregate → facade-then-federate (draft ADR-015 Option B; catalogue "Option D (hybrid)").
 - **Bulk version has a latent ordering bug** (push order ≠ input order).
 2. **`productBusinessPartnerActions`** — ~220-line dispatcher (REMOVE/DROP/UNDROP partner) with cleanup
    across `recentlyViewed`/`todo`/`favorite`/`sampleV2`. No rollback.

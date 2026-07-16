@@ -4,7 +4,7 @@ model: Claude Sonnet 4.5
 description: "Generate Kotlin parity tests for a migrated operation (DgsQueryExecutor + mocked REST)"
 ---
 
-Write the parity tests for **${input:operation:getProduct}** (story ${input:storyId:SPARK-PROD-B02}) in the `apps/app` test tree.
+Write the parity tests for **${input:operation:getProduct}** (story ${input:storyId:PRODUCT-BE-B-02}) in the `apps/app` test tree.
 
 Steps:
 

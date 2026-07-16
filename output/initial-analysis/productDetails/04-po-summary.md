@@ -15,8 +15,7 @@ their attachments, and per-partner access) — off the `spark-internal-graphql` 
 The one genuinely harder piece is **`updateProductDetailsSet`**, a multi-step write — workspace
 associations, then bulk-archive removed attachments, then the body — with no rollback today.
 
-**ACL note:** the current code obtains per-resource capability tokens via ACL; **ACL is ignored in the DGS
-implementation** (no ACL story) — noted for context only.
+**ACL note:** the current code obtains per-resource capability tokens via ACL; Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
 
 ## Migration Scope
 | Surface | Count | Notes |
@@ -41,14 +40,14 @@ implementation** (no ACL story) — noted for context only.
 
 > One engineer ≈ **5–9 sprints**.
 
-> **Phase A dissolved.** Schema skeleton, service wiring, and external stubs are a one-time checklist in **B01** (completed in the same PR). No separate Phase A stories.
+> **Phase A dissolved.** Schema skeleton, service wiring, and external stubs are a one-time checklist in **B-01** (completed in the same PR). No separate Phase A stories.
 
 > **Self-contained story model.** The DGS-on-REST framework already exists; every operation story is **end-to-end in one PR** — schema (query/mutation + the GraphQL types it returns) + DGS data fetcher + Kotlin REST service method (read/write) + push the schema change to **Hive**. The standalone `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## Key Risk Areas
 | Risk | Severity | What the PO needs to know |
 |---|---|---|
-| `updateProductDetailsSet` multi-step write | 🟡 Medium | Needs a decision (E01) on recovering from a mid-write failure |
+| `updateProductDetailsSet` multi-step write | 🟡 Medium | Needs a decision (E-01) on recovering from a mid-write failure |
 | `updateProductDetailComponentStatus` has no auth token | 🟢 Low | Confirm the backend enforces it |
 | Attachment-by-search field resolvers | 🟢 Low | Shared search helper; batch where possible |
 | `getProductDetailsElastic.types` arg not in schema | 🟢 Low | Drop or add to the schema |
@@ -56,10 +55,10 @@ implementation** (no ACL story) — noted for context only.
 ## Decisions Required
 | # | Decision | Blocks | Owner |
 |---|---|---|---|
-| 1 | `updateProductDetailsSet` failure strategy | E01 | Tech Lead + PO |
-| 2 | `updateProductDetailComponentStatus` no token — backend-enforced? | D05 | PO |
-| 3 | `getProductDetailsElastic.types` — add to schema or drop? | C01 | Backend Eng |
-| 4 | Are the 2 unused version service methods needed cross-domain? | B01 | Tech Lead |
+| 1 | `updateProductDetailsSet` failure strategy | E-01 | Tech Lead + PO |
+| 2 | `updateProductDetailComponentStatus` no token — backend-enforced? | D-05 | PO |
+| 3 | `getProductDetailsElastic.types` — add to schema or drop? | C-01 | Backend Eng |
+| 4 | Are the 2 unused version service methods needed cross-domain? | B-01 | Tech Lead |
 
 ## Dependency Map
 ```
@@ -68,23 +67,23 @@ plm-product (ProductDetails subgraph) depends on:
  sibling DGS (federation): attachment, workspace, user-profile, access-control, search 🔴
  Hive Gateway → VMM (business partners)
  internal (same DGS): product, specificationsTemplate
- product domain F01 Product.productDetails (internal field resolver)
+ product domain F-01 Product.productDetails (internal field resolver)
 ```
 
 ## Recommended Sprint Sequencing
 | Sprint | Stories | Focus |
 |---|---|---|
-| 1 | B01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
-| 2 | D01–D05 | simple mutations |
-| 3 | E01 + F01 | multi-step write + Product field |
-| 4 | G01–G03 | field resolvers |
-| 5 | G04 | tests & parity |
+| 1 | B-01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
+| 2 | D-01–D-05 | simple mutations |
+| 3 | E-01 + F-01 | multi-step write + Product field |
+| 4 | G-01–G-03 | field resolvers |
+| 5 | G-04 | tests & parity |
 
 ## Capacity Planning
 | Team size | Calendar | Notes |
 |---|---|---|
 | 1 engineer | ~6–11 sprints | sequential |
-| 2 engineers | ~4–6 sprints | reads + mutations parallel after B01 |
+| 2 engineers | ~4–6 sprints | reads + mutations parallel after B-01 |
 
 ---
 *Pipeline 2.0 — Phase 4 complete. ProductDetails artifacts: 01, 02, 03×2, 04-stories, 04-stories-index, 04-po, 05 (8 files).*

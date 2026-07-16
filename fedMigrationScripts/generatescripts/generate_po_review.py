@@ -99,30 +99,30 @@ PHASE2_BREAKDOWNS: dict[str, dict] = {
             "are delegated to dedicated complex cases."
         ),
         "rows": [
-            ("SPARK-PROD-E01", "productBusinessPartnerActions (drop/undrop)", "Very High",
-             "E01-1 orchestrator + fan-out · E01-2 ACL drop + user-profile · E01-3 saga + parity harness"),
-            ("SPARK-PROD-G01", "Product.attachmentsWithMetaData", "Very High",
-             "G01-1 per-domain service call + merge · G01-2 metadata hydration + counts"),
-            ("SPARK-PROD-E02", "updateComponentStatuses (5-loader fan-out)", "High",
-             "E02-1 loader scaffold + status updates · E02-2 parity + count validation"),
-            ("SPARK-PROD-G03", "Product.attachments / attachmentsV3 / attachmentSummary", "High",
-             "G03-1 attachments + attachmentsV3 · G03-2 attachmentSummary + draft filtering"),
+            ("PRODUCT-BE-E-01", "productBusinessPartnerActions (drop/undrop)", "Very High",
+             "E-01-1 orchestrator + fan-out · E-01-2 ACL drop + user-profile · E-01-3 saga + parity harness"),
+            ("PRODUCT-BE-G-01", "Product.attachmentsWithMetaData", "Very High",
+             "G-01-1 per-domain service call + merge · G-01-2 metadata hydration + counts"),
+            ("PRODUCT-BE-E-02", "updateComponentStatuses (5-loader fan-out)", "High",
+             "E-02-1 loader scaffold + status updates · E-02-2 parity + count validation"),
+            ("PRODUCT-BE-G-03", "Product.attachments / attachmentsV3 / attachmentSummary", "High",
+             "G-03-1 attachments + attachmentsV3 · G-03-2 attachmentSummary + draft filtering"),
         ],
         "delegated_note": (
-            "> `SPARK-PROD-E03/E04` (TechPack) and `SPARK-PROD-G02` (components) are delegated to "
+            "> `PRODUCT-BE-E-03/E-04` (TechPack) and `PRODUCT-BE-G-02` (components) are delegated to "
             "complex cases — those provide the full cross-domain breakdown; the Jira stubs point there."
         ),
     },
     "bom": {
         "intro": "Two stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-BOM-E01", "updateBom — 3-step orchestrated write", "Very High",
-             "E01-1 workspace-assoc + body PUT · E01-2 permissions PUT + rollback framework"),
-            ("SPARK-BOM-G08", "BomTrimMaterial field resolvers (dispatcher + 7 types)", "High",
-             "G08-1 dispatcher scaffold + type resolution · G08-2 7 TrimMaterial field resolvers"),
+            ("BOM-BE-E-01", "updateBom — 3-step orchestrated write", "Very High",
+             "E-01-1 workspace-assoc + body PUT · E-01-2 permissions PUT + rollback framework"),
+            ("BOM-BE-G-08", "BomTrimMaterial field resolvers (dispatcher + 7 types)", "High",
+             "G-08-1 dispatcher scaffold + type resolution · G-08-2 7 TrimMaterial field resolvers"),
         ],
         "delegated_note": (
-            "> `SPARK-BOM-E01` is also the home stub for the **non-atomic-write-saga** complex case. "
+            "> `BOM-BE-E-01` is also the home stub for the **non-atomic-write-saga** complex case. "
             "See `complexStories/non-atomic-write-saga/`."
         ),
     },
@@ -132,13 +132,13 @@ PHASE2_BREAKDOWNS: dict[str, dict] = {
             "One additional Very High story is delegated to a complex case."
         ),
         "rows": [
-            ("SPARK-WS-E01", "workspaceBusinessPartnerActionsV2 (5-case dispatcher)", "Very High",
-             "E01-1 dispatcher scaffold + sample/discussion/claims cases · E01-2 engagement/team/ACL removal + saga"),
-            ("SPARK-WS-G01", "WorkspaceV2.attachmentsWithMetaData (hub rollup)", "Very High",
-             "G01-1 per-domain services + merge · G01-2 metadata + draft filtering + counts"),
+            ("WORKSPACE-BE-E-01", "workspaceBusinessPartnerActionsV2 (5-case dispatcher)", "Very High",
+             "E-01-1 dispatcher scaffold + sample/discussion/claims cases · E-01-2 engagement/team/ACL removal + saga"),
+            ("WORKSPACE-BE-G-01", "WorkspaceV2.attachmentsWithMetaData (hub rollup)", "Very High",
+             "G-01-1 per-domain services + merge · G-01-2 metadata + draft filtering + counts"),
         ],
         "delegated_note": (
-            "> `SPARK-WS-G02` (counts — dashboard rollup + increment) is delegated to "
+            "> `WORKSPACE-BE-G-02` (counts — dashboard rollup + increment) is delegated to "
             "`complexStories/components-and-counts-rollups/`. "
             "In Jira, sub-tasks appear nested under their parent story."
         ),
@@ -146,40 +146,40 @@ PHASE2_BREAKDOWNS: dict[str, dict] = {
     "attachment": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-ATCH-G01", "Attachment field resolvers (cross-domain)", "High",
-             "G01-1 access/users · G01-2 businessPartnersFull + snake/camel"),
+            ("ATTACHMENT-BE-G-01", "Attachment field resolvers (cross-domain)", "High",
+             "G-01-1 access/users · G-01-2 businessPartnersFull + snake/camel"),
         ],
     },
     "claims": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-CLM-E01", "updateClaim (proxy ACL + workspace + body)", "High",
-             "E01-1 body PUT + workspace call · E01-2 ACL proxy + orchestration"),
+            ("CLAIM-BE-E-01", "updateClaim (proxy ACL + workspace + body)", "High",
+             "E-01-1 body PUT + workspace call · E-01-2 ACL proxy + orchestration"),
         ],
     },
     "discussion": {
         "intro": "Two stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-DISC-E02", "Participants V3 (4 bundled mutations)", "High",
-             "E02-1 updateParticipantsV3 + coreUpdate · E02-2 coreDelete + deleteParticipantV3"),
-            ("SPARK-DISC-G01", "Discussion field resolvers (3 main types)", "High",
-             "G01-1 Discussion + Content · G01-2 FullDiscussion + participants"),
+            ("DISCUSSION-BE-E-02", "Participants V3 (4 bundled mutations)", "High",
+             "E-02-1 updateParticipantsV3 + coreUpdate · E-02-2 coreDelete + deleteParticipantV3"),
+            ("DISCUSSION-BE-G-01", "Discussion field resolvers (3 main types)", "High",
+             "G-01-1 Discussion + Content · G-01-2 FullDiscussion + participants"),
         ],
     },
     "packaging": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-PKG-E01", "updatePackaging (body + attachment add/remove, branching)", "High",
-             "E01-1 body + attachment add · E01-2 attachment remove + pricing"),
+            ("PKG-BE-E-01", "updatePackaging (body + attachment add/remove, branching)", "High",
+             "E-01-1 body + attachment add · E-01-2 attachment remove + pricing"),
         ],
     },
     "sample": {
         "intro": "Three stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-SMPL-E02", "bulkEvaluateSamples (evaluation + new-rounds utility)", "High",
-             "E02-1 evaluation orchestrator · E02-2 new-rounds utility"),
-            ("SPARK-SMPL-G02", "Prefix-gated parents (5 prefixes + union)", "High",
-             "G02-1 prefix→loader table + DataLoader · G02-2 parent field resolvers + union"),
+            ("SAMPLE-BE-E-02", "bulkEvaluateSamples (evaluation + new-rounds utility)", "High",
+             "E-02-1 evaluation orchestrator · E-02-2 new-rounds utility"),
+            ("SAMPLE-BE-G-02", "Prefix-gated parents (5 prefixes + union)", "High",
+             "G-02-1 prefix→loader table + DataLoader · G-02-2 parent field resolvers + union"),
         ],
     },
 }
@@ -328,7 +328,7 @@ def build_po_review(domain: str) -> str:
     phase_block = extract_section(po_text, "Story Summary by Phase")
     if phase_block:
         phase_block = re.sub(r"^Story Summary by Phase.*\n", "", phase_block).strip()
-        # Keep the legit Phase-A (A04) row; strip only dissolved-note + pipeline noise
+        # Keep the legit Phase-A (A-04) row; strip only dissolved-note + pipeline noise
         phase_block = re.sub(r"^>.*[Pp]hase A dissolved[^\n]*\n?", "", phase_block, flags=re.MULTILINE)
         phase_block = re.sub(r"^>.*No separate Phase A[^\n]*\n?", "", phase_block, flags=re.MULTILINE)
         phase_block = re.sub(r"^\*Pipeline 2\.0[^\n]*\n?", "", phase_block, flags=re.MULTILINE)

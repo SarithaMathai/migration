@@ -1,8 +1,8 @@
-# ADR-013 (draft) — Non-Atomic Multi-Step Writes / WriteSaga (`SPARK-SPIKE-01`)
+# ADR-013 (draft) — Non-Atomic Multi-Step Writes / WriteSaga (`SPIKE-01`)
 
 > **Status:** 🔴 Proposed — draft for review
-> **Spike:** `SPARK-SPIKE-01` · **Home stubs:** `SPARK-BOM-E01` · `SPARK-MEAS-E01` · `SPARK-PKG-E01` ·
-> `SPARK-PDTL-E01` · `SPARK-WL-E01` · `SPARK-CLM-E01` · `SPARK-PROD-E02` · `SPARK-SMPL-E01/E02` (later phase)
+> **Spike:** `SPIKE-01` · **Home stubs:** `BOM-BE-E-01` · `MST-BE-E-01` · `PKG-BE-E-01` ·
+> `PDTL-BE-E-01` · `WATCHLIST-BE-E-01` · `CLAIM-BE-E-01` · `PRODUCT-BE-E-02` · `SAMPLE-BE-E-01/E-02` (later phase)
 > **Scope:** the **failure strategy** for every multi-step "save" — one shared mechanism instead of nine
 > hand-rolled guesses. This spike *defines* the machinery; ADR-012 (partner drop/undrop) and ADR-011
 > (association writes) *consume* it.
@@ -19,7 +19,7 @@
 Every mutation below is the same disease with different symptoms: **an early step commits, a later step
 fails, the resource is left inconsistent, and nothing detects it.**
 
-### `updateBom` (`SPARK-BOM-E01`) — 3 writes, 3 services
+### `updateBom` (`BOM-BE-E-01`) — 3 writes, 3 services
 
 1. Capability JWT for the bom.
 2. **Workspace association commits first** — if `workspaceContext` has adds/removes:
@@ -31,7 +31,7 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 - **Gap:** bom moved between workspaces but body unsaved (2✓ 3✗) · body saved but ACL stale (3✓ 4✗).
 
-### `updateMeasurement` (`SPARK-MEAS-E01`) — 2 writes
+### `updateMeasurement` (`MST-BE-E-01`) — 2 writes
 
 1. Capability JWT.
 2. **Workspace association commits first** (checked — throws on `validationErrors`).
@@ -39,7 +39,7 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 - **Gap:** set moved but content unsaved (2✓ 3✗). The minimal reproducer of the whole problem.
 
-### `updatePackaging` (`SPARK-PKG-E01`) — body first, then attachments, error check LAST
+### `updatePackaging` (`PKG-BE-E-01`) — body first, then attachments, error check LAST
 
 1. Capability JWT; body — `packaging.updatePackaging` PUT.
 2. `attachmentsToRemove`? → JWT, `attachment.archiveAttachmentBulkV2`, then `removeRelationship`
@@ -51,7 +51,7 @@ fails, the resource is left inconsistent, and nothing detects it.**
 - **Gap:** a body write that *already failed validation* still archives, unlinks, and relinks attachments
   before the error surfaces (1✗ then 2–3 run anyway).
 
-### `updateProductDetailsSet` (`SPARK-PDTL-E01`) — destructive step before the body
+### `updateProductDetailsSet` (`PDTL-BE-E-01`) — destructive step before the body
 
 1. Capability JWT; **workspace association commits first** (checked — throws;
    🐞 error text says *"measurement set"* — copy-paste).
@@ -60,7 +60,7 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 - **Gap:** attachments archived, set moved — then the body fails: destructive steps already done (1–2✓ 3✗).
 
-### `updateWatchlistEntries` (`SPARK-WL-E01`) — a race, then two writes
+### `updateWatchlistEntries` (`WATCHLIST-BE-E-01`) — a race, then two writes
 
 1. 🐞 `watchlistEntries.map(async …)` — per entry: read user-group, then update-or-add it —
    **the map is never awaited**. The user-group writes race step 2; a failure inside is an
@@ -71,7 +71,7 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 - **Gap:** entries saved while user-groups silently failed, or vice versa — order not even deterministic.
 
-### `updateClaim` (`SPARK-CLM-E01`) — proxy ACL, unchecked association
+### `updateClaim` (`CLAIM-BE-E-01`) — proxy ACL, unchecked association
 
 1. **Proxy capability JWT** — `getUserPermissionsJWTByProxy({id, proxyIds: [parentId], basePermissions})` —
    permissions borrowed from the parent product.
@@ -80,7 +80,7 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 - **Gap:** claim moved (or the move silently failed — nobody looked) while the body diverges.
 
-### `updateComponentStatuses` (`SPARK-PROD-E02`) — 5-domain parallel fan-out
+### `updateComponentStatuses` (`PRODUCT-BE-E-02`) — 5-domain parallel fan-out
 
 1. Build one promise per id-type: `bom.updateBomComponentStatus` · `measurement.updateMeasurementComponentStatus` ·
    `ProductDetails.updateProductDetailComponentStatus` · `claim.bulkUpdateClaim` ·
@@ -91,9 +91,9 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 - **Gap:** status set on BOMs and measurements, missed on claims — invisible partial fan-out.
 
-### `updateSamplesV2` / `bulkEvaluateSamples` (`SPARK-SMPL-E01/E02`, later phase)
+### `updateSamplesV2` / `bulkEvaluateSamples` (`SAMPLE-BE-E-01/E-02`, later phase)
 
-- Sample body + evaluation write (E01); bulk evaluation + open-new-review-rounds util (E02).
+- Sample body + evaluation write (E-01); bulk evaluation + open-new-review-rounds util (E-02).
 - Same shape: two ordered writes, no rollback; adopt whatever this ADR decides when the sample domain migrates.
 
 ---
@@ -139,6 +139,31 @@ Recurring shapes the grid exposes:
   chosen here must serve that consumer too.
 - The latent bugs (🐞 above) must be consciously fixed or consciously preserved — never accidentally either.
 
+### Assumptions, constraints & success criteria
+
+**Assumptions**
+- The step sequences in §1 (from each domain's `02-resolver-analysis.md`) are the behavioral authority;
+  sample-domain steps are unverified in this pass and are re-confirmed when that domain migrates.
+- Existing inverse endpoints (associate↔dissociate, relationship add↔remove) behave as inverses; the
+  compensation inventory (pin-down 1) verifies this before any policy relies on it.
+- ADR-012 consumes this module unchanged — the saga API must satisfy its per-step policy needs.
+
+**Constraints**
+- No distributed transaction is available across the involved backends; atomicity can only be approximated.
+- These are interactive "save" operations — the mutation response must describe the final state; async
+  completion is out of scope here.
+- Phase-1 parity: happy-path behavior (inputs, outputs, side-effects, step order) must match the legacy
+  gateway exactly; only failure-path *visibility* may differ, per the agreed deviation list.
+
+**Success criteria (measurable)**
+- One shared `WriteSaga` module ships in Sprint 0 with the §4-B policy table; all nine E-phase stories
+  implement against it with zero per-mutation failure-strategy decisions left open.
+- Every write step's response is checked by construction; injected mid-sequence failures in tests yield
+  `COMPENSATED` or `PARTIAL_FAILURE` with per-step detail — never silent inconsistency.
+- Recorded-fixture parity green for each mutation's happy path; the deviation list (pin-downs 2–6) is
+  PO-approved before parity testing starts.
+- `updateMeasurement` pilot completes in one sprint; subsequent adoptions require no saga-API changes.
+
 ---
 
 ## 4. Options
@@ -164,7 +189,7 @@ Recurring shapes the grid exposes:
   `action` + `policy` — `COMPENSATE(inverse)` · `RETRY(n)` · `RECORD` (log + reconcile, never silent).
 - Runs the steps, stops at first non-retryable failure, applies declared compensations for completed
   steps that have them, and returns `COMMITTED | COMPENSATED | PARTIAL_FAILURE` with per-step detail —
-  exactly the story pseudocode shape in `SPARK-PROD-E01`.
+  exactly the story pseudocode shape in `PRODUCT-BE-E-01`.
 - Default policy table (the "compensation-log + best-effort" middle option, made concrete):
 
 | Step kind | Policy | Why |
@@ -246,7 +271,7 @@ Today the same failure leaves the bom **moved but unsaved**, and the caller sees
 | 4 | ComponentStatuses claim DTO 🐞 + void return | preserve vs fix | fix the duplicated `claimIds`; return an aggregated per-domain result; accepted deviation |
 | 5 | Unchecked responses (bom perms, claim assoc, pdtl body) | preserve silence vs surface | every saga step's response is checked by construction — surface as step detail |
 | 6 | Result surface | new `PARTIAL_FAILURE` detail vs legacy generic error | keep return types; carry per-step detail in the GraphQL error extensions; accepted deviation |
-| 7 | Parallel fan-out (`updateComponentStatuses`) | serialize vs keep parallel | keep parallel; per-branch isolation + aggregated result (matches `E01` AC-3 style) |
+| 7 | Parallel fan-out (`updateComponentStatuses`) | serialize vs keep parallel | keep parallel; per-branch isolation + aggregated result (matches `E-01` AC-3 style) |
 | 8 | Sample mutations (later phase) | — | adopt the same `WriteSaga` + policy table when the sample domain migrates; no new decision |
 
 ---
@@ -274,11 +299,11 @@ Today the same failure leaves the bom **moved but unsaved**, and the caller sees
 
 Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 
-1. Copy this write-up to `adrs/`; add the `SPARK-SPIKE-01` block to `adrs/adr-index.yaml`
+1. Copy this write-up to `adrs/`; add the `SPIKE-01` block to `adrs/adr-index.yaml`
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the §4-B policy table as the per-step reference).
-3. Replace the *"per `SPARK-SPIKE-01`"* placeholders in each affected domain's
+3. Replace the *"per `SPIKE-01`"* placeholders in each affected domain's
    `output/initial-analysis/{domain}/04-stories.md` (bom, measurement, packaging, productDetails,
-   watchlist, claims, product `E02`).
+   watchlist, claims, product `E-02`).
 4. Regenerate domain + global docs; push to Jira/Confluence.

@@ -1,8 +1,8 @@
 ---
 description: >
-  Implements one SPARK-CLM-* migration story end-to-end: schema + Kotlin DGS data fetcher +
+  Implements one CLAIM-BE-* migration story end-to-end: schema + Kotlin DGS data fetcher +
   service method + tests, in one branch ready for PR. Checks spike gating and plm-product
-  federation blocking before writing code. Use when an Engineer says "implement SPARK-CLM-B01"
+  federation blocking before writing code. Use when an Engineer says "implement CLAIM-BE-B-01"
   or assigns a story from Jira.
 tools: ["codebase", "search", "edit", "runCommands"]
 ---
@@ -13,15 +13,15 @@ You implement exactly **one** migration story per run. Never batch stories.
 
 ## Inputs you need
 
-- The story id (e.g. `SPARK-CLM-B01`). If missing, ask for it and stop.
+- The story id (e.g. `CLAIM-BE-B-01`). If missing, ask for it and stop.
 - The story text — from the Jira ticket the Engineer pastes, or from
   `output/initial-analysis/claims/04-stories.md` at https://github.com/XXX.
 
 ## Workflow
 
 1. **Gate check first.**
-   - `SPARK-CLM-E01` or any story listing `SPARK-SPIKE-0x` in *Depends On*, or flagged 🔴🔬: **stop and report** which spike blocks it and what decision is pending ("Open — … to decide"). Only proceed if the Engineer confirms the spike decision is recorded.
-   - `SPARK-CLM-F01`/`F02`: confirm the owning type (`Product` / `ResourcesCount`) is already live in `plm-product` before proceeding — these are BLOCKED-BY, not spike-gated.
+   - `CLAIM-BE-E-01` or any story listing `SPIKE-0x` in *Depends On*, or flagged 🔴🔬: **stop and report** which spike blocks it and what decision is pending ("Open — … to decide"). Only proceed if the Engineer confirms the spike decision is recorded.
+   - `CLAIM-BE-F-01`/`F-02`: confirm the owning type (`Product` / `ResourcesCount`) is already live in `plm-product` before proceeding — these are BLOCKED-BY, not spike-gated.
 2. **Read the contract.**
    - Story sections: *Current Behaviour* → *Target* → *Files* → *Acceptance Criteria* → *Test Cases*.
    - Pseudo-logic of the legacy resolver: `02-resolver-analysis.md`, the section for this operation.

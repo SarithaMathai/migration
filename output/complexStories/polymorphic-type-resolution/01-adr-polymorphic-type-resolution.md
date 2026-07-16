@@ -1,8 +1,8 @@
-# ADR-017 (draft) — Polymorphic type resolution (`SPARK-SPIKE-05`)
+# ADR-017 (draft) — Polymorphic type resolution (`SPIKE-05`)
 
 > **Status:** 🔴 Proposed — draft for review
-> **Spike:** `SPARK-SPIKE-05` · **Home stubs:** `SPARK-BOM-A04` + material FRs `SPARK-BOM-G08` ·
-> `SPARK-SMPL-A04`/`SPARK-SMPL-G02` (later phase) · `SPARK-SRCH-B01`/`SPARK-SRCH-C02` (later phase)
+> **Spike:** `SPIKE-05` · **Home stubs:** `BOM-BE-A-04` + material FRs `BOM-BE-G-08` ·
+> `SAMPLE-BE-A-04`/`SAMPLE-BE-G-02` (later phase) · `SEARCH-BE-B-01`/`SEARCH-BE-C-02` (later phase)
 > **Scope:** how every `__resolveType` / prefix-gated dispatch is ported and **kept from drifting** —
 > the dispatch tables, the per-variant field resolvers around them, and the conformance guard.
 > **⚠ Map authority:** the legacy resolver source is the authority for every table below — these were
@@ -122,16 +122,42 @@
 - Phase-1 goal is **behavioral parity** — a wrong dispatch renders the wrong fragment silently; nothing
   throws. Fixtures must pin every row of every table, including the defaults.
 - The brief's named risk: getting the mapping **exactly** right, especially the HUB fall-through — the
-  tables in §1 are read from the resolver source (the declared authority), and `SPARK-BOM-A04` already
+  tables in §1 are read from the resolver source (the declared authority), and `BOM-BE-A-04` already
   encodes the same bom tables; this ADR must not contradict it.
 - **Drift is the disease**: schema impls, dispatch tables, and per-variant resolvers are maintained by
   hand in 3 domains; today nothing fails when they diverge.
 - DGS specifics: a `@DgsTypeResolver` must return a valid concrete type name — the `SampleAsset` `null`
   needs a conscious equivalent; Kotlin enums replace the resolver-local constant objects
-  (`A04` already moves `MATERIAL_CATEGORY_ID` to `BomConstants.kt`, fixing a circular import).
+  (`A-04` already moves `MATERIAL_CATEGORY_ID` to `BomConstants.kt`, fixing a circular import).
 - Search's polymorphic lane lands **later phase** — the pattern must be decided now so `plm-sample` and
   `plm-elastic-search` inherit a playbook, not a per-team reinvention.
 - Consistency: no cross-resolver imports survive (ADR-011/012/016 stance).
+
+### Assumptions, constraints & success criteria
+
+**Assumptions**
+- The §1 tables, read from the resolver source, are correct pending one backend verification pass per
+  domain (`A-04` AC-3) before fixtures freeze.
+- The load-bearing defaults (HUB code 9 → `BomMaterial`, 601 → base impression) are intentional
+  behavior, not bugs; the UI depends on them.
+- Sample and search dispatch sites migrate in later phases and inherit this playbook unchanged.
+
+**Constraints**
+- A DGS `@DgsTypeResolver` must return a valid concrete type name — the legacy `null` return needs an
+  explicit, decided equivalent (pin-down 3).
+- Phase-1 parity: every dispatch outcome, including defaults and the un-gated `trim` call-through, must
+  match the legacy resolver (deviations only via pin-downs 3/6).
+- The conformance gate is a shared test library — it must not require new runtime infrastructure.
+
+**Success criteria (measurable)**
+- Golden-table fixtures exist for all five dispatch sites, seeded from §1 and backend-verified; every row
+  (including defaults, unknown codes, the `null` path, a `PID`-parented trim query, an unrecognized hub
+  `type` string) passes parity.
+- The CI gate demonstrably fails on each drift direction: an SDL member with no enum row, an enum row
+  with no SDL type, an undeclared default, and a mapping change without its fixture change in the same PR.
+- Zero inline `when`/`if` dispatch ladders remain — every mapping is a constants-enum lookup.
+- The two out-of-scope sites (discussion `Resource`, `SPARK_Categories`) have stories referencing the
+  playbook, not bespoke designs.
 
 ---
 
@@ -147,7 +173,7 @@
 ### A — Per-site ports (mirror every switch)
 
 - Each domain writes its `@DgsTypeResolver` mirroring §1; per-variant field resolvers become service calls.
-- ➕ smallest possible change · exactly what `SPARK-BOM-A04` describes for bom.
+- ➕ smallest possible change · exactly what `BOM-BE-A-04` describes for bom.
 - ➖ five tables in three repos with **no guard** — the next added impl or renamed type string drifts
   silently, which is the case's stated problem, unsolved.
 
@@ -187,7 +213,7 @@
 - ➕ concrete types owned by their domains; search stops needing hydrated rows.
 - ➖ needs the material-owning subgraphs live + gateway interface-entity support — a later-phase shape,
   and irrelevant to bom/sample (their variants are co-located; resolution is already local).
-- **Recorded as the target** for `SPARK-SRCH-C02`/`B01`; the enum + conformance gate from B carries over
+- **Recorded as the target** for `SEARCH-BE-C-02`/`B-01`; the enum + conformance gate from B carries over
   unchanged (the stub still needs the same `type → __typename` table on the search side).
 
 ---
@@ -197,7 +223,7 @@
 - **Option B** — port every dispatcher per-site (Option A runtime), with:
   - one constants-enum-per-domain as the single mapping source,
   - the shared **CI conformance gate** (SDL ↔ enum ↔ golden fixture) wired into each affected subgraph,
-  - `SPARK-SPIKE-05`'s **`code → type` registry** as the human-readable master table — §1 of this ADR
+  - `SPIKE-05`'s **`code → type` registry** as the human-readable master table — §1 of this ADR
     seeds it, ADR-014's `type 2 → packagingBom` row included.
 - **Option D recorded** as the search lane's end-state; no phase-1 work.
 - The two out-of-scope sites (discussion `Resource`, `SPARK_Categories`) adopt the playbook in their own
@@ -207,7 +233,7 @@
 
 | # | Item | Choice to make | Draft recommendation |
 |---|---|---|---|
-| 1 | Table fidelity | — | §1 tables (from resolver source) seed the registry; `A04` AC-3's "verify values against backend" runs once per domain before fixtures freeze |
+| 1 | Table fidelity | — | §1 tables (from resolver source) seed the registry; `A-04` AC-3's "verify values against backend" runs once per domain before fixtures freeze |
 | 2 | HUB (9) / COMPONENT (1) / OTHER (5) fall-through | case them vs keep default | **keep the default branch exactly** — casing 9 breaks hub-material rendering; enum marks them `DEFAULT` explicitly |
 | 3 | `SampleAsset` `null` return 🐞 | preserve generic error vs typed error | resolve to a typed `DgsException` with the offending prefix in the message — same observable failure (field errors), better diagnosis; accepted deviation |
 | 4 | `SampleV2.trim` missing prefix gate 🐞 | preserve call-through vs add gate | **preserve** in phase 1 (parity — behavior currently defined by the trim backend's 404); log non-trim prefixes; add the gate as a documented post-parity fix |
@@ -221,7 +247,7 @@
 ## 5. Consequences
 
 - If accepted:
-  - `SPARK-BOM-A04`/`G08` proceed exactly as written, plus the enum + conformance wiring,
+  - `BOM-BE-A-04`/`G-08` proceed exactly as written, plus the enum + conformance wiring,
   - sample and search stories (later phase) inherit a playbook + a working gate, not a blank page,
   - every future "add an impl" PR fails CI until schema, enum, and golden fixture agree — silent drift
     becomes structurally impossible,
@@ -241,11 +267,11 @@
 
 Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 
-1. Copy this write-up to `adrs/`; add the `SPARK-SPIKE-05` block to `adrs/adr-index.yaml`
+1. Copy this write-up to `adrs/`; add the `SPIKE-05` block to `adrs/adr-index.yaml`
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the seeded `code → type` registry as its own artifact).
-3. Replace the *"per `SPARK-SPIKE-05`"* placeholders in the affected
-   `output/initial-analysis/{bom,product}/04-stories.md` stories (`A04`, `G08`); sample/search follow in
+3. Replace the *"per `SPIKE-05`"* placeholders in the affected
+   `output/initial-analysis/{bom,product}/04-stories.md` stories (`A-04`, `G-08`); sample/search follow in
    their phases.
 4. Regenerate domain + global docs; push to Jira/Confluence.

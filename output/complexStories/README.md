@@ -1,25 +1,36 @@
-# Complex Stories — problem briefs
+# Complex Stories — problem briefs + draft ADRs
 
 One folder per genuinely complex, cross-domain case found during the resolver analysis.
-Each folder holds a single `00-overview.md`:
+Each folder holds:
 
-- **§1 The problem** — grounded in the legacy code: which resolvers, what they do today, why it is hard.
-- **§2 What must be decided** — the open questions the owning spike answers.
+- **`00-overview.md`** — the problem brief: **§1 the problem** (problem statement · current state &
+  root cause · impact · objectives, grounded in the legacy code) · **§2 what must be decided** (the open
+  questions the owning spike answers, plus a pointer to the draft decision).
+- **`01-adr-<case>.md`** — the **draft ADR**: today's behavior (evidence), decision drivers, options with
+  trade-offs, the proposed decision with pin-downs, consequences, and the on-acceptance lifecycle.
+- **`02-adr-noacl-<case>.md`** — a **scenario ADR** re-scoring the draft under the program's domain-ACL
+  assumption (every domain service performs its own ACL; the DGS/orchestration layer makes no ACL calls).
+  It is ratified only together with that global decision.
 
-These briefs are the research so far. The decision and the detailed design/task
-breakdown are produced by the spike and land here when it concludes.
+All draft ADRs are **🔴 Proposed — pending ratification**. On acceptance they move to `adrs/` and the
+affected domain stories are updated, per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`.
 
-| Case | Spike | Home domains |
-|---|---|---|
-| [non-atomic-write-saga](non-atomic-write-saga/00-overview.md) | `SPARK-SPIKE-01` | all `E`-phase writes |
-| [techpack](techpack/00-overview.md) | `SPARK-SPIKE-02` | product |
-| [partner-drop-undrop-write](partner-drop-undrop-write/00-overview.md) | `SPARK-SPIKE-03` | product · workspace |
-| [notRemovable-undroppable-partners](notRemovable-undroppable-partners/00-overview.md) | `SPARK-SPIKE-04` | product · workspace |
-| [polymorphic-type-resolution](polymorphic-type-resolution/00-overview.md) | `SPARK-SPIKE-05` | bom |
-| [cross-domain-association](cross-domain-association/00-overview.md) | `SPARK-SPIKE-06a` (Hydration) / `SPARK-SPIKE-06b` (Association) | product · bom |
-| [attachments-enrichment](attachments-enrichment/00-overview.md) | — (cutover pattern) | product · workspace |
-| [components-and-counts-rollups](components-and-counts-rollups/00-overview.md) | — (cutover pattern) | product · workspace |
+| Case | Spike | Draft ADR | Home domains |
+|---|---|---|---|
+| [non-atomic-write-saga](non-atomic-write-saga/00-overview.md) | `SPIKE-01` | [ADR-013](non-atomic-write-saga/01-adr-non-atomic-write-saga.md) — shared `WriteSaga`, per-step policy | all `E`-phase writes |
+| [techpack](techpack/00-overview.md) | `SPIKE-02` | [ADR-015](techpack/01-adr-techpack.md) — facade-then-federate | product |
+| [partner-drop-undrop-write](partner-drop-undrop-write/00-overview.md) | `SPIKE-03` | [ADR-012](partner-drop-undrop-write/01-adr-partner-drop-undrop.md) — owner-orchestrated saga + participant contract | product · workspace |
+| [notRemovable-undroppable-partners](notRemovable-undroppable-partners/00-overview.md) | `SPIKE-04` | [ADR-016](notRemovable-undroppable-partners/01-adr-notremovable-undroppable-partners.md) — owner-`@requires` lane aggregation | product · workspace |
+| [polymorphic-type-resolution](polymorphic-type-resolution/00-overview.md) | `SPIKE-05` | [ADR-017](polymorphic-type-resolution/01-adr-polymorphic-type-resolution.md) — per-site ports + CI conformance gate | bom (+ sample · search, later phase) |
+| [cross-domain-association](cross-domain-association/00-overview.md) | `SPIKE-06a` (Hydration) / `SPIKE-06b` (Association) | [ADR-011](cross-domain-association/01-adr-cross-domain-association.md) — sync orchestration + shared association component *(06b only; 06a concludes via `PRODUCT-BE-S-02`)* | product · bom |
+| [attachments-enrichment](attachments-enrichment/00-overview.md) | — (cutover pattern) | [ADR-018](attachments-enrichment/01-adr-attachments-enrichment.md) — owner-computed enrichment, shared library + per-surface policy | product · workspace |
+| [components-and-counts-rollups](components-and-counts-rollups/00-overview.md) | — (cutover pattern) | [ADR-014](components-and-counts-rollups/01-adr-components-counts-rollups.md) — owner-computed rollups + four fixes | product · workspace |
 
 Stories gated on a spike are marked 🔴🔬 in their domain page with the spike id in
 **Depends On** — see the Phase 0 table in the program breakdown
 (`output/summary/Federated+Graphql+Stories+-+BreakDown.md`).
+
+**ADR numbering** continues from the pre-existing ADR-010 (Teams ↔ Domain association, in `adrs/`).
+ADR option letters are **local to each ADR** — cite them qualified (e.g. "ADR-015 Option B"), never bare.
+The TechPack pattern catalogue `fedMigrationScripts/reference/techpack-migration-options.md` has its own
+lettering, where "Option D (hybrid)" names the same facade-then-federate approach as ADR-015 Option B.

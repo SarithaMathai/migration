@@ -36,8 +36,8 @@ No interfaces — no `@DgsTypeResolver`. (`updatedFromResource` is currently mon
   (access-control, ACL-context-only), `relationship` (for `getMeasurements`), `search` — plus platform
   `VMM_BusinessPartner`.
 - **Contributes back:**
-  - `Product.measurementSets` → **internal** field resolver (co-located, F01).
-  - `SampleV2.sampleMeasurement` → **true federation** (sample is a separate DGS subgraph, F02).
+  - `Product.measurementSets` → **internal** field resolver (co-located, F-01).
+  - `SampleV2.sampleMeasurement` → **true federation** (sample is a separate DGS subgraph, F-02).
 
 ## 4. Migration Approach  *(Confluence approach page)*
 
@@ -59,7 +59,7 @@ a single tagged `MeasurementAccessInput` (keep the wire format).
 ## 5. Risks & Recommendations
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|
-| `updateMeasurement` 2-step non-atomic write | Medium | Medium | E01 failure strategy (workspace then body) | Tech Lead |
+| `updateMeasurement` 2-step non-atomic write | Medium | Medium | E-01 failure strategy (workspace then body) | Tech Lead |
 | `getMeasurements` depends on relationship subgraph 🔴 | Medium | Medium | Sequence relationship federation; or call its service | Platform |
 | `updateMeasurementAccess` polymorphic input | Low | Low | Tagged `MeasurementAccessInput` | Backend Eng |
 | `updateMeasurementComponentStatus` no JWT | Low | Low | Confirm backend enforces (context only) | PO |

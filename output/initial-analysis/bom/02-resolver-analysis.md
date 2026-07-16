@@ -79,7 +79,7 @@ Confirm `Bom_Unified` ⊆ `Bom`. Share one Kotlin service call; two `@DgsQuery` 
 2. `boms = await ctx.loaders.bom.getActiveBomsByProductId(permissionJWT, parentId)`
    → `GET {base}/.../bom/v1/byProductId/{parentId}`.
 3. Return `{ content: orderBy(boms, b => new Date(b.createdAt), 'desc') }` — **client-side sort**.
-**Finding 🟡:** sort happens in the gateway. PO decision B03: push sort to backend to remove the hop.
+**Finding 🟡:** sort happens in the gateway. PO decision B-03: push sort to backend to remove the hop.
 
 ### Q5 · `getBomMaterialTypes(ids: [String]): [BomMaterialType]` — Medium
 1. `bomMaterialTypes = await ctx.loaders.bom.getBomMaterialTypes(ids)`
@@ -107,7 +107,7 @@ Confirm `Bom_Unified` ⊆ `Bom`. Share one Kotlin service call; two `@DgsQuery` 
 3. If `nestedSearchFilters.length`: for each `[i]`, flatten into 5 query-string keys
    `nestedSearchFilters[i].{type|fieldPath|nestedFieldPath|operator|values}`; then `delete queryPayload.nestedSearchFilters`.
 4. Return `ctx.loaders.search.searchMaterialsBom.load(queryPayload)`. **EXT** 🔴 `search`.
-**Finding 🟡:** the flatten is fragile (PO decision C02 — keep flatten vs structured DTO).
+**Finding 🟡:** the flatten is fragile (PO decision C-02 — keep flatten vs structured DTO).
 
 ### Q11 · `getValidTrimSuppliersForBom(merchVendorIds: [ID]): [Int]` — Low
 `return getRelatedSuppliersForMVs(ctx, merchVendorIds, [BusinessPartnerRole.TRIM_SUPPLIER.code])`. **EXT** 🔵 `vmm`.
@@ -151,7 +151,7 @@ Identical to M4 → `PUT .../{bomId}/unlock`.
 
 ### M6 · `updateBomComponentStatus(productId, ids, status): BomPaged` — Low
 `return ctx.loaders.bom.updateBomComponentStatus({productId, ids, status})` → `PUT .../bom/v1/component_status_update`.
-**Finding 🟡:** **no JWT** — the only write without one. **PO decision D05** (intentional or gap?).
+**Finding 🟡:** **no JWT** — the only write without one. **PO decision D-05** (intentional or gap?).
 
 ---
 
@@ -206,36 +206,36 @@ WASH→`getWashMaterial`, FABRIC→`getFabricMaterial`, HUB→`getHubMaterial`, 
 **Finding 🔵 perf:** `getTrimBatch` hit 3× per material (memoized) — consolidate into one `TrimEnrichmentService.enrich(material)`.
 **Finding 🟡:** preserve int→string `materialLibraryUomId.toString()` coercion.
 
-### C10 · `BomWashMaterial` — 4 fields — Low
+### C-10 · `BomWashMaterial` — 4 fields — Low
 `libraryResource`: `permissionJWT = await getUserPermissionsJWT(washId)` → `wash.getWash(jwt).load(washId)`→`?? {id}` (🔴 `accessControl` + 🟡 `wash`) · `weight` · `countryOfOrigin` · `impressionDetails`.
 
-### C11 · `BomImpressionDetailsInterface.__resolveType` — 5-case — Low
+### C-11 · `BomImpressionDetailsInterface.__resolveType` — 5-case — Low
 TRIM(603)→`BomTrimLibraryImpressionDetails` · TRIM_ZIPPER(605)→`BomTrimZipperLibraryImpressionDetails` ·
 WASH(604)→`BomWashLibraryImpressionDetails` · FABRIC(602)→`BomFabricLibraryImpressionDetails` · default(601 BASE)→`BomBaseImpressionDetails`.
 
-### C12 · `BomImpressionDetails_Unified` — 6 fields — **High** (+1 for internal/external branch)
+### C-12 · `BomImpressionDetails_Unified` — 6 fields — **High** (+1 for internal/external branch)
 `libraryResource`:
 - **internal** (`ctx.currentUser.internal`): `searchMaterialById('libraryResource', detail, ctx)` (🔴 `search`).
 - **external**: `bomIds = args.ids`; `libraryResourceId = detail.libraryResource.id`; if none → null; `permissionJWT = await getUserPermissionsJWT(bomIds)`; `search.searchMaterialsByProxyIds(jwt).load({q:`id:(${libraryResourceId})`, proxyIds: bomIds, page:0, size:1})` → `content[0] ?? {id}` (🔴 `search`, 🔴 `accessControl`).
 `groundColor`/`textColor`/`sliderColor`/`tapeColor`/`teethColor`: `searchMaterialById(name, detail, ctx)` (5 separate loader calls).
 **Finding 🔴:** `args.ids` is read off the field args — only present when the parent query carried an `ids` arg. Fragile contract. **DGS:** pass `bomIds` via `DgsDataFetchingEnvironment` local context, not field args.
 
-### C13 · `BomFabricLibraryImpressionDetails` — 1 field — Low (+1 branch → Medium)
-`libraryResource` — same internal/external branch as C12.
+### C-13 · `BomFabricLibraryImpressionDetails` — 1 field — Low (+1 branch → Medium)
+`libraryResource` — same internal/external branch as C-12.
 
-### C14 · `BomTrimLibraryImpressionDetails` — 3 fields — Low (+1 branch → Medium)
+### C-14 · `BomTrimLibraryImpressionDetails` — 3 fields — Low (+1 branch → Medium)
 `libraryResource` (same branch) + `groundColor`, `textColor` via `searchMaterialById`.
 
-### C15 · `BomTrimZipperLibraryImpressionDetails` — 3 fields — Low
+### C-15 · `BomTrimZipperLibraryImpressionDetails` — 3 fields — Low
 `sliderColor`, `tapeColor`, `teethColor` via `searchMaterialById` (🔴 `search`).
 
-### C16 · `BomMaterialType.id` — 1 synthetic field — Low (trivial)
+### C-16 · `BomMaterialType.id` — 1 synthetic field — Low (trivial)
 `id = `${detail.code}_${detail.description}``. Computed.
 
-### C17 · `BomMaterialSearch.paging` — 1 field — Low (trivial)
+### C-17 · `BomMaterialSearch.paging` — 1 field — Low (trivial)
 `paging = searchResults` (whole-object passthrough).
 
-### C18 · `BomMaterialSearchResult` — 5 fields — Medium
+### C-18 · `BomMaterialSearchResult` — 5 fields — Medium
 `description`=`detail.description ?? detail.name` · `status`=`detail.status?.description ?? detail.status` ·
 `fabricSpec`: if `type==='fabric_spec_combo'` & `fabricSpecId` → `fabric.getSpecificationByID.load(id)` (🟡) ·
 `fabric`: if `type==='combination'` & `fabricRecordHumanId` → `permissionJWT` → `fabric.getByID(jwt).load(id)` (🔴+🟡) ·
@@ -305,12 +305,12 @@ WASH(604)→`BomWashLibraryImpressionDetails` · FABRIC(602)→`BomFabricLibrary
 
 | # | Loader key | Owning DGS/platform | HTTP / via | Severity | Called from |
 |---|---|---|---|---|---|
-| 1 | `accessControl` | AccessControlService | JWT + permissions | 🔴 | Q1/Q4, M2/M4/M5, C1/C10/C12/C18, H5 |
-| 2 | `search` | SearchService (elastic) | elastic | 🔴 | Q9, Q10, C6, C12–C15, C18, H4 |
+| 1 | `accessControl` | AccessControlService | JWT + permissions | 🔴 | Q1/Q4, M2/M4/M5, C1/C-10/C-12/C-18, H5 |
+| 2 | `search` | SearchService (elastic) | elastic | 🔴 | Q9, Q10, C6, C-12–C-15, C-18, H4 |
 | 3 | `materialHub` | MaterialHubService | loader | 🟡 | Q5, C4, H1/H2/H3/H5 |
 | 4 | `trim` | TrimService | `getTrimBatch`/UoMs | 🟡 | C9, `getMaterialLibraryUom` |
-| 5 | `wash` | WashService | JWT loader | 🟡 | C10 |
-| 6 | `fabric` | FabricService | `getSpecificationByID`/`getByID` | 🟡 | C7, C18 |
+| 5 | `wash` | WashService | JWT loader | 🟡 | C-10 |
+| 6 | `fabric` | FabricService | `getSpecificationByID`/`getByID` | 🟡 | C7, C-18 |
 | 7 | `combination` | CombinationService | `getById`/search | 🟡 | Q13, C8 |
 | 8 | `workspaceV2` | WorkspaceService | `getWorkspacesByIdsV2`/assoc | 🟡 | C1, M2, M3 |
 | 9 | `vmm` | VMM platform | `getByID`/supplier roles | 🔵 | Q10, Q11, Q12, Q13 |
@@ -328,11 +328,11 @@ WASH(604)→`BomWashLibraryImpressionDetails` · FABRIC(602)→`BomFabricLibrary
 |---|---|---|---|
 | updateBom | Mutation | 🔴 acl + 🟡 ws | **Very High** (3-step non-atomic) |
 | BomTrimMaterial (C9) | Field block | 🟡 trim + 🔵 loc | **High** |
-| BomImpressionDetails_Unified (C12) | Field block | 🔴 search/acl | **High** (internal/external branch) |
-| getBomMaterialTypes, searchMaterialsBom, getComboSupplierForBom, addBom, BomMaterial(C4), BomMaterialSearchResult(C18) | mixed | varies | **Medium** |
+| BomImpressionDetails_Unified (C-12) | Field block | 🔴 search/acl | **High** (internal/external branch) |
+| getBomMaterialTypes, searchMaterialsBom, getComboSupplierForBom, addBom, BomMaterial(C4), BomMaterialSearchResult(C-18) | mixed | varies | **Medium** |
 | all master-data queries, lock/unlock, simple material blocks | mixed | varies | **Low** |
 
-Bump rules applied: `__resolveType` (+1 → C3 Medium); `isExternal` branch (+1 → C12/C13/C14, C18).
+Bump rules applied: `__resolveType` (+1 → C3 Medium); `isExternal` branch (+1 → C-12/C-13/C-14, C-18).
 
 ## Key Findings
 

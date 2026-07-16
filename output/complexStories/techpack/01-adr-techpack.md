@@ -1,12 +1,12 @@
-# ADR-015 (draft) — Product TechPack aggregate (`SPARK-SPIKE-02`)
+# ADR-015 (draft) — Product TechPack aggregate (`SPIKE-02`)
 
 > **Status:** 🔴 Proposed — draft for review
-> **Spike:** `SPARK-SPIKE-02` · **Home stubs:** `SPARK-PROD-E03` (facade) · `SPARK-PROD-E04` (bulk) ·
-> **Gates:** `F01–F08` (per-domain federation) · `F09` (retire facade)
+> **Spike:** `SPIKE-02` · **Home stubs:** `PRODUCT-BE-E-03` (facade) · `PRODUCT-BE-E-04` (bulk) ·
+> **Gates:** `F-01–F-08` (per-domain federation) · `F-09` (retire facade)
 > **Scope:** how the 11-field `ResourcesCount` badge aggregate is assembled under federation — one panel,
 > ~8 domains' data, today one 200-line helper. Reads only; no writes in this case.
 > **Related:** ADR-014 (components/counts rollups — same owner-computed-read stance) ·
-> `SPARK-SPIKE-06a` (hydration) · the `TechPack/` spike clone validated the federated end-state E2E.
+> `SPIKE-06a` (hydration) · the `TechPack/` spike clone validated the federated end-state E2E.
 > **Evidence:** `resolvers/SPARK_Product.js` (Q8/Q9 + `getTechPackResourceCountMap`) +
 > `utils/commonLoaders.js` + `utils/accessControlUtils.js` + `services/Search.js` / `Attachment.js` /
 > `Relationship.js` / `AccessControl.js` at `https://github.com/XXX`.
@@ -15,7 +15,7 @@
 
 ## 1. Today's behavior — `getTechPackResourceCountMap(productId, partnerId, workspaceContext, parentProductId)`
 
-### Q8 · `getProductTechPackCountV1` — the 15-step helper
+### Q8 · `getProductTechPackCountV1` — the 14-step helper
 
 1. **Relationship walk + ACL filter** — `getFilteredResourceAndLevelWiseChildrenBasedOnPartnerACLPermission`
    with `inputMap = {attachments: [0–3], attachments_v3: [0–3]}`:
@@ -42,7 +42,7 @@
 7. **Measurement sets** — `GET ${search}/measurement/v1` (`parentId`, partner security, `statusId:200`).
 8. **Claims** — `GET ${search}/claims/v1` (`statusId:501`).
 9. **BOMs** — `GET ${search}/bom/v1` (`statusId:501`); later split `type 1` → `productBoms`,
-   `type 2` → `packagingBoms` (the ADR-014 / `SPARK-SPIKE-05` tagging rule again).
+   `type 2` → `packagingBoms` (the ADR-014 / `SPIKE-05` tagging rule again).
 10. **Constructions** — `GET ${search}/constructionset/v1`; 🐞 the `workspaceContext` clause is spliced
     **inside** the `parentId` parenthesis (`(parentId: X {ws} AND archived:false)`) — grouping differs from
     every sibling query; filter is `archived:false`, not a statusId.
@@ -63,9 +63,9 @@
 
 - `Promise.all` over a map whose callbacks **push** each awaited result into a shared list.
 - 🐞 **Result order = completion order, not input order** — the caller cannot match results to inputs
-  (the known `E04` ordering bug; each entry does echo `productId`, so callers *can* re-key, but the list
+  (the known `E-04` ordering bug; each entry does echo `productId`, so callers *can* re-key, but the list
   contract is broken).
-- N inputs = N full runs of the 15 steps above, concurrently, each with its own graph walk.
+- N inputs = N full runs of the 14 steps above, concurrently, each with its own graph walk.
 
 ### Interaction grid
 
@@ -91,7 +91,7 @@ search/elastic → `plm-elastic-search` · bom/measurement/construction/watchlis
 >   (and, via step 6, critical discussions). The other **8 of 11 fields are one direct elastic query each**,
 >   already keyed by `productId + partnerId`.
 > - 8 domains' *data*, but only **4 physical services** are ever called; every domain slice is an elastic
->   index. Re-homing a slice to its owning subgraph (`F01–F08`) changes *who runs the query*, not the query.
+>   index. Re-homing a slice to its owning subgraph (`F-01–F-08`) changes *who runs the query*, not the query.
 > - So the aggregate decomposes cleanly: each badge is independently computable by its owner; only the
 >   attachment/discussion slices need the walk replaced by an owner-side query.
 
@@ -102,49 +102,78 @@ search/elastic → `plm-elastic-search` · bom/measurement/construction/watchlis
 - Phase-1 goal is **behavioral parity** (recorded fixtures) — including the packet-critical filter, the
   sample post-filter, per-index statusId quirks, and the parent double-walk semantics.
 - The panel is a single screen paint — but only `plm-product` exists on day 1; **7 of 8 owning subgraphs
-  aren't live**, so pure federation-native cannot ship first (`F01–F08` each block on a domain).
+  aren't live**, so pure federation-native cannot ship first (`F-01–F-08` each block on a domain).
 - The Relationship-Service walk is **retiring** — its replacement must not be rebuilt per domain later.
 - The `TechPack/` spike clone already **validated the end-state mechanics** E2E: `ProductTechPack` shell
   `@key(productId partnerId)`, co-located lanes, `plm-attachment` / `plm-discussion` contributing fields
   (incl. `@requires` field-level dependency ordering in the gateway).
-- `E04`'s bulk-ordering bug must be consciously fixed or preserved.
+- `E-04`'s bulk-ordering bug must be consciously fixed or preserved.
 - Consistency: owner-computed reads (ADR-014), no cross-resolver imports, no `variableValues` coupling
   (none exist here — this helper is clean on both counts).
+
+### Assumptions, constraints & success criteria
+
+**Assumptions**
+- The legacy resolver source at the pinned snapshot is the behavioral authority; recorded fixtures define parity.
+- Sibling subgraphs (`plm-attachment`, `plm-discussion`, `plm-sample`, `spark-claims`, construction) ship on
+  their own later-phase schedules; this ADR must not depend on their dates.
+- The elastic indexes remain queryable by `productId + partnerId` throughout the F-phase overlap window.
+
+**Constraints**
+- Day-1 deliverable must serve all 11 `ResourcesCount` fields with only `plm-product` live.
+- The Relationship-Service walk is retiring — no option may spread it beyond one quarantined seam.
+- The public GraphQL contract (query signature, `ResourcesCount` shape) must not change in phase 1.
+
+**Success criteria (measurable)**
+- `E-03`: recorded-fixture parity vs the legacy gateway for the pinned input set (incl. a parented product,
+  > 100 walked ids, a 3D attachment, an out-of-walk critical thread) — 100% field-value match modulo the
+  documented deviation list (pin-downs 1–3).
+- `E-04`: `bulk(P1..Pn) == [single(P1)..single(Pn)]` in input order; empty list → `[]`.
+- Each `F0x`: per-slice fixture green against **both** facade and owner paths before the facade stops
+  serving that field.
+- `F-09`: facade decommissioned; zero references (Feign beans, flags, health checks) remain; all 11 fields
+  resolve via federation with unchanged fixture results.
 
 ---
 
 ## 3. Options
 
+> **Option-letter note:** the letters below are local to this ADR. The pattern catalogue
+> (`fedMigrationScripts/reference/techpack-migration-options.md`, echoed by
+> `reference-federation-patterns.md §3`) uses its own lettering in which **"Option D (hybrid)"** names the
+> same facade-then-federate approach as **Option B here**. Story text that says *"Option D Phase 1"* refers
+> to that catalogue label. Cite letters qualified, never bare.
+
 | | Option | Who computes phase 1 | End-state | Parity | Verdict |
 |---|---|---|---|---|---|
 | A | Lift-and-shift aggregation in `plm-product` | one ported helper | same monolith | exact | viable, re-freezes the 8-domain coupling |
-| B | Facade-then-federate | thin `@DgsQuery` → aggregation facade | per-domain federated fields, facade retired (`F09`) | exact | **recommended** (= the resolved "Option D Phase 1") |
+| B | Facade-then-federate | thin `@DgsQuery` → aggregation facade | per-domain federated fields, facade retired (`F-09`) | exact | **recommended** (= the resolved "Option D Phase 1") |
 | C | Federation-native day 1 | each domain contributes its slice | same | exact per slice | disqualified — 7 subgraphs not live |
 | D | Search-DGS / materialized counts | elastic computes ready aggregates | indexer precomputes | risky | later refinement, never for ACL-dependent slices |
 
 ### A — Lift-and-shift into `plm-product`
 
-- Port the 15 steps into one Kotlin service; loaders become REST/Feign clients; done.
+- Port the 14 steps into one Kotlin service; loaders become REST/Feign clients; done.
 - ➕ exact parity · single deliverable · no new seams.
 - ➖ the 200-line 8-domain function survives as the permanent shape — no domain ever owns its badge ·
-  `F01–F08` would then be a *rewrite*, not a re-homing · the retiring relationship walk gets a new lease.
+  `F-01–F-08` would then be a *rewrite*, not a re-homing · the retiring relationship walk gets a new lease.
 
 ### B — Facade-then-federate ⭐ (the already-resolved stance, formalized)
 
-- **Phase 1 (`E03`/`E04`):** `@DgsQuery getProductTechPackCountV1(...)` is a thin stub over a
+- **Phase 1 (`E-03`/`E-04`):** `@DgsQuery getProductTechPackCountV1(...)` is a thin stub over a
   `TechPackAggregatorClient` (Feign) → an aggregation facade extracted from `getTechPackResourceCountMap`,
   behavior-identical except the pinned fixes below. `@DgsEntityFetcher(name = "ResourcesCount")` rebuilds
   the entity for `_entities`.
-- **Phase 2 (`F01–F08`):** each domain, as its subgraph goes live, contributes its fields to the shared
-  entity — `extend type ResourcesCount @key(fields: "productId partnerId")` — attachment (`F01`),
-  discussions (`F02`), samples (`F03`), claims (`F05`), and co-located bom/measurement/construction/
+- **Phase 2 (`F-01–F-08`):** each domain, as its subgraph goes live, contributes its fields to the shared
+  entity — `extend type ResourcesCount @key(fields: "productId partnerId")` — attachment (`F-01`),
+  discussions (`F-02`), samples (`F-03`), claims (`F-05`), and co-located bom/measurement/construction/
   watchlist lanes in-process; the facade stops serving that field.
-- **Phase 3 (`F09`):** facade deleted; the query returns only the keyed shell; the gateway fans out.
+- **Phase 3 (`F-09`):** facade deleted; the query returns only the keyed shell; the gateway fans out.
 - ➕ day-1 function with exact parity · every slice migrates independently, ship-on-green ·
   mechanics already proven in the `TechPack/` clone (shell + lanes + `@requires` ordering, 29 tests green) ·
   the relationship walk dies per-slice, replaced by each owner's own query (attachment already queries by
   `relatedResources` — no walk needed).
-- ➖ the facade is **deliberate throwaway code** — must stay frozen (bug-fix only) or `F09` never lands ·
+- ➖ the facade is **deliberate throwaway code** — must stay frozen (bug-fix only) or `F-09` never lands ·
   two behaviors to keep in parity per slice during the F-phase overlap window.
 
 ### C — Federation-native on day 1
@@ -173,7 +202,7 @@ sequenceDiagram
     participant FA as aggregation facade
     participant SVC as relationship · ACL ·<br/>attachment · elastic
 
-    Note over UI,SVC: Phase 1 — facade (E03/E04)
+    Note over UI,SVC: Phase 1 — facade (E-03/E-04)
     UI->>GW: getProductTechPackCountV1
     GW->>PP: one subgraph call
     PP->>FA: TechPackAggregatorClient.getCount(...)
@@ -192,7 +221,7 @@ sequenceDiagram
     participant SM as plm-sample
     participant CL as spark-claims
 
-    Note over UI,CL: End state — federated (F01–F08, facade retired F09)
+    Note over UI,CL: End state — federated (F-01–F-08, facade retired F-09)
     UI->>GW: getProductTechPackCountV1
     GW->>PP: shell {productId partnerId} + bom/meas/constr/watchlist lanes
     par gateway _entities fan-out
@@ -208,19 +237,19 @@ sequenceDiagram
 
 ## 4. Proposed decision (to ratify)
 
-- **Option B** — facade-then-federate, exactly as the `E03`/`E04` + `F01–F09` story chain already encodes:
-  - `E03` ships the thin stub + facade (extracted, behavior-frozen, fixes below only),
+- **Option B** — facade-then-federate, exactly as the `E-03`/`E-04` + `F-01–F-09` story chain already encodes:
+  - `E-03` ships the thin stub + facade (extracted, behavior-frozen, fixes below only),
   - each `F0x` re-homes one slice when its subgraph is live (ship-on-green, per-slice parity fixture),
-  - `F09` retires the facade once all 8 report green.
+  - `F-09` retires the facade once all 8 report green.
 - **Option D recorded as a later refinement** for viewer-independent counts; never the packet-filtered
   attachment fields.
-- Bulk (`E04`) is a facade endpoint over the same core, **input-ordered**.
+- Bulk (`E-04`) is a facade endpoint over the same core, **input-ordered**.
 
 ### Pin-downs at ratification
 
 | # | Item | Choice to make | Draft recommendation |
 |---|---|---|---|
-| 1 | Bulk result ordering 🐞 | preserve completion-order vs fix | **fix — return in input order** (key by `productId`); accepted parity deviation (already `E04`'s AC) |
+| 1 | Bulk result ordering 🐞 | preserve completion-order vs fix | **fix — return in input order** (key by `productId`); accepted parity deviation (already `E-04`'s AC) |
 | 2 | 7 serial elastic queries 🐞 | keep serial vs parallelize | parallelize (one `Promise.all` equivalent); deviation noted — same stance as ADR-014 pin-down 7 |
 | 3 | Serial ACL chunk loop 🐞 | keep vs parallelize chunks | parallelize chunk requests; deviation noted |
 | 4 | `parentId: undefined` in query strings 🐞 | preserve literal vs omit clause | **preserve the exact query string** in the facade (parity — elastic treats it as a non-match today); each owner drops it at its `F0x` migration |
@@ -228,23 +257,23 @@ sequenceDiagram
 | 6 | Constructions query paren splice 🐞 | preserve vs normalize | preserve the exact string phase 1; normalize at `F0x` with a fixture proving equivalence |
 | 7 | Parent double-walk | keep vs single combined walk | keep in the facade (parity); dies naturally at federation (owners query `parentId IN (…)`) |
 | 8 | Per-index statusId quirks (200/501/`archived:false`) | — | preserve verbatim; record in the per-slice parity fixtures so `F0x` owners inherit them consciously |
-| 9 | Facade placement | module in `plm-product` vs separate deployable | Feign-fronted facade per `E03`'s shape, but **deploy inside `plm-product`** — no new always-on service for throwaway code |
-| 10 | `discussionAttachments` critical-union semantics | — | preserve `∪(critical-discussion attachments, packet-critical)` exactly; it is the `F01`/`F02` contract boundary |
+| 9 | Facade placement | module in `plm-product` vs separate deployable | Feign-fronted facade per `E-03`'s shape, but **deploy inside `plm-product`** — no new always-on service for throwaway code |
+| 10 | `discussionAttachments` critical-union semantics | — | preserve `∪(critical-discussion attachments, packet-critical)` exactly; it is the `F-01`/`F-02` contract boundary |
 
 ---
 
 ## 5. Consequences
 
 - If accepted:
-  - `E03` builds one frozen facade + thin stub; `E04` is a wrapper with the ordering fix,
-  - `F01–F08` become mechanical re-homings against per-slice fixtures already recorded from the facade,
-  - the Relationship-Service dependency is quarantined inside the facade and deleted with it (`F09`),
+  - `E-03` builds one frozen facade + thin stub; `E-04` is a wrapper with the ordering fix,
+  - `F-01–F-08` become mechanical re-homings against per-slice fixtures already recorded from the facade,
+  - the Relationship-Service dependency is quarantined inside the facade and deleted with it (`F-09`),
   - dashboard latency improves immediately (pin-downs 2–3) without changing any count.
 - Risks:
   - the facade attracting feature work — freeze it by convention *and* by CODEOWNERS; anything new goes to
     the owning domain's `F0x` story,
   - the F-phase overlap window: a slice served by both facade and owner must agree — the per-slice fixture
-    is the gate, run against **both** paths until `F09`,
+    is the gate, run against **both** paths until `F-09`,
   - fixture recording must include: a product **with a parent** (double-walk), > 100 walked ids (chunked
     ACL), a 3D attachment, and a critical thread whose parent discussion is outside the walk — or the edge
     behavior ships unverified.
@@ -255,10 +284,10 @@ sequenceDiagram
 
 Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 
-1. Copy this write-up to `adrs/`; add the `SPARK-SPIKE-02` block to `adrs/adr-index.yaml`
+1. Copy this write-up to `adrs/`; add the `SPIKE-02` block to `adrs/adr-index.yaml`
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the pin-down table as the facade's deviation list).
 3. Replace the techpack placeholders in `output/initial-analysis/product/04-stories.md`
-   (`E03`, `E04`, `F01–F09`) with the concrete pattern above.
+   (`E-03`, `E-04`, `F-01–F-09`) with the concrete pattern above.
 4. Regenerate domain + global docs; push to Jira/Confluence.

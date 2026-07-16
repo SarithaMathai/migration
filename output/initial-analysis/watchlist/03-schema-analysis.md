@@ -42,10 +42,10 @@ are flattened from `{code, description}` objects on the record (declared in the 
 - **Contributes back** to `Product` → **internal** field resolvers (co-located, Phase F): `Product.watchlists`
   and the TechPack `ResourcesCount.watchlists` count.
 
-> **⚠ Cross-domain correction:** the product analysis's `SPARK-PROD-F08` (`ResourcesCount.watchlists`)
+> **⚠ Cross-domain correction:** the product analysis's `PRODUCT-BE-F-08` (`ResourcesCount.watchlists`)
 > currently labels watchlist as a **separate-subgraph** federation contribution (`category: CAT-4`,
-> `blocked_by: watchlist`). Watchlist is **co-located**, so F08 is **internal** (`CAT-2`, `blocked_by: none`),
-> exactly like `SPARK-BOM-F06` and `SPARK-MEAS-F04`. This has been corrected in product's artifacts.
+> `blocked_by: watchlist`). Watchlist is **co-located**, so F-08 is **internal** (`CAT-2`, `blocked_by: none`),
+> exactly like `BOM-BE-F-06` and `MST-BE-F-04`. This has been corrected in product's artifacts.
 
 ## 4. Migration Approach  *(Confluence approach page)*
 
@@ -67,10 +67,10 @@ Watchlist is a **small, mid-low-risk** co-located domain — no polymorphism.
 ## 5. Risks & Recommendations
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|
-| `updateWatchlistEntries` un-awaited user-group map (race) (E01) | Medium | Medium-High | Await/`Promise.all`; choose failure strategy | Backend Eng + Tech Lead |
-| `updateWatchlistEntries` multi-step partial failure (E01) | Medium | Medium | Saga / compensation — decision | Tech Lead + PO |
-| `getWatchlistByFilter` 4-step chain (perf) (C01) | Low | Medium | Cache product lookup; paginate | Backend Eng |
-| Product `SPARK-PROD-F08` mislabel (separate vs internal) | — | Low | Reclassified to internal (CAT-2) | Product Owner |
+| `updateWatchlistEntries` un-awaited user-group map (race) (E-01) | Medium | Medium-High | Await/`Promise.all`; choose failure strategy | Backend Eng + Tech Lead |
+| `updateWatchlistEntries` multi-step partial failure (E-01) | Medium | Medium | Saga / compensation — decision | Tech Lead + PO |
+| `getWatchlistByFilter` 4-step chain (perf) (C-01) | Low | Medium | Cache product lookup; paginate | Backend Eng |
+| Product `PRODUCT-BE-F-08` mislabel (separate vs internal) | — | Low | Reclassified to internal (CAT-2) | Product Owner |
 | Sibling refs (attachment/search/workspace/user-profile/VMM) need gateway stubs | Medium | Low | Standard federation sequencing | Platform |
 
 ## 6. ACL Handling

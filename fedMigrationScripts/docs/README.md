@@ -93,14 +93,14 @@ deliverables under `output/`. Two parts:
 
 ### How to read a story row
 ```
-SPARK-BOM-B04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
+BOM-BE-B-04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
 ```
 `ID` (stable ref) · `Phase` 🔬0 🧱A 📖B 🔍C ✏️D ⚙️E 🔗F 🧪G · `Type` 🔷Query 🔶Mutation 🔸Resolver ·
 `Complexity→size` 🟢XS 🟡M 🟠L 🔴XL · `Depends On` (real story-to-story only) · `Status`.
 
 ### Conventions
-- **Counts:** BOM **39**, Product **70** (incl. Phase-0 spikes; BOM incl. `A04`).
-- **`B01` isn't a per-story dependency** — it lands the one-time DGS module scaffold; assumed once (in the
+- **Counts:** BOM **39**, Product **70** (incl. Phase-0 spikes; BOM incl. `A-04`).
+- **`B-01` isn't a per-story dependency** — it lands the one-time DGS module scaffold; assumed once (in the
   dependency graph), not repeated per row.
 - **Thin wrappers:** model + REST (GET/POST/PUT) + service already exist; each story adds only the DGS layer.
 - **Ship on green, per story** — except cross-subgraph entity extensions (marked **BLOCKED-BY**).

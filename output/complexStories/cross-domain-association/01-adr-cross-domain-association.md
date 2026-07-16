@@ -1,9 +1,9 @@
-# ADR-011 (draft) — Cross-Domain Association writes (`SPARK-SPIKE-06b`)
+# ADR-011 (draft) — Cross-Domain Association writes (`SPIKE-06b`)
 
 > **Status:** 🔴 Proposed — draft for review
-> **Spike:** `SPARK-SPIKE-06b` · **Home stub:** `SPARK-PROD-S01` · **Gates:** `D01 D02 D03 D04 D06 D07 D11`
+> **Spike:** `SPIKE-06b` · **Home stub:** `PRODUCT-BE-S-01` · **Gates:** `D-01 D-02 D-03 D-04 D-06 D-07 D-11`
 > **Scope:** the *write* half of cross-domain — a mutation that also links its record into a sibling domain.
-> Hydration (reads) is `SPARK-SPIKE-06a`, **not** decided here.
+> Hydration (reads) is `SPIKE-06a`, **not** decided here.
 > **Prior art:** ADR-010 (Teams ↔ Domain association) — must stay consistent with it.
 > **Evidence:** `resolvers/SPARK_Product.js` + `services/Product.js` at `https://github.com/XXX`.
 
@@ -11,7 +11,7 @@
 
 ## 1. Today's behavior, mutation by mutation
 
-### D01 · `addProduct(workspaceId, sparkProduct, copyProduct)`
+### D-01 · `addProduct(workspaceId, sparkProduct, copyProduct)`
 
 1. Create product — `POST ${v1}`.
 2. `workspaceId`? → ACL token for the workspace, then `workspaceV2.addResourcesToWorkspaceV2` links the new id.
@@ -21,7 +21,7 @@
 
 - **Failure:** sequential, no rollback — a failed link or copy errors the mutation *after* the product exists.
 
-### D02 · `addProducts(workspaceId, products[])` — one create, four association fan-outs
+### D-02 · `addProducts(workspaceId, products[])` — one create, four association fan-outs
 
 1. ACL token for the workspace, up front.
 2. Bulk create — `POST ${v1}/bulk` (input `attachmentId` → `thumbnailId`).
@@ -40,23 +40,23 @@
 
 - **Failure:** no rollback anywhere; one call never even checked.
 
-### D03 · `bulkUpdateProducts(products)`
+### D-03 · `bulkUpdateProducts(products)`
 
 - Pure passthrough — `PUT ${v1}/mass_update`.
 - No cross-domain call in the resolver; "cross-domain" only in that the DTO can carry association-ish fields
   the backend fans out.
 
-### D04 · `updateProduct(input, copyProduct)`
+### D-04 · `updateProduct(input, copyProduct)`
 
 1. Update product (only if `input` has keys besides `id`) — `PUT ${v1}/{id}`.
-2. `copyProduct`? → same copy helper as D01; merge copy metadata into the result.
+2. `copyProduct`? → same copy helper as D-01; merge copy metadata into the result.
 3. `removedProductTemplateAttachments`? → split: `humanId` → v3, `documentId` → v2;
    per list: ACL token, then `archiveAttachmentBulkV2` / `archiveAttachmentBulkV3` (awaited).
 4. Return product.
 
 - **Failure:** sequential, no rollback — a failed archive errors the mutation after the update committed.
 
-### D06 · `addTeamsToProduct(productId, workspaceIds, teamIds, newPartners)` 🔀 Collab Canvas
+### D-06 · `addTeamsToProduct(productId, workspaceIds, teamIds, newPartners)` 🔀 Collab Canvas
 
 1. `newPartners`? → `POST ${v1}/{productId}/partners-add/bulk`; on error **return `new Error(...)`**
    (early exit — teams never added).
@@ -67,13 +67,13 @@
 - **Failure:** sequential; partners can land and teams fail; no compensation.
 - All three endpoints are on the **product backend** — cross-domain in concept, single-service in execution.
 
-### D07 · `addBusinessPartnersToProductWithType(productId, partners)` 🔀 Collab Canvas
+### D-07 · `addBusinessPartnersToProductWithType(productId, partners)` 🔀 Collab Canvas
 
 - Single write — `POST ${v1}/{productId}/partners-add/bulk`.
 - Success = response has `product_id`, no `status_code` → return it.
 - Failure = log, then **`return new Error(...)`** (returned, not thrown — surfaces as a field error).
 
-### D11 · `updateWorkspaceAttributes(productId, workspaceAttributesInput)` 🔀 Collab Canvas
+### D-11 · `updateWorkspaceAttributes(productId, workspaceAttributesInput)` 🔀 Collab Canvas
 
 - Pure passthrough — `PUT ${v1}/{productId}/workspaceAttributes/{humanId}`.
 - Per-workspace attributes live **on the product record**; the workspace service is never called.
@@ -85,16 +85,16 @@ relationship → central platform service · ACL → AccessControlService.
 
 | Mutation | Product | Workspace | Attachment | Relationship | ACL | Cross-subgraph write? |
 |---|---|---|---|---|---|---|
-| D01 `addProduct` | create + copy | ✅ | — | — | ✅ ×2 | **Yes** — workspace |
-| D02 `addProducts` | bulk create | ✅ | ✅ metadata (cross-resolver) + re-point (unawaited) | ✅ | ✅ ×3 | **Yes** — 3 domains |
-| D03 `bulkUpdateProducts` | mass_update | — | — | — | — | No |
-| D04 `updateProduct` | update + copy | — | ✅ archive V2/V3 | — | ✅ | **Yes** — attachment |
-| D06 `addTeamsToProduct` | 3 endpoints | — | — | — | — | No — single backend |
-| D07 `addBusinessPartnersToProductWithType` | 1 endpoint | — | — | — | — | No — single backend |
-| D11 `updateWorkspaceAttributes` | 1 endpoint | — | — | — | — | No — single backend |
+| D-01 `addProduct` | create + copy | ✅ | — | — | ✅ ×2 | **Yes** — workspace |
+| D-02 `addProducts` | bulk create | ✅ | ✅ metadata (cross-resolver) + re-point (unawaited) | ✅ | ✅ ×3 | **Yes** — 3 domains |
+| D-03 `bulkUpdateProducts` | mass_update | — | — | — | — | No |
+| D-04 `updateProduct` | update + copy | — | ✅ archive V2/V3 | — | ✅ | **Yes** — attachment |
+| D-06 `addTeamsToProduct` | 3 endpoints | — | — | — | — | No — single backend |
+| D-07 `addBusinessPartnersToProductWithType` | 1 endpoint | — | — | — | — | No — single backend |
+| D-11 `updateWorkspaceAttributes` | 1 endpoint | — | — | — | — | No — single backend |
 
-> **Key finding:** only **D01, D02, D04** orchestrate across future subgraph boundaries.
-> **D03, D06, D07, D11** hit the product backend only → plain `@DgsMutation`s, no orchestration decision.
+> **Key finding:** only **D-01, D-02, D-04** orchestrate across future subgraph boundaries.
+> **D-03, D-06, D-07, D-11** hit the product backend only → plain `@DgsMutation`s, no orchestration decision.
 > The spike's blast radius is three mutations, not seven.
 
 ---
@@ -107,8 +107,34 @@ relationship → central platform service · ACL → AccessControlService.
 - Partial failure is real but undocumented: no rollback anywhere, one fire-and-forget call.
 - A federated gateway does **not** orchestrate multi-subgraph mutations natively.
 - ACL capability tokens must keep flowing (header forwarding via `@DgsContext` filter).
-- Collab Canvas consumes D06/D07/D11 — its contract must not change in phase 1.
+- Collab Canvas consumes D-06/D-07/D-11 — its contract must not change in phase 1.
 - Must stay consistent with ADR-010.
+
+### Assumptions, constraints & success criteria
+
+**Assumptions**
+- The §1 interaction matrix is complete: only D-01, D-02, D-04 orchestrate across future subgraph
+  boundaries; D-03/D-06/D-07/D-11 are single-backend (re-verified against the resolver source).
+- Sibling services (workspace, attachment, relationship) keep their current REST contracts through
+  phase 1.
+- ACL capability tokens continue to flow via header forwarding (`@DgsContext` filter) under the current
+  program ACL stance; the noACL scenario ADR re-scores this premise.
+
+**Constraints**
+- The mutation contract is synchronous read-after-write — the UI navigates immediately after `addProduct`;
+  no phase-1 option may return before links exist.
+- The federated gateway cannot orchestrate multi-subgraph mutations — orchestration must live in the
+  owning subgraph.
+- Cross-domain calls are service-to-service REST, never subgraph-to-subgraph GraphQL.
+
+**Success criteria (measurable)**
+- D-01/D-02/D-04 recorded-fixture parity (inputs, outputs, side-effects, call order), with the accepted
+  deviations (awaited `bulkUpdateResource`, typed errors) in the approved exception list.
+- One shared `associate(...)` component with a declared per-mutation failure policy; zero ad-hoc fan-out
+  code and zero resolver imports remain in the gated mutations.
+- D-03/D-06/D-07/D-11 ship as plain `@DgsMutation`s with no dependency on the component build.
+- A later switch of component internals to events (Option D) requires no mutation-signature change —
+  demonstrated by the component's API tests.
 
 ---
 
@@ -125,7 +151,7 @@ relationship → central platform service · ACL → AccessControlService.
 
 - The `plm-product` `@DgsMutation` does the primary write, then calls siblings **service-to-service**
   (Feign/REST to workspace, attachment, relationship) — never subgraph-to-subgraph GraphQL.
-- ➕ exact parity · no new infra · D02's resolver import becomes an honest client call.
+- ➕ exact parity · no new infra · D-02's resolver import becomes an honest client call.
 - ➖ each mutation still hand-rolls its fan-out (the "five ad-hoc versions" survive) ·
   partial-failure behavior stays implicit.
 
@@ -135,7 +161,7 @@ relationship → central platform service · ACL → AccessControlService.
   workspace / attachment / relationship link calls; every gated mutation uses it.
 - Partial-failure policy (fail-fast · best-effort · compensate) is a **declared parameter** per mutation,
   not implicit resolver code.
-- ➕ kills the duplicated fan-outs (`SPARK-PROD-S01`'s stated problem) · failure policy explicit and testable ·
+- ➕ kills the duplicated fan-outs (`PRODUCT-BE-S-01`'s stated problem) · failure policy explicit and testable ·
   internals can later switch to events (D) without touching mutation signatures · same runtime behavior as A.
 - ➖ one more abstraction to own · doesn't fix partial failure by itself — only makes the policy visible.
 
@@ -151,7 +177,7 @@ relationship → central platform service · ACL → AccessControlService.
 
 - `plm-product` commits, publishes `ProductCreated` / `ProductUpdated`; consumers create the links.
 - ➕ full decoupling · retries + idempotency answer partial failure cleanly.
-- ➖ mutation would return before links exist → UI read-after-write races · D02's "reject on relationship
+- ➖ mutation would return before links exist → UI read-after-write races · D-02's "reject on relationship
   failure" contract inexpressible · needs event infra, idempotency keys, monitoring.
 - **Reliability — transactional outbox required**, or D is worse than today:
   - naïve publish-after-commit is a dual-write: a crash between DB commit and Kafka publish silently
@@ -175,9 +201,9 @@ relationship → central platform service · ACL → AccessControlService.
   - per-mutation failure policy declared explicitly; default = today's fail-fast / no-rollback, documented.
 - **Option D recorded as end-state** — with the **transactional outbox as a stated precondition**
   (outbox in the product backend's DB transaction, CDC/poller relay, idempotent consumers);
-  revisit after `SPARK-SPIKE-06a` + read federation land.
-- **Scope exclusions** (satisfies `SPARK-PROD-S01` AC-3):
-  - D03, D06, D07, D11 → plain `plm-product` mutations; component not required,
+  revisit after `SPIKE-06a` + read federation land.
+- **Scope exclusions** (satisfies `PRODUCT-BE-S-01` AC-3):
+  - D-03, D-06, D-07, D-11 → plain `plm-product` mutations; component not required,
   - Collab Canvas trio = the documented exception — association *semantics*, but the product backend owns
     the write, so no cross-subgraph pattern applies.
 
@@ -185,18 +211,18 @@ relationship → central platform service · ACL → AccessControlService.
 
 | # | Item | Choice to make | Draft recommendation |
 |---|---|---|---|
-| 1 | D02 unawaited `bulkUpdateResource` | await vs preserve fire-and-forget | await; list as accepted parity deviation |
-| 2 | D02 post-create reject on relationship failure | accept non-atomic vs compensate | accept + document; defer compensation to `SPARK-SPIKE-01` (saga) |
-| 3 | D02 cross-resolver import of `bulkUpdateAttachmentsV2` | — | replace with attachment-service client call inside the component |
-| 4 | D06/D07 `return new Error(...)` | keep vs standardize | thrown typed errors (`DgsException`); accepted parity deviation |
+| 1 | D-02 unawaited `bulkUpdateResource` | await vs preserve fire-and-forget | await; list as accepted parity deviation |
+| 2 | D-02 post-create reject on relationship failure | accept non-atomic vs compensate | accept + document; defer compensation to `SPIKE-01` (saga) |
+| 3 | D-02 cross-resolver import of `bulkUpdateAttachmentsV2` | — | replace with attachment-service client call inside the component |
+| 4 | D-06/D-07 `return new Error(...)` | keep vs standardize | thrown typed errors (`DgsException`); accepted parity deviation |
 
 ---
 
 ## 5. Consequences
 
 - If accepted:
-  - D01/D02/D04 stories reference one named component + one failure-policy table,
-  - D03/D06/D07/D11 unblock immediately (no dependency on the component build),
+  - D-01/D-02/D-04 stories reference one named component + one failure-policy table,
+  - D-03/D-06/D-07/D-11 unblock immediately (no dependency on the component build),
   - the component is a new `plm-product` module with unit + parity tests,
   - a later move to Option D touches component internals only.
 - Risks:
@@ -210,9 +236,9 @@ relationship → central platform service · ACL → AccessControlService.
 
 Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 
-1. Copy this write-up to `adrs/`; add the `SPARK-SPIKE-06b` block to `adrs/adr-index.yaml`
+1. Copy this write-up to `adrs/`; add the `SPIKE-06b` block to `adrs/adr-index.yaml`
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 (06b half) to **Decided**; add `01-stories.md` + implementation notes.
-3. Replace the *"per `SPARK-PROD-S01`"* placeholders in `output/initial-analysis/product/04-stories.md`
-   (D01–D04, D06, D07, D11) with the concrete pattern.
+3. Replace the *"per `PRODUCT-BE-S-01`"* placeholders in `output/initial-analysis/product/04-stories.md`
+   (D-01–D-04, D-06, D-07, D-11) with the concrete pattern.
 4. Regenerate domain + global docs; push to Jira/Confluence.

@@ -10,12 +10,12 @@ and tool-independent:
   `Epic Link` column points at it by name. The prompts **do not create an epic** — they link to yours. Have
   its key ready as `<EPIC_KEY>`.
 - **Domain-tagged summaries** — each `Summary` is already `[<Domain>] <Story ID> · <title>`
-  (e.g. `[BOM] SPARK-BOM-E01 · updateBom — 3-step orchestrated write`). The story ID comes straight from the
+  (e.g. `[BOM] BOM-BE-E-01 · updateBom — 3-step orchestrated write`). The story ID comes straight from the
   artifact. Nothing to prefix at push time.
 - **Source:** `output/jira/all-stories.csv` = 1 Epic row + **337 Story rows + 6 program-Spike rows** (343
   total) across all 13 domains. Per-domain files (`bom.csv`, `product.csv`, …) carry the same shared epic and
   hold **only that domain's Story rows** (no spikes) if you'd rather push one domain.
-- **The 6 program spikes** (`SPARK-SPIKE-01…06`) are cross-domain — they live **only in `all-stories.csv`**
+- **The 6 program spikes** (`SPIKE-01…06`) are cross-domain — they live **only in `all-stories.csv`**
   (Issue Type=Spike), not in any per-domain file. If you push per-domain, push the spikes once too (see below).
 - **Complex cross-domain cases import separately** — each `output/complexStories/<case>/<case>.csv` is
   imported under its home-stub story, not via `all-stories.csv`.
@@ -70,7 +70,7 @@ Labels, Parent Link, Depends On, Status, Description.
      [ ] checklists). Keep every paragraph break and convert the markup to this Jira's description
      format (wiki markup or rich text). Never collapse to one line, strip markup, or reword.
    - labels = the three Labels values, plus "phase-<Phase>", "size-<T-shirt size>", and "id-<Story ID>"
-     (e.g. id-SPARK-BOM-S01). The id- label is required.
+     (e.g. id-BOM-BE-S-01). The id- label is required.
    - link the issue to epic <EPIC_KEY>.
    - IDEMPOTENT: before creating, search for label "id-<Story ID>"; if it exists, skip (don't duplicate).
    - After each batch, append "<Story ID>,<Jira Key>" lines to output/jira/jira-key-map.csv
@@ -78,8 +78,8 @@ Labels, Parent Link, Depends On, Status, Description.
 
 2. DEPENDENCIES (after this domain's issues exist): for every row with a non-empty "Depends On", read the
    dependent's key and each dependency's key from output/jira/jira-key-map.csv, then create a "Blocks" link
-   (dependency blocks the dependent). Depends On sometimes uses short ids like "B01" — match by suffix within
-   this domain (SPARK-<CODE>-B01). If an id isn't in the map yet (it may belong to a domain not pushed yet),
+   (dependency blocks the dependent). Depends On sometimes uses short ids like "B-01" — match by suffix within
+   this domain (SPARK-<CODE>-B-01). If an id isn't in the map yet (it may belong to a domain not pushed yet),
    record it as unresolved; never guess a key.  Skip links that already exist.
 
 3. VERIFY & REPORT: count issues you created/skipped for this domain vs the Story/Spike rows in
@@ -101,7 +101,7 @@ Labels, Parent Link, Depends On, Status, Description.
 
 > **Rows = Story rows only** (337 total). The **6 program spikes** aren't here — after the domains, push them
 > once: run the Option-A prompt against `output/jira/all-stories.csv` with an idempotent skip (it re-creates
-> nothing that already has an `id-…` label, so only the 6 `SPARK-SPIKE-0x` rows land).
+> nothing that already has an `id-…` label, so only the 6 `SPIKE-0x` rows land).
 
 **After the last domain — one cross-domain sweep** (catches any dependency that pointed at a domain pushed
 later, which was "unresolved" at the time):
@@ -158,7 +158,7 @@ from it.
 ```
 Using only output/jira/all-stories.csv (Depends On) and output/jira/jira-key-map.csv (Story ID -> key):
 for each row with a non-empty Depends On, create a "Blocks" link where each dependency blocks the row.
-Match short ids like "B01" by suffix within the same domain. Unresolvable ids -> report, don't guess.
+Match short ids like "B-01" by suffix within the same domain. Unresolvable ids -> report, don't guess.
 Skip links that already exist. Report links created and any unresolved ids. STOP.
 ```
 

@@ -11,23 +11,23 @@ Engineers: read *Current Behaviour → Target → Files → Acceptance → Tests
 ## 1. Phases Overview
 | Phase | Name | Stories |
 |---|---|---|
-| B | Core Reads | B01–B05 |
-| C | Listing (relationship/elastic) | C01–C02 |
-| D | Mutations (simple) | D01–D07 |
-| E | Complex (`updateMeasurement`) | E01 |
-| F | Federation Contributions | F01–F02 (BLOCKED-BY product/sample) |
-| G | Field Resolvers & Tests | G01–G03 |
+| B | Core Reads | B-01–B-05 |
+| C | Listing (relationship/elastic) | C-01–C-02 |
+| D | Mutations (simple) | D-01–D-07 |
+| E | Complex (`updateMeasurement`) | E-01 |
+| F | Federation Contributions | F-01–F-02 (BLOCKED-BY product/sample) |
+| G | Field Resolvers & Tests | G-01–G-03 |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## 2. Dependency Graph
 ```mermaid
 graph TD
-  B01["B01 getMeasurementByIds\n(DGS module init in this PR)"]-->B[B01-B05 Reads]&C[C01-C02 Listing]&D[D01-D07 Mutations]&E01[E01 updateMeasurement]
-  B01-->G01[G01 Measurement fields]&G02[G02 SampleSet fields]
-  G01-->G03[G03 Tests]
-  PROD[product Phase 3]-.->F01[F01 Product.measurementSets]
-  SAMP[sample Phase 3]-.->F02[F02 SampleV2.sampleMeasurement]
+  B01["B-01 getMeasurementByIds\n(DGS module init in this PR)"]-->B[B-01-B-05 Reads]&C[C-01-C-02 Listing]&D[D-01-D-07 Mutations]&E01[E-01 updateMeasurement]
+  B01-->G01[G-01 Measurement fields]&G02[G-02 SampleSet fields]
+  G01-->G03[G-03 Tests]
+  PROD[product Phase 3]-.->F01[F-01 Product.measurementSets]
+  SAMP[sample Phase 3]-.->F02[F-02 SampleV2.sampleMeasurement]
 ```
 
 ---
@@ -36,7 +36,7 @@ graph TD
 
 ---
 
-### SPARK-MEAS-B01 · `getMeasurementByIds` data fetcher
+### MST-BE-B-01 · `getMeasurementByIds` data fetcher
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Fetch measurement sets by id.
@@ -54,8 +54,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-B02 · `getUnitsOfMeasure` (cacheable)
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-B-02 · `getUnitsOfMeasure` (cacheable)
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Return the unit-of-measure lookup list (cached).
 
@@ -69,8 +69,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-B03 · `getThicknessUnitsOfMeasure` (cacheable)
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-B-03 · `getThicknessUnitsOfMeasure` (cacheable)
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Return the thickness unit-of-measure lookup (cached).
 
@@ -84,8 +84,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-B04 · `getMeasurementSetStatus` (cacheable)
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-B-04 · `getMeasurementSetStatus` (cacheable)
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Return the measurement-set status lookup (cached).
 
@@ -100,8 +100,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-B05 · `getSampleMeasurement` data fetcher
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01, B01
+### MST-BE-B-05 · `getSampleMeasurement` data fetcher
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01, B-01
 
 - **In plain terms:** Fetch the measurement set for a sample.
 
@@ -115,8 +115,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-C01 · `getMeasurements` data fetcher (relationship + listing)
-- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `relationship`
+### MST-BE-C-01 · `getMeasurements` data fetcher (relationship + listing)
+- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `relationship`
 
 - **In plain terms:** List a resource's measurement sets (resolves the relationship first).
 
@@ -138,8 +138,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-C02 · `getMeasurementsElastic` data fetcher
-- **Type:** Query · **Phase:** C · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `search`
+### MST-BE-C-02 · `getMeasurementsElastic` data fetcher
+- **Type:** Query · **Phase:** C · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `search`
 
 - **In plain terms:** Search a product's measurement sets via elastic.
 
@@ -155,8 +155,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-D01 · `addMeasurement` mutation
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-D-01 · `addMeasurement` mutation
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Create a measurement set.
 
@@ -171,8 +171,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-D02 · `updateMeasurementAccess` mutation
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-D-02 · `updateMeasurementAccess` mutation
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Change who can access a measurement set.
 
@@ -187,8 +187,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-D03 · `lockMeasurementSet` mutation
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-D-03 · `lockMeasurementSet` mutation
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Lock a measurement set from edits.
 
@@ -202,12 +202,12 @@ graph TD
 
 ---
 
-### SPARK-MEAS-D04 · `unlockMeasurementSet` mutation
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-D-04 · `unlockMeasurementSet` mutation
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Unlock a measurement set.
 
-- **Current Behaviour (M6):** `PUT …/{id}/unlock`. ACL note as D03.
+- **Current Behaviour (M6):** `PUT …/{id}/unlock`. ACL note as D-03.
 - **Target DGS Implementation:** `@DgsMutation unlockMeasurementSet(measurementSetId): Measurement`.
 
 #### Acceptance Criteria
@@ -217,12 +217,12 @@ graph TD
 
 ---
 
-### SPARK-MEAS-D05 · `updateMeasurementComponentStatus` mutation
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-D-05 · `updateMeasurementComponentStatus` mutation
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Update the component status on measurement sets.
 
-- **Current Behaviour (M2):** `PUT …/component_status_update` body `{productId, ids, status}`. **No ACL token** — confirm backend enforces (like BOM D05).
+- **Current Behaviour (M2):** `PUT …/component_status_update` body `{productId, ids, status}`. **No ACL token** — confirm backend enforces (like BOM D-05).
 - **Target DGS Implementation:** `@DgsMutation updateMeasurementComponentStatus(productId, ids, status): MeasurementPaged`; wrap result `{content}`.
 
 #### Acceptance Criteria
@@ -233,8 +233,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-D06 · `putSampleMeasurementSet` mutation
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-D-06 · `putSampleMeasurementSet` mutation
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Create or replace a sample's measurement set.
 
@@ -249,8 +249,8 @@ graph TD
 
 ---
 
-### SPARK-MEAS-D07 · `deleteSampleMeasurementSet` mutation
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### MST-BE-D-07 · `deleteSampleMeasurementSet` mutation
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Delete a sample's measurement set.
 
@@ -264,8 +264,10 @@ graph TD
 
 ---
 
-### SPARK-MEAS-E01 · `updateMeasurement` — 2-step orchestrated write
-- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🟡 `workspaceV2`
+### MST-BE-E-01 · `updateMeasurement` — 2-step orchestrated write
+- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `workspaceV2`
+
+> **Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — draft ADR-013, ratification pending.** This is the program's **pilot** saga adoption (smallest real case, ADR-013 §5 build order): workspace assoc `COMPENSATE` → body PUT = point of no return; injected step-2 failure must yield `COMPENSATED` (set not moved) with per-step detail.
 
 - **In plain terms:** Edit a measurement set — a 2-step write (workspace + body) that has no rollback today.
 
@@ -278,7 +280,7 @@ strategy **so that** workspace and body updates stay consistent.
 4. On `validationErrors||message` → throw. Return measurement.
 - **Risk 🟡:** 2 sequential writes, no rollback — workspace change persists if body PUT fails.
 - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association).
-- **Target DGS Implementation:** `MeasurementUpdateOrchestrator`: workspace assoc → body PUT. **PO decision E01:** failure strategy (saga / compensation log / best-effort). Typed exception replaces shape-sniff; prime cache on success.
+- **Target DGS Implementation:** `MeasurementUpdateOrchestrator`: workspace assoc → body PUT. **PO decision E-01:** failure strategy (saga / compensation log / best-effort). Typed exception replaces shape-sniff; prime cache on success.
 - **Files:** `service/MeasurementUpdateOrchestrator.kt`, `MeasurementMutationDataFetcher.kt`.
 
 #### Acceptance Criteria
@@ -298,20 +300,20 @@ strategy **so that** workspace and body updates stay consistent.
 
 ---
 
-> **Monorepo note:** F01 is **internal** (product+measurement are the same `plm-product` subgraph); F02 is
+> **Monorepo note:** F-01 is **internal** (product+measurement are the same `plm-product` subgraph); F-02 is
 > **true federation** (sample is a separate DGS). See [reference-federation-patterns.md §0](../../../fedMigrationScripts/reference/reference-federation-patterns.md).
 
 ---
 
-### SPARK-MEAS-F01 · Implement `Product.measurementSets` (internal)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `relationship`
+### MST-BE-F-01 · Implement `Product.measurementSets` (internal)
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `relationship`
 
 - **In plain terms:** Expose a product's measurement sets on the Product type.
 
 - **Current Behaviour:** product navigates to measurement sets via the relationship + getMeasurements flow.
 - **Target DGS Implementation:** plain `@DgsData measurementSets(...)` on the internal `Product` type (same
-subgraph) reusing the C01 relationship+listing logic. **No** `@DgsEntityFetcher`/`@extends @external`.
-Depends on `Product` existing (product A02), not on a separate deployment.
+subgraph) reusing the C-01 relationship+listing logic. **No** `@DgsEntityFetcher`/`@extends @external`.
+Depends on `Product` existing (product A-02), not on a separate deployment.
 
 #### Acceptance Criteria
 
@@ -321,8 +323,8 @@ Depends on `Product` existing (product A02), not on a separate deployment.
 
 ---
 
-### SPARK-MEAS-F02 · Contribute `sampleMeasurement` to the `SampleV2` entity
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B01 · **Blocked by:** sample
+### MST-BE-F-02 · Contribute `sampleMeasurement` to the `SampleV2` entity
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** sample
 
 - **In plain terms:** Contribute a sample's measurement set to the Sample entity.
 
@@ -336,8 +338,8 @@ Depends on `Product` existing (product A02), not on a separate deployment.
 
 ---
 
-### SPARK-MEAS-G01 · `Measurement` field resolvers (13 fields)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01, B01 · **EXT:** 🟡 `workspaceV2` · 🟡 `sampleV2` · 🟡 `measurementTemplate` · 🟡 `sizeTemplate` · 🟡 `tightFit` · 🔵 `vmm` · 🔵 `userAttributes`
+### MST-BE-G-01 · `Measurement` field resolvers (13 fields)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01, B-01 · **EXT:** 🟡 `workspaceV2` · 🟡 `sampleV2` · 🟡 `measurementTemplate` · 🟡 `sizeTemplate` · 🟡 `tightFit` · 🔵 `vmm` · 🔵 `userAttributes`
 
 - **In plain terms:** Resolve the everyday measurement fields (people, product, partners).
 
@@ -362,8 +364,8 @@ Depends on `Product` existing (product A02), not on a separate deployment.
 
 ---
 
-### SPARK-MEAS-G02 · `SampleMeasurementSet` field resolvers (2 fields)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01, B01 · **EXT:** 🔵 `userAttributes`
+### MST-BE-G-02 · `SampleMeasurementSet` field resolvers (2 fields)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01, B-01 · **EXT:** 🔵 `userAttributes`
 
 - **In plain terms:** Resolve the sample-measurement-set fields.
 
@@ -377,8 +379,8 @@ Depends on `Product` existing (product A02), not on a separate deployment.
 
 ---
 
-### SPARK-MEAS-G03 · Test coverage & parity
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B01, C01, E01, G01
+### MST-BE-G-03 · Test coverage & parity
+- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B-01, C-01, E-01, G-01
 
 - **In plain terms:** Prove the measurement subgraph matches the old gateway.
 
@@ -395,17 +397,17 @@ Depends on `Product` existing (product A02), not on a separate deployment.
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|
-| `updateMeasurement` 2-step non-atomic write | Medium | Medium | E01 failure strategy | Tech Lead |
+| `updateMeasurement` 2-step non-atomic write | Medium | Medium | E-01 failure strategy | Tech Lead |
 | `getMeasurements` relationship dependency 🔴 | Medium | Medium | Sequence relationship federation | Platform |
-| `updateMeasurementAccess` polymorphic input | Low | Low | Tagged `MeasurementAccessInput` (D02) | Backend Eng |
+| `updateMeasurementAccess` polymorphic input | Low | Low | Tagged `MeasurementAccessInput` (D-02) | Backend Eng |
 | `updateMeasurementComponentStatus` no JWT | Low | Low | Confirm backend enforces | PO |
-| F01 internal (same subgraph, depends on Product type); F02 federated (sample DGS) | Low | Low | Sequence F01 after product A02; F02 after sample migrates | Tech Lead |
+| F-01 internal (same subgraph, depends on Product type); F-02 federated (sample DGS) | Low | Low | Sequence F-01 after product A-02; F-02 after sample migrates | Tech Lead |
 
 ## 5. Summary
 - **Stories:** 20 (B:5 · C:2 · D:7 · E:1 · F:2 · G:3).
-- **Critical path:** E01; C01.
+- **Critical path:** E-01; C-01.
 - **Highest risk:** `updateMeasurement` 2-step write; relationship dependency in `getMeasurements`.
-- **Independent of federation:** ships before F01/F02.
+- **Independent of federation:** ships before F-01/F-02.
 
 ---
 - **Phase Completed:** Phase 4 · **Domain:** `measurement`.

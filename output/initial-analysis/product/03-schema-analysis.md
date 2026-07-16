@@ -35,7 +35,7 @@ This is the design view + the **Confluence approach page** for the flagship doma
 
 ## 3. Composite-key Aggregate — `ResourcesCount` (TechPack)
 - `@key(fields:"productId partnerId")` with 11 stub fields, each annotated with its owning subgraph (attachment/discussion/sample/measurement/claim/bom/construction/watchlist).
-- Migration uses **Option D** (facade-then-federate) — see [reference-federation-patterns.md §3](../../../fedMigrationScripts/reference/reference-federation-patterns.md).
+- Migration uses **facade-then-federate** (draft ADR-015 Option B; the catalogue label is "Option D (hybrid)") — see [reference-federation-patterns.md §3](../../../fedMigrationScripts/reference/reference-federation-patterns.md) and [ADR-015 (draft)](../../complexStories/techpack/01-adr-techpack.md).
 
 ## 4. Client Contract Verification
 18 queries + 20 mutations preserved (`0 ✅ | 38 🔜`). 3 schema-drift partner wrappers are **deferred ⏭**
@@ -60,25 +60,25 @@ Recommended sequence:
 3. **Phase C:** search/listing (`getProducts` two-stage hydration, `getProductTemplates`, `getCategories`, `getRatingByTcin`).
 4. **Phase D:** core mutations (add/update/bulk/teams/partners/resources/toggles/rules).
 5. **Phase E:** the hard ones — `productBusinessPartnerActions` (M10), `updateComponentStatuses` (M20),
-   and **TechPack** (`getProductTechPackCountV1`/Bulk) via the **Option D facade**.
+   and **TechPack** (`getProductTechPackCountV1`/Bulk) via the **facade-then-federate interim facade** (draft ADR-015 Option B).
 6. **Phase F:** TechPack `ResourcesCount` field ownership. **Monorepo split:** `measurementSets` (measurement),
-- `productBoms`/`packagingBoms`/`boms` (bom), and `watchlists` (watchlist) are filled by **internal** `@DgsData` (co-located, F04/F06/F08); the other **5** fields (attachment/discussion/sample/claim/construction) use **true federation** `extend type ResourcesCount` placeholders BLOCKED-BY each separate domain.
+- `productBoms`/`packagingBoms`/`boms` (bom), and `watchlists` (watchlist) are filled by **internal** `@DgsData` (co-located, F-04/F-06/F-08); the other **5** fields (attachment/discussion/sample/claim/construction) use **true federation** `extend type ResourcesCount` placeholders BLOCKED-BY each separate domain.
 - Then facade retirement, gateway composition, platform stub verification, deferred-wrapper decision.
 7. **Phase G:** ~14 field-resolver stories (incl. the two X-Large: `attachmentsWithMetaData`, `components`),
    the `division` bug fix, utils ports, and the test/parity harness.
 
-**TechPack — recommended Option D (hybrid):** ship a thin `@DgsQuery` over a temporary aggregation facade
+**TechPack — recommended facade-then-federate (draft ADR-015 Option B; catalogue "Option D (hybrid)"):** ship a thin `@DgsQuery` over a temporary aggregation facade
 (extract `getTechPackResourceCountMap`) so the query works day 1; then federate each stub field to its owning
 subgraph; then retire the facade. Fix the **bulk ordering bug** during the port.
 
 ## 7. Risks & Recommendations
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
-| TechPack composite-key aggregate (Q8/Q9) | High | High | Option D facade-then-federate; bulk-order fix | Tech Lead + Platform |
-| `productBusinessPartnerActions` partial failure (M10) | Medium | High | Saga / compensation log — decision required | Tech Lead |
-| `components` N+1 ACL regression (G02) | Medium | Medium | Batch ACL on port | Backend Eng |
-| `attachmentsWithMetaData` perf (G01) | Medium | High | Parallel fetch + cached relationship walk | Backend Eng |
-| `Product.division` bug fix changes shape (G12) | Medium | Medium | Feature-flag during cutover; client survey | PO |
+| TechPack composite-key aggregate (Q8/Q9) | High | High | facade-then-federate (draft ADR-015 Option B); bulk-order fix | Tech Lead + Platform |
+| `productBusinessPartnerActions` partial failure (M10) | Medium | High | Owner-orchestrated saga (draft ADR-012 via `SPIKE-03`) — ratification required | Tech Lead |
+| `components` N+1 ACL regression (G-02) | Medium | Medium | Batch ACL on port | Backend Eng |
+| `attachmentsWithMetaData` perf (G-01) | Medium | High | Parallel fetch + cached relationship walk | Backend Eng |
+| `Product.division` bug fix changes shape (G-12) | Medium | Medium | Feature-flag during cutover; client survey | PO |
 | `USE_NEW_RULES_API` legacy delete | Low | High | Verify all envs `true`; staged rollout | PO |
 | Deferred partner wrappers may have live consumers | Medium | Medium | Traffic survey before delete (Phase F) | PO |
 | External rating secret handling | Low | Medium | Move `SPARK_GATEWAY_API_KEY` to Vault | Platform |
@@ -86,16 +86,20 @@ subgraph; then retire the facade. Fix the **bulk ordering bug** during the port.
 ## 8. ACL Handling
 The source curries capability tokens via `getUserPermissionsJWT`/`getAccessControlBatch` on nearly every
 read/write because product resources are partner/workspace-scoped and the backend authorizes per resource.
-**Per decision, ACL is ignored in the DGS implementation** — there is **no ACL plumbing story**. Each
-affected operation carries a one-line context note; the `accessControl` loader is marked **context-only**,
-not a 🔴 build dependency.
+**Per the program-level working decision, the DGS layer carries no ACL plumbing story** — each domain
+service performs its own access control. Each affected operation carries a one-line context note; the
+`accessControl` loader is marked **context-only**, not a 🔴 build dependency. The per-case impact of this
+assumption is recorded in the scenario ADRs (`complexStories/*/02-adr-noacl-*.md`), which ratify together
+with the global decision.
 
 ## 9. Open Questions
-1. TechPack facade: Node extract vs Kotlin aggregation service?
-2. `productBusinessPartnerActions` rollback strategy?
-3. Delete or `@deprecated` the 3 drift wrappers?
-4. `USE_NEW_RULES_API` — does rules stay in `plm-product` or move to its own subgraph?
-5. `Product.division` bug — feature-flag the fix during cutover?
+1. TechPack facade: Node extract vs Kotlin aggregation service? — **direction resolved**: facade-then-federate
+   (draft ADR-015 Option B; deployment inside `plm-product` per its pin-down 9); ADR ratification pending.
+2. `productBusinessPartnerActions` rollback strategy? — **draft answer**: owner-orchestrated `WriteSaga`
+   with per-step policy (draft ADR-012 via `SPIKE-03`); ratification pending.
+3. Delete or `@deprecated` the 3 drift wrappers? — open; needs a traffic survey (blocks `F-12`, owner PO).
+4. `USE_NEW_RULES_API` — does rules stay in `plm-product` or move to its own subgraph? — open (blocks `B-10`/`B-11`/`C-05`).
+5. `Product.division` bug — resolved: ship the corrected shape after a client survey (see `G-12`).
 
 ---
 **Phase Completed:** Phase 3 · **Domain:** `product`.

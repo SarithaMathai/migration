@@ -79,9 +79,9 @@ If nothing above shows up: confirm you're on a Copilot plan/IDE version that sup
 
 ## 5. Implement your first story
 
-Now follow **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** — it walks `SPARK-PROD-B01` end-to-end using exactly the setup you just created. Short version:
+Now follow **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** — it walks `PRODUCT-BE-B-01` end-to-end using exactly the setup you just created. Short version:
 
-1. Get your assigned story id from Jira (e.g. `SPARK-PROD-B02`).
+1. Get your assigned story id from Jira (e.g. `PRODUCT-BE-B-02`).
 2. In Copilot Chat, switch to the **story-implementer** chat mode.
 3. Type `Implement {story-id}` and paste the Jira ticket text if asked.
 4. Follow along — gate check, contract read, diff plan (confirm before it writes anything), implementation, verification, PR draft.

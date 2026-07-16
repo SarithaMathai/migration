@@ -474,7 +474,7 @@ type WorkspaceStatus @shareable {
 #   • Union (not interface) is the deliberate federation choice: members include platform/external stubs
 #     (VMM_Brand, IG_Department, IG_Division, IG_Clazz_Filter) that cannot `implements` a local interface
 #     across subgraphs. ⚠ CLIENT CONTRACT: with an interface, clients select `id`/`name` directly on
-#     `[Categories]`; with a union they need inline fragments. Verify consumers before cutover (A04/G04).
+#     `[Categories]`; with a union they need inline fragments. Verify consumers before cutover (A-04/G-04).
 union Categories =
   | VMM_Brand
   | IG_Department

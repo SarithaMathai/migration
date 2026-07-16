@@ -59,8 +59,8 @@ ProductDetails (the backend "construction" set) is a **mid-size, mid-low-risk** 
 ## 5. Risks & Recommendations
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|
-| `updateProductDetailsSet` multi-step partial failure (E01) | Medium | High | Saga / compensation log — decision required | Tech Lead + PO |
-| `updateProductDetailComponentStatus` has no auth token (D05) | Low | Medium | Confirm backend enforces; document | PO |
+| `updateProductDetailsSet` multi-step partial failure (E-01) | Medium | High | Saga / compensation log — decision required | Tech Lead + PO |
+| `updateProductDetailComponentStatus` has no auth token (D-05) | Low | Medium | Confirm backend enforces; document | PO |
 | Attachment-by-search field resolvers (perf) | Low | Medium | Shared search helper; batch where possible | Backend Eng |
 | `getProductDetailsElastic` `types` arg drift | Low | Low | Drop or add to schema; confirm consumers | Backend Eng |
 | Sibling refs (attachment/workspace/user-profile/VMM) need gateway stubs | Medium | Low | Standard federation sequencing | Platform |

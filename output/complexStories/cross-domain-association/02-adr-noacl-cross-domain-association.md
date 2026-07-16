@@ -18,10 +18,10 @@ ACL in this case is pure **token plumbing** — capability JWTs fetched before c
 
 | Mutation | ACL today | Under domain-ACL |
 |---|---|---|
-| D01 `addProduct` | token before workspace link · token before copy-details (✅ ×2) | **gone** — workspace / product services authorize the calls themselves |
-| D02 `addProducts` | tokens ×3 (workspace, attachment metadata, re-point) | **gone** |
-| D04 `updateProduct` | token per archive list (V2/V3) | **gone** — attachment service authorizes its own archive |
-| D03 / D06 / D07 / D11 | none | unaffected |
+| D-01 `addProduct` | token before workspace link · token before copy-details (✅ ×2) | **gone** — workspace / product services authorize the calls themselves |
+| D-02 `addProducts` | tokens ×3 (workspace, attachment metadata, re-point) | **gone** |
+| D-04 `updateProduct` | token per archive list (V2/V3) | **gone** — attachment service authorizes its own archive |
+| D-03 / D-06 / D-07 / D-11 | none | unaffected |
 
 - The interaction matrix loses its ACL column; nothing else moves. The case's substance — who orchestrates
   the multi-subgraph fan-out, and what happens on partial failure — is untouched, because ACL was never a
@@ -51,10 +51,10 @@ ACL in this case is pure **token plumbing** — capability JWTs fetched before c
 
 | 01 # | Item | Under domain-ACL |
 |---|---|---|
-| 1 | D02 unawaited `bulkUpdateResource` | unchanged — await it |
-| 2 | D02 reject-after-create | unchanged — accept + document, defer to `SPARK-SPIKE-01` |
-| 3 | D02 cross-resolver import | unchanged — attachment-service client call (now without a token argument) |
-| 4 | D06/D07 `return new Error(...)` | unchanged — thrown typed errors |
+| 1 | D-02 unawaited `bulkUpdateResource` | unchanged — await it |
+| 2 | D-02 reject-after-create | unchanged — accept + document, defer to `SPIKE-01` |
+| 3 | D-02 cross-resolver import | unchanged — attachment-service client call (now without a token argument) |
+| 4 | D-06/D-07 `return new Error(...)` | unchanged — thrown typed errors |
 | new | Context forwarding contract | replace the capability-token forwarding requirement with a single **user-context propagation** convention (headers) shared by all service clients; the domain services' own ACL calls depend on it — one contract test |
 
 ---

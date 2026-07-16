@@ -1,11 +1,11 @@
-# ADR-012 (draft) — Partner Drop/Undrop + Ownership (`SPARK-SPIKE-03`)
+# ADR-012 (draft) — Partner Drop/Undrop + Ownership (`SPIKE-03`)
 
 > **Status:** 🔴 Proposed — draft for review
-> **Spike:** `SPARK-SPIKE-03` · **Home stubs:** `SPARK-PROD-E01` · `SPARK-WS-E01` (later phase)
+> **Spike:** `SPIKE-03` · **Home stubs:** `PRODUCT-BE-E-01` · `WORKSPACE-BE-E-01` (later phase)
 > **Scope:** who **owns** the partner drop/undrop/remove fan-out, and how it is **orchestrated** —
-> the generic failure *machinery* (WriteSaga) is `SPARK-SPIKE-01`'s decision, consumed here, not made here.
+> the generic failure *machinery* (WriteSaga) is `SPIKE-01`'s decision, consumed here, not made here.
 > **Related:** ADR-011 (cross-domain association writes) — same sync-orchestration stance ·
-> `SPARK-SPIKE-04` (not-removable/undroppable *reads*) is separate.
+> `SPIKE-04` (not-removable/undroppable *reads*) is separate.
 > **Evidence:** `resolvers/SPARK_Product.js` + `services/Product.js` + `utils/commonLoaders.js`
 > at `https://github.com/XXX`.
 
@@ -54,7 +54,7 @@
    `POST ${v2}/{productId}/drop-undrop-partner` + the sample call. **Then**, sequentially:
    - `accessControl.dropPartnerFromResources` / `unDropPartnerFromResources(toBePermissionsMap)`,
    - if dropping: `UserProfileAttributes.Mutation.deleteAllUserProfileDataForAPartner(...)` —
-     **called by importing another domain's resolver directly** (same anti-pattern ADR-011 removes in D02).
+     **called by importing another domain's resolver directly** (same anti-pattern ADR-011 removes in D-02).
 
 - **Failure:** parallel primary writes, then ordered ACL + profile cleanup; any mid-flight failure leaves
   the partner **half-dropped** (e.g. samples dropped but ACL still granting access) with no detection.
@@ -83,16 +83,42 @@ user-activity services (🔵).
 
 ## 2. Decision drivers
 
-- Phase-1 goal is **behavioral parity**, proven by recorded-fixture parity tests (`E01` AC-1).
+- Phase-1 goal is **behavioral parity**, proven by recorded-fixture parity tests (`E-01` AC-1).
 - **Access revocation is synchronous today** — drop must not return while ACL still grants access;
   eventual consistency here is a security gap, not just staleness.
 - The Relationship-Service traversal is being retired — child enumeration needs a new source.
-- `SPARK-SPIKE-01` owns the failure *machinery* (shared `WriteSaga`: step / compensate / statuses
+- `SPIKE-01` owns the failure *machinery* (shared `WriteSaga`: step / compensate / statuses
   `COMMITTED | COMPENSATED | PARTIAL_FAILURE`); this ADR only declares per-step policy.
-- The workspace twin (`SPARK-WS-E01`) must reuse whatever is chosen — ownership must generalize.
-- `E01` AC-3: one cleanup failing must be **visible** and must not silently swallow the rest.
+- The workspace twin (`WORKSPACE-BE-E-01`) must reuse whatever is chosen — ownership must generalize.
+- `E-01` AC-3: one cleanup failing must be **visible** and must not silently swallow the rest.
 - Consistency with ADR-011: sync orchestration in the owning subgraph, service-to-service REST,
   never subgraph-to-subgraph GraphQL.
+
+### Assumptions, constraints & success criteria
+
+**Assumptions**
+- `SPIKE-01`'s shared `WriteSaga` exists before `E-01` implementation starts (it is Sprint-0 critical
+  path); this ADR declares per-step policy only.
+- Each participant domain can expose (or already exposes) a drop/undrop/remove endpoint and can enumerate
+  its own children for a product/workspace; gaps surface at contract-agreement time as backlog stories.
+- The UI's contract is unchanged: mutation success means the action is fully effective.
+
+**Constraints**
+- **Security ordering:** on drop, ACL revocation must complete before the mutation returns success; on
+  undrop, ACL restore precedes participant undrops. This is a testable invariant, not a convention.
+- The Relationship-Service traversal may not be ported — child enumeration must come from participants.
+- The workspace twin must reuse the participant contract without a second design round.
+
+**Success criteria (measurable)**
+- `E-01` recorded-fixture parity for all three action paths (REMOVE_TEAM, REMOVE_PARTNER,
+  DROP_UNDROP_PARTNER), incl. the design-partner branch, with the partial-failure visibility deviation
+  (pin-down 7) in the approved exception list.
+- Injected failure at each saga step yields the declared policy outcome (compensate / retry-then-fail /
+  retry-and-reconcile) with per-step detail; no silent partial state in any test.
+- An automated test proves the drop ACL-ordering invariant (mutation cannot return success with ACL
+  revocation incomplete).
+- Zero remaining references to the Relationship-Service traversal and the `UserProfileAttributes`
+  resolver import in the ported flow.
 
 ---
 
@@ -109,7 +135,7 @@ user-activity services (🔵).
 
 - Port the switch into a `plm-product` `@DgsMutation`; replace loaders with REST clients; keep ordering.
 - ➕ exact parity · no new abstractions.
-- ➖ mid-flight failure stays invisible (fails `E01` AC-3) · the workspace twin re-implements the same
+- ➖ mid-flight failure stays invisible (fails `E-01` AC-3) · the workspace twin re-implements the same
   fan-out · Relationship traversal + resolver import still need ad-hoc fixes.
 
 ### B — Owner-orchestrated saga + per-domain participant contract ⭐
@@ -121,7 +147,7 @@ user-activity services (🔵).
   user-profile purge (exists behind the resolver import — becomes a client call), activity cleanup
   (recentlyViewed/todo/favorite, exist). Each participant also **enumerates its own children** for a
   product/workspace — replacing the Relationship traversal with per-domain enumeration.
-- **Orchestration:** the owner runs the steps through `SPARK-SPIKE-01`'s `WriteSaga` — one step per
+- **Orchestration:** the owner runs the steps through `SPIKE-01`'s `WriteSaga` — one step per
   participant, per-step policy declared (see pin-downs), result surfaces
   `COMMITTED | COMPENSATED | PARTIAL_FAILURE` with per-step detail.
 - ➕ satisfies AC-3 (visible, isolated step failures) · workspace twin reuses the same participant
@@ -251,7 +277,7 @@ sequenceDiagram
 - **Option B:**
   - ownership — the **resource owner orchestrates**: `plm-product` for product actions,
     `plm-workspace` for workspace actions; one shared participant contract between them,
-  - orchestration — synchronous fan-out through `SPARK-SPIKE-01`'s `WriteSaga`, one step per
+  - orchestration — synchronous fan-out through `SPIKE-01`'s `WriteSaga`, one step per
     participant, per-step failure policy declared in a single table in the implementation notes,
   - `REMOVE_TEAM` is excluded — plain mutation, no saga.
 - **Ordering constraint (security):** on **drop**, the ACL bulk-drop step must complete before the
@@ -276,9 +302,9 @@ sequenceDiagram
 ## 5. Consequences
 
 - If accepted:
-  - `SPARK-PROD-E01` implements `ProductBusinessPartnerActionService` (3 strategy methods) over the
+  - `PRODUCT-BE-E-01` implements `ProductBusinessPartnerActionService` (3 strategy methods) over the
     shared `WriteSaga`, per the story's pseudocode shape,
-  - `SPARK-WS-E01` (later phase) reuses the participant contract — no second design round,
+  - `WORKSPACE-BE-E-01` (later phase) reuses the participant contract — no second design round,
   - the participant endpoints become explicit, versioned contracts with sample / ACL / user-activity
     domains — agree them early, they are the critical path,
   - Relationship-Service dependency for this flow is gone by construction.
@@ -295,10 +321,10 @@ sequenceDiagram
 
 Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 
-1. Copy this write-up to `adrs/`; add the `SPARK-SPIKE-03` block to `adrs/adr-index.yaml`
+1. Copy this write-up to `adrs/`; add the `SPIKE-03` block to `adrs/adr-index.yaml`
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the per-step failure-policy table from pin-down 3).
-3. Replace the *"per `SPARK-SPIKE-03`"* placeholders in
-   `output/initial-analysis/product/04-stories.md` (`E01`) — workspace's stories follow in its phase.
+3. Replace the *"per `SPIKE-03`"* placeholders in
+   `output/initial-analysis/product/04-stories.md` (`E-01`) — workspace's stories follow in its phase.
 4. Regenerate domain + global docs; push to Jira/Confluence.

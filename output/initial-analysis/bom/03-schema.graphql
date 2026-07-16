@@ -447,48 +447,48 @@ enum SortDirection { ASC, DESC }
 # 7. QUERIES  (🔜 all need migration — story phase in 04-stories.md)
 # =============================================================================
 extend type Query {
-  getBomByIds(ids: [String!]): [Bom]                                             # 🔜 B01
-  # getBomDataV2 (was 🔜 B02) removed — Bom_Unified deprecated, use field selection on Bom instead
-  getBomStatus: [CodeDescription]                                               # 🔜 B03 (cacheable)
-  getBomByParentId(parentId: String!): BomPaged                                 # 🔜 B04
-  getBomMaterialTypes(ids: [String]): [BomMaterialType]                          # 🔜 B05 (merges hub)
-  getBomPackagingMaterialTypes: [BomMaterialType]                               # 🔜 B06 (cacheable)
-  getBomPackagingSubstrates: [BomPackagingSubstrate]                            # 🔜 B07 (cacheable)
-  getBomPackagingUnitOfMeasure: [UnitsOfMeasure]                                # 🔜 B08 (cacheable)
-  getBomElastic(q: String!): [Bom]                                              # 🔜 C01
+  getBomByIds(ids: [String!]): [Bom]                                             # 🔜 B-01
+  # getBomDataV2 (was 🔜 B-02) removed — Bom_Unified deprecated, use field selection on Bom instead
+  getBomStatus: [CodeDescription]                                               # 🔜 B-03 (cacheable)
+  getBomByParentId(parentId: String!): BomPaged                                 # 🔜 B-04
+  getBomMaterialTypes(ids: [String]): [BomMaterialType]                          # 🔜 B-05 (merges hub)
+  getBomPackagingMaterialTypes: [BomMaterialType]                               # 🔜 B-06 (cacheable)
+  getBomPackagingSubstrates: [BomPackagingSubstrate]                            # 🔜 B-07 (cacheable)
+  getBomPackagingUnitOfMeasure: [UnitsOfMeasure]                                # 🔜 B-08 (cacheable)
+  getBomElastic(q: String!): [Bom]                                              # 🔜 C-01
   searchMaterialsBom(
     searchString: String  materialType: String  partnerIds: [ID]
     internalOnly: Boolean  excludedTypes: [String]  size: Int = 20
     sortField: String  sortDirection: SortDirection
     nestedSearchFilters: [MaterialNestedSearchFilter]
-  ): BomMaterialSearch                                                          # 🔜 C02
-  getComboSupplierForBom(comboId: String, partnerIds: [ID]): [BomComboSupplier] # 🔜 C03
-  getValidTrimSuppliersForBom(merchVendorIds: [ID]): [Int]                       # 🔜 C04
-  getValidRawMaterialSuppliersForBom(merchVendorIds: [ID]): [Int]               # 🔜 C05
+  ): BomMaterialSearch                                                          # 🔜 C-02
+  getComboSupplierForBom(comboId: String, partnerIds: [ID]): [BomComboSupplier] # 🔜 C-03
+  getValidTrimSuppliersForBom(merchVendorIds: [ID]): [Int]                       # 🔜 C-04
+  getValidRawMaterialSuppliersForBom(merchVendorIds: [ID]): [Int]               # 🔜 C-05
 }
 
 # =============================================================================
 # 8. MUTATIONS
 # =============================================================================
 extend type Mutation {
-  addBom(sparkBom: BomInput): Bom                                               # 🔜 D01
-  updateBom(sparkBom: UpdateBomInput): Bom                                      # 🔜 E01 (3-step, non-atomic)
-  manageBomWorkspaces(bomId: ID, workspacesToAdd: [ID], workspacesToRemove: [ID]): Bom   # 🔜 D02
-  lockBom(bomId: String!): Bom                                                  # 🔜 D03
-  unlockBom(bomId: String!): Bom                                               # 🔜 D04
-  updateBomComponentStatus(productId: String!, ids: [String], status: ComponentStatusInput): BomPaged  # 🔜 D05 (no JWT — confirm)
+  addBom(sparkBom: BomInput): Bom                                               # 🔜 D-01
+  updateBom(sparkBom: UpdateBomInput): Bom                                      # 🔜 E-01 (3-step, non-atomic)
+  manageBomWorkspaces(bomId: ID, workspacesToAdd: [ID], workspacesToRemove: [ID]): Bom   # 🔜 D-02
+  lockBom(bomId: String!): Bom                                                  # 🔜 D-03
+  unlockBom(bomId: String!): Bom                                               # 🔜 D-04
+  updateBomComponentStatus(productId: String!, ids: [String], status: ComponentStatusInput): BomPaged  # 🔜 D-05 (no JWT — confirm)
 }
 
 # =============================================================================
 # 9. FEDERATION — Bom contributions to other subgraphs (Phase F, BLOCKED-BY product)
 # =============================================================================
-# extend type Product @key(fields: "id") {           # F01 — BLOCKED-BY product Phase 3
+# extend type Product @key(fields: "id") {           # F-01 — BLOCKED-BY product Phase 3
 #   id: ID! @external
 #   productBoms(includeAttachments: Boolean): [Bom]
 #   boms(types: [Int]): [Bom]
 #   packagingBoms: [Bom]
 # }
-# extend type ResourcesCount @key(fields: "productId partnerId") {   # F02 — BLOCKED-BY product TechPack facade
+# extend type ResourcesCount @key(fields: "productId partnerId") {   # F-02 — BLOCKED-BY product TechPack facade
 #   productId: ID! @external
 #   partnerId: ID! @external
 #   bomsCount: Int

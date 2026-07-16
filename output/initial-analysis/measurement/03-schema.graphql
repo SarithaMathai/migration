@@ -164,25 +164,25 @@ input SampleMeasurementSetRowInput {
 
 # --- Queries (names + nullability + return types preserved from the SDL) ---
 extend type Query {
-  getMeasurementByIds(ids: [String], calculated: Boolean): MeasurementPaged           # 🔜 B01 (SDL: paged, not a list)
-  getMeasurements(resourceId: String, businessPartnerIds: [String], calculated: Boolean, mustHaveRows: Boolean): MeasurementPaged  # 🔜 C01
-  getMeasurementsElastic(resourceId: String): MeasurementPaged                        # 🔜 C02
-  getUnitsOfMeasure(ids: [String]): [UnitOfMeasure]                                   # 🔜 B02 (cacheable)
-  getThicknessUnitsOfMeasure: [UnitOfMeasure]                                         # 🔜 B03 (cacheable)
-  getMeasurementSetStatus: [CodeDescription]                                          # 🔜 B04 (cacheable)
-  getSampleMeasurement(sampleId: String): SampleMeasurementSet                        # 🔜 B05 (SDL: single, not a list)
+  getMeasurementByIds(ids: [String], calculated: Boolean): MeasurementPaged           # 🔜 B-01 (SDL: paged, not a list)
+  getMeasurements(resourceId: String, businessPartnerIds: [String], calculated: Boolean, mustHaveRows: Boolean): MeasurementPaged  # 🔜 C-01
+  getMeasurementsElastic(resourceId: String): MeasurementPaged                        # 🔜 C-02
+  getUnitsOfMeasure(ids: [String]): [UnitOfMeasure]                                   # 🔜 B-02 (cacheable)
+  getThicknessUnitsOfMeasure: [UnitOfMeasure]                                         # 🔜 B-03 (cacheable)
+  getMeasurementSetStatus: [CodeDescription]                                          # 🔜 B-04 (cacheable)
+  getSampleMeasurement(sampleId: String): SampleMeasurementSet                        # 🔜 B-05 (SDL: single, not a list)
 }
 
 # --- Mutations (names + nullability + return types preserved from the SDL) ---
 extend type Mutation {
-  addMeasurement(sparkMeasurement: MeasurementSetInput): Measurement                   # 🔜 D01
-  updateMeasurement(sparkMeasurement: MeasurementSetUpdateInput): Measurement          # 🔜 E01 (2-step)
-  updateMeasurementAccess(measurementSetId: ID!, systemTeamIds: [String], systemTeamDto: SystemTeamsWithTypeInput): Measurement  # 🔜 D02
-  lockMeasurementSet(measurementSetId: ID!): Measurement                               # 🔜 D03
-  unlockMeasurementSet(measurementSetId: ID!): Measurement                             # 🔜 D04
-  updateMeasurementComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): MeasurementPaged  # 🔜 D05 (no JWT — confirm)
-  putSampleMeasurementSet(sampleMeasurementSet: SampleMeasurementSetInput!): SampleMeasurementSet  # 🔜 D06
-  deleteSampleMeasurementSet(sampleId: String!): String                                # 🔜 D07 (SDL: returns String)
+  addMeasurement(sparkMeasurement: MeasurementSetInput): Measurement                   # 🔜 D-01
+  updateMeasurement(sparkMeasurement: MeasurementSetUpdateInput): Measurement          # 🔜 E-01 (2-step)
+  updateMeasurementAccess(measurementSetId: ID!, systemTeamIds: [String], systemTeamDto: SystemTeamsWithTypeInput): Measurement  # 🔜 D-02
+  lockMeasurementSet(measurementSetId: ID!): Measurement                               # 🔜 D-03
+  unlockMeasurementSet(measurementSetId: ID!): Measurement                             # 🔜 D-04
+  updateMeasurementComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): MeasurementPaged  # 🔜 D-05 (no JWT — confirm)
+  putSampleMeasurementSet(sampleMeasurementSet: SampleMeasurementSetInput!): SampleMeasurementSet  # 🔜 D-06
+  deleteSampleMeasurementSet(sampleId: String!): String                                # 🔜 D-07 (SDL: returns String)
 }
 
 # --- Federation: Measurement contributes to Product + SampleV2 (Phase F, BLOCKED-BY product/sample) ---

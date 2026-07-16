@@ -21,8 +21,8 @@ this.endpoint = `${endpoint}/enterprise_product_development_products/watchlist/v
 > `enterprise_product_development_products/...` base (like bom/measurement/packaging) and the resolver lives
 > under `resolvers/product/`, watchlist is **co-located in the `plm-product` monorepo** (also listed in
 > [reference-federation-patterns.md §0](../../../fedMigrationScripts/reference/reference-federation-patterns.md)). The product analysis's
-> `SPARK-PROD-F08` currently labels `watchlists` as a *separate-subgraph* federation contribution — that is
-> a mislabel; it should be **internal** (CAT-2), like `bom`'s F06 and `measurement`'s F04. See §5.
+> `PRODUCT-BE-F-08` currently labels `watchlists` as a *separate-subgraph* federation contribution — that is
+> a mislabel; it should be **internal** (CAT-2), like `bom`'s F-06 and `measurement`'s F-04. See §5.
 
 | Setting | Value |
 |---|---|
@@ -71,7 +71,7 @@ services/WatchlistService.js uses postOne, putOne, loadListing, loadOne, convert
 `product`, `bom`, `measurement`, `packaging`, `productDetails`, `impression`, `fileLibrary` — share `plm-product`.
 - `Product.watchlists` and the TechPack `ResourcesCount.watchlists` count resolve **internally** (same
 - subgraph), **not** cross-subgraph.
-- **Product's `SPARK-PROD-F08` should be reclassified** from CAT-4 federation (`blocked_by: watchlist`) to **CAT-2 internal** (`blocked_by: none`), matching `SPARK-BOM-F06` and `SPARK-MEAS-F04`.
+- **Product's `PRODUCT-BE-F-08` should be reclassified** from CAT-4 federation (`blocked_by: watchlist`) to **CAT-2 internal** (`blocked_by: none`), matching `BOM-BE-F-06` and `MST-BE-F-04`.
 
 ## 6. Hot Spots
 1. **`getWatchlistByFilter`** (`:16-24`) — **4-step read**: (internal) `product.getWorkspaceProducts` → product

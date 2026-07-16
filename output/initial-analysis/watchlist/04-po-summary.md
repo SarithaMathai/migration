@@ -14,8 +14,7 @@ The one genuinely harder piece is **`updateWatchlistEntries`**, a multi-step wri
 the body, then attachment archival) that today **does not await** its per-entry user-group updates — a race
 to fix on the port.
 
-**ACL note:** the current code obtains per-resource capability tokens via ACL; **ACL is ignored in the DGS
-implementation** (no ACL story) — noted for context only.
+**ACL note:** the current code obtains per-resource capability tokens via ACL; Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
 
 ## Migration Scope
 | Surface | Count | Notes |
@@ -40,7 +39,7 @@ implementation** (no ACL story) — noted for context only.
 
 > One engineer ≈ **5–9 sprints**.
 
-> **Phase A dissolved.** Schema skeleton, service wiring, and external stubs are a one-time checklist in **B01** (completed in the same PR). No separate Phase A stories.
+> **Phase A dissolved.** Schema skeleton, service wiring, and external stubs are a one-time checklist in **B-01** (completed in the same PR). No separate Phase A stories.
 
 > **Self-contained story model.** The DGS-on-REST framework already exists; every operation story is **end-to-end in one PR** — schema (query/mutation + the GraphQL types it returns) + DGS data fetcher + Kotlin REST service method (read/write) + push the schema change to **Hive**. The standalone `*Service` Kotlin-port story has been dissolved into the operation stories.
 
@@ -49,14 +48,14 @@ implementation** (no ACL story) — noted for context only.
 |---|---|---|
 | `updateWatchlistEntries` un-awaited user-group update (race) | 🟡 Medium-High | Real bug today; fix to await on the port + decide failure strategy |
 | `getWatchlistByFilter` 4-step chain | 🟡 Medium | Performance-sensitive; cache the product lookup |
-| Product `SPARK-PROD-F08` mislabelled watchlist as a separate subgraph | 🟢 Low | Corrected — it's an **internal** contribution (like bom/measurement) |
+| Product `PRODUCT-BE-F-08` mislabelled watchlist as a separate subgraph | 🟢 Low | Corrected — it's an **internal** contribution (like bom/measurement) |
 | Attachment/search field resolvers | 🟢 Low | Shared search helper |
 
 ## Decisions Required
 | # | Decision | Blocks | Owner |
 |---|---|---|---|
-| 1 | `updateWatchlistEntries` — await user-group upserts + failure strategy | E01 | Tech Lead + PO |
-| 2 | Are the 2 unused version service methods needed cross-domain? | B01 | Tech Lead |
+| 1 | `updateWatchlistEntries` — await user-group upserts + failure strategy | E-01 | Tech Lead + PO |
+| 2 | Are the 2 unused version service methods needed cross-domain? | B-01 | Tech Lead |
 
 ## Dependency Map
 ```
@@ -65,22 +64,22 @@ plm-product (Watchlist subgraph) depends on:
  sibling DGS (federation): attachment, search 🔴, workspace, user-profile, user-group
  Hive Gateway → VMM (partner names)
  internal (same DGS): product
- product domain F01 Product.watchlists ; F02 ResourcesCount.watchlists (both internal)
+ product domain F-01 Product.watchlists ; F-02 ResourcesCount.watchlists (both internal)
 ```
 
 ## Recommended Sprint Sequencing
 | Sprint | Stories | Focus |
 |---|---|---|
-| 1 | B01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
-| 2 | C01 + D01/D02 | filtered read + simple mutations |
-| 3 | E01 + F01/F02 | multi-step update + Product/TechPack internal contributions |
-| 4 | G01–G03 + G04 | field resolvers + tests |
+| 1 | B-01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
+| 2 | C-01 + D-01/D-02 | filtered read + simple mutations |
+| 3 | E-01 + F-01/F-02 | multi-step update + Product/TechPack internal contributions |
+| 4 | G-01–G-03 + G-04 | field resolvers + tests |
 
 ## Capacity Planning
 | Team size | Calendar | Notes |
 |---|---|---|
 | 1 engineer | ~6–11 sprints | sequential |
-| 2 engineers | ~4–6 sprints | reads + mutations parallel after B01 |
+| 2 engineers | ~4–6 sprints | reads + mutations parallel after B-01 |
 
 ---
 *Pipeline 2.0 — Phase 4 complete. Watchlist artifacts: 01, 02, 03×2, 04-stories, 04-stories-index, 04-po, 05 (8 files).*

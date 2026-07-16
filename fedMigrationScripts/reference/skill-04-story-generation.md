@@ -37,7 +37,7 @@ A list of every story with the fields a Jira MCP needs to create a ticket:
 domain: bom
 target_dgs: plm-product
 stories:
-  - id: SPARK-BOM-B01
+  - id: BOM-BE-B-01
     summary: "Implement getBomByIds query data fetcher"
     epic: "BOM → plm-product migration"
     phase: B

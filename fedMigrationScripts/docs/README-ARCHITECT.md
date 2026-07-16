@@ -16,7 +16,7 @@
    - `03-schema-analysis.md` — **type classification, federation boundaries, `@key` candidates, gap analysis**.
    - `01-schema-inventory.md` — the full type/field surface being migrated.
 
-3. **The decisions you own — spikes & ADRs:** the 6 program spikes (`SPARK-SPIKE-01…06`, in the global
+3. **The decisions you own — spikes & ADRs:** the 6 program spikes (`SPIKE-01…06`, in the global
    breakdown's *Phase 0 — Program Spikes*).
    - You **approve the option**; that decision becomes an ADR and drives the case design.
    - Index of status + chosen option: [`adrs/adr-index.yaml`](../../adrs/adr-index.yaml).
@@ -48,7 +48,7 @@ that isn't explicit in the SDL. Otherwise `03-schema*` + the resolver analysis a
 
 ## How to read a story row
 ```
-SPARK-BOM-B04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
+BOM-BE-B-04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
 ```
 Phase 🔬0 🧱A 📖B 🔍C ✏️D ⚙️E 🔗F 🧪G · Type 🔷Query 🔶Mutation 🔸Resolver · Size 🟢XS 🟡M 🟠L 🔴XL.
 

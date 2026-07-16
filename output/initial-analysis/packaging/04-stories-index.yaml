@@ -9,7 +9,7 @@ pipeline_version: '2.0'
 acl_policy: ACL ignored in implementation; current-impl ACL usage noted as context
   only
 stories:
-- id: SPARK-PKG-A01
+- id: PKG-BE-A-01
   summary: Schema skeleton + DateTime scalar
   phase: A
   category: CAT-1
@@ -17,191 +17,191 @@ stories:
   depends_on: []
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-A02
+- id: PKG-BE-A-02
   summary: Owned types + inputs (~24 types, ~20 inputs)
   phase: A
   category: CAT-1
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A01
+  - PKG-BE-A-01
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-A03
+- id: PKG-BE-A-03
   summary: External stubs (platform + sibling DGS)
   phase: A
   category: CAT-1
   complexity: Low
   depends_on:
-  - SPARK-PKG-A01
+  - PKG-BE-A-01
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-A04
+- id: PKG-BE-A-04
   summary: PackagingService port (packaging/v1)
   phase: A
   category: CAT-3
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A01
+  - PKG-BE-A-01
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-B01
+- id: PKG-BE-B-01
   summary: getPackagings
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A02
-  - SPARK-PKG-A04
+  - PKG-BE-A-02
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-B02
+- id: PKG-BE-B-02
   summary: getPackagingById
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A02
-  - SPARK-PKG-A04
+  - PKG-BE-A-02
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-B03
+- id: PKG-BE-B-03
   summary: getDielines
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A02
-  - SPARK-PKG-A04
+  - PKG-BE-A-02
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-B04
+- id: PKG-BE-B-04
   summary: getPackagingFieldValuesByType
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-B05
+- id: PKG-BE-B-05
   summary: getDielineEvaluationStatuses (cacheable)
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-B06
+- id: PKG-BE-B-06
   summary: getCountries (cacheable)
   phase: B
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-C01
+- id: PKG-BE-C-01
   summary: getPackagingElastic
   phase: C
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services:
   - key: search
     severity: RED
   blocked_by: none
-- id: SPARK-PKG-D01
+- id: PKG-BE-D-01
   summary: addPackaging (throws on validationErrors)
   phase: D
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-D02
+- id: PKG-BE-D-02
   summary: evaluateDieline
   phase: D
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-D03
+- id: PKG-BE-D-03
   summary: bulkAddPackagings
   phase: D
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-D04
+- id: PKG-BE-D-04
   summary: bulkUpdatePackagings
   phase: D
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-D05
+- id: PKG-BE-D-05
   summary: exportPackaging
   phase: D
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-D06
+- id: PKG-BE-D-06
   summary: lockPackaging
   phase: D
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-D07
+- id: PKG-BE-D-07
   summary: unlockPackaging
   phase: D
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-D08
+- id: PKG-BE-D-08
   summary: cloneFilesForDielines
   phase: D
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services:
   - key: attachment
     severity: RED
   blocked_by: none
-- id: SPARK-PKG-D09
+- id: PKG-BE-D-09
   summary: updatePackagingComponentStatus (no JWT — confirm)
   phase: D
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-E01
+- id: PKG-BE-E-01
   summary: 'updatePackaging (multi-step: body + attachment add/remove, non-atomic)'
   phase: E
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: &id001
   - key: attachment
     severity: RED
@@ -210,97 +210,97 @@ stories:
   blocked_by: none
   parent: null
   substories:
-  - SPARK-PKG-E01-1
-  - SPARK-PKG-E01-2
-- id: SPARK-PKG-E01-1
+  - PKG-BE-E-01-1
+  - PKG-BE-E-01-2
+- id: PKG-BE-E-01-1
   summary: body + attachment add
   phase: E
   category: CAT-2
   complexity: Medium
-  parent: SPARK-PKG-E01
+  parent: PKG-BE-E-01
   substories: []
   depends_on:
-  - SPARK-PKG-E01
-  - SPARK-PKG-A04
+  - PKG-BE-E-01
+  - PKG-BE-A-04
   blocked_by: none
   ext_services: *id001
-- id: SPARK-PKG-E01-2
+- id: PKG-BE-E-01-2
   summary: attachment remove + pricing
   phase: E
   category: CAT-2
   complexity: Medium
-  parent: SPARK-PKG-E01
+  parent: PKG-BE-E-01
   substories: []
   depends_on:
-  - SPARK-PKG-E01
-  - SPARK-PKG-A04
+  - PKG-BE-E-01
+  - PKG-BE-A-04
   blocked_by: none
   ext_services: *id001
-- id: SPARK-PKG-F01
+- id: PKG-BE-F-01
   summary: Product packaging links (INTERNAL, same subgraph)
   phase: F
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services: []
   blocked_by: none
-- id: SPARK-PKG-G01
+- id: PKG-BE-G-01
   summary: access + businessPartner + participantDetails
   phase: G
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A02
-  - SPARK-PKG-A04
+  - PKG-BE-A-02
+  - PKG-BE-A-04
   ext_services:
   - key: vmm
     severity: BLUE
   - key: userGroup
     severity: BLUE
   blocked_by: none
-- id: SPARK-PKG-G02
+- id: PKG-BE-G-02
   summary: createdBy + updatedBy + dielineEvaluators
   phase: G
   category: CAT-2
   complexity: Low
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services:
   - key: userAttributes
     severity: YELLOW
   blocked_by: none
-- id: SPARK-PKG-G03
+- id: PKG-BE-G-03
   summary: product + workspaces + attachments
   phase: G
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services:
   - key: search
     severity: RED
   blocked_by: none
-- id: SPARK-PKG-G04
+- id: PKG-BE-G-04
   summary: suggestedRetailPriceByDPCI + waveDescription + retailPrice
   phase: G
   category: CAT-2
   complexity: High
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services:
   - key: tag
     severity: YELLOW
   - key: apex
     severity: BLUE
   blocked_by: none
-- id: SPARK-PKG-G05
+- id: PKG-BE-G-05
   summary: Dieline + PrinterDieline + PackagingElement field resolvers
   phase: G
   category: CAT-2
   complexity: Medium
   depends_on:
-  - SPARK-PKG-A04
+  - PKG-BE-A-04
   ext_services:
   - key: attachment
     severity: RED
@@ -309,16 +309,16 @@ stories:
   - key: userAttributes
     severity: YELLOW
   blocked_by: none
-- id: SPARK-PKG-G06
+- id: PKG-BE-G-06
   summary: Tests, parity harness
   phase: G
   category: CAT-5
   complexity: Medium
   depends_on:
-  - SPARK-PKG-B01
-  - SPARK-PKG-E01
-  - SPARK-PKG-G03
-  - SPARK-PKG-G04
+  - PKG-BE-B-01
+  - PKG-BE-E-01
+  - PKG-BE-G-03
+  - PKG-BE-G-04
   ext_services: []
   blocked_by: none
 totals:

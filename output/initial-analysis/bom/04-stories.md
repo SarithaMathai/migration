@@ -15,49 +15,49 @@ resolver. **ACL note:** where a story says the current code obtains a capability
 
 | Phase | Name | Stories | Notes |
 |-------|------|---------|-------|
-| 0 | Spikes | S01–S03 | time-boxed research; must conclude before the stories they block start |
-| B | Core Reads | B01, B03–B08 | one query per story; 4 are cacheable master data. **`B02` removed** — see Bom_Unified deprecation below |
-| C | Search & Listing | C01–C05 | elastic + supplier lookups |
-| D | Mutations (simple) | D01–D05 | add / workspaces / lock / unlock / component-status |
-| E | Complex Operations | E01 | `updateBom` 3-step non-atomic write — blocked by `S01` |
-| F | Federation Contributions | F01–F02 | BLOCKED-BY product domain |
-| G | Field Resolvers & Tests | G01, G03–G16 | one story per type block + parity harness. **`G02` removed**, `G10` repurposed — see Bom_Unified deprecation below |
+| 0 | Spikes | S-01–S-03 | time-boxed research; must conclude before the stories they block start |
+| B | Core Reads | B-01, B-03–B-08 | one query per story; 4 are cacheable master data. **`B-02` removed** — see Bom_Unified deprecation below |
+| C | Search & Listing | C-01–C-05 | elastic + supplier lookups |
+| D | Mutations (simple) | D-01–D-05 | add / workspaces / lock / unlock / component-status |
+| E | Complex Operations | E-01 | `updateBom` 3-step non-atomic write — blocked by `S-01` |
+| F | Federation Contributions | F-01–F-02 | BLOCKED-BY product domain |
+| G | Field Resolvers & Tests | G-01, G-03–G-16 | one story per type block + parity harness. **`G-02` removed**, `G-10` repurposed — see Bom_Unified deprecation below |
 
 > **`Bom_Unified` deprecated.** The reviewer decision (formerly Decision #3) was: drop `Bom_Unified` as a
-> parallel type and use field selection on `Bom` instead. That removes `getBomDataV2` (`B02`) and
-> `BomMaterial_Unified` (`G02`) entirely. `G10` (`BomImpressionDetails_Unified`) is **not** deleted, though —
+> parallel type and use field selection on `Bom` instead. That removes `getBomDataV2` (`B-02`) and
+> `BomMaterial_Unified` (`G-02`) entirely. `G-10` (`BomImpressionDetails_Unified`) is **not** deleted, though —
 > its internal/external branch-resolution logic and `MaterialDataLoader` are the shared implementation that
-> `G11`/`G12`/`G13` depend on for the *real* (non-Unified) `BomImpressionDetailsInterface` types. `G10` is
+> `G-11`/`G-12`/`G-13` depend on for the *real* (non-Unified) `BomImpressionDetailsInterface` types. `G-10` is
 > repurposed to own just that shared logic; see its story body below.
 
 Effort/day-ranges are intentionally **not** in stories (complexity tier only). See
 [04-po-summary.md](./04-po-summary.md) for AI-estimated ranges and sprint sequencing.
 
-> **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories. The BOM material `@DgsTypeResolver` (A04) remains a dedicated story.
+> **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories. The BOM material `@DgsTypeResolver` (A-04) remains a dedicated story.
 
-> **These are thin DGS wrappers — and why `B01` is *not* in the Depends On column.** The domain **model**, the
+> **These are thin DGS wrappers — and why `B-01` is *not* in the Depends On column.** The domain **model**, the
 > **REST controller (GET/POST/PUT)**, and the Kotlin **service** already exist; each story only adds the
-> Netflix-DGS layer so the federated graph can stitch this subgraph. The **one-time DGS module scaffold** `B01`
+> Netflix-DGS layer so the federated graph can stitch this subgraph. The **one-time DGS module scaffold** `B-01`
 > lands (`bom.graphqls`, scalar registration, service + Feign wiring) is a prerequisite for **every** operation
 > story, so it is **assumed once (shown in the graph below) and not repeated in each row's `Depends On`**. Rows
-> list only **genuine story-to-story dependencies**. After `B01`, phases B/C/D/G run **fully in parallel**.
+> list only **genuine story-to-story dependencies**. After `B-01`, phases B/C/D/G run **fully in parallel**.
 
-> **Reading the graph:** an arrow from `B01` means *"needs the DGS module scaffold"* — shown **once here**, not
+> **Reading the graph:** an arrow from `B-01` means *"needs the DGS module scaffold"* — shown **once here**, not
 > duplicated in each story's `Depends On`.
 
 ## 2. Dependency Graph
 
 ```mermaid
 graph TD
-  B01["B01 getBomByIds + one-time DGS module scaffold\n(bom.graphqls, scalars, service + Feign wiring)"] --> B[B03-B08 Reads] & C[C01-C05 Search] & D[D01-D05 Mutations] & E01[E01 updateBom]
-  S01[S01 updateBom failure-strategy spike] --> E01
-  S02[S02 federation rollout-order spike] -.informs.-> G
-  S03[S03 searchMaterialsBom DTO spike] --> C02[C02 searchMaterialsBom]
+  B01["B-01 getBomByIds + one-time DGS module scaffold\n(bom.graphqls, scalars, service + Feign wiring)"] --> B[B-03-B-08 Reads] & C[C-01-C-05 Search] & D[D-01-D-05 Mutations] & E01[E-01 updateBom]
+  S01[S-01 updateBom failure-strategy spike] --> E01
+  S02[S-02 federation rollout-order spike] -.informs.-> G
+  S03[S-03 searchMaterialsBom DTO spike] --> C02[C-02 searchMaterialsBom]
   B01 --> G
-  G --> G16[G16 Tests & parity]
+  G --> G16[G-16 Tests & parity]
   E01 --> G16
-  PROD[product Phase 3] -.blocked.-> F01[F01 Product extension]
-  PRODF[product TechPack facade] -.blocked.-> F02[F02 ResourcesCount.bomsCount]
+  PROD[product Phase 3] -.blocked.-> F01[F-01 Product extension]
+  PRODF[product TechPack facade] -.blocked.-> F02[F-02 ResourcesCount.bomsCount]
 ```
 
 ---
@@ -72,8 +72,8 @@ graph TD
 
 ---
 
-### SPARK-BOM-S01 · `updateBom` failure-strategy spike
-- **Type:** Spike · **Phase:** S · **Complexity:** Medium · **Category:** CAT-1 · **Depends on:** — · **Blocks:** E01
+### BOM-BE-S-01 · `updateBom` failure-strategy spike
+- **Type:** Spike · **Phase:** S · **Complexity:** Medium · **Category:** CAT-1 · **Depends on:** — · **Blocks:** E-01
 - **Status:** ⬜ Not Started
 
 - **Layman summary:** `updateBom` today does three separate write calls in a row — save the workspace links,
@@ -112,15 +112,15 @@ graph TD
 
 1. One of (a)/(b)/(c) is chosen and recorded here, with the reasoning.
 2. If (a) or (b), the per-step compensation (specifically: how to undo the workspace-assoc step) is written
-   down concretely enough for `E01` to implement without re-deriving it.
-3. `E01`'s "Chosen failure strategy" line is updated from "PO decision E01" to the concrete choice.
-4. If a shared `WriteSaga` (prior art above) is adopted, note that `E01` becomes the first *production* wiring
-   of that shared component (`non-atomic-write-saga` is the design; `E01` is an implementation of it).
+   down concretely enough for `E-01` to implement without re-deriving it.
+3. `E-01`'s "Chosen failure strategy" line is updated from "PO decision E-01" to the concrete choice.
+4. If a shared `WriteSaga` (prior art above) is adopted, note that `E-01` becomes the first *production* wiring
+   of that shared component (`non-atomic-write-saga` is the design; `E-01` is an implementation of it).
 
 ---
 
-### SPARK-BOM-S02 · Federation rollout-order spike (material sibling DGS)
-- **Type:** Spike · **Phase:** S · **Complexity:** Low · **Category:** CAT-1 · **Depends on:** — · **Blocks:** B01, G
+### BOM-BE-S-02 · Federation rollout-order spike (material sibling DGS)
+- **Type:** Spike · **Phase:** S · **Complexity:** Low · **Category:** CAT-1 · **Depends on:** — · **Blocks:** B-01, G
 - **Status:** ⬜ Not Started
 
 - **Layman summary:** BOM's material field resolvers (trim, wash, fabric, fabric-spec, combination, and the
@@ -135,7 +135,7 @@ graph TD
    federated subgraph — this is a cross-team scheduling question, not a BOM-internal one.
 2. Whether BOM should ship reads/writes for **all** material types on day 1 with partial enrichment (some
    materials show `{id}` only), or gate the whole domain launch on at least N of 5 siblings being ready.
-3. Whether trim (`G08`, the largest field-resolver story) and its sibling should be prioritized first since
+3. Whether trim (`G-08`, the largest field-resolver story) and its sibling should be prioritized first since
    it is also the highest-complexity story, or whether an easier sibling (e.g. wash) should go first to prove
    the federation stub pattern cheaply.
 
@@ -155,13 +155,13 @@ placeholder documented in each `G0x` story's Target section.
 1. A rollout order for hub/trim/wash/fabric/combination is agreed with Platform + each sibling team and
    recorded here.
 2. The order is reflected in the sprint sequencing table in `04-po-summary.md`.
-3. `B01`'s DGS-module-init checklist and each affected `G0x` story note which siblings are expected to be
+3. `B-01`'s DGS-module-init checklist and each affected `G0x` story note which siblings are expected to be
    `{id}`-only at BOM's launch date.
 
 ---
 
-### SPARK-BOM-S03 · `searchMaterialsBom` request-shape spike
-- **Type:** Spike · **Phase:** S · **Complexity:** Low · **Category:** CAT-1 · **Depends on:** — · **Blocks:** C02
+### BOM-BE-S-03 · `searchMaterialsBom` request-shape spike
+- **Type:** Spike · **Phase:** S · **Complexity:** Low · **Category:** CAT-1 · **Depends on:** — · **Blocks:** C-02
 - **Status:** ⬜ Not Started
 
 - **Layman summary:** today, when a caller sends `nestedSearchFilters` to `searchMaterialsBom`, the gateway
@@ -188,8 +188,8 @@ placeholder documented in each `G0x` story's Target section.
 #### Acceptance Criteria
 
 1. Search backend team confirms whether a structured body is accepted.
-2. Decision (flatten vs. structured) recorded here and copied into `C02`'s Target DGS Implementation text.
-3. If moving to structured, `C02`'s acceptance criteria #2 (today: "same `nestedSearchFilters[i].*` keys as
+2. Decision (flatten vs. structured) recorded here and copied into `C-02`'s Target DGS Implementation text.
+3. If moving to structured, `C-02`'s acceptance criteria #2 (today: "same `nestedSearchFilters[i].*` keys as
    today") is updated to describe the agreed structured shape instead.
 
 ---
@@ -198,7 +198,7 @@ placeholder documented in each `G0x` story's Target section.
 
 ---
 
-### SPARK-BOM-A04 · `@DgsTypeResolver` for the 2 BOM interfaces
+### BOM-BE-A-04 · `@DgsTypeResolver` for the 2 BOM interfaces
 - **Type:** Field Resolver · **Phase:** A · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Route each material/impression row to the right concrete type by its category code.
@@ -207,7 +207,7 @@ placeholder documented in each `G0x` story's Target section.
 `BomImpressionDetailsInterface` (5 impls) **so that** polymorphic material/impression lists resolve to the
 correct concrete type.
 
-- **Current Behaviour (from Phase 2 — C3 / C11):**
+- **Current Behaviour (from Phase 2 — C3 / C-11):**
 - Material: switch on `material.materialCategory.code` → 4→Trim, 6→Wash, 2→Fabric, 15→Combination,
   16→FabricSpec, {10,11,12,13,14,17–24}→Packaging, **default (1,5,9)→BomMaterial**.
 - Impression: switch on `impression.type` → 603→Trim, 605→TrimZipper, 604→Wash, 602→Fabric, **default 601→Base**.
@@ -230,7 +230,7 @@ default branches exactly (HUB code 9 must fall through to `BomMaterial`). Source
 
 ---
 
-### SPARK-BOM-B01 · `getBomByIds` data fetcher
+### BOM-BE-B-01 · `getBomByIds` data fetcher
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Looks up full BOM records for a set of BOM ids (the core 'give me these BOMs' read).
@@ -253,14 +253,14 @@ Add a request-scoped `BomDataLoader` keyed on id (the source isn't batched — i
 
 ---
 
-> **`SPARK-BOM-B02` (`getBomDataV2`) — removed.** It only ever existed to serve the `Bom_Unified` projection.
+> **`BOM-BE-B-02` (`getBomDataV2`) — removed.** It only ever existed to serve the `Bom_Unified` projection.
 > Per the reviewer decision (§Phase 0 note above), `Bom_Unified` is deprecated in favor of field selection on
 > `Bom` — callers who want a smaller projection now just ask `getBomByIds` for fewer fields, which is what
 > GraphQL field selection is for. No replacement query is needed.
 
 ---
 
-### SPARK-BOM-B03 · `getBomStatus` (cacheable master data)
+### BOM-BE-B-03 · `getBomStatus` (cacheable master data)
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Returns the list of possible BOM statuses — the options you'd see in a status dropdown.
@@ -277,7 +277,7 @@ Add a request-scoped `BomDataLoader` keyed on id (the source isn't batched — i
 
 ---
 
-### SPARK-BOM-B04 · `getBomByParentId` data fetcher
+### BOM-BE-B-04 · `getBomByParentId` data fetcher
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Lists all the BOMs that belong to one product, newest first.
@@ -293,7 +293,7 @@ replicates `sortedByDescending { it.createdAt }` client-side — the REST call n
 
 - **Example (before → after):**
 ```
-// before (B04 as originally written)
+// before (B-04 as originally written)
 val boms = restClient.getByProductId(parentId)                 // unsorted
 return boms.sortedByDescending { it.createdAt }                 // client-side sort
 
@@ -310,7 +310,7 @@ return boms                                                      // no client-si
 
 ---
 
-### SPARK-BOM-B05 · `getBomMaterialTypes` (merge with Material Hub)
+### BOM-BE-B-05 · `getBomMaterialTypes` (merge with Material Hub)
 - **Type:** Query · **Phase:** B · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `materialHub`
 
 - **In plain terms:** Returns the catalog of material types, combined with the shared material-hub types.
@@ -333,7 +333,7 @@ sources **in parallel** (`coroutineScope`), concat, synthesize hub rows as above
 
 ---
 
-### SPARK-BOM-B06 · `getBomPackagingMaterialTypes` (cacheable)
+### BOM-BE-B-06 · `getBomPackagingMaterialTypes` (cacheable)
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Returns the packaging material-type lookup list (cached, rarely changes).
@@ -349,7 +349,7 @@ sources **in parallel** (`coroutineScope`), concat, synthesize hub rows as above
 
 ---
 
-### SPARK-BOM-B07 · `getBomPackagingSubstrates` (cacheable)
+### BOM-BE-B-07 · `getBomPackagingSubstrates` (cacheable)
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Returns the packaging substrate lookup list (cached).
@@ -364,7 +364,7 @@ sources **in parallel** (`coroutineScope`), concat, synthesize hub rows as above
 
 ---
 
-### SPARK-BOM-B08 · `getBomPackagingUnitOfMeasure` (cacheable)
+### BOM-BE-B-08 · `getBomPackagingUnitOfMeasure` (cacheable)
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Returns the packaging unit-of-measure lookup list (cached).
@@ -383,7 +383,7 @@ sources **in parallel** (`coroutineScope`), concat, synthesize hub rows as above
 
 ---
 
-### SPARK-BOM-C01 · `getBomElastic` data fetcher
+### BOM-BE-C-01 · `getBomElastic` data fetcher
 - **Type:** Query · **Phase:** C · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔴 `search`
 
 - **In plain terms:** Runs a BOM search and returns the BOMs that match.
@@ -402,8 +402,8 @@ sources **in parallel** (`coroutineScope`), concat, synthesize hub rows as above
 
 ---
 
-### SPARK-BOM-C02 · `searchMaterialsBom` data fetcher
-- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** S03 · **EXT:** 🔴 `search` · 🔵 `vmm`
+### BOM-BE-C-02 · `searchMaterialsBom` data fetcher
+- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** S-03 · **EXT:** 🔴 `search` · 🔵 `vmm`
 
 - **In plain terms:** Searches for materials inside BOMs, with filters and paging.
 
@@ -419,9 +419,9 @@ that's the shape the old gateway happened to build.
 - **EXT Service Calls:** **EXT** → key: `search` · 🔴; **EXT** → key: `vmm` · 🔵 (fabric-supplier lookup).
 - **Target DGS Implementation:** `@DgsQuery searchMaterialsBom(...): BomMaterialSearch`. Fetch fabric suppliers
 - via a `VmmClient`/federation (not a resolver import).
-- **Request shape is per `SPARK-BOM-S03`'s outcome** — until that spike concludes, implement the flatten (below) so this story isn't blocked on the spike's timeline; swap to the structured DTO only if S03 lands during this story's PR.
+- **Request shape is per `BOM-BE-S-03`'s outcome** — until that spike concludes, implement the flatten (below) so this story isn't blocked on the spike's timeline; swap to the structured DTO only if S-03 lands during this story's PR.
 
-- **Example (today's flatten, to preserve until S03 says otherwise):**
+- **Example (today's flatten, to preserve until S-03 says otherwise):**
 ```
 input:  nestedSearchFilters: [{type: "trim", fieldPath: "size", operator: "eq", values: ["4"]}]
 output query string:
@@ -442,7 +442,7 @@ output query string:
 
 ---
 
-### SPARK-BOM-C03 · `getComboSupplierForBom` data fetcher
+### BOM-BE-C-03 · `getComboSupplierForBom` data fetcher
 - **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `combination` · 🔵 `vmm`
 
 - **In plain terms:** Finds which suppliers are available for a BOM's combination materials.
@@ -465,7 +465,7 @@ Call combination via `CombinationClient`/federation. VMM lookups in parallel (`c
 
 ---
 
-### SPARK-BOM-C04 · `getValidTrimSuppliersForBom` data fetcher
+### BOM-BE-C-04 · `getValidTrimSuppliersForBom` data fetcher
 - **Type:** Query · **Phase:** C · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔵 `vmm`
 
 - **In plain terms:** Lists the valid trim suppliers for a BOM.
@@ -482,12 +482,12 @@ Call combination via `CombinationClient`/federation. VMM lookups in parallel (`c
 
 ---
 
-### SPARK-BOM-C05 · `getValidRawMaterialSuppliersForBom` data fetcher
+### BOM-BE-C-05 · `getValidRawMaterialSuppliersForBom` data fetcher
 - **Type:** Query · **Phase:** C · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔵 `vmm`
 
 - **In plain terms:** Lists the valid raw-material suppliers for a BOM.
 
-- **Current Behaviour (Q12):** same as C04 with roles `[RAW_MATERIAL_SUPPLIER, FABRIC_SUPPLIER, TRIM_SUPPLIER]`.
+- **Current Behaviour (Q12):** same as C-04 with roles `[RAW_MATERIAL_SUPPLIER, FABRIC_SUPPLIER, TRIM_SUPPLIER]`.
 - **Target DGS Implementation:** `@DgsQuery` delegating with the three roles.
 
 #### Acceptance Criteria
@@ -501,7 +501,7 @@ Call combination via `CombinationClient`/federation. VMM lookups in parallel (`c
 
 ---
 
-### SPARK-BOM-D01 · `addBom` mutation
+### BOM-BE-D-01 · `addBom` mutation
 - **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Creates a new BOM.
@@ -524,7 +524,7 @@ After success, `bomDataLoader.prime(humanId, bom)`.
 
 ---
 
-### SPARK-BOM-D02 · `manageBomWorkspaces` mutation
+### BOM-BE-D-02 · `manageBomWorkspaces` mutation
 - **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `workspaceV2`
 
 - **In plain terms:** Adds or removes which workspaces a BOM belongs to.
@@ -542,7 +542,7 @@ After success, `bomDataLoader.prime(humanId, bom)`.
 
 ---
 
-### SPARK-BOM-D03 · `lockBom` mutation
+### BOM-BE-D-03 · `lockBom` mutation
 - **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Locks a BOM so others can't edit it.
@@ -557,12 +557,12 @@ After success, `bomDataLoader.prime(humanId, bom)`.
 
 ---
 
-### SPARK-BOM-D04 · `unlockBom` mutation
+### BOM-BE-D-04 · `unlockBom` mutation
 - **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Unlocks a BOM so it can be edited again.
 
-- **Current Behaviour (M5):** `PUT …/{bomId}/unlock`. ACL note as D03.
+- **Current Behaviour (M5):** `PUT …/{bomId}/unlock`. ACL note as D-03.
 - **Target DGS Implementation:** `@DgsMutation unlockBom(bomId): Bom` → `bomService.unlock(bomId)`.
 
 #### Acceptance Criteria
@@ -572,7 +572,7 @@ After success, `bomDataLoader.prime(humanId, bom)`.
 
 ---
 
-### SPARK-BOM-D05 · `updateBomComponentStatus` mutation
+### BOM-BE-D-05 · `updateBomComponentStatus` mutation
 - **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Updates the status of one or more components on a BOM.
@@ -591,8 +591,8 @@ After success, `bomDataLoader.prime(humanId, bom)`.
 
 ---
 
-### SPARK-BOM-E01 · `updateBom` — 3-step orchestrated write
-- **Type:** Mutation · **Phase:** E · **Complexity:** Very High · **Category:** CAT-2 · **Depends on:** D02, S01 · **EXT:** 🟡 `workspaceV2`
+### BOM-BE-E-01 · `updateBom` — 3-step orchestrated write
+- **Type:** Mutation · **Phase:** E · **Complexity:** Very High · **Category:** CAT-2 · **Depends on:** D-02, S-01 · **EXT:** 🟡 `workspaceV2`
 
 - **In plain terms:** Edit a BOM — a 3-step write (workspace + body + permissions) that has no rollback today.
 
@@ -612,12 +612,13 @@ chosen failure strategy **so that** body, workspace, and permission updates stay
 - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association step).
 - **Target DGS Implementation:** `BomUpdateOrchestrator` running steps in order: workspace assoc → body PUT
 - (`omitParamsInBody`) → optional permissions PUT.
-- **Failure strategy is whatever `SPARK-BOM-S01` concludes** (saga / compensation-log / best-effort) — see that spike for the reasoning; this story implements the choice.
+- **Failure strategy is whatever `BOM-BE-S-01` concludes** (program id `SPIKE-01`; saga / compensation-log / best-effort) — see that spike for the reasoning; this story implements the choice.
+- **Draft direction (pending ratification):** ADR-013 (`complexStories/non-atomic-write-saga/01-adr-non-atomic-write-saga.md`) proposes the shared `WriteSaga` with per-step policy — for `updateBom`: workspace assoc `COMPENSATE` → body PUT = point of no return → permissions `RETRY` then `PARTIAL_FAILURE`; the never-checked `updatePermissions` response becomes checked by construction (ADR-013 pin-down 5).
 - Replace the `validationErrors||message` shape-sniff with a typed `BomValidationException`.
 - Prime the read cache on success.
-- **Files / Dependencies:** `service/BomUpdateOrchestrator.kt`, `BomMutationDataFetcher.kt`; D02 (shares the workspace step); reuses the shared `WriteSaga` framework from `../../complexStories/non-atomic-write-saga/` if `S01` adopts it.
+- **Files / Dependencies:** `service/BomUpdateOrchestrator.kt`, `BomMutationDataFetcher.kt`; D-02 (shares the workspace step); reuses the shared `WriteSaga` framework from `../../complexStories/non-atomic-write-saga/` if `S-01` adopts it.
 
-- **Pseudocode (shape only — exact compensation depends on `S01`'s answer):**
+- **Pseudocode (shape only — exact compensation depends on `S-01`'s answer):**
 ```kotlin
 class BomUpdateOrchestrator(private val saga: WriteSaga) {
 
@@ -625,7 +626,7 @@ class BomUpdateOrchestrator(private val saga: WriteSaga) {
     saga.step("workspace-assoc",
       // do:
       { workspaceCtx?.let { manageBomWorkspaces(humanId, it.toAdd, it.toRemove) } },
-      // compensate (undo), only meaningful if S01 picks the saga pattern:
+      // compensate (undo), only meaningful if S-01 picks the saga pattern:
       { workspaceCtx?.let { manageBomWorkspaces(humanId, toAdd = it.toRemove, toRemove = it.toAdd) } }
     )
 
@@ -636,7 +637,7 @@ class BomUpdateOrchestrator(private val saga: WriteSaga) {
 
     saga.step("permissions-put",
       { partners?.let { restClient.putPermissions(humanId, it) } },
-      { /* compensation TBD by S01: restore previous partner list, or log+alert */ }
+      { /* compensation TBD by S-01: restore previous partner list, or log+alert */ }
     )
 
     val result = saga.finish()          // COMMITTED | COMPENSATED | PARTIAL_FAILURE
@@ -674,7 +675,7 @@ class BomUpdateOrchestrator(private val saga: WriteSaga) {
 
 ---
 
-### SPARK-BOM-F01 · Implement `Product.productBoms` / `boms` / `packagingBoms` (internal)
+### BOM-BE-F-01 · Implement `Product.productBoms` / `boms` / `packagingBoms` (internal)
 - **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Serve a product's BOM lists from BOM's own service instead of product reaching across.
@@ -719,7 +720,7 @@ class ProductBomFieldResolver(private val bomService: BomService) {
 
 ---
 
-### SPARK-BOM-F02 · Fill `ResourcesCount.bomsCount` (internal)
+### BOM-BE-F-02 · Fill `ResourcesCount.bomsCount` (internal)
 - **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔴 `search`
 
 - **In plain terms:** Let BOM own the 'how many boms' count shown on the TechPack panel.
@@ -754,12 +755,12 @@ fun bomsCount(dfe: DgsDataFetchingEnvironment): Int {
 ### Phase G — Field Resolvers & Tests (one story per type block)
 
 > Each Phase-G story implements all field resolvers for one type. Titles name the type, not an "and" of
-> operations. Trivial scalar pass-throughs are bundled in **G14**. Every sibling-DGS field resolves as a
+> operations. Trivial scalar pass-throughs are bundled in **G-14**. Every sibling-DGS field resolves as a
 > federated reference; until that subgraph publishes its stub it returns `{id}`.
 
 ---
 
-### SPARK-BOM-G01 · `Bom` field resolvers (9 shared fields)
+### BOM-BE-G-01 · `Bom` field resolvers (9 shared fields)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `workspaceV2` · 🔵 `tag`
 
 - **In plain terms:** Resolve the 9 shared Bom fields (people, product, workspaces, partners, participants).
@@ -797,7 +798,7 @@ Bom{ parentId: "SOMETHINGELSE" }.product → null   (never observed in practice 
 
 ---
 
-### SPARK-BOM-G03 · `BomMaterial` field resolvers (8 fields)
+### BOM-BE-G-03 · `BomMaterial` field resolvers (8 fields)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `materialHub` · 🔵 `tag`
 
 - **In plain terms:** Resolve the generic material row's fields (library lookup, origins, weight).
@@ -832,7 +833,7 @@ fun genericMaterialType(material: BomMaterial): String {
 
 ---
 
-### SPARK-BOM-G04 · `BomPackagingMaterial` field resolvers (2 fields)
+### BOM-BE-G-04 · `BomPackagingMaterial` field resolvers (2 fields)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔵 `tag`
 
 - **In plain terms:** Resolve a packaging material's impressions and country-of-origin.
@@ -849,7 +850,7 @@ fun genericMaterialType(material: BomMaterial): String {
 
 ---
 
-### SPARK-BOM-G05 · `BomFabricMaterial` field resolvers (4 fields)
+### BOM-BE-G-05 · `BomFabricMaterial` field resolvers (4 fields)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔴 `search` · 🔵 `tag` · 🟡 `materialHub`
 
 - **In plain terms:** Resolve a fabric material's spec/combo, weight and origin.
@@ -858,16 +859,16 @@ fun genericMaterialType(material: BomMaterial): String {
 - **EXT:** 🔴 search; 🟡 materialHub (weight); 🔵 tag.
 - **Target DGS Implementation:** `libraryResource` via `searchClient.fabricSpecCombos(...)` with `{id}` fallback.
 
-- **Example:** `libraryResourceId: "FSC-99"` → search returns a match → `libraryResource = FabricSpecCombo{id:"FSC-99", name:"Denim 12oz"}`; no match → `libraryResource = {id:"FSC-99"}` only (fallback shell, same convention as G06/G07/G09).
+- **Example:** `libraryResourceId: "FSC-99"` → search returns a match → `libraryResource = FabricSpecCombo{id:"FSC-99", name:"Denim 12oz"}`; no match → `libraryResource = {id:"FSC-99"}` only (fallback shell, same convention as G-06/G-07/G-09).
 
 #### Acceptance Criteria
 
 1. Returns the matched fabricSpecCombo or `{id}`.
-2. `weight`/`countryOfOrigin` as G03.
+2. `weight`/`countryOfOrigin` as G-03.
 
 ---
 
-### SPARK-BOM-G06 · `BomFabricSpecMaterial` field resolvers (4 fields)
+### BOM-BE-G-06 · `BomFabricSpecMaterial` field resolvers (4 fields)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `fabric` · 🔵 `tag` · 🟡 `materialHub`
 
 - **In plain terms:** Resolve a fabric-spec material's fields.
@@ -876,16 +877,16 @@ fun genericMaterialType(material: BomMaterial): String {
 - **EXT:** 🟡 fabric, materialHub; 🔵 tag.
 - **Target DGS Implementation:** `libraryResource` via `FabricClient.getSpecificationById` with `{id}` fallback.
 
-- **Example:** same fallback shape as G05/G07/G09 — `libraryResource(id)` found → full object; not found → `{id}` only, never `null`.
+- **Example:** same fallback shape as G-05/G-07/G-09 — `libraryResource(id)` found → full object; not found → `{id}` only, never `null`.
 
 #### Acceptance Criteria
 
 1. Returns fabric spec or `{id}`.
-2. weight/countryOfOrigin as G03.
+2. weight/countryOfOrigin as G-03.
 
 ---
 
-### SPARK-BOM-G07 · `BomCombinationMaterial` field resolvers (4 fields)
+### BOM-BE-G-07 · `BomCombinationMaterial` field resolvers (4 fields)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `combination` · 🔵 `tag` · 🟡 `materialHub`
 
 - **In plain terms:** Resolve a combination material's fields.
@@ -893,16 +894,16 @@ fun genericMaterialType(material: BomMaterial): String {
 - **Current Behaviour (C8):** `libraryResource` = `combination.getById.load(id) ?? {id}`; `weight`, `countryOfOrigin`.
 - **Target DGS Implementation:** `libraryResource` via `CombinationClient.getById` with `{id}` fallback.
 
-- **Example:** same fallback shape as G05/G06/G09 — combination found → full object; not found → `{id}` only.
+- **Example:** same fallback shape as G-05/G-06/G-09 — combination found → full object; not found → `{id}` only.
 
 #### Acceptance Criteria
 
 1. Returns combination or `{id}`.
-2. weight/countryOfOrigin as G03.
+2. weight/countryOfOrigin as G-03.
 
 ---
 
-### SPARK-BOM-G08 · `BomTrimMaterial` field resolvers (7 fields) — trim size dispatchers
+### BOM-BE-G-08 · `BomTrimMaterial` field resolvers (7 fields) — trim size dispatchers
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** High · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `trim` · 🔵 `location` · 🔵 `tag`
 
 - **In plain terms:** Resolve a trim material's fields, including the per-trim-type size dispatch.
@@ -916,7 +917,7 @@ dispatchers **so that** trim rows display the correct size value, caption, UoM a
 - `sizeValue` = reload trim → match size by `librarySizeId` → `getTrimSizeValue(trimType, trimSubType, size)` — **15-case TRIM_TYPES** (`utils/bomUtils.js:57-114`).
 - `sizeCaption` = reload trim → `getBomSizeCaption(trim, size)` — **15-case**, returns `{edit, view}` (`utils/bomUtils.js:116-187`).
 - `facilityName` = if already set return it; else reload trim → find supplier by `supplierId` → facility by `facilityId` → `location.getLocationById(facilityId)` → `vmmFacility.name`.
-- `weight`, `countryOfOrigin` as G03. The trim is loaded 3× (memoized) — consolidate.
+- `weight`, `countryOfOrigin` as G-03. The trim is loaded 3× (memoized) — consolidate.
 - **EXT:** 🟡 trim; 🔵 location (facility); 🔵 tag.
 - **Target DGS Implementation:** `TrimEnrichmentService.enrich(material)` does **one** `getTrimBatch` and feeds
 - `libraryResource`/`sizeValue`/`sizeCaption`/`materialLibraryUom`.
@@ -975,24 +976,24 @@ class TrimEnrichmentService(private val trimClient: TrimClient, private val loca
 
 ---
 
-### SPARK-BOM-G09 · `BomWashMaterial` field resolvers (4 fields)
+### BOM-BE-G-09 · `BomWashMaterial` field resolvers (4 fields)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `wash` · 🔵 `tag` · 🟡 `materialHub`
 
 - **In plain terms:** Resolve a wash material's fields.
 
-- **Current Behaviour (C10):** `libraryResource` = `wash.getWash(jwt).load(washId) ?? {id}`; `weight`, `countryOfOrigin`, `impressionDetails`. **ACL context:** wash uses a capability token; ignore in impl.
+- **Current Behaviour (C-10):** `libraryResource` = `wash.getWash(jwt).load(washId) ?? {id}`; `weight`, `countryOfOrigin`, `impressionDetails`. **ACL context:** wash uses a capability token; ignore in impl.
 - **Target DGS Implementation:** `libraryResource` via `WashClient.getWash(washId)` with `{id}` fallback.
 
-- **Example:** same fallback shape as G05/G06/G07 — wash found → full object; not found → `{id}` only.
+- **Example:** same fallback shape as G-05/G-06/G-07 — wash found → full object; not found → `{id}` only.
 
 #### Acceptance Criteria
 
 1. Returns wash or `{id}`.
-2. weight/countryOfOrigin as G03.
+2. weight/countryOfOrigin as G-03.
 
 ---
 
-### SPARK-BOM-G10 · Impression library-resource resolution (shared internal/external branch + `MaterialDataLoader`)
+### BOM-BE-G-10 · Impression library-resource resolution (shared internal/external branch + `MaterialDataLoader`)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** High · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔴 `search`
 
 - **In plain terms:** Resolve an impression's colour/library links, branching on internal vs external caller.
@@ -1000,10 +1001,10 @@ class TrimEnrichmentService(private val trimClient: TrimClient, private val loca
 > **Rescoped.** This story previously implemented `BomImpressionDetails_Unified` — the flattened impression
 > type that only existed to support `Bom_Unified` (`getBomDataV2`). Since `Bom_Unified` and its whole type
 > family are deprecated (§Phase 0 decision above), that specific type is dropped. **But the internal/external
-> branch logic and the `MaterialDataLoader` this story builds are still needed** — `G11`/`G12`/`G13` (the real,
+> branch logic and the `MaterialDataLoader` this story builds are still needed** — `G-11`/`G-12`/`G-13` (the real,
 > non-Unified impression types `BomFabricLibraryImpressionDetails`/`BomTrimLibraryImpressionDetails`/
 > `BomTrimZipperLibraryImpressionDetails`, which implement `BomImpressionDetailsInterface` on the main `Bom`
-> path) rely on exactly this helper. So `G10` is kept as its own story, rescoped to own **just** the shared
+> path) rely on exactly this helper. So `G-10` is kept as its own story, rescoped to own **just** the shared
 > resolution service + loader, not a schema type of its own.
 
 - **Current Behaviour, in plain terms:** resolving "what material does this impression's color/library field
@@ -1023,7 +1024,7 @@ fields via a `MaterialDataLoader` keyed on id.
 - **Files / Dependencies:** `ImpressionLibraryResourceResolver.kt` (renamed from `BomImpressionDetailsFieldDataFetcher.kt`
 to reflect that it's a shared service now, not a single type's field resolver), `MaterialDataLoader.kt`.
 
-- **Pseudocode — the shared helper `G11`/`G12`/`G13` call into:**
+- **Pseudocode — the shared helper `G-11`/`G-12`/`G-13` call into:**
 ```kotlin
 class ImpressionLibraryResourceResolver(private val searchClient: SearchClient, private val materialLoader: MaterialDataLoader) {
 
@@ -1050,7 +1051,7 @@ class ImpressionLibraryResourceResolver(private val searchClient: SearchClient, 
 2. `bomIds` come from DGS local context, not field args (the fragile `args.ids` contract is removed).
 3. Missing `libraryResource.id` → null.
 4. 5 color fields resolve via batched material loader.
-5. `G11`/`G12`/`G13` call this shared service rather than re-implementing the branch.
+5. `G-11`/`G-12`/`G-13` call this shared service rather than re-implementing the branch.
 
 #### Test Cases
 
@@ -1062,13 +1063,13 @@ class ImpressionLibraryResourceResolver(private val searchClient: SearchClient, 
 
 ---
 
-### SPARK-BOM-G11 · `BomFabricLibraryImpressionDetails.libraryResource`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** G10 · **EXT:** 🔴 `search`
+### BOM-BE-G-11 · `BomFabricLibraryImpressionDetails.libraryResource`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** G-10 · **EXT:** 🔴 `search`
 
-- **In plain terms:** Resolve this impression type's library link (shares G10's branch).
+- **In plain terms:** Resolve this impression type's library link (shares G-10's branch).
 
-- **Current Behaviour (C13):** single `libraryResource` field with the same internal/external branch as G10.
-- **Target DGS Implementation:** thin `@DgsData` that calls `ImpressionLibraryResourceResolver.resolveLibraryResource(detail, dfe)` (the `G10` shared service) — no branch logic duplicated here.
+- **Current Behaviour (C-13):** single `libraryResource` field with the same internal/external branch as G-10.
+- **Target DGS Implementation:** thin `@DgsData` that calls `ImpressionLibraryResourceResolver.resolveLibraryResource(detail, dfe)` (the `G-10` shared service) — no branch logic duplicated here.
 
 - **Example:**
 ```kotlin
@@ -1079,36 +1080,36 @@ fun libraryResource(dfe: DgsDataFetchingEnvironment) =
 
 #### Acceptance Criteria
 
-1. Same behaviour as `G10`'s `libraryResource` for this type.
+1. Same behaviour as `G-10`'s `libraryResource` for this type.
 2. Uses local-context `bomIds`.
 
 ---
 
-### SPARK-BOM-G12 · `BomTrimLibraryImpressionDetails` field resolvers (3 fields)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** G10 · **EXT:** 🔴 `search`
+### BOM-BE-G-12 · `BomTrimLibraryImpressionDetails` field resolvers (3 fields)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** G-10 · **EXT:** 🔴 `search`
 
 - **In plain terms:** Resolve this trim-impression's library link and two colours.
 
-- **Current Behaviour (C14):** `libraryResource` (G10 branch) + `groundColor`, `textColor` via `searchMaterialById`.
-- **Target DGS Implementation:** reuse `G10`'s `resolveLibraryResource` + 2 color fields via `resolveColor`.
+- **Current Behaviour (C-14):** `libraryResource` (G-10 branch) + `groundColor`, `textColor` via `searchMaterialById`.
+- **Target DGS Implementation:** reuse `G-10`'s `resolveLibraryResource` + 2 color fields via `resolveColor`.
 
 - **Example:** `groundColor` → `impressionLibraryResourceResolver.resolveColor("groundColor", detail)`; same
 pattern for `textColor`, each a batched lookup through the shared `MaterialDataLoader`, not a separate call.
 
 #### Acceptance Criteria
 
-1. `libraryResource` behaves as `G10`.
+1. `libraryResource` behaves as `G-10`.
 2. `groundColor`/`textColor` resolve via material loader.
 
 ---
 
-### SPARK-BOM-G13 · `BomTrimZipperLibraryImpressionDetails` field resolvers (3 colors)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** G10 · **EXT:** 🔴 `search`
+### BOM-BE-G-13 · `BomTrimZipperLibraryImpressionDetails` field resolvers (3 colors)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** G-10 · **EXT:** 🔴 `search`
 
 - **In plain terms:** Resolve a zipper impression's three colours.
 
-- **Current Behaviour (C15):** `sliderColor`, `tapeColor`, `teethColor` via `searchMaterialById`. Unlike `G11`/`G12`,
-this type has no `libraryResource` field at all — just three colors — so it only needs `G10`'s color loader,
+- **Current Behaviour (C-15):** `sliderColor`, `tapeColor`, `teethColor` via `searchMaterialById`. Unlike `G-11`/`G-12`,
+this type has no `libraryResource` field at all — just three colors — so it only needs `G-10`'s color loader,
 not the internal/external branch.
 - **Target DGS Implementation:** 3 `@DgsData` fields via `impressionLibraryResourceResolver.resolveColor(name, detail)`.
 
@@ -1121,7 +1122,7 @@ not the internal/external branch.
 
 ---
 
-### SPARK-BOM-G14 · Trivial pass-through fields (bundle)
+### BOM-BE-G-14 · Trivial pass-through fields (bundle)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** Resolve the trivial computed / pass-through fields (no service call).
@@ -1144,12 +1145,12 @@ type covered by DTO mapping.
 
 ---
 
-### SPARK-BOM-G15 · `BomMaterialSearchResult` field resolvers (5 fields)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** C02 · **EXT:** 🟡 `fabric` · 🔴 `search`
+### BOM-BE-G-15 · `BomMaterialSearchResult` field resolvers (5 fields)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** C-02 · **EXT:** 🟡 `fabric` · 🔴 `search`
 
 - **In plain terms:** Resolve the material-search-result fields (tolerant of both response shapes).
 
-- **Current Behaviour (C18):** `description` (`description ?? name`), `status` (`status?.description ?? status`),
+- **Current Behaviour (C-18):** `description` (`description ?? name`), `status` (`status?.description ?? status`),
 - `fabricSpec` (if `type==='fabric_spec_combo'` & `fabricSpecId` → `fabric.getSpecificationByID`), `fabric` (if `type==='combination'` & `fabricRecordHumanId` → `fabric.getByID(jwt)`), `fabricId` (combination → `fabricRecordHumanId`), `relatedMaterials` (2-branch internal/external elastic by `relatedAssetIds` buckets).
 - **Bug 🟡:** external branch does `proxyIds.push(detail.parentComboId)` — mutates the args array; defensive-copy.
 - **ACL context:** `fabric.getByID` and external branch use a capability token; ignore in impl, keep `proxyIds`.
@@ -1182,8 +1183,8 @@ fun relatedMaterialsExternal(args: SearchArgs, detail: SearchResult) {
 
 ---
 
-### SPARK-BOM-G16 · Test coverage & parity harness
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** E01, G08, G10
+### BOM-BE-G-16 · Test coverage & parity harness
+- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** E-01, G-08, G-10
 
 - **In plain terms:** The safety net: automated tests + a parity harness that prove the new BOM DGS returns exactly what the old gateway did before we switch traffic.
 
@@ -1205,21 +1206,21 @@ a CI schema-conformance check across the 7 material impls.
 
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
-| `updateBom` 3-step non-atomic write | Medium | High | `S01` spike picks a failure strategy (saga/compensation/best-effort) before `E01` starts | Tech Lead |
-| Impression library-resource `args.ids` contract | Medium | Medium | `G10` moves `bomIds` to DGS local context | Backend Eng |
-| 7-variant polymorphism drift | Medium | Medium | G16 CI schema-conformance check | Backend Eng |
-| Sibling material subgraphs not federated yet | High | Medium | `S02` spike sets the hub/trim/wash/fabric/combination rollout order | Platform |
-| Trim 15-case dispatcher porting errors (G08) | Medium | Medium | Parity table per trim type | Backend Eng |
-| Latent bugs (`getHubMaterial` await; `getFabricMaterial` null; array mutation) | Medium | Low | Fix on port (G03/G05/G15) + unit tests | Backend Eng |
-| F01/F02 are internal (same subgraph) — depend on Product/ResourcesCount types existing | Low | Low | Sequence after product B01; no gateway block | Tech Lead |
+| `updateBom` 3-step non-atomic write | Medium | High | `S-01` spike picks a failure strategy (saga/compensation/best-effort) before `E-01` starts | Tech Lead |
+| Impression library-resource `args.ids` contract | Medium | Medium | `G-10` moves `bomIds` to DGS local context | Backend Eng |
+| 7-variant polymorphism drift | Medium | Medium | G-16 CI schema-conformance check | Backend Eng |
+| Sibling material subgraphs not federated yet | High | Medium | `S-02` spike sets the hub/trim/wash/fabric/combination rollout order | Platform |
+| Trim 15-case dispatcher porting errors (G-08) | Medium | Medium | Parity table per trim type | Backend Eng |
+| Latent bugs (`getHubMaterial` await; `getFabricMaterial` null; array mutation) | Medium | Low | Fix on port (G-03/G-05/G-15) + unit tests | Backend Eng |
+| F-01/F-02 are internal (same subgraph) — depend on Product/ResourcesCount types existing | Low | Low | Sequence after product B-01; no gateway block | Tech Lead |
 
 ## 5. Summary
 - **Stories:** 39 (S:3 · A:1 · B:7 · C:5 · D:5 · E:1 · F:2 · G:15).
-  > **Note — A:1** is the `SPARK-BOM-A04` TypeResolver story (one dedicated PR for `BomMaterialInterface` + `BomImpressionDetailsInterface`). All other former Phase A work is folded into B01.
-  > **B:7 / G:15** (down from 8/16): `B02` (`getBomDataV2`) and `G02` (`BomMaterial_Unified`) are removed — see
-  > the `Bom_Unified` deprecation decision. `G10` is kept but rescoped (still counts toward G:15).
-- **Critical path:** S01 → E01, and G08/G10→G16.
-- **Highest risk:** `updateBom` atomicity (`E01`, pending `S01`); impression `args.ids` contract (`G10`).
-- **Monorepo:** F01/F02 are **internal** field resolvers in the same `plm-product` subgraph (not gateway
+  > **Note — A:1** is the `BOM-BE-A-04` TypeResolver story (one dedicated PR for `BomMaterialInterface` + `BomImpressionDetailsInterface`). All other former Phase A work is folded into B-01.
+  > **B:7 / G:15** (down from 8/16): `B-02` (`getBomDataV2`) and `G-02` (`BomMaterial_Unified`) are removed — see
+  > the `Bom_Unified` deprecation decision. `G-10` is kept but rescoped (still counts toward G:15).
+- **Critical path:** S-01 → E-01, and G-08/G-10→G-16.
+- **Highest risk:** `updateBom` atomicity (`E-01`, pending `S-01`); impression `args.ids` contract (`G-10`).
+- **Monorepo:** F-01/F-02 are **internal** field resolvers in the same `plm-product` subgraph (not gateway
   federation). Real cross-subgraph federation in BOM is only the **material DGS** references (hub/trim/wash/
   fabric/combination) + workspace/tag/user-profile/access-control.

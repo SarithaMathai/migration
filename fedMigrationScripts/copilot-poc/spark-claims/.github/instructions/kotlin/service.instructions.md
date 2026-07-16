@@ -14,7 +14,7 @@ description: "Kotlin REST service / client rules for spark-claims"
 
 ## Parity traps (verified in analysis — preserve them)
 
-- `updateClaim` today: 1) proxy-ACL permission check (context-only, not built) → 2) `workspaceAssociationHelper(CLAIM, humanId, add, remove)` only if `workspaceContext.{add,remove}` is non-empty → 3) `PUT {base}/{humanId}` → 4) **throw on `validationErrors`/`message`**, no rollback. Keep this exact step order and throw behaviour until `SPARK-SPIKE-01` decides the saga strategy.
+- `updateClaim` today: 1) proxy-ACL permission check (context-only, not built) → 2) `workspaceAssociationHelper(CLAIM, humanId, add, remove)` only if `workspaceContext.{add,remove}` is non-empty → 3) `PUT {base}/{humanId}` → 4) **throw on `validationErrors`/`message`**, no rollback. Keep this exact step order and throw behaviour until `SPIKE-01` decides the saga strategy.
 - `getClaimByIds` uses an ACL-context token in its call; `getClaims` explicitly has **no ACL token** — do not add one.
 - The legacy gateway converts snake_case backend payloads to camelCase — replicate that conversion exactly where the story notes it.
 

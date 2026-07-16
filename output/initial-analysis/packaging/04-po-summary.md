@@ -16,8 +16,7 @@ remove via archive + relationship, then attachment add via relationship + attrib
 rollback; and **`suggestedRetailPriceByDPCI`**, a multi-hop pricing field (printers → dielines → DPCIs →
 pricing service).
 
-**ACL note:** the current code obtains per-resource capability tokens via ACL; **ACL is ignored in the DGS
-implementation** (no ACL story) — noted for context only.
+**ACL note:** the current code obtains per-resource capability tokens via ACL; Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
 
 ## Migration Scope
 | Surface | Count | Notes |
@@ -27,7 +26,7 @@ implementation** (no ACL story) — noted for context only.
 | Field-resolver type blocks | 4 | `Packaging` (12), `Dieline` (3), `PrinterDieline` (1), `PackagingElement` (1) |
 | External dependencies | 7 keys (2 🔴 · 3 🟡 · 2 🔵) | search/attachment 🔴; relationship/user-profile/tag 🟡 |
 | Federation contributions | 1 (Product) | **internal** (co-located) |
-| **Total stories** | **26** | green-field |
+| **Total stories** | **24** | green-field |
 
 ## Story Summary by Phase (AI-estimated)
 | Phase | Name | Stories | Effort (est., +20%) |
@@ -38,18 +37,18 @@ implementation** (no ACL story) — noted for context only.
 | E | Complex (`updatePackaging`) | 1 | 5–8d |
 | F | Federation (Product, internal) | 1 | 1–2d |
 | G | Field Resolvers & Tests | 6 | 15–25d |
-| **Total** | | **26** | **42–72d** (buffered) |
+| **Total** | | **24** | **42–72d** (buffered) |
 
 > One engineer ≈ **9–15 sprints**.
 
-> **Phase A dissolved.** Schema skeleton, service wiring, and external stubs are a one-time checklist in **B01** (completed in the same PR). No separate Phase A stories.
+> **Phase A dissolved.** Schema skeleton, service wiring, and external stubs are a one-time checklist in **B-01** (completed in the same PR). No separate Phase A stories.
 
 > **Self-contained story model.** The DGS-on-REST framework already exists; every operation story is **end-to-end in one PR** — schema (query/mutation + the GraphQL types it returns) + DGS data fetcher + Kotlin REST service method (read/write) + push the schema change to **Hive**. The standalone `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## Key Risk Areas
 | Risk | Severity | What the PO needs to know |
 |---|---|---|
-| `updatePackaging` multi-step write | 🟡 Medium-High | Needs a decision (E01) on mid-write failure; add/remove error handling is inconsistent today |
+| `updatePackaging` multi-step write | 🟡 Medium-High | Needs a decision (E-01) on mid-write failure; add/remove error handling is inconsistent today |
 | `suggestedRetailPriceByDPCI` multi-hop pricing | 🟡 Medium | Performance-sensitive; cache/batch the dieline→DPCI→price chain |
 | `updatePackagingComponentStatus` has no auth token | 🟢 Low | Confirm the backend enforces it |
 | Attachment-by-search field resolvers | 🟢 Low | Shared search helper; batch |
@@ -58,10 +57,10 @@ implementation** (no ACL story) — noted for context only.
 ## Decisions Required
 | # | Decision | Blocks | Owner |
 |---|---|---|---|
-| 1 | `updatePackaging` failure strategy + align add/remove error handling | E01 | Tech Lead + PO |
-| 2 | `suggestedRetailPriceByDPCI` — cache the dieline→DPCI→pricing chain? | G04 | Backend Eng |
-| 3 | `updatePackagingComponentStatus` no token — backend-enforced? | D09 | PO |
-| 4 | Claims pass-through (`claimId`/`claimDetails`) — keep on packaging or route to claims? | B01 | Product Owner |
+| 1 | `updatePackaging` failure strategy + align add/remove error handling | E-01 | Tech Lead + PO |
+| 2 | `suggestedRetailPriceByDPCI` — cache the dieline→DPCI→pricing chain? | G-04 | Backend Eng |
+| 3 | `updatePackagingComponentStatus` no token — backend-enforced? | D-09 | PO |
+| 4 | Claims pass-through (`claimId`/`claimDetails`) — keep on packaging or route to claims? | B-01 | Product Owner |
 
 ## Dependency Map
 ```
@@ -70,25 +69,25 @@ plm-product (Packaging subgraph) depends on:
  sibling DGS (federation): attachment, search 🔴, workspace, user-profile, relationship, tag
  Hive Gateway → VMM (business partners), apex/pricing (suggested retail price)
  internal (same DGS): product, fileLibrary
- product domain F01 Product packaging links (internal field resolvers)
+ product domain F-01 Product packaging links (internal field resolvers)
 ```
 
 ## Recommended Sprint Sequencing
 | Sprint | Stories | Focus |
 |---|---|---|
-| 1 | B01 (DGS module init + service wiring + first resolver) | schema, service port, core reads |
-| 2 | B04–B06 + C01 + D02/D05–D07 | master-data + search + simple mutations |
-| 3 | D01/D03/D04/D08/D09 | create/bulk/clone/component-status |
-| 4 | E01 + F01 | multi-step update + Product links |
-| 5 | G01–G03 | ACL/users/refs field resolvers |
-| 6 | G04/G05 + G06 | pricing + dieline resolvers + tests |
+| 1 | B-01 (DGS module init + service wiring + first resolver) | schema, service port, core reads |
+| 2 | B-04–B-06 + C-01 + D-02/D-05–D-07 | master-data + search + simple mutations |
+| 3 | D-01/D-03/D-04/D-08/D-09 | create/bulk/clone/component-status |
+| 4 | E-01 + F-01 | multi-step update + Product links |
+| 5 | G-01–G-03 | ACL/users/refs field resolvers |
+| 6 | G-04/G-05 + G-06 | pricing + dieline resolvers + tests |
 
 ## Capacity Planning
 | Team size | Calendar | Notes |
 |---|---|---|
 | 1 engineer | ~10–17 sprints | sequential |
-| 2 engineers | ~6–10 sprints | reads + mutations parallel after B01 |
-| 3 engineers | ~4–7 sprints | critical path A → E01 → G04 → G06 |
+| 2 engineers | ~6–10 sprints | reads + mutations parallel after B-01 |
+| 3 engineers | ~4–7 sprints | critical path A → E-01 → G-04 → G-06 |
 
 ---
 *Pipeline 2.0 — Phase 4 complete. Packaging artifacts: 01, 02, 03×2, 04-stories, 04-stories-index, 04-po, 05 (8 files).*

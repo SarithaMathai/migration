@@ -1,6 +1,6 @@
 Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,SPARK-PDTL-B01,(Product Details) getProductDetailsById(ids) [SPARK-PDTL-B01],,Federate BreakDown Product,B,XS,dgs-migration,productDetails,query,,,To Do,"*Current Behaviour:*
+Story,PDTL-BE-B-01,(Product Details) getProductDetailsById(ids) [PDTL-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,productDetails,query,,,To Do,"*Current Behaviour:*
 * (ACL context) token for `ids` → `GET construction/v1?ids={csv}` → camelCase list.
 
 *Target:*
@@ -8,7 +8,7 @@ Story,SPARK-PDTL-B01,(Product Details) getProductDetailsById(ids) [SPARK-PDTL-B0
 
 *Acceptance Criteria:*
 1. returns list for ids; empty → []"
-Story,SPARK-PDTL-C01,(Product Details) getProductDetailsElastic(resourceId) [SPARK-PDTL-C01],,Federate BreakDown Product,C,M,dgs-migration,productDetails,search,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-C-01,(Product Details) getProductDetailsElastic(resourceId) [PDTL-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,productDetails,search,,B-01,To Do,"*Current Behaviour:*
 * (🔴 search) `search.getProductDetailsElastic.load({ q:""parentId: {resourceId}"" })` → paged. - **EXT:** 🔴 search.
 
 *Target:*
@@ -17,7 +17,7 @@ Story,SPARK-PDTL-C01,(Product Details) getProductDetailsElastic(resourceId) [SPA
 *Acceptance Criteria:*
 1. `parentId:` elastic query built
 2. paged shape returned"
-Story,SPARK-PDTL-D01,(Product Details) createProductDetailsSet [SPARK-PDTL-D01],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-D-01,(Product Details) createProductDetailsSet [PDTL-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B-01,To Do,"*Current Behaviour:*
 * (ACL context) token for literal capability → `POST construction/v1` (snake_case). **If response has `validationErrors` or `message` → throw.**
 
 *Target:*
@@ -26,7 +26,7 @@ Story,SPARK-PDTL-D01,(Product Details) createProductDetailsSet [SPARK-PDTL-D01],
 *Acceptance Criteria:*
 1. creates set
 2. validation error → exception (not a partial object)"
-Story,SPARK-PDTL-D02,(Product Details) updateProductDetailAccess [SPARK-PDTL-D02],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-D-02,(Product Details) updateProductDetailAccess [PDTL-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Current Behaviour:*
 * map `managePermissionsRequest[].resourceId` → token → `PUT construction/v1/manage-permissions` (`primeKey=humanId`).
 
 *Target:*
@@ -34,7 +34,7 @@ Story,SPARK-PDTL-D02,(Product Details) updateProductDetailAccess [SPARK-PDTL-D02
 
 *Acceptance Criteria:*
 1. updates partner access for each resource"
-Story,SPARK-PDTL-D03,(Product Details) productDetailLockUnlock [SPARK-PDTL-D03],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-D-03,(Product Details) productDetailLockUnlock [PDTL-BE-D-03],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Current Behaviour:*
 * token for `[constructionSetId]` → `PUT construction/v1/{id}/{lock|unlock}`.
 
 *Target:*
@@ -42,7 +42,7 @@ Story,SPARK-PDTL-D03,(Product Details) productDetailLockUnlock [SPARK-PDTL-D03],
 
 *Acceptance Criteria:*
 1. `isLock=true`→lock path, false→unlock path"
-Story,SPARK-PDTL-D04,(Product Details) cloneFilesForProductDetails [SPARK-PDTL-D04],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-D-04,(Product Details) cloneFilesForProductDetails [PDTL-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B-01,To Do,"*Current Behaviour:*
 * token → `Promise.all(attachmentIds.map((id,i) => (🔴 attachment) cloneAttachmentV3({cloneReferences:[cloneReference[i]]}, id)))`, stamp `parentResource=id`, flatten. No rollback. **EXT:** 🔴 attachment.
 
 *Target:*
@@ -51,7 +51,7 @@ Story,SPARK-PDTL-D04,(Product Details) cloneFilesForProductDetails [SPARK-PDTL-D
 *Acceptance Criteria:*
 1. clones each id with its paired cloneReference
 2. `parentResource` stamped"
-Story,SPARK-PDTL-D05,(Product Details) updateProductDetailComponentStatus [SPARK-PDTL-D05],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-D-05,(Product Details) updateProductDetailComponentStatus [PDTL-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Current Behaviour:*
 * `PUT construction/v1/component_status_update`; wraps result as `{content}`. **No JWT — confirm backend-enforced.**
 
 *Target:*
@@ -60,7 +60,7 @@ Story,SPARK-PDTL-D05,(Product Details) updateProductDetailComponentStatus [SPARK
 *Acceptance Criteria:*
 1. updates statuses; result wrapped as `{content}`
 2. no-token behaviour documented"
-Story,SPARK-PDTL-E01,(Product Details) updateProductDetailsSet (multi-step write) [SPARK-PDTL-E01],,Federate BreakDown Product,E,L,dgs-migration,productDetails,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+Story,PDTL-BE-E-01,(Product Details) updateProductDetailsSet (multi-step write) [PDTL-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,productDetails,complex,,"SPIKE-01, B-01",To Do,"*Requires spike:* SPIKE-01 (Non-Atomic Write Saga) — see program spike
 
 *Current Behaviour:*
 * 1) if `workspaceContext.{add,remove}Workspaces` non-empty → `workspaceAssociationHelper(PRODUCT_DETAIL, id, add, remove)` (throws on error); 2) null `workspaceContext`; 3) if `deleteAttachmentIds` → (🔴 attachment) `archiveAttachmentBulkV3` (separate ACL token); 4) `PUT construction/v1/{id}`. **No rollback across steps.** - **EXT:** 🔴 attachment · 🟡 workspaceV2.
@@ -79,7 +79,7 @@ Story,SPARK-PDTL-E01,(Product Details) updateProductDetailsSet (multi-step write
 * [ ] attachment-archive
 * [ ] partial-failure
 * [ ] Parity: DGS response matches spark-internal-graphql baseline"
-Story,SPARK-PDTL-F01,"(Product Details) Product.productDetails (internal, same subgraph) [SPARK-PDTL-F01]",,Federate BreakDown Product,F,XS,dgs-migration,productDetails,field-resolver,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-F-01,"(Product Details) Product.productDetails (internal, same subgraph) [PDTL-BE-F-01]",,Federate BreakDown Product,F,XS,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Current Behaviour:*
 * Product exposes `productDetails` resolved from the co-located ProductDetails service.
 
 *Target:*
@@ -87,7 +87,7 @@ Story,SPARK-PDTL-F01,"(Product Details) Product.productDetails (internal, same s
 
 *Acceptance Criteria:*
 1. `Product.productDetails` resolves in-process; no gateway hop"
-Story,SPARK-PDTL-G01,(Product Details) access + currentUserPermissions + participantDetails [SPARK-PDTL-G01],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-G-01,(Product Details) access + currentUserPermissions + participantDetails [PDTL-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Current Behaviour:*
 * `access` → `accessControl.getPermissions([humanId||id])[0]`; `currentUserPermissions` → `getUserAccessUnencoded(humanId||id)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.)
 
 *Target:*
@@ -95,7 +95,7 @@ Story,SPARK-PDTL-G01,(Product Details) access + currentUserPermissions + partici
 
 *Acceptance Criteria:*
 1. each field resolves; null-safe on empty"
-Story,SPARK-PDTL-G02,(Product Details) product + createdBy + updatedBy + businessPartners + workspaces [SPARK-PDTL-G02],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-G-02,(Product Details) product + createdBy + updatedBy + businessPartners + workspaces [PDTL-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Current Behaviour:*
 * `product` (internal, only if `parentId` starts `'PID'`), `createdBy`/`updatedBy` (🟡 user-profile), `businessPartners` (🔵 vmm `loadBpsWithType`), `workspaces` (🟡 workspaceV2 by ids).
 
 *Target:*
@@ -104,7 +104,7 @@ Story,SPARK-PDTL-G02,(Product Details) product + createdBy + updatedBy + busines
 *Acceptance Criteria:*
 1. each resolves; `product` null when `parentId` not `PID*`
 2. null id → null user"
-Story,SPARK-PDTL-G03,(Product Details) attachment + item attachment/constructionSetAttachments + category subCategories [SPARK-PDTL-G03],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B01,To Do,"*Current Behaviour:*
+Story,PDTL-BE-G-03,(Product Details) attachment + item attachment/constructionSetAttachments + category subCategories [PDTL-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Current Behaviour:*
 * `ProductDetails.attachment` → (🔴 search) `searchAttachments([humanId||id])`, find - `relatedResources.length<=2`; `ProductDetailsItem.attachment` → `searchAttachments([templateId])[0]||{}`; `constructionSetAttachments` → `searchAttachments([id]).content||[]`; `CategoryWithSection.subCategories` → (internal `specificationsTemplate`) `getProductDetailsCategorySection()` find by `code`.
 
 *Target:*
@@ -113,7 +113,7 @@ Story,SPARK-PDTL-G03,(Product Details) attachment + item attachment/construction
 *Acceptance Criteria:*
 1. each field resolves to the right source
 2. `attachment` length-≤2 filter preserved"
-Story,SPARK-PDTL-G04,"(Product Details) Tests, parity harness [SPARK-PDTL-G04]",,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,"B01, E01, G01",To Do,"*Target:*
+Story,PDTL-BE-G-04,"(Product Details) Tests, parity harness [PDTL-BE-G-04]",,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,"B-01, E-01, G-01",To Do,"*Target:*
 * ≥80% unit coverage; parity fixtures (incl. the multi-step `updateProductDetailsSet`, the create error-contract, attachment-by-search fields); contract test (schema diff intentional-only).
 
 *Acceptance Criteria:*

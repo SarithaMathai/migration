@@ -60,7 +60,7 @@
 - **Option B** stands, with the participant contract upgraded:
   - each participant's drop/undrop endpoint = **enumerate own children of X the partner is on → apply the
     partner change → apply the ACL delta for those children** — one atomic-as-possible unit per domain,
-  - the orchestrator (`plm-product` / `plm-workspace`) runs participants through `SPARK-SPIKE-01`'s
+  - the orchestrator (`plm-product` / `plm-workspace`) runs participants through `SPIKE-01`'s
     `WriteSaga` and returns success **only when all participants report revoked**,
   - **ordering constraint (revised from 01 §4):** on drop, *all participant drop steps* must complete
     before the mutation returns success (there is no longer a single ACL step to sequence); on undrop,

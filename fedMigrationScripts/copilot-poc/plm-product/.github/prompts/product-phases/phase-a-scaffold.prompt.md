@@ -1,14 +1,14 @@
 ---
 mode: agent
 model: Claude Sonnet 4.5
-description: "Phase A — module scaffold or a type-resolver story (e.g. SPARK-BOM-A04) in apps/app"
+description: "Phase A — module scaffold or a type-resolver story (e.g. BOM-BE-A-04) in apps/app"
 ---
 
-Implement Phase-A story **${input:storyId:SPARK-BOM-A04}** in `apps/app`.
+Implement Phase-A story **${input:storyId:BOM-BE-A-04}** in `apps/app`.
 
 Phase A is the **Foundation & Type Resolvers** phase. It's either:
-- the **one-time DGS module scaffold** for a domain (usually folded into that domain's `B01` story as a "DGS Module Init" note — `product.graphqls` header/scalars/external stubs, `ScalarConfig.kt`, service + Feign wiring), or
-- a **standalone type-resolver story** for a polymorphic interface/union (e.g. `SPARK-BOM-A04`'s `@DgsTypeResolver` for `BomMaterialInterface`/`BomImpressionDetailsInterface`).
+- the **one-time DGS module scaffold** for a domain (usually folded into that domain's `B-01` story as a "DGS Module Init" note — `product.graphqls` header/scalars/external stubs, `ScalarConfig.kt`, service + Feign wiring), or
+- a **standalone type-resolver story** for a polymorphic interface/union (e.g. `BOM-BE-A-04`'s `@DgsTypeResolver` for `BomMaterialInterface`/`BomImpressionDetailsInterface`).
 
 Steps:
 

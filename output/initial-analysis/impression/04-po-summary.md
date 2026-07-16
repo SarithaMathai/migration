@@ -15,8 +15,7 @@ that proves the pipeline end-to-end.
 - The only mild wrinkle is the counts query: today it returns the impressions **list** and a field resolver aggregates per-partner counts (re-fetching the product).
 - We recommend a cleaner typed result as a fast-follow, but the existing contract can be preserved exactly.
 
-**ACL note:** the current code obtains a per-product capability token via ACL; **ACL is ignored in the DGS
-implementation** (no ACL story) — noted for context only.
+**ACL note:** the current code obtains a per-product capability token via ACL; Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
 
 ## Migration Scope
 | Surface | Count | Notes |
@@ -37,7 +36,7 @@ implementation** (no ACL story) — noted for context only.
 | G | Field Resolvers & Tests | 3 | 4–7d |
 | **Total** | | **7** | **11–18d** (buffered) |
 
-> Phase A dissolved — schema skeleton, owned types, external stubs, and `ImpressionService` (2 methods) are a one-time checklist preamble in **B01**. One engineer ≈ **2–4 sprints**.
+> Phase A dissolved — schema skeleton, owned types, external stubs, and `ImpressionService` (2 methods) are a one-time checklist preamble in **B-01**. One engineer ≈ **2–4 sprints**.
 
 ## Key Risk Areas
 | Risk | Severity | What the PO needs to know |
@@ -49,24 +48,24 @@ implementation** (no ACL story) — noted for context only.
 ## Decisions Required
 | # | Decision | Blocks | Owner |
 |---|---|---|---|
-| 1 | Preserve `ImpressionCount` contract or adopt `ImpressionCountResult`? | B02/G02 | Product Owner |
-| 2 | Should `enableWorkspaceContextFiltering` filter at the backend? | B01 | Backend Eng |
+| 1 | Preserve `ImpressionCount` contract or adopt `ImpressionCountResult`? | B-02/G-02 | Product Owner |
+| 2 | Should `enableWorkspaceContextFiltering` filter at the backend? | B-01 | Backend Eng |
 
 ## Dependency Map
 ```
 plm-product (Impression subgraph) depends on:
  spark-product backend REST .../impressions/product
  sibling DGS (federation): workspace, user-profile ; Hive Gateway → VMM
- product domain F01 Product entity extension (impressions + impressionCounts)
+ product domain F-01 Product entity extension (impressions + impressionCounts)
 ```
 
 ## Recommended Sprint Sequencing
 | Sprint | Stories | Focus |
 |---|---|---|
-| 1 | B01 + B02 | **B01:** DGS module init (schema/types/stubs/scalars) + ImpressionService wiring + `searchImpressionsByProductId`; **B02:** counts query |
-| 2 | D01 + G01 + G02 | mutation + field resolvers + counts aggregation |
-| 3 | G03 | tests & parity |
-| post-launch | F01 | Product extension (unblocked by product) |
+| 1 | B-01 + B-02 | **B-01:** DGS module init (schema/types/stubs/scalars) + ImpressionService wiring + `searchImpressionsByProductId`; **B-02:** counts query |
+| 2 | D-01 + G-01 + G-02 | mutation + field resolvers + counts aggregation |
+| 3 | G-03 | tests & parity |
+| post-launch | F-01 | Product extension (unblocked by product) |
 
 ## Capacity Planning
 | Team size | Calendar | Notes |

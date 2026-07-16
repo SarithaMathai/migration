@@ -16,7 +16,7 @@ description: "Kotlin REST service / client rules for plm-product (apps/app modul
 
 - The legacy gateway converts snake_case backend payloads to camelCase in specific operations — replicate that conversion exactly where the story notes it.
 - Some legacy operations tolerate partial backend failure per target (one failure is visible, the rest proceed) — keep that isolation.
-- Multi-step writes (workspace-association PUT → body PUT → permissions PUT) keep today's step order and failure behaviour until `SPARK-SPIKE-01` decides the saga strategy.
+- Multi-step writes (workspace-association PUT → body PUT → permissions PUT) keep today's step order and failure behaviour until `SPIKE-01` decides the saga strategy.
 
 ## Style
 

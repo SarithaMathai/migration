@@ -72,7 +72,7 @@ Page title = the case's `00-overview.md` H1. Optional child page per case from i
 | Complex Story — attachmentsWithMetaData enrichment (Product + Workspace) | `output/complexStories/attachments-enrichment/` | ✓ |
 | Complex Story — Product.components + WorkspaceV2.counts rollups | `output/complexStories/components-and-counts-rollups/` | ✓ |
 | Complex Story — Polymorphic type resolution (@DgsTypeResolver + per-variant + prefix-gated parents) | `output/complexStories/polymorphic-type-resolution/` | ✓ |
-| Complex Story — Cross-domain association & hydration (SPARK-SPIKE-06) | `output/complexStories/cross-domain-association/` | companion note only |
+| Complex Story — Cross-domain association & hydration (SPIKE-06) | `output/complexStories/cross-domain-association/` | companion note only |
 
 ## 6. Deliberately not published to Confluence
 

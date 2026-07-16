@@ -86,13 +86,13 @@ extend type Query {
     partnerIds: [ID]
     workspaceIds: [ID]
     enableWorkspaceContextFiltering: Boolean
-  ): [Impression]                                        # 🔜 B01
-  getImpressionCountsByProductId(id: ID): ImpressionCount   # 🔜 B02 (consider ImpressionCountResult)
+  ): [Impression]                                        # 🔜 B-01
+  getImpressionCountsByProductId(id: ID): ImpressionCount   # 🔜 B-02 (consider ImpressionCountResult)
 }
 
 # --- Mutations ---
 extend type Mutation {
-  updateImpressions(productId: ID, productImpression: ProductImpressionInput): [Impression]   # 🔜 D01
+  updateImpressions(productId: ID, productImpression: ProductImpressionInput): [Impression]   # 🔜 D-01
 }
 
 # --- Federation: Impression contributes to Product (Phase F, BLOCKED-BY product) ---

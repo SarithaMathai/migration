@@ -2,14 +2,14 @@
 
 > **Status:** 🔴 Proposed — draft for review
 > **Spike:** — (read pattern applied at cutover, not a research spike)
-> **Home stubs:** `SPARK-PROD-G01` (product enrichment) · `SPARK-PROD-G03` (thin variants) ·
-> `SPARK-WS-G01` / `SPARK-WS-G03` (later phase, workspace twins)
+> **Home stubs:** `PRODUCT-BE-G-01` (product enrichment) · `PRODUCT-BE-G-03` (thin variants) ·
+> `WORKSPACE-BE-G-01` / `WORKSPACE-BE-G-03` (later phase, workspace twins)
 > **Scope:** the one-feed attachments tab — direct files + discussion files + sample files, merged,
 > permission-annotated, draft-filtered, ordered — on both `Product` and `WorkspaceV2`, plus the thin
 > variants (`attachments` / `attachmentsV3` / `attachmentSummary`) over the same engine. Reads only.
 > **Related:** ADR-014 (owner-computed rollups — same stance) · ADR-015 (facade-then-federate phasing) ·
 > ADR-016 (consumes this read cross-resolver today — that coupling dies with ADR-016 §4) ·
-> `SPARK-SPIKE-06a` (hydration).
+> `SPIKE-06a` (hydration).
 > **Evidence:** `resolvers/SPARK_Product.js` + `resolvers/SPARK_WorkspaceV2.js` +
 > `utils/Product/attachmentUtils.js` + `utils/discussionUtils.js` at `https://github.com/XXX`.
 
@@ -17,7 +17,7 @@
 
 ## 1. Today's behavior
 
-### `Product.attachmentsWithMetaData` (`SPARK-PROD-G01`, ~150 ln)
+### `Product.attachmentsWithMetaData` (`PRODUCT-BE-G-01`, ~150 ln)
 
 1. **Relationship walk** — `relationship.searchByIds` (`GET ${relationship}/{productId}`,
    10 `includeBranches`, node types `attachments / sample / discussions / discussionThreads /
@@ -43,7 +43,7 @@
 8. **Order** — `orderProductAttachments`: rank by `resource.type` via
    `['product','discussion','sample'].indexOf` **asc**, then `created_at` **desc**.
 
-### `WorkspaceV2.attachmentsWithMetaData` (`SPARK-WS-G01`, ~75 ln) — same shape, different rules
+### `WorkspaceV2.attachmentsWithMetaData` (`WORKSPACE-BE-G-01`, ~75 ln) — same shape, different rules
 
 - Walk with 3 branches / 4 node types; 🐞 **v2 `attachments` ids are requested from the walk but never
   collected** — only `attachments_v3` count (empty v3 → `[]` even if v2 files exist).
@@ -54,7 +54,7 @@
   `undefined` instead of the key being absent; draft flag = thread's `draft` else discussion's.
 - Same draft filter, duplicated verbatim (same TODO).
 
-### The thin variants (`SPARK-PROD-G03` / `SPARK-WS-G03`) — one engine, three doors
+### The thin variants (`PRODUCT-BE-G-03` / `WORKSPACE-BE-G-03`) — one engine, three doors
 
 - `Product.attachmentsV3` → `getProductOrWorkSpaceAttachments` (`utils/Product/attachmentUtils.js`):
   1. **elastic, not the walk** — `search.searchAttachmentsByRelatedResource` —
@@ -121,6 +121,32 @@ Homes: relationship → central service (**retiring**) · ACL → AccessControlS
   verbatim, and the "ACL should do this" question must go somewhere real.
 - Reads: no saga/outbox; the questions are **who computes the merge** and **where each slice comes from**
   (mirrors ADR-014/015/016).
+
+### Assumptions, constraints & success criteria
+
+**Assumptions**
+- Each surface's UI is calibrated to its own current behavior (ordering, v2 handling, defaults) — the
+  product/workspace differences are contract, not bugs to unify.
+- By-related-resource queries can source every bucket the walk sources today (attachment
+  `relatedResources:{id}` demonstrated; remaining buckets confirmed before the walk's seam shrinks).
+- The `attachmentElasticResponseFeatureFlag` state per environment is discoverable before fixture
+  recording (pin-down 5 — the schedule risk).
+
+**Constraints**
+- Parity is **per surface** — product and workspace each keep their exact ordering, defaults, and filters.
+- The draft filter must survive the port verbatim; removing it is never a migration-time change.
+- The enrichment library is shared across two repos without a shared runtime (library, not service).
+- The Relationship-Service walk may persist only behind one quarantined enumeration seam.
+
+**Success criteria (measurable)**
+- Recorded-fixture parity per surface and per thin variant, with byte-identical row content; the fixture
+  set includes the §5 edge list (missing parent discussion, draft attachment, own-`relatedResources` row,
+  v2-only workspace, both `attachmentsV3` modes).
+- The three accidental implementations are replaced by one engine + a reviewed per-surface policy table;
+  any behavioral difference between surfaces appears as a policy row, not code archaeology.
+- The resolver import and reply N+1 are gone (direct discussion client, one batched replies call);
+  independent fetches run in parallel — tab latency ≤ today's on the recorded scenarios.
+- ADR-016's fields no longer invoke this read — verified by a static check for cross-resolver calls.
 
 ---
 
@@ -192,7 +218,7 @@ Homes: relationship → central service (**retiring**) · ACL → AccessControlS
   walk quarantined.
 - **Option C recorded as the end-state**, adopted slice-by-slice as sibling subgraphs ship; Option D's
   elastic query is the candidate attachment-slice source, contingent on pin-down 5.
-- The thin variants (`G03`) are doors onto the same library — no separate engine.
+- The thin variants (`G-03`) are doors onto the same library — no separate engine.
 
 ### Pin-downs at ratification
 
@@ -214,8 +240,8 @@ Homes: relationship → central service (**retiring**) · ACL → AccessControlS
 ## 5. Consequences
 
 - If accepted:
-  - `G01` builds the library + the product policy row; `G03` becomes thin doors; the workspace phase
-    (`WS-G01`/`G03`) adds a policy row and fixtures, not a design round,
+  - `G-01` builds the library + the product policy row; `G-03` becomes thin doors; the workspace phase
+    (`WS-G-01`/`G-03`) adds a policy row and fixtures, not a design round,
   - ADR-016's lanes stop depending on this read's internals — the two cases decouple,
   - tab latency improves (parallel fetches, batched replies) with byte-identical content,
   - the three-way divergence becomes a reviewed table instead of archaeology.
@@ -239,6 +265,6 @@ pattern-at-cutover):
    (`status: Accepted`, `chosen: "A — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the per-surface policy table and the deviation list).
-3. Update `output/initial-analysis/product/04-stories.md` (`G01`, `G03`) with the concrete pattern;
+3. Update `output/initial-analysis/product/04-stories.md` (`G-01`, `G-03`) with the concrete pattern;
    workspace stories follow in their phase.
 4. Regenerate domain + global docs; push to Jira/Confluence.

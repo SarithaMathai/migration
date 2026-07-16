@@ -36,8 +36,8 @@ object on **update** — preserved.
 - **External (federation):** `Product` (`product`, `parentDetails`), `search` (elastic claims + teams),
   `workspace`, `user-profile` (`createdBy`/`updatedBy`/`substantiatedBy`/participants), `access-control`,
   `team` (`TeamPaged`); **gateway stitch:** `VMM` (business/design partners).
-- **Contributes back** (Phase F, BLOCKED-BY product): `extend type Product { claims }` (F01) and the
-  TechPack `ResourcesCount.claims` count (F02 — the claims side of `SPARK-PROD-F05`).
+- **Contributes back** (Phase F, BLOCKED-BY product): `extend type Product { claims }` (F-01) and the
+  TechPack `ResourcesCount.claims` count (F-02 — the claims side of `PRODUCT-BE-F-05`).
 
 ## 4. Migration Approach  *(Confluence approach page)*
 
@@ -58,11 +58,11 @@ multi-step update and several federation contributions.
 ## 5. Risks & Recommendations
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|
-| `updateClaim` proxy-ACL multi-step partial failure (E01) | Medium | High | Saga / compensation — decision required | Tech Lead + PO |
+| `updateClaim` proxy-ACL multi-step partial failure (E-01) | Medium | High | Saga / compensation — decision required | Tech Lead + PO |
 | `bulkUpdateClaim` response transform is `deepToSnakeCase` (likely bug) | Medium | Medium | Fix to camelCase; parity test | Backend Eng |
 | `ParentDetails.systemTeams` elastic query from BPs (perf/empty) | Low | Medium | Preserve empty→`{content:[]}`; paginate | Backend Eng |
 | `businessPartner` 3-way fallback easy to get wrong | Low | Medium | Preserve incl. `{bpId:0,bpName:'Target'}`; unit-test each branch | Backend Eng |
-| Federation contributions wait on product | Low | Low | F01/F02 post-launch | Product Owner |
+| Federation contributions wait on product | Low | Low | F-01/F-02 post-launch | Product Owner |
 
 ## 6. ACL Handling
 - Reads/writes curry capability tokens; `updateClaim` uses the **proxy** variant (`getUserPermissionsJWTByProxy`, `basePermissions:true`, `proxyIds:[parentId]`) — the external/proxy path (+1 complexity).

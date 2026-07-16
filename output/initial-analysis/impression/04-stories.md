@@ -14,12 +14,12 @@ Each story is self-contained: read *Current Behaviour → Target → Acceptance 
 
 | Phase | Name | Stories |
 |---|---|---|
-| B | Core Reads | B01–B02 |
-| D | Mutations | D01 |
-| F | Federation Contributions | F01 *(BLOCKED-BY product)* |
-| G | Field Resolvers & Tests | G01–G03 |
+| B | Core Reads | B-01–B-02 |
+| D | Mutations | D-01 |
+| F | Federation Contributions | F-01 *(BLOCKED-BY product)* |
+| G | Field Resolvers & Tests | G-01–G-03 |
 
-> **Note — Phase A dissolved.** Schema skeleton, owned types, external stubs, and `ImpressionService`/`ImpressionClient` setup are a one-time checklist inside **B01** (completed in the same PR). No separate Phase A stories exist.
+> **Note — Phase A dissolved.** Schema skeleton, owned types, external stubs, and `ImpressionService`/`ImpressionClient` setup are a one-time checklist inside **B-01** (completed in the same PR). No separate Phase A stories exist.
 
 ---
 
@@ -27,10 +27,10 @@ Each story is self-contained: read *Current Behaviour → Target → Acceptance 
 
 ```mermaid
 graph TD
-  B01["B01 searchImpressions\n(DGS init + ImpressionService)"] --> B02 & D01 & G01 & G02
-  G01 --> G03[G03 Tests]
+  B01["B-01 searchImpressions\n(DGS init + ImpressionService)"] --> B02 & D01 & G01 & G02
+  G01 --> G03[G-03 Tests]
   G02 --> G03
-  PROD[product Phase 3] -.blocked.-> F01[F01 Product extension]
+  PROD[product Phase 3] -.blocked.-> F01[F-01 Product extension]
 ```
 
 ---
@@ -39,7 +39,7 @@ graph TD
 
 ---
 
-### SPARK-IMP-B01 · `searchImpressionsByProductId` data fetcher
+### IMPRESSION-BE-B-01 · `searchImpressionsByProductId` data fetcher
 
 - **Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Category:** CAT-2  ·  **Depends on:** —
 
@@ -100,9 +100,9 @@ graph TD
 
 ---
 
-### SPARK-IMP-B02 · `getImpressionCountsByProductId` data fetcher
+### IMPRESSION-BE-B-02 · `getImpressionCountsByProductId` data fetcher
 
-- **Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Category:** CAT-2  ·  **Depends on:** B01
+- **Type:** Story  ·  **Phase:** B  ·  **Complexity:** Low  ·  **Category:** CAT-2  ·  **Depends on:** B-01
 
 - **In plain terms:** Count a product's impressions.
 
@@ -110,8 +110,8 @@ graph TD
 
 #### Current Behaviour
 
-1. Reuses the same REST search call as B01 for `id`.
-2. Returns the impressions list typed as `ImpressionCount`; the `counts` field (G02) aggregates the list.
+1. Reuses the same REST search call as B-01 for `id`.
+2. Returns the impressions list typed as `ImpressionCount`; the `counts` field (G-02) aggregates the list.
 
 > **EXT Services:** None.
 
@@ -120,7 +120,7 @@ graph TD
 #### Target DGS Implementation
 
 - **Annotation:** `@DgsQuery getImpressionCountsByProductId(id): ImpressionCount`
-- Returns the search result as the `ImpressionCount` parent (G02 computes the `counts` child field).
+- Returns the search result as the `ImpressionCount` parent (G-02 computes the `counts` child field).
 - **PO decision required:** preserve list-as-parent contract, or switch to a computed `ImpressionCountResult`?
 
 ---
@@ -135,7 +135,7 @@ graph TD
 
 1. Returns the impressions list as the `ImpressionCount` parent type.
 2. The contract decision (list-as-parent vs typed result) is recorded in story comments.
-3. Empty product → `counts` yields `totalCount: 0` (verified by G02).
+3. Empty product → `counts` yields `totalCount: 0` (verified by G-02).
 
 ---
 
@@ -146,9 +146,9 @@ graph TD
 
 ---
 
-### SPARK-IMP-D01 · `updateImpressions` mutation
+### IMPRESSION-BE-D-01 · `updateImpressions` mutation
 
-- **Type:** Story  ·  **Phase:** D  ·  **Complexity:** Medium  ·  **Category:** CAT-2  ·  **Depends on:** B01
+- **Type:** Story  ·  **Phase:** D  ·  **Complexity:** Medium  ·  **Category:** CAT-2  ·  **Depends on:** B-01
 
 - **In plain terms:** Update a product's impressions.
 
@@ -193,9 +193,9 @@ graph TD
 
 ---
 
-### SPARK-IMP-F01 · `Product.impressions` / `impressionCounts` (internal field resolver)
+### IMPRESSION-BE-F-01 · `Product.impressions` / `impressionCounts` (internal field resolver)
 
-- **Type:** Story  ·  **Phase:** F  ·  **Complexity:** Low  ·  **Category:** CAT-2  ·  **Depends on:** B01  ·  **Blocked by:** product B01
+- **Type:** Story  ·  **Phase:** F  ·  **Complexity:** Low  ·  **Category:** CAT-2  ·  **Depends on:** B-01  ·  **Blocked by:** product B-01
 
 - **In plain terms:** Expose impressions and their counts on the Product type.
 
@@ -242,9 +242,9 @@ Product exposes `impressions` and `impressionCounts` resolved via the impression
 
 ---
 
-### SPARK-IMP-G01 · `Impression` field resolvers (5 fields)
+### IMPRESSION-BE-G-01 · `Impression` field resolvers (5 fields)
 
-- **Type:** Story  ·  **Phase:** G  ·  **Complexity:** Low  ·  **Category:** CAT-2  ·  **Depends on:** B01
+- **Type:** Story  ·  **Phase:** G  ·  **Complexity:** Low  ·  **Category:** CAT-2  ·  **Depends on:** B-01
 
 - **In plain terms:** Resolve the individual Impression fields.
 
@@ -292,9 +292,9 @@ Product exposes `impressions` and `impressionCounts` resolved via the impression
 
 ---
 
-### SPARK-IMP-G02 · `ImpressionCount.counts` aggregation
+### IMPRESSION-BE-G-02 · `ImpressionCount.counts` aggregation
 
-- **Type:** Story  ·  **Phase:** G  ·  **Complexity:** Medium  ·  **Category:** CAT-2  ·  **Depends on:** B01
+- **Type:** Story  ·  **Phase:** G  ·  **Complexity:** Medium  ·  **Category:** CAT-2  ·  **Depends on:** B-01
 
 - **In plain terms:** Aggregate the per-type impression counts.
 
@@ -320,7 +320,7 @@ Product exposes `impressions` and `impressionCounts` resolved via the impression
 - Product fetched via `productService.getById(parentId)` (in-process, no HTTP).
 - Computes per-partner rows then appends the `totalCount` row.
 - Preserves the try/catch fallback: any error → `[{ bpType:'totalCount', counts:0 }]`.
-- **PO note:** if `ImpressionCountResult` restructure is adopted (see B02), this becomes a fetcher-level computation instead of a child field.
+- **PO note:** if `ImpressionCountResult` restructure is adopted (see B-02), this becomes a fetcher-level computation instead of a child field.
 
 ---
 
@@ -348,9 +348,9 @@ Product exposes `impressions` and `impressionCounts` resolved via the impression
 
 ---
 
-### SPARK-IMP-G03 · Test coverage & parity
+### IMPRESSION-BE-G-03 · Test coverage & parity
 
-- **Type:** Story  ·  **Phase:** G  ·  **Complexity:** Low  ·  **Category:** CAT-5  ·  **Depends on:** B01, B02, D01, G02
+- **Type:** Story  ·  **Phase:** G  ·  **Complexity:** Low  ·  **Category:** CAT-5  ·  **Depends on:** B-01, B-02, D-01, G-02
 
 - **In plain terms:** Prove the impression logic matches the old gateway.
 
@@ -386,18 +386,18 @@ Product exposes `impressions` and `impressionCounts` resolved via the impression
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|
 | `ImpressionCount` array-as-parent contract breaks on empty list | Low | Low | Preserve fallback; PO to decide on `ImpressionCountResult` restructure | Product Owner |
-| `enableWorkspaceContextFiltering` not forwarded — unclear intent | Low | Low | Confirm and document in B01 | Backend Eng |
-| F01 depends on `Product` type existing (product B01 init) | Low | Low | Sequence after product B01 merges; not a gateway blocker | Tech Lead |
+| `enableWorkspaceContextFiltering` not forwarded — unclear intent | Low | Low | Confirm and document in B-01 | Backend Eng |
+| F-01 depends on `Product` type existing (product B-01 init) | Low | Low | Sequence after product B-01 merges; not a gateway blocker | Tech Lead |
 
 ---
 
 ## 5. Summary
 
 - **Stories:** 7 (B:2 · D:1 · F:1 · G:3).
-- **Phase A dissolved** — DGS module init + `ImpressionService`/`ImpressionClient` folded into B01.
+- **Phase A dissolved** — DGS module init + `ImpressionService`/`ImpressionClient` folded into B-01.
 - **No High/Very-High stories** — `counts` aggregation is the only Medium.
 - **Lowest-risk domain** — recommended as the first migration to prove the end-to-end pipeline.
-- **F01 is independent of federation** — ships after product B01 merges; does not block other domains.
+- **F-01 is independent of federation** — ships after product B-01 merges; does not block other domains.
 
 ---
 *Pipeline 2.0 · Domain: `impression` · Source of truth: `resolvers/SPARK_Impression.js`*

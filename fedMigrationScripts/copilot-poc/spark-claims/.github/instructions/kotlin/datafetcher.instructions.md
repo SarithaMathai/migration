@@ -11,7 +11,7 @@ description: "Netflix DGS data fetcher rules for spark-claims (Kotlin)"
 
 - Phase B/C read story → `@DgsQuery`.
 - Phase D/E write story → `@DgsMutation`.
-- Phase F federation-contribution story → `@DgsEntityFetcher(name = "Product")` / `@DgsEntityFetcher(name = "ResourcesCount")` resolving only the contributed field, or `@DgsData(parentType = "Product", field = "claims")` depending on the chosen pattern — match whichever `SPARK-CLM-F01` established first.
+- Phase F federation-contribution story → `@DgsEntityFetcher(name = "Product")` / `@DgsEntityFetcher(name = "ResourcesCount")` resolving only the contributed field, or `@DgsData(parentType = "Product", field = "claims")` depending on the chosen pattern — match whichever `CLAIM-BE-F-01` established first.
 - Phase G field-resolver story → `@DgsData(parentType = "Claims", field = "…")`.
 
 ## Implementation shape
@@ -26,5 +26,5 @@ description: "Netflix DGS data fetcher rules for spark-claims (Kotlin)"
 ## Hard limits
 
 - No ACL or proxy-ACL logic (`getUserPermissionsJWTByProxy` and similar are context-only, never implemented here).
-- No compensation/rollback logic in `updateClaim` (`SPARK-CLM-E01`) until `SPARK-SPIKE-01` records its decision.
+- No compensation/rollback logic in `updateClaim` (`CLAIM-BE-E-01`) until `SPIKE-01` records its decision.
 - Keep the DGS layer free of caching unless the story's acceptance criteria ask for it (`getCommunicationChannels`/`getAllClaimsAbout` are marked cacheable — only cache where the story says so).

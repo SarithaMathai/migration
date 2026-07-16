@@ -120,7 +120,7 @@ Before publishing a story, verify all of these:
 
 ## Story ID & phase convention (unchanged)
 
-`SPARK-{DOMAIN_ABBREV}-{PHASE}{NN}` — e.g. `SPARK-BOM-B02`.
+`SPARK-{DOMAIN_ABBREV}-{PHASE}{NN}` — e.g. `BOM-BE-B-02`.
 Phases group by *what they deliver*: **A** Foundation/Schema · **B** Core Reads · **C** Search/Listing ·
 **D** Mutations · **E** Complex/Orchestration · **F** Federation/Stitching · **G** Field Resolvers & Tests.
 Category `CAT-1..5` is metadata, not the grouping key.

@@ -11,19 +11,19 @@ Each story is self-contained. Full pseudo-logic in [02-resolver-analysis.md](./0
 ## 1. Phases Overview
 | Phase | Name | Stories |
 |---|---|---|
-| B | Core Reads | B01–B06 |
-| C | Search & Listing | C01 |
-| D | Mutations (simple) | D01–D09 |
-| E | Complex (multi-step write) | E01 |
-| F | Federation (internal) | F01 |
-| G | Field Resolvers & Tests | G01–G06 |
+| B | Core Reads | B-01–B-06 |
+| C | Search & Listing | C-01 |
+| D | Mutations (simple) | D-01–D-09 |
+| E | Complex (multi-step write) | E-01 |
+| F | Federation (internal) | F-01 |
+| G | Field Resolvers & Tests | G-01–G-06 |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## 2. Dependency Graph
 ```mermaid
 graph TD
-  B01 & E01 & G03 & G04 --> G06
+  B01["B-01"] & E01["E-01"] & G03["G-03"] & G04["G-04"] --> G06["G-06"]
 ```
 
 ---
@@ -34,7 +34,7 @@ graph TD
 
 ---
 
-### SPARK-PKG-B01 · `getPackagings(...)`
+### PKG-BE-B-01 · `getPackagings(...)`
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** List packagings with paging and filters.
@@ -48,8 +48,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-B02 · `getPackagingById(packagingId)`
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-B-02 · `getPackagingById(packagingId)`
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Fetch one packaging by id.
 
@@ -61,8 +61,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-B03 · `getDielines(...)`
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-B-03 · `getDielines(...)`
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** List dielines (print layouts) for a packaging.
 
@@ -74,8 +74,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-B04 · `getPackagingFieldValuesByType(type, ids)`
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-B-04 · `getPackagingFieldValuesByType(type, ids)`
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Return packaging field-value lookups by type.
 
@@ -87,8 +87,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-B05 · `getDielineEvaluationStatuses` (cacheable)
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-B-05 · `getDielineEvaluationStatuses` (cacheable)
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Return the dieline evaluation-status lookup (cached).
 
@@ -100,8 +100,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-B06 · `getCountries(codes)` (cacheable)
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-B-06 · `getCountries(codes)` (cacheable)
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Return the country lookup (cached).
 
@@ -117,8 +117,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-C01 · `getPackagingElastic(parentHumanId)`
-- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `search`
+### PKG-BE-C-01 · `getPackagingElastic(parentHumanId)`
+- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `search`
 
 - **In plain terms:** Search a product's packagings via elastic.
 
@@ -134,8 +134,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D01 · `addPackaging`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-D-01 · `addPackaging`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Create a packaging.
 
@@ -148,8 +148,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D02 · `evaluateDieline`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-D-02 · `evaluateDieline`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Trigger evaluation of a dieline.
 
@@ -161,8 +161,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D03 · `bulkAddPackagings`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-D-03 · `bulkAddPackagings`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Create many packagings at once.
 
@@ -175,8 +175,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D04 · `bulkUpdatePackagings`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-D-04 · `bulkUpdatePackagings`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Update many packagings at once.
 
@@ -189,8 +189,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D05 · `exportPackaging`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-D-05 · `exportPackaging`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Kick off a packaging export.
 
@@ -202,8 +202,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D06 · `lockPackaging`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-D-06 · `lockPackaging`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Lock a packaging from edits.
 
@@ -215,8 +215,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D07 · `unlockPackaging`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-D-07 · `unlockPackaging`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Unlock a packaging.
 
@@ -228,8 +228,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D08 · `cloneFilesForDielines`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `attachment`
+### PKG-BE-D-08 · `cloneFilesForDielines`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment`
 
 - **In plain terms:** Copy attachment files for dielines.
 
@@ -241,8 +241,8 @@ graph TD
 
 ---
 
-### SPARK-PKG-D09 · `updatePackagingComponentStatus`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-D-09 · `updatePackagingComponentStatus`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Update component status on packagings.
 
@@ -259,8 +259,10 @@ graph TD
 
 ---
 
-### SPARK-PKG-E01 · `updatePackaging` (multi-step write)
-- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `attachment` · 🟡 `relationship`
+### PKG-BE-E-01 · `updatePackaging` (multi-step write)
+- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment` · 🟡 `relationship`
+
+> **Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — draft ADR-013, ratification pending.** Saga steps: body PUT (validation checked **before** attachment side-effects — the late-check defect is fixed as an accepted deviation, ADR-013 pin-down 3) → attachment archive/attrs `RECORD`+reconcile → relationship add/remove `COMPENSATE`.
 
 - **In plain terms:** Edit a packaging — a multi-step write (body + attachments + relationships) with no rollback today.
 
@@ -295,8 +297,8 @@ attachment add/remove changes stay consistent.
 
 ---
 
-### SPARK-PKG-F01 · Product packaging links (internal, same subgraph)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### PKG-BE-F-01 · Product packaging links (internal, same subgraph)
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Expose a product's packagings on the Product type (same subgraph).
 
@@ -314,8 +316,8 @@ in-process (not gateway federation; depends only on the `Product`/`Component` ty
 
 ---
 
-### SPARK-PKG-G01 · `access` + `businessPartner` + `participantDetails`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔵 `vmm` · 🔵 `userGroup`
+### PKG-BE-G-01 · `access` + `businessPartner` + `participantDetails`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔵 `vmm` · 🔵 `userGroup`
 
 - **In plain terms:** Resolve a packaging's access / partner / participant fields.
 
@@ -328,8 +330,8 @@ in-process (not gateway federation; depends only on the `Product`/`Component` ty
 
 ---
 
-### SPARK-PKG-G02 · `createdBy` + `updatedBy` + `dielineEvaluators`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🟡 `userAttributes`
+### PKG-BE-G-02 · `createdBy` + `updatedBy` + `dielineEvaluators`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `userAttributes`
 
 - **In plain terms:** Resolve the people fields on a packaging.
 
@@ -342,8 +344,8 @@ in-process (not gateway federation; depends only on the `Product`/`Component` ty
 
 ---
 
-### SPARK-PKG-G03 · `product` + `workspaces` + `attachments`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `search`
+### PKG-BE-G-03 · `product` + `workspaces` + `attachments`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `search`
 
 - **In plain terms:** Resolve a packaging's product, workspaces and attachments.
 
@@ -358,8 +360,8 @@ in-process (not gateway federation; depends only on the `Product`/`Component` ty
 
 ---
 
-### SPARK-PKG-G04 · `suggestedRetailPriceByDPCI` + `waveDescription` + `retailPrice`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🟡 `tag` · 🔵 `apex`
+### PKG-BE-G-04 · `suggestedRetailPriceByDPCI` + `waveDescription` + `retailPrice`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `tag` · 🔵 `apex`
 
 - **In plain terms:** Resolve pricing fields (the dieline→DPCI→price chain).
 
@@ -384,8 +386,8 @@ in-process (not gateway federation; depends only on the `Product`/`Component` ty
 
 ---
 
-### SPARK-PKG-G05 · `Dieline` + `PrinterDieline` + `PackagingElement` field resolvers
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `attachment` · 🔴 `search` · 🟡 `userAttributes`
+### PKG-BE-G-05 · `Dieline` + `PrinterDieline` + `PackagingElement` field resolvers
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment` · 🔴 `search` · 🟡 `userAttributes`
 
 - **In plain terms:** Resolve the dieline / printer-dieline / element sub-type fields.
 
@@ -399,8 +401,8 @@ in-process (not gateway federation; depends only on the `Product`/`Component` ty
 
 ---
 
-### SPARK-PKG-G06 · Tests, parity harness
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B01, E01, G03, G04
+### PKG-BE-G-06 · Tests, parity harness
+- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B-01, E-01, G-03, G-04
 
 - **In plain terms:** Prove the packaging subgraph matches the old gateway.
 
@@ -419,16 +421,16 @@ incl. `@deprecated`).
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
-| `updatePackaging` multi-step partial failure (E01) | Medium | High | Saga / compensation; align add/remove error handling | Tech Lead + PO |
-| `suggestedRetailPriceByDPCI` multi-hop pricing (G04) | Medium | Medium | Cache/batch; honor the `requiresSuggestedRetailPrice` gate | Backend Eng |
-| `updatePackagingComponentStatus` no auth token (D09) | Low | Medium | Confirm backend-enforced | PO |
-| Attachment-by-search field perf (G03/G05) | Low | Medium | Shared helper; batch | Backend Eng |
+| `updatePackaging` multi-step partial failure (E-01) | Medium | High | Saga / compensation; align add/remove error handling | Tech Lead + PO |
+| `suggestedRetailPriceByDPCI` multi-hop pricing (G-04) | Medium | Medium | Cache/batch; honor the `requiresSuggestedRetailPrice` gate | Backend Eng |
+| `updatePackagingComponentStatus` no auth token (D-09) | Low | Medium | Confirm backend-enforced | PO |
+| Attachment-by-search field perf (G-03/G-05) | Low | Medium | Shared helper; batch | Backend Eng |
 | Claims pass-through on `PackagingInput` | Low | Low | Confirm ownership (packaging vs claims) | Product Owner |
 
 ## 5. Summary
 - **Stories:** 24 (B:6 · C:1 · D:9 · E:1 · F:1 · G:6).
-- **Critical path:** A02/E01→G04→G06.
-- **Highest risk:** `updatePackaging` (E01); `suggestedRetailPriceByDPCI` (G04).
+- **Critical path:** A-02/E-01→G-04→G-06.
+- **Highest risk:** `updatePackaging` (E-01); `suggestedRetailPriceByDPCI` (G-04).
 - **Co-located:** packaging is in the `plm-product` monorepo; Product packaging links resolve internally.
 
 ---

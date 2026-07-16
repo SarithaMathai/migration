@@ -1,7 +1,7 @@
 # Spark → Federated GraphQL Migration — Program Overview
 
 > 🏷️ **Tags:** `dgs-migration` · `program-overview` — **Confluence:** *Federation Graph Migration* (space home)
-> **Generated:** 2026-07-07 · **Scope:** 8 domains (phase 1) · `spark-internal-graphql` → Netflix DGS via Hive Schema Registry
+> **Generated:** 2026-07-15 · **Scope:** 8 domains (phase 1) · `spark-internal-graphql` → Netflix DGS via Hive Schema Registry
 > Effort is **AI-estimated — confirm in refinement.**
 
 ---
@@ -25,10 +25,10 @@
 |---|---|
 | Total domains | 8 |
 | Target DGS services | 2 |
-| **Total stories** | **206** |
-| Complexity | 🔴 6 Very High · 🟠 14 High · 🟡 79 Medium · 🟢 107 Low |
+| **Total stories** | **200** build stories (Phase-0 spikes tracked separately: 7 program spikes + their domain stubs) |
+| Complexity | 🔴 6 Very High · 🟠 13 High · 🟡 76 Medium · 🟢 105 Low |
 | Open decisions | 34 |
-| **Effort (buffered +20%)** | **435–737 engineer-days** |
+| **Effort (buffered +20%)** | **432–733 engineer-days** |
 
 ---
 
@@ -36,15 +36,15 @@
 
 | Domain | Target DGS | Stories | T-Shirt | 🔴 | 🟠 | 🟡 | 🟢 | Effort (buffered) | Top risk |
 |---|---|---|---|---|---|---|---|---|---|
-| [Product](./product/FederatedGqlBrakDown-product.md) | `plm-product (host)` | **70** | XXL | 5 | 5 | 27 | 33 | 197–330d | 🔴 High TechPack aggregation + partner drop/undrop orchestration |
-| [BOM](./bom/FederatedGqlBrakDown-bom.md) | `plm-product (co-located)` | **39** | XL | 1 | 2 | 13 | 23 | 68–114d | 🔴 High `updateBom` 3-step write — no rollback path today |
+| [Product](./product/FederatedGqlBrakDown-product.md) | `plm-product (host)` | **67** | XXL | 5 | 4 | 25 | 33 | 194–326d | 🔴 High TechPack aggregation + partner drop/undrop orchestration |
+| [BOM](./bom/FederatedGqlBrakDown-bom.md) | `plm-product (co-located)` | **36** | XL | 1 | 2 | 12 | 21 | 68–114d | 🔴 High `updateBom` 3-step write — no rollback path today |
 | [Packaging](./packaging/FederatedGqlBrakDown-packaging.md) | `plm-product (co-located)` | **24** | L | 0 | 2 | 9 | 13 | 42–72d | 🟡 Medium `updatePackaging` multi-step write + elastic search cutover |
 | [Measurement](./measurement/FederatedGqlBrakDown-measurement.md) | `plm-product (co-located)` | **20** | M | 0 | 1 | 6 | 13 | 32–55d | 🟡 Medium `updateMeasurement` 2-step write + master-data cache |
 | [Claims](./claims/FederatedGqlBrakDown-claims.md) | `spark-claims (separate)` | **20** | L | 0 | 2 | 9 | 9 | 36–62d | 🟡 Medium `updateClaim` proxy-ACL multi-step + camelCase response bug |
 | [Impression](./impression/FederatedGqlBrakDown-impression.md) | `plm-product (co-located)` | **7** | XS | 0 | 0 | 2 | 5 | 11–18d | 🟢 Low Impression sub-type polymorphism (5 types) |
 | [Product Details](./productDetails/FederatedGqlBrakDown-productDetails.md) | `plm-product (co-located)` | **13** | M | 0 | 1 | 7 | 5 | 24–42d | 🟡 Medium `updateProductDetailsSet` multi-step + elastic search |
 | [Watchlist](./watchlist/FederatedGqlBrakDown-watchlist.md) | `plm-product (co-located)` | **13** | M | 0 | 1 | 6 | 6 | 25–44d | 🟡 Medium `updateWatchlistEntries` multi-step write |
-| **TOTAL** | — | **206** | — | **6** | **14** | **79** | **107** | **435–737d** | — |
+| **TOTAL** | — | **200** | — | **6** | **13** | **76** | **105** | **432–733d** | — |
 
 > All counts + complexity are computed live from each domain's `04-stories.md` (same parser as the breakdown + Jira CSVs), so these totals always reconcile.
 
@@ -52,24 +52,28 @@
 
 ## DGS service groupings
 
-| DGS Service | Domains | Combined stories |
-|---|---|---|
-| `plm-product` | Product · BOM · Measurement · Packaging · Impression · Product Details · Watchlist | 186 |
-| `plm-sample` | Sample | 33 |
-| `plm-discussion` | Discussion | 37 |
-| `plm-workspace` | Workspace | 32 |
-| `plm-attachment` | Attachment | 26 |
-| `plm-elastic-search` | Search | 21 |
-| `spark-claims` | Claims | 22 |
+| DGS Service | Phase | Domains | Combined stories |
+|---|---|---|---|
+| `plm-product` | 1 | Product · BOM · Measurement · Packaging · Impression · Product Details · Watchlist | 180 |
+| `spark-claims` | 1 | Claims | 20 |
+| `plm-sample` | later | Sample | ~33 (estimate — analysis not yet regenerated) |
+| `plm-discussion` | later | Discussion | ~37 (estimate) |
+| `plm-workspace` | later | Workspace | ~32 (estimate) |
+| `plm-attachment` | later | Attachment | ~26 (estimate) |
+| `plm-elastic-search` | later | Search | ~21 (estimate) |
+
+> Phase-1 rows are computed live from `04-stories.md`; later-phase rows are earlier-pass estimates,
+> re-baselined when those domains' analyses are regenerated.
 
 ---
 
 ## Recommended sequencing
 
 ```
-Tier 1 — Foundation:  Search (read hub) · Product (host DGS, shared wiring)
-Tier 2 — Co-located:  Impression → Measurement → ProductDetails → Watchlist → BOM → Packaging
-Tier 3 — Separate:    Attachment · Claims · Discussion · Sample · Workspace
+Tier 1 — Foundation:  Product (host DGS, shared wiring; phase 1) · Search (read hub — later-phase domain,
+                      sequenced first among them because every domain reads through it)
+Tier 2 — Co-located:  Impression → Measurement → ProductDetails → Watchlist → BOM → Packaging  (phase 1)
+Tier 3 — Separate:    Claims (phase 1) · Attachment · Discussion · Sample · Workspace  (later phase)
 Tier 4 — Federation:  all F-phase stories, once the owning subgraph is live
 ```
 
@@ -77,14 +81,14 @@ Tier 4 — Federation:  all F-phase stories, once the owning subgraph is live
 
 | Blocked story | Domain | Waits on |
 |---|---|---|
-| `SPARK-PROD-F01` (attachments) | product | **attachment** |
-| `SPARK-PROD-F02` (discussions) | product | **discussion** |
-| `SPARK-PROD-F03` (sample) | product | **sample** |
-| `SPARK-PROD-F05` (claims) | product | **claim** |
-| `SPARK-PROD-F07` (constructions) | product | **construction** |
-| `SPARK-MEAS-F02` (sampleMeasurement) | measurement | **sample** |
+| `PRODUCT-BE-F-01` (attachments) | product | **attachment** (`plm-attachment`, later phase) |
+| `PRODUCT-BE-F-02` (discussions) | product | **discussion** (`plm-discussion`, later phase) |
+| `PRODUCT-BE-F-03` (sample) | product | **sample** (`plm-sample`, later phase) |
+| `PRODUCT-BE-F-05` (claims) | product | **claims** (`spark-claims`, phase 1) |
+| `PRODUCT-BE-F-07` (constructions) | product | **construction** (no subgraph scheduled yet — `F-07` stays blocked until one exists) |
+| `MST-BE-F-02` (sampleMeasurement) | measurement | **sample** (`plm-sample`, later phase) |
 
-> Internal (NOT blockers, same `plm-product` subgraph): `SPARK-BOM-F01/F02`, `SPARK-PROD-F04/F06/F08`, `SPARK-MEAS-F01`, `SPARK-IMP-F01`, `SPARK-PDTL-F01`, `SPARK-PKG-F01`.
+> Internal (NOT blockers, same `plm-product` subgraph): `BOM-BE-F-01/F-02`, `PRODUCT-BE-F-04/F-06/F-08`, `MST-BE-F-01`, `IMPRESSION-BE-F-01`, `PDTL-BE-F-01`, `PKG-BE-F-01`.
 
 ---
 
@@ -95,4 +99,4 @@ Tier 4 — Federation:  all F-phase stories, once the owning subgraph is live
 - **Read order by role + regeneration:** see `README.md`.
 
 ---
-*Program overview · generated 2026-07-07 from `output/initial-analysis/*/04-*.md`.*
+*Program overview · generated 2026-07-15 from `output/initial-analysis/*/04-*.md`.*

@@ -35,10 +35,10 @@
 ## How to read a story row (scan, don't implement)
 
 ```
-SPARK-BOM-B04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
+BOM-BE-B-04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
 ```
 - **Size:** 🟢 XS · 🟡 M · 🟠 L · 🔴 XL — drives sprint load.
-- **Depends On:** only real story-to-story blockers (the one-time `B01` scaffold is assumed, not shown).
+- **Depends On:** only real story-to-story blockers (the one-time `B-01` scaffold is assumed, not shown).
 - **Status:** ⬜ Not Started → update as work proceeds.
 
 > Each story = **one `spark-internal-graphql` operation being migrated** (the title is that operation).

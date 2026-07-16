@@ -64,9 +64,9 @@ multi-hop pricing field.
 ## 5. Risks & Recommendations
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|
-| `updatePackaging` multi-step partial failure (E01) | Medium | High | Saga / compensation; align add/remove error handling | Tech Lead + PO |
-| `suggestedRetailPriceByDPCI` multi-hop (dielines→dpcis→pricing) (G04) | Medium | Medium | Cache/batch; guard on `requiresSuggestedRetailPrice` | Backend Eng |
-| `updatePackagingComponentStatus` has no auth token (D09) | Low | Medium | Confirm backend enforces; document | PO |
+| `updatePackaging` multi-step partial failure (E-01) | Medium | High | Saga / compensation; align add/remove error handling | Tech Lead + PO |
+| `suggestedRetailPriceByDPCI` multi-hop (dielines→dpcis→pricing) (G-04) | Medium | Medium | Cache/batch; guard on `requiresSuggestedRetailPrice` | Backend Eng |
+| `updatePackagingComponentStatus` has no auth token (D-09) | Low | Medium | Confirm backend enforces; document | PO |
 | Attachment-by-search field resolvers (perf) | Low | Medium | Shared search helper; batch | Backend Eng |
 | Claims pass-through fields on `PackagingInput` | Low | Low | Confirm ownership (packaging vs claims subgraph) | Product Owner |
 

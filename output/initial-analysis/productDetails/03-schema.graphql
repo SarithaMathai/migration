@@ -154,18 +154,18 @@ input UserGroup_ParticipantsInput { _placeholder: String }
 
 # --- Queries (names + nullability preserved from the SDL) ---
 extend type Query {
-  getProductDetailsById(ids: [String]): [ProductDetails]               # 🔜 B01
-  getProductDetailsElastic(resourceId: String): ProductDetailsPaged    # 🔜 C01 (🔴 search)
+  getProductDetailsById(ids: [String]): [ProductDetails]               # 🔜 B-01
+  getProductDetailsElastic(resourceId: String): ProductDetailsPaged    # 🔜 C-01 (🔴 search)
 }
 
 # --- Mutations (names + nullability preserved from the SDL) ---
 extend type Mutation {
-  createProductDetailsSet(productDetails: ProductDetailSetInput): ProductDetails                              # 🔜 D01 (throws on validationErrors)
-  updateProductDetailAccess(updateAccessPermissions: ProductDetailsManagePermissionInput): [ProductDetails]   # 🔜 D02
-  productDetailLockUnlock(constructionSetId: ID!, isLock: Boolean): ProductDetails                            # 🔜 D03
-  cloneFilesForProductDetails(attachmentIds: [String], cloneReference: [PDTLAttachmentCloneRef]): [Attachment]# 🔜 D04 (🔴 attachment)
-  updateProductDetailComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): ProductDetailsPaged  # 🔜 D05 (no JWT — confirm)
-  updateProductDetailsSet(productDetailsId: ID!, productDetails: ProductDetailSetUpdateInput): ProductDetails  # 🔜 E01 (multi-step, non-atomic)
+  createProductDetailsSet(productDetails: ProductDetailSetInput): ProductDetails                              # 🔜 D-01 (throws on validationErrors)
+  updateProductDetailAccess(updateAccessPermissions: ProductDetailsManagePermissionInput): [ProductDetails]   # 🔜 D-02
+  productDetailLockUnlock(constructionSetId: ID!, isLock: Boolean): ProductDetails                            # 🔜 D-03
+  cloneFilesForProductDetails(attachmentIds: [String], cloneReference: [PDTLAttachmentCloneRef]): [Attachment]# 🔜 D-04 (🔴 attachment)
+  updateProductDetailComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): ProductDetailsPaged  # 🔜 D-05 (no JWT — confirm)
+  updateProductDetailsSet(productDetailsId: ID!, productDetails: ProductDetailSetUpdateInput): ProductDetails  # 🔜 E-01 (multi-step, non-atomic)
 }
 
 # --- Federation: ProductDetails contributes to Product (Phase F — INTERNAL, same subgraph) ---

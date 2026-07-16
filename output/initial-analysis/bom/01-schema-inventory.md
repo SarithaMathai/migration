@@ -77,7 +77,7 @@ utils/bomUtils.js
 
 > **Config note:** `config/businessPartner` and `config/constants` are imported but are **not present**
 > in the snapshot. The values used (`BusinessPartnerRole.TRIM_SUPPLIER.code`, `VMM_ROLE_IDS.*`) are role
-> ID constants — port them as Kotlin enums; confirm exact codes against the real config during A06.
+> ID constants — port them as Kotlin enums; confirm exact codes against the real config during A-06.
 
 ## 4. Cross-Domain Reference Table
 

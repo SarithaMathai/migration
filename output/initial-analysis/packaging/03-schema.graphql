@@ -211,27 +211,27 @@ input UserGroup_ParticipantsInput { _placeholder: String }
 
 # --- Queries (names + nullability preserved from the SDL) ---
 extend type Query {
-  getPackagings(page: Int = 0, size: Int = 10000, packagingIds: [String], parentIds: [String], workspaceIds: [String], partnerIds: [String], statusIds: [Int]): PackagingPaged   # 🔜 B01
-  getPackagingById(packagingId: String!): Packaging                                                          # 🔜 B02
-  getDielines(page: Int = 0, size: Int = 10000, packagingIds: [String], parentIds: [String], printerIds: [String], statusIds: [Int]): [Dieline]   # 🔜 B03
-  getPackagingFieldValuesByType(type: String!, ids: [Int]): [PackagingFieldValues]                           # 🔜 B04
-  getDielineEvaluationStatuses: [CodeDescription]                                                            # 🔜 B05 (cacheable)
-  getCountries(codes: [String]): [Countries]                                                                 # 🔜 B06 (cacheable)
-  getPackagingElastic(parentHumanId: String): [Packaging]                                                    # 🔜 C01 (🔴 search)
+  getPackagings(page: Int = 0, size: Int = 10000, packagingIds: [String], parentIds: [String], workspaceIds: [String], partnerIds: [String], statusIds: [Int]): PackagingPaged   # 🔜 B-01
+  getPackagingById(packagingId: String!): Packaging                                                          # 🔜 B-02
+  getDielines(page: Int = 0, size: Int = 10000, packagingIds: [String], parentIds: [String], printerIds: [String], statusIds: [Int]): [Dieline]   # 🔜 B-03
+  getPackagingFieldValuesByType(type: String!, ids: [Int]): [PackagingFieldValues]                           # 🔜 B-04
+  getDielineEvaluationStatuses: [CodeDescription]                                                            # 🔜 B-05 (cacheable)
+  getCountries(codes: [String]): [Countries]                                                                 # 🔜 B-06 (cacheable)
+  getPackagingElastic(parentHumanId: String): [Packaging]                                                    # 🔜 C-01 (🔴 search)
 }
 
 # --- Mutations (names + nullability preserved from the SDL) ---
 extend type Mutation {
-  addPackaging(sparkPackaging: PackagingInput): Packaging                                                    # 🔜 D01 (throws on validationErrors)
-  evaluateDieline(dielineId: String!, dielineEvaluation: DielineEvaluationInput): Dieline                    # 🔜 D02
-  bulkAddPackagings(bulkPackagingInput: PackagingBulkInput!): PackagingBulk                                  # 🔜 D03 (throws)
-  bulkUpdatePackagings(bulkPackagingInput: PackagingBulkInput!): PackagingBulk                               # 🔜 D04 (throws)
-  exportPackaging(workspaceId: String!, workspaceDescription: String!, ids: [String]): String               # 🔜 D05
-  lockPackaging(packagingId: String!): Packaging                                                             # 🔜 D06
-  unlockPackaging(packagingId: String!): Packaging                                                           # 🔜 D07
-  cloneFilesForDielines(attachmentIds: [String!], cloneReferences: [DielineAttachmentCloneRef!]): [Attachment]  # 🔜 D08 (🔴 attachment)
-  updatePackagingComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): PackagingPagedForStatus  # 🔜 D09 (no JWT — confirm)
-  updatePackaging(packagingId: String!, sparkPackaging: PackagingInput): Packaging                           # 🔜 E01 (multi-step, non-atomic)
+  addPackaging(sparkPackaging: PackagingInput): Packaging                                                    # 🔜 D-01 (throws on validationErrors)
+  evaluateDieline(dielineId: String!, dielineEvaluation: DielineEvaluationInput): Dieline                    # 🔜 D-02
+  bulkAddPackagings(bulkPackagingInput: PackagingBulkInput!): PackagingBulk                                  # 🔜 D-03 (throws)
+  bulkUpdatePackagings(bulkPackagingInput: PackagingBulkInput!): PackagingBulk                               # 🔜 D-04 (throws)
+  exportPackaging(workspaceId: String!, workspaceDescription: String!, ids: [String]): String               # 🔜 D-05
+  lockPackaging(packagingId: String!): Packaging                                                             # 🔜 D-06
+  unlockPackaging(packagingId: String!): Packaging                                                           # 🔜 D-07
+  cloneFilesForDielines(attachmentIds: [String!], cloneReferences: [DielineAttachmentCloneRef!]): [Attachment]  # 🔜 D-08 (🔴 attachment)
+  updatePackagingComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): PackagingPagedForStatus  # 🔜 D-09 (no JWT — confirm)
+  updatePackaging(packagingId: String!, sparkPackaging: PackagingInput): Packaging                           # 🔜 E-01 (multi-step, non-atomic)
 }
 
 # --- Federation: Packaging contributes to Product (Phase F — INTERNAL, same subgraph) ---

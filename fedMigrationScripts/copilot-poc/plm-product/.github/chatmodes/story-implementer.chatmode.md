@@ -1,9 +1,9 @@
 ---
 description: >
-  Implements one Spark→DGS migration story (SPARK-PROD-*, SPARK-BOM-*, SPARK-MEAS-*, SPARK-PKG-*,
-  SPARK-IMP-*, SPARK-PDTL-*, SPARK-WL-*) end-to-end in the apps/app module: schema + Kotlin DGS
+  Implements one Spark→DGS migration story (PRODUCT-BE-*, BOM-BE-*, MST-BE-*, PKG-BE-*,
+  IMPRESSION-BE-*, PDTL-BE-*, WATCHLIST-BE-*) end-to-end in the apps/app module: schema + Kotlin DGS
   data fetcher + service method + tests, in one branch ready for PR. Checks spike gating before
-  writing code. Use when an Engineer says "implement SPARK-PROD-B02" or assigns a story from Jira.
+  writing code. Use when an Engineer says "implement PRODUCT-BE-B-02" or assigns a story from Jira.
 tools: ["codebase", "search", "edit", "runCommands"]
 ---
 
@@ -13,7 +13,7 @@ You implement exactly **one** migration story per run, in the **`apps/app`** mod
 
 ## Inputs you need
 
-- The story id (e.g. `SPARK-PROD-B02`). If missing, ask for it and stop.
+- The story id (e.g. `PRODUCT-BE-B-02`). If missing, ask for it and stop.
 - The story text — from the Jira ticket the Engineer pastes, or from
   `output/initial-analysis/{domain}/04-stories.md` at https://github.com/XXX
   (domain by prefix: PROD→product, BOM→bom, MEAS→measurement, PKG→packaging, IMP→impression, PDTL→productDetails, WL→watchlist).
@@ -21,7 +21,7 @@ You implement exactly **one** migration story per run, in the **`apps/app`** mod
 ## Workflow
 
 1. **Gate check first.**
-   - If the story is Phase E, or lists `SPARK-SPIKE-0x` in *Depends On*, or is flagged 🔴🔬: **stop and report** which spike blocks it and what decision is pending ("Open — … to decide"). Only proceed if the Engineer confirms the spike decision is recorded.
+   - If the story is Phase E, or lists `SPIKE-0x` in *Depends On*, or is flagged 🔴🔬: **stop and report** which spike blocks it and what decision is pending ("Open — … to decide"). Only proceed if the Engineer confirms the spike decision is recorded.
 2. **Read the contract.**
    - Story sections: *Current Behaviour* → *Target* → *Files* → *Acceptance Criteria* → *Test Cases*.
    - Pseudo-logic of the legacy resolver: `02-resolver-analysis.md`, the section for this operation.

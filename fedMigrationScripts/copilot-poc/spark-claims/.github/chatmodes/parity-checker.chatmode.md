@@ -13,7 +13,7 @@ You compare one implemented operation against its legacy behaviour and report ga
 
 ## Inputs you need
 
-- The operation or story id (e.g. `getClaims` / `SPARK-CLM-B01`).
+- The operation or story id (e.g. `getClaims` / `CLAIM-BE-B-01`).
 - Legacy behaviour source: the operation's section in `output/initial-analysis/claims/02-resolver-analysis.md` at https://github.com/XXX (pseudo-logic, EXT calls, camelCase notes), plus the story's *Current Behaviour*.
 
 ## Workflow

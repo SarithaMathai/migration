@@ -81,7 +81,7 @@ Analyze the GraphQL domain "watchlist" per finalOutput/scripts/ (skills 01→06)
 - service : code/services/product/Watchlist.txt
 Co-located in the plm-product monorepo (service uses the enterprise_product_development_products base);
 it contributes ResourcesCount.watchlists to Product TechPack INTERNALLY (CAT-2, like bom/measurement —
-see SPARK-PROD-F08). Output finalOutput/watchlist/01..05 + confluence/watchlist.md, run
+see PRODUCT-BE-F-08). Output finalOutput/watchlist/01..05 + confluence/watchlist.md, run
 python finalOutput/jira/generate.py, and refresh the program rollups. Follow the RUN-NEW-DOMAIN.md rules.
 ```
 

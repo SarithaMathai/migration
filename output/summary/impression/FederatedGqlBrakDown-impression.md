@@ -7,7 +7,7 @@
 | **Total Stories** | 7 |
 | **Complexity** | 🔴 0 Very High · 🟠 0 High · 🟡 2 Medium · 🟢 5 Low |
 | **Phase Coverage** | 📖 B · ✏️ D · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-07 |
+| **Generated** | 2026-07-15 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
 
@@ -24,8 +24,7 @@ that proves the pipeline end-to-end.
 - The only mild wrinkle is the counts query: today it returns the impressions **list** and a field resolver aggregates per-partner counts (re-fetching the product).
 - We recommend a cleaner typed result as a fast-follow, but the existing contract can be preserved exactly.
 
-**ACL note:** the current code obtains a per-product capability token via ACL; **ACL is ignored in the DGS
-implementation** (no ACL story) — noted for context only.
+**ACL note:** the current code obtains a per-product capability token via ACL; Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs ([`complexStories/*/02-adr-noacl-*.md`](https://github.com/XXX/blob/main/output/complexStories/*/02-adr-noacl-*.md)) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
 
 ---
 
@@ -76,10 +75,10 @@ implementation** (no ACL story) — noted for context only.
 
 | Sprint | Stories | Focus |
 |---|---|---|
-| 1 | B01 + B02 | **B01:** DGS module init (schema/types/stubs/scalars) + ImpressionService wiring + `searchImpressionsByProductId`; **B02:** counts query |
-| 2 | D01 + G01 + G02 | mutation + field resolvers + counts aggregation |
-| 3 | G03 | tests & parity |
-| post-launch | F01 | Product extension (unblocked by product) |
+| 1 | B-01 + B-02 | **B-01:** DGS module init (schema/types/stubs/scalars) + ImpressionService wiring + `searchImpressionsByProductId`; **B-02:** counts query |
+| 2 | D-01 + G-01 + G-02 | mutation + field resolvers + counts aggregation |
+| 3 | G-03 | tests & parity |
+| post-launch | F-01 | Product extension (unblocked by product) |
 
 ---
 
@@ -91,10 +90,10 @@ implementation** (no ACL story) — noted for context only.
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔷 `SPARK-IMP-B01`<br>`searchImpressionsByProductId` data fetcher | 🟢 Low `XS` | Query | — | **Intent —** Find a product's impressions (colour / artwork placements).<br>**Done when:**<br>• `searchImpressionsByProductId(id)` returns impressions list; empty product → `[]`<br>• `partnerIds` and `workspaceIds` are forwarded as **repeated** query params (not CSV)<br>• `enableWorkspaceContextFiltering` intent is documented in code (forwarded or intentionally ignored)<br>• `./gradlew generateJava` passes and `DateTime` round-trips ISO-8601. *(One-time gate — verify once in this PR.)* |
-| 🔷 `SPARK-IMP-B02`<br>`getImpressionCountsByProductId` data fetcher | 🟢 Low `XS` | Query | B01 | **Intent —** Count a product's impressions.<br>**Done when:**<br>• Returns the impressions list as the `ImpressionCount` parent type<br>• The contract decision (list-as-parent vs typed result) is recorded in story comments<br>• Empty product → `counts` yields `totalCount: 0` (verified by G02) |
+| 🔷 `IMPRESSION-BE-B-01`<br>`searchImpressionsByProductId` data fetcher | 🟢 Low `XS` | Query | — | **Intent —** Find a product's impressions (colour / artwork placements).<br>**Done when:**<br>• `searchImpressionsByProductId(id)` returns impressions list; empty product → `[]`<br>• `partnerIds` and `workspaceIds` are forwarded as **repeated** query params (not CSV)<br>• `enableWorkspaceContextFiltering` intent is documented in code (forwarded or intentionally ignored)<br>• `./gradlew generateJava` passes and `DateTime` round-trips ISO-8601. *(One-time gate — verify once in this PR.)* |
+| 🔷 `IMPRESSION-BE-B-02`<br>`getImpressionCountsByProductId` data fetcher | 🟢 Low `XS` | Query | B-01 | **Intent —** Count a product's impressions.<br>**Done when:**<br>• Returns the impressions list as the `ImpressionCount` parent type<br>• The contract decision (list-as-parent vs typed result) is recorded in story comments<br>• Empty product → `counts` yields `totalCount: 0` (verified by G-02) |
 
-> **`SPARK-IMP-B01`** — **Note — DGS Module Init (this PR only):** Creates `impression.graphqls` (federation v2.3 header,
+> **`IMPRESSION-BE-B-01`** — **Note — DGS Module Init (this PR only):** Creates `impression.graphqls` (federation v2.3 header,
 > `scalar DateTime → Instant`, owned types `Impression @key(fields:"id")`, `ImpressionCount`,
 > `CountsByBp`, 3 inputs, `@shareable CountsByBp`, plus external stubs for `VMM_BusinessPartner`,
 > `Product`, `WorkspaceV2`, `UserProfileAttributes`) + registers the scalar in `ScalarConfig.kt` +
@@ -106,21 +105,21 @@ implementation** (no ACL story) — noted for context only.
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔶 `SPARK-IMP-D01`<br>`updateImpressions` mutation | 🟡 Medium `M` | Mutation | B01 | **Intent —** Update a product's impressions.<br>**Done when:**<br>• PUT body includes both delete and update sets in snake_case<br>• Response is mapped to camelCase and returned as `List<Impression>`<br>• Backend `validationErrors` or `message` → typed `ImpressionValidationException` thrown (not a silent partial return) |
+| 🔶 `IMPRESSION-BE-D-01`<br>`updateImpressions` mutation | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Update a product's impressions.<br>**Done when:**<br>• PUT body includes both delete and update sets in snake_case<br>• Response is mapped to camelCase and returned as `List<Impression>`<br>• Backend `validationErrors` or `message` → typed `ImpressionValidationException` thrown (not a silent partial return) |
 
 
 ### 🔗 Phase F — Federation & Stitching (1 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `SPARK-IMP-F01`<br>`Product.impressions` / `impressionCounts` (internal field resolver) | 🟢 Low `XS` | Field Resolver | B01 | **Intent —** Expose impressions and their counts on the Product type.<br>**Done when:**<br>• `Product.impressions` and `Product.impressionCounts` resolve in-process via `impressionService`<br>• No HTTP call is made during resolution (verified by unit test mock)<br>• Output matches the current product-side resolver (parity) |
+| 🔸 `IMPRESSION-BE-F-01`<br>`Product.impressions` / `impressionCounts` (internal field resolver) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose impressions and their counts on the Product type.<br>**Done when:**<br>• `Product.impressions` and `Product.impressionCounts` resolve in-process via `impressionService`<br>• No HTTP call is made during resolution (verified by unit test mock)<br>• Output matches the current product-side resolver (parity) |
 
 
 ### 🧪 Phase G — Field Resolvers & Tests (3 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `SPARK-IMP-G01`<br>`Impression` field resolvers (5 fields) | 🟢 Low `XS` | Field Resolver | B01 | **Intent —** Resolve the individual Impression fields.<br>**Done when:**<br>• `businessPartners` and `owningBusinessPartner` resolve correctly from `partnerIds` / `owningPartnerId`<br>• `workspaces` returns `[]` when `workspaceContext` is empty; the workspace service is not called<br>• `createdBy` / `updatedBy`: `null` id returns `null` — no exception thrown |
-| 🔸 `SPARK-IMP-G02`<br>`ImpressionCount.counts` aggregation | 🟡 Medium `M` | Field Resolver | B01 | **Intent —** Aggregate the per-type impression counts.<br>**Done when:**<br>• One row per product partner containing the correct filtered impression count<br>• Final row is always `{ bpType: 'totalCount', counts: <total impressions length> }`<br>• Empty impressions list or missing product → `[{ bpType: 'totalCount', counts: 0 }]` — no exception is propagated<br>• Product is fetched in-process; no HTTP call is made |
-| 🔸 `SPARK-IMP-G03`<br>Test coverage & parity | 🟢 Low `XS` | Field Resolver | B01, B02, D01, G02 | **Intent —** Prove the impression logic matches the old gateway.<br>**Done when:**<br>• Unit test coverage ≥ 80% for all impression data fetchers<br>• Parity tests are green for search, counts, and the update mutation<br>• The `counts` error-fallback path is explicitly covered by a unit test |
+| 🔸 `IMPRESSION-BE-G-01`<br>`Impression` field resolvers (5 fields) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Resolve the individual Impression fields.<br>**Done when:**<br>• `businessPartners` and `owningBusinessPartner` resolve correctly from `partnerIds` / `owningPartnerId`<br>• `workspaces` returns `[]` when `workspaceContext` is empty; the workspace service is not called<br>• `createdBy` / `updatedBy`: `null` id returns `null` — no exception thrown |
+| 🔸 `IMPRESSION-BE-G-02`<br>`ImpressionCount.counts` aggregation | 🟡 Medium `M` | Field Resolver | B-01 | **Intent —** Aggregate the per-type impression counts.<br>**Done when:**<br>• One row per product partner containing the correct filtered impression count<br>• Final row is always `{ bpType: 'totalCount', counts: <total impressions length> }`<br>• Empty impressions list or missing product → `[{ bpType: 'totalCount', counts: 0 }]` — no exception is propagated<br>• Product is fetched in-process; no HTTP call is made |
+| 🔸 `IMPRESSION-BE-G-03`<br>Test coverage & parity | 🟢 Low `XS` | Field Resolver | B-01, B-02, D-01, G-02 | **Intent —** Prove the impression logic matches the old gateway.<br>**Done when:**<br>• Unit test coverage ≥ 80% for all impression data fetchers<br>• Parity tests are green for search, counts, and the update mutation<br>• The `counts` error-fallback path is explicitly covered by a unit test |
 

@@ -1,10 +1,10 @@
-# ADR-016 (draft) — `notRemovablePartnerIds` / `unDroppablePartners` reads (`SPARK-SPIKE-04`)
+# ADR-016 (draft) — `notRemovablePartnerIds` / `unDroppablePartners` reads (`SPIKE-04`)
 
 > **Status:** 🔴 Proposed — draft for review
-> **Spike:** `SPARK-SPIKE-04` · **Home stubs:** `SPARK-PROD-G11-1` (notRemovable) · `SPARK-PROD-G07`
-> (unDroppable) · `SPARK-WS-G05` (later phase, workspace twins)
+> **Spike:** `SPIKE-04` · **Home stubs:** `PRODUCT-BE-G-11-1` (notRemovable) · `PRODUCT-BE-G-07`
+> (unDroppable) · `WORKSPACE-BE-G-05` (later phase, workspace twins)
 > **Scope:** the two **read** aggregations that answer "which partners can the user *not* remove / *not*
-> drop, because a child still references them". The drop/undrop **writes** are ADR-012 (`SPARK-SPIKE-03`),
+> drop, because a child still references them". The drop/undrop **writes** are ADR-012 (`SPIKE-03`),
 > not decided here.
 > **Related:** ADR-014 (owner-computed rollups) · ADR-015 (facade-then-federate — same lane decomposition) ·
 > ADR-018 (`attachmentsWithMetaData` — a direct dependency of the workspace twin) ·
@@ -100,16 +100,44 @@ ACL → AccessControlService · relationship → central service (**retiring**).
   source un-greys a partner who still owns data (an admin then removes a partner who shouldn't be).
 - Security-adjacent read, but a **read** — staleness risk is a wrong grey-out, not an access leak;
   still: async/materialized options must clear a higher bar than dashboard counts.
-- `G11-1` AC-2 is explicit: **no reflective resolver invocation remains** — every source becomes a direct,
+- `G-11-1` AC-2 is explicit: **no reflective resolver invocation remains** — every source becomes a direct,
   statically-typed call. The pattern chosen here decides what those calls are.
 - The Relationship-Service walk (unDroppable) is retiring — per-domain enumeration must replace it
   (same conclusion as ADR-012 pin-down 1: each participant enumerates its own children).
-- The workspace twins (`SPARK-WS-G05`, later phase) must inherit the pattern, not a redesign.
+- The workspace twins (`WORKSPACE-BE-G-05`, later phase) must inherit the pattern, not a redesign.
 - The `removablePartner/` spike clone already **validated the end-state E2E**: owner-computed aggregation
   via `@requires` over per-domain lane fields, gateway resolving lanes first then `_entities` back to the
   owner — including the stand-in trick for not-yet-live subgraphs.
 - Consistency: owner-computed reads (ADR-014), facade-then-federate phasing (ADR-015), async never for
   ACL/security edges (ADR-012).
+
+### Assumptions, constraints & success criteria
+
+**Assumptions**
+- The five legacy sources (discussions, attachments+components, samples, watchlists, owning partner) are
+  the complete set; per-source fixtures diffed against production samples confirm no source is reached
+  only via ad-hoc ACL grants before cutover.
+- Each referencing domain can answer "which partners do you still reference for X?" with one query it
+  already owns (validated E2E in the `removablePartner/` spike clone).
+- The UI's usage pattern holds: `unDroppablePartners` is queried only in the design-partner flow.
+
+**Constraints**
+- `G-11-1` AC-2: no reflective resolver invocation may remain — every source becomes a direct,
+  statically-typed call or a federated lane.
+- The `info.variableValues` coupling via the `samples` resolver cannot be ported — the lane contract must
+  be settled with the UI team before cutover (hard blocker, pin-down 2).
+- Lane fields must not leak into client-facing schemas (structural hiding until `@inaccessible` is usable).
+- The Relationship-Service walk may survive phase 1 only quarantined inside the owner's enumeration client.
+
+**Success criteria (measurable)**
+- Per-source recorded fixtures match legacy output for both fields on product and workspace (union per
+  source, plus the final union), with quirks (dps exclusion, `.filter(Number)`, first-workspace watchlist
+  scope, `isDesignPartner` gate) each pinned by a dedicated fixture.
+- Each lane flip (direct call → federated contribution) is individually gated on its per-source fixture
+  staying green; the aggregator field's contract and fixtures never change.
+- A schema-diff gate proves no lane field is exposed to clients.
+- Zero cross-resolver invocations remain (statically verifiable); the ADR-014/ADR-018 pipelines are no
+  longer dependencies of these fields.
 
 ---
 
@@ -127,7 +155,7 @@ ACL → AccessControlService · relationship → central service (**retiring**).
 - Port both utils into the owning subgraph; each source becomes a **client call scoped to ids/partners**
   (elastic discussions query, attachment-by-relatedResource query, sample-by-parent query, watchlist
   search, batched ACL) — never the sibling resolvers' full pipelines.
-- ➕ exact parity · satisfies `G11-1` AC-2 · kills the two accidental complex-case dependencies
+- ➕ exact parity · satisfies `G-11-1` AC-2 · kills the two accidental complex-case dependencies
   (components/attachmentsWithMetaData no longer invoked for ids).
 - ➖ the owner keeps a client for every domain, forever · each new referencing domain = an owner change ·
   the "which partners do you reference?" question still has no owner-side contract.
@@ -180,13 +208,13 @@ ACL → AccessControlService · relationship → central service (**retiring**).
 - **Option B** — the aggregation is **owned by the entity's home subgraph** (`plm-product` /
   `plm-workspace`), computed over **per-domain partner lanes**:
   - phase 1: the aggregator resolves lanes via direct service calls (Option A runtime, satisfying
-    `G11-1` AC-2), never via sibling resolver pipelines,
+    `G-11-1` AC-2), never via sibling resolver pipelines,
   - per lane, as the owning subgraph ships: the lane becomes a federated contribution
     (`extend type Product … @external/@requires` wiring per the `removablePartner/` clone), aggregator
     unchanged,
   - `unDroppablePartners` uses the same lanes for child enumeration + owner-side ACL join.
 - **Option D recorded as a possible cache refinement** after all lanes federate; never for phase 1.
-- Workspace twins (`SPARK-WS-G05`) inherit the contract — no second decision round.
+- Workspace twins (`WORKSPACE-BE-G-05`) inherit the contract — no second decision round.
 
 ### Pin-downs at ratification
 
@@ -208,7 +236,7 @@ ACL → AccessControlService · relationship → central service (**retiring**).
 ## 5. Consequences
 
 - If accepted:
-  - `G11-1` and `G07` implement one aggregator + a lane-client seam each; parity fixtures record the
+  - `G-11-1` and `G-07` implement one aggregator + a lane-client seam each; parity fixtures record the
     union per source so lane flips are individually gated,
   - the accidental coupling to ADR-014/ADR-018 pipelines disappears — those cases can now change their
     internals without breaking partner removability,
@@ -228,10 +256,10 @@ ACL → AccessControlService · relationship → central service (**retiring**).
 
 Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 
-1. Copy this write-up to `adrs/`; add the `SPARK-SPIKE-04` block to `adrs/adr-index.yaml`
+1. Copy this write-up to `adrs/`; add the `SPIKE-04` block to `adrs/adr-index.yaml`
    (`status: Accepted`, `chosen: "B — …"`, all options preserved).
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the lane contract table: lane field · owning domain · phase-1 client call · federation trigger).
-3. Replace the *"per `SPARK-SPIKE-04`"* placeholders in `output/initial-analysis/product/04-stories.md`
-   (`G07`, `G11-1`); workspace stories follow in their phase.
+3. Replace the *"per `SPIKE-04`"* placeholders in `output/initial-analysis/product/04-stories.md`
+   (`G-07`, `G-11-1`); workspace stories follow in their phase.
 4. Regenerate domain + global docs; push to Jira/Confluence.

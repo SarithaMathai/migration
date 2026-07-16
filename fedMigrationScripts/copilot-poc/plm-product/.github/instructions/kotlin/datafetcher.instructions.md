@@ -27,5 +27,5 @@ description: "Netflix DGS data fetcher rules for plm-product (apps/app module)"
 ## Hard limits
 
 - No ACL/permission-token logic — ACL is context-only (program-level decision).
-- No compensation/rollback logic in multi-step writes until `SPARK-SPIKE-01` records its decision.
+- No compensation/rollback logic in multi-step writes until `SPIKE-01` records its decision.
 - Keep the DGS layer free of caching unless the story's acceptance criteria ask for it.

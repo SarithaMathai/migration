@@ -12,19 +12,19 @@ cross-subgraph).
 ## 1. Phases Overview
 | Phase | Name | Stories |
 |---|---|---|
-| B | Core Reads | B01–B05 |
-| C | Search & Listing | C01–C02 |
-| D | Mutations (simple) | D01–D05 |
-| E | Complex (proxy-ACL multi-step write) | E01 |
-| F | Federation Contributions (BLOCKED-BY product) | F01–F02 |
-| G | Field Resolvers & Tests | G01–G05 |
+| B | Core Reads | B-01–B-05 |
+| C | Search & Listing | C-01–C-02 |
+| D | Mutations (simple) | D-01–D-05 |
+| E | Complex (proxy-ACL multi-step write) | E-01 |
+| F | Federation Contributions (BLOCKED-BY product) | F-01–F-02 |
+| G | Field Resolvers & Tests | G-01–G-05 |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## 2. Dependency Graph
 ```mermaid
 graph TD
-  B01 & E01 & G02 & G03 --> G05
+  B01["B-01"] & E01["E-01"] & G02["G-02"] & G03["G-03"] --> G05["G-05"]
 ```
 
 ---
@@ -35,7 +35,7 @@ graph TD
 
 ---
 
-### SPARK-CLM-B01 · `getClaims(parentHumanId, claimHumanIds, partnerIds)`
+### CLAIM-BE-B-01 · `getClaims(parentHumanId, claimHumanIds, partnerIds)`
 - **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** —
 
 - **In plain terms:** List claims for a product / set of partners.
@@ -49,8 +49,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-B02 · `getClaimByIds(claimHumanIds)`
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-B-02 · `getClaimByIds(claimHumanIds)`
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Fetch specific claims by their ids.
 
@@ -62,8 +62,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-B03 · `getCommunicationChannels` (cacheable)
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-B-03 · `getCommunicationChannels` (cacheable)
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Return the communication-channel lookup list (cached).
 
@@ -75,8 +75,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-B04 · `getAllClaimsAbout` (cacheable)
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-B-04 · `getAllClaimsAbout` (cacheable)
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Return the 'claims about' lookup list (cached).
 
@@ -88,8 +88,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-B05 · `getClaimExports`
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-B-05 · `getClaimExports`
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** List the claim export jobs.
 
@@ -105,8 +105,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-C01 · `searchGuestFacing(queryParam)`
-- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-C-01 · `searchGuestFacing(queryParam)`
+- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Search the guest-facing (external-partner) claims view.
 
@@ -118,8 +118,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-C02 · `getClaimsElastic(parentHumanId)`
-- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔴 `search`
+### CLAIM-BE-C-02 · `getClaimsElastic(parentHumanId)`
+- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `search`
 
 - **In plain terms:** Search a product's claims via elastic.
 
@@ -135,8 +135,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-D01 · `createClaim`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-D-01 · `createClaim`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Create a new claim.
 
@@ -149,8 +149,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-D02 · `bulkUpdateClaim`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-D-02 · `bulkUpdateClaim`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Update many claims in one call.
 
@@ -163,8 +163,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-D03 · `requestClaimExport`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-D-03 · `requestClaimExport`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Kick off a claim export job.
 
@@ -176,8 +176,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-D04 · `lockClaim`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-D-04 · `lockClaim`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Lock a claim from edits.
 
@@ -189,8 +189,8 @@ graph TD
 
 ---
 
-### SPARK-CLM-D05 · `unlockClaim`
-- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B01
+### CLAIM-BE-D-05 · `unlockClaim`
+- **Type:** Mutation · **Phase:** D · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01
 
 - **In plain terms:** Unlock a claim for edits.
 
@@ -206,8 +206,10 @@ graph TD
 
 ---
 
-### SPARK-CLM-E01 · `updateClaim` (proxy ACL + multi-step write)
-- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🟡 `workspaceV2`
+### CLAIM-BE-E-01 · `updateClaim` (proxy ACL + multi-step write)
+- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `workspaceV2`
+
+> **Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — draft ADR-013, ratification pending.** Implement as ordered `WriteSaga` steps (proxy-ACL context → workspace assoc `COMPENSATE` → body PUT = point of no return); the unchecked workspace-association response becomes checked by construction (ADR-013 §5 pin-down 5). The claim proxy-permission rule is verified per ADR-013-noACL pin-down N1 before the resolver's proxy JWT is dropped.
 
 - **In plain terms:** Edit a claim — a multi-step write (permissions + workspace + body) that has no rollback today.
 
@@ -241,8 +243,8 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### SPARK-CLM-F01 · `Product.claims` (federation contribution)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** B01 · **Blocked by:** product
+### CLAIM-BE-F-01 · `Product.claims` (federation contribution)
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** product
 
 - **In plain terms:** Expose a product's claims on the Product type (federation contribution).
 
@@ -255,14 +257,14 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### SPARK-CLM-F02 · `ResourcesCount.claims` (TechPack — claims side of SPARK-PROD-F05)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B01 · **Blocked by:** product
+### CLAIM-BE-F-02 · `ResourcesCount.claims` (TechPack — claims side of PRODUCT-BE-F-05)
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** product
 
 - **In plain terms:** Contribute the claims count to the product TechPack rollup.
 
 - **Target:** `extend type ResourcesCount @key(fields:"productId partnerId") { claims: [ID] }` with a
 `@DgsEntityFetcher`; fills the TechPack `claims` count. **BLOCKED-BY:** product TechPack facade
-(`SPARK-PROD-E03`/`F05`). 
+(`PRODUCT-BE-E-03`/`F-05`). 
 
 #### Acceptance Criteria
 
@@ -274,8 +276,8 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### SPARK-CLM-G01 · `access` + `currentUserPermissions` + `participantDetails`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🔵 `userGroup`
+### CLAIM-BE-G-01 · `access` + `currentUserPermissions` + `participantDetails`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔵 `userGroup`
 
 - **In plain terms:** Resolve a claim's access / permission / participant fields.
 
@@ -288,8 +290,8 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### SPARK-CLM-G02 · `createdBy` + `updatedBy` + `businessPartner` + `designPartner`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🟡 `userAttributes` · 🔵 `vmm`
+### CLAIM-BE-G-02 · `createdBy` + `updatedBy` + `businessPartner` + `designPartner`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `userAttributes` · 🔵 `vmm`
 
 - **In plain terms:** Resolve the people and partner fields on a claim.
 
@@ -304,8 +306,8 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### SPARK-CLM-G03 · `product` + `parentDetails` (otherClaimBps / systemTeams / droppedPartnerIds)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🟡 `product` · 🔴 `search`
+### CLAIM-BE-G-03 · `product` + `parentDetails` (otherClaimBps / systemTeams / droppedPartnerIds)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `product` · 🔴 `search`
 
 - **In plain terms:** Resolve the parent product and its related-partner context on a claim.
 
@@ -327,8 +329,8 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### SPARK-CLM-G04 · `workspaces` + `ClaimSubstantiate.substantiatedBy` + `ClaimDetails.claimName`
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B01 · **EXT:** 🟡 `workspaceV2` · 🟡 `userAttributes`
+### CLAIM-BE-G-04 · `workspaces` + `ClaimSubstantiate.substantiatedBy` + `ClaimDetails.claimName`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `workspaceV2` · 🟡 `userAttributes`
 
 - **In plain terms:** Resolve workspace links and a few computed claim fields.
 
@@ -342,8 +344,8 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### SPARK-CLM-G05 · Tests, parity harness
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B01, E01, G02, G03
+### CLAIM-BE-G-05 · Tests, parity harness
+- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B-01, E-01, G-02, G-03
 
 - **In plain terms:** Prove the claims subgraph matches the old gateway.
 
@@ -362,16 +364,16 @@ camelCase fix, the `businessPartner` 3-way fallback, `parentDetails` elastic loo
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
-| `updateClaim` proxy-ACL multi-step partial failure (E01) | Medium | High | Saga / compensation — PO decision | Tech Lead + PO |
-| `bulkUpdateClaim` snake-cased response (likely bug) (D02) | Medium | Medium | Fix to camelCase; parity test | Backend Eng |
-| `businessPartner` 3-way fallback regressions (G02) | Low | Medium | Unit-test each branch incl. Target(0) | Backend Eng |
-| `ParentDetails` elastic team/BP lookups (G03) | Low | Medium | Preserve empty handling; paginate | Backend Eng |
-| Federation contributions wait on product (F01/F02) | Low | Low | Post-launch; not on critical path | Product Owner |
+| `updateClaim` proxy-ACL multi-step partial failure (E-01) | Medium | High | Saga / compensation — PO decision | Tech Lead + PO |
+| `bulkUpdateClaim` snake-cased response (likely bug) (D-02) | Medium | Medium | Fix to camelCase; parity test | Backend Eng |
+| `businessPartner` 3-way fallback regressions (G-02) | Low | Medium | Unit-test each branch incl. Target(0) | Backend Eng |
+| `ParentDetails` elastic team/BP lookups (G-03) | Low | Medium | Preserve empty handling; paginate | Backend Eng |
+| Federation contributions wait on product (F-01/F-02) | Low | Low | Post-launch; not on critical path | Product Owner |
 
 ## 5. Summary
 - **Stories:** 20 (B:5 · C:2 · D:5 · E:1 · F:2 · G:5).
-- **Critical path:** A02/E01→G02/G03→G05.
-- **Highest risk:** `updateClaim` (E01); the `bulkUpdateClaim` transform bug (D02).
+- **Critical path:** A-02/E-01→G-02/G-03→G-05.
+- **Highest risk:** `updateClaim` (E-01); the `bulkUpdateClaim` transform bug (D-02).
 - **Separate subgraph:** claims contributes `Product.claims` + TechPack `ResourcesCount.claims` (Phase F).
 
 ---

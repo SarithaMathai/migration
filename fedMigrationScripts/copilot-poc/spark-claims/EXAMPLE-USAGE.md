@@ -4,20 +4,20 @@ Two worked sessions: a simple story that goes straight through, and the one comp
 
 ---
 
-## Walkthrough 1 — implementing a simple story (`SPARK-CLM-B01`)
+## Walkthrough 1 — implementing a simple story (`CLAIM-BE-B-01`)
 
 **Setup:** in VS Code, open Copilot Chat, pick **story-implementer** from the chat mode dropdown.
 
 **Engineer types:**
 
 ```
-Implement SPARK-CLM-B01
+Implement CLAIM-BE-B-01
 ```
 
 **What fires, in order:**
 
 1. **`copilot-instructions.md`** is already loaded — Copilot knows this is a standalone claims subgraph, that stories are self-contained one-PR units, and that ACL/proxy-ACL is context-only.
-2. Gate check: `SPARK-CLM-B01` is Phase B, not `E01`, no `SPARK-SPIKE-0x` → not gated → proceeds.
+2. Gate check: `CLAIM-BE-B-01` is Phase B, not `E-01`, no `SPIKE-0x` → not gated → proceeds.
 3. Read the contract — the Engineer pastes the Jira ticket text:
 
    > **`getClaims(parentHumanId, claimHumanIds, partnerIds)`** · Type: Query · Phase: B · Complexity: Low · Depends on: —
@@ -29,7 +29,7 @@ Implement SPARK-CLM-B01
 4. Plan the diff — Copilot lists files and waits:
 
    ```
-   Planned diff for SPARK-CLM-B01:
+   Planned diff for CLAIM-BE-B-01:
    - claims.graphqls                        (new: Claims @key type, Query.getClaims, scalar registration)
    - ScalarConfig.kt                        (new: scalar wiring)
    - ClaimsDataFetcher.kt                   (new: @DgsQuery getClaims)
@@ -51,22 +51,22 @@ Implement SPARK-CLM-B01
    ```
 7. PR — branch `feature/spark-clm-b01`, description drafted with the Hive push note.
 
-**Optional follow-up:** switch to **parity-checker** (or `/write-parity-tests getClaims SPARK-CLM-B01`) to confirm the response shape matches the legacy gateway exactly, then **schema-steward** to review `claims.graphqls` before the Hive push.
+**Optional follow-up:** switch to **parity-checker** (or `/write-parity-tests getClaims CLAIM-BE-B-01`) to confirm the response shape matches the legacy gateway exactly, then **schema-steward** to review `claims.graphqls` before the Hive push.
 
 ---
 
-## Walkthrough 2 — the spike-gated story (`SPARK-CLM-E01`)
+## Walkthrough 2 — the spike-gated story (`CLAIM-BE-E-01`)
 
 **Engineer types:**
 
 ```
-/check-spike-gate SPARK-CLM-E01
+/check-spike-gate CLAIM-BE-E-01
 ```
 
 **Copilot responds** (from `.github/prompts/story/check-spike-gate.prompt.md`, which has the spike table inline):
 
 ```
-Gated — SPARK-SPIKE-01 (Non-Atomic Write Saga).
+Gated — SPIKE-01 (Non-Atomic Write Saga).
 
 Decision to make: pick (a) compensating saga, (b) compensation-log +
 best-effort, or (c) best-effort — and write down how to undo each step.
@@ -82,9 +82,9 @@ overview, and output/complexStories/non-atomic-write-saga/ for
 research so far.
 ```
 
-If the Engineer then tries `/implement-story SPARK-CLM-E01` anyway, the **story-implementer** chat mode's own gate check catches it independently and refuses to write the failure-strategy code, asking for confirmation the spike decision is recorded first.
+If the Engineer then tries `/implement-story CLAIM-BE-E-01` anyway, the **story-implementer** chat mode's own gate check catches it independently and refuses to write the failure-strategy code, asking for confirmation the spike decision is recorded first.
 
-**Separately — federation blocking, not a spike:** if the Engineer instead asks about `SPARK-CLM-F01` (`Product.claims`), the same prompt reports it as **Blocked by `plm-product`** (the `Product` entity must exist there first) rather than spike-gated — a different kind of hold that the prompt and chat mode both distinguish from `SPARK-SPIKE-0x` gating.
+**Separately — federation blocking, not a spike:** if the Engineer instead asks about `CLAIM-BE-F-01` (`Product.claims`), the same prompt reports it as **Blocked by `plm-product`** (the `Product` entity must exist there first) rather than spike-gated — a different kind of hold that the prompt and chat mode both distinguish from `SPIKE-0x` gating.
 
 ---
 
@@ -94,7 +94,7 @@ If the Engineer then tries `/implement-story SPARK-CLM-E01` anyway, the **story-
 |---|---|
 | Starting any story | chat mode **story-implementer**, or `/implement-story {id}` |
 | Not sure if a story is blocked (spike or federation) | `/check-spike-gate {id}` |
-| Adding/extending schema, incl. F01/F02 contributions into `plm-product` | `/derive-dgs-schema` |
+| Adding/extending schema, incl. F-01/F-02 contributions into `plm-product` | `/derive-dgs-schema` |
 | Verifying a finished operation matches legacy behaviour | chat mode **parity-checker**, or `/write-parity-tests {operation} {id}` |
 | Reviewing a PR that touches `.graphqls` | chat mode **schema-steward** |
 | Copilot coding agent working an assigned GitHub issue autonomously | reads `AGENTS.md` + `copilot-instructions.md` on its own, no manual invocation |

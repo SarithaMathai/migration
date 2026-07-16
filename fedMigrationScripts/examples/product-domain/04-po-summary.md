@@ -61,16 +61,16 @@ This is a **green-field migration** — no existing DGS code exists for this dom
 
 | Risk | Severity | Relevant Stories |
 |------|----------|-----------------|
-| `attachmentsWithMetaData` — 6 external service calls, complex enrichment and sort | 🔴 Critical | SPARK-PROD-G01 |
-| `productBusinessPartnerActions` DROP_UNDROP — relationship tree traversal + ACL update + sample side-effects | 🔴 Critical | SPARK-PROD-E04 |
-| `getProductTechPackCountV1` — ACL tree traversal is 200+ lines of recursive graph logic shared across domains | 🔴 Critical | SPARK-PROD-E02 |
-| TechPack sub-story coordination — 8 per-subgraph CAT-4 stories depend on 8 separate domain migrations being in scope | 🔴 Critical | SPARK-PROD-F01 through F08 |
-| `components` field resolver — 5 domain types unified with ACL mapping | 🔴 Critical | SPARK-PROD-G03 |
-| `addProducts` bulk create — 4 external side-effects with no transaction rollback | 🟡 High | SPARK-PROD-E01 |
+| `attachmentsWithMetaData` — 6 external service calls, complex enrichment and sort | 🔴 Critical | PRODUCT-BE-G-01 |
+| `productBusinessPartnerActions` DROP_UNDROP — relationship tree traversal + ACL update + sample side-effects | 🔴 Critical | PRODUCT-BE-E-04 |
+| `getProductTechPackCountV1` — ACL tree traversal is 200+ lines of recursive graph logic shared across domains | 🔴 Critical | PRODUCT-BE-E-02 |
+| TechPack sub-story coordination — 8 per-subgraph CAT-4 stories depend on 8 separate domain migrations being in scope | 🔴 Critical | PRODUCT-BE-F-01 through F-08 |
+| `components` field resolver — 5 domain types unified with ACL mapping | 🔴 Critical | PRODUCT-BE-G-03 |
+| `addProducts` bulk create — 4 external side-effects with no transaction rollback | 🟡 High | PRODUCT-BE-E-01 |
 | `USE_NEW_RULES_API` feature flag — dual-path routing in DGS | 🟡 High | Phase F rules story |
-| **`division` field resolver BUG in source** — calls `department` loader instead of `division` | 🟡 High | SPARK-PROD-G06 |
-| Green-field: no existing DGS to validate naming against | 🟡 High | SPARK-PROD-A01, H04 |
-| Aggregation facade becoming permanent if sub-story retirement is not actively governed | 🟡 High | SPARK-PROD-F09 |
+| **`division` field resolver BUG in source** — calls `department` loader instead of `division` | 🟡 High | PRODUCT-BE-G-06 |
+| Green-field: no existing DGS to validate naming against | 🟡 High | PRODUCT-BE-A-01, H04 |
+| Aggregation facade becoming permanent if sub-story retirement is not actively governed | 🟡 High | PRODUCT-BE-F-09 |
 
 ---
 
@@ -83,8 +83,8 @@ This is a **green-field migration** — no existing DGS code exists for this dom
 | Is the `division` resolver bug already reported? Should it be fixed in the source before/during migration? | Phase D kickoff | Avoids dual-tracking |
 | Should `USE_NEW_RULES_API` be ON or OFF by default in `plm-product`? | Phase F kickoff | RuleLibrary team coordination |
 | Does the Hive Gateway supergraph support federation v2.3? | Phase H kickoff | Stitching approach for VMM/IG |
-| Confirm TechPack migration option (B/C/D). Option D (facade now, federate per-subgraph) is recommended. See `reference/techpack-migration-options.md`. | Phase E kickoff | SPARK-PROD-E02 story design; blocks 8 downstream sub-stories |
-| Which 8 domain teams own the per-subgraph CAT-4 stories (Attachment, Discussion, Sample, Measurement, Claims, BOM, Construction, Watchlist)? Each needs a migration sprint. | Phase F planning | SPARK-PROD-F01–F08 |
+| Confirm TechPack migration option (B/C/D). Option D (facade now, federate per-subgraph) is recommended. See `reference/techpack-migration-options.md`. | Phase E kickoff | PRODUCT-BE-E-02 story design; blocks 8 downstream sub-stories |
+| Which 8 domain teams own the per-subgraph CAT-4 stories (Attachment, Discussion, Sample, Measurement, Claims, BOM, Construction, Watchlist)? Each needs a migration sprint. | Phase F planning | PRODUCT-BE-F-01–F-08 |
 
 ---
 
@@ -116,17 +116,17 @@ plm-product depends on:
 
 | Sprint | Phases | Focus |
 |--------|--------|-------|
-| S1 | A | Foundation, schema, DTOs, service skeleton; includes `ResourcesCount` @key schema (E01) |
+| S1 | A | Foundation, schema, DTOs, service skeleton; includes `ResourcesCount` @key schema (E-01) |
 | S2 | B, D1–D3 | Core queries + simple mutations |
 | S3 | C, D4 | Search queries + remaining mutations |
 | S4 | E1–E3 | Partner management (non-complex) |
 | S5 | E4 | `productBusinessPartnerActions` (complex orchestration) |
-| S6 | E-TechPack | TechPack stub resolver + aggregation facade (E02, E03) — delivers working `getProductTechPackCountV1` on Day 1 via Option D Phase 1 |
+| S6 | E-TechPack | TechPack stub resolver + aggregation facade (E-02, E-03) — delivers working `getProductTechPackCountV1` on Day 1 via Option D Phase 1 |
 | S7 | F-Rules | `USE_NEW_RULES_API` routing + remaining federation config |
 | S8 | G1–G4 | Complex field resolvers: `attachmentsWithMetaData`, `attachmentsV3`, `components`, `reservedDpcis` |
 | S9 | G5–G6, H | Remaining field resolvers + federation stitching |
-| S10 | I | Full test coverage pass |
-| Ongoing | F01–F09 | Per-subgraph TechPack CAT-4 stories — each unblocked when owning domain migrates. Retire aggregation facade (F09) when all 8 are done. |
+| S-10 | I | Full test coverage pass |
+| Ongoing | F-01–F-09 | Per-subgraph TechPack CAT-4 stories — each unblocked when owning domain migrates. Retire aggregation facade (F-09) when all 8 are done. |
 
 ---
 

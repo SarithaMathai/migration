@@ -98,22 +98,22 @@ input UserGroup_ParticipantsInput { _placeholder: String }
 
 # --- Queries (names + nullability preserved from the SDL) ---
 extend type Query {
-  getWatchlistReasons: [CodeDescription]                                                       # 🔜 B02 (cacheable)
-  getWatchlistInspectionActions: [WatchlistInspectionAction]                                   # 🔜 B03 (cacheable)
-  getWatchlistByIds(ids: [String!]): [Watchlist]                                               # 🔜 B01
-  getWatchlistByFilter(q: String, filter: [String], workspaceId: ID!, page: Int = 0, size: Int = 100): [Watchlist]   # 🔜 C01 (🔴 search; product→search→watchlist)
+  getWatchlistReasons: [CodeDescription]                                                       # 🔜 B-02 (cacheable)
+  getWatchlistInspectionActions: [WatchlistInspectionAction]                                   # 🔜 B-03 (cacheable)
+  getWatchlistByIds(ids: [String!]): [Watchlist]                                               # 🔜 B-01
+  getWatchlistByFilter(q: String, filter: [String], workspaceId: ID!, page: Int = 0, size: Int = 100): [Watchlist]   # 🔜 C-01 (🔴 search; product→search→watchlist)
 }
 
 # --- Mutations (names + nullability preserved from the SDL) ---
 extend type Mutation {
-  createWatchlistEntries(watchlistEntries: [WatchlistInput!]!): [Watchlist]                     # 🔜 D01 (create + user-group; throws)
-  cloneFilesForWatchlist(attachmentIds: [String], cloneReference: [WatchlistAttachmentCloneRef]): [Attachment]   # 🔜 D02 (🔴 attachment)
-  updateWatchlistEntries(watchlistEntries: [WatchlistInput!]!): [Watchlist]                     # 🔜 E01 (multi-step, non-atomic; await bug)
+  createWatchlistEntries(watchlistEntries: [WatchlistInput!]!): [Watchlist]                     # 🔜 D-01 (create + user-group; throws)
+  cloneFilesForWatchlist(attachmentIds: [String], cloneReference: [WatchlistAttachmentCloneRef]): [Attachment]   # 🔜 D-02 (🔴 attachment)
+  updateWatchlistEntries(watchlistEntries: [WatchlistInput!]!): [Watchlist]                     # 🔜 E-01 (multi-step, non-atomic; await bug)
 }
 
 # --- Federation: Watchlist contributes to Product + TechPack (Phase F — INTERNAL, same subgraph) ---
 # Co-located: Product.watchlists and ResourcesCount.watchlists resolve in-process (CAT-2), NOT gateway
-# federation. This is the watchlist side of product's TechPack count — analogous to bom F06 / measurement F04.
-# (Product's SPARK-PROD-F08 should be reclassified internal; see 01 §5.)
-# extend type Product { id: ID!  watchlists: [Watchlist] }         # F01 (internal)
-# extend type ResourcesCount { productId: ID!  partnerId: ID!  watchlists: [ID] }   # F02 (internal)
+# federation. This is the watchlist side of product's TechPack count — analogous to bom F-06 / measurement F-04.
+# (Product's PRODUCT-BE-F-08 should be reclassified internal; see 01 §5.)
+# extend type Product { id: ID!  watchlists: [Watchlist] }         # F-01 (internal)
+# extend type ResourcesCount { productId: ID!  partnerId: ID!  watchlists: [ID] }   # F-02 (internal)

@@ -29,12 +29,12 @@ The most complex logic in the system. Backs Q8/Q9.
 5. `allAttachmentIds = productAttachments + discussionAttachments`.
 6. (🔴 attachment) `attachment.getAttachmentsV3(allAttachmentIds)` — hydrate (ACL token, context only).
 7. Predicate `isProductPacketAttachments(id)` = matches `document_id`/`human_id` AND `product_packet_props` with `partner_id==partnerId && critical==true`.
-8. (🔴 search) **7 parallel elastic queries**: samples, criticalDiscussions, measurementSets, claims, boms, constructions, watchlists. Filter samples by workspaceContext or `sampleType.code ∈ {200,135}`.
+8. (🔴 search) **7 elastic slice queries** (independent, but awaited **sequentially** today — perf defect, ADR-015 pin-down 2): samples, criticalDiscussions, measurementSets, claims, boms, constructions, watchlists. Filter samples by workspaceContext or `sampleType.code ∈ {200,135}`.
 9. From critical discussions derive `parentDiscussionIds`, `criticalDiscussionIds`, `criticalThreadIds` (dedup).
 10. If critical ids exist → (🔴 search) `searchAttachmentsByParentResources(allCriticalIds)`.
 11. Filter `discussionAttachments` through the predicate.
 12. Build & return `ResourcesCount {productId, partnerId, workspaceContext, productAttachments, discussionAttachments, discussions, sample, measurementSets, claims, productBoms (type==1), packagingBoms (type==2), constructions, watchlists}`.
-**EXT:** accessControl 🔴 (context), attachment 🔴, search 🔴 ×8. **Migration:** Option D facade-then-federate.
+**EXT:** accessControl 🔴 (context), attachment 🔴, search 🔴 ×8. **Migration:** facade-then-federate (draft ADR-015 Option B; catalogue "Option D (hybrid)") — see `complexStories/techpack/01-adr-techpack.md` §1 for the authoritative 14-step breakdown.
 
 ## Query Resolvers (18)
 
@@ -87,19 +87,19 @@ The most complex logic in the system. Backs Q8/Q9.
 
 ## Field Resolvers (grouped by story — see 04-stories G-phase)
 `Product` has ~50 field resolvers. Highlights:
-- **Very High:** `attachmentsWithMetaData` (G01, ~150 lines, ACL + 5-source merge), `components` (G02, ~190 lines, N+1 ACL — batch on port).
-- **Medium:** `attachmentsV3`/`attachments`/`attachmentSummary` (G03), `ProductsCategories.categories` 12-case dispatcher + Doppler (G04), `samples`/`sampleIds`/`elasticSamplesList` (G05, stops reading `info.variableValues`), `teams`/`discussionsV2`/`discussionsCount`/`workspaces` (G06), `vendorAttributes`/`businessPartners`/`droppedPartners`/`unDroppablePartners` (G07, VMM), `measurementSets`/`claims`/`bom`/`productBom`/`packagingBom` (G08, internal siblings), `productWorkspaceAttributes`/`productWorkspaceInfo` (G09, deferred `designCycle`), `ancestryProducts`/`rating`/`reservedDpcis` (G10, rating+apex), `notRemovablePartnerIds`/`notRemovableWorkspaceIds`/`associateProductsAsks`/`variations` (G11, replace reflective resolver calls with service methods).
-- **Bug fix:** `Product.division` calls the *department* loader — wire to `DivisionService` (G12).
-- **Trivial groups:** `SPARK_ProductRules.*`, `tags`, `tcins`, `SPARK_Tcin.itemDetails` (CORONA), `SPARK_PackagingAttribute.spg`, `ProductComponentStatus.updatedBy`, `VMM_BusinessPartnerCategory.*`, `MasterProductStatus.*`, template fields (G13); `createdBy`/`updatedBy`/`status`/`department`/`clazz`/`brand` etc. (G14).
-- **Categories polymorphism:** `SPARK_Categories.__resolveType` 12-case + default `IG_Clazz_Filter` (A04 type resolver).
+- **Very High:** `attachmentsWithMetaData` (G-01, ~150 lines, ACL + 5-source merge), `components` (G-02, ~190 lines, N+1 ACL — batch on port).
+- **Medium:** `attachmentsV3`/`attachments`/`attachmentSummary` (G-03), `ProductsCategories.categories` 12-case dispatcher + Doppler (G-04), `samples`/`sampleIds`/`elasticSamplesList` (G-05, stops reading `info.variableValues`), `teams`/`discussionsV2`/`discussionsCount`/`workspaces` (G-06), `vendorAttributes`/`businessPartners`/`droppedPartners`/`unDroppablePartners` (G-07, VMM), `measurementSets`/`claims`/`bom`/`productBom`/`packagingBom` (G-08, internal siblings), `productWorkspaceAttributes`/`productWorkspaceInfo` (G-09, deferred `designCycle`), `ancestryProducts`/`rating`/`reservedDpcis` (G-10, rating+apex), `notRemovablePartnerIds`/`notRemovableWorkspaceIds`/`associateProductsAsks`/`variations` (G-11, replace reflective resolver calls with service methods).
+- **Bug fix:** `Product.division` calls the *department* loader — wire to `DivisionService` (G-12).
+- **Trivial groups:** `SPARK_ProductRules.*`, `tags`, `tcins`, `SPARK_Tcin.itemDetails` (CORONA), `SPARK_PackagingAttribute.spg`, `ProductComponentStatus.updatedBy`, `VMM_BusinessPartnerCategory.*`, `MasterProductStatus.*`, template fields (G-13); `createdBy`/`updatedBy`/`status`/`department`/`clazz`/`brand` etc. (G-14).
+- **Categories polymorphism:** `SPARK_Categories.__resolveType` 12-case + default `IG_Clazz_Filter` (A-04 type resolver).
 
 ## EXT Service Call Inventory (summary)
 **12 EXT keys + 6 platform** — 4 🔴 (attachment, workspaceV2, search, [accessControl=context]) · 6 🟡 (claim, relationship, userAttributes, teamV2, discussion, sampleV2, tag) · 2 🔵 (recentlyViewed/todo/favorite, ruleLibrary) · 6 platform 🔵 (VMM, IG, Doppler, CORONA, APEX, BrandCompliance). Internal (same DGS): product, bom, measurement, productDetails, packaging, productAsk, productVariation, fileLibrary.
 
 ## Key Findings
 - **Highest risk:** TechPack (Q8/Q9, composite-key aggregate), `productBusinessPartnerActions` (M10), `components`/`attachmentsWithMetaData` field resolvers.
-- **Latent bugs:** TechPack bulk ordering (Q9); `updateComponentStatuses` shadow var (M20); `Product.division` wrong loader (G12); `componentStatusUtils.incrementAllContextCounter` never resets.
-- **Refactors:** N+1 ACL in `components` → batch; reflective resolver calls (G11) → service methods; two-stage elastic+canonical (Q1) → shared helper; external rating secret → Vault.
+- **Latent bugs:** TechPack bulk ordering (Q9); `updateComponentStatuses` shadow var (M20); `Product.division` wrong loader (G-12); `componentStatusUtils.incrementAllContextCounter` never resets.
+- **Refactors:** N+1 ACL in `components` → batch; reflective resolver calls (G-11) → service methods; two-stage elastic+canonical (Q1) → shared helper; external rating secret → Vault.
 - **Decisions:** `USE_NEW_RULES_API` cutover (3 queries cross to spark-tag DGS); deferred partner wrappers (delete vs keep `@deprecated`); TechPack facade option.
 - **Quick wins:** `getProduct`, `getProductsByIds`, `getProductStatus`, rules CRUD, lock-like toggles.
 
