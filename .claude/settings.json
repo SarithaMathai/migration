@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(git commit -q -m 'Remove unused files: legacy-jira-generate.py \\(superseded by generate_jira.py\\) and typo-named documentstion.md \\(unreferenced ADR draft\\) *)",
-      "Bash(git commit -q -m ' *)"
+      "Bash(git commit -q -m ' *)",
+      "Bash(git -C /c/Saritha/jul4/migration log --oneline -5)",
+      "Bash(git -C /c/Saritha/jul4/migration status --short)"
     ]
   }
 }

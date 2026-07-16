@@ -48,6 +48,7 @@ review_mod    = _load("generate_po_review")
 jira_mod      = _load("generate_jira")
 breakdown_mod = _load("generate_breakdown")
 word_mod      = _load("generate_word")
+frontend_mod  = _load("generate_frontend")
 
 ALL_DOMAINS = comp_mod.ALL_DOMAINS
 
@@ -335,6 +336,12 @@ def main() -> None:
             jira_mod.generate_all_csv(ALL_DOMAINS)
         except Exception as e:
             print(f"  FAIL all-stories.csv: {type(e).__name__}: {e}")
+
+        # Frontend inventory docs + FE Jira CSVs (output/frontend-analysis + output/jira/frontend)
+        try:
+            frontend_mod.main()
+        except Exception as e:
+            print(f"  FAIL frontend analysis: {type(e).__name__}: {e}")
 
     print("\nDone. Run `python generate_all.py <domain>` to regenerate a single domain.\n")
 

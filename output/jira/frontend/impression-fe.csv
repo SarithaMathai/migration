@@ -1,0 +1,50 @@
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with BOM wave) [IMPRESSION-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 BOM-BE-B-01 BOM-FE-002 PLATFORM-FE-003,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* impression
+* *Depends on:* IMPRESSION-BE-B-01, BOM-BE-B-01, BOM-FE-002, PLATFORM-FE-003
+* *Operations:* {{searchImpressionsByProductId}}, {{getBomByIds}}
+
+* *Business objective:*
+** The combined BOM + impressions view keeps one round trip and identical data.
+* *Technical objective:*
+** Migrate the cross-domain document when both roots are on the router (per [07-network-call-analysis.md §2.1](./07-network-call-analysis.md) — no interim split).
+* *Background / current implementation:*
+** One document selects {{getBomByIds}} and {{searchImpressionsByProductId}}; impression sub-type polymorphism (5 types) needs the regenerated {{possibleTypes}} map (ADR-017 — 🟠 draft).
+* *Required changes:*
+** Re-point after BOM-FE-002 lands; inline-fragment selections verified against federated impression sub-types.
+
+*Acceptance Criteria*
+
+1. Combined view renders identically in one request under the flag.
+2. All 5 impression sub-types resolve correctly in cache.
+
+*Testing*
+
+* Fixtures covering each sub-type; view integration test.
+
+* *Risk:* Low.
+* *Estimated effort:* 2–3 days"
+Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with Product wave) [IMPRESSION-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 PRODUCT-BE-B-01 PRODUCT-FE-001,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* impression
+* *Depends on:* IMPRESSION-BE-B-01, PRODUCT-BE-B-01, PRODUCT-FE-001
+* *Operations:* {{searchImpressionsByProductId}}, {{getProduct}}
+
+* *Business objective:*
+** Carry-forward form keeps its combined product + impressions data.
+* *Technical objective:*
+** Migrate the cross-domain document when both roots are on the router.
+* *Required changes:*
+** Re-point after PRODUCT-FE-001; sub-type handling as IMPRESSION-FE-001.
+
+*Acceptance Criteria*
+
+1. Carry-forward form renders identically in one request under the flag.
+
+*Testing*
+
+* Carry-forward flow E2E.
+
+* *Risk:* Low.
+* *Estimated effort:* 1–2 days
+
+---
+
+## Claims"

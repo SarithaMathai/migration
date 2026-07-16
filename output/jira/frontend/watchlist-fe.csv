@@ -1,0 +1,68 @@
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01 PLATFORM-FE-004,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* watchlist
+* *Depends on:* WATCHLIST-BE-B-01, WATCHLIST-BE-C-01, PLATFORM-FE-004
+* *Operations:* {{getWatchlistByIds}}, {{getWatchlistByFilter}}
+
+* *Business objective:*
+** Watchlist screens read from the federated graph unchanged — the pilot cutover candidate.
+* *Technical objective:*
+** Migrate the 2 read documents in {{watchlist/WatchlistQueries.ts}} (fragments {{WATCHLIST_FRAGMENT}}, {{WATCHLIST_PARTICIPANT_FRAGMENT}}, shared {{PRODUCT_BASE_INFO_FRAGMENT}}).
+* *Required changes:*
+** Fragment re-target (product base fragment shared with product domain); document re-point.
+
+*Acceptance Criteria*
+
+1. Watchlist list and detail render identically under the flag.
+
+*Testing*
+
+* Screen integration tests; shared-fragment cache assertion with product entities.
+
+* *Risk:* Low — smallest isolated domain; run first to validate the platform stack.
+* *Estimated effort:* 2–3 days"
+Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,To Do,"* *Type:* Mutation migration · *Impact:* Low · *Domain:* watchlist
+* *Depends on:* WATCHLIST-BE-D-01, WATCHLIST-BE-D-02
+* *Operations:* {{createWatchlistEntries}}, {{cloneFilesForWatchlist}}
+
+* *Business objective:*
+** Watchlist creation and file cloning write through the federated graph.
+* *Technical objective:*
+** Migrate the 2 single-step mutations with cache writes.
+* *Required changes:*
+** Input renames; response-driven list update.
+
+*Acceptance Criteria*
+
+1. Created entries appear without refetch; clone completes.
+
+*Testing*
+
+* Mutation unit tests; create E2E.
+
+* *Risk:* Low.
+* *Estimated effort:* 2–3 days"
+Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga handling [WATCHLIST-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,watchlist,mutation-migration-(complex),,WATCHLIST-BE-E-01 PLATFORM-FE-003,To Do,"* *Type:* Mutation migration (complex) · *Impact:* Medium · *Domain:* watchlist
+* *Depends on:* WATCHLIST-BE-E-01, PLATFORM-FE-003
+* *Operations:* {{updateWatchlistEntries}}
+
+* *Business objective:*
+** Bulk watchlist updates surface partial failures explicitly.
+* *Technical objective:*
+** Adopt the multi-step write contract ({{getWatchlistForBulkUpdate}} feeds this flow).
+* *Required changes:*
+** Per-entry outcome rendering; remove compensating refetch.
+
+*Acceptance Criteria*
+
+1. Bulk update shows per-entry outcomes; partial failure actionable.
+
+*Testing*
+
+* Induced step-failure tests; bulk-update E2E.
+
+* *Risk:* Medium — ADR-013 ratification dependency.
+* *Estimated effort:* 3–4 days
+
+---
+
+## Impression"

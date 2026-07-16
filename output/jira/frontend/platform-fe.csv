@@ -1,0 +1,139 @@
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Story,PLATFORM-FE-001,[Platform FE] Federated router endpoint behind a feature flag [PLATFORM-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,platform,platform-enablement,,,To Do,"* *Type:* Platform enablement · *Impact:* High · *Domain:* platform
+* *Depends on:* —
+* *Operations:* —
+
+* *Business objective:*
+** Enable a reversible, per-environment switch from spark-internal-graphql to the federated router with zero user-visible change.
+* *Technical objective:*
+** Add a flag-gated Apollo {{HttpLink}} so any operation set can be routed to the federated endpoint during dual-run.
+* *Background / current implementation:*
+** The Apollo client posts every operation to the single spark-internal-graphql gateway URL.
+* *Required changes:*
+** Introduce the router URL as environment configuration.
+** Flag-gated link selection (per-domain allowlist, so domains cut over independently).
+** Auth header pass-through verified against the router ({{SPARK-Capability-Token}} header remains context-only for phase 1).
+
+*Acceptance Criteria*
+
+1. With the flag off, all traffic goes to spark-internal-graphql (bit-identical behaviour).
+2. With the flag on for a domain, that domain's operations reach the router; all others are unaffected.
+3. Flag flip requires no rebuild (runtime configuration).
+
+*Testing*
+
+* Integration test per routing branch; smoke suite runs once per endpoint in CI.
+
+* *Risk:* Low — additive; the legacy path is untouched.
+* *Estimated effort:* 3–5 days"
+Story,PLATFORM-FE-002,[Platform FE] Codegen against the federated schema [PLATFORM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,platform,platform-enablement,,PLATFORM-FE-001,To Do,"* *Type:* Platform enablement · *Impact:* High · *Domain:* platform
+* *Depends on:* PLATFORM-FE-001
+* *Operations:* —
+
+* *Business objective:*
+** Guarantee compile-time safety for every migrated operation before any cutover.
+* *Technical objective:*
+** Point GraphQL codegen at the federated router schema; regenerate TypeScript types and the {{possibleTypes}} map.
+* *Background / current implementation:*
+** Generated types derive from spark-internal-graphql introspection; type names carry the {{SPARK_}} prefix.
+* *Required changes:*
+** Dual-schema codegen during migration (legacy + federated outputs side by side).
+** Regenerated {{possibleTypes}} for interfaces/unions (impression sub-types, {{IG_Clazz_Filter}}).
+** CI check: migrated documents must validate against the federated schema.
+
+*Acceptance Criteria*
+
+1. Codegen produces federated-schema types alongside legacy types without name collisions.
+2. {{possibleTypes}} map is generated, not hand-maintained.
+3. A document that selects a field absent from the federated schema fails CI.
+
+*Testing*
+
+* CI validation job; type-level compile tests for one pilot document per domain.
+
+* *Risk:* Medium — dual-output wiring touches every package's build.
+* *Estimated effort:* 5–8 days"
+Story,PLATFORM-FE-003,[Platform FE] Apollo cache identity remap and cutover reset [PLATFORM-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,platform,platform-enablement,,PLATFORM-FE-002,To Do,"* *Type:* Platform enablement · *Impact:* High · *Domain:* platform
+* *Depends on:* PLATFORM-FE-002
+* *Operations:* —
+
+* *Business objective:*
+** Prevent silent cache corruption when {{__typename}}s change at cutover.
+* *Technical objective:*
+** Re-key {{typePolicies}} for federated type names and reset persisted cache state at flag flip.
+* *Background / current implementation:*
+** Cache normalization is keyed by {{SPARK_*}} typenames; {{keyFields}} assume legacy ids.
+* *Required changes:*
+** {{typePolicies}} for {{Product}}, {{Bom}}, {{Claims}}, {{Measurements}}, {{Packaging}}, {{Watchlist}}, {{Impression}}, {{ProductDetail}} with {{keyFields}} mirroring federation {{@key}}s ({{TeamV2.teamId}}, {{Discussion.discussionId}} where selected).
+** Versioned cache key (or explicit purge) tied to the endpoint flag.
+** Error policy default {{all}} for migrated queries (partial data + per-subgraph errors).
+
+*Acceptance Criteria*
+
+1. Entities cached under federated typenames normalize and dedupe across domains.
+2. Flag flip never mixes legacy and federated objects in one cache instance.
+3. A failing subgraph yields partial render, not a full-page error, on a pilot screen.
+
+*Testing*
+
+* Cache unit tests per typePolicy; manual dual-run on the product detail screen.
+
+* *Risk:* High — cache identity errors are silent and user-visible.
+* *Estimated effort:* 5–8 days"
+Story,PLATFORM-FE-004,[Platform FE] Phase-1 fragment rename sweep (`on SPARK_*` → federated types) [PLATFORM-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,platform,refactor,,PLATFORM-FE-002,To Do,"* *Type:* Refactor · *Impact:* Medium · *Domain:* platform
+* *Depends on:* PLATFORM-FE-002
+* *Operations:* —
+
+* *Business objective:*
+** Make every shared fragment reusable against the federated schema in one coordinated change.
+* *Technical objective:*
+** Re-target the 22 phase-1 fragments (type conditions, names kept) and update all import sites.
+* *Background / current implementation:*
+** Fragments declare {{on SPARK_Product}}, {{on SPARK_Claims}}, etc.; they are imported across 11 client libraries.
+* *Required changes:*
+** Rename type conditions per the federated schema (prefix drop).
+** Keep fragment names stable to minimize snapshot churn.
+** Coordinate with each domain cutover story (fragment flips with its domain's flag).
+
+*Acceptance Criteria*
+
+1. Every phase-1 fragment validates against the federated schema.
+2. No orphan {{on SPARK_*}} conditions remain in migrated documents.
+
+*Testing*
+
+* Codegen validation (PLATFORM-FE-002 CI check) is the gate; snapshot regeneration per consuming package.
+
+* *Risk:* Low — mechanical, CI-guarded.
+* *Estimated effort:* 3–5 days"
+Story,PLATFORM-FE-005,[Platform FE] Statically expand runtime-composed gql factories [PLATFORM-FE-005],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,platform,refactor,,,To Do,"* *Type:* Refactor · *Impact:* High · *Domain:* platform
+* *Depends on:* —
+* *Operations:* —
+
+* *Business objective:*
+** Remove the documents that can never be validated, generated or persisted, before any domain cutover depends on them.
+* *Technical objective:*
+** Replace runtime template factories with enumerated static documents.
+* *Background / current implementation:*
+** {{BUILD_FILES_FRAGMENT(on)}} and {{BOM_FABRIC_SPEC_COMBO_DETAILS}} (BomQueries) interpolate type names into fragments at runtime.
+** {{FULL_CLAIM_DETAILS(includeWorkspaces)}} (ClaimQueries) conditionally includes a {{workspaces}} selection.
+* *Required changes:*
+** Expand {{BUILD_FILES_FRAGMENT}} into named static fragments per target type ({{SPARK_BaseMaterial}}, {{SPARK_FabricSpecification}}, {{SPARK_Wash}}).
+** Split {{FULL_CLAIM_DETAILS}} into {{FullClaimDetailsFragment}} and {{FullClaimDetailsWithWorkspacesFragment}}; select at the hook call site.
+** Same pattern for {{BOM_FABRIC_SPEC_COMBO_DETAILS}}.
+
+*Acceptance Criteria*
+
+1. No {{gql}} document in phase-1 scope is composed at runtime.
+2. All expanded documents pass codegen validation on the legacy schema (pre-cutover, behaviour-neutral).
+
+*Testing*
+
+* Snapshot the generated document text before/after to prove selection equivalence; existing component tests unchanged.
+
+* *Risk:* Medium — conditional branches must be enumerated exactly.
+* *Estimated effort:* 4–6 days
+
+---
+
+## Product"

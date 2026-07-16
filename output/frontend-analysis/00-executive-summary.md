@@ -1,0 +1,66 @@
+# Executive Summary — Frontend Federated GraphQL Migration (Phase 1)
+
+> Hand-authored deliverable · 2026-07-16 · Scope: the 8 phase-1 domains
+> Full document set: see the [deliverables index](../confluence/frontend-confluence-documentation.md)
+
+## Numbers
+
+| Measure | Value |
+|---|---|
+| GraphQL queries analyzed (in scope) | 90 |
+| GraphQL mutations analyzed (in scope) | 52 |
+| Domains analyzed | 8 — Product, BOM, Measurement, Product Details, Packaging, Watchlist, Impression, Claims |
+| Client libraries involved | 11 |
+| Frontend components/hooks affected | ~108 (some consume several domains) |
+| Fragments to re-target | 22 phase-1 fragments |
+| Dynamic gql documents to refactor | 3 (BOM ×2, Claims ×1) |
+| Deprecated fields still selected | 4 in phase-1 domains |
+| Frontend stories | 43 (5 platform + 38 domain) |
+| Backend stories referenced | every phase-1 operation maps to a `*-BE-*` story — no orphans |
+| Estimated frontend effort | 177–276 engineer-days over 5 waves |
+| Out of scope | 618 client operations on later-phase domains / other services |
+
+## Backend schema changes the frontend absorbs
+
+- `SPARK_` prefix drop on owned types — fragments, generated types and cache identities all change.
+- Flat id fields become hydrated entity references (`createdBy`, `brand`, `department`, partners).
+- Cross-domain data resolves via `@key`-stitched entities across subgraphs (`plm-product`, `spark-claims`).
+- Multi-step writes return saga status instead of thin/unreliable payloads.
+- 4 deprecated field selections must be replaced before their domain cuts over (`SPARK_Measurements.humanId`, `SPARK_Dieline.attachments`, `SPARK_PackagingFieldValues.resourceType`, `SPARK_ProductRules.businessPartners`).
+
+## High-impact migrations
+
+- `getProduct` family — 20+ documents across 5 libraries back the product detail, files, teams and scaffolding screens (PRODUCT-FE-001/002).
+- Partner drop/undrop orchestration — behavioural change, gated on ADR-012/016 ratification (PRODUCT-FE-009).
+- `updateBom` saga — partial-failure UI is new behaviour, gated on ADR-013 (BOM-FE-006).
+- Claims reads — the program's first production cross-subgraph entity resolution (CLAIM-FE-002).
+- Search-backed lists (`getProducts`, `getBomElastic`, `getMeasurementsElastic`) — gated on the elastic read-hub decision.
+
+## Additional network calls
+
+- Default: none — federation fan-out moves server-side into the router.
+- Temporary +1 request only if a cross-domain document (4 exist) is split across waves; the plan avoids splits by migrating each with the later of its two domains.
+- Net reductions available: TechPack counts fold into product documents (−1 to −2 requests per screen), mutation responses replace refetches, hydrated entities remove lookup queries.
+
+## High-risk areas
+
+1. Apollo cache identity: `__typename` renames silently corrupt normalization if typePolicies are not remapped and the cache not reset at flag flip (PLATFORM-FE-003).
+2. Dynamic gql factories: 3 documents cannot be validated or generated until statically expanded (PLATFORM-FE-005) — they block BOM and Claims cutovers.
+3. Draft-ADR gates: 6 stories are blocked on unratified write-saga / drop-undrop / rollup / techpack decisions.
+4. Write-then-read consistency across the cutover boundary (packaging packet info; PKG-FE-005).
+5. Inventory gaps: 2 template fragments are defined outside the snapshot libraries — locate before PRODUCT-FE-005.
+
+## Recommended migration sequence
+
+1. Wave 0 — Platform enablement (flag, codegen, cache, fragments, dynamic-gql).
+2. Wave 1 — Watchlist pilot (smallest isolated domain).
+3. Wave 2 — Product Details, Measurement, Packaging (parallel).
+4. Wave 3 — BOM, then Claims (first cross-subgraph cutover).
+5. Wave 4 — Product incrementally (rules/templates first, core reads, lists after the search gate, orchestrated writes last), with Impression documents riding their partner domain's flip.
+
+## Key architectural findings
+
+- The frontend already treats spark-internal-graphql as one graph — federation is invisible at the transport level, so the migration cost concentrates in type identity (renames), shapes (entity nesting) and write semantics (sagas), not in networking.
+- 8 phase-1 backend root fields have no frontend caller — deprecation-review candidates before they are ported ([03-merged-inventory.md](./03-merged-inventory.md)).
+- Fragment reuse across client libraries is high (e.g. `PRODUCT_BASE_INFO_FRAGMENT` used by product and watchlist) — the shared-fragment sweep must be coordinated, not per-team.
+- Cross-domain documents are few (4) and known — sequencing them with the later domain eliminates the interim dual-endpoint problem almost entirely.
