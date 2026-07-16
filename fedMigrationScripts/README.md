@@ -106,8 +106,8 @@ Each domain's artifacts are in their own subfolder: `finalOutput/oneStopDoc/{dom
 
 | File | Purpose | Audience |
 |------|---------|---------|
-| `FederatedGqlBrakDown-BE-{domain}.docx` | **Primary — Word doc with full formatting**: navy blue headers, metrics banner, colored story tables, icons (🔷🔶🔸 🔴🟠🟡🟢) | PO + Engineers (open in Word or paste into Confluence) |
-| `FederatedGqlBrakDown-BE-{domain}.md` | Markdown fallback — same content and table format as the Word doc | PO + Engineers (paste raw Markdown into Confluence) |
+| `FederatedGqlBreakDown-BE-{domain}.docx` | **Primary — Word doc with full formatting**: navy blue headers, metrics banner, colored story tables, icons (🔷🔶🔸 🔴🟠🟡🟢) | PO + Engineers (open in Word or paste into Confluence) |
+| `FederatedGqlBreakDown-BE-{domain}.md` | Markdown fallback — same content and table format as the Word doc | PO + Engineers (paste raw Markdown into Confluence) |
 | `{domain}/{domain}-comprehensive.md` | Full engineering doc — all stories, AC, test cases (High/VH only), complex story callouts | Engineers + Tech Leads |
 | `{domain}/{domain}-po-review.md` | Executive PO review — scope, risks, decisions, sprint capacity, Phase 2 breakdowns | Product Owner + Stakeholders |
 | `{domain}/{domain}.csv` | Jira import CSV — Epic + stories; schema init excluded; tests for High/VH only | Jira admin |

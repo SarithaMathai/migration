@@ -22,7 +22,7 @@
 - Per-operation pseudo-logic of the legacy resolver: `output/analysis/{domain}/be-02-resolver-analysis.md`.
 - Target subgraph schema: `output/analysis/{domain}/be-03-schema.graphql`.
 - Complex-case research briefs: `output/complexStories/<case>/`.
-- Confluence: `FederatedGqlBrakDown-BE-{domain}` pages + the global overview holding **Phase 0 — Program Spikes**.
+- Confluence: `FederatedGqlBreakDown-BE-{domain}` pages + the global overview holding **Phase 0 — Program Spikes**.
 
 ## Hard rules
 

@@ -345,7 +345,7 @@ def build_po_review(domain: str) -> str:
         lines += [
             f"> 🔬 Open decisions marked **Spike** are tracked as real, estimable Phase 0 stories — "
             f"see *Phase 0 — Spikes* in [`../finalOutput/{domain}/be-04-stories.md`](../finalOutput/{domain}/be-04-stories.md) "
-            f"and [`FederatedGqlBrakDown-BE-{domain}.md`](../FederatedGqlBrakDown-BE-{domain}.md) "
+            f"and [`FederatedGqlBreakDown-BE-{domain}.md`](./FederatedGqlBreakDown-BE-{domain}.md) "
             f"for the full write-up (unknowns, candidate patterns, examples).",
             "",
         ]

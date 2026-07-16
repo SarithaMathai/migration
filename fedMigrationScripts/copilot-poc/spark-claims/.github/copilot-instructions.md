@@ -25,7 +25,7 @@
 - Story text: the Jira ticket, generated from `output/analysis/claims/be-04-stories.md` at https://github.com/XXX.
 - Per-operation pseudo-logic of the legacy resolver: `output/analysis/claims/be-02-resolver-analysis.md`.
 - Target subgraph schema: `output/analysis/claims/be-03-schema.graphql`.
-- Confluence: `FederatedGqlBrakDown-BE-claims` page + the global overview holding **Phase 0 — Program Spikes**.
+- Confluence: `FederatedGqlBreakDown-BE-claims` page + the global overview holding **Phase 0 — Program Spikes**.
 
 ## Hard rules
 

@@ -49,7 +49,7 @@ plm-product/
 ## Source of truth this POC assumes
 
 - Jira stories generated from `output/analysis/{domain}/be-04-stories.md`, pushed from this migration repo.
-- Confluence pages `FederatedGqlBrakDown-BE-{domain}` + the global overview (Phase 0 — Program Spikes).
+- Confluence pages `FederatedGqlBreakDown-BE-{domain}` + the global overview (Phase 0 — Program Spikes).
 - `fedMigrationScripts/` and `output/` are checked in at `https://github.com/XXX` — instructions/prompts link there for the legacy pseudo-logic and target schema an Engineer needs mid-story.
 
 ## Try it

@@ -1,6 +1,6 @@
 # Federated GraphQL — Migration Overview · All Domains
 
-> **Program overview** — the full `spark-internal-graphql` → Netflix DGS migration at a glance. Each domain's phase tables live in its own FederatedGqlBrakDown-BE-<domain> breakdown page (see the Domain Index); the complex, cross-cutting problems are centralized here as **program spikes** (below).
+> **Program overview** — the full `spark-internal-graphql` → Netflix DGS migration at a glance. Each domain's phase tables live in its own FederatedGqlBreakDown-BE-<domain> breakdown page (see the Domain Index); the complex, cross-cutting problems are centralized here as **program spikes** (below).
 
 | | |
 |---|---|
@@ -140,14 +140,14 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 | # | Domain | Target DGS | T-Shirt | Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | Breakdown page |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | **Bill of Materials (BOM)** | `plm-product (co-located)` | **XL** | **36** | 1 | 2 | 12 | 21 | `FederatedGqlBrakDown-BE-bom` |
-| 2 | **Claims** | `spark-claims (separate)` | **L** | **20** | 0 | 2 | 9 | 9 | `FederatedGqlBrakDown-BE-claims` |
-| 3 | **Impression** | `plm-product (co-located)` | **XS** | **7** | 0 | 0 | 2 | 5 | `FederatedGqlBrakDown-BE-impression` |
-| 4 | **Measurement** | `plm-product (co-located)` | **M** | **20** | 0 | 1 | 6 | 13 | `FederatedGqlBrakDown-BE-measurement` |
-| 5 | **Packaging** | `plm-product (co-located)` | **L** | **24** | 0 | 2 | 9 | 13 | `FederatedGqlBrakDown-BE-packaging` |
-| 6 | **Product** | `plm-product (host)` | **XXL** | **67** | 5 | 4 | 25 | 33 | `FederatedGqlBrakDown-BE-product` |
-| 7 | **Product Details** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 7 | 5 | `FederatedGqlBrakDown-BE-productDetails` |
-| 8 | **Watchlist** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 6 | 6 | `FederatedGqlBrakDown-BE-watchlist` |
+| 1 | **Bill of Materials (BOM)** | `plm-product (co-located)` | **XL** | **36** | 1 | 2 | 12 | 21 | `FederatedGqlBreakDown-BE-bom` |
+| 2 | **Claims** | `spark-claims (separate)` | **L** | **20** | 0 | 2 | 9 | 9 | `FederatedGqlBreakDown-BE-claims` |
+| 3 | **Impression** | `plm-product (co-located)` | **XS** | **7** | 0 | 0 | 2 | 5 | `FederatedGqlBreakDown-BE-impression` |
+| 4 | **Measurement** | `plm-product (co-located)` | **M** | **20** | 0 | 1 | 6 | 13 | `FederatedGqlBreakDown-BE-measurement` |
+| 5 | **Packaging** | `plm-product (co-located)` | **L** | **24** | 0 | 2 | 9 | 13 | `FederatedGqlBreakDown-BE-packaging` |
+| 6 | **Product** | `plm-product (host)` | **XXL** | **67** | 5 | 4 | 25 | 33 | `FederatedGqlBreakDown-BE-product` |
+| 7 | **Product Details** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 7 | 5 | `FederatedGqlBreakDown-BE-productDetails` |
+| 8 | **Watchlist** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 6 | 6 | `FederatedGqlBreakDown-BE-watchlist` |
 | | **TOTAL** | — | — | **200** | **6** | **13** | **76** | **105** | — |
 
 ---

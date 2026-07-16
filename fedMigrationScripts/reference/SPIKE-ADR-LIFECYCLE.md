@@ -74,7 +74,7 @@ Do these in order:
 | The 6 spikes themselves | `output/jira/all-stories.csv` (rows `Issue Type=Spike`) | Spikes (or Story labelled `spike`) |
 | Domain stories | `output/jira/{domain}.csv` / `all-stories.csv` | Story per row, under the domain Epic |
 | **Complex-case sub-tasks** | `output/complexStories/<case>/<case>.csv` | **imported separately, nested under the case's home stub** (e.g. techpack sub-tasks under `PRODUCT-BE-E-03`) |
-| Confluence pages | `output/summary/FederatedGqlBrakDown-BE-{domain}.md` + `{domain}-po-review.md` | create/update by title |
+| Confluence pages | `output/summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md` + `{domain}-po-review.md` | create/update by title |
 
 > **Why complex cases import separately:** they are kept **out** of `all-stories.csv` so they aren't
 > double-counted against the 337-story program total — the **home stub** story is what the rollup tracks.

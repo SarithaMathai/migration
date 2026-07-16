@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate FederatedGqlBrakDown-BE-{domain}.docx — Microsoft Word format.
+Generate FederatedGqlBreakDown-BE-{domain}.docx — Microsoft Word format.
 
 Styles match the reference docs in 'final PO BreakDown Doc/':
   - Title: bold 20pt blue
@@ -9,8 +9,8 @@ Styles match the reference docs in 'final PO BreakDown Doc/':
   - Story tables with colored headers and complexity-coded text
   - Emoji icons throughout (paste into Confluence cleanly)
 
-Output:  output/summary/FederatedGqlBrakDown-BE-{domain}.docx  (flat — no per-domain subfolder)
-         oneStopDoc/Federated+Graphql+Stories+-+BreakDown.docx  (global)
+Output:  output/summary/{domain}/FederatedGqlBreakDown-BE-{domain}.docx  (per-domain subfolder)
+         output/summary/Federated+Graphql+Stories+-+BreakDown.docx       (global, summary/ root)
 
 Run:
     python generate_word.py              # all phase-1 domains + global
@@ -775,7 +775,7 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         grand[0] += total; grand[1] += vh; grand[2] += hi; grand[3] += me; grand[4] += lo
         idx_rows.append([str(i), label, DGS_MAP[domain], ts,
                          str(total), str(vh), str(hi), str(me), str(lo),
-                         f"FederatedGqlBrakDown-BE-{domain}"])
+                         f"FederatedGqlBreakDown-BE-{domain}"])
     idx_rows.append(["", "TOTAL", "—", "—",
                      str(grand[0]), str(grand[1]), str(grand[2]), str(grand[3]), str(grand[4]), "—"])
 
@@ -797,20 +797,21 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
     render_md_block(doc, bd.build_spike_detail(dd))
 
     # Per-domain story detail intentionally NOT included — this is an overview.
-    # Each domain's phase tables are in its own FederatedGqlBrakDown-BE-<domain> breakdown.
+    # Each domain's phase tables are in its own FederatedGqlBreakDown-BE-<domain> breakdown.
 
     return doc
 
 
 # ─── Runner ────────────────────────────────────────────────────────────────────
 def generate_word_for(domain: str) -> None:
-    # Backend artifacts carry -BE- in the name and live flat in output/summary/
-    # (no per-domain subfolder), next to their -FE- frontend counterparts.
-    OUTPUT.mkdir(parents=True, exist_ok=True)
+    # Per-domain artifacts live in output/summary/{domain}/ (BE + FE breakdowns
+    # side by side); only the program-level pages stay at the summary/ root.
+    domain_dir = OUTPUT / domain
+    domain_dir.mkdir(parents=True, exist_ok=True)
     doc      = build_word_doc(domain)
-    out_file = OUTPUT / f"FederatedGqlBrakDown-BE-{domain}.docx"
+    out_file = domain_dir / f"FederatedGqlBreakDown-BE-{domain}.docx"
     doc.save(str(out_file))
-    print(f"  OK FederatedGqlBrakDown-BE-{domain}.docx")
+    print(f"  OK {domain}/FederatedGqlBreakDown-BE-{domain}.docx")
 
 
 def generate_global_word() -> None:

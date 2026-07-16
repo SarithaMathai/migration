@@ -4,8 +4,8 @@
 
 ## Start here, by role
 
-- **Product Owner / Stakeholder** → [summary/00-program-overview.md](summary/00-program-overview.md), then the per-domain breakdown pages in [summary/](summary/) (`.docx` twins for sharing).
-- **Engineer (backend)** → [analysis/](analysis/) for your domain (`be-*` files; the domain's frontend view is right there as `fe-{domain}-breakdown.md`), then your domain's `FederatedGqlBrakDown-BE-*.md` in [summary/](summary/).
+- **Product Owner / Stakeholder** → [summary/00-program-overview.md](summary/00-program-overview.md), then the per-domain breakdown pages in [summary/{domain}/](summary/) (`.docx` twins for sharing).
+- **Engineer (backend)** → [analysis/](analysis/) for your domain (`be-*` files; the domain's frontend view is right there as `fe-{domain}-breakdown.md`), then your domain's `summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md`.
 - **Engineer (frontend)** → [analysis/program/fe-00-executive-summary.md](analysis/program/fe-00-executive-summary.md), stories in [analysis/program/fe-08-frontend-stories.md](analysis/program/fe-08-frontend-stories.md), order in [analysis/program/fe-10-migration-sequencing.md](analysis/program/fe-10-migration-sequencing.md).
 - **Delivery (Jira / Confluence)** → import the combined per-domain CSVs from [jira/](jira/) (prompts: `fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md`), publish pages from [confluence/](confluence/).
 
@@ -13,7 +13,7 @@
 
 | Folder | Content | Audience |
 |---|---|---|
-| [summary/](summary/) | Program overview + per-domain breakdown pages: `FederatedGqlBrakDown-BE-{domain}` (backend) and `FederatedGqlBrakDown-FE-{domain}` (frontend), each as `.md` + `.docx`; global `Federated+Graphql+Stories+-+BreakDown` | PO, everyone |
+| [summary/](summary/) | Program overview + per-domain breakdown folders: `{domain}/FederatedGqlBreakDown-BE-{domain}` (backend) and `{domain}/FederatedGqlBreakDown-FE-{domain}` (frontend), each as `.md` + `.docx`; global `Federated+Graphql+Stories+-+BreakDown` at the root | PO, everyone |
 | [analysis/](analysis/) | **Everything for one domain in one folder** (8 folders): backend `be-01-schema-inventory` → `be-02-resolver-analysis` → `be-03-schema-analysis` (+ `be-03-schema.graphql`) → `be-04-stories` / `be-04-po-summary` → `be-05-attribute-inventory`, plus the domain's frontend view `fe-{domain}-breakdown.md` | Engineers |
 | [analysis/program/](analysis/program/) | Cross-domain frontend program docs `fe-00`–`fe-11` (numbered reading order; `fe-08` = story source of truth) + `frontend-inventory.json` (machine-readable master data) | Frontend engineers |
 | [jira/](jira/) | **Combined** per-domain CSVs — `{domain}.csv` holds that domain's backend AND frontend stories (both epics); full-program files: `all-stories.csv` (backend) + `all-frontend-stories.csv` (frontend) | Delivery |

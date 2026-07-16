@@ -22,8 +22,8 @@ Outputs:
   output/confluence/frontend-confluence-documentation.md
   output/jira/{domain}.csv     COMBINED backend + frontend rows (FE rows appended to the
       backend CSV written by generate_jira; idempotent) + all-frontend-stories.csv
-  output/summary/FederatedGqlBrakDown-FE-{domain}.md|.docx   per-domain FE breakdown pages,
-      flat next to the FederatedGqlBrakDown-BE-{domain} backend breakdowns; the same page
+  output/summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md|.docx   per-domain FE breakdown
+      pages, next to the FederatedGqlBreakDown-BE-{domain} backend breakdowns; the same page
       is co-located as output/analysis/{domain}/fe-{domain}-breakdown.md (only when 08 exists)
 
 Run (from anywhere — paths resolve relative to this script):
@@ -1262,7 +1262,7 @@ def emit_dependency_matrix(stories):
     write(FE_OUT / "fe-09-story-dependency-matrix.md", "\n".join(L))
 
 
-# ─── Per-domain FE breakdown pages (output/summary/FederatedGqlBrakDown-FE-*) ─
+# ─── Per-domain FE breakdown pages (output/summary/{domain}/FederatedGqlBreakDown-FE-*) ─
 SUMMARY_OUT = ROOT / "output" / "summary"
 IMPACT_ICONS = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}
 
@@ -1345,8 +1345,8 @@ def fe_order_map_lines(group):
 
 
 def emit_fe_breakdowns(stories, ops):
-    """One FederatedGqlBrakDown-FE-{domain} page per phase-1 domain, flat in
-    output/summary/ next to the FederatedGqlBrakDown-BE-{domain} backend breakdowns."""
+    """One FederatedGqlBreakDown-FE-{domain} page per phase-1 domain, in
+    output/summary/{domain}/ next to the FederatedGqlBreakDown-BE-{domain} backend breakdowns."""
     if not stories:
         print("  (fe-08-frontend-stories.md not found — skipping FE breakdowns)")
         return
@@ -1441,10 +1441,12 @@ def emit_fe_breakdowns(stories, ops):
             "- fe-09-story-dependency-matrix.md — FE ↔ BE dependency matrix.",
             "- fe-10-migration-sequencing.md — program-level waves and external gates.",
             "- fe-03-merged-inventory.md — every operation × backend root field for this domain.",
-            f"- FederatedGqlBrakDown-BE-{dom}.md — the backend breakdown this cutover follows.",
+            f"- FederatedGqlBreakDown-BE-{dom}.md — the backend breakdown this cutover follows.",
             "",
         ]
-        out = SUMMARY_OUT / f"FederatedGqlBrakDown-FE-{dom}.md"
+        dom_out = SUMMARY_OUT / dom
+        dom_out.mkdir(parents=True, exist_ok=True)
+        out = dom_out / f"FederatedGqlBreakDown-FE-{dom}.md"
         out.write_text("\n".join(L), encoding="utf-8")
         print(f"  wrote {out.relative_to(ROOT)}")
 
@@ -1462,8 +1464,8 @@ def emit_fe_breakdowns(stories, ops):
             tp = doc.add_paragraph()
             gw.add_run(tp, title, bold=True, size_pt=20, color_hex=gw.C_TITLE)
             gw.render_md_block(doc, L[1:])
-            doc.save(str(SUMMARY_OUT / f"FederatedGqlBrakDown-FE-{dom}.docx"))
-            print(f"  wrote output/summary/FederatedGqlBrakDown-FE-{dom}.docx")
+            doc.save(str(dom_out / f"FederatedGqlBreakDown-FE-{dom}.docx"))
+            print(f"  wrote output/summary/{dom}/FederatedGqlBreakDown-FE-{dom}.docx")
 
 
 # ─── Docs 00 / 10 / Confluence index — narrative templated here, numbers computed ─

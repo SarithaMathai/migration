@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate FederatedGqlBrakDown-BE-{domain}.md and Federated+Graphql+Stories+-+BreakDown.md.
+Generate FederatedGqlBreakDown-BE-{domain}.md and Federated+Graphql+Stories+-+BreakDown.md.
 
 Format mirrors the reference Word docs in 'final PO BreakDown Doc/':
   - Compact header banner
@@ -8,10 +8,11 @@ Format mirrors the reference Word docs in 'final PO BreakDown Doc/':
   - Stories rendered as TABLES (one row per story) grouped by phase — Confluence-ready
   - High/VH tests shown beneath the phase table, not inline
 
-Output (flat in output/summary/ — BE artifacts carry -BE- in the name, next to the
-FederatedGqlBrakDown-FE-{domain} frontend breakdowns from generate_frontend.py):
-  output/summary/FederatedGqlBrakDown-BE-{domain}.md   (per domain)
-  output/summary/Federated+Graphql+Stories+-+BreakDown.md    (global)
+Output (per-domain artifacts in output/summary/{domain}/ — BE artifacts carry -BE- in the
+name, next to the FederatedGqlBreakDown-FE-{domain} frontend breakdowns from
+generate_frontend.py; program-level pages stay at the summary/ root):
+  output/summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md   (per domain)
+  output/summary/Federated+Graphql+Stories+-+BreakDown.md        (global)
 
 Run:
     python generate_breakdown.py              # all domains + global
@@ -1320,7 +1321,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
          f"({', '.join(DOMAIN_LABELS[d] for d in domains)}). The full-program overview is the untouched "
          "`Federated+Graphql+Stories+-+BreakDown` page." if is_custom else
          "> **Program overview** — the full `spark-internal-graphql` → Netflix DGS migration at a glance. "
-         "Each domain's phase tables live in its own FederatedGqlBrakDown-BE-<domain> breakdown page (see the Domain "
+         "Each domain's phase tables live in its own FederatedGqlBreakDown-BE-<domain> breakdown page (see the Domain "
          "Index); the complex, cross-cutting problems are centralized here as **program spikes** (below)."),
         "",
         "| | |",
@@ -1354,7 +1355,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     for i, (domain, label, dgs, ts, total, vh, hi, me, lo) in enumerate(all_stats, 1):
         lines.append(
             f"| {i} | **{label}** | `{dgs}` | **{ts}** | "
-            f"**{total}** | {vh} | {hi} | {me} | {lo} | `FederatedGqlBrakDown-BE-{domain}` |"
+            f"**{total}** | {vh} | {hi} | {me} | {lo} | `FederatedGqlBreakDown-BE-{domain}` |"
         )
 
     lines += [
@@ -1369,7 +1370,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     lines += build_spike_detail(domain_data)
 
     # Per-domain story detail intentionally NOT included here — this is an overview.
-    # Each domain's phase tables live in its own FederatedGqlBrakDown-BE-<domain> breakdown.
+    # Each domain's phase tables live in its own FederatedGqlBreakDown-BE-<domain> breakdown.
 
     text = re.sub(r"\n+(?:---\s*)+$", "\n", "\n".join(lines))   # drop any trailing horizontal rule
     return strip_relative_links(repo_linkify(text))
@@ -1377,13 +1378,14 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
 
 # ─── Runner ────────────────────────────────────────────────────────────────────
 def generate_breakdown_for(domain: str) -> None:
-    # Backend artifacts carry -BE- in the name and live flat in output/summary/
-    # (no per-domain subfolder), next to their -FE- frontend counterparts.
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    # Per-domain artifacts live in output/summary/{domain}/ (BE + FE breakdowns
+    # side by side); only the program-level pages stay at the summary/ root.
+    domain_dir = OUT_DIR / domain
+    domain_dir.mkdir(parents=True, exist_ok=True)
     content  = build_breakdown(domain)
-    out_file = OUT_DIR / f"FederatedGqlBrakDown-BE-{domain}.md"
+    out_file = domain_dir / f"FederatedGqlBreakDown-BE-{domain}.md"
     out_file.write_text(content, encoding="utf-8")
-    print(f"  OK FederatedGqlBrakDown-BE-{domain}.md ({len(content):,} chars)")
+    print(f"  OK {domain}/FederatedGqlBreakDown-BE-{domain}.md ({len(content):,} chars)")
 
 
 def generate_global() -> None:

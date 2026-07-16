@@ -10,8 +10,8 @@ For each of the 13 domains, running this skill produces **five files** inside `f
 
 | Output file | Audience | Contents |
 |---|---|---|
-| `FederatedGqlBrakDown-BE-{domain}.docx` | PO + Engineers · **Open in Word / paste into Confluence** | **Primary artifact** — Microsoft Word with full formatting: navy blue title, light-blue metrics banner, colored table headers, complexity-coded text (🔴🟠🟡🟢), type icons (🔷🔶🔸), phase icons, all 8 sections as Word content. Ready to copy-paste into Confluence or share as a Word doc. |
-| `FederatedGqlBrakDown-BE-{domain}.md` | PO + Engineers · Confluence paste (Markdown) | Markdown fallback — same content and table format as the Word doc; use this when pasting raw Markdown into Confluence. |
+| `FederatedGqlBreakDown-BE-{domain}.docx` | PO + Engineers · **Open in Word / paste into Confluence** | **Primary artifact** — Microsoft Word with full formatting: navy blue title, light-blue metrics banner, colored table headers, complexity-coded text (🔴🟠🟡🟢), type icons (🔷🔶🔸), phase icons, all 8 sections as Word content. Ready to copy-paste into Confluence or share as a Word doc. |
+| `FederatedGqlBreakDown-BE-{domain}.md` | PO + Engineers · Confluence paste (Markdown) | Markdown fallback — same content and table format as the Word doc; use this when pasting raw Markdown into Confluence. |
 | `{domain}-comprehensive.md` | Engineers + Tech Leads | Full engineering doc — executive summary, scope, phase effort table, risks, decisions, dependency map, sprint sequencing, capacity planning, complex story breakdowns (§8b), **all stories** with AC + test cases (High/VH only), and story reference table |
 | `{domain}-po-review.md` | Product Owner + Stakeholders | Concise PO review — what we're building, scope, effort by phase, key risks, decisions required, migration approach summary, sprint capacity, and Phase 2 story breakdowns |
 | `{domain}.csv` | Jira admin | Jira-import CSV — one Epic + per-story rows; schema init excluded (it is a B-01 checklist item, not a story); test cases included only for High/VH stories |
@@ -90,7 +90,7 @@ The generators look for source files in this priority order:
 
 ## Format rules
 
-### Breakdown doc (`FederatedGqlBrakDown-BE-{domain}.md`)
+### Breakdown doc (`FederatedGqlBreakDown-BE-{domain}.md`)
 - **Table format for stories** — each story is one row: `Story ID | Operation | Type | Complexity | Depends On | AC`; no card-style headers
 - **Phase grouping** — each phase gets its own `###` heading with icon and story count, then a single table for all stories in that phase
 - **Complexity icons** — 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low; size badge (`XS`/`M`/`L`/`XL`) in the complexity cell

@@ -21,19 +21,19 @@ Titles follow one convention: `{Domain} — Federated GraphQL Breakdown` (engine
 
 | Domain | Breakdown page (source) | PO review page (source) |
 |---|---|---|
-| Attachment | `output/summary/attachment/FederatedGqlBrakDown-BE-attachment.md` | `output/summary/attachment/attachment-po-review.md` |
-| BOM | `output/summary/FederatedGqlBrakDown-BE-bom.md` | `output/summary/bom/bom-po-review.md` |
-| Claims | `output/summary/FederatedGqlBrakDown-BE-claims.md` | `output/summary/claims/claims-po-review.md` |
-| Discussion | `output/summary/discussion/FederatedGqlBrakDown-BE-discussion.md` | `output/summary/discussion/discussion-po-review.md` |
-| Impression | `output/summary/FederatedGqlBrakDown-BE-impression.md` | `output/summary/impression/impression-po-review.md` |
-| Measurement | `output/summary/FederatedGqlBrakDown-BE-measurement.md` | `output/summary/measurement/measurement-po-review.md` |
-| Packaging | `output/summary/FederatedGqlBrakDown-BE-packaging.md` | `output/summary/packaging/packaging-po-review.md` |
-| Product | `output/summary/FederatedGqlBrakDown-BE-product.md` | `output/summary/product/product-po-review.md` |
-| Product Details | `output/summary/FederatedGqlBrakDown-BE-productDetails.md` | `output/summary/productDetails/productDetails-po-review.md` |
-| Sample | `output/summary/sample/FederatedGqlBrakDown-BE-sample.md` | `output/summary/sample/sample-po-review.md` |
-| Search | `output/summary/search/FederatedGqlBrakDown-BE-search.md` | `output/summary/search/search-po-review.md` |
-| Watchlist | `output/summary/FederatedGqlBrakDown-BE-watchlist.md` | `output/summary/watchlist/watchlist-po-review.md` |
-| Workspace | `output/summary/workspace/FederatedGqlBrakDown-BE-workspace.md` | `output/summary/workspace/workspace-po-review.md` |
+| Attachment | `output/summary/attachment/FederatedGqlBreakDown-BE-attachment.md` | `output/summary/attachment/attachment-po-review.md` |
+| BOM | `output/summary/bom/FederatedGqlBreakDown-BE-bom.md` | `output/summary/bom/bom-po-review.md` |
+| Claims | `output/summary/claims/FederatedGqlBreakDown-BE-claims.md` | `output/summary/claims/claims-po-review.md` |
+| Discussion | `output/summary/discussion/FederatedGqlBreakDown-BE-discussion.md` | `output/summary/discussion/discussion-po-review.md` |
+| Impression | `output/summary/impression/FederatedGqlBreakDown-BE-impression.md` | `output/summary/impression/impression-po-review.md` |
+| Measurement | `output/summary/measurement/FederatedGqlBreakDown-BE-measurement.md` | `output/summary/measurement/measurement-po-review.md` |
+| Packaging | `output/summary/packaging/FederatedGqlBreakDown-BE-packaging.md` | `output/summary/packaging/packaging-po-review.md` |
+| Product | `output/summary/product/FederatedGqlBreakDown-BE-product.md` | `output/summary/product/product-po-review.md` |
+| Product Details | `output/summary/productDetails/FederatedGqlBreakDown-BE-productDetails.md` | `output/summary/productDetails/productDetails-po-review.md` |
+| Sample | `output/summary/sample/FederatedGqlBreakDown-BE-sample.md` | `output/summary/sample/sample-po-review.md` |
+| Search | `output/summary/search/FederatedGqlBreakDown-BE-search.md` | `output/summary/search/search-po-review.md` |
+| Watchlist | `output/summary/watchlist/FederatedGqlBreakDown-BE-watchlist.md` | `output/summary/watchlist/watchlist-po-review.md` |
+| Workspace | `output/summary/workspace/FederatedGqlBreakDown-BE-workspace.md` | `output/summary/workspace/workspace-po-review.md` |
 
 Each breakdown page contains: the domain's story list by phase (A–G) with acceptance criteria, the spike-gated
 stories flagged with their program spike, complexity/T-shirt sizing, and dependency mapping. Each PO review
