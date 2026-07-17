@@ -394,6 +394,27 @@ Depends on `Product` existing (product A-02), not on a separate deployment.
 
 ---
 
+### MST-BE-G-04 · `SampleMeasurementSet.sample` forward reference (recommended, PO-gated)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-05 · **EXT:** 🟡 `sample`
+- **Status:** Recommended (PO-gated — federation-review/03 §2 REC-4)
+
+- **In plain terms:** Adds `sample { … }` on the sample measurement set — the forward twin of the existing
+reverse extension (`SampleV2.sampleMeasurement`, F-04).
+
+- **Context:** `SampleMeasurementSet` is keyed on `sampleId` but exposes no way to walk to the sample entity;
+sample screens re-query by id today. `sampleId` stays — it is the `@key`.
+- **Target DGS Implementation:** schema adds `sample: SampleV2` on `SampleMeasurementSet`; resolver emits
+`{id: sampleId}` — zero extra backend calls; hydrated by the sample subgraph (phase 2; stitched gateway
+until then).
+
+#### Acceptance Criteria
+
+1. PO approval recorded (OQ-5) before implementation starts.
+2. `sample { id }` resolves as a stub; `sampleId` unchanged.
+3. Pairs cleanly with F-04 (no circular resolution at the gateway — verified by a two-hop smoke query).
+
+---
+
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|

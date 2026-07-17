@@ -79,12 +79,12 @@
 | Backend schema | Resolver | Frontend operation | Client constant | Components / hooks | FE story | BE story |
 |---|---|---|---|---|---|---|
 | `schemas/SPARK_Bom.graphqls` | `addBom` | `addBom` | `ADD_BOM` | `BomCloneTemplate.tsx`<br>`BomCreateTemplate.tsx` | BOM-FE-006 | BOM-BE-D-01 |
-| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomByIds` | `GET_BOMS_BY_IDS` | `BomCloneTemplate.tsx`<br>`useBomsByIds.ts` | BOM-FE-002 | BOM-BE-B-01 |
-| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomByIds` | `GET_BOMS_BY_IDS_WITH_PRODUCT_INFO` | `BomViewTemplate.tsx` | BOM-FE-002 | BOM-BE-B-01 |
-| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomByIds` | `GET_BOM_BY_ID` | — | BOM-FE-002 | BOM-BE-B-01 |
-| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomComponentStatus` | `GET_BOM_COMPONENT_STATUS` | `useComponentStatus.ts` | BOM-FE-002 | BOM-BE-B-01 |
-| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomDataAndImpressions` | `GET_BOM_TEMPLATES_AND_IMPRESSIONS` | `ProductTemplateBomExpandedView.tsx` | BOM-FE-002 | BOM-BE-B-01 |
-| `schemas/SPARK_Bom.graphqls` | `getBomByParentId` | `getBomByParentId` | `GET_BOMS_BY_PARENT_ID` | `useBomsByParentId.ts` | BOM-FE-002 | BOM-BE-B-04 |
+| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomByIds` | `GET_BOMS_BY_IDS` | `BomCloneTemplate.tsx`<br>`useBomsByIds.ts` | BOM-FE-007 | BOM-BE-B-01 |
+| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomByIds` | `GET_BOMS_BY_IDS_WITH_PRODUCT_INFO` | `BomViewTemplate.tsx` | BOM-FE-007 | BOM-BE-B-01 |
+| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomByIds` | `GET_BOM_BY_ID` | — | BOM-FE-007 | BOM-BE-B-01 |
+| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomComponentStatus` | `GET_BOM_COMPONENT_STATUS` | `useComponentStatus.ts` | BOM-FE-007 | BOM-BE-B-01 |
+| `schemas/SPARK_Bom.graphqls` | `getBomByIds` | `getBomDataAndImpressions` | `GET_BOM_TEMPLATES_AND_IMPRESSIONS` | `ProductTemplateBomExpandedView.tsx` | BOM-FE-007 | BOM-BE-B-01 |
+| `schemas/SPARK_Bom.graphqls` | `getBomByParentId` | `getBomByParentId` | `GET_BOMS_BY_PARENT_ID` | `useBomsByParentId.ts` | BOM-FE-007 | BOM-BE-B-04 |
 | `schemas/SPARK_Bom.graphqls` | `getBomElastic` | `getBomElastic` | `GET_BOMS_FROM_ES_BY_PARENT_IDS` | `useBomsByParentIdsFromES.ts` | BOM-FE-003 | BOM-BE-C-01 |
 | `schemas/SPARK_Bom.graphqls` | `getBomMaterialTypes` | `getBomMaterialTypes` | `GET_BOM_MATERIAL_TYPES` | `useBomMaterialTypes.ts` | BOM-FE-004 | BOM-BE-B-05 |
 | `schemas/SPARK_Bom.graphqls` | `getBomPackagingMaterialTypes` | `getBomPackagingMasterData` | `GET_BOM_PACKAGING_MASTER_DATA` | `useBomMaterialTypes.ts` | BOM-FE-004 | BOM-BE-B-06 |
@@ -95,7 +95,7 @@
 | `schemas/SPARK_Bom.graphqls` | `getValidRawMaterialSuppliersForBom` | `getValidSuppliersForBom` | `GET_VALID_SUPPLIERS_FOR_BOM` | `BomForm.tsx`<br>`PackagingBomForm.tsx` | BOM-FE-005 | BOM-BE-C-05 |
 | `schemas/SPARK_Bom.graphqls` | `getValidTrimSuppliersForBom` | `getValidSuppliersForBom` | `GET_VALID_SUPPLIERS_FOR_BOM` | `BomForm.tsx`<br>`PackagingBomForm.tsx` | BOM-FE-005 | BOM-BE-C-04 |
 | `schemas/SPARK_Bom.graphqls` | `lockBom` | `lockBom` | `LOCK_BOM` | `BomViewHeader.tsx` | BOM-FE-006 | BOM-BE-D-03 |
-| `schemas/SPARK_Bom.graphqls` | `searchMaterialsBom` | `searchMaterialsBom` | `BOM_SEARCH_MATERIALS` | — | BOM-FE-003 | BOM-BE-S-03 |
+| `schemas/SPARK_Bom.graphqls` | `searchMaterialsBom` | `searchMaterialsBom` | `BOM_SEARCH_MATERIALS` | — | BOM-FE-007 | BOM-BE-S-03 |
 | `schemas/SPARK_Bom.graphqls` | `unlockBom` | `unlockBom` | `UNLOCK_BOM` | `BomViewHeader.tsx` | BOM-FE-006 | BOM-BE-D-04 |
 | `schemas/SPARK_Bom.graphqls` | `updateBom` | `updateBom` | `UPDATE_BOM` | `BomViewTemplate.tsx` | BOM-FE-006 | BOM-BE-S-01 |
 | `schemas/SPARK_Bom.graphqls` | `updateBomComponentStatus` | `updateBomComponentStatus` | `UPDATE_BOM_COMPONENT_STATUS` | `BomViewTemplate.tsx` | BOM-FE-006 | BOM-BE-D-05 |

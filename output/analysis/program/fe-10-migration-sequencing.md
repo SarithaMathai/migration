@@ -59,9 +59,9 @@
 |---|---|---|
 | 1 — Watchlist pilot | 3 | 7–10 days |
 | 2 — PDTL + MST + PKG | 12 | 41–64 days |
-| 3 — BOM + Claims | 10 | 44–69 days |
-| 4 — Product + Impression | 13 | 66–102 days |
-| **Total** | **38** | **158–245 days** (single-engineer days; waves 2–4 parallelize across domains) |
+| 3 — BOM + Claims | 11 | 46–73 days |
+| 4 — Product + Impression | 14 | 69–107 days |
+| **Total** | **40** | **163–254 days** (single-engineer days; waves 2–4 parallelize across domains) |
 
 ## 5. Rollback posture
 

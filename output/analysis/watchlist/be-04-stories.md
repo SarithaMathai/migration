@@ -260,6 +260,26 @@ diff intentional-only).
 
 ---
 
+### WATCHLIST-BE-G-05 · `WatchlistPartner.partner` entity reference (recommended, PO-gated)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** G-02 · **EXT:** 🔵 `vmm`
+- **Status:** Recommended (PO-gated — federation-review/03 §2 REC-3)
+
+- **In plain terms:** Adds `partner { … }` next to `partnerId`/`partnerName` on watchlist partner rows.
+
+- **Context:** `WatchlistPartner.partnerName` is *already* a live VMM lookup (`getByID(partnerId).bpName`,
+G-02) — the entity ref exposes the full partner from the same underlying call instead of one denormalized
+field. `partnerId`/`partnerName` stay (client contract).
+- **Target DGS Implementation:** schema adds `partner: VMM_BusinessPartner` on `WatchlistPartner`; resolver
+emits `{id: partnerId}` — gateway hydrates from VMM; null-safe on missing `partnerId`.
+
+#### Acceptance Criteria
+
+1. PO approval recorded (OQ-5) before implementation starts.
+2. `partner { id name }` resolves via the gateway; `partnerName` parity is preserved.
+3. No additional VMM calls from the watchlist subgraph (stub emission only).
+
+---
+
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|

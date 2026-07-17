@@ -1,6 +1,6 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,CLAIM-BE-B-01,"(Claims) getClaims(parentHumanId, claimHumanIds, partnerIds) [CLAIM-BE-B-01]",,Federate BreakDown Product,B,XS,dgs-migration,claims,query,,,To Do,"*Implementation Order:* 1 of 15 (Claims backend, step 1)
+Story,CLAIM-BE-B-01,"(Claims) getClaims(parentHumanId, claimHumanIds, partnerIds) [CLAIM-BE-B-01]",,Federate BreakDown Product,B,XS,dgs-migration,claims,query,,,To Do,"*Implementation Order:* 1 of 16 (Claims backend, step 1)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* No
 
@@ -22,6 +22,7 @@ Story,CLAIM-BE-B-01,"(Claims) getClaims(parentHumanId, claimHumanIds, partnerIds
 * CLAIM-BE-G-03 — product + parentDetails
 * CLAIM-BE-G-04 — workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName
 * CLAIM-BE-G-05 — Tests, parity harness
+* CLAIM-BE-G-06 — Shared value-type alignment
 * CLAIM-FE-002
 
 *Current Behaviour:*
@@ -37,7 +38,7 @@ Story,CLAIM-BE-B-01,"(Claims) getClaims(parentHumanId, claimHumanIds, partnerIds
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-B-02,(Claims) getClaimByIds · getCommunicationChannels · getAllClaimsAbout · getClaimExports [CLAIM-BE-B-02],,Federate BreakDown Product,B,M,dgs-migration,claims,query,,B-01,To Do,"*Implementation Order:* 2 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-B-02,(Claims) getClaimByIds · getCommunicationChannels · getAllClaimsAbout · getClaimExports [CLAIM-BE-B-02],,Federate BreakDown Product,B,M,dgs-migration,claims,query,,B-01,To Do,"*Implementation Order:* 2 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -92,7 +93,7 @@ Story,CLAIM-BE-B-02,(Claims) getClaimByIds · getCommunicationChannels · getAll
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-C-01,(Claims) searchGuestFacing(queryParam) [CLAIM-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,claims,search,,B-01,To Do,"*Implementation Order:* 3 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-C-01,(Claims) searchGuestFacing(queryParam) [CLAIM-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,claims,search,,B-01,To Do,"*Implementation Order:* 3 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -115,7 +116,7 @@ Story,CLAIM-BE-C-01,(Claims) searchGuestFacing(queryParam) [CLAIM-BE-C-01],,Fede
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-C-02,(Claims) getClaimsElastic(parentHumanId) [CLAIM-BE-C-02],,Federate BreakDown Product,C,M,dgs-migration,claims,search,,B-01,To Do,"*Implementation Order:* 4 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-C-02,(Claims) getClaimsElastic(parentHumanId) [CLAIM-BE-C-02],,Federate BreakDown Product,C,M,dgs-migration,claims,search,,B-01,To Do,"*Implementation Order:* 4 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -138,7 +139,7 @@ Story,CLAIM-BE-C-02,(Claims) getClaimsElastic(parentHumanId) [CLAIM-BE-C-02],,Fe
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-D-01,(Claims) createClaim [CLAIM-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,claims,mutation,,B-01,To Do,"*Implementation Order:* 5 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-D-01,(Claims) createClaim [CLAIM-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,claims,mutation,,B-01,To Do,"*Implementation Order:* 5 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -162,7 +163,7 @@ Story,CLAIM-BE-D-01,(Claims) createClaim [CLAIM-BE-D-01],,Federate BreakDown Pro
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-D-02,(Claims) bulkUpdateClaim [CLAIM-BE-D-02],,Federate BreakDown Product,D,M,dgs-migration,claims,mutation,,B-01,To Do,"*Implementation Order:* 6 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-D-02,(Claims) bulkUpdateClaim [CLAIM-BE-D-02],,Federate BreakDown Product,D,M,dgs-migration,claims,mutation,,B-01,To Do,"*Implementation Order:* 6 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -186,7 +187,7 @@ Story,CLAIM-BE-D-02,(Claims) bulkUpdateClaim [CLAIM-BE-D-02],,Federate BreakDown
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-D-03,(Claims) requestClaimExport · lockClaim · unlockClaim [CLAIM-BE-D-03],,Federate BreakDown Product,D,M,dgs-migration,claims,mutation,,B-01,To Do,"*Implementation Order:* 7 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-D-03,(Claims) requestClaimExport · lockClaim · unlockClaim [CLAIM-BE-D-03],,Federate BreakDown Product,D,M,dgs-migration,claims,mutation,,B-01,To Do,"*Implementation Order:* 7 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -231,7 +232,7 @@ Story,CLAIM-BE-D-03,(Claims) requestClaimExport · lockClaim · unlockClaim [CLA
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-E-01,(Claims) updateClaim (proxy ACL + multi-step write) [CLAIM-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,claims,complex,,"SPIKE-01, B-01",To Do,"*Implementation Order:* 8 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-E-01,(Claims) updateClaim (proxy ACL + multi-step write) [CLAIM-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,claims,complex,,"SPIKE-01, B-01",To Do,"*Implementation Order:* 8 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -268,7 +269,7 @@ Story,CLAIM-BE-E-01,(Claims) updateClaim (proxy ACL + multi-step write) [CLAIM-B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-F-01,(Claims) Product.claims (federation contribution) [CLAIM-BE-F-01],,Federate BreakDown Product,F,M,dgs-migration,claims,field-resolver,,"B-01, product",To Do,"*Implementation Order:* 9 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-F-01,(Claims) Product.claims (federation contribution) [CLAIM-BE-F-01],,Federate BreakDown Product,F,M,dgs-migration,claims,field-resolver,,"B-01, product",To Do,"*Implementation Order:* 9 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -279,7 +280,7 @@ Story,CLAIM-BE-F-01,(Claims) Product.claims (federation contribution) [CLAIM-BE-
 * None
 
 *Target:*
-* `extend type Product @key(fields:""id"") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] }` with a `@DgsEntityFetcher`; the claims subgraph fills `Product.claims` over the gateway. **BLOCKED-BY:** the `Product` entity existing (plm-product Phase A).
+* `extend type Product @key(fields:""id"") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] }` with a `@DgsEntityFetcher`; the claims subgraph fills `Product.claims` over the gateway. **BLOCKED-BY:** the `Product` entity existing (plm-product Phase A) **and PRODUCT-BE-F-14** (product-side stub aligned to the `Claims` type name; `Claims.id` is synthesized from humanId so federation keys on `id` — federation-review/03 §R3, program decision 2026-07-17). For the reverse direction (`Claims.product` hydration) see PRODUCT-BE-F-13.
 
 *Acceptance Criteria:*
 1. `Product.claims` resolves via federation
@@ -289,7 +290,7 @@ Story,CLAIM-BE-F-01,(Claims) Product.claims (federation contribution) [CLAIM-BE-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-F-02,(Claims) ResourcesCount.claims (TechPack — claims side of PRODUCT-BE-F-05) [CLAIM-BE-F-02],,Federate BreakDown Product,F,XS,dgs-migration,claims,field-resolver,,"B-01, product",To Do,"*Implementation Order:* 10 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-F-02,(Claims) ResourcesCount.claims (TechPack — claims side of PRODUCT-BE-F-05) [CLAIM-BE-F-02],,Federate BreakDown Product,F,XS,dgs-migration,claims,field-resolver,,"B-01, product",To Do,"*Implementation Order:* 10 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -300,7 +301,7 @@ Story,CLAIM-BE-F-02,(Claims) ResourcesCount.claims (TechPack — claims side of 
 * None
 
 *Target:*
-* `extend type ResourcesCount @key(fields:""productId partnerId"") { claims: [ID] }` with a `@DgsEntityFetcher`; fills the TechPack `claims` count. **BLOCKED-BY:** product TechPack facade (`PRODUCT-BE-E-03`/`F-05`).
+* `extend type ResourcesCount @key(fields:""productId partnerId"") { claims: [ID] }` with a `@DgsEntityFetcher`; fills the TechPack `claims` count. **BLOCKED-BY:** product TechPack facade (`PRODUCT-BE-E-03`/`F-05`) and PRODUCT-BE-F-14 (contract alignment).
 
 *Acceptance Criteria:*
 1. field resolves on the federated `ResourcesCount`; parity vs facade
@@ -309,7 +310,7 @@ Story,CLAIM-BE-F-02,(Claims) ResourcesCount.claims (TechPack — claims side of 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-01,(Claims) access + currentUserPermissions + participantDetails [CLAIM-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 11 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-G-01,(Claims) access + currentUserPermissions + participantDetails [CLAIM-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 11 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -329,7 +330,7 @@ Story,CLAIM-BE-G-01,(Claims) access + currentUserPermissions + participantDetail
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-02,(Claims) createdBy + updatedBy + businessPartner + designPartner [CLAIM-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 12 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-G-02,(Claims) createdBy + updatedBy + businessPartner + designPartner [CLAIM-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 12 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -353,7 +354,7 @@ Story,CLAIM-BE-G-02,(Claims) createdBy + updatedBy + businessPartner + designPar
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeams / droppedPartnerIds) [CLAIM-BE-G-03],,Federate BreakDown Product,G,L,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 13 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeams / droppedPartnerIds) [CLAIM-BE-G-03],,Federate BreakDown Product,G,L,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 13 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -383,7 +384,7 @@ Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeam
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName [CLAIM-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 14 of 15 (Claims backend, step 2)
+Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName [CLAIM-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 14 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -404,7 +405,7 @@ Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + Cl
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,"B-01, E-01, G-02, G-03",To Do,"*Implementation Order:* 15 of 15 (Claims backend, step 3)
+Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,"B-01, E-01, G-02, G-03",To Do,"*Implementation Order:* 16 of 16 (Claims backend, step 3)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* No
 
@@ -429,8 +430,31 @@ Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
+Story,CLAIM-BE-G-06,(Claims) Shared value-type alignment (@shareable instead of entity stubs) [CLAIM-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 15 of 16 (Claims backend, step 2)
+*Domain:* Claims — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* CLAIM-BE-B-01 — getClaims
+
+*Blocks:*
+* None
+
+*Target:*
+* duplicate the value types `@shareable` in the claims schema (`ProductComponentStatus`, `CodeDescriptionOrder`, `ResourcePermissions` + `PermissionEntry`, `TeamPaged` + `Team` + `Paging`) matching the product-side shapes; finalize the `Team` field subset actually returned by the claims elastic search; contract test asserting shape equality with the product definitions.
+
+*Acceptance Criteria:*
+1. Claims subgraph composes with plm-product with zero `INVALID_FIELD_SHARING`/value-type conflicts
+2. `statuses` / `currentUserPermissions` / `systemTeams` return locally-resolved data (parity vs the old gateway)
+3. `Team` field subset confirmed against the elastic response and documented
+4. Revisit note recorded for the phase-2 team subgraph (Team becomes its entity then)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target claim fragments [CLAIM-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,refactor,,,To Do,"*Implementation Order:* 16 of 19 (Claims combined — frontend #1, cutover step 1)
+Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target claim fragments [CLAIM-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,refactor,,,To Do,"*Implementation Order:* 17 of 20 (Claims combined — frontend #1, cutover step 1)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 
@@ -468,7 +492,7 @@ Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target cl
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover) [CLAIM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,query-migration,,CLAIM-BE-B-01 CLAIM-BE-B-02 CLAIM-FE-001,To Do,"*Implementation Order:* 17 of 19 (Claims combined — frontend #2, cutover step 2)
+Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover) [CLAIM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,query-migration,,CLAIM-BE-B-01 CLAIM-BE-B-02 CLAIM-FE-001,To Do,"*Implementation Order:* 18 of 20 (Claims combined — frontend #2, cutover step 2)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* High — *Parallelizable:* No
 
@@ -509,7 +533,7 @@ Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,mutation-migration,,CLAIM-BE-D-01 CLAIM-BE-D-02 CLAIM-BE-D-03,To Do,"*Implementation Order:* 18 of 19 (Claims combined — frontend #3, cutover step 3)
+Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,mutation-migration,,CLAIM-BE-D-01 CLAIM-BE-D-02 CLAIM-BE-D-03,To Do,"*Implementation Order:* 19 of 20 (Claims combined — frontend #3, cutover step 3)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 
@@ -547,7 +571,7 @@ Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-004,[Claims FE] Migrate `updateClaim` multi-step write handling [CLAIM-FE-004],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,mutation-migration-(complex),,CLAIM-BE-E-01,To Do,"*Implementation Order:* 19 of 19 (Claims combined — frontend #4, cutover step 4)
+Story,CLAIM-FE-004,[Claims FE] Migrate `updateClaim` multi-step write handling [CLAIM-FE-004],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,mutation-migration-(complex),,CLAIM-BE-E-01,To Do,"*Implementation Order:* 20 of 20 (Claims combined — frontend #4, cutover step 4)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* High — *Parallelizable:* No
 

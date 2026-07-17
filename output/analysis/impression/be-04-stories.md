@@ -381,6 +381,29 @@ Product exposes `impressions` and `impressionCounts` resolved via the impression
 
 ---
 
+### IMPRESSION-BE-G-04 · `attachment` entity reference (recommended, PO-gated)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment`
+- **Status:** Recommended (PO-gated — federation-review/03 §2 REC-2)
+
+- **In plain terms:** Adds `attachment { … }` next to `attachmentId` so clients get file metadata without a
+separate attachment-API round-trip.
+
+- **Context:** clients select `attachmentId` on `searchImpressionsByProductId`
+(`ClientCallingGqlQueries/product-queries__ProductQueries.txt:309`) and then resolve the file separately.
+`attachmentId` stays (thumbnail-URL building contract).
+- **Target DGS Implementation:** schema adds `attachment: Attachment` (declare the `Attachment @extends
+@key(fields:"id")` stub); resolver emits `{id: attachmentId}` — the gateway/attachment subgraph hydrates
+(phase 2; until then the stitched gateway serves it). Optionally pair with `associatedBoms: [Bom]`
+(internal co-located resolver) if the UI asks — currently deferred (federation-review/03 §3).
+
+#### Acceptance Criteria
+
+1. PO approval recorded (OQ-5) before implementation starts.
+2. `attachment { id }` resolves as a stub; `attachmentId` unchanged (parity).
+3. Null-safe when `attachmentId` is absent.
+
+---
+
 ## 4. Risk Register
 
 | Risk | Likelihood | Impact | Mitigation | Owner |

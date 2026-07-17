@@ -1,6 +1,6 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,WATCHLIST-BE-B-01,(Watchlist) getWatchlistByIds(ids) [WATCHLIST-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,watchlist,query,,,To Do,"*Implementation Order:* 1 of 11 (Watchlist backend, step 1)
+Story,WATCHLIST-BE-B-01,(Watchlist) getWatchlistByIds(ids) [WATCHLIST-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,watchlist,query,,,To Do,"*Implementation Order:* 1 of 12 (Watchlist backend, step 1)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* No
 
@@ -33,7 +33,7 @@ Story,WATCHLIST-BE-B-01,(Watchlist) getWatchlistByIds(ids) [WATCHLIST-BE-B-01],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-B-02,(Watchlist) getWatchlistReasons · getWatchlistInspectionActions [WATCHLIST-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,watchlist,query,,B-01,To Do,"*Implementation Order:* 2 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-B-02,(Watchlist) getWatchlistReasons · getWatchlistInspectionActions [WATCHLIST-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,watchlist,query,,B-01,To Do,"*Implementation Order:* 2 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -68,7 +68,7 @@ Story,WATCHLIST-BE-B-02,(Watchlist) getWatchlistReasons · getWatchlistInspectio
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-C-01,(Watchlist) getWatchlistByFilter(...) (4-step read) [WATCHLIST-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,watchlist,search,,B-01,To Do,"*Implementation Order:* 3 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-C-01,(Watchlist) getWatchlistByFilter(...) (4-step read) [WATCHLIST-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,watchlist,search,,B-01,To Do,"*Implementation Order:* 3 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -93,7 +93,7 @@ Story,WATCHLIST-BE-C-01,(Watchlist) getWatchlistByFilter(...) (4-step read) [WAT
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-D-01,(Watchlist) createWatchlistEntries [WATCHLIST-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,watchlist,mutation,,B-01,To Do,"*Implementation Order:* 4 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-D-01,(Watchlist) createWatchlistEntries [WATCHLIST-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,watchlist,mutation,,B-01,To Do,"*Implementation Order:* 4 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -117,7 +117,7 @@ Story,WATCHLIST-BE-D-01,(Watchlist) createWatchlistEntries [WATCHLIST-BE-D-01],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-D-02,(Watchlist) cloneFilesForWatchlist [WATCHLIST-BE-D-02],,Federate BreakDown Product,D,M,dgs-migration,watchlist,mutation,,B-01,To Do,"*Implementation Order:* 5 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-D-02,(Watchlist) cloneFilesForWatchlist [WATCHLIST-BE-D-02],,Federate BreakDown Product,D,M,dgs-migration,watchlist,mutation,,B-01,To Do,"*Implementation Order:* 5 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -140,7 +140,7 @@ Story,WATCHLIST-BE-D-02,(Watchlist) cloneFilesForWatchlist [WATCHLIST-BE-D-02],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-E-01,(Watchlist) updateWatchlistEntries (multi-step write) [WATCHLIST-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,watchlist,complex,,"SPIKE-01, B-01",To Do,"*Implementation Order:* 6 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-E-01,(Watchlist) updateWatchlistEntries (multi-step write) [WATCHLIST-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,watchlist,complex,,"SPIKE-01, B-01",To Do,"*Implementation Order:* 6 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -176,7 +176,7 @@ Story,WATCHLIST-BE-E-01,(Watchlist) updateWatchlistEntries (multi-step write) [W
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-F-01,(Watchlist) Product.watchlists · ResourcesCount.watchlists [WATCHLIST-BE-F-01],,Federate BreakDown Product,F,XS,dgs-migration,watchlist,field-resolver,,B-01,To Do,"*Implementation Order:* 7 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-F-01,(Watchlist) Product.watchlists · ResourcesCount.watchlists [WATCHLIST-BE-F-01],,Federate BreakDown Product,F,XS,dgs-migration,watchlist,field-resolver,,B-01,To Do,"*Implementation Order:* 7 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -208,7 +208,7 @@ Story,WATCHLIST-BE-F-01,(Watchlist) Product.watchlists · ResourcesCount.watchli
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-G-01,(Watchlist) Computed flatteners (status/reasons/inspection action) [WATCHLIST-BE-G-01],,Federate BreakDown Product,G,XS,dgs-migration,watchlist,field-resolver,,B-01,To Do,"*Implementation Order:* 8 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-G-01,(Watchlist) Computed flatteners (status/reasons/inspection action) [WATCHLIST-BE-G-01],,Federate BreakDown Product,G,XS,dgs-migration,watchlist,field-resolver,,B-01,To Do,"*Implementation Order:* 8 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -231,7 +231,7 @@ Story,WATCHLIST-BE-G-01,(Watchlist) Computed flatteners (status/reasons/inspecti
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-G-02,(Watchlist) createdBy + updatedBy + workspaces + participantDetails + partnerName [WATCHLIST-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,B-01,To Do,"*Implementation Order:* 9 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-G-02,(Watchlist) createdBy + updatedBy + workspaces + participantDetails + partnerName [WATCHLIST-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,B-01,To Do,"*Implementation Order:* 9 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -240,6 +240,7 @@ Story,WATCHLIST-BE-G-02,(Watchlist) createdBy + updatedBy + workspaces + partici
 
 *Blocks:*
 * WATCHLIST-BE-G-04 — Tests, parity harness
+* WATCHLIST-BE-G-05 — WatchlistPartner.partner entity reference
 
 *Current Behaviour:*
 * `createdBy`/`updatedBy` (🟡 user-profile); `workspaces` (🟡 workspaceV2 by `workspaceContext`); `participantDetails` (🔵 user-group `getUserGroups([humanId])[0].participantDetails`); `WatchlistPartner.partnerName` (🔵 vmm `getByID(partnerId).bpName`, null-safe).
@@ -251,7 +252,7 @@ Story,WATCHLIST-BE-G-02,(Watchlist) createdBy + updatedBy + workspaces + partici
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-G-03,(Watchlist) attachments + product [WATCHLIST-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,B-01,To Do,"*Implementation Order:* 10 of 11 (Watchlist backend, step 2)
+Story,WATCHLIST-BE-G-03,(Watchlist) attachments + product [WATCHLIST-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,B-01,To Do,"*Implementation Order:* 10 of 12 (Watchlist backend, step 2)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -272,9 +273,9 @@ Story,WATCHLIST-BE-G-03,(Watchlist) attachments + product [WATCHLIST-BE-G-03],,F
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,WATCHLIST-BE-G-04,"(Watchlist) Tests, parity harness [WATCHLIST-BE-G-04]",,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,"B-01, C-01, E-01, G-02",To Do,"*Implementation Order:* 11 of 11 (Watchlist backend, step 3)
+Story,WATCHLIST-BE-G-04,"(Watchlist) Tests, parity harness [WATCHLIST-BE-G-04]",,Federate BreakDown Product,G,M,dgs-migration,watchlist,field-resolver,,"B-01, C-01, E-01, G-02",To Do,"*Implementation Order:* 11 of 12 (Watchlist backend, step 3)
 *Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
-*Priority:* Medium — *Parallelizable:* No
+*Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
 * WATCHLIST-BE-B-01 — getWatchlistByIds
@@ -297,8 +298,30 @@ Story,WATCHLIST-BE-G-04,"(Watchlist) Tests, parity harness [WATCHLIST-BE-G-04]",
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
+Story,WATCHLIST-BE-G-05,"(Watchlist) WatchlistPartner.partner entity reference (recommended, PO-gated) [WATCHLIST-BE-G-05]",,Federate BreakDown Product,G,XS,dgs-migration,watchlist,field-resolver,,G-02,Recommended (PO-gated — federation-review/03 §2 REC-3),"*Implementation Order:* 12 of 12 (Watchlist backend, step 3)
+*Domain:* Watchlist — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* WATCHLIST-BE-G-02 — createdBy + updatedBy + workspaces + participantDetails + partnerName
+
+*Blocks:*
+* None
+
+*Target:*
+* schema adds `partner: VMM_BusinessPartner` on `WatchlistPartner`; resolver emits `{id: partnerId}` — gateway hydrates from VMM; null-safe on missing `partnerId`.
+
+*Acceptance Criteria:*
+1. PO approval recorded (OQ-5) before implementation starts
+2. `partner { id name }` resolves via the gateway; `partnerName` parity is preserved
+3. No additional VMM calls from the watchlist subgraph (stub emission only)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01,To Do,"*Implementation Order:* 12 of 14 (Watchlist combined — frontend #1, cutover step 2)
+Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01,To Do,"*Implementation Order:* 13 of 15 (Watchlist combined — frontend #1, cutover step 2)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Low — *Parallelizable:* No
 
@@ -335,7 +358,7 @@ Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001]
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,To Do,"*Implementation Order:* 13 of 14 (Watchlist combined — frontend #2, cutover step 3)
+Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,To Do,"*Implementation Order:* 14 of 15 (Watchlist combined — frontend #2, cutover step 3)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Low — *Parallelizable:* No
 
@@ -372,7 +395,7 @@ Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutatio
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga handling [WATCHLIST-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,watchlist,mutation-migration-(complex),,WATCHLIST-BE-E-01,To Do,"*Implementation Order:* 14 of 14 (Watchlist combined — frontend #3, cutover step 4)
+Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga handling [WATCHLIST-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,watchlist,mutation-migration-(complex),,WATCHLIST-BE-E-01,To Do,"*Implementation Order:* 15 of 15 (Watchlist combined — frontend #3, cutover step 4)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Medium — *Parallelizable:* No
 

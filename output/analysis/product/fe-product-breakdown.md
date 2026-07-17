@@ -4,9 +4,9 @@
 |---|---|
 | **Client** | `pdex-ui-react` (Apollo Client) |
 | **Backend subgraph** | `plm-product (host)` |
-| **Total FE Stories** | 11 |
-| **Impact** | 🔴 3 High · 🟡 8 Medium · 🟢 0 Low |
-| **Estimated effort** | 63–97 days (single-engineer) |
+| **Total FE Stories** | 12 |
+| **Impact** | 🔴 3 High · 🟡 9 Medium · 🟢 0 Low |
+| **Estimated effort** | 66–102 days (single-engineer) |
 | **Phase-1 surface** | 66 operation-to-root-field rows · 20 client files · 48 components |
 | **Generated** | 2026-07-17 |
 
@@ -36,6 +36,7 @@
 | `PRODUCT-FE-009` | Migrate partner drop/undrop orchestration | Mutation migration (complex) | 🔴 High | 8–12 days | `PRODUCT-BE-S-03`, `PRODUCT-BE-D-06` | `productBusinessPartnerActions`, `updateBusinessPartnerStatuses` |
 | `PRODUCT-FE-010` | Migrate TechPack count queries (facade-then-federate) | Query migration (staged) | 🟡 Medium | 4–6 days (step 1) + 4–6 days (step 2) | `PRODUCT-BE-E-03`, `PRODUCT-BE-E-04` | `getProductTechPackCountV1`, `getProductTechPackBulkCountV1` |
 | `PRODUCT-FE-011` | Migrate component status rollups | Query + mutation migration | 🟡 Medium | 4–6 days | `PRODUCT-BE-B-01`, `PRODUCT-BE-D-18`, `PRODUCT-BE-E-02` | `getProduct`, `updateComponentStatus`, `updateComponentStatuses` |
+| `PRODUCT-FE-012` | Verify fragment type-conditions, `__typename` logic and cache keys against federated type names | Verification / refactor | 🟡 Medium | 3–5 days | `PRODUCT-BE-F-14` | `cross-cutting (no single operation)` |
 
 ---
 
@@ -48,10 +49,10 @@
 | 1 | 🔴 `PRODUCT-FE-001`, 🟡 `PRODUCT-FE-004` | `PRODUCT-FE-001` → `PRODUCT-BE-B-01`<br>`PRODUCT-FE-004` → `PRODUCT-BE-B-02` | Reads cutover — needs backend phase A/B reads live |
 | 2 | 🟡 `PRODUCT-FE-002`, 🟡 `PRODUCT-FE-005` | `PRODUCT-FE-002` → `PRODUCT-BE-B-01`, `PRODUCT-BE-B-02`<br>`PRODUCT-FE-005` → `PRODUCT-BE-C-02`, `PRODUCT-BE-C-03` | Search & listing — needs backend phase C |
 | 3 | 🟡 `PRODUCT-FE-006`, 🟡 `PRODUCT-FE-007`, 🟡 `PRODUCT-FE-008` | `PRODUCT-FE-006` → `PRODUCT-BE-B-06`, `PRODUCT-BE-B-10`, `PRODUCT-BE-C-05`, `PRODUCT-BE-D-14`<br>`PRODUCT-FE-007` → `PRODUCT-BE-D-01`, `PRODUCT-BE-D-02`, `PRODUCT-BE-D-03`, `PRODUCT-BE-D-04` (+3)<br>`PRODUCT-FE-008` → `PRODUCT-BE-D-06`, `PRODUCT-BE-D-10` | Writes — needs backend phase D mutations |
-| 4 | 🟡 `PRODUCT-FE-010`, 🟡 `PRODUCT-FE-011` | `PRODUCT-FE-010` → `PRODUCT-BE-E-03`, `PRODUCT-BE-E-04`<br>`PRODUCT-FE-011` → `PRODUCT-BE-B-01`, `PRODUCT-BE-D-18`, `PRODUCT-BE-E-02` | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 4 | 🟡 `PRODUCT-FE-010`, 🟡 `PRODUCT-FE-011`, 🟡 `PRODUCT-FE-012` | `PRODUCT-FE-010` → `PRODUCT-BE-E-03`, `PRODUCT-BE-E-04`<br>`PRODUCT-FE-011` → `PRODUCT-BE-B-01`, `PRODUCT-BE-D-18`, `PRODUCT-BE-E-02`<br>`PRODUCT-FE-012` → `PRODUCT-BE-F-14` | Complex writes / sagas — needs backend phase E + ADR ratification |
 | 5 | 🔴 `PRODUCT-FE-003`, 🔴 `PRODUCT-FE-009` | `PRODUCT-FE-003` → `PRODUCT-BE-S-02`, `PRODUCT-BE-B-02`<br>`PRODUCT-FE-009` → `PRODUCT-BE-S-03`, `PRODUCT-BE-D-06` | Externally gated — search/read-hub decision |
 
-**Cutover flow:** `PRODUCT-FE-001` → `PRODUCT-FE-004` → `PRODUCT-FE-002` → `PRODUCT-FE-005` → `PRODUCT-FE-006` → `PRODUCT-FE-007` → `PRODUCT-FE-008` → `PRODUCT-FE-010` → `PRODUCT-FE-011` → `PRODUCT-FE-003` → `PRODUCT-FE-009`.
+**Cutover flow:** `PRODUCT-FE-001` → `PRODUCT-FE-004` → `PRODUCT-FE-002` → `PRODUCT-FE-005` → `PRODUCT-FE-006` → `PRODUCT-FE-007` → `PRODUCT-FE-008` → `PRODUCT-FE-010` → `PRODUCT-FE-011` → `PRODUCT-FE-012` → `PRODUCT-FE-003` → `PRODUCT-FE-009`.
 
 ---
 
@@ -64,10 +65,10 @@
 | 1 | 🔴 `PRODUCT-FE-001` (10–15d) | 🟡 `PRODUCT-FE-004` (5–8d) | Reads cutover — needs backend phase A/B reads live |
 | 2 | 🟡 `PRODUCT-FE-002` (5–8d) | 🟡 `PRODUCT-FE-005` (5–8d) | Search & listing — needs backend phase C |
 | 3 | 🟡 `PRODUCT-FE-007` (6–10d)<br>🟡 `PRODUCT-FE-008` (4–6d) | 🟡 `PRODUCT-FE-006` (4–6d) | Writes — needs backend phase D mutations |
-| 4 | 🟡 `PRODUCT-FE-010` (4–6d) | 🟡 `PRODUCT-FE-011` (4–6d) | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 4 | 🟡 `PRODUCT-FE-010` (4–6d)<br>🟡 `PRODUCT-FE-012` (3–5d) | 🟡 `PRODUCT-FE-011` (4–6d) | Complex writes / sagas — needs backend phase E + ADR ratification |
 | 5 | 🔴 `PRODUCT-FE-003` (8–12d) | 🔴 `PRODUCT-FE-009` (8–12d) | Externally gated — search/read-hub decision |
 
-**Elapsed (nominal midpoints):** ~47 FE build days with 2 engineers vs ~80 single-engineer — calendar time is set by the backend gates, not FE capacity.
+**Elapsed (nominal midpoints):** ~51 FE build days with 2 engineers vs ~84 single-engineer — calendar time is set by the backend gates, not FE capacity.
 
 ---
 

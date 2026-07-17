@@ -1202,6 +1202,31 @@ a CI schema-conformance check across the 7 material impls.
 
 ---
 
+### BOM-BE-G-17 · `supplier` entity references on material rows (recommended, PO-gated)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** G-01 · **EXT:** 🔵 `vmm`
+- **Status:** Recommended (PO-gated — federation-review/03 §2 REC-1; answer OQ-3 snapshot-semantics first)
+
+- **In plain terms:** Adds a `supplier { … }` object next to `supplierId`/`supplierName` on every material row,
+so clients stop re-querying VMM for partner data they already have the id for.
+
+- **Context:** `BomMaterialInterface.supplierId` + `supplierName` are the last partner references in the BOM
+schema without an entity counterpart (18 client selections in
+`src/libs/product-queries/src/queries/BomQueries.tsx`). Both existing fields stay — `supplierName` may be an
+authoring-time snapshot (OQ-3), so the entity ref sits **beside** it, never replaces it.
+- **Target DGS Implementation:** add `supplier: VMM_BusinessPartner` to `BomMaterialInterface` and all 7
+implementations (schema-conformance check from G-16 enforces the fan-out); resolver emits a `{id: supplierId}`
+key stub — the gateway hydrates from VMM; null-safe when `supplierId` is empty. Facility/laundry refs are
+deferred pending a `VMM_Location` stub decision (federation-review/03 §3).
+
+#### Acceptance Criteria
+
+1. PO approval recorded (OQ-5) and OQ-3 answered before implementation starts.
+2. `supplier` present on the interface + all 7 impls; conformance check green.
+3. `supplierId`/`supplierName` continue to return unchanged values (parity).
+4. Stub emission only — no direct VMM calls from the BOM subgraph.
+
+---
+
 ## 4. Risk Register
 
 | Risk | Likelihood | Impact | Mitigation | Owner |

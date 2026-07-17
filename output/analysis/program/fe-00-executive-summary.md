@@ -15,9 +15,9 @@
 | Fragments to re-target | 22 phase-1 fragments |
 | Dynamic gql documents to refactor | 3 (BOM ×2, Claims ×1) |
 | Deprecated fields still selected | 4 in phase-1 domains |
-| Frontend stories | 38 domain stories (platform enablement — flag, codegen, cache remap, fragment sweep, dynamic-gql expansion — already complete) |
+| Frontend stories | 40 domain stories (platform enablement — flag, codegen, cache remap, fragment sweep, dynamic-gql expansion — already complete) |
 | Backend stories referenced | every phase-1 operation maps to a `*-BE-*` story — no orphans |
-| Estimated frontend effort | 158–245 engineer-days over 4 waves |
+| Estimated frontend effort | 163–254 engineer-days over 4 waves |
 | Out of scope | 618 client operations on later-phase domains / other services |
 
 ## Backend schema changes the frontend absorbs

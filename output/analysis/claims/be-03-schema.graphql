@@ -22,16 +22,37 @@ type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
 type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
 type UserGroup_Participants @extends @key(fields: "id") { id: ID! @external }
 type AccessControl @extends @key(fields: "id") { id: ID! @external }
-type ResourcePermissions @extends @key(fields: "id") { id: ID! @external }
-type ProductComponentStatus @extends @key(fields: "id") { id: ID! @external }
-type TeamPaged @extends @key(fields: "id") { id: ID! @external }                # team/search subgraph
 
 # --- Shared value types ---
+# R5 (federation-review/03): ProductComponentStatus / ResourcePermissions / TeamPaged were wrongly
+# modelled as @extends @key entity stubs. Claims resolves these fields LOCALLY with full data
+# (statuses from the claim record; systemTeams from claims' own elastic call), and the owners model
+# them as value types (no key; ProductComponentStatus has no id at all; TeamPaged is a paged wrapper).
+# They are therefore duplicated here as @shareable value types matching the product-side shapes.
 type CodeDescription @shareable { code: Int, description: String }
+type CodeDescriptionOrder @shareable { code: Int, description: String, order: Int }
+type ProductComponentStatus @shareable {
+  workspaceId: String
+  type: String
+  status: CodeDescriptionOrder
+  overallStatus: CodeDescriptionOrder
+  updatedAt: DateTime!
+  updatedBy: UserProfileAttributes
+}
+type ResourcePermissions @shareable { resourceId: String, permissions: [PermissionEntry] }
+type PermissionEntry @shareable { permissionLevel: String, grantees: [String] }
+type TeamPaged @shareable { content: [Team], paging: Paging }
+# Subset the claims elastic search actually returns today; finalize the field list in CLAIM-BE-G-06.
+# ⚠ Revisit when the team DGS onboards (phase 2): Team then becomes that subgraph's entity.
+type Team @shareable { id: String, name: String }
+type Paging @shareable { totalElements: Int, totalPages: Int, number: Int, size: Int }
 
 # --- Owned entity: a claim ---
-type Claims @key(fields: "humanId") {
-  humanId: String                 # @key — the SDL exposes no `id` field; the resolver keys on humanId
+# KEY (program decision 2026-07-17): all entities federate on `id` so gateway stitching is uniform.
+# The SDL exposes no `id` — `id` is SYNTHESIZED from humanId (same pattern as Measurement.id).
+type Claims @key(fields: "id") {
+  id: ID!                         # @key — synthesized from humanId (SDL has no id; Measurement pattern)
+  humanId: String                 # kept for the client contract; source of the synthesized id
   parentId: String
   version: Int
   claimName: String

@@ -33,11 +33,13 @@ scalar DateTime
 # =============================================================================
 
 # --- VMM platform ---
-type VMM_BusinessPartner @key(fields: "bpId") @extends {                # 🔜
-  bpId: ID! @external
+# Keys aligned to the source SDL (core.txt: both types expose `id: ID`) and to the other 7 domain
+# schemas, which all stub VMM_BusinessPartner @key(fields: "id"). See federation-review/03 §R1-R2.
+type VMM_BusinessPartner @key(fields: "id") @extends {                  # 🔜
+  id: ID! @external
 }
-type VMM_Brand @key(fields: "brandId") @extends {                       # 🔜
-  brandId: ID! @external
+type VMM_Brand @key(fields: "id") @extends {                            # 🔜
+  id: ID! @external
 }
 
 # --- IG (Item Groups) platform ---
@@ -52,6 +54,9 @@ type IG_Clazz_Filter @key(fields: "id") @extends { id: ID! @external }  # 🔜
 type DopplerCapacityType @key(fields: "id") @extends { id: ID! @external }  # 🔜
 
 # --- Corona platform (item master) ---
+# ✅ DECIDED (2026-07-17, federation-review/03 §R6, OQ-2): stays an ENTITY keyed on tcinId — where a
+# tcin exists the record carries tcinId, and Corona INFLATES the item details from that key via the
+# gateway (same wrap-with-id pattern as the humanId-only entities).
 type CORONA_ItemDetails @key(fields: "tcinId") @extends {               # 🔜
   tcinId: ID! @external
 }
@@ -64,7 +69,10 @@ type CORONA_ItemDetails @key(fields: "tcinId") @extends {               # 🔜
 # Rating service is fetched server-side via API key; result returned as embedded
 # `Rating` value type — no federation stub required.
 
-# --- Co-located sibling DGS subgraphs (same `plm-product` DGS, distinct subgraphs) ---
+# --- Sibling DGS subgraph stubs ---
+# Most are co-located in `plm-product` or arrive in phase 2. EXCEPTION (✅ confirmed 2026-07-17,
+# federation-review/08 OQ-6): `Claims` is a SEPARATE subgraph (repo `spark-claims`) — Product.claims /
+# Claims.product cross the Hive Gateway (hence PRODUCT-BE-F-13, the Product entity fetcher).
 type Attachment      @key(fields: "id") @extends { id: ID! @external }      # 🔜 attachment subgraph
 type SampleV2        @key(fields: "id") @extends { id: ID! @external }      # 🔜 sample subgraph
 type Tag             @key(fields: "id") @extends { id: ID! @external }      # 🔜 tag subgraph
@@ -75,10 +83,14 @@ type Discussion      @key(fields: "discussionId") @extends { discussionId: ID! @
 type DiscussionThread @key(fields: "discussionThreadId") @extends { discussionThreadId: ID! @external }  # 🔜
 type FileLibrary     @key(fields: "id") @extends { id: ID! @external }      # 🔜 file-library subgraph
 type Bom             @key(fields: "id") @extends { id: ID! @external }      # 🔜 bom subgraph
-type Claim           @key(fields: "id") @extends { id: ID! @external }      # 🔜 claim subgraph
+# Type names aligned with the owning schemas (federation-review/03 §R3-R4): claims owns `Claims`,
+# productDetails owns `ProductDetails`. KEYS (program decision 2026-07-17): every entity federates on
+# `id`; owners whose SDL lacks an id (Claims, Packaging, Watchlist, Dieline) SYNTHESIZE `id` from
+# humanId — the Measurement pattern — so stitching is uniform on `id` across the supergraph.
+type Claims          @key(fields: "id") @extends { id: ID! @external }      # 🔜 claims subgraph (separate DGS; id synthesized from humanId)
 type Measurement     @key(fields: "id") @extends { id: ID! @external }      # 🔜 measurement subgraph
-type ProductDetail   @key(fields: "id") @extends { id: ID! @external }      # 🔜 product-detail subgraph
-type Packaging       @key(fields: "id") @extends { id: ID! @external }      # 🔜 packaging subgraph
+type ProductDetails  @key(fields: "id") @extends { id: ID! @external }      # 🔜 product-details subgraph
+type Packaging       @key(fields: "id") @extends { id: ID! @external }      # 🔜 packaging subgraph (id synthesized from humanId)
 type ProductAsk      @key(fields: "id") @extends { id: ID! @external }      # 🔜 product-ask subgraph
 type ProductVariation @key(fields: "id") @extends { id: ID! @external }     # 🔜 product-variation subgraph
 
@@ -173,8 +185,8 @@ type Product @key(fields: "id") {                                       # 🔜
   receivedNotEvaluatedCount: Int
 
   # --- Components (co-located domains) ---
-  measurementSets(calculated: Boolean, includeMeasurements: Boolean): MeasurementsPaged
-  claims(partnerIds: [String], includeClaims: Boolean): [Claim]
+  measurementSets(calculated: Boolean, includeMeasurements: Boolean): MeasurementPaged   # type name aligned with measurement's owned MeasurementPaged (federation-review/03 §R4)
+  claims(partnerIds: [String], includeClaims: Boolean): [Claims]
   bom(includeBoms: Boolean): BomPaged
   productBom(includeBoms: Boolean): BomPaged
   packagingBom(includeBoms: Boolean): BomPaged
@@ -574,7 +586,9 @@ type AvailableRules {
 # this stays inside `plm-product` or moves to its own DGS subgraph.
 
 # ---- Component status ----
-type ProductComponentStatus {
+# @shareable: claims (separate subgraph) resolves Claims.statuses locally with this same shape —
+# duplicate value-type definitions must both be @shareable to compose (federation-review/03 §R5).
+type ProductComponentStatus @shareable {
   workspaceId: String
   type: String
   status: CodeDescriptionOrder

@@ -248,7 +248,7 @@ ACL is **context-only** (note it; build nothing).
 
 - **In plain terms:** Expose a product's claims on the Product type (federation contribution).
 
-- **Target:** `extend type Product @key(fields:"id") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] }` with a `@DgsEntityFetcher`; the claims subgraph fills `Product.claims` over the gateway. **BLOCKED-BY:** the `Product` entity existing (plm-product Phase A). 
+- **Target:** `extend type Product @key(fields:"id") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] }` with a `@DgsEntityFetcher`; the claims subgraph fills `Product.claims` over the gateway. **BLOCKED-BY:** the `Product` entity existing (plm-product Phase A) **and PRODUCT-BE-F-14** (product-side stub aligned to the `Claims` type name; `Claims.id` is synthesized from humanId so federation keys on `id` — federation-review/03 §R3, program decision 2026-07-17). For the reverse direction (`Claims.product` hydration) see PRODUCT-BE-F-13.
 
 #### Acceptance Criteria
 
@@ -264,7 +264,7 @@ ACL is **context-only** (note it; build nothing).
 
 - **Target:** `extend type ResourcesCount @key(fields:"productId partnerId") { claims: [ID] }` with a
 `@DgsEntityFetcher`; fills the TechPack `claims` count. **BLOCKED-BY:** product TechPack facade
-(`PRODUCT-BE-E-03`/`F-05`). 
+(`PRODUCT-BE-E-03`/`F-05`) and PRODUCT-BE-F-14 (contract alignment). 
 
 #### Acceptance Criteria
 
@@ -310,6 +310,10 @@ ACL is **context-only** (note it; build nothing).
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `product` · 🔴 `search`
 
 - **In plain terms:** Resolve the parent product and its related-partner context on a claim.
+- **Federation note (federation-review/04 §4):** `Claims.product` emits only a `Product{id}` key stub —
+end-to-end hydration through the gateway requires plm-product's `Product` entity fetcher
+(**PRODUCT-BE-F-13**); the local stub emission itself is not blocked. `systemTeams`/`statuses` shapes
+depend on CLAIM-BE-G-06 (value-type alignment).
 
 - **Current Behaviour:** `product` (🟡 product, only if `parentId` starts `'PID'`); `parentDetails` →
 - `product.getByID(parentId)` (the product feeds `ParentDetails`): `otherClaimBps` (🔴 search `getClaimsElastic` → partner ids), `systemTeams` (🔴 search `searchTeams` from product BPs; empty→`{content:[]}`), `droppedPartnerIds` (direct).
@@ -361,6 +365,32 @@ camelCase fix, the `businessPartner` 3-way fallback, `parentDetails` elastic loo
 
 ---
 
+### CLAIM-BE-G-06 · Shared value-type alignment (`@shareable` instead of entity stubs)
+- **Type:** Schema · **Phase:** G · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B-01
+
+- **In plain terms:** Models `ProductComponentStatus`, `ResourcePermissions` and `TeamPaged` as shared value
+types instead of federation entity stubs, because claims resolves these fields locally with full data.
+
+- **Context (federation-review/03 §R5):** the claims schema previously declared these three as
+`@extends @key(fields:"id")` entity stubs. That modelling cannot work: an `@external` stub carries no data,
+but `Claims.statuses` comes straight off the claim record, and `ParentDetails.systemTeams` is claims' own
+elastic call. The owners also model them as value types (product's `ResourcePermissions` is `@shareable`
+with no key; `ProductComponentStatus` has no `id` field at all; `TeamPaged` is a paged wrapper with no
+identity). The schema file has been corrected; this story carries the implementation.
+- **Target DGS Implementation:** duplicate the value types `@shareable` in the claims schema
+(`ProductComponentStatus`, `CodeDescriptionOrder`, `ResourcePermissions` + `PermissionEntry`,
+`TeamPaged` + `Team` + `Paging`) matching the product-side shapes; finalize the `Team` field subset actually
+returned by the claims elastic search; contract test asserting shape equality with the product definitions.
+
+#### Acceptance Criteria
+
+1. Claims subgraph composes with plm-product with zero `INVALID_FIELD_SHARING`/value-type conflicts.
+2. `statuses` / `currentUserPermissions` / `systemTeams` return locally-resolved data (parity vs the old gateway).
+3. `Team` field subset confirmed against the elastic response and documented.
+4. Revisit note recorded for the phase-2 team subgraph (Team becomes its entity then).
+
+---
+
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
@@ -371,7 +401,7 @@ camelCase fix, the `businessPartner` 3-way fallback, `parentDetails` elastic loo
 | Federation contributions wait on product (F-01/F-02) | Low | Low | Post-launch; not on critical path | Product Owner |
 
 ## 5. Summary
-- **Stories:** 20 (B:5 · C:2 · D:5 · E:1 · F:2 · G:5).
+- **Stories:** 21 (B:5 · C:2 · D:5 · E:1 · F:2 · G:6). G-06 (value-type alignment) added by the federation review.
 - **Critical path:** A-02/E-01→G-02/G-03→G-05.
 - **Highest risk:** `updateClaim` (E-01); the `bulkUpdateClaim` transform bug (D-02).
 - **Separate subgraph:** claims contributes `Product.claims` + TechPack `ResourcesCount.claims` (Phase F).

@@ -11,6 +11,7 @@
 | BOM-FE-004 | Migrate BOM master-data reads | Low | BOM-BE-B-05, BOM-BE-B-03, BOM-BE-B-08 | BOM |
 | BOM-FE-005 | Migrate BOM supplier reads | Medium | BOM-BE-C-03, BOM-BE-C-01 | BOM |
 | BOM-FE-006 | Migrate BOM mutations including `updateBom` saga handling | High | BOM-BE-D-01, BOM-BE-D-02, BOM-BE-S-01 | BOM |
+| BOM-FE-007 | Adopt BOM `supplier` entity references (optional, PO-gated) | Low | BOM-BE-G-17, BOM-FE-002 | BOM |
 | CLAIM-FE-001 | Split the claim fragment factory and re-target claim fragments | Medium | — | Claims |
 | CLAIM-FE-002 | Migrate claim reads (first cross-subgraph cutover) | High | CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-FE-001 | Claims |
 | CLAIM-FE-003 | Migrate claim simple mutations and export | Medium | CLAIM-BE-D-01, CLAIM-BE-D-02, CLAIM-BE-D-03 | Claims |
@@ -40,6 +41,7 @@
 | PRODUCT-FE-009 | Migrate partner drop/undrop orchestration | High | PRODUCT-BE-S-03, PRODUCT-BE-D-06 | Product |
 | PRODUCT-FE-010 | Migrate TechPack count queries (facade-then-federate) | Medium | PRODUCT-BE-E-03, PRODUCT-BE-E-04 | Product |
 | PRODUCT-FE-011 | Migrate component status rollups | Medium | PRODUCT-BE-B-01, PRODUCT-BE-D-18, PRODUCT-BE-E-02 | Product |
+| PRODUCT-FE-012 | Verify fragment type-conditions, `__typename` logic and cache keys against federated type names | Medium | PRODUCT-BE-F-14 | Product |
 | WATCHLIST-FE-001 | Migrate watchlist reads | Low | WATCHLIST-BE-B-01, WATCHLIST-BE-C-01 | Watchlist |
 | WATCHLIST-FE-002 | Migrate watchlist create and clone mutations | Low | WATCHLIST-BE-D-01, WATCHLIST-BE-D-02 | Watchlist |
 | WATCHLIST-FE-003 | Migrate `updateWatchlistEntries` saga handling | Medium | WATCHLIST-BE-E-01 | Watchlist |
@@ -56,6 +58,7 @@
 | BOM-BE-C-03 | BOM-FE-005 |
 | BOM-BE-D-01 | BOM-FE-006 |
 | BOM-BE-D-02 | BOM-FE-006 |
+| BOM-BE-G-17 | BOM-FE-007 |
 | BOM-BE-S-01 | BOM-FE-006 |
 | BOM-BE-S-03 | BOM-FE-003 |
 | CLAIM-BE-B-01 | CLAIM-FE-002 |
@@ -105,6 +108,7 @@
 | PRODUCT-BE-E-02 | PRODUCT-FE-011 |
 | PRODUCT-BE-E-03 | PRODUCT-FE-010 |
 | PRODUCT-BE-E-04 | PRODUCT-FE-010 |
+| PRODUCT-BE-F-14 | PRODUCT-FE-012 |
 | PRODUCT-BE-S-02 | PRODUCT-FE-003 |
 | PRODUCT-BE-S-03 | PRODUCT-FE-009 |
 | WATCHLIST-BE-B-01 | WATCHLIST-FE-001 |

@@ -5,7 +5,9 @@
 # Source:    code/schemas/SPARK_Packaging.txt (the real SDL) + code/resolvers/product/SPARK_Packaging.txt (behaviour)
 # Target:    plm-product/apps/app/src/main/resources/schema/packaging.graphqls
 # This is the FEDERATED TARGET schema, translated from the SDL (SPARK_ prefix dropped, @key added).
-# Nullability/return-types from the SDL (verified against the resolver). Entities keyed on humanId (no id).
+# Nullability/return-types from the SDL (verified against the resolver).
+# KEY (program decision 2026-07-17): all entities federate on `id`; the SDL exposes no `id`, so
+# Packaging.id / Dieline.id are SYNTHESIZED from humanId (Measurement pattern) for uniform stitching.
 # Status: 🔜 all need migration.
 # =============================================================================
 
@@ -34,8 +36,9 @@ type Paging @shareable { totalElements: Int, totalPages: Int, number: Int, size:
 type Pageable @shareable { pageNumber: Int, pageSize: Int, offset: Int }
 
 # --- Owned entity: a packaging record ---
-type Packaging @key(fields: "humanId") {
-  humanId: String                 # @key — SDL exposes no `id`
+type Packaging @key(fields: "id") {
+  id: ID!                         # @key — synthesized from humanId (SDL has no id; Measurement pattern)
+  humanId: String                 # kept for the client contract; source of the synthesized id
   placeholderId: String
   parentId: String
   description: String
@@ -134,8 +137,9 @@ type PrinterDieline {
   attachmentIds: [String]
 }
 
-type Dieline @key(fields: "humanId") {
-  humanId: String                 # @key — SDL exposes no `id`
+type Dieline @key(fields: "id") {
+  id: ID!                         # @key — synthesized from humanId (SDL has no id; Measurement pattern)
+  humanId: String                 # kept for the client contract; source of the synthesized id
   printerId: String  parentId: String
   reservedDpcis: [DielineReservedDpci]
   dielineDueDate: String  sizeIds: [String]

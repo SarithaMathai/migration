@@ -319,6 +319,34 @@
 - **Risk:** Medium — gated on ADR-014 ratification.
 - **Estimated effort:** 4–6 days
 
+### PRODUCT-FE-012 · Verify fragment type-conditions, `__typename` logic and cache keys against federated type names
+
+- **Type:** Verification / refactor · **Impact:** Medium · **Domain:** product
+- **Depends on:** PRODUCT-BE-F-14
+- **Operations:** cross-cutting (no single operation)
+
+- **Business objective:**
+  - No screen breaks at the claims/packaging/product-details cutovers because client code still branches on pre-federation type names or normalizes on the wrong key.
+- **Technical objective:**
+  - Sweep the estate for fragment type-conditions, `__typename` branches and Apollo cache config that reference the aligned federated contracts (federation-review/03 §R3–R4): `Claims` (not `Claim`), `ProductDetails` (not `ProductDetail`), plus the `Categories` interface→union change (inline fragments required). Per the program key decision (2026-07-17), every entity exposes `id` (synthesized from humanId for Claims/Packaging/Watchlist/Dieline), so Apollo's default id-based normalization applies — verify `id` is selected wherever those entities are cached.
+- **Background / current implementation:**
+  - The completed platform fragment sweep (former PLATFORM-FE-004) predates the R3/R4 contract alignment; `Claims`/`ProductDetails` conditions were never re-verified, and the humanId-only entities previously had no `id` to normalize on. Remaining explicit `keyFields`: `SampleMeasurementSet: ["sampleId"]`, `ResourcesCount: ["productId","partnerId"]`.
+- **Required changes:**
+  - Codemod/grep sweep for the legacy names; ensure `id` is selected on `Claims`/`Packaging`/`Watchlist`/`Dieline` selections (add where missing); add the two remaining `keyFields` entries; add a `__typename` assertion pass to the parity harness; inline-fragment adoption for `Categories` selections.
+
+#### Acceptance Criteria
+
+1. Zero references to `Claim`/`ProductDetail` type names in fragments, type guards or cache config.
+2. Cache normalizes `Claims`/`Packaging`/`Watchlist`/`Dieline` entities on the synthesized `id` (verified via devtools fixture); `id` is selected in every cached document for these types.
+3. `Categories` selections use inline fragments and render all 12 member types.
+
+#### Testing
+
+- Static sweep in CI (fails on legacy names); parity `__typename` assertions per domain fixture.
+
+- **Risk:** Medium — silent cache mis-normalization is hard to spot in QA.
+- **Estimated effort:** 3–5 days
+
 ---
 
 ## BOM
@@ -481,6 +509,34 @@
 
 - **Risk:** High — blocked on ADR-013 ratification.
 - **Estimated effort:** 8–12 days
+
+### BOM-FE-007 · Adopt BOM `supplier` entity references (optional, PO-gated)
+
+- **Type:** Query enhancement · **Impact:** Low · **Domain:** bom
+- **Depends on:** BOM-BE-G-17, BOM-FE-002
+- **Operations:** `getBomByIds`, `getBomByParentId`, `searchMaterialsBom`
+
+- **Business objective:**
+  - BOM screens show supplier details without a second business-partner fetch.
+- **Technical objective:**
+  - Where BOM documents select `supplierId`/`supplierName` (18 selections in `src/libs/product-queries/src/queries/BomQueries.tsx`), optionally add the additive `supplier { id name }` selection and drop the secondary `getBusinessPartnersByIds` calls in the supplier pickers.
+- **Background / current implementation:**
+  - Material rows carry only the denormalized id+name pair; partner detail flows re-query VMM by id (federation-review/06 §2 REC-1).
+- **Required changes:**
+  - Selection-set additions per screen (ids stay selected — snapshot semantics per OQ-3); codegen re-run; MSW mocks gain `supplier`; remove redundant partner fetches where the entity now covers the need.
+
+#### Acceptance Criteria
+
+1. Supplier column/name rendering is pixel-identical (still driven by `supplierName`).
+2. Supplier detail popovers read from the `supplier` entity; the redundant partner fetch is removed.
+3. No selection added on screens that only render the name (avoid gateway fan-out for nothing).
+
+#### Testing
+
+- Snapshot + network-call-count assertions on the BOM grid and supplier pickers.
+
+- **Risk:** Low — additive; gated on PO approval (OQ-5) and BOM-BE-G-17.
+- **Estimated effort:** 2–4 days
 
 ---
 

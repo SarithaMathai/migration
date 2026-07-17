@@ -5,7 +5,9 @@
 # Source:    code/schemas/SPARK_Watchlist.txt (the real SDL) + code/resolvers/product/SPARK_Watchlist.txt (behaviour)
 # Target:    plm-product/apps/app/src/main/resources/schema/watchlist.graphqls
 # This is the FEDERATED TARGET schema, translated from the SDL (SPARK_ prefix dropped, @key added).
-# Nullability/return-types from the SDL (verified against the resolver). Entity keyed on humanId (no id).
+# Nullability/return-types from the SDL (verified against the resolver).
+# KEY (program decision 2026-07-17): all entities federate on `id`; the SDL exposes no `id`, so
+# Watchlist.id is SYNTHESIZED from humanId (Measurement pattern) for uniform stitching.
 # Status: 🔜 all need migration.
 # =============================================================================
 
@@ -29,8 +31,9 @@ type UserGroup_Participants @extends @key(fields: "id") { id: ID! @external }
 type CodeDescription @shareable { code: Int, description: String }
 
 # --- Owned entity: a watchlist entry ---
-type Watchlist @key(fields: "humanId") {
-  humanId: String!                # @key — SDL exposes no `id`
+type Watchlist @key(fields: "id") {
+  id: ID!                         # @key — synthesized from humanId (SDL has no id; Measurement pattern)
+  humanId: String!                # kept for the client contract; source of the synthesized id
   parentId: String!
   workspaceContext: String
   businessPartners: [WatchlistPartner]

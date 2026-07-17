@@ -46,9 +46,10 @@ type Pom @shareable { id: ID, code: String, description: String }
 type Paging @shareable { totalElements: Int, totalPages: Int, number: Int, size: Int }
 
 # --- Owned entity: the measurement set (source type SPARK_Measurements) ---
-# ⚠ KEY: the SDL `SPARK_Measurements` type has NO `id` field; the resolver identifies the set by
-#   `humanId` (== `measurementSetId` in the mutations). `id` below is SYNTHESIZED from humanId for the
-#   federation key. Confirm the intended stable key before cutover (humanId is @deprecated in the SDL).
+# KEY (decided 2026-07-17, program-wide): the SDL `SPARK_Measurements` type has NO `id` field; the
+#   resolver identifies the set by `humanId` (== `measurementSetId` in the mutations). `id` below is
+#   SYNTHESIZED from humanId for the federation key. This synthesized-id wrap is now the STANDARD for
+#   every humanId-only entity (Claims, Packaging, Watchlist, Dieline) so stitching is uniform on `id`.
 type Measurement @key(fields: "id") {
   id: ID!                       # synthesized from humanId (no `id` field exists in the SDL type)
   humanId: String @deprecated(reason: "Use parentId")

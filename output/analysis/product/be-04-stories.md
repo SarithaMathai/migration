@@ -1086,7 +1086,7 @@ to `F-01`-`F-08`'s federated resolvers for the 11 count fields, same as any othe
 ---
 
 ### PRODUCT-BE-F-10 · Hive Gateway supergraph composition
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** —
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** F-13, F-14
 
 - **In plain terms:** Composes all the subgraphs into one federated graph at the gateway.
 
@@ -1103,6 +1103,8 @@ VMM subgraphs.
 
 1. supergraph composes.
 2. cross-subgraph smoke test passes.
+3. composition runs as a CI gate on every schema change (not a one-off) and fails on any `@key`/type-name mismatch between subgraphs (regression guard for federation-review/03 §R1–R5).
+4. zero remaining contract mismatches: `VMM_BusinessPartner`/`VMM_Brand` keyed `id`; every entity keyed `id` (Claims/Packaging/Watchlist/Dieline synthesize `id` from humanId — program decision 2026-07-17); `ProductDetails`/`MeasurementPaged` names aligned.
 
 ---
 
@@ -1143,6 +1145,64 @@ querying `{ businessPartners { id name } }` should come back with `name` populat
 
 1. traffic survey complete.
 2. decision implemented.
+
+---
+
+### PRODUCT-BE-F-13 · `Product` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-3 · **Depends on:** B-01 · **EXT:** —
+
+- **In plain terms:** Lets *other* subgraphs (today: claims) turn a bare `Product{id}` reference into a full product through the gateway.
+
+- **Context (federation-review/04 §4):** the claims subgraph is a **separate DGS** (`spark-claims`). Its
+`Claims.product` field emits only a `Product` key stub; the Hive Gateway then calls `plm-product`'s
+`_entities(representations: [{__typename: "Product", id: …}])` to hydrate it. DGS does **not** generate that
+resolver automatically — without an explicit `@DgsEntityFetcher(name = "Product")`, `Claims.product` (and any
+future external subgraph's product reference) resolves to `null`. `ResourcesCount` already has its entity
+fetcher (TechPack story); `Product` itself had none.
+- **Target DGS Implementation:** `@DgsEntityFetcher(name = "Product")` → `productService.getById(id)` behind a
+`DataLoader` (one batched backend call per request, not per representation); null-tolerant (missing id → null
+entry, no exception, per federation spec).
+- **Files / Dependencies:** `ProductEntityFetcher.kt`; reuses the B-01 service path.
+
+- **Example:**
+```
+POST /graphql  { _entities(representations: [{__typename:"Product", id:"PID1"}, {__typename:"Product", id:"PID2"}]) { ... on Product { id description } } }
+→ one batched productService call → [Product{PID1}, Product{PID2}]
+```
+
+#### Acceptance Criteria
+
+1. `_entities` resolves `Product` representations with a single batched backend call.
+2. Unknown ids yield `null` entries without failing the whole `_entities` response.
+3. End-to-end: a claims-subgraph query `{ getClaims { product { description } } }` hydrates through the gateway (pairs with CLAIM-BE-G-03).
+4. No ACL plumbing introduced.
+
+---
+
+### PRODUCT-BE-F-14 · Cross-subgraph contract alignment (keys, type names, paged wrappers)
+- **Type:** Schema · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** — · **EXT:** —
+
+- **In plain terms:** Fixes the naming/key mismatches between product's stubs and the owning schemas so the supergraph can actually compose.
+
+- **Context (federation-review/03 §1):** the schema files have been aligned already; this story carries the
+verification + the remaining declaration work into the DGS implementation:
+  - `VMM_BusinessPartner` / `VMM_Brand` stubs keyed `id` (source SDL has `id`, not `bpId`/`brandId`) — R1/R2.
+  - `Claim` → `Claims` (owner: spark-claims) — R3. **Key = `id`** per the program decision (2026-07-17):
+    humanId-only entities (Claims, Packaging, Watchlist, Dieline) synthesize `id` from humanId — the
+    Measurement pattern — so all stitching happens uniformly on `id`.
+  - `ProductDetail` → `ProductDetails`; `MeasurementsPaged` → `MeasurementPaged` — R4.
+  - `ProductComponentStatus` marked `@shareable` (claims duplicates it as a value type) — R5.
+  - Declare the cross-subgraph paged wrappers product references but never defines (`TeamPaged`, `TeamPagedV2`,
+    `WorkspacesPagedV2`, `DiscussionElastic`) — as `@shareable` value types or deferred-domain stubs.
+  - `CORONA_ItemDetails` — ✅ decided (2026-07-17): stays an entity keyed `tcinId`; where a tcin exists the
+    record carries `tcinId` and Corona inflates the item details from that key via the gateway.
+
+#### Acceptance Criteria
+
+1. `plm-product` schema compiles standalone with every referenced type declared.
+2. `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts.
+3. `CORONA_ItemDetails` entity form implemented per the 2026-07-17 decision (keyed `tcinId`; Corona inflates via the gateway).
+4. Blocks released: F-10, CLAIM-BE-F-01, CLAIM-BE-F-02.
 
 ---
 
@@ -1597,6 +1657,30 @@ rather than one giant call or 500 sequential ones.
 
 ---
 
+### PRODUCT-BE-G-17 · Entity references on partner/lineage value types (recommended, PO-gated)
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** G-01 · **EXT:** 🔵 `vmm`
+- **Status:** Recommended (PO-gated — federation-review/03 §2 REC-5/REC-6, OQ-5)
+
+- **In plain terms:** Adds `partner { … }` / `product { … }` object fields next to the existing ids on the
+per-partner and lineage value rows, so clients stop re-joining ids against separate lookups.
+
+- **Context:** `ProductVendorAttributes.partnerId` and `WorkspaceInfoPartner.partnerId` force clients to join
+rows against the `businessPartners` list client-side; `AncestryProducts`/`ChildProducts` carry only a product
+id, so lineage detail needs a follow-up `getProductsByIds`. All additions are additive — every existing id
+field stays (client contract).
+- **Target DGS Implementation:** schema adds `partner: VMM_BusinessPartner` (emit `{id}` key stub — the gateway
+hydrates) on `ProductVendorAttributes` + `WorkspaceInfoPartner`, and `product: Product` (internal
+`productService` call, DataLoader-batched) on `AncestryProducts` + `ChildProducts`.
+
+#### Acceptance Criteria
+
+1. PO approval recorded (OQ-5) before implementation starts.
+2. New object fields resolve; all existing id fields unchanged.
+3. `product` lineage refs batch via DataLoader (no N+1 on `ancestryProducts`).
+4. Codegen/contract parity suite passes with the additive fields present.
+
+---
+
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
@@ -1613,8 +1697,9 @@ rather than one giant call or 500 sequential ones.
 | External rating secret | Low | Medium | Vault | Platform |
 
 ## 5. Summary
-- **Stories:** 70 (S:3 · B:11 · C:5 · D:18 · E:4 · F:12 · G:17). `G-11` was **split into G-11-1/G-11-2** (+1 to G);
-  `F` counts F-01–F-08 (8 per-subgraph federation stories) + F-09–F-12.
+- **Stories:** 73 (S:3 · B:11 · C:5 · D:18 · E:4 · F:14 · G:18). `G-11` was **split into G-11-1/G-11-2** (+1 to G);
+  `F` counts F-01–F-08 (8 per-subgraph federation stories) + F-09–F-14 (F-13 entity fetcher and F-14 contract
+  alignment added by the federation review; G-17 is recommended/PO-gated).
 - **Critical path:** S-01/S-02/S-03 → B-01 → C-01/D-01-D-04/E-01 → E-03 (TechPack facade) → G-01 → G-02 → G-16.
 - **Highest risk:** TechPack (E-03/E-04); `productBusinessPartnerActions` (E-01, pending `S-03`).
 - **Host DGS:** product is the home of the whole product family; co-located siblings resolve internally.

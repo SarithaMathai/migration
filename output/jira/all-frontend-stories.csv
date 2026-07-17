@@ -1,6 +1,6 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover) [BOM-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,refactor,,,To Do,"*Implementation Order:* 25 of 30 (BOM combined — frontend #1, cutover step 1)
+Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover) [BOM-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,refactor,,,To Do,"*Implementation Order:* 26 of 32 (BOM combined — frontend #1, cutover step 1)
 *Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -38,7 +38,7 @@ Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover)
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-B-01 BOM-BE-B-03 BOM-FE-001,To Do,"*Implementation Order:* 27 of 30 (BOM combined — frontend #3, cutover step 2)
+Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-B-01 BOM-BE-B-03 BOM-FE-001,To Do,"*Implementation Order:* 28 of 32 (BOM combined — frontend #3, cutover step 2)
 *Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -48,6 +48,7 @@ Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDow
 * BOM-FE-001 — Statically expand BOM fragment factories (pre-cutover)
 
 *Blocks:*
+* BOM-FE-007 — Adopt BOM `supplier` entity references (optional, PO-gated)
 * IMPRESSION-FE-001 — Migrate `getBomDataAndImpressions` (with BOM wave)
 
 * *Type:* Query migration · *Impact:* High · *Domain:* bom
@@ -79,7 +80,7 @@ Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDow
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-C-01 BOM-BE-S-03,To Do,"*Implementation Order:* 29 of 30 (BOM combined — frontend #5, cutover step 5)
+Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-C-01 BOM-BE-S-03,To Do,"*Implementation Order:* 31 of 32 (BOM combined — frontend #6, cutover step 5)
 *Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -118,7 +119,7 @@ Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Fed
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,bom,query-migration,,BOM-BE-B-05 BOM-BE-B-03 BOM-BE-B-08,To Do,"*Implementation Order:* 26 of 30 (BOM combined — frontend #2, cutover step 1)
+Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,bom,query-migration,,BOM-BE-B-05 BOM-BE-B-03 BOM-BE-B-08,To Do,"*Implementation Order:* 27 of 32 (BOM combined — frontend #2, cutover step 1)
 *Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -158,7 +159,7 @@ Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate B
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,bom,query-migration,,BOM-BE-C-03 BOM-BE-C-01,To Do,"*Implementation Order:* 28 of 30 (BOM combined — frontend #4, cutover step 2)
+Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,bom,query-migration,,BOM-BE-C-03 BOM-BE-C-01,To Do,"*Implementation Order:* 29 of 32 (BOM combined — frontend #4, cutover step 2)
 *Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -197,7 +198,7 @@ Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate Brea
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handling [BOM-FE-006],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,mutation-migration-(complex),,BOM-BE-D-01 BOM-BE-D-02 BOM-BE-S-01,To Do,"*Implementation Order:* 30 of 30 (BOM combined — frontend #6, cutover step 5)
+Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handling [BOM-FE-006],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,mutation-migration-(complex),,BOM-BE-D-01 BOM-BE-D-02 BOM-BE-S-01,To Do,"*Implementation Order:* 32 of 32 (BOM combined — frontend #7, cutover step 5)
 *Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -235,6 +236,47 @@ Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handl
 * *Risk:* High — blocked on ADR-013 ratification.
 * *Estimated effort:* 8–12 days
 
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-007,"[BOM FE] Adopt BOM `supplier` entity references (optional, PO-gated) [BOM-FE-007]",,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,bom,query-enhancement,,BOM-BE-G-17 BOM-FE-002,To Do,"*Implementation Order:* 30 of 32 (BOM combined — frontend #5, cutover step 4)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* BOM-BE-G-17 — supplier entity references on material rows
+* BOM-FE-002 — Migrate BOM core reads
+
+*Blocks:*
+* None
+
+* *Type:* Query enhancement · *Impact:* Low · *Domain:* bom
+* *Depends on:* BOM-BE-G-17, BOM-FE-002
+* *Operations:* {{getBomByIds}}, {{getBomByParentId}}, {{searchMaterialsBom}}
+
+* *Business objective:*
+** BOM screens show supplier details without a second business-partner fetch.
+* *Technical objective:*
+** Where BOM documents select {{supplierId}}/{{supplierName}} (18 selections in {{src/libs/product-queries/src/queries/BomQueries.tsx}}), optionally add the additive {{supplier { id name }}} selection and drop the secondary {{getBusinessPartnersByIds}} calls in the supplier pickers.
+* *Background / current implementation:*
+** Material rows carry only the denormalized id+name pair; partner detail flows re-query VMM by id (federation-review/06 §2 REC-1).
+* *Required changes:*
+** Selection-set additions per screen (ids stay selected — snapshot semantics per OQ-3); codegen re-run; MSW mocks gain {{supplier}}; remove redundant partner fetches where the entity now covers the need.
+
+*Acceptance Criteria*
+
+1. Supplier column/name rendering is pixel-identical (still driven by {{supplierName}}).
+2. Supplier detail popovers read from the {{supplier}} entity; the redundant partner fetch is removed.
+3. No selection added on screens that only render the name (avoid gateway fan-out for nothing).
+
+*Testing*
+
+* Snapshot + network-call-count assertions on the BOM grid and supplier pickers.
+
+* *Risk:* Low — additive; gated on PO approval (OQ-5) and BOM-BE-G-17.
+* *Estimated effort:* 2–4 days
+
 ---
 
 ## Measurement
@@ -243,7 +285,7 @@ Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handl
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target claim fragments [CLAIM-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,refactor,,,To Do,"*Implementation Order:* 16 of 19 (Claims combined — frontend #1, cutover step 1)
+Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target claim fragments [CLAIM-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,refactor,,,To Do,"*Implementation Order:* 17 of 20 (Claims combined — frontend #1, cutover step 1)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 
@@ -281,7 +323,7 @@ Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target cl
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover) [CLAIM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,query-migration,,CLAIM-BE-B-01 CLAIM-BE-B-02 CLAIM-FE-001,To Do,"*Implementation Order:* 17 of 19 (Claims combined — frontend #2, cutover step 2)
+Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover) [CLAIM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,query-migration,,CLAIM-BE-B-01 CLAIM-BE-B-02 CLAIM-FE-001,To Do,"*Implementation Order:* 18 of 20 (Claims combined — frontend #2, cutover step 2)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* High — *Parallelizable:* No
 
@@ -322,7 +364,7 @@ Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,mutation-migration,,CLAIM-BE-D-01 CLAIM-BE-D-02 CLAIM-BE-D-03,To Do,"*Implementation Order:* 18 of 19 (Claims combined — frontend #3, cutover step 3)
+Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,mutation-migration,,CLAIM-BE-D-01 CLAIM-BE-D-02 CLAIM-BE-D-03,To Do,"*Implementation Order:* 19 of 20 (Claims combined — frontend #3, cutover step 3)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 
@@ -360,7 +402,7 @@ Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-004,[Claims FE] Migrate `updateClaim` multi-step write handling [CLAIM-FE-004],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,mutation-migration-(complex),,CLAIM-BE-E-01,To Do,"*Implementation Order:* 19 of 19 (Claims combined — frontend #4, cutover step 4)
+Story,CLAIM-FE-004,[Claims FE] Migrate `updateClaim` multi-step write handling [CLAIM-FE-004],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,mutation-migration-(complex),,CLAIM-BE-E-01,To Do,"*Implementation Order:* 20 of 20 (Claims combined — frontend #4, cutover step 4)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* High — *Parallelizable:* No
 
@@ -482,7 +524,7 @@ Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId` [MST-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-B-02,To Do,"*Implementation Order:* 15 of 18 (Measurement combined — frontend #1, cutover step 1)
+Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId` [MST-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-B-02,To Do,"*Implementation Order:* 16 of 19 (Measurement combined — frontend #1, cutover step 1)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -524,7 +566,7 @@ Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId`
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-C-01 MST-BE-C-02,To Do,"*Implementation Order:* 17 of 18 (Measurement combined — frontend #3, cutover step 2)
+Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-C-01 MST-BE-C-02,To Do,"*Implementation Order:* 18 of 19 (Measurement combined — frontend #3, cutover step 2)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 
@@ -561,7 +603,7 @@ Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-003],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,measurement,query-migration,,MST-BE-B-02,To Do,"*Implementation Order:* 16 of 18 (Measurement combined — frontend #2, cutover step 1)
+Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-003],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,measurement,query-migration,,MST-BE-B-02,To Do,"*Implementation Order:* 17 of 19 (Measurement combined — frontend #2, cutover step 1)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -597,7 +639,7 @@ Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,mutation-migration,,MST-BE-D-02 MST-BE-D-06 MST-BE-D-07,To Do,"*Implementation Order:* 18 of 18 (Measurement combined — frontend #4, cutover step 3)
+Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,mutation-migration,,MST-BE-D-02 MST-BE-D-06 MST-BE-D-07,To Do,"*Implementation Order:* 19 of 19 (Measurement combined — frontend #4, cutover step 3)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 
@@ -949,7 +991,7 @@ Story,PKG-FE-005,[Packaging FE] Migrate `updatePackaging` saga handling and pack
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-queries [PRODUCT-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01,To Do,"*Implementation Order:* 49 of 59 (Product combined — frontend #1, cutover step 1)
+Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-queries [PRODUCT-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01,To Do,"*Implementation Order:* 52 of 63 (Product combined — frontend #1, cutover step 1)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -993,7 +1035,7 @@ Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-quer
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers [PRODUCT-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-02 PRODUCT-FE-001,To Do,"*Implementation Order:* 51 of 59 (Product combined — frontend #3, cutover step 2)
+Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers [PRODUCT-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-02 PRODUCT-FE-001,To Do,"*Implementation Order:* 54 of 63 (Product combined — frontend #3, cutover step 2)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1034,7 +1076,7 @@ Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-S-02 PRODUCT-BE-B-02,To Do,"*Implementation Order:* 58 of 59 (Product combined — frontend #10, cutover step 5)
+Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-S-02 PRODUCT-BE-B-02,To Do,"*Implementation Order:* 62 of 63 (Product combined — frontend #11, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -1075,7 +1117,7 @@ Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-F
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context reads [PRODUCT-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-02,To Do,"*Implementation Order:* 50 of 59 (Product combined — frontend #2, cutover step 1)
+Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context reads [PRODUCT-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-02,To Do,"*Implementation Order:* 53 of 63 (Product combined — frontend #2, cutover step 1)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1115,7 +1157,7 @@ Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context r
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads [PRODUCT-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-C-02 PRODUCT-BE-C-03,To Do,"*Implementation Order:* 52 of 59 (Product combined — frontend #4, cutover step 2)
+Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads [PRODUCT-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-C-02 PRODUCT-BE-C-03,To Do,"*Implementation Order:* 55 of 63 (Product combined — frontend #4, cutover step 2)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1156,7 +1198,7 @@ Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-FE-006],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-06 PRODUCT-BE-B-10 PRODUCT-BE-C-05 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 53 of 59 (Product combined — frontend #5, cutover step 3)
+Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-FE-006],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-06 PRODUCT-BE-B-10 PRODUCT-BE-C-05 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 56 of 63 (Product combined — frontend #5, cutover step 3)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1200,7 +1242,7 @@ Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-01 PRODUCT-BE-D-02 PRODUCT-BE-D-03 PRODUCT-BE-D-04 PRODUCT-BE-D-05 PRODUCT-BE-D-10 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 54 of 59 (Product combined — frontend #6, cutover step 3)
+Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-01 PRODUCT-BE-D-02 PRODUCT-BE-D-03 PRODUCT-BE-D-04 PRODUCT-BE-D-05 PRODUCT-BE-D-10 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 57 of 63 (Product combined — frontend #6, cutover step 3)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1246,7 +1288,7 @@ Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-0
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations [PRODUCT-FE-008],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-06 PRODUCT-BE-D-10 PRODUCT-FE-001,To Do,"*Implementation Order:* 55 of 59 (Product combined — frontend #7, cutover step 3)
+Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations [PRODUCT-FE-008],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-06 PRODUCT-BE-D-10 PRODUCT-FE-001,To Do,"*Implementation Order:* 58 of 63 (Product combined — frontend #7, cutover step 3)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1288,7 +1330,7 @@ Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRODUCT-FE-009],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,mutation-migration-(complex),,PRODUCT-BE-S-03 PRODUCT-BE-D-06,To Do,"*Implementation Order:* 59 of 59 (Product combined — frontend #11, cutover step 5)
+Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRODUCT-FE-009],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,mutation-migration-(complex),,PRODUCT-BE-S-03 PRODUCT-BE-D-06,To Do,"*Implementation Order:* 63 of 63 (Product combined — frontend #12, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -1330,7 +1372,7 @@ Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRO
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-federate) [PRODUCT-FE-010],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration-(staged),,PRODUCT-BE-E-03 PRODUCT-BE-E-04,To Do,"*Implementation Order:* 56 of 59 (Product combined — frontend #8, cutover step 4)
+Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-federate) [PRODUCT-FE-010],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration-(staged),,PRODUCT-BE-E-03 PRODUCT-BE-E-04,To Do,"*Implementation Order:* 59 of 63 (Product combined — frontend #8, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1371,7 +1413,7 @@ Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-fe
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-011],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-01 PRODUCT-BE-D-18 PRODUCT-BE-E-02,To Do,"*Implementation Order:* 57 of 59 (Product combined — frontend #9, cutover step 4)
+Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-011],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-01 PRODUCT-BE-D-18 PRODUCT-BE-E-02,To Do,"*Implementation Order:* 60 of 63 (Product combined — frontend #9, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1408,6 +1450,46 @@ Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-0
 * *Risk:* Medium — gated on ADR-014 ratification.
 * *Estimated effort:* 4–6 days
 
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-012,"[Product FE] Verify fragment type-conditions, `__typename` logic and cache keys against federated type names [PRODUCT-FE-012]",,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,verification-/-refactor,,PRODUCT-BE-F-14,To Do,"*Implementation Order:* 61 of 63 (Product combined — frontend #10, cutover step 4)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-F-14 — Cross-subgraph contract alignment
+
+*Blocks:*
+* None
+
+* *Type:* Verification / refactor · *Impact:* Medium · *Domain:* product
+* *Depends on:* PRODUCT-BE-F-14
+* *Operations:* cross-cutting (no single operation)
+
+* *Business objective:*
+** No screen breaks at the claims/packaging/product-details cutovers because client code still branches on pre-federation type names or normalizes on the wrong key.
+* *Technical objective:*
+** Sweep the estate for fragment type-conditions, {{__typename}} branches and Apollo cache config that reference the aligned federated contracts (federation-review/03 §R3–R4): {{Claims}} (not {{Claim}}), {{ProductDetails}} (not {{ProductDetail}}), plus the {{Categories}} interface→union change (inline fragments required). Per the program key decision (2026-07-17), every entity exposes {{id}} (synthesized from humanId for Claims/Packaging/Watchlist/Dieline), so Apollo's default id-based normalization applies — verify {{id}} is selected wherever those entities are cached.
+* *Background / current implementation:*
+** The completed platform fragment sweep (former PLATFORM-FE-004) predates the R3/R4 contract alignment; {{Claims}}/{{ProductDetails}} conditions were never re-verified, and the humanId-only entities previously had no {{id}} to normalize on. Remaining explicit {{keyFields}}: {{SampleMeasurementSet: [""sampleId""]}}, {{ResourcesCount: [""productId"",""partnerId""]}}.
+* *Required changes:*
+** Codemod/grep sweep for the legacy names; ensure {{id}} is selected on {{Claims}}/{{Packaging}}/{{Watchlist}}/{{Dieline}} selections (add where missing); add the two remaining {{keyFields}} entries; add a {{__typename}} assertion pass to the parity harness; inline-fragment adoption for {{Categories}} selections.
+
+*Acceptance Criteria*
+
+1. Zero references to {{Claim}}/{{ProductDetail}} type names in fragments, type guards or cache config.
+2. Cache normalizes {{Claims}}/{{Packaging}}/{{Watchlist}}/{{Dieline}} entities on the synthesized {{id}} (verified via devtools fixture); {{id}} is selected in every cached document for these types.
+3. {{Categories}} selections use inline fragments and render all 12 member types.
+
+*Testing*
+
+* Static sweep in CI (fails on legacy names); parity {{__typename}} assertions per domain fixture.
+
+* *Risk:* Medium — silent cache mis-normalization is hard to spot in QA.
+* *Estimated effort:* 3–5 days
+
 ---
 
 ## BOM
@@ -1416,7 +1498,7 @@ Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-0
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01,To Do,"*Implementation Order:* 12 of 14 (Watchlist combined — frontend #1, cutover step 2)
+Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01,To Do,"*Implementation Order:* 13 of 15 (Watchlist combined — frontend #1, cutover step 2)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Low — *Parallelizable:* No
 
@@ -1453,7 +1535,7 @@ Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001]
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,To Do,"*Implementation Order:* 13 of 14 (Watchlist combined — frontend #2, cutover step 3)
+Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,To Do,"*Implementation Order:* 14 of 15 (Watchlist combined — frontend #2, cutover step 3)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Low — *Parallelizable:* No
 
@@ -1490,7 +1572,7 @@ Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutatio
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga handling [WATCHLIST-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,watchlist,mutation-migration-(complex),,WATCHLIST-BE-E-01,To Do,"*Implementation Order:* 14 of 14 (Watchlist combined — frontend #3, cutover step 4)
+Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga handling [WATCHLIST-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,watchlist,mutation-migration-(complex),,WATCHLIST-BE-E-01,To Do,"*Implementation Order:* 15 of 15 (Watchlist combined — frontend #3, cutover step 4)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Medium — *Parallelizable:* No
 

@@ -21,8 +21,8 @@
 | Fragments on phase-1 types | 22 |
 | Client libraries involved | 11 |
 | Dynamic (runtime-composed) documents to refactor | 3 |
-| Frontend migration stories | 38 domain stories (platform enablement complete) |
-| Estimated effort | 158–245 engineer-days across 4 waves |
+| Frontend migration stories | 40 domain stories (platform enablement complete) |
+| Estimated effort | 163–254 engineer-days across 4 waves |
 
 ## What changes for the frontend
 
@@ -44,7 +44,7 @@
 | [05 Federation impact](../analysis/program/fe-05-federation-impact.md) | Structural schema differences and per-domain impact |
 | [06 UI impact](../analysis/program/fe-06-ui-impact.md) | Component/hook/cache/test impact per domain with levels |
 | [07 Network call analysis](../analysis/program/fe-07-network-call-analysis.md) | Request-count and latency changes, caching strategy |
-| [08 Frontend stories](../analysis/program/fe-08-frontend-stories.md) | The 38 implementation stories (source of truth) |
+| [08 Frontend stories](../analysis/program/fe-08-frontend-stories.md) | The 40 implementation stories (source of truth) |
 | [09 Dependency matrix](../analysis/program/fe-09-story-dependency-matrix.md) | FE ↔ BE story dependencies, reverse index |
 | [10 Sequencing plan](../analysis/program/fe-10-migration-sequencing.md) | Waves, gates, rollback posture |
 | [11 Traceability matrix](../analysis/program/fe-11-traceability-matrix.md) | Domain → schema → resolver → query → component → stories |

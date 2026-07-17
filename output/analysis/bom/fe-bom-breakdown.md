@@ -4,9 +4,9 @@
 |---|---|
 | **Client** | `pdex-ui-react` (Apollo Client) |
 | **Backend subgraph** | `plm-product (co-located)` |
-| **Total FE Stories** | 6 |
-| **Impact** | 🔴 4 High · 🟡 1 Medium · 🟢 1 Low |
-| **Estimated effort** | 27–42 days (single-engineer) |
+| **Total FE Stories** | 7 |
+| **Impact** | 🔴 4 High · 🟡 1 Medium · 🟢 2 Low |
+| **Estimated effort** | 29–46 days (single-engineer) |
 | **Phase-1 surface** | 21 operation-to-root-field rows · 4 client files · 7 components |
 | **Generated** | 2026-07-17 |
 
@@ -31,6 +31,7 @@
 | `BOM-FE-004` | Migrate BOM master-data reads | Query migration | 🟢 Low | 2–3 days | `BOM-BE-B-05`, `BOM-BE-B-03`, `BOM-BE-B-08` | `getBomMaterialTypes`, `getBomPackagingMaterialTypes`, `getBomPackagingSubstrates`, `getBomPackagingUnitOfMeasure` |
 | `BOM-FE-005` | Migrate BOM supplier reads | Query migration | 🟡 Medium | 3–5 days | `BOM-BE-C-03`, `BOM-BE-C-01` | `getComboSupplierForBom`, `getValidTrimSuppliersForBom`, `getValidRawMaterialSuppliersForBom` |
 | `BOM-FE-006` | Migrate BOM mutations including `updateBom` saga handling | Mutation migration (complex) | 🔴 High | 8–12 days | `BOM-BE-D-01`, `BOM-BE-D-02`, `BOM-BE-S-01` | `addBom`, `lockBom`, `unlockBom`, `updateBom`, `updateBomComponentStatus` |
+| `BOM-FE-007` | Adopt BOM `supplier` entity references (optional, PO-gated) | Query enhancement | 🟢 Low | 2–4 days | `BOM-BE-G-17`, `BOM-FE-002` | `getBomByIds`, `getBomByParentId`, `searchMaterialsBom` |
 
 ---
 
@@ -42,9 +43,10 @@
 |---|---|---|---|
 | 1 | 🔴 `BOM-FE-001`, 🟢 `BOM-FE-004` | `BOM-FE-004` → `BOM-BE-B-05`, `BOM-BE-B-03`, `BOM-BE-B-08` | Reads cutover — needs backend phase A/B reads live |
 | 2 | 🔴 `BOM-FE-002`, 🟡 `BOM-FE-005` | `BOM-FE-002` → `BOM-BE-B-01`, `BOM-BE-B-03`<br>`BOM-FE-005` → `BOM-BE-C-03`, `BOM-BE-C-01` | Search & listing — needs backend phase C |
+| 4 | 🟢 `BOM-FE-007` | `BOM-FE-007` → `BOM-BE-G-17` | Complex writes / sagas — needs backend phase E + ADR ratification |
 | 5 | 🔴 `BOM-FE-003`, 🔴 `BOM-FE-006` | `BOM-FE-003` → `BOM-BE-C-01`, `BOM-BE-S-03`<br>`BOM-FE-006` → `BOM-BE-D-01`, `BOM-BE-D-02`, `BOM-BE-S-01` | Externally gated — search/read-hub decision |
 
-**Cutover flow:** `BOM-FE-001` → `BOM-FE-004` → `BOM-FE-002` → `BOM-FE-005` → `BOM-FE-003` → `BOM-FE-006`.
+**Cutover flow:** `BOM-FE-001` → `BOM-FE-004` → `BOM-FE-002` → `BOM-FE-005` → `BOM-FE-007` → `BOM-FE-003` → `BOM-FE-006`.
 
 ---
 
@@ -56,9 +58,10 @@
 |---|---|---|---|
 | 1 | 🔴 `BOM-FE-001` (3–4d) | 🟢 `BOM-FE-004` (2–3d) | Reads cutover — needs backend phase A/B reads live |
 | 2 | 🔴 `BOM-FE-002` (6–10d) | 🟡 `BOM-FE-005` (3–5d) | Search & listing — needs backend phase C |
+| 4 | 🟢 `BOM-FE-007` (2–4d) | — | Complex writes / sagas — needs backend phase E + ADR ratification |
 | 5 | 🔴 `BOM-FE-006` (8–12d) | 🔴 `BOM-FE-003` (5–8d) | Externally gated — search/read-hub decision |
 
-**Elapsed (nominal midpoints):** ~22 FE build days with 2 engineers vs ~34 single-engineer — calendar time is set by the backend gates, not FE capacity.
+**Elapsed (nominal midpoints):** ~24 FE build days with 2 engineers vs ~38 single-engineer — calendar time is set by the backend gates, not FE capacity.
 
 ---
 

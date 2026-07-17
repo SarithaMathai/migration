@@ -11,7 +11,7 @@ Story,IMPRESSION-BE-B-01,(Impression) searchImpressionsByProductId data fetcher 
 * IMPRESSION-BE-B-02 — getImpressionCountsByProductId data fetcher
 * IMPRESSION-BE-D-01 — updateImpressions mutation
 * IMPRESSION-BE-F-01 — Product.impressions / impressionCounts
-* IMPRESSION-BE-G-01 — Impression field resolvers
+* IMPRESSION-BE-G-01 — Impression field resolvers · attachment entity reference
 * IMPRESSION-BE-G-02 — ImpressionCount.counts aggregation
 * IMPRESSION-BE-G-03 — Test coverage & parity
 * IMPRESSION-FE-001
@@ -108,7 +108,7 @@ Story,IMPRESSION-BE-F-01,(Impression) Product.impressions / impressionCounts (in
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,IMPRESSION-BE-G-01,(Impression) Impression field resolvers (5 fields) [IMPRESSION-BE-G-01],,Federate BreakDown Product,G,XS,dgs-migration,impression,field-resolver,,B-01,To Do,"*Implementation Order:* 5 of 7 (Impression backend, step 2)
+Story,IMPRESSION-BE-G-01,(Impression) Impression field resolvers · attachment entity reference [IMPRESSION-BE-G-01],,Federate BreakDown Product,G,XS,dgs-migration,impression,field-resolver,,B-01,To Do,"*Implementation Order:* 5 of 7 (Impression backend, step 2)
 *Domain:* Impression — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -117,6 +117,8 @@ Story,IMPRESSION-BE-G-01,(Impression) Impression field resolvers (5 fields) [IMP
 
 *Blocks:*
 * None
+
+*Grouped XS story — combines:* G-04 (one PR train; ACs of all grouped ops apply)
 
 *Current Behaviour:*
 * 1. `businessPartners` — `loadBpsWithType(partnerIds.map(p => ({ partnerId: p })))` (🟡 vmm) 2. `owningBusinessPartner` — `loadBp(owningPartnerId)` (🔵 vmm) 3. `workspaces` — `getWorkspacesByIdsV2(workspaceContext)` or `[]` when context is empty (🟡 workspaceV2) 4. `createdBy` — `userAttributes.getUserByID.load(createdById)` (🔵 user-profile) 5. `updatedBy` — `userAttributes.getUserByID.load(updatedById)` (🔵 user-profile)
@@ -128,6 +130,15 @@ Story,IMPRESSION-BE-G-01,(Impression) Impression field resolvers (5 fields) [IMP
 1. `businessPartners` and `owningBusinessPartner` resolve correctly from `partnerIds` / `owningPartnerId`
 2. `workspaces` returns `[]` when `workspaceContext` is empty; the workspace service is not called
 3. `createdBy` / `updatedBy`: `null` id returns `null` — no exception thrown
+
+*From G-04 (`attachment` entity reference):*
+*Target:*
+* schema adds `attachment: Attachment` (declare the `Attachment @extends @key(fields:""id"")` stub); resolver emits `{id: attachmentId}` — the gateway/attachment subgraph hydrates (phase 2; until then the stitched gateway serves it). Optionally pair with `associatedBoms: [Bom]` (internal co-located resolver) if the UI asks — currently deferred (federation-review/03 §3).
+
+*Acceptance Criteria:*
+1. PO approval recorded (OQ-5) before implementation starts
+2. `attachment { id }` resolves as a stub; `attachmentId` unchanged (parity)
+3. Null-safe when `attachmentId` is absent
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)
