@@ -1,6 +1,16 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,BOM-BE-A-04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [BOM-BE-A-04],,Federate BreakDown Product,A,M,dgs-migration,bom,schema,,SPIKE-05,To Do,"*Requires spike:* SPIKE-05 (Polymorphic Type Resolution) — see program spike
+Story,BOM-BE-A-04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [BOM-BE-A-04],,Federate BreakDown Product,A,M,dgs-migration,bom,schema,,SPIKE-05,To Do,"*Implementation Order:* 2 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
+*Requires spike:* SPIKE-05 (Polymorphic Type Resolution) — see program spike
 
 *Current Behaviour:*
 * - Material: switch on `material.materialCategory.code` → 4→Trim, 6→Wash, 2→Fabric, 15→Combination, 16→FabricSpec, {10,11,12,13,14,17–24}→Packaging, **default (1,5,9)→BomMaterial**. - Impression: switch on `impression.type` → 603→Trim, 605→TrimZipper, 604→Wash, 602→Fabric, **default 601→Base**.
@@ -11,8 +21,24 @@ Story,BOM-BE-A-04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [BOM-BE-A-04],
 *Acceptance Criteria:*
 1. Each `materialCategory.code` maps to the type in the table above; unknown codes → `BomMaterial`
 2. Each impression `type` maps correctly; unknown → `BomBaseImpressionDetails`
-3. `BomConstants` holds all 21 category codes + 5 impression codes (verify values against backend)"
-Story,BOM-BE-B-01,(BOM) getBomByIds data fetcher [BOM-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+3. `BomConstants` holds all 21 category codes + 5 impression codes (verify values against backend)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-B-01,(BOM) getBomByIds data fetcher [BOM-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Implementation Order:* 1 of 24 (BOM backend, step 1)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-FE-002
+* IMPRESSION-FE-001
+
+*Current Behaviour:*
 * if `ids` empty → `[]`; else `GET {base}/…/bom/v1?ids={ids}` → `deepToCamelCase`. - **ACL note (context):** current impl gets a capability token for `ids` because boms are resource-scoped; ACL ignored in DGS.
 
 *Target:*
@@ -21,8 +47,26 @@ Story,BOM-BE-B-01,(BOM) getBomByIds data fetcher [BOM-BE-B-01],,Federate BreakDo
 *Acceptance Criteria:*
 1. `getBomByIds([""B1"",""B2""])` returns mapped `Bom` objects from the REST list endpoint
 2. Empty `ids` → returns `[]` with **no** REST call
-3. Response snake_case → camelCase per schema"
-Story,BOM-BE-B-03,(BOM) getBomStatus (cacheable master data) [BOM-BE-B-03],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+3. Response snake_case → camelCase per schema
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-B-03,(BOM) getBomStatus · getBomByParentId data fetcher · getBomPackagingMaterialTypes · getBomPackagingSubstrates [BOM-BE-B-03],,Federate BreakDown Product,B,M,dgs-migration,bom,query,,,To Do,"*Implementation Order:* 3 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-FE-002
+* BOM-FE-004
+
+*Grouped XS story — combines:* B-04, B-06, B-07 (one PR train; ACs of all grouped ops apply)
+
+*Current Behaviour:*
 * `GET {base}/masterData?name=BomStatus`; transform `{key:value}` map → `[{code,description}]`. No ACL.
 
 *Target:*
@@ -31,8 +75,10 @@ Story,BOM-BE-B-03,(BOM) getBomStatus (cacheable master data) [BOM-BE-B-03],,Fede
 *Acceptance Criteria:*
 1. Returns `[{code,description}]` from the status map
 2. Second call served from cache (no REST)
-3. Map key→`code`, value→`description`"
-Story,BOM-BE-B-04,(BOM) getBomByParentId data fetcher [BOM-BE-B-04],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+3. Map key→`code`, value→`description`
+
+*From B-04 (`getBomByParentId` data fetcher):*
+*Current Behaviour:*
 * today, the gateway fetches boms for a product and sorts them by `createdAt` DESC itself, in application code — the backend returns them unsorted. **ACL note (context):** capability token for `parentId`; ignored in DGS. - **Decision (resolved — was Decision #6):** push the sort to the backend. The Kotlin service **no longer** replicates `sortedByDescending { it.createdAt }` client-side — the REST call now asks the backend to sort.
 
 *Target:*
@@ -41,8 +87,45 @@ Story,BOM-BE-B-04,(BOM) getBomByParentId data fetcher [BOM-BE-B-04],,Federate Br
 *Acceptance Criteria:*
 1. Returns boms for `parentId` sorted `createdAt` DESC, sorted by the **backend**, not client code
 2. Empty → `{content: []}`
-3. No `sortedByDescending` (or equivalent) remains in the Kotlin data fetcher — sorting happens once, server-side"
-Story,BOM-BE-B-05,(BOM) getBomMaterialTypes (merge with Material Hub) [BOM-BE-B-05],,Federate BreakDown Product,B,M,dgs-migration,bom,query,,SPIKE-06a,To Do,"*Requires spike:* SPIKE-06a (Hydration) — see program spike
+3. No `sortedByDescending` (or equivalent) remains in the Kotlin data fetcher — sorting happens once, server-side
+
+*From B-06 (`getBomPackagingMaterialTypes`):*
+*Current Behaviour:*
+* `GET …/master_data/packaging_bom_material_types` → camelCase. No ACL.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` service method. - **Files / Dependencies:** `BomQueryDataFetcher.kt`.
+
+*Acceptance Criteria:*
+1. Returns packaging material types
+2. Cached on second call
+
+*From B-07 (`getBomPackagingSubstrates`):*
+*Current Behaviour:*
+* `GET …/master_data/packaging_bom_substrate_types` → camelCase.
+
+*Target:*
+* `@DgsQuery` → `@Cacheable` service method returning `[BomPackagingSubstrate]`.
+
+*Acceptance Criteria:*
+1. Returns substrate list
+2. Cached
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-B-05,(BOM) getBomMaterialTypes (merge with Material Hub) [BOM-BE-B-05],,Federate BreakDown Product,B,M,dgs-migration,bom,query,,SPIKE-06a,To Do,"*Implementation Order:* 4 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-FE-004
+
+*Requires spike:* SPIKE-06a (Hydration) — see program spike
 
 *Current Behaviour:*
 * load bom material types (`GET …/master_data/bom_material_types[?ids]`) **and** `materialHub.getHubMaterialTypes` (today sequential), concat; map each hub type → `{code:9, description:type, bomType:{code:1,description:'Product'}, libraryLink:true, freeText:true}`. - **EXT Service Calls:** **EXT** → key: `materialHub` · severity: 🟡 — hub material type list to merge into bom types.
@@ -54,26 +137,23 @@ Story,BOM-BE-B-05,(BOM) getBomMaterialTypes (merge with Material Hub) [BOM-BE-B-
 1. Returns bom types + synthesized hub types
 2. Hub rows carry `code=9, libraryLink=true, freeText=true, bomType={1,'Product'}`
 3. The two fetches run concurrently
-4. EXT hub failure → return bom types only (partial), logged"
-Story,BOM-BE-B-06,(BOM) getBomPackagingMaterialTypes (cacheable) [BOM-BE-B-06],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
-* `GET …/master_data/packaging_bom_material_types` → camelCase. No ACL.
+4. EXT hub failure → return bom types only (partial), logged
 
-*Target:*
-* `@DgsQuery` → `@Cacheable` service method. - **Files / Dependencies:** `BomQueryDataFetcher.kt`.
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-B-08,(BOM) getBomPackagingUnitOfMeasure (cacheable) [BOM-BE-B-08],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Implementation Order:* 5 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
 
-*Acceptance Criteria:*
-1. Returns packaging material types
-2. Cached on second call"
-Story,BOM-BE-B-07,(BOM) getBomPackagingSubstrates (cacheable) [BOM-BE-B-07],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
-* `GET …/master_data/packaging_bom_substrate_types` → camelCase.
+*Depends On:*
+* None
 
-*Target:*
-* `@DgsQuery` → `@Cacheable` service method returning `[BomPackagingSubstrate]`.
+*Blocks:*
+* BOM-FE-004
 
-*Acceptance Criteria:*
-1. Returns substrate list
-2. Cached"
-Story,BOM-BE-B-08,(BOM) getBomPackagingUnitOfMeasure (cacheable) [BOM-BE-B-08],,Federate BreakDown Product,B,XS,dgs-migration,bom,query,,,To Do,"*Current Behaviour:*
+*Current Behaviour:*
 * `GET …/master_data/packaging_unit_of_measure` → camelCase (`units_of_measure`).
 
 *Target:*
@@ -81,8 +161,26 @@ Story,BOM-BE-B-08,(BOM) getBomPackagingUnitOfMeasure (cacheable) [BOM-BE-B-08],,
 
 *Acceptance Criteria:*
 1. Returns UoM list
-2. Cached"
-Story,BOM-BE-C-01,(BOM) getBomElastic data fetcher [BOM-BE-C-01],,Federate BreakDown Product,C,XS,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
+2. Cached
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-C-01,(BOM) getBomElastic data fetcher · getValidTrimSuppliersForBom data fetcher · getValidRawMaterialSuppliersForBom data fetcher [BOM-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,bom,search,,,To Do,"*Implementation Order:* 6 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-FE-003
+* BOM-FE-005
+
+*Grouped XS story — combines:* C-04, C-05 (one PR train; ACs of all grouped ops apply)
+
+*Current Behaviour:*
 * `{content} = search.getBomElastic.load(query)`; return `content`. The **entire `query` object** is passed to elastic — document the exact field set. - **EXT Service Calls:** **EXT** → key: `search` · severity: 🔴 — elastic bom search index.
 
 *Target:*
@@ -91,8 +189,46 @@ Story,BOM-BE-C-01,(BOM) getBomElastic data fetcher [BOM-BE-C-01],,Federate Break
 *Acceptance Criteria:*
 1. Returns `content` boms for a query
 2. Query DTO field set documented + matches backend
-3. Empty → `[]`"
-Story,BOM-BE-C-02,(BOM) searchMaterialsBom data fetcher [BOM-BE-C-02],,Federate BreakDown Product,C,M,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
+3. Empty → `[]`
+
+*From C-04 (`getValidTrimSuppliersForBom` data fetcher):*
+*Current Behaviour:*
+* `getRelatedSuppliersForMVs(ctx, merchVendorIds, [TRIM_SUPPLIER.code])` → `[Int]` partner ids. - **EXT Service Calls:** **EXT** → key: `vmm` · 🔵.
+
+*Target:*
+* `@DgsQuery` delegating to a `VmmSupplierService.relatedSuppliers(merchVendorIds, roles=[TRIM_SUPPLIER])`. Source the role code from `BomConstants` (confirm code value).
+
+*Acceptance Criteria:*
+1. Returns related trim-supplier partner ids
+2. Role filter = TRIM_SUPPLIER only
+3. Empty input → `[]`
+
+*From C-05 (`getValidRawMaterialSuppliersForBom` data fetcher):*
+*Current Behaviour:*
+* same as C-04 with roles `[RAW_MATERIAL_SUPPLIER, FABRIC_SUPPLIER, TRIM_SUPPLIER]`.
+
+*Target:*
+* `@DgsQuery` delegating with the three roles.
+
+*Acceptance Criteria:*
+1. Returns ids matching the 3 roles
+2. Empty input → `[]`
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-C-02,(BOM) searchMaterialsBom data fetcher [BOM-BE-C-02],,Federate BreakDown Product,C,M,dgs-migration,bom,search,,,To Do,"*Implementation Order:* 7 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-BE-G-15 — BomMaterialSearchResult field resolvers
+
+*Current Behaviour:*
 * in plain terms — before hitting the search backend, this resolver (1) looks up fabric suppliers by calling straight into another domain's resolver code (not a clean service call), and (2) if the caller passed `nestedSearchFilters`, flattens each filter object into 5 separate query-string keys (`nestedSearchFilters[i].type`, `...fieldPath`, `...nestedFieldPath`, `...operator`, `...values`) because that's the shape the old gateway happened to build. 1. `fabricSuppliers = VMM_BusinessPartner.getRelatedFabricSuppliersByMerchVendors({merchVendorIds: partnerIds})` (cross-resolver import — replace with a service/federation call). 2. Build `queryPayload` from args. 3. If `nestedSearchFilters` present: flatten each `[i]` into 5 keys `nestedSearchFilters[i].{type|fieldPath|nestedFieldPath|operator|values}`, then delete the array key. 4. `search.searchMaterialsBom.load(queryPayload)`. - **EXT Service Calls:** **EXT** → key: `search` · 🔴; **EXT** → key: `vmm` · 🔵 (fabric-supplier lookup).
 
 *Target:*
@@ -102,8 +238,23 @@ Story,BOM-BE-C-02,(BOM) searchMaterialsBom data fetcher [BOM-BE-C-02],,Federate 
 1. Returns `BomMaterialSearch{content,paging}`
 2. With `nestedSearchFilters`, the request serializes to the same `nestedSearchFilters[i].*` keys as today (or the agreed structured DTO, once the search-request-shape decision has landed)
 3. `size` defaults to 20
-4. Fabric-supplier prefetch via service/federation, not a resolver import"
-Story,BOM-BE-C-03,(BOM) getComboSupplierForBom data fetcher [BOM-BE-C-03],,Federate BreakDown Product,C,M,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
+4. Fabric-supplier prefetch via service/federation, not a resolver import
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-C-03,(BOM) getComboSupplierForBom data fetcher [BOM-BE-C-03],,Federate BreakDown Product,C,M,dgs-migration,bom,search,,,To Do,"*Implementation Order:* 8 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-FE-005
+
+*Current Behaviour:*
 * 1. `fabricSpecCombos = SPARK_Combination.searchFabricSpecCombos({q:`parentComboId:${comboId}`, page:0, size:100})` (cross-resolver import). 2. Filter combos: keep where `fsId` set AND ((`partnerIds` non-empty & `mvIds.length===1` & `partnerIds.includes(mvIds[0])`) OR `partnerIds` empty). 3. For each (parallel): `fs = vmm.getByID.load(fsId)`; if `fs.bpName`, push `{fabricSupplier:{id:fsId,name:fs.bpName}, fabricSpecCombo}`. - **EXT Service Calls:** **EXT** → key: `combination` · 🟡; **EXT** → key: `vmm` · 🔵.
 
 *Target:*
@@ -112,27 +263,23 @@ Story,BOM-BE-C-03,(BOM) getComboSupplierForBom data fetcher [BOM-BE-C-03],,Feder
 *Acceptance Criteria:*
 1. Returns suppliers only for combos with a resolvable `fsId` and `bpName`
 2. Filter logic matches the rule above (document the `mvIds.length===1` behaviour)
-3. VMM lookups run concurrently"
-Story,BOM-BE-C-04,(BOM) getValidTrimSuppliersForBom data fetcher [BOM-BE-C-04],,Federate BreakDown Product,C,XS,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
-* `getRelatedSuppliersForMVs(ctx, merchVendorIds, [TRIM_SUPPLIER.code])` → `[Int]` partner ids. - **EXT Service Calls:** **EXT** → key: `vmm` · 🔵.
+3. VMM lookups run concurrently
 
-*Target:*
-* `@DgsQuery` delegating to a `VmmSupplierService.relatedSuppliers(merchVendorIds, roles=[TRIM_SUPPLIER])`. Source the role code from `BomConstants` (confirm code value).
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-D-01,(BOM) addBom mutation [BOM-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,bom,mutation,,,To Do,"*Implementation Order:* 9 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
 
-*Acceptance Criteria:*
-1. Returns related trim-supplier partner ids
-2. Role filter = TRIM_SUPPLIER only
-3. Empty input → `[]`"
-Story,BOM-BE-C-05,(BOM) getValidRawMaterialSuppliersForBom data fetcher [BOM-BE-C-05],,Federate BreakDown Product,C,XS,dgs-migration,bom,search,,,To Do,"*Current Behaviour:*
-* same as C-04 with roles `[RAW_MATERIAL_SUPPLIER, FABRIC_SUPPLIER, TRIM_SUPPLIER]`.
+*Depends On:*
+* None
 
-*Target:*
-* `@DgsQuery` delegating with the three roles.
+*Blocks:*
+* BOM-FE-006
 
-*Acceptance Criteria:*
-1. Returns ids matching the 3 roles
-2. Empty input → `[]`"
-Story,BOM-BE-D-01,(BOM) addBom mutation [BOM-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+*Current Behaviour:*
 * `bom = bomService.addBom(sparkBom)` → `POST {base}/…/bom/v1` (`transformRequest: deepToSnakeCase`, `primeKey: humanId`); if `bom.validationErrors || bom.message` → throw. No ACL (new resource). - **Input validation:** `name` and `parentId` required (schema `String!`).
 
 *Target:*
@@ -142,8 +289,26 @@ Story,BOM-BE-D-01,(BOM) addBom mutation [BOM-BE-D-01],,Federate BreakDown Produc
 1. POST creates a bom and returns it mapped to `Bom`
 2. Backend `validationErrors`/`message` → `BomValidationException` (not a silent return)
 3. Request body is snake_case
-4. Read cache primed with `humanId`"
-Story,BOM-BE-D-02,(BOM) manageBomWorkspaces mutation [BOM-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+4. Read cache primed with `humanId`
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-D-02,(BOM) manageBomWorkspaces mutation · lockBom mutation · unlockBom mutation · updateBomComponentStatus mutation [BOM-BE-D-02],,Federate BreakDown Product,D,M,dgs-migration,bom,mutation,,,To Do,"*Implementation Order:* 10 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-BE-E-01 — updateBom — 3-step orchestrated write
+* BOM-FE-006
+
+*Grouped XS story — combines:* D-03, D-04, D-05 (one PR train; ACs of all grouped ops apply)
+
+*Current Behaviour:*
 * if `toAdd`/`toRemove` non-empty → `workspaceAssociationHelper(BOM, bomId, toAdd, toRemove)` → PUT `…/{bomId}/{associate|dissociate}_workspace`; else returns `undefined`. - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association). **ACL note (context):** capability token for `bomId`; ignored in DGS.
 
 *Target:*
@@ -152,8 +317,10 @@ Story,BOM-BE-D-02,(BOM) manageBomWorkspaces mutation [BOM-BE-D-02],,Federate Bre
 *Acceptance Criteria:*
 1. Adds/removes workspace associations via the correct endpoint
 2. Both lists empty → `null`, no REST call
-3. Returns the updated bom"
-Story,BOM-BE-D-03,(BOM) lockBom mutation [BOM-BE-D-03],,Federate BreakDown Product,D,XS,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+3. Returns the updated bom
+
+*From D-03 (`lockBom` mutation):*
+*Current Behaviour:*
 * `PUT …/{bomId}/lock`. **ACL note (context):** capability token for `bomId`; ignored in DGS.
 
 *Target:*
@@ -161,8 +328,10 @@ Story,BOM-BE-D-03,(BOM) lockBom mutation [BOM-BE-D-03],,Federate BreakDown Produ
 
 *Acceptance Criteria:*
 1. PUT to `/lock` returns the locked bom
-2. 404 → null"
-Story,BOM-BE-D-04,(BOM) unlockBom mutation [BOM-BE-D-04],,Federate BreakDown Product,D,XS,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+2. 404 → null
+
+*From D-04 (`unlockBom` mutation):*
+*Current Behaviour:*
 * `PUT …/{bomId}/unlock`. ACL note as D-03.
 
 *Target:*
@@ -170,8 +339,10 @@ Story,BOM-BE-D-04,(BOM) unlockBom mutation [BOM-BE-D-04],,Federate BreakDown Pro
 
 *Acceptance Criteria:*
 1. PUT to `/unlock` returns the unlocked bom
-2. 404 → null"
-Story,BOM-BE-D-05,(BOM) updateBomComponentStatus mutation [BOM-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,bom,mutation,,,To Do,"*Current Behaviour:*
+2. 404 → null
+
+*From D-05 (`updateBomComponentStatus` mutation):*
+*Current Behaviour:*
 * `PUT …/bom/v1/component_status_update` body `{productId, ids, status}`. **No ACL token** — the only write without one (every other BOM write obtains one).
 
 *Target:*
@@ -179,8 +350,23 @@ Story,BOM-BE-D-05,(BOM) updateBomComponentStatus mutation [BOM-BE-D-05],,Federat
 
 *Acceptance Criteria:*
 1. PUT sends `{productId, ids, status}` (snake_case)
-2. Returns `BomPaged{content}`"
-Story,BOM-BE-E-01,(BOM) updateBom — 3-step orchestrated write [BOM-BE-E-01],,Federate BreakDown Product,E,XL,dgs-migration,bom,complex,,"SPIKE-01, D-02",To Do,"*Requires spike:* SPIKE-01 (Non-Atomic Write Saga) — see program spike
+2. Returns `BomPaged{content}`
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-E-01,(BOM) updateBom — 3-step orchestrated write [BOM-BE-E-01],,Federate BreakDown Product,E,XL,dgs-migration,bom,complex,,"SPIKE-01, D-02",To Do,"*Implementation Order:* 19 of 24 (BOM backend, step 3)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Highest — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-D-02 — manageBomWorkspaces mutation · lockBom mutation · unlockBom mutation · updateBomComponentStatus mutation
+
+*Blocks:*
+* BOM-BE-G-16 — Test coverage & parity harness
+
+*Requires spike:* SPIKE-01 (Non-Atomic Write Saga) — see program spike
 
 *Current Behaviour:*
 * editing a bom today is really three separate backend calls made one - after another, with no undo button: (1) if the caller changed which workspaces the bom belongs to, save that first; (2) save the actual bom fields; (3) if the caller changed business-partner permissions, save that last. - If call 2 or 3 fails, call 1 has already gone through — there's no way today to detect or undo that. 1. (ACL note — context) capability token obtained for `humanId` because the update is resource-scoped; ignored in DGS. 2. **If** `workspaceContext` has add/remove → `workspaceAssociationHelper(BOM, humanId, add, remove)` (**commits first**) → PUT `…/{bomId}/{associate|dissociate}_workspace`. 3. `bomService.updateBom(sparkBom)` → `PUT {base}/…/bom/v1/{humanId}` (`omitParamsInBody: true`). 4. If `validationErrors || message` → throw. 5. **If** `businessPartners` present → `bomService.updatePermissions().load(sparkBom)` → PUT `…/{humanId}/permission`. 6. Return the updated bom. - **Risk 🔴:** three sequential writes, **no rollback** today. Step-2 workspace change persists even if step 3 fails; step-5 permission update can leave ACL stale. - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association step).
@@ -205,8 +391,23 @@ Story,BOM-BE-E-01,(BOM) updateBom — 3-step orchestrated write [BOM-BE-E-01],,F
 
 *Complex — broken into sub-tasks:* E-01-1 workspace-assoc + body PUT · E-01-2 permissions PUT + rollback framework
 
-*Detailed cross-domain case:* complexStories/non-atomic-write-saga/ (import non-atomic-write-saga.csv for the sub-tasks)"
-Story,BOM-BE-F-01,(BOM) Implement Product.productBoms / boms / packagingBoms (internal) [BOM-BE-F-01],,Federate BreakDown Product,F,M,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+*Detailed cross-domain case:* complexStories/non-atomic-write-saga/ (import non-atomic-write-saga.csv for the sub-tasks)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-F-01,(BOM) Implement Product.productBoms / boms / packagingBoms (internal) [BOM-BE-F-01],,Federate BreakDown Product,F,M,dgs-migration,bom,field-resolver,,,To Do,"*Implementation Order:* 11 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * when a client asks a `Product` for its boms today, that resolver lives - in *product's* code and reaches across to BOM's data loader. - After migration, product and bom live in the same service (`plm-product`), so there's no reason for that indirection — BOM's own code should just answer the field directly. - `ctx.loaders.bom.getActiveBomsByProductId(...)` / `...AndBomType(...)`.
 
 *Target:*
@@ -216,8 +417,23 @@ Story,BOM-BE-F-01,(BOM) Implement Product.productBoms / boms / packagingBoms (in
 1. `Product.productBoms/boms/packagingBoms` resolve via `bomService` internally
 2. the equivalent product-side resolvers are removed
 3. `boms(types)` filters by bom type
-4. no gateway hop"
-Story,BOM-BE-F-02,(BOM) Fill ResourcesCount.bomsCount (internal) [BOM-BE-F-02],,Federate BreakDown Product,F,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+4. no gateway hop
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-F-02,(BOM) Fill ResourcesCount.bomsCount (internal) [BOM-BE-F-02],,Federate BreakDown Product,F,XS,dgs-migration,bom,field-resolver,,,To Do,"*Implementation Order:* 12 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * the TechPack summary panel shows ""12 boms"" for a product today by having *product's* orchestration code run an elastic count query. Once BOM owns this field, BOM's own code answers it directly — same count, just answered by the team that actually owns bom data.
 
 *Target:*
@@ -226,8 +442,23 @@ Story,BOM-BE-F-02,(BOM) Fill ResourcesCount.bomsCount (internal) [BOM-BE-F-02],,
 *Acceptance Criteria:*
 1. `bomsCount` resolves internally on `ResourcesCount`
 2. count matches current elastic semantics
-3. no gateway hop for this field"
-Story,BOM-BE-G-01,(BOM) Bom field resolvers (9 shared fields) [BOM-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+3. no gateway hop for this field
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-01,(BOM) Bom field resolvers (9 shared fields) [BOM-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,,To Do,"*Implementation Order:* 13 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * 9 fields — `humanId`, `access`, `currentUserPermissions`, `businessPartners`, `createdBy`, `updatedBy`, `product`, `workspaces`, `participantDetails` — that all need a little lookup logic rather than being plain pass-throughs (C1): `humanId` (`humanId ?? id`), `access` & `currentUserPermissions` (accessControl — **ACL context only, ignore in impl**), `businessPartners` (`loadBusinessPartners`), `createdBy`/`updatedBy` (`getUser`), `product` (if `parentId` starts `PID` → `product.getByID`, else null), `workspaces` (`getWorkspacesByIdsV2`), `participantDetails` (`getUserGroup`). - **EXT Service Calls:** 🟡 `workspaceV2`; 🔵 user-profile (`createdBy`/`updatedBy`/`participantDetails`); 🔵 teams (`businessPartners`). `product` is an internal same-DGS call.
 
 *Target:*
@@ -237,8 +468,23 @@ Story,BOM-BE-G-01,(BOM) Bom field resolvers (9 shared fields) [BOM-BE-G-01],,Fed
 1. All 9 fields resolve on `Bom` from one impl
 2. `product` null when `parentId` not `PID*` (defensive guard; in practice always `PID*`, per the confirmed decision)
 3. Sibling fields emit correct `@key`s for federation
-4. No ACL plumbing introduced"
-Story,BOM-BE-G-03,(BOM) BomMaterial field resolvers (8 fields) [BOM-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+4. No ACL plumbing introduced
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-03,(BOM) BomMaterial field resolvers (8 fields) [BOM-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,,To Do,"*Implementation Order:* 14 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * `BomMaterial` is the generic (""hub"") material row. Two of its fields — - `libraryResource` and `genericMaterialType` — both need the same lookup from the Material Hub service, but today's code fetches the hub row twice (once per field) instead of once and reusing it. - (C4): `libraryResource` (H5 hub), `genericMaterialType` (hub `baseMaterial.relatedMaterialType` precedence over local), `origins`/`certifications` (H3 coded-options filter+enrich), `weight` (H1), `sizeUnitOfMeasure` (H2), `countryOfOrigin` (tag), `parentLibraryResourceId`/`libraryResourceId` (Direct), `impressionDetails` (`material.impressions`). - Hub resource loaded twice (libraryResource + genericMaterialType) — DataLoader-memoized; consolidate. - **ACL context:** hub uses a capability token; ignore in impl. - **EXT:** 🟡 materialHub; 🔵 tag.
 
 *Target:*
@@ -248,8 +494,25 @@ Story,BOM-BE-G-03,(BOM) BomMaterial field resolvers (8 fields) [BOM-BE-G-03],,Fe
 1. `genericMaterialType` returns hub value when `relatedMaterialType` differs from local, else local
 2. `origins`/`certifications` filtered to known codes and enriched to `{code,description}`
 3. `weight` uses UoM fallback code 23 (grams)
-4. Hub fetched once per material"
-Story,BOM-BE-G-04,(BOM) BomPackagingMaterial field resolvers (2 fields) [BOM-BE-G-04],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+4. Hub fetched once per material
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-04,(BOM) BomPackagingMaterial field resolvers · BomFabricMaterial field resolvers · BomFabricSpecMaterial field resolvers · BomCombinationMaterial field resolvers [BOM-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,,To Do,"*Implementation Order:* 15 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
+*Grouped XS story — combines:* G-05, G-06, G-07 (one PR train; ACs of all grouped ops apply)
+
+*Current Behaviour:*
 * `impressionDetails` (`material.impressions`), `countryOfOrigin` (tag).
 
 *Target:*
@@ -257,8 +520,10 @@ Story,BOM-BE-G-04,(BOM) BomPackagingMaterial field resolvers (2 fields) [BOM-BE-
 
 *Acceptance Criteria:*
 1. `impressionDetails` = parent impressions
-2. `countryOfOrigin` resolves from `countryOfOriginIds` (empty → `[]`)"
-Story,BOM-BE-G-05,(BOM) BomFabricMaterial field resolvers (4 fields) [BOM-BE-G-05],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+2. `countryOfOrigin` resolves from `countryOfOriginIds` (empty → `[]`)
+
+*From G-05 (`BomFabricMaterial` field resolvers):*
+*Current Behaviour:*
 * `libraryResource` = `search.searchFabricSpecCombos({q:`id:${fscId}`,page:0,size:1})` → `content[0] ?? {id:fscId}`; `weight` (H1), `countryOfOrigin`, `impressionDetails`, `libraryResourceId`. - **EXT:** 🔴 search; 🟡 materialHub (weight); 🔵 tag.
 
 *Target:*
@@ -266,8 +531,10 @@ Story,BOM-BE-G-05,(BOM) BomFabricMaterial field resolvers (4 fields) [BOM-BE-G-0
 
 *Acceptance Criteria:*
 1. Returns the matched fabricSpecCombo or `{id}`
-2. `weight`/`countryOfOrigin` as G-03"
-Story,BOM-BE-G-06,(BOM) BomFabricSpecMaterial field resolvers (4 fields) [BOM-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+2. `weight`/`countryOfOrigin` as G-03
+
+*From G-06 (`BomFabricSpecMaterial` field resolvers):*
+*Current Behaviour:*
 * `libraryResource` = `fabric.getSpecificationByID.load(id) ?? {id}`; `weight`, `countryOfOrigin`, `impressionDetails`. - **EXT:** 🟡 fabric, materialHub; 🔵 tag.
 
 *Target:*
@@ -275,8 +542,10 @@ Story,BOM-BE-G-06,(BOM) BomFabricSpecMaterial field resolvers (4 fields) [BOM-BE
 
 *Acceptance Criteria:*
 1. Returns fabric spec or `{id}`
-2. weight/countryOfOrigin as G-03"
-Story,BOM-BE-G-07,(BOM) BomCombinationMaterial field resolvers (4 fields) [BOM-BE-G-07],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+2. weight/countryOfOrigin as G-03
+
+*From G-07 (`BomCombinationMaterial` field resolvers):*
+*Current Behaviour:*
 * `libraryResource` = `combination.getById.load(id) ?? {id}`; `weight`, `countryOfOrigin`.
 
 *Target:*
@@ -284,8 +553,23 @@ Story,BOM-BE-G-07,(BOM) BomCombinationMaterial field resolvers (4 fields) [BOM-B
 
 *Acceptance Criteria:*
 1. Returns combination or `{id}`
-2. weight/countryOfOrigin as G-03"
-Story,BOM-BE-G-08,(BOM) BomTrimMaterial field resolvers (7 fields) — trim size dispatchers [BOM-BE-G-08],,Federate BreakDown Product,G,L,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+2. weight/countryOfOrigin as G-03
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-08,(BOM) BomTrimMaterial field resolvers (7 fields) — trim size dispatchers [BOM-BE-G-08],,Federate BreakDown Product,G,L,dgs-migration,bom,field-resolver,,,To Do,"*Implementation Order:* 16 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-BE-G-16 — Test coverage & parity harness
+
+*Current Behaviour:*
 * - `libraryResource` = `trim.getTrimBatch.load(trimId)`. - `materialLibraryUom` = trim UoMs, find by `materialLibraryUomId.toString()` (preserve int→string coercion). - `sizeValue` = reload trim → match size by `librarySizeId` → `getTrimSizeValue(trimType, trimSubType, size)` — **15-case TRIM_TYPES** (`utils/bomUtils.js:57-114`). - `sizeCaption` = reload trim → `getBomSizeCaption(trim, size)` — **15-case**, returns `{edit, view}` (`utils/bomUtils.js:116-187`). - `facilityName` = if already set return it; else reload trim → find supplier by `supplierId` → facility by `facilityId` → `location.getLocationById(facilityId)` → `vmmFacility.name`. - `weight`, `countryOfOrigin` as G-03. The trim is loaded 3× (memoized) — consolidate. - **EXT:** 🟡 trim; 🔵 location (facility); 🔵 tag.
 
 *Target:*
@@ -306,8 +590,25 @@ Story,BOM-BE-G-08,(BOM) BomTrimMaterial field resolvers (7 fields) — trim size
 * [ ] Unit: single trim fetch
 * [ ] Parity: recorded trim fixtures
 
-*Complex — broken into sub-tasks:* G-08-1 dispatcher scaffold + type resolution · G-08-2 7 TrimMaterial field resolvers"
-Story,BOM-BE-G-09,(BOM) BomWashMaterial field resolvers (4 fields) [BOM-BE-G-09],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+*Complex — broken into sub-tasks:* G-08-1 dispatcher scaffold + type resolution · G-08-2 7 TrimMaterial field resolvers
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-09,(BOM) BomWashMaterial field resolvers · Trivial pass-through fields [BOM-BE-G-09],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Implementation Order:* 17 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
+*Grouped XS story — combines:* G-14 (one PR train; ACs of all grouped ops apply)
+
+*Current Behaviour:*
 * `libraryResource` = `wash.getWash(jwt).load(washId) ?? {id}`; `weight`, `countryOfOrigin`, `impressionDetails`. **ACL context:** wash uses a capability token; ignore in impl.
 
 *Target:*
@@ -315,8 +616,39 @@ Story,BOM-BE-G-09,(BOM) BomWashMaterial field resolvers (4 fields) [BOM-BE-G-09]
 
 *Acceptance Criteria:*
 1. Returns wash or `{id}`
-2. weight/countryOfOrigin as G-03"
-Story,BOM-BE-G-10,(BOM) Impression library-resource resolution (shared internal/external branch + MaterialDataLoader) [BOM-BE-G-10],,Federate BreakDown Product,G,L,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
+2. weight/countryOfOrigin as G-03
+
+*From G-14 (Trivial pass-through fields):*
+*Current Behaviour:*
+* the only allowed bundle — fields that return a parent value with no service call: `BomMaterialType.id` = `` `${code}_${description}` `` (computed); `BomMaterialSearch.paging` = whole-object passthrough; every material type's `impressionDetails` = `parent.impressions` (rename); `*.libraryResourceId` = `get(parent,'libraryResource.id')`; `*.parentLibraryResourceId`; and ~30 scalar pass-throughs per material type covered by DTO mapping.
+
+*Target:*
+* Jackson DTO mapping for scalars; tiny `@DgsData` for the 3 computed/renamed fields. - **Example:** `BomMaterialType{code: 4, description: ""Zipper""}.id` → `""4_Zipper""` (no service call, pure string concat).
+
+*Acceptance Criteria:*
+1. `BomMaterialType.id` = `code_description`
+2. `impressionDetails` maps from `impressions`
+3. `libraryResourceId` from nested id
+4. No EXT calls
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-10,(BOM) Impression library-resource resolution (shared internal/external branch + MaterialDataLoader) [BOM-BE-G-10],,Federate BreakDown Product,G,L,dgs-migration,bom,field-resolver,,,To Do,"*Implementation Order:* 18 of 24 (BOM backend, step 2)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-BE-G-11 — BomFabricLibraryImpressionDetails.libraryResource
+* BOM-BE-G-12 — BomTrimLibraryImpressionDetails field resolvers
+* BOM-BE-G-13 — BomTrimZipperLibraryImpressionDetails field resolvers
+* BOM-BE-G-16 — Test coverage & parity harness
+
+*Current Behaviour:*
 * resolving ""what material does this impression's color/library field - point to"" needs to behave differently depending on who's asking. - An **internal** user gets the material looked up directly by id. - An **external** (e.g. supplier-portal) user doesn't have direct access to that id space, so the lookup goes through a proxy-id search instead, scoped to the boms they're allowed to see. - `libraryResource`: **internal** (`currentUser.internal`) → `searchMaterialById('libraryResource', detail)`; **external** → `bomIds = args.ids`; if no `libraryResource.id` → null; else `searchMaterialsByProxyIds.load({q:`id:(${id})`, proxyIds: bomIds, page:0, size:1})` → `content[0] ?? {id}`. - `groundColor`/`textColor`/`sliderColor`/`tapeColor`/`teethColor` → `searchMaterialById(name, detail)` (5 loader calls). - **Risk 🔴:** the external branch reads `args.ids` — only present when the parent query carried `ids`, a fragile implicit contract. **ACL context:** external path obtains a capability token for `bomIds`; ignore in impl, but keep `proxyIds`. - **EXT:** 🔴 search.
 
 *Target:*
@@ -334,8 +666,23 @@ Story,BOM-BE-G-10,(BOM) Impression library-resource resolution (shared internal/
 * [ ] Unit: external branch (proxyIds)
 * [ ] Unit: null id
 * [ ] Unit: color batch
-* [ ] Parity: internal vs external"
-Story,BOM-BE-G-11,(BOM) BomFabricLibraryImpressionDetails.libraryResource [BOM-BE-G-11],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,G-10,To Do,"*Current Behaviour:*
+* [ ] Parity: internal vs external
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-11,(BOM) BomFabricLibraryImpressionDetails.libraryResource [BOM-BE-G-11],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,G-10,To Do,"*Implementation Order:* 20 of 24 (BOM backend, step 3)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-G-10 — Impression library-resource resolution
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * single `libraryResource` field with the same internal/external branch as G-10.
 
 *Target:*
@@ -343,8 +690,23 @@ Story,BOM-BE-G-11,(BOM) BomFabricLibraryImpressionDetails.libraryResource [BOM-B
 
 *Acceptance Criteria:*
 1. Same behaviour as `G-10`'s `libraryResource` for this type
-2. Uses local-context `bomIds`"
-Story,BOM-BE-G-12,(BOM) BomTrimLibraryImpressionDetails field resolvers (3 fields) [BOM-BE-G-12],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,G-10,To Do,"*Current Behaviour:*
+2. Uses local-context `bomIds`
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-12,(BOM) BomTrimLibraryImpressionDetails field resolvers (3 fields) [BOM-BE-G-12],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,G-10,To Do,"*Implementation Order:* 21 of 24 (BOM backend, step 3)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-G-10 — Impression library-resource resolution
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * `libraryResource` (G-10 branch) + `groundColor`, `textColor` via `searchMaterialById`.
 
 *Target:*
@@ -352,8 +714,23 @@ Story,BOM-BE-G-12,(BOM) BomTrimLibraryImpressionDetails field resolvers (3 field
 
 *Acceptance Criteria:*
 1. `libraryResource` behaves as `G-10`
-2. `groundColor`/`textColor` resolve via material loader"
-Story,BOM-BE-G-13,(BOM) BomTrimZipperLibraryImpressionDetails field resolvers (3 colors) [BOM-BE-G-13],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,G-10,To Do,"*Current Behaviour:*
+2. `groundColor`/`textColor` resolve via material loader
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-13,(BOM) BomTrimZipperLibraryImpressionDetails field resolvers (3 colors) [BOM-BE-G-13],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,G-10,To Do,"*Implementation Order:* 22 of 24 (BOM backend, step 3)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-G-10 — Impression library-resource resolution
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * `sliderColor`, `tapeColor`, `teethColor` via `searchMaterialById`. Unlike `G-11`/`G-12`, this type has no `libraryResource` field at all — just three colors — so it only needs `G-10`'s color loader, not the internal/external branch.
 
 *Target:*
@@ -361,19 +738,23 @@ Story,BOM-BE-G-13,(BOM) BomTrimZipperLibraryImpressionDetails field resolvers (3
 
 *Acceptance Criteria:*
 1. Three color fields resolve by id
-2. Missing id → null"
-Story,BOM-BE-G-14,(BOM) Trivial pass-through fields (bundle) [BOM-BE-G-14],,Federate BreakDown Product,G,XS,dgs-migration,bom,field-resolver,,,To Do,"*Current Behaviour:*
-* the only allowed bundle — fields that return a parent value with no service call: `BomMaterialType.id` = `` `${code}_${description}` `` (computed); `BomMaterialSearch.paging` = whole-object passthrough; every material type's `impressionDetails` = `parent.impressions` (rename); `*.libraryResourceId` = `get(parent,'libraryResource.id')`; `*.parentLibraryResourceId`; and ~30 scalar pass-throughs per material type covered by DTO mapping.
+2. Missing id → null
 
-*Target:*
-* Jackson DTO mapping for scalars; tiny `@DgsData` for the 3 computed/renamed fields. - **Example:** `BomMaterialType{code: 4, description: ""Zipper""}.id` → `""4_Zipper""` (no service call, pure string concat).
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-15,(BOM) BomMaterialSearchResult field resolvers (5 fields) [BOM-BE-G-15],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,C-02,To Do,"*Implementation Order:* 23 of 24 (BOM backend, step 3)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
 
-*Acceptance Criteria:*
-1. `BomMaterialType.id` = `code_description`
-2. `impressionDetails` maps from `impressions`
-3. `libraryResourceId` from nested id
-4. No EXT calls"
-Story,BOM-BE-G-15,(BOM) BomMaterialSearchResult field resolvers (5 fields) [BOM-BE-G-15],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,C-02,To Do,"*Current Behaviour:*
+*Depends On:*
+* BOM-BE-C-02 — searchMaterialsBom data fetcher
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * `description` (`description ?? name`), `status` (`status?.description ?? status`), - `fabricSpec` (if `type==='fabric_spec_combo'` & `fabricSpecId` → `fabric.getSpecificationByID`), `fabric` (if `type==='combination'` & `fabricRecordHumanId` → `fabric.getByID(jwt)`), `fabricId` (combination → `fabricRecordHumanId`), `relatedMaterials` (2-branch internal/external elastic by `relatedAssetIds` buckets). - **Bug 🟡:** external branch does `proxyIds.push(detail.parentComboId)` — mutates the args array; defensive-copy. - **ACL context:** `fabric.getByID` and external branch use a capability token; ignore in impl, keep `proxyIds`. - **EXT:** 🟡 fabric; 🔴 search.
 
 *Target:*
@@ -383,16 +764,48 @@ Story,BOM-BE-G-15,(BOM) BomMaterialSearchResult field resolvers (5 fields) [BOM-
 1. `description`/`status` handle both shapes
 2. `fabricSpec`/`fabric`/`fabricId` gated by `type`
 3. `relatedMaterials` buckets `intentLineIds` correctly
-4. `proxyIds` not mutated (copy used)"
-Story,BOM-BE-G-16,(BOM) Test coverage & parity harness [BOM-BE-G-16],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,"E-01, G-08, G-10",To Do,"*Target:*
+4. `proxyIds` not mutated (copy used)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,BOM-BE-G-16,(BOM) Test coverage & parity harness [BOM-BE-G-16],,Federate BreakDown Product,G,M,dgs-migration,bom,field-resolver,,"E-01, G-08, G-10",To Do,"*Implementation Order:* 24 of 24 (BOM backend, step 4)
+*Domain:* BOM — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* BOM-BE-E-01 — updateBom — 3-step orchestrated write
+* BOM-BE-G-08 — BomTrimMaterial field resolvers  — trim size dispatchers
+* BOM-BE-G-10 — Impression library-resource resolution
+
+*Blocks:*
+* None
+
+*Target:*
 * ≥80% unit coverage on fetchers/services; a parity harness recording ≥30 query/mutation fixtures (all 7 material variants + both impression branches represented) and diffing JSON; a CI schema-conformance check across the 7 material impls.
 
 *Acceptance Criteria:*
 1. Unit coverage ≥80%
 2. Parity harness covers all 7 material types + internal/external impression branch + `updateBom` 5 fixtures
-3. Schema-conformance check fails the build if an impl misses an interface field"
+3. Schema-conformance check fails the build if an impl misses an interface field
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover) [BOM-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,refactor,,,To Do,"* *Type:* Refactor · *Impact:* High · *Domain:* bom
+Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover) [BOM-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,refactor,,,To Do,"*Implementation Order:* 25 of 30 (BOM combined — frontend #1, cutover step 1)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-FE-002 — Migrate BOM core reads
+
+* *Type:* Refactor · *Impact:* High · *Domain:* bom
 * *Depends on:* —
 * *Operations:* —
 
@@ -414,9 +827,26 @@ Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover)
 * Document-text snapshots; existing BOM screen tests unchanged.
 
 * *Risk:* Medium.
-* *Estimated effort:* 3–4 days"
-Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-B-01 BOM-BE-B-03 BOM-BE-B-04 BOM-FE-001,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* bom
-* *Depends on:* BOM-BE-B-01, BOM-BE-B-03, BOM-BE-B-04, BOM-FE-001
+* *Estimated effort:* 3–4 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-B-01 BOM-BE-B-03 BOM-FE-001,To Do,"*Implementation Order:* 27 of 30 (BOM combined — frontend #3, cutover step 2)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-B-01 — getBomByIds data fetcher
+* BOM-BE-B-03 — getBomStatus · getBomByParentId data fetcher · getBomPackagingMaterialTypes · getBomPackagingSubstrates
+* BOM-FE-001 — Statically expand BOM fragment factories (pre-cutover)
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* High · *Domain:* bom
+* *Depends on:* BOM-BE-B-01, BOM-BE-B-03, BOM-FE-001
 * *Operations:* {{getBomByIds}}, {{getBomByParentId}}, {{getBomStatus}}, {{getBomComponentStatus}}
 
 * *Business objective:*
@@ -438,8 +868,24 @@ Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDow
 * Response JSON diff per variant; BOM screen integration suite.
 
 * *Risk:* High — widest fragment graph after product.
-* *Estimated effort:* 6–10 days"
-Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-C-01 BOM-BE-S-03,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* bom
+* *Estimated effort:* 6–10 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-C-01 BOM-BE-S-03,To Do,"*Implementation Order:* 29 of 30 (BOM combined — frontend #5, cutover step 5)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-C-01 — getBomElastic data fetcher · getValidTrimSuppliersForBom data fetcher · getValidRawMaterialSuppliersForBom data fetcher
+* BOM-BE-S-03
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* High · *Domain:* bom
 * *Depends on:* BOM-BE-C-01, BOM-BE-S-03
 * *Operations:* {{getBomElastic}}, {{searchMaterialsBom}}
 
@@ -461,9 +907,26 @@ Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Fed
 * Search fixture parity tests; list-screen pagination tests.
 
 * *Risk:* High — blocked on the search spike.
-* *Estimated effort:* 5–8 days"
-Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,bom,query-migration,,BOM-BE-B-05 BOM-BE-B-06 BOM-BE-B-07 BOM-BE-B-08,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* bom
-* *Depends on:* BOM-BE-B-05, BOM-BE-B-06, BOM-BE-B-07, BOM-BE-B-08
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,bom,query-migration,,BOM-BE-B-05 BOM-BE-B-03 BOM-BE-B-08,To Do,"*Implementation Order:* 26 of 30 (BOM combined — frontend #2, cutover step 1)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-B-05 — getBomMaterialTypes
+* BOM-BE-B-03 — getBomStatus · getBomByParentId data fetcher · getBomPackagingMaterialTypes · getBomPackagingSubstrates
+* BOM-BE-B-08 — getBomPackagingUnitOfMeasure
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* bom
+* *Depends on:* BOM-BE-B-05, BOM-BE-B-03, BOM-BE-B-08
 * *Operations:* {{getBomMaterialTypes}}, {{getBomPackagingMaterialTypes}}, {{getBomPackagingSubstrates}}, {{getBomPackagingUnitOfMeasure}}
 
 * *Business objective:*
@@ -484,9 +947,25 @@ Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate B
 * Fixture equality tests.
 
 * *Risk:* Low.
-* *Estimated effort:* 2–3 days"
-Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,bom,query-migration,,BOM-BE-C-03 BOM-BE-C-04 BOM-BE-C-05,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* bom
-* *Depends on:* BOM-BE-C-03, BOM-BE-C-04, BOM-BE-C-05
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,bom,query-migration,,BOM-BE-C-03 BOM-BE-C-01,To Do,"*Implementation Order:* 28 of 30 (BOM combined — frontend #4, cutover step 2)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-C-03 — getComboSupplierForBom data fetcher
+* BOM-BE-C-01 — getBomElastic data fetcher · getValidTrimSuppliersForBom data fetcher · getValidRawMaterialSuppliersForBom data fetcher
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* bom
+* *Depends on:* BOM-BE-C-03, BOM-BE-C-01
 * *Operations:* {{getComboSupplierForBom}}, {{getValidTrimSuppliersForBom}}, {{getValidRawMaterialSuppliersForBom}}
 
 * *Business objective:*
@@ -507,9 +986,26 @@ Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate Brea
 * Picker component tests across fixture partner sets.
 
 * *Risk:* Medium.
-* *Estimated effort:* 3–5 days"
-Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handling [BOM-FE-006],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,mutation-migration-(complex),,BOM-BE-D-01 BOM-BE-D-03 BOM-BE-D-04 BOM-BE-D-05 BOM-BE-S-01,To Do,"* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* bom
-* *Depends on:* BOM-BE-D-01, BOM-BE-D-03, BOM-BE-D-04, BOM-BE-D-05, BOM-BE-S-01
+* *Estimated effort:* 3–5 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handling [BOM-FE-006],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,mutation-migration-(complex),,BOM-BE-D-01 BOM-BE-D-02 BOM-BE-S-01,To Do,"*Implementation Order:* 30 of 30 (BOM combined — frontend #6, cutover step 5)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-D-01 — addBom mutation
+* BOM-BE-D-02 — manageBomWorkspaces mutation · lockBom mutation · unlockBom mutation · updateBomComponentStatus mutation
+* BOM-BE-S-01
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* bom
+* *Depends on:* BOM-BE-D-01, BOM-BE-D-02, BOM-BE-S-01
 * *Operations:* {{addBom}}, {{lockBom}}, {{unlockBom}}, {{updateBom}}, {{updateBomComponentStatus}}
 
 * *Business objective:*
@@ -536,4 +1032,9 @@ Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handl
 
 ---
 
-## Measurement"
+## Measurement
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"

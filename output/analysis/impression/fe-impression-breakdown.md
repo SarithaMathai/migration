@@ -8,7 +8,7 @@
 | **Impact** | 🔴 0 High · 🟡 0 Medium · 🟢 2 Low |
 | **Estimated effort** | 3–5 days (single-engineer) |
 | **Phase-1 surface** | 2 operation-to-root-field rows · 2 client files · 4 components |
-| **Generated** | 2026-07-16 |
+| **Generated** | 2026-07-17 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 
@@ -39,6 +39,18 @@
 | 1 | 🟢 `IMPRESSION-FE-001`, 🟢 `IMPRESSION-FE-002` | `IMPRESSION-FE-001` → `IMPRESSION-BE-B-01`, `BOM-BE-B-01`, `BOM-FE-002`<br>`IMPRESSION-FE-002` → `IMPRESSION-BE-B-01`, `PRODUCT-BE-B-01`, `PRODUCT-FE-001` | Reads cutover — needs backend phase A/B reads live |
 
 **Cutover flow:** `IMPRESSION-FE-001` → `IMPRESSION-FE-002`.
+
+---
+
+## Recommended Story Graph — 2 Frontend Engineers
+
+> The order map above packed onto **two frontend engineers**. Lanes re-sync at each step because the step's **backend gate** — not engineer availability — is the limiter; in a single-story step the second engineer pairs on parity checks/rollout or pre-pulls the next unblocked story. FE→FE chains stay with one engineer for context.
+
+| Step | 👤 FE-1 | 👤 FE-2 | Backend gate (focus) |
+|---|---|---|---|
+| 1 | 🟢 `IMPRESSION-FE-001` (2–3d) | 🟢 `IMPRESSION-FE-002` (1–2d) | Reads cutover — needs backend phase A/B reads live |
+
+**Elapsed (nominal midpoints):** ~2 FE build days with 2 engineers vs ~4 single-engineer — calendar time is set by the backend gates, not FE capacity.
 
 ---
 

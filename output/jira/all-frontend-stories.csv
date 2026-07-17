@@ -1,6 +1,16 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover) [BOM-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,refactor,,,To Do,"* *Type:* Refactor · *Impact:* High · *Domain:* bom
+Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover) [BOM-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,refactor,,,To Do,"*Implementation Order:* 25 of 30 (BOM combined — frontend #1, cutover step 1)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* BOM-FE-002 — Migrate BOM core reads
+
+* *Type:* Refactor · *Impact:* High · *Domain:* bom
 * *Depends on:* —
 * *Operations:* —
 
@@ -22,9 +32,26 @@ Story,BOM-FE-001,[BOM FE] Statically expand BOM fragment factories (pre-cutover)
 * Document-text snapshots; existing BOM screen tests unchanged.
 
 * *Risk:* Medium.
-* *Estimated effort:* 3–4 days"
-Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-B-01 BOM-BE-B-03 BOM-BE-B-04 BOM-FE-001,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* bom
-* *Depends on:* BOM-BE-B-01, BOM-BE-B-03, BOM-BE-B-04, BOM-FE-001
+* *Estimated effort:* 3–4 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-B-01 BOM-BE-B-03 BOM-FE-001,To Do,"*Implementation Order:* 27 of 30 (BOM combined — frontend #3, cutover step 2)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-B-01 — getBomByIds data fetcher
+* BOM-BE-B-03 — getBomStatus · getBomByParentId data fetcher · getBomPackagingMaterialTypes · getBomPackagingSubstrates
+* BOM-FE-001 — Statically expand BOM fragment factories (pre-cutover)
+
+*Blocks:*
+* IMPRESSION-FE-001 — Migrate `getBomDataAndImpressions` (with BOM wave)
+
+* *Type:* Query migration · *Impact:* High · *Domain:* bom
+* *Depends on:* BOM-BE-B-01, BOM-BE-B-03, BOM-FE-001
 * *Operations:* {{getBomByIds}}, {{getBomByParentId}}, {{getBomStatus}}, {{getBomComponentStatus}}
 
 * *Business objective:*
@@ -46,8 +73,24 @@ Story,BOM-FE-002,[BOM FE] Migrate BOM core reads [BOM-FE-002],,Federate BreakDow
 * Response JSON diff per variant; BOM screen integration suite.
 
 * *Risk:* High — widest fragment graph after product.
-* *Estimated effort:* 6–10 days"
-Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-C-01 BOM-BE-S-03,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* bom
+* *Estimated effort:* 6–10 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,query-migration,,BOM-BE-C-01 BOM-BE-S-03,To Do,"*Implementation Order:* 29 of 30 (BOM combined — frontend #5, cutover step 5)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-C-01 — getBomElastic data fetcher · getValidTrimSuppliersForBom data fetcher · getValidRawMaterialSuppliersForBom data fetcher
+* BOM-BE-S-03
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* High · *Domain:* bom
 * *Depends on:* BOM-BE-C-01, BOM-BE-S-03
 * *Operations:* {{getBomElastic}}, {{searchMaterialsBom}}
 
@@ -69,9 +112,26 @@ Story,BOM-FE-003,[BOM FE] Migrate BOM search and elastic reads [BOM-FE-003],,Fed
 * Search fixture parity tests; list-screen pagination tests.
 
 * *Risk:* High — blocked on the search spike.
-* *Estimated effort:* 5–8 days"
-Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,bom,query-migration,,BOM-BE-B-05 BOM-BE-B-06 BOM-BE-B-07 BOM-BE-B-08,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* bom
-* *Depends on:* BOM-BE-B-05, BOM-BE-B-06, BOM-BE-B-07, BOM-BE-B-08
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,bom,query-migration,,BOM-BE-B-05 BOM-BE-B-03 BOM-BE-B-08,To Do,"*Implementation Order:* 26 of 30 (BOM combined — frontend #2, cutover step 1)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-B-05 — getBomMaterialTypes
+* BOM-BE-B-03 — getBomStatus · getBomByParentId data fetcher · getBomPackagingMaterialTypes · getBomPackagingSubstrates
+* BOM-BE-B-08 — getBomPackagingUnitOfMeasure
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* bom
+* *Depends on:* BOM-BE-B-05, BOM-BE-B-03, BOM-BE-B-08
 * *Operations:* {{getBomMaterialTypes}}, {{getBomPackagingMaterialTypes}}, {{getBomPackagingSubstrates}}, {{getBomPackagingUnitOfMeasure}}
 
 * *Business objective:*
@@ -92,9 +152,25 @@ Story,BOM-FE-004,[BOM FE] Migrate BOM master-data reads [BOM-FE-004],,Federate B
 * Fixture equality tests.
 
 * *Risk:* Low.
-* *Estimated effort:* 2–3 days"
-Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,bom,query-migration,,BOM-BE-C-03 BOM-BE-C-04 BOM-BE-C-05,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* bom
-* *Depends on:* BOM-BE-C-03, BOM-BE-C-04, BOM-BE-C-05
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,bom,query-migration,,BOM-BE-C-03 BOM-BE-C-01,To Do,"*Implementation Order:* 28 of 30 (BOM combined — frontend #4, cutover step 2)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-C-03 — getComboSupplierForBom data fetcher
+* BOM-BE-C-01 — getBomElastic data fetcher · getValidTrimSuppliersForBom data fetcher · getValidRawMaterialSuppliersForBom data fetcher
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* bom
+* *Depends on:* BOM-BE-C-03, BOM-BE-C-01
 * *Operations:* {{getComboSupplierForBom}}, {{getValidTrimSuppliersForBom}}, {{getValidRawMaterialSuppliersForBom}}
 
 * *Business objective:*
@@ -115,9 +191,26 @@ Story,BOM-FE-005,[BOM FE] Migrate BOM supplier reads [BOM-FE-005],,Federate Brea
 * Picker component tests across fixture partner sets.
 
 * *Risk:* Medium.
-* *Estimated effort:* 3–5 days"
-Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handling [BOM-FE-006],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,mutation-migration-(complex),,BOM-BE-D-01 BOM-BE-D-03 BOM-BE-D-04 BOM-BE-D-05 BOM-BE-S-01,To Do,"* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* bom
-* *Depends on:* BOM-BE-D-01, BOM-BE-D-03, BOM-BE-D-04, BOM-BE-D-05, BOM-BE-S-01
+* *Estimated effort:* 3–5 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handling [BOM-FE-006],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,bom,mutation-migration-(complex),,BOM-BE-D-01 BOM-BE-D-02 BOM-BE-S-01,To Do,"*Implementation Order:* 30 of 30 (BOM combined — frontend #6, cutover step 5)
+*Domain:* BOM — *Team:* Frontend — *Owner:* FE-1
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* BOM-BE-D-01 — addBom mutation
+* BOM-BE-D-02 — manageBomWorkspaces mutation · lockBom mutation · unlockBom mutation · updateBomComponentStatus mutation
+* BOM-BE-S-01
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* bom
+* *Depends on:* BOM-BE-D-01, BOM-BE-D-02, BOM-BE-S-01
 * *Operations:* {{addBom}}, {{lockBom}}, {{unlockBom}}, {{updateBom}}, {{updateBomComponentStatus}}
 
 * *Business objective:*
@@ -144,8 +237,23 @@ Story,BOM-FE-006,[BOM FE] Migrate BOM mutations including `updateBom` saga handl
 
 ---
 
-## Measurement"
-Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target claim fragments [CLAIM-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,refactor,,,To Do,"* *Type:* Refactor · *Impact:* Medium · *Domain:* claims
+## Measurement
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target claim fragments [CLAIM-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,refactor,,,To Do,"*Implementation Order:* 16 of 19 (Claims combined — frontend #1, cutover step 1)
+*Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* None
+
+*Blocks:*
+* CLAIM-FE-002 — Migrate claim reads (first cross-subgraph cutover)
+
+* *Type:* Refactor · *Impact:* Medium · *Domain:* claims
 * *Depends on:* —
 * *Operations:* —
 
@@ -167,9 +275,26 @@ Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target cl
 * Document-text snapshots; claim screen tests unchanged.
 
 * *Risk:* Low.
-* *Estimated effort:* 2–3 days"
-Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover) [CLAIM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,query-migration,,CLAIM-BE-B-01 CLAIM-BE-B-02 CLAIM-BE-B-03 CLAIM-BE-B-04 CLAIM-FE-001,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* claims
-* *Depends on:* CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-FE-001
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover) [CLAIM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,query-migration,,CLAIM-BE-B-01 CLAIM-BE-B-02 CLAIM-FE-001,To Do,"*Implementation Order:* 17 of 19 (Claims combined — frontend #2, cutover step 2)
+*Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
+*Priority:* High — *Parallelizable:* No
+
+*Depends On:*
+* CLAIM-BE-B-01 — getClaims
+* CLAIM-BE-B-02 — getClaimByIds · getCommunicationChannels · getAllClaimsAbout · getClaimExports
+* CLAIM-FE-001 — Split the claim fragment factory and re-target claim fragments
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* High · *Domain:* claims
+* *Depends on:* CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-FE-001
 * *Operations:* {{getClaims}}, {{getClaimByIds}}, {{getCommunicationChannels}}, {{getAllClaimsAbout}}, {{getClaimComponentStatus}}
 
 * *Business objective:*
@@ -191,9 +316,26 @@ Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover
 * Cross-subgraph fixture tests incl. induced product-subgraph failure; claim screen integration suite.
 
 * *Risk:* High — first cross-subgraph dependency in production.
-* *Estimated effort:* 6–10 days"
-Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,mutation-migration,,CLAIM-BE-D-01 CLAIM-BE-D-02 CLAIM-BE-D-03 CLAIM-BE-D-04 CLAIM-BE-D-05,To Do,"* *Type:* Mutation migration · *Impact:* Medium · *Domain:* claims
-* *Depends on:* CLAIM-BE-D-01, CLAIM-BE-D-02, CLAIM-BE-D-03, CLAIM-BE-D-04, CLAIM-BE-D-05
+* *Estimated effort:* 6–10 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,mutation-migration,,CLAIM-BE-D-01 CLAIM-BE-D-02 CLAIM-BE-D-03,To Do,"*Implementation Order:* 18 of 19 (Claims combined — frontend #3, cutover step 3)
+*Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* CLAIM-BE-D-01 — createClaim
+* CLAIM-BE-D-02 — bulkUpdateClaim
+* CLAIM-BE-D-03 — requestClaimExport · lockClaim · unlockClaim
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Medium · *Domain:* claims
+* *Depends on:* CLAIM-BE-D-01, CLAIM-BE-D-02, CLAIM-BE-D-03
 * *Operations:* {{createClaim}}, {{bulkUpdateClaim}}, {{lockClaim}}, {{unlockClaim}}, {{requestClaimExport}}
 
 * *Business objective:*
@@ -212,8 +354,23 @@ Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-
 * Mutation unit tests; create/lock E2E.
 
 * *Risk:* Medium.
-* *Estimated effort:* 4–6 days"
-Story,CLAIM-FE-004,[Claims FE] Migrate `updateClaim` multi-step write handling [CLAIM-FE-004],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,mutation-migration-(complex),,CLAIM-BE-E-01,To Do,"* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* claims
+* *Estimated effort:* 4–6 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,CLAIM-FE-004,[Claims FE] Migrate `updateClaim` multi-step write handling [CLAIM-FE-004],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,mutation-migration-(complex),,CLAIM-BE-E-01,To Do,"*Implementation Order:* 19 of 19 (Claims combined — frontend #4, cutover step 4)
+*Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
+*Priority:* High — *Parallelizable:* No
+
+*Depends On:*
+* CLAIM-BE-E-01 — updateClaim
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* claims
 * *Depends on:* CLAIM-BE-E-01
 * *Operations:* {{updateClaim}}
 
@@ -236,8 +393,25 @@ Story,CLAIM-FE-004,[Claims FE] Migrate `updateClaim` multi-step write handling [
 * Contract tests per call site; induced step-failure test.
 
 * *Risk:* High — behavioural change (bug removal) across multiple libraries.
-* *Estimated effort:* 5–8 days"
-Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with BOM wave) [IMPRESSION-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 BOM-BE-B-01 BOM-FE-002,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* impression
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with BOM wave) [IMPRESSION-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 BOM-BE-B-01 BOM-FE-002,To Do,"*Implementation Order:* 8 of 9 (Impression combined — frontend #1, cutover step 1)
+*Domain:* Impression — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+* BOM-BE-B-01
+* BOM-FE-002 — Migrate BOM core reads
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* impression
 * *Depends on:* IMPRESSION-BE-B-01, BOM-BE-B-01, BOM-FE-002
 * *Operations:* {{searchImpressionsByProductId}}, {{getBomByIds}}
 
@@ -260,8 +434,25 @@ Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with
 * Fixtures covering each sub-type; view integration test.
 
 * *Risk:* Low.
-* *Estimated effort:* 2–3 days"
-Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with Product wave) [IMPRESSION-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 PRODUCT-BE-B-01 PRODUCT-FE-001,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* impression
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with Product wave) [IMPRESSION-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 PRODUCT-BE-B-01 PRODUCT-FE-001,To Do,"*Implementation Order:* 9 of 9 (Impression combined — frontend #2, cutover step 1)
+*Domain:* Impression — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+* PRODUCT-BE-B-01
+* PRODUCT-FE-001 — Migrate `getProduct` documents in product-queries
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* impression
 * *Depends on:* IMPRESSION-BE-B-01, PRODUCT-BE-B-01, PRODUCT-FE-001
 * *Operations:* {{searchImpressionsByProductId}}, {{getProduct}}
 
@@ -285,9 +476,25 @@ Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with 
 
 ---
 
-## Claims"
-Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId` [MST-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-B-04,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* measurement
-* *Depends on:* MST-BE-B-01, MST-BE-B-04
+## Claims
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId` [MST-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-B-02,To Do,"*Implementation Order:* 15 of 18 (Measurement combined — frontend #1, cutover step 1)
+*Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* MST-BE-B-01 — getMeasurementByIds data fetcher
+* MST-BE-B-02 — getUnitsOfMeasure · getThicknessUnitsOfMeasure · getMeasurementSetStatus · getSampleMeasurement data fetcher
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* measurement
+* *Depends on:* MST-BE-B-01, MST-BE-B-02
 * *Operations:* {{getMeasurementByIds}}, {{getMeasurementSetStatus}}, {{getMeasurementComponentStatus}}
 
 * *Business objective:*
@@ -311,8 +518,24 @@ Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId`
 * Selection-level lint (no {{humanId}}); measurement screen integration tests.
 
 * *Risk:* Medium.
-* *Estimated effort:* 4–6 days"
-Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-C-01 MST-BE-C-02,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* measurement
+* *Estimated effort:* 4–6 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-C-01 MST-BE-C-02,To Do,"*Implementation Order:* 17 of 18 (Measurement combined — frontend #3, cutover step 2)
+*Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* MST-BE-C-01 — getMeasurements data fetcher
+* MST-BE-C-02 — getMeasurementsElastic data fetcher
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* measurement
 * *Depends on:* MST-BE-C-01, MST-BE-C-02
 * *Operations:* {{getMeasurements}}, {{getMeasurementsElastic}}
 
@@ -332,9 +555,24 @@ Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-
 * Fixture parity tests.
 
 * *Risk:* Medium — search-cutover dependency.
-* *Estimated effort:* 3–5 days"
-Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-003],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,measurement,query-migration,,MST-BE-B-02 MST-BE-B-03,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* measurement
-* *Depends on:* MST-BE-B-02, MST-BE-B-03
+* *Estimated effort:* 3–5 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-003],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,measurement,query-migration,,MST-BE-B-02,To Do,"*Implementation Order:* 16 of 18 (Measurement combined — frontend #2, cutover step 1)
+*Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* MST-BE-B-02 — getUnitsOfMeasure · getThicknessUnitsOfMeasure · getMeasurementSetStatus · getSampleMeasurement data fetcher
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* measurement
+* *Depends on:* MST-BE-B-02
 * *Operations:* {{getUnitsOfMeasure}}, {{getThicknessUnitsOfMeasure}}
 
 * *Business objective:*
@@ -353,9 +591,26 @@ Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-
 * Fixture equality tests.
 
 * *Risk:* Low.
-* *Estimated effort:* 1–2 days"
-Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,mutation-migration,,MST-BE-D-03 MST-BE-D-04 MST-BE-D-06 MST-BE-D-07,To Do,"* *Type:* Mutation migration · *Impact:* Medium · *Domain:* measurement
-* *Depends on:* MST-BE-D-03, MST-BE-D-04, MST-BE-D-06, MST-BE-D-07
+* *Estimated effort:* 1–2 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,mutation-migration,,MST-BE-D-02 MST-BE-D-06 MST-BE-D-07,To Do,"*Implementation Order:* 18 of 18 (Measurement combined — frontend #4, cutover step 3)
+*Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* MST-BE-D-02 — updateMeasurementAccess mutation · lockMeasurementSet mutation · unlockMeasurementSet mutation · updateMeasurementComponentStatus mutation
+* MST-BE-D-06 — putSampleMeasurementSet mutation
+* MST-BE-D-07 — deleteSampleMeasurementSet mutation
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Medium · *Domain:* measurement
+* *Depends on:* MST-BE-D-02, MST-BE-D-06, MST-BE-D-07
 * *Operations:* {{lockMeasurementSet}}, {{unlockMeasurementSet}}, {{putSampleMeasurementSet}}, {{deleteSampleMeasurementSet}}
 
 * *Business objective:*
@@ -379,8 +634,23 @@ Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Fe
 
 ---
 
-## Product Details"
-Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,productDetails,query-migration,,PDTL-BE-B-01,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* productDetails
+## Product Details
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,productDetails,query-migration,,PDTL-BE-B-01,To Do,"*Implementation Order:* 12 of 14 (Product Details combined — frontend #1, cutover step 1)
+*Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* productDetails
 * *Depends on:* PDTL-BE-B-01
 * *Operations:* {{getProductDetailsById}}, {{getProductDetailComponentStatus}}
 
@@ -400,9 +670,26 @@ Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-00
 * Screen integration tests; snapshot regeneration.
 
 * *Risk:* Low.
-* *Estimated effort:* 2–3 days"
-Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations [PDTL-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration,,PDTL-BE-D-01 PDTL-BE-D-03 PDTL-BE-D-04 PDTL-BE-D-05,To Do,"* *Type:* Mutation migration · *Impact:* Medium · *Domain:* productDetails
-* *Depends on:* PDTL-BE-D-01, PDTL-BE-D-03, PDTL-BE-D-04, PDTL-BE-D-05
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations [PDTL-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration,,PDTL-BE-D-01 PDTL-BE-D-02 PDTL-BE-D-04,To Do,"*Implementation Order:* 13 of 14 (Product Details combined — frontend #2, cutover step 3)
+*Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* PDTL-BE-D-01 — createProductDetailsSet
+* PDTL-BE-D-02 — updateProductDetailAccess · productDetailLockUnlock · updateProductDetailComponentStatus
+* PDTL-BE-D-04 — cloneFilesForProductDetails
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Medium · *Domain:* productDetails
+* *Depends on:* PDTL-BE-D-01, PDTL-BE-D-02, PDTL-BE-D-04
 * *Operations:* {{createProductDetailsSet}}, {{productDetailLockUnlock}}, {{cloneFilesForProductDetails}}, {{updateProductDetailComponentStatus}}
 
 * *Business objective:*
@@ -421,8 +708,23 @@ Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations 
 * Mutation unit tests; clone-flow smoke test.
 
 * *Risk:* Low.
-* *Estimated effort:* 3–4 days"
-Story,PDTL-FE-003,[Product Details FE] Migrate `updateProductDetailsSet` saga handling [PDTL-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration-(complex),,PDTL-BE-E-01,To Do,"* *Type:* Mutation migration (complex) · *Impact:* Medium · *Domain:* productDetails
+* *Estimated effort:* 3–4 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PDTL-FE-003,[Product Details FE] Migrate `updateProductDetailsSet` saga handling [PDTL-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration-(complex),,PDTL-BE-E-01,To Do,"*Implementation Order:* 14 of 14 (Product Details combined — frontend #3, cutover step 4)
+*Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* PDTL-BE-E-01 — updateProductDetailsSet
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* Medium · *Domain:* productDetails
 * *Depends on:* PDTL-BE-E-01
 * *Operations:* {{updateProductDetailsSet}}
 
@@ -446,8 +748,24 @@ Story,PDTL-FE-003,[Product Details FE] Migrate `updateProductDetailsSet` saga ha
 
 ---
 
-## Packaging"
-Story,PKG-FE-001,[Packaging FE] Migrate packaging reads [PKG-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-01 PKG-BE-B-02,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* packaging
+## Packaging
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-001,[Packaging FE] Migrate packaging reads [PKG-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-01 PKG-BE-B-02,To Do,"*Implementation Order:* 19 of 23 (Packaging combined — frontend #1, cutover step 1)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+* PKG-BE-B-02 — getPackagingById · getDielines · getPackagingFieldValuesByType · getDielineEvaluationStatuses
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* packaging
 * *Depends on:* PKG-BE-B-01, PKG-BE-B-02
 * *Operations:* {{getPackagings}}, {{getPackagingById}}, {{getPackagingComponentStatus}}
 
@@ -470,9 +788,25 @@ Story,PKG-FE-001,[Packaging FE] Migrate packaging reads [PKG-FE-001],,Federate B
 * Response JSON diffs; packaging screen integration suite.
 
 * *Risk:* Medium.
-* *Estimated effort:* 5–8 days"
-Story,PKG-FE-002,[Packaging FE] Migrate packaging master-data reads and retire deprecated fields [PKG-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-04 PKG-BE-B-06,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* packaging
-* *Depends on:* PKG-BE-B-04, PKG-BE-B-06
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-002,[Packaging FE] Migrate packaging master-data reads and retire deprecated fields [PKG-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-02 PKG-BE-B-06,To Do,"*Implementation Order:* 20 of 23 (Packaging combined — frontend #2, cutover step 1)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-02 — getPackagingById · getDielines · getPackagingFieldValuesByType · getDielineEvaluationStatuses
+* PKG-BE-B-06 — getCountries
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* packaging
+* *Depends on:* PKG-BE-B-02, PKG-BE-B-06
 * *Operations:* {{getCountries}}, {{getPackagingFieldValuesByType}}
 
 * *Business objective:*
@@ -491,9 +825,25 @@ Story,PKG-FE-002,[Packaging FE] Migrate packaging master-data reads and retire d
 * Fixture equality tests; selection lint.
 
 * *Risk:* Low.
-* *Estimated effort:* 2–3 days"
-Story,PKG-FE-003,[Packaging FE] Migrate dieline flows [PKG-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-+-mutation-migration,,PKG-BE-B-03 PKG-BE-B-05 PKG-BE-D-02,To Do,"* *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* packaging
-* *Depends on:* PKG-BE-B-03, PKG-BE-B-05, PKG-BE-D-02
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-003,[Packaging FE] Migrate dieline flows [PKG-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-+-mutation-migration,,PKG-BE-B-02 PKG-BE-D-02,To Do,"*Implementation Order:* 21 of 23 (Packaging combined — frontend #3, cutover step 3)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-02 — getPackagingById · getDielines · getPackagingFieldValuesByType · getDielineEvaluationStatuses
+* PKG-BE-D-02 — evaluateDieline · exportPackaging · lockPackaging · unlockPackaging
+
+*Blocks:*
+* None
+
+* *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* packaging
+* *Depends on:* PKG-BE-B-02, PKG-BE-D-02
 * *Operations:* {{getDielines}}, {{getDielineEvaluationStatuses}}, {{evaluateDieline}}
 
 * *Business objective:*
@@ -513,9 +863,28 @@ Story,PKG-FE-003,[Packaging FE] Migrate dieline flows [PKG-FE-003],,Federate Bre
 * Dieline flow integration tests; evaluation E2E.
 
 * *Risk:* Medium.
-* *Estimated effort:* 4–6 days"
-Story,PKG-FE-004,[Packaging FE] Migrate packaging simple mutations and export [PKG-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,mutation-migration,,PKG-BE-D-01 PKG-BE-D-03 PKG-BE-D-04 PKG-BE-D-05 PKG-BE-D-06 PKG-BE-D-07 PKG-BE-D-09,To Do,"* *Type:* Mutation migration · *Impact:* Medium · *Domain:* packaging
-* *Depends on:* PKG-BE-D-01, PKG-BE-D-03, PKG-BE-D-04, PKG-BE-D-05, PKG-BE-D-06, PKG-BE-D-07, PKG-BE-D-09
+* *Estimated effort:* 4–6 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-004,[Packaging FE] Migrate packaging simple mutations and export [PKG-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,mutation-migration,,PKG-BE-D-01 PKG-BE-D-03 PKG-BE-D-04 PKG-BE-D-02 PKG-BE-D-09,To Do,"*Implementation Order:* 22 of 23 (Packaging combined — frontend #4, cutover step 3)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-D-01 — addPackaging
+* PKG-BE-D-03 — bulkAddPackagings
+* PKG-BE-D-04 — bulkUpdatePackagings
+* PKG-BE-D-02 — evaluateDieline · exportPackaging · lockPackaging · unlockPackaging
+* PKG-BE-D-09 — updatePackagingComponentStatus
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Medium · *Domain:* packaging
+* *Depends on:* PKG-BE-D-01, PKG-BE-D-03, PKG-BE-D-04, PKG-BE-D-02, PKG-BE-D-09
 * *Operations:* {{addPackaging}}, {{bulkAddPackagings}}, {{bulkUpdatePackagings}}, {{exportPackaging}}, {{lockPackaging}}, {{unlockPackaging}}, {{updatePackagingComponentStatus}}
 
 * *Business objective:*
@@ -534,8 +903,23 @@ Story,PKG-FE-004,[Packaging FE] Migrate packaging simple mutations and export [P
 * Mutation unit tests; bulk-path fixtures; export smoke test.
 
 * *Risk:* Medium — bulk surface.
-* *Estimated effort:* 5–8 days"
-Story,PKG-FE-005,[Packaging FE] Migrate `updatePackaging` saga handling and packet information [PKG-FE-005],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,packaging,mutation-migration-(complex),,PKG-BE-E-01,To Do,"* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* packaging
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-005,[Packaging FE] Migrate `updatePackaging` saga handling and packet information [PKG-FE-005],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,packaging,mutation-migration-(complex),,PKG-BE-E-01,To Do,"*Implementation Order:* 23 of 23 (Packaging combined — frontend #5, cutover step 4)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* High — *Parallelizable:* No
+
+*Depends On:*
+* PKG-BE-E-01 — updatePackaging
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* packaging
 * *Depends on:* PKG-BE-E-01
 * *Operations:* {{updatePackaging}}, {{getPackagingPacketsInformation}}, {{getPackagingPacketInformation}}
 
@@ -559,8 +943,25 @@ Story,PKG-FE-005,[Packaging FE] Migrate `updatePackaging` saga handling and pack
 
 ---
 
-## Watchlist"
-Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-queries [PRODUCT-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* product
+## Watchlist
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-queries [PRODUCT-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01,To Do,"*Implementation Order:* 49 of 59 (Product combined — frontend #1, cutover step 1)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-B-01 — getProduct
+
+*Blocks:*
+* IMPRESSION-FE-002 — Migrate `getCarryForwardFormData` (with Product wave)
+* PRODUCT-FE-002 — Migrate shared-library `getProduct` consumers
+* PRODUCT-FE-008 — Migrate team and partner assignment mutations
+
+* *Type:* Query migration · *Impact:* High · *Domain:* product
 * *Depends on:* PRODUCT-BE-B-01
 * *Operations:* {{getProduct}}
 
@@ -586,9 +987,26 @@ Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-quer
 * Side-by-side JSON diff of legacy vs federated responses per document; full product-screen integration suite under the flag.
 
 * *Risk:* High — largest regression surface in phase 1.
-* *Estimated effort:* 10–15 days"
-Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers [PRODUCT-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-04 PRODUCT-FE-001,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-B-04, PRODUCT-FE-001
+* *Estimated effort:* 10–15 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers [PRODUCT-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-02 PRODUCT-FE-001,To Do,"*Implementation Order:* 51 of 59 (Product combined — frontend #3, cutover step 2)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-B-01 — getProduct
+* PRODUCT-BE-B-02 — getProductsByIds · getProductStatus · getProductVersions · getCopyStatus
+* PRODUCT-FE-001 — Migrate `getProduct` documents in product-queries
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* product
+* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-B-02, PRODUCT-FE-001
 * *Operations:* {{getProduct}}, {{getProductVersions}}
 
 * *Business objective:*
@@ -610,8 +1028,24 @@ Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers 
 * Component tests per consumer library; snapshot regeneration.
 
 * *Risk:* Medium — many small consumers, low individual complexity.
-* *Estimated effort:* 5–8 days"
-Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-S-02 PRODUCT-BE-B-02,To Do,"* *Type:* Query migration · *Impact:* High · *Domain:* product
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-S-02 PRODUCT-BE-B-02,To Do,"*Implementation Order:* 58 of 59 (Product combined — frontend #10, cutover step 5)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-S-02
+* PRODUCT-BE-B-02 — getProductsByIds · getProductStatus · getProductVersions · getCopyStatus
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* High · *Domain:* product
 * *Depends on:* PRODUCT-BE-S-02, PRODUCT-BE-B-02
 * *Operations:* {{getProducts}}, {{getProductsByIds}}
 
@@ -635,9 +1069,24 @@ Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-F
 * List-screen integration tests with pagination fixtures; bulk-flow smoke tests.
 
 * *Risk:* High — blocked by the search spike outcome.
-* *Estimated effort:* 8–12 days"
-Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context reads [PRODUCT-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-03,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-03
+* *Estimated effort:* 8–12 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context reads [PRODUCT-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-02,To Do,"*Implementation Order:* 50 of 59 (Product combined — frontend #2, cutover step 1)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-B-02 — getProductsByIds · getProductStatus · getProductVersions · getCopyStatus
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* product
+* *Depends on:* PRODUCT-BE-B-02
 * *Operations:* {{getProductStatus}}
 
 * *Business objective:*
@@ -660,8 +1109,24 @@ Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context r
 * Fixture matrix across workspace/partner filters; form-screen integration test.
 
 * *Risk:* Medium.
-* *Estimated effort:* 5–8 days"
-Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads [PRODUCT-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-C-02 PRODUCT-BE-C-03,To Do,"* *Type:* Query migration · *Impact:* Medium · *Domain:* product
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads [PRODUCT-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-C-02 PRODUCT-BE-C-03,To Do,"*Implementation Order:* 52 of 59 (Product combined — frontend #4, cutover step 2)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-C-02 — getProductTemplates
+* PRODUCT-BE-C-03 — getCategories
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* product
 * *Depends on:* PRODUCT-BE-C-02, PRODUCT-BE-C-03
 * *Operations:* {{getProductTemplates}}, {{getCategories}}
 
@@ -685,9 +1150,27 @@ Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads 
 * Template library integration suite; clone-flow smoke test.
 
 * *Risk:* Medium — widest fragment composition in phase 1.
-* *Estimated effort:* 5–8 days"
-Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-FE-006],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-07 PRODUCT-BE-B-08 PRODUCT-BE-B-09 PRODUCT-BE-B-10 PRODUCT-BE-B-11 PRODUCT-BE-C-05 PRODUCT-BE-D-15 PRODUCT-BE-D-16 PRODUCT-BE-D-17,To Do,"* *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-D-15, PRODUCT-BE-D-16, PRODUCT-BE-D-17
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-FE-006],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-06 PRODUCT-BE-B-10 PRODUCT-BE-C-05 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 53 of 59 (Product combined — frontend #5, cutover step 3)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-B-06 — getProductTemplateById · getProductRules · getProductRulesById · getAllAvailableRules
+* PRODUCT-BE-B-10 — getProductDeptRules · getProductBPRules
+* PRODUCT-BE-C-05 — searchProductRules
+* PRODUCT-BE-D-14 — unlinkProduct · addProductRule · updateProductRule · deleteProductRule
+
+*Blocks:*
+* None
+
+* *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
+* *Depends on:* PRODUCT-BE-B-06, PRODUCT-BE-B-10, PRODUCT-BE-C-05, PRODUCT-BE-D-14
 * *Operations:* {{getProductRules}}, {{getProductRulesById}}, {{getAllAvailableRules}}, {{getProductDeptRules}}, {{getProductBPRules}}, {{searchProductRules}}, {{addProductRule}}, {{updateProductRule}}, {{deleteProductRule}}
 
 * *Business objective:*
@@ -711,9 +1194,30 @@ Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-
 * Admin rules CRUD integration test; search fixture tests.
 
 * *Risk:* Low — isolated admin surface.
-* *Estimated effort:* 4–6 days"
-Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-01 PRODUCT-BE-D-02 PRODUCT-BE-D-03 PRODUCT-BE-D-04 PRODUCT-BE-D-05 PRODUCT-BE-D-10 PRODUCT-BE-D-13 PRODUCT-BE-D-14,To Do,"* *Type:* Mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-D-01, PRODUCT-BE-D-02, PRODUCT-BE-D-03, PRODUCT-BE-D-04, PRODUCT-BE-D-05, PRODUCT-BE-D-10, PRODUCT-BE-D-13, PRODUCT-BE-D-14
+* *Estimated effort:* 4–6 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-01 PRODUCT-BE-D-02 PRODUCT-BE-D-03 PRODUCT-BE-D-04 PRODUCT-BE-D-05 PRODUCT-BE-D-10 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 54 of 59 (Product combined — frontend #6, cutover step 3)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-D-01 — addProduct
+* PRODUCT-BE-D-02 — addProducts
+* PRODUCT-BE-D-03 — bulkUpdateProducts
+* PRODUCT-BE-D-04 — updateProduct
+* PRODUCT-BE-D-05 — carryForwardProduct
+* PRODUCT-BE-D-10 — updateViewToggle · updateWorkspaceAttributes 🔀 Collab Canvas · updateProductTeamsWorkspaceContext · linkProduct
+* PRODUCT-BE-D-14 — unlinkProduct · addProductRule · updateProductRule · deleteProductRule
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Medium · *Domain:* product
+* *Depends on:* PRODUCT-BE-D-01, PRODUCT-BE-D-02, PRODUCT-BE-D-03, PRODUCT-BE-D-04, PRODUCT-BE-D-05, PRODUCT-BE-D-10, PRODUCT-BE-D-14
 * *Operations:* {{addProduct}}, {{addProducts}}, {{updateProduct}}, {{bulkUpdateProducts}}, {{carryForwardProduct}}, {{updateViewToggle}}, {{linkProduct}}, {{unlinkProduct}}
 
 * *Business objective:*
@@ -736,9 +1240,26 @@ Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-0
 * Mutation unit tests with cache assertions; create/edit/link E2E happy paths.
 
 * *Risk:* Medium.
-* *Estimated effort:* 6–10 days"
-Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations [PRODUCT-FE-008],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-06 PRODUCT-BE-D-07 PRODUCT-BE-D-12 PRODUCT-FE-001,To Do,"* *Type:* Mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-D-06, PRODUCT-BE-D-07, PRODUCT-BE-D-12, PRODUCT-FE-001
+* *Estimated effort:* 6–10 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations [PRODUCT-FE-008],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-06 PRODUCT-BE-D-10 PRODUCT-FE-001,To Do,"*Implementation Order:* 55 of 59 (Product combined — frontend #7, cutover step 3)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-D-06 — addTeamsToProduct 🔀 Collab Canvas · addBusinessPartnersToProductWithType 🔀 Collab Canvas · removeProductResources · updateBusinessPartnerStatuses
+* PRODUCT-BE-D-10 — updateViewToggle · updateWorkspaceAttributes 🔀 Collab Canvas · updateProductTeamsWorkspaceContext · linkProduct
+* PRODUCT-FE-001 — Migrate `getProduct` documents in product-queries
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Medium · *Domain:* product
+* *Depends on:* PRODUCT-BE-D-06, PRODUCT-BE-D-10, PRODUCT-FE-001
 * *Operations:* {{addTeamsToProduct}}, {{addBusinessPartnersToProductWithType}}, {{updateProductTeamsWorkspaceContext}}
 
 * *Business objective:*
@@ -761,9 +1282,25 @@ Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations 
 * Team-tab integration suite; cache assertion tests.
 
 * *Risk:* Medium.
-* *Estimated effort:* 4–6 days"
-Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRODUCT-FE-009],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,mutation-migration-(complex),,PRODUCT-BE-S-03 PRODUCT-BE-D-09,To Do,"* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* product
-* *Depends on:* PRODUCT-BE-S-03, PRODUCT-BE-D-09
+* *Estimated effort:* 4–6 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRODUCT-FE-009],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,mutation-migration-(complex),,PRODUCT-BE-S-03 PRODUCT-BE-D-06,To Do,"*Implementation Order:* 59 of 59 (Product combined — frontend #11, cutover step 5)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-S-03
+* PRODUCT-BE-D-06 — addTeamsToProduct 🔀 Collab Canvas · addBusinessPartnersToProductWithType 🔀 Collab Canvas · removeProductResources · updateBusinessPartnerStatuses
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* product
+* *Depends on:* PRODUCT-BE-S-03, PRODUCT-BE-D-06
 * *Operations:* {{productBusinessPartnerActions}}, {{updateBusinessPartnerStatuses}}
 
 * *Business objective:*
@@ -787,8 +1324,24 @@ Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRO
 * Contract tests against the new mutation; E2E drop/undrop with induced partial failure.
 
 * *Risk:* High — blocked on two draft ADR ratifications.
-* *Estimated effort:* 8–12 days"
-Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-federate) [PRODUCT-FE-010],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration-(staged),,PRODUCT-BE-E-03 PRODUCT-BE-E-04,To Do,"* *Type:* Query migration (staged) · *Impact:* Medium · *Domain:* product
+* *Estimated effort:* 8–12 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-federate) [PRODUCT-FE-010],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration-(staged),,PRODUCT-BE-E-03 PRODUCT-BE-E-04,To Do,"*Implementation Order:* 56 of 59 (Product combined — frontend #8, cutover step 4)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-E-03 — getProductTechPackCountV1 stub + aggregation facade
+* PRODUCT-BE-E-04 — getProductTechPackBulkCountV1
+
+*Blocks:*
+* None
+
+* *Type:* Query migration (staged) · *Impact:* Medium · *Domain:* product
 * *Depends on:* PRODUCT-BE-E-03, PRODUCT-BE-E-04
 * *Operations:* {{getProductTechPackCountV1}}, {{getProductTechPackBulkCountV1}}
 
@@ -812,8 +1365,25 @@ Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-fe
 * Parity fixtures step 1; screen-level request-count assertion step 2.
 
 * *Risk:* Medium — two-step delivery, second step gated on federation of the counts.
-* *Estimated effort:* 4–6 days (step 1) + 4–6 days (step 2)"
-Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-011],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-01 PRODUCT-BE-D-18 PRODUCT-BE-E-02,To Do,"* *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
+* *Estimated effort:* 4–6 days (step 1) + 4–6 days (step 2)
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-011],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-01 PRODUCT-BE-D-18 PRODUCT-BE-E-02,To Do,"*Implementation Order:* 57 of 59 (Product combined — frontend #9, cutover step 4)
+*Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-B-01 — getProduct
+* PRODUCT-BE-D-18 — updateComponentStatus
+* PRODUCT-BE-E-02 — updateComponentStatuses
+
+*Blocks:*
+* None
+
+* *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
 * *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-D-18, PRODUCT-BE-E-02
 * *Operations:* {{getProduct}}, {{updateComponentStatus}}, {{updateComponentStatuses}}
 
@@ -840,8 +1410,24 @@ Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-0
 
 ---
 
-## BOM"
-Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01,To Do,"* *Type:* Query migration · *Impact:* Low · *Domain:* watchlist
+## BOM
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01,To Do,"*Implementation Order:* 12 of 14 (Watchlist combined — frontend #1, cutover step 2)
+*Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* WATCHLIST-BE-B-01 — getWatchlistByIds
+* WATCHLIST-BE-C-01 — getWatchlistByFilter
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* watchlist
 * *Depends on:* WATCHLIST-BE-B-01, WATCHLIST-BE-C-01
 * *Operations:* {{getWatchlistByIds}}, {{getWatchlistByFilter}}
 
@@ -861,8 +1447,24 @@ Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001]
 * Screen integration tests; shared-fragment cache assertion with product entities.
 
 * *Risk:* Low — smallest isolated domain; run first to validate the platform stack.
-* *Estimated effort:* 2–3 days"
-Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,To Do,"* *Type:* Mutation migration · *Impact:* Low · *Domain:* watchlist
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,To Do,"*Implementation Order:* 13 of 14 (Watchlist combined — frontend #2, cutover step 3)
+*Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* WATCHLIST-BE-D-01 — createWatchlistEntries
+* WATCHLIST-BE-D-02 — cloneFilesForWatchlist
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Low · *Domain:* watchlist
 * *Depends on:* WATCHLIST-BE-D-01, WATCHLIST-BE-D-02
 * *Operations:* {{createWatchlistEntries}}, {{cloneFilesForWatchlist}}
 
@@ -882,8 +1484,23 @@ Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutatio
 * Mutation unit tests; create E2E.
 
 * *Risk:* Low.
-* *Estimated effort:* 2–3 days"
-Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga handling [WATCHLIST-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,watchlist,mutation-migration-(complex),,WATCHLIST-BE-E-01,To Do,"* *Type:* Mutation migration (complex) · *Impact:* Medium · *Domain:* watchlist
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga handling [WATCHLIST-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,watchlist,mutation-migration-(complex),,WATCHLIST-BE-E-01,To Do,"*Implementation Order:* 14 of 14 (Watchlist combined — frontend #3, cutover step 4)
+*Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* WATCHLIST-BE-E-01 — updateWatchlistEntries
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* Medium · *Domain:* watchlist
 * *Depends on:* WATCHLIST-BE-E-01
 * *Operations:* {{updateWatchlistEntries}}
 
@@ -907,4 +1524,9 @@ Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga hand
 
 ---
 
-## Impression"
+## Impression
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"

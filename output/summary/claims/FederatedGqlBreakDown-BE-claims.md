@@ -4,10 +4,10 @@
 |---|---|
 | **Target DGS** | `spark-claims (separate)` |
 | **T-Shirt Size** | **L** |
-| **Total Stories** | 20 |
-| **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 9 Medium · 🟢 9 Low |
+| **Total Stories** | 15 |
+| **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 11 Medium · 🟢 2 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-16 |
+| **Generated** | 2026-07-17 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
 
@@ -101,17 +101,38 @@ Per the program-level working decision, **the DGS layer carries no ACL plumbing 
 
 ## Recommended Implementation Order
 
-> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**.
+> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**. **Focus** names the phase category each step advances — same convention as the frontend order map.
 
 > 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — a gated story slides later without reshuffling the map.
 
-| Step | Stories (parallel set) | Entry gates in this step |
-|---|---|---|
-| 1 | 🟢 `B-01` | — |
-| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟡 `C-01`, 🟡 `C-02`, 🟡 `D-01`, 🟡 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟡 `G-02`, 🟠 `G-03`, 🟡 `G-04` | `E-01` → 🔬 SPIKE-01<br>`F-01` → ⛔ BLOCKED-BY product<br>`F-02` → ⛔ BLOCKED-BY product |
-| 3 | 🟡 `G-05` | — |
+| Step | Stories (parallel set) | Entry gates in this step | Focus |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
+| 2 | 🟡 `B-02`, 🟡 `C-01`, 🟡 `C-02`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟡 `G-02`, 🟠 `G-03`, 🟡 `G-04` | `E-01` → 🔬 SPIKE-01<br>`F-01` → ⛔ BLOCKED-BY product<br>`F-02` → ⛔ BLOCKED-BY product | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 3 | 🟡 `G-05` | — | 🧪 Field Resolvers & Tests |
 
-**Critical path:** `B-01` → `E-01` → `G-05` — 3 sequential stories; everything else hangs off this chain in parallel.
+**Critical path:** `B-01` → `G-03` → `G-05` — 3 sequential stories; everything else hangs off this chain in parallel.
+
+---
+
+## Recommended Story Graph — 2 Backend Engineers
+
+> The order map above assumes unlimited parallelism; this packs the **same dependency graph onto 2 backend engineers** (greedy critical-chain scheduling, nominal day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates that slide a slot without reshuffling the lanes.
+
+| Slot | 👤 BE-1 | 👤 BE-2 |
+|---|---|---|
+| 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟠 `G-03` (4–7d) |
+| 2 | 🟠 `E-01` (4–7d) 🔬 | 🟡 `B-02` (2–4d) *(grouped XS: +`B-03`, `B-04`, `B-05`)* |
+| 3 | 🟡 `G-02` (2–4d) | 🟡 `C-02` (2–4d) |
+| 4 | 🟡 `C-01` (2–4d) | 🟡 `D-02` (2–4d) |
+| 5 | 🟡 `D-01` (2–4d) | 🟡 `F-01` (2–4d) ⛔ |
+| 6 | 🟡 `D-03` (2–4d) *(grouped XS: +`D-04`, `D-05`)* | 🟡 `G-04` (2–4d) |
+| 7 | 🟡 `G-01` (2–4d) | 🟢 `F-02` (1–2d) ⛔ |
+| 8 | 🟡 `G-05` (2–4d) | — |
+
+**BE-1:** `B-01` → `E-01` → `G-02` → `C-01` → `D-01` → `D-03` → `G-01` → `G-05`<br>**BE-2:** `G-03` → `B-02` → `C-02` → `D-02` → `F-01` → `G-04` → `F-02`
+
+**Elapsed (nominal midpoints):** ~25 working days with 2 engineers vs ~47 days sequential.
 
 ---
 
@@ -119,15 +140,12 @@ Per the program-level working decision, **the DGS layer carries no ACL plumbing 
 
 > Each row is one Jira story. Complexity drives T-shirt sizing in refinement. `Depends On` lists blocking story IDs within this domain — including Phase 0 spikes where a story's implementation is gated on a spike's outcome.
 
-### 📖 Phase B — Core Reads (5 stories)
+### 📖 Phase B — Core Reads (2 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔷 `CLAIM-BE-B-01`<br>`getClaims(parentHumanId, claimHumanIds, partnerIds)` | 🟢 Low `XS` | Query | — | **Intent —** List claims for a product / set of partners.<br>**Today —** claim.getClaims GET … (filtered) → camelCase. No ACL token<br>**Done when:**<br>• filters by the 3 args |
-| 🔷 `CLAIM-BE-B-02`<br>`getClaimByIds(claimHumanIds)` | 🟢 Low `XS` | Query | B-01 | **Intent —** Fetch specific claims by their ids.<br>**Today —** token → GET …<br>**Done when:**<br>• returns claims for ids |
-| 🔷 `CLAIM-BE-B-03`<br>`getCommunicationChannels` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the communication-channel lookup list (cached).<br>**Today —** GET …<br>**Done when:**<br>• returns channels; cached |
-| 🔷 `CLAIM-BE-B-04`<br>`getAllClaimsAbout` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the 'claims about' lookup list (cached).<br>**Today —** GET …<br>**Done when:**<br>• returns list; cached |
-| 🔷 `CLAIM-BE-B-05`<br>`getClaimExports` | 🟢 Low `XS` | Query | B-01 | **Intent —** List the claim export jobs.<br>**Today —** GET …<br>**Done when:**<br>• returns export records |
+| 🔷 `CLAIM-BE-B-02`<br>`getClaimByIds` · `getCommunicationChannels` · `getAllClaimsAbout` · `getClaimExports` | 🟡 Medium `M` | Query | B-01 | **Grouped XS story —** combines former `B-03`, `B-04`, `B-05` (one PR train)<br>**Intent —** Fetch specific claims by their ids; Return the communication-channel lookup list (cached); Return the 'claims about' lookup list (cached); List the claim export jobs<br>**Today —** token → GET … ; GET … ; GET … ; GET …<br>**Done when:**<br>• `getClaimByIds`: returns claims for ids<br>• `getCommunicationChannels`: returns channels; cached<br>• `getAllClaimsAbout`: returns list; cached<br>• `getClaimExports`: returns export records |
 
 > **`CLAIM-BE-B-01`** — **Note — DGS Module Init (this PR only):** Creates `claims.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: be-03-schema.graphql.
 
@@ -140,15 +158,13 @@ Per the program-level working decision, **the DGS layer carries no ACL plumbing 
 | 🔷 `CLAIM-BE-C-02`<br>`getClaimsElastic(parentHumanId)` | 🟡 Medium `M` | Query<br>Calls: `search` | B-01 | **Intent —** Search a product's claims via elastic.<br>**Today —** (search) search.getClaimsElastic. EXT: search<br>**Done when:**<br>• `parentId:` elastic query built |
 
 
-### ✏️ Phase D — Mutations (5 stories)
+### ✏️ Phase D — Mutations (3 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔶 `CLAIM-BE-D-01`<br>`createClaim` | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Create a new claim.<br>**Today —** POST … (snake_case). If validationErrors/message → throw<br>**Done when:**<br>• creates claim(s)<br>• validation error → exception |
 | 🔶 `CLAIM-BE-D-02`<br>`bulkUpdateClaim` | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Update many claims in one call.<br>**Today —** PUT … Error contract: result is array → return; status_code>400 → throw; else throw "unhandled". Latent: source snake-cases the response — fix to camelCase<br>**Done when:**<br>• array result returned (camelCase)<br>• error status → exception |
-| 🔶 `CLAIM-BE-D-03`<br>`requestClaimExport` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Kick off a claim export job.<br>**Today —** POST … → response.request_id<br>**Done when:**<br>• returns the request id |
-| 🔶 `CLAIM-BE-D-04`<br>`lockClaim` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Lock a claim from edits.<br>**Today —** token → PUT …<br>**Done when:**<br>• locks the claim |
-| 🔶 `CLAIM-BE-D-05`<br>`unlockClaim` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Unlock a claim for edits.<br>**Today —** token → PUT …<br>**Done when:**<br>• unlocks the claim |
+| 🔶 `CLAIM-BE-D-03`<br>`requestClaimExport` · `lockClaim` · `unlockClaim` | 🟡 Medium `M` | Mutation | B-01 | **Grouped XS story —** combines former `D-04`, `D-05` (one PR train)<br>**Intent —** Kick off a claim export job; Lock a claim from edits; Unlock a claim for edits<br>**Today —** POST … → response.request_id. ; token → PUT … ; token → PUT …<br>**Done when:**<br>• `requestClaimExport`: returns the request id<br>• `lockClaim`: locks the claim<br>• `unlockClaim`: unlocks the claim |
 
 
 ### ⚙️ Phase E — Complex Operations (1 stories)

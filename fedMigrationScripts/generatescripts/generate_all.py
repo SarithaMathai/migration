@@ -98,6 +98,7 @@ def build_program_overview() -> str:
     # Live per-domain counts + complexity from the actual be-04-stories.md → program totals always reconcile
     # with the global breakdown and the Jira CSVs (all use the same parser).
     live: dict[str, tuple] = {}
+    phase_counts: dict[str, dict[str, int]] = {}
     for key in (d[0] for d in DOMAIN_META):
         try:
             st = breakdown_mod.parse_stories(breakdown_mod.get_domain_dir(key) / "be-04-stories.md")
@@ -113,6 +114,25 @@ def build_program_overview() -> str:
             sum(1 for s in st if s["complexity"] == "medium"),
             sum(1 for s in st if s["complexity"] == "low"),
         )
+        pc: dict[str, int] = {}
+        for s in st:
+            pc[s["phase"]] = pc.get(s["phase"], 0) + 1
+        phase_counts[key] = pc
+
+    # Frontend per-domain: story count + effort range from fe-08-frontend-stories.md
+    # (same parser as the FE breakdown pages and Jira CSVs, so numbers reconcile).
+    fe_by_dom: dict[str, tuple[int, int, int]] = {}   # key -> (count, effort_lo, effort_hi)
+    try:
+        for s in frontend_mod.parse_fe_stories():
+            k = frontend_mod.domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])
+            lo, hi = frontend_mod._effort_range(s["effort"])
+            c, tlo, thi = fe_by_dom.get(k, (0, 0, 0))
+            fe_by_dom[k] = (c + 1, tlo + lo, thi + hi)
+    except Exception:
+        pass
+    fe_total   = sum(v[0] for v in fe_by_dom.values())
+    fe_eff_lo  = sum(v[1] for v in fe_by_dom.values())
+    fe_eff_hi  = sum(v[2] for v in fe_by_dom.values())
     total_stories   = sum(live[d[0]][0] for d in DOMAIN_META)
     total_lo        = sum(d[4]  for d in DOMAIN_META)
     total_hi        = sum(d[5]  for d in DOMAIN_META)
@@ -153,29 +173,57 @@ def build_program_overview() -> str:
         "|---|---|",
         f"| Total domains | {len(ALL_DOMAINS)} |",
         f"| Target DGS services | {len({d[2].split()[0] for d in DOMAIN_META})} |",
-        f"| **Total stories** | **{total_stories}** build stories (Phase-0 spikes tracked separately: 7 program spikes + their domain stubs) |",
-        f"| Complexity | 🔴 {tvh} Very High · 🟠 {th} High · 🟡 {tm} Medium · 🟢 {tl} Low |",
+        f"| **Total backend stories** | **{total_stories}** build stories (Phase-0 spikes tracked separately: 7 program spikes + their domain stubs) |",
+        f"| **Total frontend stories** | **{fe_total}** (platform enablement complete — waves 1–4) |",
+        f"| Complexity (backend) | 🔴 {tvh} Very High · 🟠 {th} High · 🟡 {tm} Medium · 🟢 {tl} Low |",
         f"| Open decisions | {total_decisions} |",
-        f"| **Effort (buffered +20%)** | **{total_lo}–{total_hi} engineer-days** |",
+        f"| **Backend effort (buffered +20%)** | **{total_lo}–{total_hi} engineer-days** |",
+        f"| **Frontend effort (single-engineer)** | **{fe_eff_lo}–{fe_eff_hi} engineer-days** |",
         "",
         "---",
         "",
         "## Domains at a glance",
         "",
-        "| Domain | Target DGS | Stories | T-Shirt | 🔴 | 🟠 | 🟡 | 🟢 | Effort (buffered) | Top risk |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| Domain | Target DGS | BE Stories | T-Shirt | 🔴 | 🟠 | 🟡 | 🟢 | BE effort (buffered) | FE Stories | FE effort | Top risk |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for (key,label,dgs,stories,elo,ehi,slo,shi,q,mut,fb,dec,risk,rl) in DOMAIN_META:
         total, vh, h, m, lo = live[key]
         ts = tshirt(total, ehi)
+        fc, flo, fhi = fe_by_dom.get(key, (0, 0, 0))
         L.append(f"| [{label}](./{key}/FederatedGqlBreakDown-BE-{key}.md) | `{dgs}` | **{total}** | {ts} | "
-                 f"{vh} | {h} | {m} | {lo} | {elo}–{ehi}d | {rl} {risk} |")
+                 f"{vh} | {h} | {m} | {lo} | {elo}–{ehi}d | {fc} | {flo}–{fhi}d | {rl} {risk} |")
     L += [
         f"| **TOTAL** | — | **{total_stories}** | — | **{tvh}** | **{th}** | **{tm}** | **{tl}** | "
-        f"**{total_lo}–{total_hi}d** | — |",
+        f"**{total_lo}–{total_hi}d** | **{fe_total}** | **{fe_eff_lo}–{fe_eff_hi}d** | — |",
         "",
-        "> All counts + complexity are computed live from each domain's `be-04-stories.md` (same parser as the "
-        "breakdown + Jira CSVs), so these totals always reconcile.",
+        "> BE counts + complexity are computed live from each domain's `be-04-stories.md`; FE counts + effort from "
+        "`fe-08-frontend-stories.md` (same parsers as the breakdowns + Jira CSVs), so these totals always reconcile. "
+        "BE effort is buffered +20%; FE effort is single-engineer, unbuffered. Each domain's FE stories live in "
+        "`summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md`.",
+        "",
+        "---",
+        "",
+        "## Backend stories by phase",
+        "",
+        "> Phases: " + " · ".join(
+            f"{breakdown_mod.PHASE_ICONS[p]} **{p}** {breakdown_mod.PHASE_NAMES[p]}"
+            for p in breakdown_mod.PHASE_SEQ) + ". "
+        "Phase-0 spikes are tracked separately (program spike register). Frontend stories are staged by "
+        "**wave**, not phase — see `analysis/program/fe-10-migration-sequencing.md`.",
+        "",
+        "| Domain | " + " | ".join(f"{breakdown_mod.PHASE_ICONS[p]} {p}" for p in breakdown_mod.PHASE_SEQ) + " | Total |",
+        "|---|" + "---|" * (len(breakdown_mod.PHASE_SEQ) + 1),
+    ]
+    for (key,label,*_rest) in DOMAIN_META:
+        pc = phase_counts.get(key, {})
+        cells = " | ".join(str(pc.get(p, 0)) for p in breakdown_mod.PHASE_SEQ)
+        L.append(f"| [{label}](./{key}/FederatedGqlBreakDown-BE-{key}.md) | {cells} | **{live[key][0]}** |")
+    phase_tot = {p: sum(phase_counts.get(d[0], {}).get(p, 0) for d in DOMAIN_META)
+                 for p in breakdown_mod.PHASE_SEQ}
+    L += [
+        "| **TOTAL** | " + " | ".join(f"**{phase_tot[p]}**" for p in breakdown_mod.PHASE_SEQ)
+        + f" | **{total_stories}** |",
         "",
         "---",
         "",
@@ -345,6 +393,18 @@ def main() -> None:
             frontend_mod.main()
         except Exception as e:
             print(f"  FAIL frontend analysis: {type(e).__name__}: {e}")
+
+        # Program-level team plan (2 BE + 2 FE engineers) — needs both BE + FE parsers
+        try:
+            _load("generate_team_plan").main()
+        except Exception as e:
+            print(f"  FAIL team plan: {type(e).__name__}: {e}")
+
+        # Story-level project plan (combined BE + FE order, domain by domain)
+        try:
+            _load("generate_project_plan").main()
+        except Exception as e:
+            print(f"  FAIL project plan: {type(e).__name__}: {e}")
 
     print("\nDone. Run `python generate_all.py <domain>` to regenerate a single domain.\n")
 

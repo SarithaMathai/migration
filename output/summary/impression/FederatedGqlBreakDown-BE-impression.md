@@ -7,7 +7,7 @@
 | **Total Stories** | 7 |
 | **Complexity** | 🔴 0 Very High · 🟠 0 High · 🟡 2 Medium · 🟢 5 Low |
 | **Phase Coverage** | 📖 B · ✏️ D · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-16 |
+| **Generated** | 2026-07-17 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
 
@@ -84,17 +84,34 @@ that proves the pipeline end-to-end.
 
 ## Recommended Implementation Order
 
-> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**.
+> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**. **Focus** names the phase category each step advances — same convention as the frontend order map.
 
 > 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — a gated story slides later without reshuffling the map.
 
-| Step | Stories (parallel set) | Entry gates in this step |
-|---|---|---|
-| 1 | 🟢 `B-01` | — |
-| 2 | 🟢 `B-02`, 🟡 `D-01`, 🟢 `F-01`, 🟢 `G-01`, 🟡 `G-02` | `F-01` → ⛔ BLOCKED-BY product B-01 |
-| 3 | 🟢 `G-03` | — |
+| Step | Stories (parallel set) | Entry gates in this step | Focus |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
+| 2 | 🟢 `B-02`, 🟡 `D-01`, 🟢 `F-01`, 🟢 `G-01`, 🟡 `G-02` | `F-01` → ⛔ BLOCKED-BY product B-01 | Fan-out — 📖 Core Reads · ✏️ Mutations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 3 | 🟢 `G-03` | — | 🧪 Field Resolvers & Tests |
 
 **Critical path:** `B-01` → `G-02` → `G-03` — 3 sequential stories; everything else hangs off this chain in parallel.
+
+---
+
+## Recommended Story Graph — 2 Backend Engineers
+
+> The order map above assumes unlimited parallelism; this packs the **same dependency graph onto 2 backend engineers** (greedy critical-chain scheduling, nominal day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates that slide a slot without reshuffling the lanes.
+
+| Slot | 👤 BE-1 | 👤 BE-2 |
+|---|---|---|
+| 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟡 `G-02` (2–4d) |
+| 2 | 🟡 `D-01` (2–4d) | 🟢 `F-01` (1–2d) ⛔ |
+| 3 | 🟢 `B-02` (1–2d) | 🟢 `G-03` (1–2d) |
+| 4 | 🟢 `G-01` (1–2d) | — |
+
+**BE-1:** `B-01` → `D-01` → `B-02` → `G-01`<br>**BE-2:** `G-02` → `F-01` → `G-03`
+
+**Elapsed (nominal midpoints):** ~8 working days with 2 engineers vs ~14 days sequential.
 
 ---
 

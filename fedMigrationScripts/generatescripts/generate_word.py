@@ -674,6 +674,9 @@ def build_word_doc(domain: str) -> Document:
     # ── §4b Recommended Implementation Order (same builder as the .md) ─────
     render_md_block(doc, bd.implementation_order_md(stories))
 
+    # ── §4c Recommended Story Graph — 2 Backend Engineers (same builder) ───
+    render_md_block(doc, bd.team_plan_md(stories))
+
     # ── §5 Stories by Phase ────────────────────────────────────────────────
     section_heading(doc, "Jira Stories by Phase")
     note_p = doc.add_paragraph()
@@ -738,11 +741,16 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         _g[2] += sum(1 for s in _st if s["complexity"] == "high")
         _g[3] += sum(1 for s in _st if s["complexity"] == "medium")
         _g[4] += sum(1 for s in _st if s["complexity"] == "low")
+    _fe = bd.fe_story_stats()
+    _fe_n  = sum(_fe.get(d, (0, 0, 0))[0] for d in domains)
+    _fe_lo = sum(_fe.get(d, (0, 0, 0))[1] for d in domains)
+    _fe_hi = sum(_fe.get(d, (0, 0, 0))[2] for d in domains)
     add_plain_table(doc, ["Program", "spark-internal-graphql → Netflix DGS Federation (Hive Registry)"], [
         ["Domains", str(len(domains))],
         ["Target DGS services", str(_n_dgs)],
-        ["Total Stories", str(_g[0])],
-        ["Complexity", f"🔴 {_g[1]} Very High · 🟠 {_g[2]} High · 🟡 {_g[3]} Medium · 🟢 {_g[4]} Low"],
+        ["Total Backend Stories", str(_g[0])],
+        ["Total Frontend Stories", f"{_fe_n} · {_fe_lo}–{_fe_hi}d single-engineer (per-domain pages FederatedGqlBreakDown-FE-<domain>)"],
+        ["Complexity (backend)", f"🔴 {_g[1]} Very High · 🟠 {_g[2]} High · 🟡 {_g[3]} Medium · 🟢 {_g[4]} Low"],
         ["Generated", today],
     ], col_widths=[2.2, 5.5])
     doc.add_paragraph().paragraph_format.space_after = Pt(8)
@@ -753,7 +761,8 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
     # Domain index table
     section_heading(doc, "Domain Index")
 
-    idx_headers = ["#", "Domain", "Target DGS", "T-Shirt", "Stories", "🔴 VH", "🟠 H", "🟡 M", "🟢 L", "Breakdown page"]
+    idx_headers = ["#", "Domain", "Target DGS", "T-Shirt", "BE Stories", "🔴 VH", "🟠 H", "🟡 M", "🟢 L",
+                   "FE Stories", "FE effort", "Breakdown pages"]
     idx_rows: list[list[str]] = []
     domain_story_map: dict[str, list] = {}
     grand = [0, 0, 0, 0, 0]  # total, vh, hi, me, lo
@@ -773,14 +782,17 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         me    = sum(1 for s in stories if s["complexity"] == "medium")
         lo    = sum(1 for s in stories if s["complexity"] == "low")
         grand[0] += total; grand[1] += vh; grand[2] += hi; grand[3] += me; grand[4] += lo
+        fc, flo, fhi = _fe.get(domain, (0, 0, 0))
         idx_rows.append([str(i), label, DGS_MAP[domain], ts,
                          str(total), str(vh), str(hi), str(me), str(lo),
-                         f"FederatedGqlBreakDown-BE-{domain}"])
+                         str(fc), f"{flo}–{fhi}d",
+                         f"FederatedGqlBreakDown-BE-{domain} · FederatedGqlBreakDown-FE-{domain}"])
     idx_rows.append(["", "TOTAL", "—", "—",
-                     str(grand[0]), str(grand[1]), str(grand[2]), str(grand[3]), str(grand[4]), "—"])
+                     str(grand[0]), str(grand[1]), str(grand[2]), str(grand[3]), str(grand[4]),
+                     str(_fe_n), f"{_fe_lo}–{_fe_hi}d", "—"])
 
     add_plain_table(doc, idx_headers, idx_rows,
-                    col_widths=[0.3, 1.3, 1.7, 0.6, 0.6, 0.45, 0.45, 0.45, 0.45, 1.8])
+                    col_widths=[0.3, 1.2, 1.5, 0.55, 0.6, 0.4, 0.4, 0.4, 0.4, 0.6, 0.7, 2.0])
 
     # Icon legend
     leg_p = doc.add_paragraph()

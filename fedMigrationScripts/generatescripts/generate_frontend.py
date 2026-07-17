@@ -1104,6 +1104,46 @@ def emit_traceability(ops, fe_story_index):
 FE_STORY_RE = re.compile(r'^### ([A-Z]+-FE-\d+)\s*·\s*(.+)$', re.M)
 
 
+_BE_MERGE_MAP = None
+_BD_MOD = None
+
+
+def _bd():
+    """Lazily-loaded generate_breakdown module (shared graph engine + team constants)."""
+    global _BD_MOD
+    if _BD_MOD is None:
+        try:
+            import importlib.util as _ilu
+            spec = _ilu.spec_from_file_location("generate_breakdown", HERE / "generate_breakdown.py")
+            mod = _ilu.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            _BD_MOD = mod
+        except Exception:
+            _BD_MOD = False
+    return _BD_MOD or None
+
+
+def _be_merge_map():
+    """{merged-away BE full id: surviving BE full id} across phase-1 domains — the
+    backend breakdown merges grouped-XS stories; FE dep references follow the survivor."""
+    global _BE_MERGE_MAP
+    if _BE_MERGE_MAP is None:
+        _BE_MERGE_MAP = {}
+        bd = _bd()
+        if bd is not None:
+            for dom in PHASE1_ORDER:
+                try:
+                    _BE_MERGE_MAP.update(bd.xs_merge_map(dom))
+                except Exception:
+                    pass
+    return _BE_MERGE_MAP
+
+
+def _remap_be_deps(deps):
+    m = _be_merge_map()
+    return list(dict.fromkeys(m.get(d, d) for d in deps))
+
+
 def parse_fe_stories():
     p = FE_OUT / "fe-08-frontend-stories.md"
     if not p.exists():
@@ -1121,7 +1161,8 @@ def parse_fe_stories():
             "id": m.group(1), "title": m.group(2).strip(),
             "type": grab("Type"), "impact": grab("Impact"),
             "domain": grab("Domain"), "effort": grab("Estimated effort"),
-            "depends": [d.strip() for d in re.split(r'[,;]', grab("Depends on")) if d.strip() and d.strip() != "—"],
+            "depends": _remap_be_deps(
+                [d.strip() for d in re.split(r'[,;]', grab("Depends on")) if d.strip() and d.strip() != "—"]),
             "operations": [x.strip().strip('`') for x in (ops_m.group(1).split(',') if ops_m else [])],
             "body": body.strip(),
         })
@@ -1153,6 +1194,21 @@ def impact_to_tshirt(impact):
     return {"High": "L", "Medium": "M", "Low": "S", "None": "XS"}.get(impact.split()[0] if impact else "", "M")
 
 
+def _remap_body_be_ids(text):
+    """Rewrite grouped-XS BE ids inside a story body (e.g. the `**Depends on:**` line)
+    to the surviving story id, deduping the dep list afterwards."""
+    m = _be_merge_map()
+    if not m:
+        return text
+    for gone, kept in m.items():
+        text = text.replace(gone, kept)
+
+    def _dedupe_line(match):
+        parts = [p.strip() for p in match.group(2).split(",")]
+        return match.group(1) + ", ".join(dict.fromkeys(p for p in parts if p))
+    return re.sub(r"(\*\*Depends on:\*\*\s*)([^\n]+)", _dedupe_line, text)
+
+
 def md_to_jira(md):
     t = re.sub(r'^####\s+(.+)$', r'*\1*', md, flags=re.M)
     t = re.sub(r'\*\*([^*]+)\*\*', r'*\1*', t)
@@ -1167,16 +1223,82 @@ def _fe_epic_row():
             "fed-graphql-fe", "frontend", "epic", "", "", "", FE_EPIC_DESC]
 
 
+FE_DOD = ("*Definition of Done:*\n"
+          "* Operations point at the federated router behind the platform flag\n"
+          "* Dual-run parity clean; flag flip and rollback path verified\n"
+          "* No UI regression (component tests + smoke suite)")
+
+
+def _fe_meta(all_stories):
+    """{fe id: metadata description block} — Implementation Order (continuing after the
+    domain's backend sequence), Owner, Priority, Depends On (ids + names), Blocks,
+    Parallelizable. Same convention as the BE Jira rows and 02-project-plan.md."""
+    bd = _bd()
+    by_dom = defaultdict(list)
+    for s in all_stories:
+        by_dom[domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])].append(s)
+    fe_blocks = defaultdict(list)
+    for s in all_stories:
+        for d in s["depends"]:
+            if "-FE-" in d:
+                fe_blocks[d].append(s["id"])
+    fe_title = {s["id"]: s["title"] for s in all_stories}
+
+    meta: dict[str, str] = {}
+    for dom, group in by_dom.items():
+        label = DOMAIN_LABELS.get(dom, dom.title())
+        owner = "Frontend"
+        be_n = 0
+        be_title: dict[str, str] = {}
+        if bd is not None:
+            owner = bd.DOMAIN_OWNERS.get(dom, {}).get("fe", "Frontend")
+            try:
+                bst = [x for x in bd.parse_stories(bd.get_domain_dir(dom) / "be-04-stories.md")
+                       if x.get("phase") != "S"]
+                be_n = len(bst)
+                be_title = {x["id"]: re.sub(r"\(.*?\)", "", x["title"]).replace("`", "").strip()
+                            for x in bst}
+            except Exception:
+                pass
+        stage = fe_stages(group)
+        pop = defaultdict(int)
+        for sid, n in stage.items():
+            pop[n] += 1
+        seq = sorted(group, key=lambda s: (stage[s["id"]], s["id"]))
+        for idx, s in enumerate(seq, 1):
+            deps = [f"* {d} — {be_title[d]}" if d in be_title
+                    else (f"* {d} — {fe_title[d]}" if d in fe_title else f"* {d}")
+                    for d in s["depends"]]
+            blk = [f"* {b} — {fe_title.get(b, '')}".rstrip(" —") for b in fe_blocks.get(s["id"], [])]
+            meta[s["id"]] = "\n".join([
+                f"*Implementation Order:* {be_n + idx} of {be_n + len(group)} "
+                f"({label} combined — frontend #{idx}, cutover step {stage[s['id']]})",
+                f"*Domain:* {label} — *Team:* Frontend — *Owner:* {owner}",
+                f"*Priority:* {(s['impact'] or 'Medium').split()[0]} — "
+                f"*Parallelizable:* {'Yes' if pop[stage[s['id']]] > 1 else 'No'}",
+                "",
+                "*Depends On:*",
+                *(deps or ["* None"]),
+                "",
+                "*Blocks:*",
+                *(blk or ["* None"]),
+            ])
+    return meta
+
+
 def _fe_story_rows(stories_group):
+    meta = _fe_meta(stories_group)
     rows = []
     for s in stories_group:
         dom = domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])
         label = DOMAIN_LABELS.get(dom, dom.title())
+        desc = "\n\n".join(x for x in (
+            meta.get(s["id"], ""), md_to_jira(_remap_body_be_ids(s["body"])), FE_DOD) if x)
         rows.append([
             "Story", s["id"], f"[{label} FE] {s['title']} [{s['id']}]",
             "", FE_EPIC_NAME, "FE", impact_to_tshirt(s["impact"]),
             "fed-graphql-fe", dom, (s["type"] or "migration").lower().replace(" ", "-"),
-            "", " ".join(s["depends"]), "To Do", md_to_jira(s["body"]),
+            "", " ".join(s["depends"]), "To Do", desc,
         ])
     return rows
 
@@ -1344,6 +1466,58 @@ def fe_order_map_lines(group):
     return L
 
 
+def fe_team_plan_lines(group, n_eng=2):
+    """Markdown lines for 'Recommended Story Graph — 2 Frontend Engineers' — the staged
+    order map packed onto a fixed FE pair. Lanes re-sync at each step because the step's
+    backend gate — not engineer availability — is the limiter."""
+    stage = fe_stages(group)
+    lane_of = {}                     # story id -> lane (keep FE→FE chains on one engineer)
+    hdr = " | ".join(f"👤 FE-{e + 1}" for e in range(n_eng))
+    L = [
+        f"## Recommended Story Graph — {n_eng} Frontend Engineers",
+        "",
+        "> The order map above packed onto **two frontend engineers**. Lanes re-sync at each "
+        "step because the step's **backend gate** — not engineer availability — is the limiter; "
+        "in a single-story step the second engineer pairs on parity checks/rollout or pre-pulls "
+        "the next unblocked story. FE→FE chains stay with one engineer for context.",
+        "",
+        f"| Step | {hdr} | Backend gate (focus) |",
+        "|---|" + "---|" * (n_eng + 1),
+    ]
+    team_days = 0.0
+    solo_days = 0.0
+    for n in sorted(set(stage.values())):
+        rows = sorted((s for s in group if stage[s["id"]] == n),
+                      key=lambda s: -sum(_effort_range(s["effort"])) / 2)
+        lanes = [[] for _ in range(n_eng)]
+        loads = [0.0] * n_eng
+        for s in rows:
+            mid = sum(_effort_range(s["effort"])) / 2
+            solo_days += mid
+            pref = next((lane_of[d] for d in s["depends"] if d in lane_of), None)
+            e = pref if pref is not None else loads.index(min(loads))
+            lanes[e].append(s)
+            loads[e] += mid
+            lane_of[s["id"]] = e
+        team_days += max(loads)
+        cells = []
+        for lane in lanes:
+            cells.append("<br>".join(
+                f"{_impact_icon(s['impact'])} `{s['id']}` "
+                f"({_effort_range(s['effort'])[0]}–{_effort_range(s['effort'])[1]}d)"
+                for s in lane) or "—")
+        label = STAGE_LABELS.get(n, "Follow-on cutover — after the stories it depends on")
+        L.append(f"| {n} | " + " | ".join(cells) + f" | {label} |")
+    L += [
+        "",
+        f"**Elapsed (nominal midpoints):** ~{team_days:.0f} FE build days with {n_eng} engineers "
+        f"vs ~{solo_days:.0f} single-engineer — calendar time is set by the backend gates, "
+        "not FE capacity.",
+        "",
+    ]
+    return L
+
+
 def emit_fe_breakdowns(stories, ops):
     """One FederatedGqlBreakDown-FE-{domain} page per phase-1 domain, in
     output/summary/{domain}/ next to the FederatedGqlBreakDown-BE-{domain} backend breakdowns."""
@@ -1432,6 +1606,8 @@ def emit_fe_breakdowns(stories, ops):
                      f"| {deps} | {ops_cell} |")
         L += ["", "---", ""]
         L += fe_order_map_lines(group)
+        L += ["---", ""]
+        L += fe_team_plan_lines(group)
         L += [
             "---",
             "",

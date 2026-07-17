@@ -4,10 +4,10 @@
 |---|---|
 | **Target DGS** | `plm-product (co-located)` |
 | **T-Shirt Size** | **L** |
-| **Total Stories** | 24 |
-| **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 9 Medium · 🟢 13 Low |
+| **Total Stories** | 18 |
+| **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 11 Medium · 🟢 5 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-16 |
+| **Generated** | 2026-07-17 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
 
@@ -101,17 +101,39 @@ pricing service).
 
 ## Recommended Implementation Order
 
-> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**.
+> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**. **Focus** names the phase category each step advances — same convention as the frontend order map.
 
 > 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — a gated story slides later without reshuffling the map.
 
-| Step | Stories (parallel set) | Entry gates in this step |
-|---|---|---|
-| 1 | 🟢 `B-01` | — |
-| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟡 `C-01`, 🟡 `D-01`, 🟢 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟢 `D-05`, 🟢 `D-06`, 🟢 `D-07`, 🟡 `D-08`, 🟢 `D-09`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟢 `G-02`, 🟡 `G-03`, 🟠 `G-04`, 🟡 `G-05` | `E-01` → 🔬 SPIKE-01 |
-| 3 | 🟡 `G-06` | — |
+| Step | Stories (parallel set) | Entry gates in this step | Focus |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
+| 2 | 🟡 `B-02`, 🟢 `B-06`, 🟡 `C-01`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟡 `D-08`, 🟢 `D-09`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟢 `G-02`, 🟡 `G-03`, 🟠 `G-04`, 🟡 `G-05` | `E-01` → 🔬 SPIKE-01 | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 3 | 🟡 `G-06` | — | 🧪 Field Resolvers & Tests |
 
-**Critical path:** `B-01` → `E-01` → `G-06` — 3 sequential stories; everything else hangs off this chain in parallel.
+**Critical path:** `B-01` → `G-03` → `G-06` — 3 sequential stories; everything else hangs off this chain in parallel.
+
+---
+
+## Recommended Story Graph — 2 Backend Engineers
+
+> The order map above assumes unlimited parallelism; this packs the **same dependency graph onto 2 backend engineers** (greedy critical-chain scheduling, nominal day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates that slide a slot without reshuffling the lanes.
+
+| Slot | 👤 BE-1 | 👤 BE-2 |
+|---|---|---|
+| 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟠 `G-04` (4–7d) |
+| 2 | 🟠 `E-01` (4–7d) 🔬 | 🟡 `B-02` (2–4d) *(grouped XS: +`B-03`, `B-04`, `B-05`)* |
+| 3 | 🟡 `G-03` (2–4d) | 🟡 `D-01` (2–4d) |
+| 4 | 🟡 `C-01` (2–4d) | 🟡 `D-03` (2–4d) |
+| 5 | 🟡 `D-02` (2–4d) *(grouped XS: +`D-05`, `D-06`, `D-07`)* | 🟡 `D-08` (2–4d) |
+| 6 | 🟡 `D-04` (2–4d) | 🟡 `G-05` (2–4d) |
+| 7 | 🟡 `G-01` (2–4d) | 🟢 `B-06` (1–2d) |
+| 8 | 🟡 `G-06` (2–4d) | 🟢 `D-09` (1–2d) |
+| 9 | 🟢 `F-01` (1–2d) | 🟢 `G-02` (1–2d) |
+
+**BE-1:** `B-01` → `E-01` → `G-03` → `C-01` → `D-02` → `D-04` → `G-01` → `G-06` → `F-01`<br>**BE-2:** `G-04` → `B-02` → `D-01` → `D-03` → `D-08` → `G-05` → `B-06` → `D-09` → `G-02`
+
+**Elapsed (nominal midpoints):** ~26 working days with 2 engineers vs ~52 days sequential.
 
 ---
 
@@ -119,15 +141,12 @@ pricing service).
 
 > Each row is one Jira story. Complexity drives T-shirt sizing in refinement. `Depends On` lists blocking story IDs within this domain — including Phase 0 spikes where a story's implementation is gated on a spike's outcome.
 
-### 📖 Phase B — Core Reads (6 stories)
+### 📖 Phase B — Core Reads (3 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔷 `PKG-BE-B-01`<br>`getPackagings(...)` | 🟢 Low `XS` | Query | — | **Intent —** List packagings with paging and filters.<br>**Today —** getPackagings() → paged<br>**Done when:**<br>• all 7 filter args forwarded; defaults page=0/size=10000 |
-| 🔷 `PKG-BE-B-02`<br>`getPackagingById(packagingId)` | 🟢 Low `XS` | Query | B-01 | **Intent —** Fetch one packaging by id.<br>**Today —** token → getPackagingById<br>**Done when:**<br>• returns packaging; miss→null |
-| 🔷 `PKG-BE-B-03`<br>`getDielines(...)` | 🟢 Low `XS` | Query | B-01 | **Intent —** List dielines (print layouts) for a packaging.<br>**Today —** getDielines → .dielines<br>**Done when:**<br>• filters forwarded; returns the `dielines` array |
-| 🔷 `PKG-BE-B-04`<br>`getPackagingFieldValuesByType(type, ids)` | 🟢 Low `XS` | Query | B-01 | **Intent —** Return packaging field-value lookups by type.<br>**Today —** getPackagingFieldValuesByType(type, ids)<br>**Done when:**<br>• by type (+optional ids) |
-| 🔷 `PKG-BE-B-05`<br>`getDielineEvaluationStatuses` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the dieline evaluation-status lookup (cached).<br>**Today —** getDielineEvaluationStatuses()<br>**Done when:**<br>• returns statuses; cached |
+| 🔷 `PKG-BE-B-02`<br>`getPackagingById` · `getDielines` · `getPackagingFieldValuesByType` · `getDielineEvaluationStatuses` | 🟡 Medium `M` | Query | B-01 | **Grouped XS story —** combines former `B-03`, `B-04`, `B-05` (one PR train)<br>**Intent —** Fetch one packaging by id; List dielines (print layouts) for a packaging; Return packaging field-value lookups by type; Return the dieline evaluation-status lookup (cached)<br>**Today —** token → getPackagingById. ; getDielines → .dielines. ; getPackagingFieldValuesByType(type, ids). ; getDielineEvaluationStatuses()<br>**Done when:**<br>• `getPackagingById`: returns packaging; miss→null<br>• `getDielines`: filters forwarded; returns the `dielines` array<br>• `getPackagingFieldValuesByType`: by type (+optional ids)<br>• `getDielineEvaluationStatuses`: returns statuses; cached |
 | 🔷 `PKG-BE-B-06`<br>`getCountries(codes)` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the country lookup (cached).<br>**Today —** getCountries(codes)<br>**Done when:**<br>• returns countries (optionally filtered by codes) |
 
 > **`PKG-BE-B-01`** — **Note — DGS Module Init (this PR only):** Creates `packaging.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: be-03-schema.graphql.
@@ -140,17 +159,14 @@ pricing service).
 | 🔷 `PKG-BE-C-01`<br>`getPackagingElastic(parentHumanId)` | 🟡 Medium `M` | Query<br>Calls: `search` | B-01 | **Intent —** Search a product's packagings via elastic.<br>**Today —** (search) search.getPackagingElastic → .content. EXT: search<br>**Done when:**<br>• `parentId:` elastic query built; returns content |
 
 
-### ✏️ Phase D — Mutations (9 stories)
+### ✏️ Phase D — Mutations (6 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔶 `PKG-BE-D-01`<br>`addPackaging` | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Create a packaging.<br>**Today —** POST packaging/v1. Throw on validationErrors/message<br>**Done when:**<br>• creates<br>• validation error → exception |
-| 🔶 `PKG-BE-D-02`<br>`evaluateDieline` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Trigger evaluation of a dieline.<br>**Today —** PUT packaging/v1/dielines/{dielineId}/evaluate<br>**Done when:**<br>• evaluates the dieline |
+| 🔶 `PKG-BE-D-02`<br>`evaluateDieline` · `exportPackaging` · `lockPackaging` · `unlockPackaging` | 🟡 Medium `M` | Mutation | B-01 | **Grouped XS story —** combines former `D-05`, `D-06`, `D-07` (one PR train)<br>**Intent —** Trigger evaluation of a dieline; Kick off a packaging export; Lock a packaging from edits; Unlock a packaging<br>**Today —** PUT packaging/v1/dielines/{dielineId}/evaluate. ; token → requestPackagingExport({workspace_id, workspace_description, product_ids}) → request id. ; token → PUT…<br>**Done when:**<br>• `evaluateDieline`: evaluates the dieline<br>• `exportPackaging`: returns the export request id<br>• `lockPackaging`: locks<br>• `unlockPackaging`: unlocks |
 | 🔶 `PKG-BE-D-03`<br>`bulkAddPackagings` | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Create many packagings at once.<br>**Today —** bulkAddPackagings. Throw on validationErrors/message<br>**Done when:**<br>• bulk creates<br>• error → throw |
 | 🔶 `PKG-BE-D-04`<br>`bulkUpdatePackagings` | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Update many packagings at once.<br>**Today —** token for packaging[].humanId → bulkUpdatePackagings. Throw on error<br>**Done when:**<br>• bulk updates<br>• error → throw |
-| 🔶 `PKG-BE-D-05`<br>`exportPackaging` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Kick off a packaging export.<br>**Today —** token → requestPackagingExport({workspace_id, workspace_description, product_ids}) → request id<br>**Done when:**<br>• returns the export request id |
-| 🔶 `PKG-BE-D-06`<br>`lockPackaging` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Lock a packaging from edits.<br>**Today —** token → PUT packaging/v1/{id}/lock<br>**Done when:**<br>• locks |
-| 🔶 `PKG-BE-D-07`<br>`unlockPackaging` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Unlock a packaging.<br>**Today —** token → PUT packaging/v1/{id}/unlock<br>**Done when:**<br>• unlocks |
 | 🔶 `PKG-BE-D-08`<br>`cloneFilesForDielines` | 🟡 Medium `M` | Mutation<br>Calls: `attachment` | B-01 | **Intent —** Copy attachment files for dielines.<br>**Today —** token → Promise.all(attachmentIds.map(id => (attachment) cloneAttachmentV3({cloneReferences}, id))), flatten. EXT: attachment<br>**Done when:**<br>• clones each id with the shared `cloneReferences` |
 | 🔶 `PKG-BE-D-09`<br>`updatePackagingComponentStatus` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Update component status on packagings.<br>**Today —** updatePackagingComponentStatus({productId, ids, status}). No JWT — confirm backend-enforced<br>**Done when:**<br>• updates statuses<br>• no-token behaviour documented |
 

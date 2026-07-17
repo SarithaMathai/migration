@@ -8,7 +8,7 @@
 | **Impact** | 🔴 4 High · 🟡 1 Medium · 🟢 1 Low |
 | **Estimated effort** | 27–42 days (single-engineer) |
 | **Phase-1 surface** | 21 operation-to-root-field rows · 4 client files · 7 components |
-| **Generated** | 2026-07-16 |
+| **Generated** | 2026-07-17 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 
@@ -26,11 +26,11 @@
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
 | `BOM-FE-001` | Statically expand BOM fragment factories (pre-cutover) | Refactor | 🔴 High | 3–4 days | — | — |
-| `BOM-FE-002` | Migrate BOM core reads | Query migration | 🔴 High | 6–10 days | `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-B-04`, `BOM-FE-001` | `getBomByIds`, `getBomByParentId`, `getBomStatus`, `getBomComponentStatus` |
+| `BOM-FE-002` | Migrate BOM core reads | Query migration | 🔴 High | 6–10 days | `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-FE-001` | `getBomByIds`, `getBomByParentId`, `getBomStatus`, `getBomComponentStatus` |
 | `BOM-FE-003` | Migrate BOM search and elastic reads | Query migration | 🔴 High | 5–8 days | `BOM-BE-C-01`, `BOM-BE-S-03` | `getBomElastic`, `searchMaterialsBom` |
-| `BOM-FE-004` | Migrate BOM master-data reads | Query migration | 🟢 Low | 2–3 days | `BOM-BE-B-05`, `BOM-BE-B-06`, `BOM-BE-B-07`, `BOM-BE-B-08` | `getBomMaterialTypes`, `getBomPackagingMaterialTypes`, `getBomPackagingSubstrates`, `getBomPackagingUnitOfMeasure` |
-| `BOM-FE-005` | Migrate BOM supplier reads | Query migration | 🟡 Medium | 3–5 days | `BOM-BE-C-03`, `BOM-BE-C-04`, `BOM-BE-C-05` | `getComboSupplierForBom`, `getValidTrimSuppliersForBom`, `getValidRawMaterialSuppliersForBom` |
-| `BOM-FE-006` | Migrate BOM mutations including `updateBom` saga handling | Mutation migration (complex) | 🔴 High | 8–12 days | `BOM-BE-D-01`, `BOM-BE-D-03`, `BOM-BE-D-04`, `BOM-BE-D-05`, `BOM-BE-S-01` | `addBom`, `lockBom`, `unlockBom`, `updateBom`, `updateBomComponentStatus` |
+| `BOM-FE-004` | Migrate BOM master-data reads | Query migration | 🟢 Low | 2–3 days | `BOM-BE-B-05`, `BOM-BE-B-03`, `BOM-BE-B-08` | `getBomMaterialTypes`, `getBomPackagingMaterialTypes`, `getBomPackagingSubstrates`, `getBomPackagingUnitOfMeasure` |
+| `BOM-FE-005` | Migrate BOM supplier reads | Query migration | 🟡 Medium | 3–5 days | `BOM-BE-C-03`, `BOM-BE-C-01` | `getComboSupplierForBom`, `getValidTrimSuppliersForBom`, `getValidRawMaterialSuppliersForBom` |
+| `BOM-FE-006` | Migrate BOM mutations including `updateBom` saga handling | Mutation migration (complex) | 🔴 High | 8–12 days | `BOM-BE-D-01`, `BOM-BE-D-02`, `BOM-BE-S-01` | `addBom`, `lockBom`, `unlockBom`, `updateBom`, `updateBomComponentStatus` |
 
 ---
 
@@ -40,11 +40,25 @@
 
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
-| 1 | 🔴 `BOM-FE-001`, 🟢 `BOM-FE-004` | `BOM-FE-004` → `BOM-BE-B-05`, `BOM-BE-B-06`, `BOM-BE-B-07`, `BOM-BE-B-08` | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🔴 `BOM-FE-002`, 🟡 `BOM-FE-005` | `BOM-FE-002` → `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-B-04`<br>`BOM-FE-005` → `BOM-BE-C-03`, `BOM-BE-C-04`, `BOM-BE-C-05` | Search & listing — needs backend phase C |
-| 5 | 🔴 `BOM-FE-003`, 🔴 `BOM-FE-006` | `BOM-FE-003` → `BOM-BE-C-01`, `BOM-BE-S-03`<br>`BOM-FE-006` → `BOM-BE-D-01`, `BOM-BE-D-03`, `BOM-BE-D-04`, `BOM-BE-D-05` (+1) | Externally gated — search/read-hub decision |
+| 1 | 🔴 `BOM-FE-001`, 🟢 `BOM-FE-004` | `BOM-FE-004` → `BOM-BE-B-05`, `BOM-BE-B-03`, `BOM-BE-B-08` | Reads cutover — needs backend phase A/B reads live |
+| 2 | 🔴 `BOM-FE-002`, 🟡 `BOM-FE-005` | `BOM-FE-002` → `BOM-BE-B-01`, `BOM-BE-B-03`<br>`BOM-FE-005` → `BOM-BE-C-03`, `BOM-BE-C-01` | Search & listing — needs backend phase C |
+| 5 | 🔴 `BOM-FE-003`, 🔴 `BOM-FE-006` | `BOM-FE-003` → `BOM-BE-C-01`, `BOM-BE-S-03`<br>`BOM-FE-006` → `BOM-BE-D-01`, `BOM-BE-D-02`, `BOM-BE-S-01` | Externally gated — search/read-hub decision |
 
 **Cutover flow:** `BOM-FE-001` → `BOM-FE-004` → `BOM-FE-002` → `BOM-FE-005` → `BOM-FE-003` → `BOM-FE-006`.
+
+---
+
+## Recommended Story Graph — 2 Frontend Engineers
+
+> The order map above packed onto **two frontend engineers**. Lanes re-sync at each step because the step's **backend gate** — not engineer availability — is the limiter; in a single-story step the second engineer pairs on parity checks/rollout or pre-pulls the next unblocked story. FE→FE chains stay with one engineer for context.
+
+| Step | 👤 FE-1 | 👤 FE-2 | Backend gate (focus) |
+|---|---|---|---|
+| 1 | 🔴 `BOM-FE-001` (3–4d) | 🟢 `BOM-FE-004` (2–3d) | Reads cutover — needs backend phase A/B reads live |
+| 2 | 🔴 `BOM-FE-002` (6–10d) | 🟡 `BOM-FE-005` (3–5d) | Search & listing — needs backend phase C |
+| 5 | 🔴 `BOM-FE-006` (8–12d) | 🔴 `BOM-FE-003` (5–8d) | Externally gated — search/read-hub decision |
+
+**Elapsed (nominal midpoints):** ~22 FE build days with 2 engineers vs ~34 single-engineer — calendar time is set by the backend gates, not FE capacity.
 
 ---
 

@@ -5,15 +5,16 @@
 ## Start here, by role
 
 - **Product Owner / Stakeholder** → [summary/00-program-overview.md](summary/00-program-overview.md), then the per-domain breakdown pages in [summary/{domain}/](summary/) (`.docx` twins for sharing).
-- **Engineer (backend)** → [analysis/](analysis/) for your domain (`be-*` files; the domain's frontend view is right there as `fe-{domain}-breakdown.md`), then your domain's `summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md`.
-- **Engineer (frontend)** → [analysis/program/fe-00-executive-summary.md](analysis/program/fe-00-executive-summary.md), stories in [analysis/program/fe-08-frontend-stories.md](analysis/program/fe-08-frontend-stories.md), order in [analysis/program/fe-10-migration-sequencing.md](analysis/program/fe-10-migration-sequencing.md).
-- **Delivery (Jira / Confluence)** → import the combined per-domain CSVs from [jira/](jira/) (prompts: `fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md`), publish pages from [confluence/](confluence/).
+- **Tech Lead / Planning** → [summary/01-implementation-plan-2BE-2FE.md](summary/01-implementation-plan-2BE-2FE.md) (who does what, when — lanes, gates, sprint milestones for the 2 BE + 2 FE team), then [summary/02-project-plan.md](summary/02-project-plan.md) (the exact story-by-story implementation order per domain, with Depends On / Blocks / Parallelizable per story and a roadmap per domain).
+- **Engineer (backend)** → [analysis/](analysis/) for your domain (`be-*` files; the domain's frontend view is right there as `fe-{domain}-breakdown.md`), then your domain's `summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md` — its **Recommended Implementation Order** (dependency map) and **Recommended Story Graph — 2 Backend Engineers** (your lane) sections are the build order.
+- **Engineer (frontend)** → [analysis/program/fe-00-executive-summary.md](analysis/program/fe-00-executive-summary.md), stories in [analysis/program/fe-08-frontend-stories.md](analysis/program/fe-08-frontend-stories.md), order in [analysis/program/fe-10-migration-sequencing.md](analysis/program/fe-10-migration-sequencing.md); your domain's cutover lane is the **Recommended Story Graph — 2 Frontend Engineers** section of `summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md`.
+- **Delivery (Jira / Confluence)** → import the combined per-domain CSVs from [jira/](jira/) (prompts: `fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md`), publish pages from [confluence/](confluence/). Every story's description carries the sequencing metadata (Implementation Order, Owner, Priority, Depends On / Blocks by story id + name, Parallelizable, Definition of Done).
 
 ## Folder map
 
 | Folder | Content | Audience |
 |---|---|---|
-| [summary/](summary/) | Program overview + per-domain breakdown folders: `{domain}/FederatedGqlBreakDown-BE-{domain}` (backend) and `{domain}/FederatedGqlBreakDown-FE-{domain}` (frontend), each as `.md` + `.docx`; global `Federated+Graphql+Stories+-+BreakDown` at the root | PO, everyone |
+| [summary/](summary/) | Program overview (`00`), team plan (`01-implementation-plan-2BE-2FE`), story-order project plan (`02-project-plan`) + per-domain breakdown folders: `{domain}/FederatedGqlBreakDown-BE-{domain}` (backend) and `{domain}/FederatedGqlBreakDown-FE-{domain}` (frontend), each as `.md` + `.docx`; global `Federated+Graphql+Stories+-+BreakDown` at the root | PO, everyone |
 | [analysis/](analysis/) | **Everything for one domain in one folder** (8 folders): backend `be-01-schema-inventory` → `be-02-resolver-analysis` → `be-03-schema-analysis` (+ `be-03-schema.graphql`) → `be-04-stories` / `be-04-po-summary` → `be-05-attribute-inventory`, plus the domain's frontend view `fe-{domain}-breakdown.md` | Engineers |
 | [analysis/program/](analysis/program/) | Cross-domain frontend program docs `fe-00`–`fe-11` (numbered reading order; `fe-08` = story source of truth) + `frontend-inventory.json` (machine-readable master data) | Frontend engineers |
 | [jira/](jira/) | **Combined** per-domain CSVs — `{domain}.csv` holds that domain's backend AND frontend stories (both epics); full-program files: `all-stories.csv` (backend) + `all-frontend-stories.csv` (frontend) | Delivery |
@@ -23,11 +24,14 @@
 ## Conventions
 
 - Story ids: backend `<TOKEN>-BE-<phase>-<NN>`, frontend `<TOKEN>-FE-<NNN>`; tokens: PRODUCT, BOM, CLAIM, MST, PDTL, PKG, WATCHLIST, IMPRESSION.
+- **Grouped XS stories:** logically-related XS stories (same phase + type + dependencies) are merged into one story at generation time (`MERGE_XS` in `generate_breakdown.py`); the surviving id absorbs the others (e.g. `CLAIM-BE-B-02` combines former `B-03`, `B-04`, `B-05`) and every generated reference follows the survivor. `be-04-stories.md` still lists the originals.
+- **Story sequencing metadata:** every Jira story description carries Implementation Order, Domain, Team, Owner (BE-1/BE-2/FE-1/FE-2 per the team plan's domain ownership), Priority, Depends On / Blocks (story ids + names, never order numbers), Parallelizable, and a Definition of Done.
 - Platform enablement (former Wave 0) is **complete** — frontend waves run 1–4 (see [analysis/program/fe-10-migration-sequencing.md](analysis/program/fe-10-migration-sequencing.md)).
 - A frontend story is Done only after every backend story it depends on has been delivered.
 
 ## Regeneration
 
-- Backend docs + summary pages: `python fedMigrationScripts/generatescripts/generate_all.py` (run from inside `generatescripts/`).
-- Frontend docs (00–04, 09–11, Jira CSVs, FE breakdown pages, frontend Confluence page): `python fedMigrationScripts/generatescripts/generate_frontend.py`.
+- Everything (backend + frontend docs, Jira CSVs, team plan `01`, project plan `02`): `python fedMigrationScripts/generatescripts/generate_all.py`.
+- Frontend only (fe-00–04, 09–11, Jira CSVs, FE breakdown pages, frontend Confluence page): `python fedMigrationScripts/generatescripts/generate_frontend.py`.
+- Plans only: `generate_team_plan.py` (01) · `generate_project_plan.py` (02).
 - Hand-authored (never overwritten): frontend `05`–`08` (`fe-08-frontend-stories.md` is the parsed source of truth) and the backend Confluence page.

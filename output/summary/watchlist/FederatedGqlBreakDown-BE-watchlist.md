@@ -4,10 +4,10 @@
 |---|---|
 | **Target DGS** | `plm-product (co-located)` |
 | **T-Shirt Size** | **M** |
-| **Total Stories** | 13 |
-| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 6 Medium · 🟢 6 Low |
+| **Total Stories** | 11 |
+| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 6 Medium · 🟢 4 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-16 |
+| **Generated** | 2026-07-17 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
 
@@ -96,17 +96,36 @@ to fix on the port.
 
 ## Recommended Implementation Order
 
-> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**.
+> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**. **Focus** names the phase category each step advances — same convention as the frontend order map.
 
 > 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — a gated story slides later without reshuffling the map.
 
-| Step | Stories (parallel set) | Entry gates in this step |
-|---|---|---|
-| 1 | 🟢 `B-01` | — |
-| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟡 `C-01`, 🟡 `D-01`, 🟡 `D-02`, 🟠 `E-01`, 🟢 `F-01`, 🟢 `F-02`, 🟢 `G-01`, 🟡 `G-02`, 🟡 `G-03` | `E-01` → 🔬 SPIKE-01 |
-| 3 | 🟡 `G-04` | — |
+| Step | Stories (parallel set) | Entry gates in this step | Focus |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
+| 2 | 🟢 `B-02`, 🟡 `C-01`, 🟡 `D-01`, 🟡 `D-02`, 🟠 `E-01`, 🟢 `F-01`, 🟢 `G-01`, 🟡 `G-02`, 🟡 `G-03` | `E-01` → 🔬 SPIKE-01 | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 3 | 🟡 `G-04` | — | 🧪 Field Resolvers & Tests |
 
-**Critical path:** `B-01` → `E-01` → `G-04` — 3 sequential stories; everything else hangs off this chain in parallel.
+**Critical path:** `B-01` → `G-02` → `G-04` — 3 sequential stories; everything else hangs off this chain in parallel.
+
+---
+
+## Recommended Story Graph — 2 Backend Engineers
+
+> The order map above assumes unlimited parallelism; this packs the **same dependency graph onto 2 backend engineers** (greedy critical-chain scheduling, nominal day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates that slide a slot without reshuffling the lanes.
+
+| Slot | 👤 BE-1 | 👤 BE-2 |
+|---|---|---|
+| 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟡 `C-01` (2–4d) |
+| 2 | 🟠 `E-01` (4–7d) 🔬 | 🟡 `G-02` (2–4d) |
+| 3 | 🟡 `D-01` (2–4d) | 🟡 `D-02` (2–4d) |
+| 4 | 🟡 `G-03` (2–4d) | 🟡 `G-04` (2–4d) |
+| 5 | 🟢 `B-02` (1–2d) *(grouped XS: +`B-03`)* | 🟢 `F-01` (1–2d) *(grouped XS: +`F-02`)* |
+| 6 | 🟢 `G-01` (1–2d) | — |
+
+**BE-1:** `B-01` → `E-01` → `D-01` → `G-03` → `B-02` → `G-01`<br>**BE-2:** `C-01` → `G-02` → `D-02` → `G-04` → `F-01`
+
+**Elapsed (nominal midpoints):** ~16 working days with 2 engineers vs ~30 days sequential.
 
 ---
 
@@ -114,13 +133,12 @@ to fix on the port.
 
 > Each row is one Jira story. Complexity drives T-shirt sizing in refinement. `Depends On` lists blocking story IDs within this domain — including Phase 0 spikes where a story's implementation is gated on a spike's outcome.
 
-### 📖 Phase B — Core Reads (3 stories)
+### 📖 Phase B — Core Reads (2 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔷 `WATCHLIST-BE-B-01`<br>`getWatchlistByIds(ids)` | 🟢 Low `XS` | Query | — | **Intent —** Fetch watchlist entries by id.<br>**Today —** token → GET watchlist/v1?watchlistIds={csv} → camelCase<br>**Done when:**<br>• returns entries for ids; empty → [] |
-| 🔷 `WATCHLIST-BE-B-02`<br>`getWatchlistReasons` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the watchlist-reason lookup (cached).<br>**Today —** GET watchlist/v1/watchlist_reasons<br>**Done when:**<br>• returns reasons; cached |
-| 🔷 `WATCHLIST-BE-B-03`<br>`getWatchlistInspectionActions` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the inspection-action lookup (cached).<br>**Today —** GET watchlist/v1/watchlist_inspection_action_types<br>**Done when:**<br>• returns actions; cached |
+| 🔷 `WATCHLIST-BE-B-02`<br>`getWatchlistReasons` · `getWatchlistInspectionActions` | 🟢 Low `XS` | Query | B-01 | **Grouped XS story —** combines former `B-03` (one PR train)<br>**Intent —** Return the watchlist-reason lookup (cached); Return the inspection-action lookup (cached)<br>**Today —** GET watchlist/v1/watchlist_reasons. ; GET watchlist/v1/watchlist_inspection_action_types<br>**Done when:**<br>• `getWatchlistReasons`: returns reasons; cached<br>• `getWatchlistInspectionActions`: returns actions; cached |
 
 > **`WATCHLIST-BE-B-01`** — **Note — DGS Module Init (this PR only):** Creates `watchlist.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: be-03-schema.graphql.
 
@@ -147,12 +165,11 @@ to fix on the port.
 | 🔴🔬 🔶 `WATCHLIST-BE-E-01`<br>`updateWatchlistEntries` (multi-step write)<br>🔴🔬 _Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — see global Spike Detail_ | 🟠 High `L` | Mutation<br>Calls: `attachment`, `userGroup` | SPIKE-01, B-01 | **Intent —** Edit watchlist entries — a multi-step write (user-groups + body); today the group step isn't awaited (a bug).<br>**Today —** per-entry (currently NOT awaited — bug): getUserGroups([humanId]); if existing participants → updateUserGroup, else (user-group) addUserGroup (throw on error); 2)…<br>**Done when:**<br>• user-group upserts complete before the watchlist update (race fixed)<br>• removed attachments archived<br>• partial-failure strategy | ☐ existing-participants path<br>☐ new-participants path<br>☐ attachment archive<br>☐ ordering/await<br>☐ partial-failure<br>☐ Parity: DGS response matches spark-internal-graphql baseline |
 
 
-### 🔗 Phase F — Federation & Stitching (2 stories)
+### 🔗 Phase F — Federation & Stitching (1 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `WATCHLIST-BE-F-01`<br>`Product.watchlists` (internal) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose a product's watchlists on the Product type.<br>**Today —** Product exposes watchlists resolved from the co-located watchlist service<br>**Done when:**<br>• resolves in-process; no gateway hop |
-| 🔸 `WATCHLIST-BE-F-02`<br>`ResourcesCount.watchlists` (internal — TechPack) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Contribute the watchlists count to the TechPack rollup.<br>**Today —** fill the TechPack `ResourcesCount<br>**Done when:**<br>• count resolves in-process; parity vs the TechPack facade |
+| 🔸 `WATCHLIST-BE-F-01`<br>`Product.watchlists` · `ResourcesCount.watchlists` | 🟢 Low `XS` | Field Resolver | B-01 | **Grouped XS story —** combines former `F-02` (one PR train)<br>**Intent —** Expose a product's watchlists on the Product type; Contribute the watchlists count to the TechPack rollup<br>**Today —** Product exposes watchlists resolved from the co-located watchlist service<br>**Done when:**<br>• `Product.watchlists`: resolves in-process; no gateway hop<br>• `ResourcesCount.watchlists`: count resolves in-process; parity vs the TechPack facade |
 
 
 ### 🧪 Phase G — Field Resolvers & Tests (4 stories)

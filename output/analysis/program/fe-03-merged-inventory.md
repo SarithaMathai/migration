@@ -1,6 +1,6 @@
 # Merged GraphQL Inventory — Frontend Usage × Backend Schema
 
-> Authoritative migration-planning inventory · Generated: 2026-07-16
+> Authoritative migration-planning inventory · Generated: 2026-07-17
 > One row per frontend operation × backend root field. FE story ids resolve in fe-08-frontend-stories.md; BE story ids in output/analysis/{{domain}}/be-04-stories.md.
 
 ## Summary

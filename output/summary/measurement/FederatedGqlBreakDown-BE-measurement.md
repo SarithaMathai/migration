@@ -4,10 +4,10 @@
 |---|---|
 | **Target DGS** | `plm-product (co-located)` |
 | **T-Shirt Size** | **M** |
-| **Total Stories** | 20 |
-| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 6 Medium · 🟢 13 Low |
+| **Total Stories** | 14 |
+| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 8 Medium · 🟢 5 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-16 |
+| **Generated** | 2026-07-17 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
 
@@ -98,17 +98,37 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 
 ## Recommended Implementation Order
 
-> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**.
+> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**. **Focus** names the phase category each step advances — same convention as the frontend order map.
 
 > 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — a gated story slides later without reshuffling the map.
 
-| Step | Stories (parallel set) | Entry gates in this step |
-|---|---|---|
-| 1 | 🟢 `B-01` | — |
-| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟡 `C-01`, 🟢 `C-02`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟡 `D-06`, 🟢 `D-07`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟢 `G-02` | `E-01` → 🔬 SPIKE-01<br>`F-02` → ⛔ BLOCKED-BY sample |
-| 3 | 🟡 `G-03` | — |
+| Step | Stories (parallel set) | Entry gates in this step | Focus |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
+| 2 | 🟡 `B-02`, 🟡 `C-01`, 🟢 `C-02`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-06`, 🟢 `D-07`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟢 `G-02` | `E-01` → 🔬 SPIKE-01<br>`F-02` → ⛔ BLOCKED-BY sample | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 3 | 🟡 `G-03` | — | 🧪 Field Resolvers & Tests |
 
 **Critical path:** `B-01` → `E-01` → `G-03` — 3 sequential stories; everything else hangs off this chain in parallel.
+
+---
+
+## Recommended Story Graph — 2 Backend Engineers
+
+> The order map above assumes unlimited parallelism; this packs the **same dependency graph onto 2 backend engineers** (greedy critical-chain scheduling, nominal day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates that slide a slot without reshuffling the lanes.
+
+| Slot | 👤 BE-1 | 👤 BE-2 |
+|---|---|---|
+| 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟡 `C-01` (2–4d) |
+| 2 | 🟠 `E-01` (4–7d) 🔬 | 🟡 `G-01` (2–4d) |
+| 3 | 🟡 `B-02` (2–4d) *(grouped XS: +`B-03`, `B-04`, `B-05`)* | 🟡 `D-01` (2–4d) |
+| 4 | 🟡 `D-02` (2–4d) *(grouped XS: +`D-03`, `D-04`, `D-05`)* | 🟡 `D-06` (2–4d) |
+| 5 | 🟡 `F-01` (2–4d) | 🟡 `G-03` (2–4d) |
+| 6 | 🟢 `C-02` (1–2d) | 🟢 `D-07` (1–2d) |
+| 7 | 🟢 `F-02` (1–2d) ⛔ | 🟢 `G-02` (1–2d) |
+
+**BE-1:** `B-01` → `E-01` → `B-02` → `D-02` → `F-01` → `C-02` → `F-02`<br>**BE-2:** `C-01` → `G-01` → `D-01` → `D-06` → `G-03` → `D-07` → `G-02`
+
+**Elapsed (nominal midpoints):** ~20 working days with 2 engineers vs ~37 days sequential.
 
 ---
 
@@ -116,15 +136,12 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 
 > Each row is one Jira story. Complexity drives T-shirt sizing in refinement. `Depends On` lists blocking story IDs within this domain — including Phase 0 spikes where a story's implementation is gated on a spike's outcome.
 
-### 📖 Phase B — Core Reads (5 stories)
+### 📖 Phase B — Core Reads (2 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔷 `MST-BE-B-01`<br>`getMeasurementByIds` data fetcher | 🟢 Low `XS` | Query | — | **Intent —** Fetch measurement sets by id.<br>**Today —** GET … → camelCase. ignored in DGS<br>**Done when:**<br>• Returns measurements for ids with `calculated` flag forwarded<br>• Empty ids → `[]`<br>• snake→camel mapping |
-| 🔷 `MST-BE-B-02`<br>`getUnitsOfMeasure` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the unit-of-measure lookup list (cached).<br>**Today —** GET … → units_of_measure camelCase<br>**Done when:**<br>• Returns UoM list (optionally filtered by ids)<br>• Cached |
-| 🔷 `MST-BE-B-03`<br>`getThicknessUnitsOfMeasure` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the thickness unit-of-measure lookup (cached).<br>**Today —** GET … → units_of_measure<br>**Done when:**<br>• Returns thickness UoM list<br>• Cached |
-| 🔷 `MST-BE-B-04`<br>`getMeasurementSetStatus` (cacheable) | 🟢 Low `XS` | Query | B-01 | **Intent —** Return the measurement-set status lookup (cached).<br>**Today —** GET … → {key:value} map → [{code, description}]<br>**Done when:**<br>• Returns statuses<br>• Cached<br>• key→code, value→description |
-| 🔷 `MST-BE-B-05`<br>`getSampleMeasurement` data fetcher | 🟢 Low `XS` | Query | B-01 | **Intent —** Fetch the measurement set for a sample.<br>**Today —** GET … → camelCase. ignored in DGS<br>**Done when:**<br>• Returns the sample measurement set for `sampleId`<br>• Not found → `null` |
+| 🔷 `MST-BE-B-02`<br>`getUnitsOfMeasure` · `getThicknessUnitsOfMeasure` · `getMeasurementSetStatus` · `getSampleMeasurement` data fetcher | 🟡 Medium `M` | Query | B-01 | **Grouped XS story —** combines former `B-03`, `B-04`, `B-05` (one PR train)<br>**Intent —** Return the unit-of-measure lookup list (cached); Return the thickness unit-of-measure lookup (cached); Return the measurement-set status lookup (cached); Fetch the measurement set for a sample<br>**Today —** GET … → units_of_measure camelCase. ; GET … → units_of_measure. ; GET … → {key:value} map → [{code, description}]. ; GET … → camelCase. ignored in DGS<br>**Done when:**<br>• `getUnitsOfMeasure`: Returns UoM list (optionally filtered by ids)<br>• `getUnitsOfMeasure`: Cached<br>• `getThicknessUnitsOfMeasure`: Returns thickness UoM list<br>• `getThicknessUnitsOfMeasure`: Cached<br>• `getMeasurementSetStatus`: Returns statuses<br>• `getMeasurementSetStatus`: Cached<br>• `getMeasurementSetStatus`: key→code, value→description<br>• `getSampleMeasurement` data fetcher: Returns the sample measurement set for `sampleId`<br>• `getSampleMeasurement` data fetcher: Not found → `null` |
 
 > **`MST-BE-B-01`** — **Note — DGS Module Init (this PR only):** Creates `measurement.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: be-03-schema.graphql.
 
@@ -137,15 +154,12 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | 🔷 `MST-BE-C-02`<br>`getMeasurementsElastic` data fetcher | 🟢 Low `XS` | Query<br>Calls: `search` | B-01 | **Intent —** Search a product's measurement sets via elastic.<br>**Today —** {content} = search.getMeasurementSets → sort createdAt DESC → {content}. - EXT Service Calls: EXT → key: search · severity: — elastic measurement-set index<br>**Done when:**<br>• Returns elastic content for `parentId`<br>• Sorted `createdAt DESC`<br>• Empty → `{content:[]}` |
 
 
-### ✏️ Phase D — Mutations (7 stories)
+### ✏️ Phase D — Mutations (4 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔶 `MST-BE-D-01`<br>`addMeasurement` mutation | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Create a measurement set.<br>**Today —** POST … (snake_case request, primeKey: humanId); on validationErrors\\|\\|message → throw. No ACL (new resource)<br>**Done when:**<br>• POST creates + returns mapped `Measurement`<br>• `validationErrors`/`message` → exception<br>• Cache primed with `humanId` |
-| 🔶 `MST-BE-D-02`<br>`updateMeasurementAccess` mutation | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Change who can access a measurement set.<br>**Today —** PUT …/{id}/permission body {systemTeamIds} or {systemTeamDto} (whichever provided). ignored in DGS<br>**Done when:**<br>• Sends `{systemTeamIds}` when provided, else `{systemTeamDto}`<br>• Returns updated measurement<br>• Input-shape decision recorded |
-| 🔶 `MST-BE-D-03`<br>`lockMeasurementSet` mutation | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Lock a measurement set from edits.<br>**Today —** PUT …/{id}/lock. ignored in DGS<br>**Done when:**<br>• PUT `/lock` returns locked set<br>• 404 → null |
-| 🔶 `MST-BE-D-04`<br>`unlockMeasurementSet` mutation | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Unlock a measurement set.<br>**Today —** PUT …/{id}/unlock<br>**Done when:**<br>• PUT `/unlock` returns unlocked set<br>• 404 → null |
-| 🔶 `MST-BE-D-05`<br>`updateMeasurementComponentStatus` mutation | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Update the component status on measurement sets.<br>**Today —** PUT …/component_status_update body {productId, ids, status}. No ACL token — confirm backend enforces (like BOM D-05)<br>**Done when:**<br>• PUT sends `{productId, ids, status}` snake_case<br>• Returns `MeasurementPaged{content}`<br>• Auth decision recorded |
+| 🔶 `MST-BE-D-02`<br>`updateMeasurementAccess` mutation · `lockMeasurementSet` mutation · `unlockMeasurementSet` mutation · `updateMeasurementComponentStatus` mutation | 🟡 Medium `M` | Mutation | B-01 | **Grouped XS story —** combines former `D-03`, `D-04`, `D-05` (one PR train)<br>**Intent —** Change who can access a measurement set; Lock a measurement set from edits; Unlock a measurement set; Update the component status on measurement sets<br>**Today —** PUT …/{id}/permission body {systemTeamIds} or {systemTeamDto} (whichever provided). ignored in DGS. ; PUT …/{id}/lock. ignored in DGS. ; PUT …/{id}/unlock. ; PUT…<br>**Done when:**<br>• `updateMeasurementAccess` mutation: Sends `{systemTeamIds}` when provided, else `{systemTeamDto}`<br>• `updateMeasurementAccess` mutation: Returns updated measurement<br>• `updateMeasurementAccess` mutation: Input-shape decision recorded<br>• `lockMeasurementSet` mutation: PUT `/lock` returns locked set<br>• `lockMeasurementSet` mutation: 404 → null<br>• `unlockMeasurementSet` mutation: PUT `/unlock` returns unlocked set<br>• `unlockMeasurementSet` mutation: 404 → null<br>• `updateMeasurementComponentStatus` mutation: PUT sends `{productId, ids, status}` snake_case<br>• `updateMeasurementComponentStatus` mutation: Returns `MeasurementPaged{content}`<br>• `updateMeasurementComponentStatus` mutation: Auth decision recorded |
 | 🔶 `MST-BE-D-06`<br>`putSampleMeasurementSet` mutation | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Create or replace a sample's measurement set.<br>**Today —** PUT …/sample (primeKey: sampleId); token for [measurementSetId, sampleId]; on validationErrors\\|\\|message → throw<br>**Done when:**<br>• PUT upserts the sample set<br>• `validationErrors`/`message` → exception<br>• Cache primed by `sampleId` |
 | 🔶 `MST-BE-D-07`<br>`deleteSampleMeasurementSet` mutation | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Delete a sample's measurement set.<br>**Today —** DELETE …/sample/{sampleId}. ignored in DGS<br>**Done when:**<br>• DELETE removes the sample set; returns the deleted/empty result<br>• 404 → null |
 

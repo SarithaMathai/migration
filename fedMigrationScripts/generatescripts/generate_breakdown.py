@@ -122,6 +122,31 @@ COMPLEXITY_ICONS = {
 }
 SIZE_MAP = {"low": "XS", "medium": "M", "high": "L", "very high": "XL"}
 
+# Nominal per-story day ranges by complexity — consistent with the AI-estimated phase
+# totals in each domain's be-04-po-summary.md (confirm in refinement). Used by the
+# 2-engineer lane plans and the program-level team plan.
+EFFORT_DAYS = {"low": (1, 2), "medium": (2, 4), "high": (4, 7), "very high": (7, 12)}
+
+# Domain ownership for the 2 BE + 2 FE team (one engineer owns a domain end-to-end;
+# lanes match 01-implementation-plan-2BE-2FE.md). Product FE is split across both.
+DOMAIN_OWNERS = {
+    "product":        {"be": "BE-1", "fe": "FE-1 + FE-2"},
+    "claims":         {"be": "BE-1", "fe": "FE-2"},
+    "impression":     {"be": "BE-1", "fe": "FE-2"},
+    "watchlist":      {"be": "BE-2", "fe": "FE-1"},
+    "productDetails": {"be": "BE-2", "fe": "FE-1"},
+    "measurement":    {"be": "BE-2", "fe": "FE-2"},
+    "packaging":      {"be": "BE-2", "fe": "FE-2"},
+    "bom":            {"be": "BE-2", "fe": "FE-1"},
+}
+PRIORITY_MAP = {"very high": "Highest", "high": "High", "medium": "Medium", "low": "Low"}
+
+# Merge logically-related XS stories into one story (fewer, chunkier tickets).
+# Grouping rule: same phase + same operation type + identical in-domain dependency set,
+# 🟢 Low complexity only, never the module-init scaffold / spike-gated / blocked stories.
+MERGE_XS = True
+MAX_XS_GROUP = 4          # ≥3 grouped XS promote the merged story to 🟡 Medium (M)
+
 TSHIRT_DATA = {
     "product":        (76, 330),
     "bom":            (42, 114),
@@ -741,7 +766,90 @@ def parse_stories(path: Path) -> list[dict]:
             "ext_services": ext_services,
             "intent":     intent_m.group(1).strip() if intent_m else "",
         })
-    return out   # keep Phase A — the type-resolver story (e.g. BOM A-04) is real, not dissolved
+    # keep Phase A — the type-resolver story (e.g. BOM A-04) is real, not dissolved
+    return merge_xs_stories(out) if MERGE_XS else out
+
+
+# ─── XS story merging (fewer, chunkier tickets) ───────────────────────────────
+def _dep_id_key(depends: str) -> tuple:
+    """Canonical in-domain dependency key for grouping: the sorted short ids."""
+    return tuple(sorted(set(re.findall(r"\b(?:[A-Z]+-BE-)?([A-G]-\d+(?:-\d+)?)\b", depends or ""))))
+
+
+def _op_name(title: str) -> str:
+    """`getClaimByIds(claimHumanIds)` → `getClaimByIds`."""
+    return re.sub(r"\(.*?\)", "", title).strip()
+
+
+def merge_xs_stories(stories: list[dict]) -> list[dict]:
+    """Merge 🟢 Low/XS stories that share phase + type + the same in-domain dependency
+    set into ONE story (id/anchor = first member). ≥3 members promote the merged story
+    to 🟡 Medium. All other stories' `Depends On` references to merged-away ids are
+    rewritten to the surviving id. `grouped_short`/`grouped_ids` record the members."""
+    keep: list[dict] = []
+    groups: dict[tuple, list[dict]] = {}
+    for s in stories:
+        mergeable = (
+            s["complexity"] == "low"
+            and "module init" not in (s.get("note", "") + " " + s["title"]).lower()
+            and not spike_for(s)
+            and not s.get("blocked")
+            and "SPIKE" not in (s.get("depends") or "")
+            and s["phase"] in PHASE_SEQ
+        )
+        if mergeable:
+            groups.setdefault((s["phase"], s["type"], _dep_id_key(s["depends"])), []).append(s)
+        else:
+            keep.append(s)
+
+    remap: dict[str, str] = {}   # merged-away short id -> surviving short id
+    merged_out: list[dict] = []
+    for members in groups.values():
+        members.sort(key=lambda s: s["id"])
+        # chunk so one merged story never swallows more than MAX_XS_GROUP XS
+        for i in range(0, len(members), MAX_XS_GROUP):
+            chunk = members[i:i + MAX_XS_GROUP]
+            if len(chunk) == 1:
+                merged_out.append(chunk[0])
+                continue
+            head = dict(chunk[0])
+            ops = [_op_name(m["title"]) for m in chunk]
+            head["title"] = " · ".join(ops)
+            head["complexity"] = "medium" if len(chunk) >= 3 else "low"
+            head["ac"] = [f"{_op_name(m['title'])}: {a}" for m in chunk for a in m["ac"]]
+            head["tests"] = [t for m in chunk for t in m["tests"]]
+            head["ext_services"] = list(dict.fromkeys(x for m in chunk for x in m["ext_services"]))
+            head["intent"] = "; ".join(dict.fromkeys(
+                m["intent"].rstrip(".") for m in chunk if m["intent"]))
+            head["covers"] = "; ".join(dict.fromkeys(m["covers"] for m in chunk if m["covers"]))
+            head["current"] = " ; ".join(dict.fromkeys(m["current"] for m in chunk if m["current"]))
+            head["target"] = " ; ".join(dict.fromkeys(m["target"] for m in chunk if m["target"]))
+            head["grouped_short"] = [_short_id(m["id"]) for m in chunk[1:]]
+            head["grouped_ids"] = [m["id"] for m in chunk[1:]]
+            for m in chunk[1:]:
+                remap[_short_id(m["id"])] = _short_id(head["id"])
+            merged_out.append(head)
+
+    out = keep + merged_out
+    if remap:
+        pat = re.compile(r"\b((?:[A-Z]+-BE-)?)([A-G]-\d+(?:-\d+)?)\b")
+        for s in out:
+            if s.get("depends") and s["depends"] != "—":
+                s["depends"] = dedupe_ids(pat.sub(
+                    lambda m: m.group(1) + remap.get(m.group(2), m.group(2)), s["depends"])) or "—"
+    # restore source order (phase, then id)
+    out.sort(key=lambda s: (PHASE_SEQ.find(s["phase"]) if s["phase"] in PHASE_SEQ else 99, s["id"]))
+    return out
+
+
+def xs_merge_map(domain: str) -> dict[str, str]:
+    """{merged-away FULL story id: surviving FULL story id} for one domain — lets the
+    frontend generator + Jira CSVs remap references to grouped XS stories."""
+    m: dict[str, str] = {}
+    for s in parse_stories(get_domain_dir(domain) / "be-04-stories.md"):
+        for gone in s.get("grouped_ids", []):
+            m[gone] = s["id"]
+    return m
 
 
 def group_by_phase(stories: list[dict]) -> dict[str, list]:
@@ -760,14 +868,15 @@ def _short_id(full_id: str) -> str:
     return m.group(1) if m else full_id
 
 
-def compute_implementation_order(stories: list[dict]):
-    """Layer the domain's stories into dependency steps (Kahn levels).
+def _dependency_graph(stories: list[dict]):
+    """Shared dep-graph builder for the order map and the team lane plan.
 
-    Returns (waves, gates, crit_path):
-      waves     – list of story-dict lists; a story in step N depends only on steps < N
-      gates     – {short_id: [gate strings]} — spike gates / cross-subgraph blocks
-                  (entry criteria, NOT ordering edges)
-      crit_path – the longest dependency chain, as short ids
+    Returns (by_short, deps, gates, scaffold):
+      by_short – {short_id: story dict}
+      deps     – {short_id: set of short_ids it depends on} (incl. the implicit scaffold edge)
+      gates    – {short_id: [gate strings]} — spike gates / cross-subgraph blocks
+                 (entry criteria, NOT ordering edges)
+      scaffold – short_ids of the module-init scaffold story
     """
     by_short = {_short_id(s["id"]): s for s in stories}
 
@@ -796,6 +905,19 @@ def compute_implementation_order(stories: list[dict]):
         if scaffold and k not in scaffold:
             d |= scaffold
         deps[k] = d
+    return by_short, deps, gates, scaffold
+
+
+def compute_implementation_order(stories: list[dict]):
+    """Layer the domain's stories into dependency steps (Kahn levels).
+
+    Returns (waves, gates, crit_path):
+      waves     – list of story-dict lists; a story in step N depends only on steps < N
+      gates     – {short_id: [gate strings]} — spike gates / cross-subgraph blocks
+                  (entry criteria, NOT ordering edges)
+      crit_path – the longest dependency chain, as short ids
+    """
+    by_short, deps, gates, _scaffold = _dependency_graph(stories)
 
     level: dict[str, int] = {}
     pending = dict(deps)
@@ -829,6 +951,18 @@ def compute_implementation_order(stories: list[dict]):
     return waves, gates, crit
 
 
+def _wave_focus(wave: list[dict]) -> str:
+    """Category label for one step of the order map — same convention as the FE order
+    map's Focus column (which stages by reads → search → writes → sagas)."""
+    if any("module init" in (s.get("note", "") + " " + s["title"]).lower() for s in wave):
+        return "🧱 Module init — schema skeleton, service wiring (unblocks everything)"
+    phases = sorted({s["phase"] for s in wave if s["phase"] in PHASE_SEQ}, key=PHASE_SEQ.find)
+    if not phases:
+        return "—"
+    focus = " · ".join(f"{PHASE_ICONS[p]} {PHASE_NAMES[p]}" for p in phases)
+    return f"Fan-out — {focus}" if len(phases) >= 4 else focus
+
+
 def implementation_order_md(stories: list[dict]) -> list[str]:
     """Markdown lines for the 'Recommended Implementation Order' section — shared by the
     .md breakdown and the .docx renderer so both stay identical."""
@@ -841,20 +975,21 @@ def implementation_order_md(stories: list[dict]) -> list[str]:
         "> Derived from each story's `Depends On` edges (plus the module-init scaffold as the "
         "implicit first step). A story appears in the earliest step where everything it depends "
         "on is already done; **stories in the same step are independent of each other and "
-        "parallelize across engineers**.",
+        "parallelize across engineers**. **Focus** names the phase category each step advances — "
+        "same convention as the frontend order map.",
         "",
         "> 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — "
         "a gated story slides later without reshuffling the map.",
         "",
-        "| Step | Stories (parallel set) | Entry gates in this step |",
-        "|---|---|---|",
+        "| Step | Stories (parallel set) | Entry gates in this step | Focus |",
+        "|---|---|---|---|",
     ]
     for i, wave in enumerate(waves, 1):
         cell = ", ".join(f"{COMPLEXITY_ICONS.get(s['complexity'], '⚪')} `{_short_id(s['id'])}`"
                          for s in wave)
         gate_bits = [f"`{_short_id(s['id'])}` → " + " · ".join(gates[_short_id(s["id"])])
                      for s in wave if _short_id(s["id"]) in gates]
-        lines.append(f"| {i} | {cell} | {'<br>'.join(gate_bits) or '—'} |")
+        lines.append(f"| {i} | {cell} | {'<br>'.join(gate_bits) or '—'} | {_wave_focus(wave)} |")
     if crit:
         lines += [
             "",
@@ -862,6 +997,116 @@ def implementation_order_md(stories: list[dict]) -> list[str]:
             f" — {len(crit)} sequential stories; everything else hangs off this chain in parallel.",
         ]
     lines += ["", "---", ""]
+    return lines
+
+
+# ─── Recommended story graph — 2 backend engineers ────────────────────────────
+def _schedule_lanes(stories: list[dict], n_eng: int = 2):
+    """Greedy list-scheduling of the dependency graph onto n engineers.
+
+    Returns (lanes, elapsed, sequential): lanes[e] = [(short_id, start, finish, stalled)],
+    times in nominal days (midpoint of EFFORT_DAYS); stalled marks a slot whose start was
+    delayed by a dependency, not by the engineer being busy."""
+    by_short, deps, _gates, _scaffold = _dependency_graph(stories)
+
+    def dur(k: str) -> float:
+        lo, hi = EFFORT_DAYS.get(by_short[k]["complexity"], (2, 4))
+        return (lo + hi) / 2
+
+    # priority = longest downstream chain (critical work first)
+    succ: dict[str, set] = {k: set() for k in by_short}
+    for k, ds in deps.items():
+        for d in ds:
+            succ.setdefault(d, set()).add(k)
+    weight: dict[str, float] = {}
+    def downstream(k: str) -> float:
+        if k not in weight:
+            weight[k] = 0.0   # cycle guard
+            weight[k] = dur(k) + max((downstream(x) for x in succ.get(k, ())), default=0.0)
+        return weight[k]
+    for k in by_short:
+        downstream(k)
+
+    eng_free = [0.0] * n_eng
+    finish: dict[str, float] = {}
+    lanes: list[list] = [[] for _ in range(n_eng)]
+    todo = set(by_short)
+    while todo:
+        best = None
+        for k in todo:
+            if any(d in todo for d in deps[k]):
+                continue
+            ready = max((finish[d] for d in deps[k]), default=0.0)
+            for e in range(n_eng):
+                start = max(eng_free[e], ready)
+                cand = (start, -weight[k], k, e, ready)
+                if best is None or cand < best:
+                    best = cand
+        if best is None:                      # dependency cycle — force the smallest id
+            k = min(todo)
+            e = eng_free.index(min(eng_free))
+            best = (eng_free[e], 0.0, k, e, eng_free[e])
+        start, _, k, e, ready = best
+        finish[k] = start + dur(k)
+        lanes[e].append((k, start, finish[k], ready > eng_free[e] + 1e-9))
+        eng_free[e] = finish[k]
+        todo.discard(k)
+    return lanes, max(eng_free, default=0.0), sum(dur(k) for k in by_short)
+
+
+def team_plan_md(stories: list[dict], n_eng: int = 2) -> list[str]:
+    """Markdown lines for 'Recommended Story Graph — 2 Backend Engineers' — the order
+    map above packed onto a fixed 2-engineer team. Shared by the .md breakdown and the
+    .docx renderer. Grouped-XS merges have already happened in parse_stories."""
+    if not stories:
+        return []
+    by_short, deps, gates, _scaffold = _dependency_graph(stories)
+    lanes, elapsed, sequential = _schedule_lanes(stories, n_eng)
+
+    def cell(k: str, stalled: bool) -> str:
+        s = by_short[k]
+        lo, hi = EFFORT_DAYS.get(s["complexity"], (2, 4))
+        txt = f"{COMPLEXITY_ICONS.get(s['complexity'], '⚪')} `{k}` ({lo}–{hi}d)"
+        if s.get("grouped_short"):
+            txt += " *(grouped XS: +" + ", ".join(f"`{x}`" for x in s["grouped_short"]) + ")*"
+        if k in gates:
+            txt += " " + " ".join(g.split()[0] for g in gates[k])
+        if stalled:
+            blockers = ", ".join(f"`{d}`" for d in sorted(deps[k])) or "deps"
+            txt = f"⏳ after {blockers} → {txt}"
+        return txt
+
+    hdr = " | ".join(f"👤 BE-{e + 1}" for e in range(n_eng))
+    lines = [
+        f"## Recommended Story Graph — {n_eng} Backend Engineers",
+        "",
+        "> The order map above assumes unlimited parallelism; this packs the **same dependency "
+        f"graph onto {n_eng} backend engineers** (greedy critical-chain scheduling, nominal "
+        "day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as "
+        "one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates "
+        "that slide a slot without reshuffling the lanes.",
+        "",
+        f"| Slot | {hdr} |",
+        "|---|" + "---|" * n_eng,
+    ]
+    for i in range(max((len(l) for l in lanes), default=0)):
+        row = [cell(l[i][0], l[i][3]) if i < len(l) else "—" for l in lanes]
+        lines.append(f"| {i + 1} | " + " | ".join(row) + " |")
+
+    flows = []
+    for e, lane in enumerate(lanes, 1):
+        chain = " → ".join(f"`{k}`" for k, *_ in lane) or "—"
+        flows.append(f"**BE-{e}:** {chain}")
+    lines += [
+        "",
+        "<br>".join(flows),
+        "",
+        f"**Elapsed (nominal midpoints):** ~{elapsed:.0f} working days with {n_eng} engineers "
+        f"vs ~{sequential:.0f} days sequential.",
+        "",
+        "---",
+        "",
+    ]
     return lines
 
 
@@ -899,6 +1144,9 @@ def _ac_cell(s: dict) -> str:
     """Build the Acceptance Criteria cell: Intent, Today, then bulleted Done-when — one cell,
     <br>-separated so it renders as stacked lines in Markdown/Confluence tables."""
     parts: list[str] = []
+    if s.get("grouped_short"):
+        parts.append("**Grouped XS story —** combines former "
+                     + ", ".join(f"`{x}`" for x in s["grouped_short"]) + " (one PR train)")
     if s.get("intent"):
         parts.append(f"**Intent —** {s['intent'].strip()}")
     today = minimal_logic(s)
@@ -1153,6 +1401,9 @@ def build_breakdown(domain: str) -> str:
     # §4b — Recommended Implementation Order (dependency-derived story map)
     lines += implementation_order_md(stories)
 
+    # §4c — Recommended Story Graph — 2 Backend Engineers (lane plan)
+    lines += team_plan_md(stories)
+
     # §5 — Jira Stories by Phase (TABLE format)
     lines += [
         "## Jira Stories by Phase",
@@ -1274,6 +1525,27 @@ def program_overview_preamble() -> list[str]:
     ]
 
 
+def fe_story_stats() -> "dict[str, tuple[int, int, int]]":
+    """Per-domain frontend rollup {domain: (stories, effort_lo, effort_hi)} from
+    fe-08-frontend-stories.md via generate_frontend's parser — loaded lazily because
+    generate_word imports this module (a top-level import would be circular).
+    Returns {} when the frontend analysis isn't present."""
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("generate_frontend", HERE / "generate_frontend.py")
+        fe   = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fe)                          # type: ignore[union-attr]
+        stats: dict[str, tuple[int, int, int]] = {}
+        for s in fe.parse_fe_stories():
+            k = fe.domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])
+            lo, hi = fe._effort_range(s["effort"])
+            c, tlo, thi = stats.get(k, (0, 0, 0))
+            stats[k] = (c + 1, tlo + lo, thi + hi)
+        return stats
+    except Exception:
+        return {}
+
+
 def build_global(domains: "list[str] | None" = None, scope_label: str = "All Domains") -> str:
     today   = date.today().isoformat()
     domains = domains or ALL_DOMAINS
@@ -1282,6 +1554,10 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     all_stats:   list[tuple] = []
     domain_data: list[tuple] = []
     grand_total = grand_vh = grand_hi = grand_me = grand_lo = 0
+    fe_stats    = fe_story_stats()
+    fe_total    = sum(fe_stats.get(d, (0, 0, 0))[0] for d in domains)
+    fe_lo       = sum(fe_stats.get(d, (0, 0, 0))[1] for d in domains)
+    fe_hi       = sum(fe_stats.get(d, (0, 0, 0))[2] for d in domains)
 
     for domain in domains:
         label = DOMAIN_LABELS[domain]
@@ -1329,8 +1605,9 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
         "| **Program** | `spark-internal-graphql` → Netflix DGS Federation (Hive Schema Registry) |",
         f"| **Domains** | {n_domains} |",
         f"| **Target DGS services** | {n_dgs} |",
-        f"| **Total Stories** | **{grand_total}** |",
-        f"| **Complexity** | 🔴 {grand_vh} Very High · 🟠 {grand_hi} High · 🟡 {grand_me} Medium · 🟢 {grand_lo} Low |",
+        f"| **Total Backend Stories** | **{grand_total}** |",
+        f"| **Total Frontend Stories** | **{fe_total}** · {fe_lo}–{fe_hi}d single-engineer (per-domain pages `FederatedGqlBreakDown-FE-<domain>`) |",
+        f"| **Complexity (backend)** | 🔴 {grand_vh} Very High · 🟠 {grand_hi} High · 🟡 {grand_me} Medium · 🟢 {grand_lo} Low |",
         f"| **Phase Coverage** | 🔬 {len(SPIKE_TITLES)} Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |",
         f"| **Cross-domain spikes** | 🔬 {len(SPIKE_TITLES)} program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |",
         f"| **Generated** | {today} |",
@@ -1346,21 +1623,26 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     lines += [
         "## Domain Index",
         "",
-        "> Each domain's full story detail is in its own breakdown page (named in the last column).",
+        "> Each domain's full story detail is in its own breakdown pages — backend `FederatedGqlBreakDown-BE-<domain>`, "
+        "frontend `FederatedGqlBreakDown-FE-<domain>` (both in `output/summary/<domain>/`). "
+        "Complexity columns are backend; FE effort is single-engineer, unbuffered.",
         "",
-        "| # | Domain | Target DGS | T-Shirt | Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | Breakdown page |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| # | Domain | Target DGS | T-Shirt | BE Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | FE Stories | FE effort | Breakdown pages |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
 
     for i, (domain, label, dgs, ts, total, vh, hi, me, lo) in enumerate(all_stats, 1):
+        fc, flo, fhi = fe_stats.get(domain, (0, 0, 0))
         lines.append(
             f"| {i} | **{label}** | `{dgs}` | **{ts}** | "
-            f"**{total}** | {vh} | {hi} | {me} | {lo} | `FederatedGqlBreakDown-BE-{domain}` |"
+            f"**{total}** | {vh} | {hi} | {me} | {lo} | **{fc}** | {flo}–{fhi}d | "
+            f"`FederatedGqlBreakDown-BE-{domain}` · `FederatedGqlBreakDown-FE-{domain}` |"
         )
 
     lines += [
         f"| | **TOTAL** | — | — | **{grand_total}** | "
-        f"**{grand_vh}** | **{grand_hi}** | **{grand_me}** | **{grand_lo}** | — |",
+        f"**{grand_vh}** | **{grand_hi}** | **{grand_me}** | **{grand_lo}** | "
+        f"**{fe_total}** | **{fe_lo}–{fe_hi}d** | — |",
         "",
         "---",
         "",

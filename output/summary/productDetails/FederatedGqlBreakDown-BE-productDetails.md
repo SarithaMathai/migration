@@ -4,10 +4,10 @@
 |---|---|
 | **Target DGS** | `plm-product (co-located)` |
 | **T-Shirt Size** | **M** |
-| **Total Stories** | 13 |
-| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 7 Medium · 🟢 5 Low |
+| **Total Stories** | 11 |
+| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 8 Medium · 🟢 2 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-16 |
+| **Generated** | 2026-07-17 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
 
@@ -98,17 +98,36 @@ associations, then bulk-archive removed attachments, then the body — with no r
 
 ## Recommended Implementation Order
 
-> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**.
+> Derived from each story's `Depends On` edges (plus the module-init scaffold as the implicit first step). A story appears in the earliest step where everything it depends on is already done; **stories in the same step are independent of each other and parallelize across engineers**. **Focus** names the phase category each step advances — same convention as the frontend order map.
 
 > 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — a gated story slides later without reshuffling the map.
 
-| Step | Stories (parallel set) | Entry gates in this step |
-|---|---|---|
-| 1 | 🟢 `B-01` | — |
-| 2 | 🟡 `C-01`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟡 `D-04`, 🟢 `D-05`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟡 `G-02`, 🟡 `G-03` | `E-01` → 🔬 SPIKE-01 |
-| 3 | 🟡 `G-04` | — |
+| Step | Stories (parallel set) | Entry gates in this step | Focus |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
+| 2 | 🟡 `C-01`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-04`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟡 `G-02`, 🟡 `G-03` | `E-01` → 🔬 SPIKE-01 | Fan-out — 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 3 | 🟡 `G-04` | — | 🧪 Field Resolvers & Tests |
 
 **Critical path:** `B-01` → `E-01` → `G-04` — 3 sequential stories; everything else hangs off this chain in parallel.
+
+---
+
+## Recommended Story Graph — 2 Backend Engineers
+
+> The order map above assumes unlimited parallelism; this packs the **same dependency graph onto 2 backend engineers** (greedy critical-chain scheduling, nominal day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates that slide a slot without reshuffling the lanes.
+
+| Slot | 👤 BE-1 | 👤 BE-2 |
+|---|---|---|
+| 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟡 `G-01` (2–4d) |
+| 2 | 🟠 `E-01` (4–7d) 🔬 | 🟡 `C-01` (2–4d) |
+| 3 | 🟡 `D-01` (2–4d) | 🟡 `D-02` (2–4d) *(grouped XS: +`D-03`, `D-05`)* |
+| 4 | 🟡 `D-04` (2–4d) | 🟡 `G-02` (2–4d) |
+| 5 | 🟡 `G-03` (2–4d) | 🟡 `G-04` (2–4d) |
+| 6 | 🟢 `F-01` (1–2d) | — |
+
+**BE-1:** `B-01` → `E-01` → `D-01` → `D-04` → `G-03` → `F-01`<br>**BE-2:** `G-01` → `C-01` → `D-02` → `G-02` → `G-04`
+
+**Elapsed (nominal midpoints):** ~18 working days with 2 engineers vs ~32 days sequential.
 
 ---
 
@@ -132,15 +151,13 @@ associations, then bulk-archive removed attachments, then the body — with no r
 | 🔷 `PDTL-BE-C-01`<br>`getProductDetailsElastic(resourceId)` | 🟡 Medium `M` | Query<br>Calls: `search` | B-01 | **Intent —** Search a product's product-detail sets via elastic.<br>**Today —** (search) search.getProductDetailsElastic → paged. - EXT: search<br>**Done when:**<br>• `parentId:` elastic query built<br>• paged shape returned |
 
 
-### ✏️ Phase D — Mutations (5 stories)
+### ✏️ Phase D — Mutations (3 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔶 `PDTL-BE-D-01`<br>`createProductDetailsSet` | 🟡 Medium `M` | Mutation | B-01 | **Intent —** Create a product-detail set.<br>**Today —** token for literal capability → POST construction/v1 (snake_case). If response has validationErrors or message → throw<br>**Done when:**<br>• creates set<br>• validation error → exception (not a partial object) |
-| 🔶 `PDTL-BE-D-02`<br>`updateProductDetailAccess` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Change who can access a product-detail set.<br>**Today —** map managePermissionsRequest[].resourceId → token → PUT construction/v1/manage-permissions (primeKey=humanId)<br>**Done when:**<br>• updates partner access for each resource |
-| 🔶 `PDTL-BE-D-03`<br>`productDetailLockUnlock` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Lock or unlock a product-detail set.<br>**Today —** token for [constructionSetId] → PUT construction/v1/{id}/{lock\\|unlock}<br>**Done when:**<br>• `isLock=true`→lock path, false→unlock path |
+| 🔶 `PDTL-BE-D-02`<br>`updateProductDetailAccess` · `productDetailLockUnlock` · `updateProductDetailComponentStatus` | 🟡 Medium `M` | Mutation | B-01 | **Grouped XS story —** combines former `D-03`, `D-05` (one PR train)<br>**Intent —** Change who can access a product-detail set; Lock or unlock a product-detail set; Update component status on product-detail sets<br>**Today —** map managePermissionsRequest[].resourceId → token → PUT construction/v1/manage-permissions (primeKey=humanId). ; token for [constructionSetId] → PUT…<br>**Done when:**<br>• `updateProductDetailAccess`: updates partner access for each resource<br>• `productDetailLockUnlock`: `isLock=true`→lock path, false→unlock path<br>• `updateProductDetailComponentStatus`: updates statuses; result wrapped as `{content}`<br>• `updateProductDetailComponentStatus`: no-token behaviour documented |
 | 🔶 `PDTL-BE-D-04`<br>`cloneFilesForProductDetails` | 🟡 Medium `M` | Mutation<br>Calls: `attachment` | B-01 | **Intent —** Copy attachment files for product details.<br>**Today —** token → Promise.all(attachmentIds.map((id,i) => (attachment) cloneAttachmentV3({cloneReferences:[cloneReference[i]]}, id))), stamp parentResource=id, flatten. No…<br>**Done when:**<br>• clones each id with its paired cloneReference<br>• `parentResource` stamped |
-| 🔶 `PDTL-BE-D-05`<br>`updateProductDetailComponentStatus` | 🟢 Low `XS` | Mutation | B-01 | **Intent —** Update component status on product-detail sets.<br>**Today —** PUT construction/v1/component_status_update; wraps result as {content}. No JWT — confirm backend-enforced<br>**Done when:**<br>• updates statuses; result wrapped as `{content}`<br>• no-token behaviour documented |
 
 
 ### ⚙️ Phase E — Complex Operations (1 stories)
