@@ -2,7 +2,7 @@
 
 > **Status:** 🔴 Proposed — draft for review
 > **Spike:** `SPIKE-02` · **Home stubs:** `PRODUCT-BE-E-03` (facade) · `PRODUCT-BE-E-04` (bulk) ·
-> **Gates:** `F-01–F-08` (per-domain federation) · `F-09` (retire facade)
+> **Gates:** `H-01–H-05` + co-located `F-04`/`F-06`/`F-08` (per-domain federation) · `F-09` (retire facade)
 > **Scope:** how the 11-field `ResourcesCount` badge aggregate is assembled under federation — one panel,
 > ~8 domains' data, today one 200-line helper. Reads only; no writes in this case.
 > **Related:** ADR-014 (components/counts rollups — same owner-computed-read stance) ·
@@ -96,7 +96,7 @@ search/elastic → `plm-elastic-search` · bom/measurement/construction/watchlis
 >   (and, via step 6, critical discussions). The other **8 of 11 fields are one direct elastic query each**,
 >   already keyed by `productId + partnerId`.
 > - 8 domains' *data*, but only **4 physical services** are ever called; every domain slice is an elastic
->   index. Re-homing a slice to its owning subgraph (`F-01–F-08`) changes *who runs the query*, not the query.
+>   index. Re-homing a slice to its owning subgraph (`H-01–H-05` + co-located `F-04`/`F-06`/`F-08`) changes *who runs the query*, not the query.
 > - So the aggregate decomposes cleanly: each badge is independently computable by its owner; only the
 >   attachment/discussion slices need the walk replaced by an owner-side query.
 
@@ -107,7 +107,7 @@ search/elastic → `plm-elastic-search` · bom/measurement/construction/watchlis
 - Phase-1 goal is **behavioral parity** (recorded fixtures) — including the packet-critical filter, the
   sample post-filter, per-index statusId quirks, and the parent double-walk semantics.
 - The panel is a single screen paint — but only `plm-product` exists on day 1; **7 of 8 owning subgraphs
-  aren't live**, so pure federation-native cannot ship first (`F-01–F-08` each block on a domain).
+  aren't live**, so pure federation-native cannot ship first (`H-01–H-05` each block on a domain).
 - The Relationship-Service walk is **retiring** — its replacement must not be rebuilt per domain later.
 - The `TechPack/` spike clone already **validated the end-state mechanics** E2E: `ProductTechPack` shell
   `@key(productId partnerId)`, co-located lanes, `plm-attachment` / `plm-discussion` contributing fields
@@ -161,7 +161,7 @@ search/elastic → `plm-elastic-search` · bom/measurement/construction/watchlis
 - Port the 14 steps into one Kotlin service; loaders become REST/Feign clients; done.
 - ➕ exact parity · single deliverable · no new seams.
 - ➖ the 200-line 8-domain function survives as the permanent shape — no domain ever owns its badge ·
-  `F-01–F-08` would then be a *rewrite*, not a re-homing · the retiring relationship walk gets a new lease.
+  `H-01–H-05` would then be a *rewrite*, not a re-homing · the retiring relationship walk gets a new lease.
 
 ### B — Facade-then-federate ⭐ (the already-resolved stance, formalized)
 
@@ -169,9 +169,9 @@ search/elastic → `plm-elastic-search` · bom/measurement/construction/watchlis
   `TechPackAggregatorClient` (Feign) → an aggregation facade extracted from `getTechPackResourceCountMap`,
   behavior-identical except the pinned fixes below. `@DgsEntityFetcher(name = "ResourcesCount")` rebuilds
   the entity for `_entities`.
-- **Phase 2 (`F-01–F-08`):** each domain, as its subgraph goes live, contributes its fields to the shared
-  entity — `extend type ResourcesCount @key(fields: "productId partnerId")` — attachment (`F-01`),
-  discussions (`F-02`), samples (`F-03`), claims (`F-05`), and co-located bom/measurement/construction/
+- **Phase 2 (`H-01–H-05` + co-located `F-04`/`F-06`/`F-08`):** each domain, as its subgraph goes live, contributes its fields to the shared
+  entity — `extend type ResourcesCount @key(fields: "productId partnerId")` — attachment (`H-01`),
+  discussions (`H-02`), samples (`H-03`), claims (`H-04`), and co-located bom/measurement/construction/
   watchlist lanes in-process; the facade stops serving that field.
 - **Phase 3 (`F-09`):** facade deleted; the query returns only the keyed shell; the gateway fans out.
 - ➕ day-1 function with exact parity · every slice migrates independently, ship-on-green ·
@@ -226,7 +226,7 @@ sequenceDiagram
     participant SM as plm-sample
     participant CL as spark-claims
 
-    Note over UI,CL: End state — federated (F-01–F-08, facade retired F-09)
+    Note over UI,CL: End state — federated (H-01–H-05 + co-located F-04/F-06/F-08, facade retired F-09)
     UI->>GW: getProductTechPackCountV1
     GW->>PP: shell {productId partnerId} + bom/meas/constr/watchlist lanes
     par gateway _entities fan-out
@@ -242,7 +242,7 @@ sequenceDiagram
 
 ## 4. Proposed decision (to ratify)
 
-- **Option B** — facade-then-federate, exactly as the `E-03`/`E-04` + `F-01–F-09` story chain already encodes:
+- **Option B** — facade-then-federate, exactly as the `E-03`/`E-04` + `H-01–H-05`/`F-09` story chain already encodes:
   - `E-03` ships the thin stub + facade (extracted, behavior-frozen, fixes below only),
   - each `F0x` re-homes one slice when its subgraph is live (ship-on-green, per-slice parity fixture),
   - `F-09` retires the facade once all 8 report green.
@@ -263,7 +263,7 @@ sequenceDiagram
 | 7 | Parent double-walk | keep vs single combined walk | keep in the facade (parity); dies naturally at federation (owners query `parentId IN (…)`) |
 | 8 | Per-index statusId quirks (200/501/`archived:false`) | — | preserve verbatim; record in the per-slice parity fixtures so `F0x` owners inherit them consciously |
 | 9 | Facade placement | module in `plm-product` vs separate deployable | Feign-fronted facade per `E-03`'s shape, but **deploy inside `plm-product`** — no new always-on service for throwaway code |
-| 10 | `discussionAttachments` critical-union semantics | — | preserve `∪(critical-discussion attachments, packet-critical)` exactly; it is the `F-01`/`F-02` contract boundary |
+| 10 | `discussionAttachments` critical-union semantics | — | preserve `∪(critical-discussion attachments, packet-critical)` exactly; it is the `H-01`/`H-02` contract boundary |
 
 ---
 
@@ -271,7 +271,7 @@ sequenceDiagram
 
 - If accepted:
   - `E-03` builds one frozen facade + thin stub; `E-04` is a wrapper with the ordering fix,
-  - `F-01–F-08` become mechanical re-homings against per-slice fixtures already recorded from the facade,
+  - `H-01–H-05` become mechanical re-homings against per-slice fixtures already recorded from the facade,
   - the Relationship-Service dependency is quarantined inside the facade and deleted with it (`F-09`),
   - dashboard latency improves immediately (pin-downs 2–3) without changing any count.
 - Risks:
@@ -294,5 +294,5 @@ Per `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`:
 2. Flip `00-overview.md` §2 to **Decided**; add `01-stories.md` + implementation notes
    (incl. the pin-down table as the facade's deviation list).
 3. Replace the techpack placeholders in `output/analysis/product/be-04-stories.md`
-   (`E-03`, `E-04`, `F-01–F-09`) with the concrete pattern above.
+   (`E-03`, `E-04`, `H-01–H-05`, `F-09`) with the concrete pattern above.
 4. Regenerate domain + global docs; push to Jira/Confluence.

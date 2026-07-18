@@ -81,7 +81,7 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 |---|---|---|
 | 1 engineer | ~8–14 sprints | sequential |
 | 2 engineers | ~5–8 sprints | reads + mutations parallel |
-| 3 engineers | ~4–6 sprints | critical path A → E-01 → G-01 → G-03 |
+| 3 engineers | ~4–6 sprints | critical path A → E-01 → G-01 → G-04 |
 
 ---
 
@@ -92,9 +92,8 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | 1 | B-01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
 | 2 | C-01/C-02 + D-01–D-04 | listing + simple mutations |
 | 3 | D-05–D-07 + E-01 | remaining mutations + `updateMeasurement` |
-| 4 | G-01–G-02 | field resolvers |
-| 5 | G-03 | tests & parity |
-| post-launch | F-01, F-02 | federation contributions |
+| 4 | G-01–G-02, G-04 | field resolvers (G-04 recommended, PO-gated). Test coverage/parity tracked outside this Jira pipeline, created manually. |
+| post-launch | F-01, H-01 | federation contributions |
 
 ---
 

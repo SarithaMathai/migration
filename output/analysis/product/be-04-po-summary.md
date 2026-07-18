@@ -28,7 +28,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
   gateway/platform stories (`F-10`, `F-11`), and the **TechPack facade** (`E-03`/`E-04`), which is *designed* to
   work day 1 before any sibling federates.
 - ⛔ **Waits for an owning subgraph (the exception)** — the true cross-subgraph federation stories
-  **`F-01` (attachment), `F-02` (discussion), `F-03` (sample), `F-05` (claim), `F-07` (construction)**, plus
+  **`H-01` (attachment), `H-02` (discussion), `H-03` (sample), `H-04` (claim), `H-05` (construction)**, plus
   **`F-09`** (facade retirement, which needs all 8 contributions live). These are the only stories held back
   from per-story prod release.
 
@@ -70,7 +70,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | `getProducts` two-stage hydration (C-01) | 🟡 Medium-High | `S-02` spike (program id `SPIKE-06a`) resolves workspace-filter placement + elastic/canonical staleness before `C-01` starts |
 | Cross-domain association pattern (D-01/D-02/D-04) | 🟡 Medium | `S-01` spike (program id `SPIKE-06b`, draft ADR-011) picks one pattern for the 3 cross-subgraph mutations; D-03/D-06/D-07/D-11 descoped (single-backend) |
 | `components` / `attachmentsWithMetaData` (G-01/G-02) | 🟡 Medium-High | Large, performance-sensitive; budget X-Large |
-| `division` latent bug (G-12) | 🟡 Medium | Fixing it changes the response shape — client survey before rollout |
+| `division` latent bug (`Product.division`/`DopplerDepartment.division` wrong-loader bug, tracked outside this Jira pipeline) | 🟡 Medium | Fixing it changes the response shape — client survey before rollout |
 | 8 TechPack placeholders block on 8 domains | 🟡 Medium | Facade keeps it working; retire only when all siblings are live |
 | Rules feature-flag + external rating secret | 🟢 Low | Verify flag everywhere; move the rating key to Vault |
 
@@ -85,7 +85,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | 2 | `productBusinessPartnerActions` failure strategy | 🔬 **Spike** `PRODUCT-BE-S-03` (program id `SPIKE-03`, run first) | Blocks `E-01`. Draft ADR-012 in `complexStories/partner-drop-undrop-write/`. |
 | 3 | Delete or `@deprecated` the 3 drift partner wrappers | ⬜ Open (not a spike — needs a traffic survey, not research) | Blocks `F-12`. Owner: PO. |
 | 4 | `USE_NEW_RULES_API` cutover (rules may move to spark-tag DGS) | ⬜ Open (not a spike) | Blocks `B-10`/`B-11`/`C-05`. Owner: Product Owner. |
-| 5 | `Product.division` bug fix — ship the response-shape change after a client survey | ✅ Resolved — ship straight, survey first | Blocks `G-12`. Owner: PO. See `G-12`'s write-up. |
+| 5 | `Product.division` bug fix — ship the response-shape change after a client survey | ✅ Resolved — ship straight, survey first | Tracked outside this Jira pipeline, created manually — see `be-04-stories.md` Phase G's `G-13` note. Owner: PO. |
 | 6 | `components` ACL batching approach | ✅ Resolved — batch, no N+1 | See `G-02`'s pseudocode; not an open question. |
 | — | `getProducts` two-stage hydration design | 🔬 **Spike** `PRODUCT-BE-S-02` | Blocks `C-01`. New item raised in review, not in the original 6. |
 | — | Cross-domain association pattern (attachments/teams/partners/workspace) | 🔬 **Spike** `PRODUCT-BE-S-01` (program id `SPIKE-06b`) | Blocks `D-01`/`D-02`/`D-04` only — draft ADR-011 descopes `D-03` (pure passthrough) and `D-06`/`D-07`/`D-11` (single-backend writes). Prior teams↔domain research (ADR-010) is directly on-topic. |
@@ -109,10 +109,10 @@ plm-product (Product subgraph, the host DGS) depends on:
 | 4 | C-01–C-05 | search/listing + rating + rules search (C-01 needs `SPIKE-06a` concluded) |
 | 5–6 | D-01–D-18 | all simple mutations, parallelizable (D-01/D-02/D-04 need `SPIKE-06b` concluded; D-03/D-06/D-07/D-11 unblocked) |
 | 7–8 | E-03/E-04 | TechPack facade + bulk (focused; facade-then-federate direction already resolved, draft ADR-015) |
-| 9 | E-01/E-02 | partner actions (needs `SPIKE-03` concluded) + component fan-out |
-| 10–12 | G-01–G-10, G-11-1, G-11-2, G-12–G-14 | field resolvers (G-01/G-02 X-Large get their own sprint) |
-| 13 | G-15 + G-16 | utils port + tests/parity/load/cut-over |
-| post-launch | F-01–F-09 | TechPack federation (unblocked as siblings migrate) + facade retirement |
+| 9 | E-00 (shared `WriteSaga` module, Sprint-0 critical path) + E-01/E-02 | partner actions (needs `SPIKE-03` concluded) + component fan-out |
+| 10–12 | G-01–G-10, G-11-1, G-11-2, G-13–G-14 | field resolvers (G-01/G-02 X-Large get their own sprint) |
+| 13 | G-15 | utils port (Kotlin). Test coverage/parity/load/cut-over rehearsal tracked outside this Jira pipeline, created manually. |
+| post-launch | H-01–H-06, F-09 | TechPack federation (unblocked as siblings migrate) + facade retirement |
 | any | F-10–F-12 | gateway composition + platform verify + drift decision |
 
 ## Capacity Planning

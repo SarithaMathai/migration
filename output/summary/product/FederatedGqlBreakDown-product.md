@@ -81,7 +81,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
   gateway/platform stories (`F-10`, `F-11`), and the **TechPack facade** (`E-03`/`E-04`), which is *designed* to
   work day 1 before any sibling federates.
 - ⛔ **Waits for an owning subgraph (the exception)** — the true cross-subgraph federation stories
-  **`F-01` (attachment), `F-02` (discussion), `F-03` (sample), `F-05` (claim), `F-07` (construction)**, plus
+  **`H-01` (attachment), `H-02` (discussion), `H-03` (sample), `H-04` (claim), `H-05` (construction)**, plus
   **`F-09`** (facade retirement, which needs all 8 contributions live). These are the only stories held back
   from per-story prod release.
 
@@ -130,10 +130,10 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | 4 | C-01–C-05 | search/listing + rating + rules search (C-01 needs `SPIKE-06a` concluded) |
 | 5–6 | D-01–D-18 | all simple mutations, parallelizable (D-01/D-02/D-04 need `SPIKE-06b` concluded; D-03/D-06/D-07/D-11 unblocked) |
 | 7–8 | E-03/E-04 | TechPack facade + bulk (focused; facade-then-federate direction already resolved, draft ADR-015) |
-| 9 | E-01/E-02 | partner actions (needs `SPIKE-03` concluded) + component fan-out |
-| 10–12 | G-01–G-10, G-11-1, G-11-2, G-12–G-14 | field resolvers (G-01/G-02 X-Large get their own sprint) |
-| 13 | G-15 + G-16 | utils port + tests/parity/load/cut-over |
-| post-launch | F-01–F-09 | TechPack federation (unblocked as siblings migrate) + facade retirement |
+| 9 | E-00 (shared `WriteSaga` module, Sprint-0 critical path) + E-01/E-02 | partner actions (needs `SPIKE-03` concluded) + component fan-out |
+| 10–12 | G-01–G-10, G-11-1, G-11-2, G-13–G-14 | field resolvers (G-01/G-02 X-Large get their own sprint) |
+| 13 | G-15 | utils port (Kotlin). Test coverage/parity/load/cut-over rehearsal tracked outside this Jira pipeline, created manually. |
+| post-launch | H-01–H-06, F-09 | TechPack federation (unblocked as siblings migrate) + facade retirement |
 | any | F-10–F-12 | gateway composition + platform verify + drift decision |
 
 ---

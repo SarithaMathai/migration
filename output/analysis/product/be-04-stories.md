@@ -16,8 +16,9 @@
 | C | Search & Listing | C-01–C-05 |
 | D | Mutations (simple) | D-01–D-18 |
 | E | Complex Operations (partner actions, component fan-out, TechPack) | E-01–E-04 |
-| F | Federation & Stitching (TechPack federate + gateway + decisions; **F-13/F-14 added by the federation review**) | F-01–F-14 |
+| F | Federation & Stitching — platform/gateway work (facade retirement, composition, stub verification, contract alignment; **F-14 added by the federation review**) | F-04, F-06, F-08–F-12, F-14 |
 | G | Field Resolvers, Utils (**G-11 split into G-11-1/G-11-2**; **G-17 added, recommended/PO-gated**) | G-01–G-11-2, G-13–G-15, G-17 |
+| H | Entity Resolution — cross-subgraph `@DgsEntityFetcher`/`@key` fields resolved by a *separate* subgraph (split out from Phase F) | H-01–H-06 |
 
 > **Phase 0 note.** Three items that used to sit as open "Decisions Required" bullets, or as a bare annotation
 > on a story row, are now real spike stories: `S-01` (cross-domain association pattern, program id
@@ -1013,12 +1014,12 @@ val results = inputs.map { byProductId.getValue(it.productId) }        // now or
 >
 > - 🔗 **Cross-subgraph federation** (`extend type ResourcesCount @key(fields:"productId partnerId")` +
 >   `@DgsEntityFetcher`) — used when the owning data lives in a **separate DGS**. These **⛔ cannot ship until
->   that owning subgraph is deployed** → marked **BLOCKED-BY `<domain>`**. Stories: `F-01, F-02, F-03, F-05, F-07`.
+>   that owning subgraph is deployed** → marked **BLOCKED-BY `<domain>`**. Stories: `H-01, H-02, H-03, H-04, H-05`.
 > - 🏠 **Internal same-subgraph `@DgsData`** — used when the owning domain is **co-located in `plm-product`**
 >   (bom/measurement/watchlist). No federation, no separate deploy → **✅ ships on green**. Stories: `F-04, F-06, F-08`.
 >
-> Ownership map: F-01 Attachment · F-02 Discussion · F-03 Sample · F-04 Measurement · F-05 Claim · F-06 BOM ·
-> F-07 Construction · F-08 Watchlist. Federation-pattern reference: `scripts/reference-federation-patterns.md §0/§3`.
+> Ownership map: H-01 Attachment · H-02 Discussion · H-03 Sample · F-04 Measurement · H-04 Claim · F-06 BOM ·
+> H-05 Construction · F-08 Watchlist. Federation-pattern reference: `scripts/reference-federation-patterns.md §0/§3`.
 
 ---
 
@@ -1192,7 +1193,7 @@ verification + the remaining declaration work into the DGS implementation:
 by walking the product's relationship graph. Once `plm-attachment` is federated, **Attachment** answers these
 fields directly against its own store, filtered by partner — no graph walk, no serial ACL.
 
-- **Example — the federated shape (this is the representative case; `F-02`/`F-03`/`F-05`/`F-07` are identical in
+- **Example — the federated shape (this is the representative case; `H-02`/`H-03`/`H-04`/`H-05` are identical in
 shape, just a different owning subgraph + field name):**
 ```graphql
 # plm-attachment — owns productAttachments/discussionAttachments, extends the shell product defines

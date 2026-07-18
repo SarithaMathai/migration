@@ -15,8 +15,9 @@ Engineers: read *Current Behaviour → Target → Files → Acceptance → Tests
 | C | Listing (relationship/elastic) | C-01–C-02 |
 | D | Mutations (simple) | D-01–D-07 |
 | E | Complex (`updateMeasurement`) | E-01 |
-| F | Federation Contributions | F-01–F-02 (BLOCKED-BY product/sample) |
+| F | Federation Contributions (internal) | F-01 |
 | G | Field Resolvers | G-01–G-04 (G-04 recommended, PO-gated — federation review) |
+| H | Entity Resolution — cross-subgraph contribution (BLOCKED-BY sample) | H-01 |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
@@ -26,7 +27,7 @@ graph TD
   B01["B-01 getMeasurementByIds\n(DGS module init in this PR)"]-->B[B-01-B-05 Reads]&C[C-01-C-02 Listing]&D[D-01-D-07 Mutations]&E01[E-01 updateMeasurement]
   B01-->G01[G-01 Measurement fields]&G02[G-02 SampleSet fields]
   PROD[product Phase 3]-.->F01[F-01 Product.measurementSets]
-  SAMP[sample Phase 3]-.->F02[F-02 SampleV2.sampleMeasurement]
+  SAMP[sample Phase 3]-.->H01[H-01 SampleV2.sampleMeasurement]
 ```
 
 ---
@@ -415,7 +416,7 @@ until then).
 - **Stories:** 20 (B:5 · C:2 · D:7 · E:1 · F:2 · G:3). G-04 (recommended, PO-gated) added by the federation review. Bug-fix/test-coverage stories (`G-03`) tracked outside this Jira pipeline, created manually.
 - **Critical path:** E-01; C-01.
 - **Highest risk:** `updateMeasurement` 2-step write; relationship dependency in `getMeasurements`.
-- **Independent of federation:** ships before F-01/F-02.
+- **Independent of federation:** ships before F-01/H-01.
 
 ---
 - **Phase Completed:** Phase 4 · **Domain:** `measurement`.

@@ -41,17 +41,39 @@
 > `python fedMigrationScripts/generatescripts/generate_all.py` — not dry-run tested, actually run — and the
 > old orphaned `FederatedGqlBreakDown-BE-*`/`-FE-*` and `01-implementation-plan-2BE-2FE.*` files were
 > removed. `output/analysis/*/fe-{domain}-breakdown.md` co-located copies were refreshed in the same run.
-> **A thorough independent review pass** (separate from the authoring work) then caught and fixed several
-> real defects post-regeneration: a wrong `Parent Link` in `non-atomic-write-saga.csv` (the shared-module
-> case's CSV nested every domain's rows under one domain's stub instead of each domain's own —
-> `output/complexStories/generate.py`'s `home_stub()` logic), stale `F-01`–`F-08`/`MST-BE-F-02` prose
-> references left over from the Phase H rename (10 locations in `product/be-04-stories.md` +
-> `generate_all.py`'s hardcoded cross-domain-blockers table), a merged-page heading-level bug (`## Backend`/
-> `## Frontend` colliding with the nested page's own demoted title instead of nesting under it), Phase H
-> missing from the phases glossary/table, a nondeterministic "Critical path" line (unsorted set iteration —
-> now sorted, stable across runs), and one story (`BOM-BE-G-15`) that was miscategorized as a bug-fix/test
-> story and wrongly deleted alongside a genuinely test-shaped story — restored. **Regeneration must be
-> re-run once more** after these fixes before the output on disk fully reflects them.
+> **Two independent review passes** (separate from the authoring work) caught and fixed several real
+> defects post-regeneration: a wrong `Parent Link` in `non-atomic-write-saga.csv` (the shared-module case's
+> CSV nested every domain's rows under one domain's stub instead of each domain's own —
+> `output/complexStories/generate.py`'s `home_stub()` logic — plus a follow-on bug in the fix itself, a
+> malformed `SAMPLE-BE-E-E-02` id from an incorrect shorthand-expansion regex, caught and fixed in the same
+> pass), stale `F-01`–`F-08`/`MST-BE-F-02` prose references left over from the Phase H rename — found across
+> three separate waves as each pass's own fix surfaced the next: `generate_all.py`'s hardcoded
+> cross-domain-blockers table (wave 1), 5 lines of prose in `product/be-04-stories.md` — a Phases-Overview
+> table missing its Phase H row, an ownership map, and 2 other lines (wave 2, caught by the second review
+> pass), and finally a manual full sweep of every domain's `be-04-po-summary.md` (wave 3, not covered by
+> either automated review) which found 4 more stale `product/be-04-po-summary.md`/`claims/`/`measurement/`
+> references to the same renamed ids, plus separately **11 references across 7 domains' po-summary files
+> to G-phase stories removed earlier in the session** (`G-16`/`G-12`/`G-05`/`G-03`/`G-04`/`G-06`, each
+> domain's own now-manually-tracked bug-fix/test-coverage story) — all now corrected. Every domain's own
+> genuinely-still-internal `F-01`/`F-02` (bom, impression, measurement, packaging, productDetails,
+> watchlist all have their own unrenamed internal Phase-F stories, distinct from product's renamed ones)
+> was deliberately left untouched. `claims`'s and `measurement`'s own phase-header tables and mermaid
+> diagrams (which genuinely did have renamed ids — `CLAIM-BE-F-01/F-02` → `H-01/H-02`, `MST-BE-F-02` →
+> `MST-BE-H-01`) and `output/complexStories/techpack/00-overview.md` + `01-adr-techpack.md` (8 locations
+> describing the pre-rename `F-01`–`F-09` chain) were also found and fixed in this same wave — the ADR is
+> a primary, actively-linked reference doc, worth keeping current. **Deliberately left un-fixed** (an
+> earlier, separate task's own explicit scope decision, not re-opened here):
+> `output/analysis/federation-review/05-backend-impact.md`, `07-story-validation-and-sequencing.md`,
+> `08-risks-assumptions-questions.md` still cite `PRODUCT-BE-F-13`/`CLAIM-BE-F-01`/`CLAIM-BE-F-02` by their
+> pre-rename ids — flagged then, still flagged now, still not fixed; a future pass should decide whether to
+> update them or archive them as historical review artifacts. A merged-page heading-level
+> bug (`## Backend`/`## Frontend` colliding with the nested page's own demoted title instead of nesting
+> under it), Phase H missing from the phases glossary/table, a nondeterministic "Critical path" line
+> (unsorted set iteration — now sorted at both call sites, verified stable across separate process runs and
+> multiple `PYTHONHASHSEED` values), and one story (`BOM-BE-G-15`) that was miscategorized as a bug-fix/test
+> story and wrongly deleted alongside a genuinely test-shaped story — restored, including its risk-register
+> and summary-count references. **Regeneration was re-run after all fixes** — `output/summary/`,
+> `output/jira/`, and `output/complexStories/*/*.csv` on disk now reflect every fix above.
 
 | Item | Where | Status |
 |---|---|---|

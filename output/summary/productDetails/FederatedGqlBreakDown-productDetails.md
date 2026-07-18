@@ -93,8 +93,7 @@ associations, then bulk-archive removed attachments, then the body — with no r
 | 1 | B-01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
 | 2 | D-01–D-05 | simple mutations |
 | 3 | E-01 + F-01 | multi-step write + Product field |
-| 4 | G-01–G-03 | field resolvers |
-| 5 | G-04 | tests & parity |
+| 4 | G-01–G-03 | field resolvers. Test coverage/parity tracked outside this Jira pipeline, created manually. |
 
 ---
 

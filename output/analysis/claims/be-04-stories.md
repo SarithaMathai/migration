@@ -16,8 +16,8 @@ cross-subgraph).
 | C | Search & Listing | C-01–C-02 |
 | D | Mutations (simple) | D-01–D-05 |
 | E | Complex (proxy-ACL multi-step write) | E-01 |
-| F | Federation Contributions (BLOCKED-BY product) | F-01–F-02 |
 | G | Field Resolvers & Tests | G-01–G-06 |
+| H | Entity Resolution — cross-subgraph contributions (BLOCKED-BY product) | H-01–H-02 |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
@@ -387,7 +387,7 @@ the product definitions.
 | `bulkUpdateClaim` snake-cased response (likely bug) (D-02) | Medium | Medium | Fix to camelCase; parity test | Backend Eng |
 | `businessPartner` 3-way fallback regressions (G-02) | Low | Medium | Unit-test each branch incl. Target(0) | Backend Eng |
 | `ParentDetails` elastic team/BP lookups (G-03) | Low | Medium | Preserve empty handling; paginate | Backend Eng |
-| Federation contributions wait on product (F-01/F-02) | Low | Low | Post-launch; not on critical path | Product Owner |
+| Federation contributions wait on product (H-01/H-02) | Low | Low | Post-launch; not on critical path | Product Owner |
 
 ## 5. Summary
 - **Stories:** 20 (B:5 · C:2 · D:5 · E:1 · F:2 · G:5). G-06 (value-type alignment) added by the federation review. Bug-fix/test-coverage stories (`G-05`) tracked outside this Jira pipeline, created manually.

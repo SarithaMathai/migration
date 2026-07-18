@@ -113,7 +113,7 @@ rest of the phase to finish.
 |-----------|----------------------|-------|
 | 1 engineer | ~15–25 sprints | sequential |
 | 2 engineers | ~9–15 sprints | B/C/D + most of G parallel |
-| 3 engineers | ~6–10 sprints | critical path A → E-01 → G-08/G-10 → G-16 |
+| 3 engineers | ~6–10 sprints | critical path A → E-01 → G-08/G-10 → G-15 |
 
 > Phase G (field resolvers) dominates the calendar; G-08 (trim) and G-10 (impression branch) are the two
 > biggest field-resolver stories.
@@ -125,15 +125,18 @@ rest of the phase to finish.
 | Sprint | Stories | Focus |
 |--------|---------|-------|
 | 0 | Program spikes | run in Sprint 0 (see global Phase 0 — Program Spikes) so E-01/rollout-order aren't waiting |
-| 1 | B-01 (DGS module init + service wiring + first resolver) | schema, stubs, type resolvers, service port |
+| 1 | B-01 (DGS module init + service wiring + first resolver), A-05 (shared CI conformance gate) | schema, stubs, type resolvers, service port, drift guard |
 | 2 | B-01, B-03–B-08 + D-03/D-04 | reads (incl. 4 cacheable) + lock/unlock |
 | 3 | C-01–C-05 + D-01/D-02/D-05 | search/supplier + simple mutations |
 | 4 | E-01 | `updateBom` 3-step write (focused; needs `SPIKE-01` concluded) |
 | 5 | G-01, G-03–G-07 | entity + simple material field resolvers |
 | 6 | G-08 + G-09 | trim (large) + wash |
 | 7 | G-10–G-15 | impression branches + search-result enrichment + trivial bundle |
-| 8 | G-16 | tests, parity harness, load test |
 | post-launch | F-01, F-02 | federation contributions (unblocked by product) |
+
+> Test-coverage/parity-harness work (formerly `G-16`) is tracked outside this Jira pipeline, created
+> manually. `G-15` (`BomMaterialSearchResult` field resolvers) is real field-resolver scope and stays in
+> the sprint plan above (sprint 7).
 
 ---
 

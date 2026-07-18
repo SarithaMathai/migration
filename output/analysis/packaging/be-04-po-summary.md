@@ -80,14 +80,14 @@ plm-product (Packaging subgraph) depends on:
 | 3 | D-01/D-03/D-04/D-08/D-09 | create/bulk/clone/component-status |
 | 4 | E-01 + F-01 | multi-step update + Product links |
 | 5 | G-01–G-03 | ACL/users/refs field resolvers |
-| 6 | G-04/G-05 + G-06 | pricing + dieline resolvers + tests |
+| 6 | G-04/G-05 | pricing + dieline resolvers. Test coverage/parity tracked outside this Jira pipeline, created manually. |
 
 ## Capacity Planning
 | Team size | Calendar | Notes |
 |---|---|---|
 | 1 engineer | ~10–17 sprints | sequential |
 | 2 engineers | ~6–10 sprints | reads + mutations parallel after B-01 |
-| 3 engineers | ~4–7 sprints | critical path A → E-01 → G-04 → G-06 |
+| 3 engineers | ~4–7 sprints | critical path A → E-01 → G-04 → G-05 |
 
 ---
 *Pipeline 2.0 — Phase 4 complete. Packaging artifacts: 01, 02, 03×2, 04-stories, 04-stories-index, 04-po, 05 (8 files).*

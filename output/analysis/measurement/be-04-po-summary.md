@@ -66,7 +66,7 @@ plm-product (Measurement subgraph) depends on:
  relationship service (getMeasurements id resolution) 🔴
  sibling DGS (federation): workspace, sample, measurement-template, size-template, tight-fit, user-profile
  Hive Gateway → VMM (business partners)
- product / sample domains F-01 Product.measurementSets ; F-02 SampleV2.sampleMeasurement
+ product domain F-01 Product.measurementSets (internal) ; sample domain H-01 SampleV2.sampleMeasurement
 ```
 
 ## Recommended Sprint Sequencing
@@ -75,16 +75,15 @@ plm-product (Measurement subgraph) depends on:
 | 1 | B-01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
 | 2 | C-01/C-02 + D-01–D-04 | listing + simple mutations |
 | 3 | D-05–D-07 + E-01 | remaining mutations + `updateMeasurement` |
-| 4 | G-01–G-02 | field resolvers |
-| 5 | G-03 | tests & parity |
-| post-launch | F-01, F-02 | federation contributions |
+| 4 | G-01–G-02, G-04 | field resolvers (G-04 recommended, PO-gated). Test coverage/parity tracked outside this Jira pipeline, created manually. |
+| post-launch | F-01, H-01 | federation contributions |
 
 ## Capacity Planning
 | Team size | Calendar | Notes |
 |---|---|---|
 | 1 engineer | ~8–14 sprints | sequential |
 | 2 engineers | ~5–8 sprints | reads + mutations parallel |
-| 3 engineers | ~4–6 sprints | critical path A → E-01 → G-01 → G-03 |
+| 3 engineers | ~4–6 sprints | critical path A → E-01 → G-01 → G-04 |
 
 ---
 *Pipeline 2.0 — Phase 4 complete. Measurement artifacts: 01, 02, 03×2, 04-stories, 04-stories-index, 04-po, 05 (8 files).*

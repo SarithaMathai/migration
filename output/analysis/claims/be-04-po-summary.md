@@ -54,7 +54,7 @@ Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permiss
 | `bulkUpdateClaim` snake-cases its response (likely bug) | 🟡 Medium | Fix to camelCase on the port; parity test |
 | `businessPartner` 3-way fallback (incl. a "Target" id-0 case) | 🟢 Low | Preserve exactly; unit-test each branch |
 | `ParentDetails` elastic team/BP lookups | 🟢 Low | Preserve empty handling; paginate |
-| Federation contributions wait on product | 🟢 Low | F-01/F-02 post-launch; not on the critical path |
+| Federation contributions wait on product | 🟢 Low | H-01/H-02 post-launch; not on the critical path |
 
 ## Decisions Required
 | # | Decision | Blocks | Owner |
@@ -78,8 +78,8 @@ claims subgraph (spark-claims) depends on:
 | 1 | B-01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
 | 2 | C-01/C-02 + D-01–D-05 | search + simple mutations |
 | 3 | E-01 + G-01/G-02 | `updateClaim` + ACL/partner field resolvers |
-| 4 | G-03/G-04 + G-05 | parent/elastic + misc fields + tests |
-| post-launch | F-01, F-02 | federation contributions (unblocked by product) |
+| 4 | G-03/G-04 + G-06 | parent/elastic + misc fields + shared value-type alignment |
+| post-launch | H-01, H-02 | federation contributions (unblocked by product) |
 
 ## Capacity Planning
 | Team size | Calendar | Notes |

@@ -83,7 +83,7 @@ rest of the phase to finish.
 |------|----------|---------------------------|
 | `updateBom` 3-step write can leave data half-updated | 🔴 High | `S-01` (Phase 0 spike) picks the recovery strategy before `E-01` starts |
 | Material field resolvers depend on 5 sibling domains | 🟡 Medium | `S-02` (Phase 0 spike) sets the rollout order; BOM can ship reads/writes meanwhile with partial enrichment |
-| 7-variant polymorphism is easy to break when fields are added | 🟡 Medium | A CI check (G-16) guards this |
+| 7-variant polymorphism is easy to break when fields are added | 🟡 Medium | A shared CI conformance gate (`A-05`) guards this |
 | Trim size logic is intricate (15 cases × 2) | 🟡 Medium | One larger story (G-08) with a parity table |
 | Federation contributions wait on the product domain | 🟡 Low | F-01/F-02 are post-launch; not on the critical path |
 
@@ -119,15 +119,18 @@ plm-product (BOM subgraph) depends on:
 | Sprint | Stories | Focus |
 |--------|---------|-------|
 | 0 | Program spikes | run in Sprint 0 (see global Phase 0 — Program Spikes) so E-01/rollout-order aren't waiting |
-| 1 | B-01 (DGS module init + service wiring + first resolver) | schema, stubs, type resolvers, service port |
+| 1 | B-01 (DGS module init + service wiring + first resolver), A-05 (shared CI conformance gate) | schema, stubs, type resolvers, service port, drift guard |
 | 2 | B-01, B-03–B-08 + D-03/D-04 | reads (incl. 4 cacheable) + lock/unlock |
 | 3 | C-01–C-05 + D-01/D-02/D-05 | search/supplier + simple mutations |
 | 4 | E-01 | `updateBom` 3-step write (focused; needs `SPIKE-01` concluded) |
 | 5 | G-01, G-03–G-07 | entity + simple material field resolvers |
 | 6 | G-08 + G-09 | trim (large) + wash |
 | 7 | G-10–G-15 | impression branches + search-result enrichment + trivial bundle |
-| 8 | G-16 | tests, parity harness, load test |
 | post-launch | F-01, F-02 | federation contributions (unblocked by product) |
+
+> Test-coverage/parity-harness work (formerly `G-16`) is tracked outside this Jira pipeline, created
+> manually. `G-15` (`BomMaterialSearchResult` field resolvers) is real field-resolver scope and stays in
+> the sprint plan above (sprint 7).
 
 ## Capacity Planning
 
@@ -135,7 +138,7 @@ plm-product (BOM subgraph) depends on:
 |-----------|----------------------|-------|
 | 1 engineer | ~15–25 sprints | sequential |
 | 2 engineers | ~9–15 sprints | B/C/D + most of G parallel |
-| 3 engineers | ~6–10 sprints | critical path A → E-01 → G-08/G-10 → G-16 |
+| 3 engineers | ~6–10 sprints | critical path A → E-01 → G-08/G-10 → G-15 |
 
 > Phase G (field resolvers) dominates the calendar; G-08 (trim) and G-10 (impression branch) are the two
 > biggest field-resolver stories.

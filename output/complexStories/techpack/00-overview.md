@@ -53,7 +53,7 @@ aggregate was built as one cross-domain function instead of per-domain contribut
 - **Reliability** — any one of the ~12 downstream calls throwing fails the whole field; there is no
   per-slice degradation.
 - **Migration risk** — a naive lift-and-shift re-freezes the 8-domain coupling inside `plm-product` and
-  gives the retiring Relationship-Service walk a new home; `PRODUCT-BE-E-03`/`E-04` and the `F-01–F-09`
+  gives the retiring Relationship-Service walk a new home; `PRODUCT-BE-E-03`/`E-04` and the `H-01–H-05`/`F-09`
   federation chain stay blocked until an assembly pattern is ratified.
 - **Ownership** — badge-count defects have no owning team; every change is a cross-team negotiation.
 

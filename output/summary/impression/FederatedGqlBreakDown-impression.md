@@ -79,7 +79,7 @@ that proves the pipeline end-to-end.
 |---|---|---|
 | 1 | B-01 + B-02 | **B-01:** DGS module init (schema/types/stubs/scalars) + ImpressionService wiring + `searchImpressionsByProductId`; **B-02:** counts query |
 | 2 | D-01 + G-01 + G-02 | mutation + field resolvers + counts aggregation |
-| 3 | G-03 | tests & parity |
+| 3 | G-04 | `attachment` entity reference (recommended, PO-gated). Test coverage/parity tracked outside this Jira pipeline, created manually. |
 | post-launch | F-01 | Product extension (unblocked by product) |
 
 ---

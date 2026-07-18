@@ -188,10 +188,10 @@ extend type Mutation {
   updateClaim(sparkClaim: ClaimsUpdateInput): Claims                   # 🔜 E-01 (proxy ACL + workspace + body, non-atomic)
 }
 
-# --- Federation: Claims contributes to Product + TechPack (Phase F, BLOCKED-BY product) ---
+# --- Federation: Claims contributes to Product + TechPack (Phase H, BLOCKED-BY product) ---
 # extend type Product @key(fields: "id") {
 #   id: ID! @external
-#   claims(partnerIds: [String], includeClaims: Boolean): [Claims]      # F-01
+#   claims(partnerIds: [String], includeClaims: Boolean): [Claims]      # H-01
 # }
 # extend type ResourcesCount @key(fields: "productId partnerId") {       # H-02 (TechPack — see PRODUCT-BE-H-04)
 #   productId: ID! @external

@@ -37,7 +37,7 @@ No interfaces — no `@DgsTypeResolver`. (`updatedFromResource` is currently mon
   `VMM_BusinessPartner`.
 - **Contributes back:**
   - `Product.measurementSets` → **internal** field resolver (co-located, F-01).
-  - `SampleV2.sampleMeasurement` → **true federation** (sample is a separate DGS subgraph, F-02).
+  - `SampleV2.sampleMeasurement` → **true federation** (sample is a separate DGS subgraph, H-01).
 
 ## 4. Migration Approach  *(Confluence approach page)*
 

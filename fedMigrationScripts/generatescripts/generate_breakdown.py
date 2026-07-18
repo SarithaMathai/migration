@@ -386,7 +386,8 @@ SPIKE_DECISION = {
     "02": "Ratify the assembly pattern and each domain’s contribution. Draft ADR-015 proposes "
           "**facade-then-federate** (ADR-015 Option B; the catalogue label is \"Option D (hybrid)\"): a frozen "
           "aggregation facade serves all 11 fields day 1 (`E-03`/`E-04`); each domain re-homes its slice as its "
-          "subgraph ships (`F-01`–`F-08`, `extend type ResourcesCount`); the facade retires last (`F-09`).",
+          "subgraph ships (`H-01`–`H-05` + the co-located `F-04`/`F-06`/`F-08`, `extend type ResourcesCount`); "
+          "the facade retires last (`F-09`).",
     "03": "Decide ownership (domain subgraph vs workspace) and the write-saga/rollback for the drop/undrop fan-out.",
     "04": "Agree the `@requires` contribution each domain exposes and where the union is computed.",
     "05": "Confirm the `code → type` table + union membership, then wire `@DgsTypeResolver` + CI conformance.",
@@ -407,7 +408,7 @@ SPIKE_STEPS = {
     ],
     "02": [
         "**Phase 1 (`E-03`/`E-04`)** — thin `@DgsQuery` stub in `plm-product` → frozen aggregation facade answers all 11 `ResourcesCount` fields (works day 1, before any sibling federates)",
-        "**Phase 2 (`F-01`–`F-08`)** — as each owning subgraph ships, it contributes its slice via `extend type ResourcesCount @key(fields: \"productId partnerId\")`; the facade stops serving that field (per-slice parity fixture gates the flip)",
+        "**Phase 2 (`H-01`–`H-05` + co-located `F-04`/`F-06`/`F-08`)** — as each owning subgraph ships, it contributes its slice via `extend type ResourcesCount @key(fields: \"productId partnerId\")`; the facade stops serving that field (per-slice parity fixture gates the flip)",
         "Each subgraph returns **only its own slice** (its count/list) — it owns that field; co-located domains (bom/measurement/construction/watchlist) contribute in-process",
         "**Phase 3 (`F-09`)** — facade retired; the gateway resolves the `@key` shell and fans out `_entities` to the contributors",
     ],

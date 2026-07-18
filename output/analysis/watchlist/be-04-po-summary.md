@@ -73,7 +73,7 @@ plm-product (Watchlist subgraph) depends on:
 | 1 | B-01 (DGS module init + service wiring + first resolver) | schema, service port, reads |
 | 2 | C-01 + D-01/D-02 | filtered read + simple mutations |
 | 3 | E-01 + F-01/F-02 | multi-step update + Product/TechPack internal contributions |
-| 4 | G-01–G-03 + G-04 | field resolvers + tests |
+| 4 | G-01–G-03, G-05 (recommended, PO-gated) | field resolvers. Test coverage/parity tracked outside this Jira pipeline, created manually. |
 
 ## Capacity Planning
 | Team size | Calendar | Notes |
