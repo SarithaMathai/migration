@@ -43,8 +43,20 @@ from **service constructors**, not `context.js`.
 | `product` | ProductService | same DGS (internal call) | — internal |
 | `workspaceV2` | WorkspaceService | Yes (sibling) | 🟡 |
 | `vmm` / `location` / `brand` | VMM platform | **No — Gateway stitch** | 🔵 |
-| `clazz`/`department`/`division` | Item Groups (IG) | **No — Gateway stitch** | 🔵 |
-| `doppler`/`apex`/`nexusAttributes`/`ldap`/`corona` | External platforms | **No — Gateway stitch** | 🔵 |
+| `clazz`/`department`/`division` / `ig` | Item Groups (IG) | **No — Gateway stitch** | 🔵 |
+| `doppler`/`apex`/`nexusAttributes`/`ldap`/`corona`/`coronaItems` | External platforms | **No — Gateway stitch** | 🔵 |
+| `relationship` | RelationshipService | Yes (sibling) | 🟡 |
+| `userAttributes` | UserProfileService | Yes (sibling) | 🟡 |
+| `teamV2` | TeamService | Yes (sibling — later-phase `team` subgraph) | 🟡 |
+| `sampleV2` | SampleService | Yes (sibling — separate DGS `plm-sample`) | 🟡 |
+| `recentlyViewed` / `todo` / `favorite` | Dashboard services | Yes (sibling) | 🔵 |
+| `ruleLibrary` | RuleLibraryService | Yes (sibling) | 🔵 |
+| `fileLibrary` | FileLibraryService | Yes (sibling) | 🔵 |
+| `productAsk` | ProductAskService | Yes (sibling — co-located, product-family) | 🔵 |
+| `productVariation` | ProductVariationService | Yes (sibling — co-located, product-family) | 🔵 |
+| `userGroup` | UserGroupService | Yes (sibling) | 🔵 |
+| `specificationsTemplate` | SpecificationsTemplateService | Yes (sibling) | 🟡 |
+| `measurementTemplate` / `sizeTemplate` / `tightFit` | Measurement (templates) services | Yes (sibling) | 🟡 |
 
 ## Core utils → DGS equivalents
 

@@ -4,8 +4,8 @@
 |---|---|
 | **Target DGS** | `spark-claims (separate)` |
 | **T-Shirt Size** | **L** |
-| **Total Stories** | 15 |
-| **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 11 Medium · 🟢 2 Low |
+| **Total Stories** | 16 |
+| **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 11 Medium · 🟢 3 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
 | **Generated** | 2026-07-17 |
 
@@ -108,10 +108,11 @@ Per the program-level working decision, **the DGS layer carries no ACL plumbing 
 | Step | Stories (parallel set) | Entry gates in this step | Focus |
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
-| 2 | 🟡 `B-02`, 🟡 `C-01`, 🟡 `C-02`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟡 `G-02`, 🟠 `G-03`, 🟡 `G-04` | `E-01` → 🔬 SPIKE-01<br>`F-01` → ⛔ BLOCKED-BY product<br>`F-02` → ⛔ BLOCKED-BY product | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
-| 3 | 🟡 `G-05` | — | 🧪 Field Resolvers & Tests |
+| 2 | 🟡 `B-02`, 🟡 `C-01`, 🟡 `C-02`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟡 `G-02`, 🟡 `G-04`, 🟢 `G-06` | `E-01` → 🔬 SPIKE-01<br>`F-01` → ⛔ BLOCKED-BY product<br>`F-02` → ⛔ BLOCKED-BY product | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 3 | 🟠 `G-03` | — | 🧪 Field Resolvers & Tests |
+| 4 | 🟡 `G-05` | — | 🧪 Field Resolvers & Tests |
 
-**Critical path:** `B-01` → `G-03` → `G-05` — 3 sequential stories; everything else hangs off this chain in parallel.
+**Critical path:** `B-01` → `G-06` → `G-03` → `G-05` — 4 sequential stories; everything else hangs off this chain in parallel.
 
 ---
 
@@ -121,18 +122,19 @@ Per the program-level working decision, **the DGS layer carries no ACL plumbing 
 
 | Slot | 👤 BE-1 | 👤 BE-2 |
 |---|---|---|
-| 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟠 `G-03` (4–7d) |
-| 2 | 🟠 `E-01` (4–7d) 🔬 | 🟡 `B-02` (2–4d) *(grouped XS: +`B-03`, `B-04`, `B-05`)* |
-| 3 | 🟡 `G-02` (2–4d) | 🟡 `C-02` (2–4d) |
-| 4 | 🟡 `C-01` (2–4d) | 🟡 `D-02` (2–4d) |
-| 5 | 🟡 `D-01` (2–4d) | 🟡 `F-01` (2–4d) ⛔ |
-| 6 | 🟡 `D-03` (2–4d) *(grouped XS: +`D-04`, `D-05`)* | 🟡 `G-04` (2–4d) |
-| 7 | 🟡 `G-01` (2–4d) | 🟢 `F-02` (1–2d) ⛔ |
-| 8 | 🟡 `G-05` (2–4d) | — |
+| 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟠 `E-01` (4–7d) 🔬 |
+| 2 | 🟢 `G-06` (1–2d) | 🟡 `G-02` (2–4d) |
+| 3 | 🟠 `G-03` (4–7d) | 🟡 `C-01` (2–4d) |
+| 4 | 🟡 `B-02` (2–4d) *(grouped XS: +`B-03`, `B-04`, `B-05`)* | 🟡 `D-01` (2–4d) |
+| 5 | 🟡 `C-02` (2–4d) | 🟡 `D-03` (2–4d) *(grouped XS: +`D-04`, `D-05`)* |
+| 6 | 🟡 `D-02` (2–4d) | 🟡 `G-01` (2–4d) |
+| 7 | 🟡 `F-01` (2–4d) ⛔ | 🟡 `G-05` (2–4d) |
+| 8 | 🟡 `G-04` (2–4d) | — |
+| 9 | 🟢 `F-02` (1–2d) ⛔ | — |
 
-**BE-1:** `B-01` → `E-01` → `G-02` → `C-01` → `D-01` → `D-03` → `G-01` → `G-05`<br>**BE-2:** `G-03` → `B-02` → `C-02` → `D-02` → `F-01` → `G-04` → `F-02`
+**BE-1:** `B-01` → `G-06` → `G-03` → `B-02` → `C-02` → `D-02` → `F-01` → `G-04` → `F-02`<br>**BE-2:** `E-01` → `G-02` → `C-01` → `D-01` → `D-03` → `G-01` → `G-05`
 
-**Elapsed (nominal midpoints):** ~25 working days with 2 engineers vs ~47 days sequential.
+**Elapsed (nominal midpoints):** ~25 working days with 2 engineers vs ~48 days sequential.
 
 ---
 
@@ -182,13 +184,14 @@ Per the program-level working decision, **the DGS layer carries no ACL plumbing 
 | 🔸 `CLAIM-BE-F-02`<br>`ResourcesCount.claims` (TechPack — claims side of PRODUCT-BE-F-05) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Contribute the claims count to the product TechPack rollup.<br>**Today —** extend type ResourcesCount @key(fields:"productId partnerId") { claims: [ID] } with a<br>**Done when:**<br>• field resolves on the federated `ResourcesCount`; parity vs facade |
 
 
-### 🧪 Phase G — Field Resolvers & Tests (5 stories)
+### 🧪 Phase G — Field Resolvers & Tests (6 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria | Key Tests |
 |---|---|---|---|---|---|
 | 🔸 `CLAIM-BE-G-01`<br>`access` + `currentUserPermissions` + `participantDetails` | 🟡 Medium `M` | Field Resolver<br>Calls: `userGroup` | B-01 | **Intent —** Resolve a claim's access / permission / participant fields.<br>**Done when:**<br>• each resolves; null-safe | — |
 | 🔸 `CLAIM-BE-G-02`<br>`createdBy` + `updatedBy` + `businessPartner` + `designPartner` | 🟡 Medium `M` | Field Resolver<br>Calls: `userAttributes`, `vmm` | B-01 | **Intent —** Resolve the people and partner fields on a claim.<br>**Today —** users via user-profile; businessPartner 3-way fallback (partnerId \\|\\| {bpId:0,bpName:'Target'} when no dpPartnerId \\|\\| dpPartnerId); designPartner dpPartnerId or…<br>**Done when:**<br>• all 3 BP branches correct (incl. `bpId:0` Target)<br>• null id → null user | — |
-| 🔸 `CLAIM-BE-G-03`<br>`product` + `parentDetails` (otherClaimBps / systemTeams / droppedPartnerIds) | 🟠 High `L` | Field Resolver<br>Calls: `product`, `search` | B-01 | **Intent —** Resolve the parent product and its related-partner context on a claim.<br>**Today —** product (product, only if parentId starts 'PID'); parentDetails → - product.getByID(parentId) (the product feeds ParentDetails): otherClaimBps (search getClaimsElastic…<br>**Done when:**<br>• `product` null when not `PID*`<br>• `otherClaimBps`/`systemTeams` elastic queries match source; empty-BP → `{content:[]}` | ☐ product branch<br>☐ otherClaimBps<br>☐ systemTeams<br>☐ empty BPs |
+| 🔸 `CLAIM-BE-G-03`<br>`product` + `parentDetails` (otherClaimBps / systemTeams / droppedPartnerIds) | 🟠 High `L` | Field Resolver<br>Calls: `product`, `search` | B-01, G-06 | **Intent —** Resolve the parent product and its related-partner context on a claim.<br>**Today —** product (product, only if parentId starts 'PID'); parentDetails → - product.getByID(parentId) (the product feeds ParentDetails): otherClaimBps (search getClaimsElastic…<br>**Done when:**<br>• `product` null when not `PID*`<br>• `otherClaimBps`/`systemTeams` elastic queries match source; empty-BP → `{content:[]}` | ☐ product branch<br>☐ otherClaimBps<br>☐ systemTeams<br>☐ empty BPs |
 | 🔸 `CLAIM-BE-G-04`<br>`workspaces` + `ClaimSubstantiate.substantiatedBy` + `ClaimDetails.claimName` | 🟡 Medium `M` | Field Resolver<br>Calls: `workspaceV2`, `userAttributes` | B-01 | **Intent —** Resolve workspace links and a few computed claim fields.<br>**Done when:**<br>• each resolves; `workspaces` null when empty<br>• `claimName` mirrors `guestFacingClaim` | — |
 | 📄 `CLAIM-BE-G-05`<br>Tests, parity harness | 🟡 Medium `M` | Tests | B-01, E-01, G-02, G-03 | **Intent —** Prove the claims subgraph matches the old gateway.<br>**Today —** ≥80% unit coverage; parity fixtures (incl<br>**Done when:**<br>• unit ≥80%<br>• parity green<br>• schema-diff intentional | — |
+| 📄 `CLAIM-BE-G-06`<br>Shared value-type alignment (`@shareable` instead of entity stubs) | 🟢 Low `XS` | Schema | B-01 | **Intent —** Models `ProductComponentStatus`, `ResourcePermissions` and `TeamPaged` as shared value<br>**Today —** duplicate the value types @shareable in the claims schema<br>**Done when:**<br>• Claims subgraph composes with plm-product with zero `INVALID_FIELD_SHARING`/value-type conflicts<br>• `statuses` / `currentUserPermissions` / `systemTeams` return locally-resolved data (parity vs the old gateway)<br>• `TeamPaged.content: [TeamV2]` resolves against the claims elastic response (map result rows to `{teamId}` stubs); documented<br>• Revisit note recorded for the phase-2 team subgraph (TeamV2 becomes its full entity then; today it is a stitched stub) | — |
 

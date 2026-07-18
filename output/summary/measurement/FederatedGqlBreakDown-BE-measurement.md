@@ -4,8 +4,8 @@
 |---|---|
 | **Target DGS** | `plm-product (co-located)` |
 | **T-Shirt Size** | **M** |
-| **Total Stories** | 14 |
-| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 8 Medium · 🟢 5 Low |
+| **Total Stories** | 15 |
+| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 8 Medium · 🟢 6 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
 | **Generated** | 2026-07-17 |
 
@@ -106,7 +106,7 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
 | 2 | 🟡 `B-02`, 🟡 `C-01`, 🟢 `C-02`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-06`, 🟢 `D-07`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟢 `G-02` | `E-01` → 🔬 SPIKE-01<br>`F-02` → ⛔ BLOCKED-BY sample | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
-| 3 | 🟡 `G-03` | — | 🧪 Field Resolvers & Tests |
+| 3 | 🟡 `G-03`, 🟢 `G-04` | — | 🧪 Field Resolvers & Tests |
 
 **Critical path:** `B-01` → `E-01` → `G-03` — 3 sequential stories; everything else hangs off this chain in parallel.
 
@@ -125,10 +125,11 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | 5 | 🟡 `F-01` (2–4d) | 🟡 `G-03` (2–4d) |
 | 6 | 🟢 `C-02` (1–2d) | 🟢 `D-07` (1–2d) |
 | 7 | 🟢 `F-02` (1–2d) ⛔ | 🟢 `G-02` (1–2d) |
+| 8 | 🟢 `G-04` (1–2d) | — |
 
-**BE-1:** `B-01` → `E-01` → `B-02` → `D-02` → `F-01` → `C-02` → `F-02`<br>**BE-2:** `C-01` → `G-01` → `D-01` → `D-06` → `G-03` → `D-07` → `G-02`
+**BE-1:** `B-01` → `E-01` → `B-02` → `D-02` → `F-01` → `C-02` → `F-02` → `G-04`<br>**BE-2:** `C-01` → `G-01` → `D-01` → `D-06` → `G-03` → `D-07` → `G-02`
 
-**Elapsed (nominal midpoints):** ~20 working days with 2 engineers vs ~37 days sequential.
+**Elapsed (nominal midpoints):** ~20 working days with 2 engineers vs ~38 days sequential.
 
 ---
 
@@ -179,11 +180,12 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | 🔸 `MST-BE-F-02`<br>Contribute `sampleMeasurement` to the `SampleV2` entity | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Contribute a sample's measurement set to the Sample entity.<br>**Today —** sample navigates to its measurement set via getSampleMeasurement<br>**Done when:**<br>• `SampleV2.sampleMeasurement` resolves<br>• Parity vs current |
 
 
-### 🧪 Phase G — Field Resolvers & Tests (3 stories)
+### 🧪 Phase G — Field Resolvers & Tests (4 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔸 `MST-BE-G-01`<br>`Measurement` field resolvers (13 fields) | 🟡 Medium `M` | Field Resolver<br>Calls: `workspaceV2`, `sampleV2`, `measurementTemplate`, `sizeTemplate`, `tightFit`, `vmm`, `userAttributes` | B-01 | **Intent —** Resolve the everyday measurement fields (people, product, partners).<br>**Today —** access/currentUserPermissions , businessPartners (loadBps), createdBy/updatedBy (getUserByIDOrNullIfNotFound), product (PID-prefixed → internal product.getByID)…<br>**Done when:**<br>• All 13 fields resolve<br>• `product` null when `resourceId` not `PID*`<br>• `status` = `{statusId, statusName}`<br>• `workspaces` empty → null<br>• `updatedFromResource` resolves only for `type==='sample'` |
 | 🔸 `MST-BE-G-02`<br>`SampleMeasurementSet` field resolvers (2 fields) | 🟢 Low `XS` | Field Resolver<br>Calls: `userAttributes` | B-01 | **Intent —** Resolve the sample-measurement-set fields.<br>**Today —** 2 @DgsData fields<br>**Done when:**<br>• `createdBy` resolves by user id (null id → null)<br>• `measurementSizeId` = `measurementSize.code` |
 | 📄 `MST-BE-G-03`<br>Test coverage & parity | 🟡 Medium `M` | Tests | B-01, C-01, E-01, G-01 | **Intent —** Prove the measurement subgraph matches the old gateway.<br>**Today —** ≥80% unit coverage; parity fixtures for the 7 queries + 8 mutations + updateMeasurement 3 fixtures + the relationship path<br>**Done when:**<br>• Unit ≥80%<br>• Parity green for reads/writes incl. `getMeasurements` relationship path<br>• `updateMeasurement` failure path covered |
+| 🔸 `MST-BE-G-04`<br>`SampleMeasurementSet.sample` forward reference (recommended, PO-gated) | 🟢 Low `XS` | Field Resolver<br>Calls: `sample` | B-02 (carries B-02 `getSampleMeasurement`, grouped-XS merged) | **Intent —** Adds `sample { … }` on the sample measurement set — the forward twin of the existing<br>**Today —** schema adds sample: SampleV2 on SampleMeasurementSet; resolver emits<br>**Done when:**<br>• PO approval recorded (OQ-5) before implementation starts<br>• `sample { id }` resolves as a stub; `sampleId` unchanged<br>• Pairs cleanly with MST-BE-F-02 (no circular resolution at the gateway — verified by a two-hop smoke query) |
 

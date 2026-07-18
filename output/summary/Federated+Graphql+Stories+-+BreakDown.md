@@ -7,9 +7,9 @@
 | **Program** | `spark-internal-graphql` → Netflix DGS Federation (Hive Schema Registry) |
 | **Domains** | 8 |
 | **Target DGS services** | 2 |
-| **Total Backend Stories** | **148** |
-| **Total Frontend Stories** | **38** · 158–245d single-engineer (per-domain pages `FederatedGqlBreakDown-FE-<domain>`) |
-| **Complexity (backend)** | 🔴 6 Very High · 🟠 13 High · 🟡 93 Medium · 🟢 36 Low |
+| **Total Backend Stories** | **155** |
+| **Total Frontend Stories** | **40** · 163–254d single-engineer (per-domain pages `FederatedGqlBreakDown-FE-<domain>`) |
+| **Complexity (backend)** | 🔴 6 Very High · 🟠 13 High · 🟡 96 Medium · 🟢 40 Low |
 | **Phase Coverage** | 🔬 7 Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |
 | **Cross-domain spikes** | 🔬 7 program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
 | **Generated** | 2026-07-17 |
@@ -141,15 +141,15 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 | # | Domain | Target DGS | T-Shirt | BE Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | FE Stories | FE effort | Breakdown pages |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | **Bill of Materials (BOM)** | `plm-product (co-located)` | **XL** | **24** | 1 | 2 | 16 | 5 | **6** | 27–42d | `FederatedGqlBreakDown-BE-bom` · `FederatedGqlBreakDown-FE-bom` |
-| 2 | **Claims** | `spark-claims (separate)` | **L** | **15** | 0 | 2 | 11 | 2 | **4** | 17–27d | `FederatedGqlBreakDown-BE-claims` · `FederatedGqlBreakDown-FE-claims` |
+| 1 | **Bill of Materials (BOM)** | `plm-product (co-located)` | **XL** | **25** | 1 | 2 | 17 | 5 | **7** | 29–46d | `FederatedGqlBreakDown-BE-bom` · `FederatedGqlBreakDown-FE-bom` |
+| 2 | **Claims** | `spark-claims (separate)` | **L** | **16** | 0 | 2 | 11 | 3 | **4** | 17–27d | `FederatedGqlBreakDown-BE-claims` · `FederatedGqlBreakDown-FE-claims` |
 | 3 | **Impression** | `plm-product (co-located)` | **XS** | **7** | 0 | 0 | 2 | 5 | **2** | 3–5d | `FederatedGqlBreakDown-BE-impression` · `FederatedGqlBreakDown-FE-impression` |
-| 4 | **Measurement** | `plm-product (co-located)` | **M** | **14** | 0 | 1 | 8 | 5 | **4** | 12–19d | `FederatedGqlBreakDown-BE-measurement` · `FederatedGqlBreakDown-FE-measurement` |
+| 4 | **Measurement** | `plm-product (co-located)` | **M** | **15** | 0 | 1 | 8 | 6 | **4** | 12–19d | `FederatedGqlBreakDown-BE-measurement` · `FederatedGqlBreakDown-FE-measurement` |
 | 5 | **Packaging** | `plm-product (co-located)` | **L** | **18** | 0 | 2 | 11 | 5 | **5** | 21–33d | `FederatedGqlBreakDown-BE-packaging` · `FederatedGqlBreakDown-FE-packaging` |
-| 6 | **Product** | `plm-product (host)` | **XXL** | **48** | 5 | 4 | 31 | 8 | **11** | 63–97d | `FederatedGqlBreakDown-BE-product` · `FederatedGqlBreakDown-FE-product` |
+| 6 | **Product** | `plm-product (host)` | **XXL** | **51** | 5 | 4 | 33 | 9 | **12** | 66–102d | `FederatedGqlBreakDown-BE-product` · `FederatedGqlBreakDown-FE-product` |
 | 7 | **Product Details** | `plm-product (co-located)` | **M** | **11** | 0 | 1 | 8 | 2 | **3** | 8–12d | `FederatedGqlBreakDown-BE-productDetails` · `FederatedGqlBreakDown-FE-productDetails` |
-| 8 | **Watchlist** | `plm-product (co-located)` | **M** | **11** | 0 | 1 | 6 | 4 | **3** | 7–10d | `FederatedGqlBreakDown-BE-watchlist` · `FederatedGqlBreakDown-FE-watchlist` |
-| | **TOTAL** | — | — | **148** | **6** | **13** | **93** | **36** | **38** | **158–245d** | — |
+| 8 | **Watchlist** | `plm-product (co-located)` | **M** | **12** | 0 | 1 | 6 | 5 | **3** | 7–10d | `FederatedGqlBreakDown-BE-watchlist` · `FederatedGqlBreakDown-FE-watchlist` |
+| | **TOTAL** | — | — | **155** | **6** | **13** | **96** | **40** | **40** | **163–254d** | — |
 
 ---
 

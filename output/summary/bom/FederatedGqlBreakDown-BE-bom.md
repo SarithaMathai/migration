@@ -4,8 +4,8 @@
 |---|---|
 | **Target DGS** | `plm-product (co-located)` |
 | **T-Shirt Size** | **XL** |
-| **Total Stories** | 24 |
-| **Complexity** | 🔴 1 Very High · 🟠 2 High · 🟡 16 Medium · 🟢 5 Low |
+| **Total Stories** | 25 |
+| **Complexity** | 🔴 1 Very High · 🟠 2 High · 🟡 17 Medium · 🟢 5 Low |
 | **Phase Coverage** | 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
 | **Generated** | 2026-07-17 |
 
@@ -145,7 +145,7 @@ rest of the phase to finish.
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
 | 2 | 🟡 `A-04`, 🟡 `B-03`, 🟡 `B-05`, 🟢 `B-08`, 🟡 `C-01`, 🟡 `C-02`, 🟡 `C-03`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟡 `G-03`, 🟡 `G-04`, 🟠 `G-08`, 🟢 `G-09`, 🟠 `G-10` | `A-04` → 🔬 SPIKE-05<br>`B-05` → 🔬 SPIKE-06a | Fan-out — 🧱 Foundation & Type Resolvers · 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
-| 3 | 🔴 `E-01`, 🟡 `G-11`, 🟡 `G-12`, 🟢 `G-13`, 🟡 `G-15` | `E-01` → 🔬 SPIKE-01 | ⚙️ Complex Operations · 🧪 Field Resolvers & Tests |
+| 3 | 🔴 `E-01`, 🟡 `G-11`, 🟡 `G-12`, 🟢 `G-13`, 🟡 `G-15`, 🟡 `G-17` | `E-01` → 🔬 SPIKE-01 | ⚙️ Complex Operations · 🧪 Field Resolvers & Tests |
 | 4 | 🟡 `G-16` | — | 🧪 Field Resolvers & Tests |
 
 **Critical path:** `B-01` → `D-02` → `E-01` → `G-16` — 4 sequential stories; everything else hangs off this chain in parallel.
@@ -161,20 +161,20 @@ rest of the phase to finish.
 | 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟠 `G-08` (4–7d) |
 | 2 | 🟡 `D-02` (2–4d) *(grouped XS: +`D-03`, `D-04`, `D-05`)* | 🟠 `G-10` (4–7d) |
 | 3 | 🔴 `E-01` (7–12d) 🔬 | 🟡 `C-02` (2–4d) |
-| 4 | 🟡 `A-04` (2–4d) 🔬 | 🟡 `B-03` (2–4d) *(grouped XS: +`B-04`, `B-06`, `B-07`)* |
-| 5 | 🟡 `B-05` (2–4d) 🔬 | 🟡 `C-01` (2–4d) *(grouped XS: +`C-04`, `C-05`)* |
-| 6 | 🟡 `C-03` (2–4d) | 🟡 `D-01` (2–4d) |
-| 7 | 🟡 `F-01` (2–4d) | 🟡 `G-01` (2–4d) |
+| 4 | 🟡 `G-01` (2–4d) | 🟡 `A-04` (2–4d) 🔬 |
+| 5 | 🟡 `B-03` (2–4d) *(grouped XS: +`B-04`, `B-06`, `B-07`)* | 🟡 `B-05` (2–4d) 🔬 |
+| 6 | 🟡 `C-01` (2–4d) *(grouped XS: +`C-04`, `C-05`)* | 🟡 `C-03` (2–4d) |
+| 7 | 🟡 `D-01` (2–4d) | 🟡 `F-01` (2–4d) |
 | 8 | 🟡 `G-03` (2–4d) | 🟡 `G-04` (2–4d) *(grouped XS: +`G-05`, `G-06`, `G-07`)* |
 | 9 | 🟡 `G-11` (2–4d) | 🟡 `G-12` (2–4d) |
 | 10 | 🟡 `G-15` (2–4d) | 🟡 `G-16` (2–4d) |
-| 11 | 🟢 `B-08` (1–2d) | 🟢 `G-09` (1–2d) *(grouped XS: +`G-14`)* |
-| 12 | 🟢 `F-02` (1–2d) | — |
+| 11 | 🟡 `G-17` (2–4d) | 🟢 `B-08` (1–2d) |
+| 12 | 🟢 `F-02` (1–2d) | 🟢 `G-09` (1–2d) *(grouped XS: +`G-14`)* |
 | 13 | 🟢 `G-13` (1–2d) | — |
 
-**BE-1:** `B-01` → `D-02` → `E-01` → `A-04` → `B-05` → `C-03` → `F-01` → `G-03` → `G-11` → `G-15` → `B-08` → `F-02` → `G-13`<br>**BE-2:** `G-08` → `G-10` → `C-02` → `B-03` → `C-01` → `D-01` → `G-01` → `G-04` → `G-12` → `G-16` → `G-09`
+**BE-1:** `B-01` → `D-02` → `E-01` → `G-01` → `B-03` → `C-01` → `D-01` → `G-03` → `G-11` → `G-15` → `G-17` → `F-02` → `G-13`<br>**BE-2:** `G-08` → `G-10` → `C-02` → `A-04` → `B-05` → `C-03` → `F-01` → `G-04` → `G-12` → `G-16` → `B-08` → `G-09`
 
-**Elapsed (nominal midpoints):** ~40 working days with 2 engineers vs ~76 days sequential.
+**Elapsed (nominal midpoints):** ~41 working days with 2 engineers vs ~79 days sequential.
 
 ---
 
@@ -233,7 +233,7 @@ rest of the phase to finish.
 | 🔸 `BOM-BE-F-02`<br>Fill `ResourcesCount.bomsCount` (internal) | 🟢 Low `XS` | Field Resolver<br>Calls: `search` | — | **Intent —** Let BOM own the 'how many boms' count shown on the TechPack panel.<br>**Today —** the TechPack summary panel shows "12 boms" for a product today by having product's orchestration code run an elastic count query. Once BOM owns this field, BOM's own…<br>**Done when:**<br>• `bomsCount` resolves internally on `ResourcesCount`<br>• count matches current elastic semantics<br>• no gateway hop for this field |
 
 
-### 🧪 Phase G — Field Resolvers & Tests (11 stories)
+### 🧪 Phase G — Field Resolvers & Tests (12 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria | Key Tests |
 |---|---|---|---|---|---|
@@ -248,4 +248,5 @@ rest of the phase to finish.
 | 🔸 `BOM-BE-G-13`<br>`BomTrimZipperLibraryImpressionDetails` field resolvers (3 colors) | 🟢 Low `XS` | Field Resolver<br>Calls: `search` | G-10 | **Intent —** Resolve a zipper impression's three colours.<br>**Today —** sliderColor, tapeColor, teethColor via searchMaterialById. Unlike G-11/G-12, this type has no libraryResource field at all — just three colors — so it only needs…<br>**Done when:**<br>• Three color fields resolve by id<br>• Missing id → null | — |
 | 🔸 `BOM-BE-G-15`<br>`BomMaterialSearchResult` field resolvers (5 fields) | 🟡 Medium `M` | Field Resolver<br>Calls: `fabric`, `search` | C-02 | **Intent —** Resolve the material-search-result fields (tolerant of both response shapes).<br>**Today —** description (description ?? name), status (status?.description ?? status), - fabricSpec (if type==='fabric_spec_combo' & fabricSpecId → fabric.getSpecificationByID)…<br>**Done when:**<br>• `description`/`status` handle both shapes<br>• `fabricSpec`/`fabric`/`fabricId` gated by `type`<br>• `relatedMaterials` buckets `intentLineIds` correctly<br>• `proxyIds` not mutated (copy used) | — |
 | 📄 `BOM-BE-G-16`<br>Test coverage & parity harness | 🟡 Medium `M` | Tests | E-01, G-08, G-10 | **Intent —** The safety net: automated tests + a parity harness that prove the new BOM DGS returns exactly what the old gateway did before we switch traffic.<br>**Today —** ≥80% unit coverage on fetchers/services; a parity harness recording ≥30<br>**Done when:**<br>• Unit coverage ≥80%<br>• Parity harness covers all 7 material types + internal/external impression branch + `updateBom` 5 fixtures<br>• Schema-conformance check fails the build if an impl misses an interface field | — |
+| 🔸 `BOM-BE-G-17`<br>`supplier` entity references on material rows (recommended, PO-gated) | 🟡 Medium `M` | Field Resolver<br>Calls: `vmm` | G-01 | **Intent —** Adds a `supplier { … }` object next to `supplierId`/`supplierName` on every material row,<br>**Today —** add supplier: VMM_BusinessPartner to BomMaterialInterface and all 7<br>**Done when:**<br>• PO approval recorded (OQ-5) and OQ-3 answered before implementation starts<br>• `supplier` present on the interface + all 7 impls; conformance check green<br>• `supplierId`/`supplierName` continue to return unchanged values (parity)<br>• Stub emission only — no direct VMM calls from the BOM subgraph | — |
 

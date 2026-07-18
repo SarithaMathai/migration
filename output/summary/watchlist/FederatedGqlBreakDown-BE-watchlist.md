@@ -4,8 +4,8 @@
 |---|---|
 | **Target DGS** | `plm-product (co-located)` |
 | **T-Shirt Size** | **M** |
-| **Total Stories** | 11 |
-| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 6 Medium · 🟢 4 Low |
+| **Total Stories** | 12 |
+| **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 6 Medium · 🟢 5 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
 | **Generated** | 2026-07-17 |
 
@@ -104,9 +104,9 @@ to fix on the port.
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
 | 2 | 🟢 `B-02`, 🟡 `C-01`, 🟡 `D-01`, 🟡 `D-02`, 🟠 `E-01`, 🟢 `F-01`, 🟢 `G-01`, 🟡 `G-02`, 🟡 `G-03` | `E-01` → 🔬 SPIKE-01 | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
-| 3 | 🟡 `G-04` | — | 🧪 Field Resolvers & Tests |
+| 3 | 🟡 `G-04`, 🟢 `G-05` | — | 🧪 Field Resolvers & Tests |
 
-**Critical path:** `B-01` → `G-02` → `G-04` — 3 sequential stories; everything else hangs off this chain in parallel.
+**Critical path:** `B-01` → `E-01` → `G-04` — 3 sequential stories; everything else hangs off this chain in parallel.
 
 ---
 
@@ -121,11 +121,11 @@ to fix on the port.
 | 3 | 🟡 `D-01` (2–4d) | 🟡 `D-02` (2–4d) |
 | 4 | 🟡 `G-03` (2–4d) | 🟡 `G-04` (2–4d) |
 | 5 | 🟢 `B-02` (1–2d) *(grouped XS: +`B-03`)* | 🟢 `F-01` (1–2d) *(grouped XS: +`F-02`)* |
-| 6 | 🟢 `G-01` (1–2d) | — |
+| 6 | 🟢 `G-01` (1–2d) | 🟢 `G-05` (1–2d) |
 
-**BE-1:** `B-01` → `E-01` → `D-01` → `G-03` → `B-02` → `G-01`<br>**BE-2:** `C-01` → `G-02` → `D-02` → `G-04` → `F-01`
+**BE-1:** `B-01` → `E-01` → `D-01` → `G-03` → `B-02` → `G-01`<br>**BE-2:** `C-01` → `G-02` → `D-02` → `G-04` → `F-01` → `G-05`
 
-**Elapsed (nominal midpoints):** ~16 working days with 2 engineers vs ~30 days sequential.
+**Elapsed (nominal midpoints):** ~16 working days with 2 engineers vs ~31 days sequential.
 
 ---
 
@@ -172,7 +172,7 @@ to fix on the port.
 | 🔸 `WATCHLIST-BE-F-01`<br>`Product.watchlists` · `ResourcesCount.watchlists` | 🟢 Low `XS` | Field Resolver | B-01 | **Grouped XS story —** combines former `F-02` (one PR train)<br>**Intent —** Expose a product's watchlists on the Product type; Contribute the watchlists count to the TechPack rollup<br>**Today —** Product exposes watchlists resolved from the co-located watchlist service<br>**Done when:**<br>• `Product.watchlists`: resolves in-process; no gateway hop<br>• `ResourcesCount.watchlists`: count resolves in-process; parity vs the TechPack facade |
 
 
-### 🧪 Phase G — Field Resolvers & Tests (4 stories)
+### 🧪 Phase G — Field Resolvers & Tests (5 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
@@ -180,4 +180,5 @@ to fix on the port.
 | 🔸 `WATCHLIST-BE-G-02`<br>`createdBy` + `updatedBy` + `workspaces` + `participantDetails` + `partnerName` | 🟡 Medium `M` | Field Resolver<br>Calls: `userAttributes`, `workspaceV2`, `userGroup`, `vmm` | B-01 | **Intent —** Resolve the people, workspace and partner fields.<br>**Done when:**<br>• each resolves; null-safe |
 | 🔸 `WATCHLIST-BE-G-03`<br>`attachments` + `product` | 🟡 Medium `M` | Field Resolver<br>Calls: `search` | B-01 | **Intent —** Resolve a watchlist entry's attachments and parent product.<br>**Done when:**<br>• attachments via elastic<br>• `product` null when not `PID*` |
 | 📄 `WATCHLIST-BE-G-04`<br>Tests, parity harness | 🟡 Medium `M` | Tests | B-01, C-01, E-01, G-02 | **Intent —** Prove the watchlist subgraph matches the old gateway.<br>**Today —** ≥80% unit coverage; parity fixtures (incl<br>**Done when:**<br>• unit ≥80%<br>• parity green<br>• schema-diff intentional |
+| 🔸 `WATCHLIST-BE-G-05`<br>`WatchlistPartner.partner` entity reference (recommended, PO-gated) | 🟢 Low `XS` | Field Resolver<br>Calls: `vmm` | G-02 | **Intent —** Adds `partner { … }` next to `partnerId`/`partnerName` on watchlist partner rows.<br>**Today —** schema adds partner: VMM_BusinessPartner on WatchlistPartner; resolver<br>**Done when:**<br>• PO approval recorded (OQ-5) before implementation starts<br>• `partner { id name }` resolves via the gateway; `partnerName` parity is preserved<br>• No additional VMM calls from the watchlist subgraph (stub emission only) |
 

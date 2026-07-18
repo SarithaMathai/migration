@@ -19,16 +19,16 @@
 
 | Lane | # | Domain | Stories | Est. days (lo–hi) | Day window | FE gate (A–E done) |
 |---|---|---|---|---|---|---|
-| 👤 BE-1 | 1 | **Product** | 48 | 174 (121–228) | d0–d174 (spr 1–18) | d86 |
-| 👤 BE-1 | 2 | **Claims** | 15 | 47 (32–62) | d174–d222 (spr 18–23) | d200 |
-| 👤 BE-1 | 3 | **Impression** | 7 | 14 (9–18) | d222–d235 (spr 23–24) | d228 |
-| 👤 BE-2 | 1 | **Watchlist** | 11 | 30 (20–39) | d0–d30 (spr 1–3) | d18 |
-| 👤 BE-2 | 2 | **Product Details** | 11 | 32 (22–43) | d30–d62 (spr 3–7) | d48 |
-| 👤 BE-2 | 3 | **Measurement** | 14 | 37 (25–49) | d62–d99 (spr 7–10) | d87 |
-| 👤 BE-2 | 4 | **Packaging** | 18 | 52 (35–68) | d99–d150 (spr 10–16) | d130 |
-| 👤 BE-2 | 5 | **BOM** | 24 | 76 (52–100) | d150–d226 (spr 16–23) | d187 |
+| 👤 BE-1 | 1 | **Product** | 51 | 182 (126–238) | d0–d182 (spr 1–19) | d86 |
+| 👤 BE-1 | 2 | **Claims** | 16 | 48 (33–64) | d182–d230 (spr 19–24) | d207 |
+| 👤 BE-1 | 3 | **Impression** | 7 | 14 (9–18) | d230–d244 (spr 24–25) | d236 |
+| 👤 BE-2 | 1 | **Watchlist** | 12 | 31 (21–41) | d0–d31 (spr 1–4) | d18 |
+| 👤 BE-2 | 2 | **Product Details** | 11 | 32 (22–43) | d31–d64 (spr 4–7) | d50 |
+| 👤 BE-2 | 3 | **Measurement** | 15 | 38 (26–51) | d64–d102 (spr 7–11) | d88 |
+| 👤 BE-2 | 4 | **Packaging** | 18 | 52 (35–68) | d102–d154 (spr 11–16) | d133 |
+| 👤 BE-2 | 5 | **BOM** | 25 | 79 (54–104) | d154–d232 (spr 16–24) | d190 |
 
-- Lanes are load-balanced: **BE-1 drains at d235**, **BE-2 at d226** — whoever frees first picks up post-launch F-phase stitches, G-phase parity leftovers, and pairs on the other lane's remaining domain.
+- Lanes are load-balanced: **BE-1 drains at d244**, **BE-2 at d232** — whoever frees first picks up post-launch F-phase stitches, G-phase parity leftovers, and pairs on the other lane's remaining domain.
 - Cross-subgraph F-phase stories that wait on later-phase domains (attachment/discussion/sample/search subgraphs) are excluded from these gates — they land post-launch when the owning subgraph exists.
 
 ---
@@ -38,13 +38,13 @@
 | Wave | Domain | Engineer | FE days | Waits for | Day window |
 |---|---|---|---|---|---|
 | 1 | **Watchlist** | 👤 FE-1 | 8 | BE Watchlist A–E done (d18) | d18–d26 (spr 2–3) |
-| 2 | **Product Details** | 👤 FE-1 | 10 | BE Product Details A–E done (d48) | d48–d58 (spr 5–6) |
-| 2 | **Measurement** | 👤 FE-2 | 16 | BE Measurement A–E done (d87) | d87–d102 (spr 9–11) |
-| 2 | **Packaging** | 👤 FE-2 | 27 | BE Packaging A–E done (d130) | d130–d157 (spr 14–16) |
-| 3 | **BOM** | 👤 FE-1 | 34 | BE BOM A–E done (d187) | d187–d222 (spr 19–23) |
-| 3 | **Claims** | 👤 FE-2 | 22 | BE Claims A–E done (d200) | d200–d222 (spr 20–23) |
-| 4 | **Product** | 👤 FE-1 + FE-2 | 80 | BE Product A–E done (d86) | d222–d262 (spr 23–27) |
-| 4 | **Impression** | 👤 FE-2 | 4 | BE Impression A–E done (d228) | d262–d266 (spr 27–27) |
+| 2 | **Product Details** | 👤 FE-1 | 10 | BE Product Details A–E done (d50) | d50–d60 (spr 6–6) |
+| 2 | **Measurement** | 👤 FE-2 | 16 | BE Measurement A–E done (d88) | d88–d104 (spr 9–11) |
+| 2 | **Packaging** | 👤 FE-2 | 27 | BE Packaging A–E done (d133) | d133–d160 (spr 14–16) |
+| 3 | **BOM** | 👤 FE-1 | 38 | BE BOM A–E done (d190) | d190–d228 (spr 20–23) |
+| 3 | **Claims** | 👤 FE-2 | 22 | BE Claims A–E done (d207) | d207–d229 (spr 21–23) |
+| 4 | **Product** | 👤 FE-1 + FE-2 | 84 | BE Product A–E done (d86) | d229–d271 (spr 23–28) |
+| 4 | **Impression** | 👤 FE-2 | 4 | BE Impression A–E done (d236) | d271–d275 (spr 28–28) |
 
 - FE engineers are gate-bound, not capacity-bound — between gates they pair on parity dashboards, dual-run monitoring and rollback drills, and pre-pull the next domain's fragment/codegen prep.
 - Search-gated stories (`MST-FE-002`, `BOM-FE-003`, `PRODUCT-FE-003`) also wait on the search read-hub decision — external to this plan and may slide independently.
@@ -57,13 +57,13 @@
 | Milestone | ≈ Day | ≈ Sprint |
 |---|---|---|
 | 🚦 Watchlist pilot live on the router | d26 | 3 |
-| 🔗 First cross-subgraph cutover (Claims FE) | d222 | 23 |
-| 🏁 Product backend complete (`plm-product` host) | d174 | 18 |
-| 🧱 All backend lanes drained (both subgraphs schema-complete) | d235 | 24 |
-| ✅ All FE cutovers flipped | d266 | 27 |
-| **Program complete (excl. post-launch F-phase)** | **d266** | **27** |
+| 🔗 First cross-subgraph cutover (Claims FE) | d229 | 23 |
+| 🏁 Product backend complete (`plm-product` host) | d182 | 19 |
+| 🧱 All backend lanes drained (both subgraphs schema-complete) | d244 | 25 |
+| ✅ All FE cutovers flipped | d275 | 28 |
+| **Program complete (excl. post-launch F-phase)** | **d275** | **28** |
 
-> ≈ **27 sprints (~14 months)** with this team, vs the sequential single-pair estimate in 00-program-overview.md. Buffered (+20%) planning figure: ~32 sprints.
+> ≈ **28 sprints (~14 months)** with this team, vs the sequential single-pair estimate in 00-program-overview.md. Buffered (+20%) planning figure: ~34 sprints.
 
 ---
 

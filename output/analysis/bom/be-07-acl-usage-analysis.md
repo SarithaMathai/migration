@@ -1,0 +1,62 @@
+# Phase 7: ACL Usage Analysis — BOM
+
+> **Domain:** `bom`
+> **Target DGS:** `plm-product (co-located)`
+> **Pipeline Version:** 1.0
+> **Generated:** 2026-07-17
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
+> **DGS Target Status:** Green-field
+
+> ⚠ **This supersedes the existing ACL note in `be-03-schema.graphql` / `be-04-stories.md`:** *“capability-token (JWT) usage in source is context-only; ACL is IGNORED in the DGS implementation (no ACL plumbing story)”*. Rows below marked **downstream-token** are cases where ACL is NOT purely context — a capability token is required to call another domain's endpoint. This file does not edit be-03/be-04 — doc updates are a separate follow-up once these findings are reviewed.
+
+For every resolver/field that touches ACL, this classifies the call site (permission-check vs. token required for a downstream cross-domain call) and evaluates whether **Mid-Request ACL Update** (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) resolves it.
+
+## Summary
+
+| Metric | Count |
+|---|---|
+| Total ACL call sites | 12 |
+| Permission-check (resolver-local) | 0 |
+| Own-domain token (resolver-local write/read gate) | 6 |
+| **Downstream-token (cross-domain, Mid-Request ACL Update candidate)** | **6** |
+| Unresolved (needs manual check) | 0 |
+
+## ACL Call Sites
+
+| Resolver | Classification | Detail | Recommendation |
+|---|---|---|---|
+| `Mutation.lockBom` | own-domain-token | `getUserPermissionsJWT` token passed to this domain's own `bom` loader — capability token required for the resolver's own write/read, not a cross-domain call | No action needed — token gates the resolver's own read/write, stays resolver-local |
+| `Mutation.unlockBom` | own-domain-token | `getUserPermissionsJWT` token passed to this domain's own `bom` loader — capability token required for the resolver's own write/read, not a cross-domain call | No action needed — token gates the resolver's own read/write, stays resolver-local |
+| `Mutation.updateBom` | own-domain-token | `getUserPermissionsJWT` token passed to this domain's own `bom` loader — capability token required for the resolver's own write/read, not a cross-domain call | No action needed — token gates the resolver's own read/write, stays resolver-local |
+| `Query.getBomByIds` | own-domain-token | `getUserPermissionsJWT` token passed to this domain's own `bom` loader — capability token required for the resolver's own write/read, not a cross-domain call | No action needed — token gates the resolver's own read/write, stays resolver-local |
+| `Query.getBomByParentId` | own-domain-token | `getUserPermissionsJWT` token passed to this domain's own `bom` loader — capability token required for the resolver's own write/read, not a cross-domain call | No action needed — token gates the resolver's own read/write, stays resolver-local |
+| `Query.getBomDataV2` | own-domain-token | `getUserPermissionsJWT` token passed to this domain's own `bom` loader — capability token required for the resolver's own write/read, not a cross-domain call | No action needed — token gates the resolver's own read/write, stays resolver-local |
+| `SPARK_BomFabricLibraryImpressionDetails.libraryResource` | downstream-token | `getUserPermissionsJWT` token minted then passed into `ctx.loaders.search.*(permissionJWT)` — capability token required to call **SearchService (elastic)** (`search`) | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `search`, avoiding re-authentication |
+| `SPARK_BomImpressionDetails_Unified.libraryResource` | downstream-token | `getUserPermissionsJWT` token minted then passed into `ctx.loaders.search.*(permissionJWT)` — capability token required to call **SearchService (elastic)** (`search`) | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `search`, avoiding re-authentication |
+| `SPARK_BomMaterialSearchResult.fabric` | downstream-token | `getUserPermissionsJWT` token minted then passed into `ctx.loaders.fabric.*(permissionJWT)` — capability token required to call **FabricService** (`fabric`) | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `fabric`, avoiding re-authentication |
+| `SPARK_BomMaterialSearchResult.relatedMaterials` | downstream-token | `getUserPermissionsJWT` token minted then passed into `ctx.loaders.search.*(permissionJWT)` — capability token required to call **SearchService (elastic)** (`search`) | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `search`, avoiding re-authentication |
+| `SPARK_BomTrimLibraryImpressionDetails.libraryResource` | downstream-token | `getUserPermissionsJWT` token minted then passed into `ctx.loaders.search.*(permissionJWT)` — capability token required to call **SearchService (elastic)** (`search`) | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `search`, avoiding re-authentication |
+| `SPARK_BomWashMaterial.libraryResource` | downstream-token | `getUserPermissionsJWT` token minted then passed into `ctx.loaders.wash.*(permissionJWT)` — capability token required to call **WashService** (`wash`) | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `wash`, avoiding re-authentication |
+
+## Conflicts with the Existing "ACL Ignored" Decision
+
+6 resolver(s) in this domain mint a capability token to call another domain — these are NOT context-only, contradicting the current be-03/be-04 text.
+
+| Resolver | Recommendation |
+|---|---|
+| `SPARK_BomFabricLibraryImpressionDetails.libraryResource` | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `search`, avoiding re-authentication |
+| `SPARK_BomImpressionDetails_Unified.libraryResource` | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `search`, avoiding re-authentication |
+| `SPARK_BomMaterialSearchResult.fabric` | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `fabric`, avoiding re-authentication |
+| `SPARK_BomMaterialSearchResult.relatedMaterials` | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `search`, avoiding re-authentication |
+| `SPARK_BomTrimLibraryImpressionDetails.libraryResource` | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `search`, avoiding re-authentication |
+| `SPARK_BomWashMaterial.libraryResource` | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `wash`, avoiding re-authentication |
+
+## Classification Legend
+
+- **permission-check** — reads a permission/access value for the current resource (`accessControl.getPermissions`/`getUserAccessUnencoded`, or bulk ACL-filtered tree reads); resolver-local, no token handoff.
+- **own-domain-token** — `getUserPermissionsJWT` mints a token used only by this domain's own loader (e.g. `bom` resolver calling `ctx.loaders.bom(token)`); resolver-local, stays as-is.
+- **downstream-token** — token minted then handed to a DIFFERENT domain's loader (`ctx.loaders.<otherDomain>(token)`) — the Mid-Request ACL Update candidate.
+- **unresolved-token** — token minted but the downstream use isn't statically visible in the same field body (e.g. passed into a helper function) — needs a manual check.
+
+---
+**Phase Completed:** Phase 7 — ACL Usage Analysis · **Domain:** `bom` · **ACL call sites:** 12 · **Downstream-token:** 6

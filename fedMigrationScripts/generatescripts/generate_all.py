@@ -51,6 +51,8 @@ jira_mod      = _load("generate_jira")
 breakdown_mod = _load("generate_breakdown")
 word_mod      = _load("generate_word")
 frontend_mod  = _load("generate_frontend")
+schema_analysis_mod = _load("generate_schema_analysis")
+acl_analysis_mod    = _load("generate_acl_analysis")
 
 ALL_DOMAINS = comp_mod.ALL_DOMAINS
 
@@ -278,6 +280,13 @@ def build_program_overview() -> str:
         "cross-domain identifier inventory, required contract fixes (R1–R6), recommended entity references, "
         "entity-resolver analysis, and the risks/open-questions register. Required-fix stories: "
         "`PRODUCT-BE-F-13/F-14`, `CLAIM-BE-G-06`, `PRODUCT-FE-012`.",
+        "- **Cross-domain field analysis:** `analysis/schemaAnalysis/00-cross-domain-field-inventory.md` "
+        "(program roll-up of each domain's `be-06-cross-domain-field-analysis.md`) — which fields hydrate "
+        "another domain, real client usage, complexity, federation recommendation.",
+        "- **ACL research:** `analysis/aclResearch/00-acl-usage-inventory.md` (program roll-up of each "
+        "domain's `be-07-acl-usage-analysis.md`) — classifies every ACL call site and proposes Mid-Request "
+        "ACL Update for downstream-token cases; **supersedes** the \"ACL is context-only, ignored\" note in "
+        "be-03/be-04 pending review (not yet applied to those docs).",
         "- **Jira:** import `jira/{domain}.csv` (or `jira/all-stories.csv`). See `PUSH-TO-JIRA-CONFLUENCE.md`.",
         "- **Read order by role + regeneration:** see `README.md`.",
         "",
@@ -346,6 +355,18 @@ def main() -> None:
         except Exception as e:
             print(f"  FAIL {domain} jira CSV: {type(e).__name__}: {e}")
 
+        # Phase 6 — cross-domain field analysis (be-06); needs be-02 + be-03 to exist.
+        try:
+            schema_analysis_mod.generate_domain(domain)
+        except Exception as e:
+            print(f"  FAIL {domain} cross-domain field analysis: {type(e).__name__}: {e}")
+
+        # Phase 7 — ACL usage analysis (be-07); needs the domain's resolver file to exist.
+        try:
+            acl_analysis_mod.generate_domain(domain)
+        except Exception as e:
+            print(f"  FAIL {domain} ACL usage analysis: {type(e).__name__}: {e}")
+
     if not no_summary and not (targets != ALL_DOMAINS):
         print()
         # Global Word doc (all domains, fully formatted)
@@ -397,6 +418,17 @@ def main() -> None:
             frontend_mod.main()
         except Exception as e:
             print(f"  FAIL frontend analysis: {type(e).__name__}: {e}")
+
+        # Schema/ACL program roll-ups — per-domain be-06/be-07 already written above;
+        # main() re-runs all domains (cheap, no external I/O) so the roll-up reflects them.
+        try:
+            schema_analysis_mod.main()
+        except Exception as e:
+            print(f"  FAIL schema analysis roll-up: {type(e).__name__}: {e}")
+        try:
+            acl_analysis_mod.main()
+        except Exception as e:
+            print(f"  FAIL ACL analysis roll-up: {type(e).__name__}: {e}")
 
         # Program-level team plan (2 BE + 2 FE engineers) — needs both BE + FE parsers
         try:

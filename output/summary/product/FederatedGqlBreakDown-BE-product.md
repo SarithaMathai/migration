@@ -4,8 +4,8 @@
 |---|---|
 | **Target DGS** | `plm-product (host)` |
 | **T-Shirt Size** | **XXL** |
-| **Total Stories** | 48 |
-| **Complexity** | 🔴 5 Very High · 🟠 4 High · 🟡 31 Medium · 🟢 8 Low |
+| **Total Stories** | 51 |
+| **Complexity** | 🔴 5 Very High · 🟠 4 High · 🟡 33 Medium · 🟢 9 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
 | **Generated** | 2026-07-17 |
 
@@ -144,11 +144,11 @@ global decision. ACL steps are noted in stories for context only.
 | Step | Stories (parallel set) | Entry gates in this step | Focus |
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
-| 2 | 🟡 `B-02`, 🟡 `B-06`, 🟢 `B-10`, 🟠 `C-01`, 🟡 `C-02`, 🟡 `C-03`, 🟡 `C-04`, 🟡 `C-05`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟡 `D-05`, 🟡 `D-06`, 🟡 `D-10`, 🟡 `D-14`, 🟢 `D-18`, 🔴 `E-01`, 🟠 `E-02`, 🔴 `E-03`, 🟢 `F-10`, 🔴 `G-01`, 🔴 `G-02`, 🟡 `G-04`, 🟡 `G-05`, 🟡 `G-06`, 🟡 `G-07`, 🟡 `G-08`, 🟡 `G-09`, 🟡 `G-10`, 🟡 `G-11-1`, 🟡 `G-11-2`, 🟢 `G-12`, 🟡 `G-13`, 🟡 `G-15` | `C-01` → 🔬 SPIKE-06a<br>`D-01` → 🔬 SPIKE-06b<br>`D-02` → 🔬 SPIKE-06b<br>`D-04` → 🔬 SPIKE-06b<br>`E-01` → 🔬 SPIKE-03<br>`E-02` → 🔬 SPIKE-01<br>`E-03` → 🔬 SPIKE-02<br>`G-07` → 🔬 SPIKE-04<br>`G-11-1` → 🔬 SPIKE-04 | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
-| 3 | 🔴 `E-04`, 🟡 `F-01`, 🟡 `F-02`, 🟡 `F-03`, 🟡 `F-04`, 🟡 `F-05`, 🟡 `F-07`, 🟢 `F-11`, 🟢 `F-12`, 🟠 `G-03`, 🟠 `G-16` | `E-04` → 🔬 SPIKE-02<br>`F-01` → ⛔ BLOCKED-BY attachment domain (⛔ cross-subgraph — does not ship until plm-attachment is live)<br>`F-02` → ⛔ BLOCKED-BY discussion domain (⛔ cross-subgraph)<br>`F-03` → ⛔ BLOCKED-BY sample domain (⛔ cross-subgraph)<br>`F-05` → ⛔ BLOCKED-BY claim domain (⛔ cross-subgraph)<br>`F-07` → ⛔ BLOCKED-BY construction domain (⛔ cross-subgraph) | ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
-| 4 | 🟢 `F-09` | — | 🔗 Federation & Stitching |
+| 2 | 🟡 `B-02`, 🟡 `B-06`, 🟢 `B-10`, 🟠 `C-01`, 🟡 `C-02`, 🟡 `C-03`, 🟡 `C-04`, 🟡 `C-05`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟡 `D-05`, 🟡 `D-06`, 🟡 `D-10`, 🟡 `D-14`, 🟢 `D-18`, 🔴 `E-01`, 🟠 `E-02`, 🔴 `E-03`, 🟡 `F-13`, 🟢 `F-14`, 🔴 `G-01`, 🔴 `G-02`, 🟡 `G-04`, 🟡 `G-05`, 🟡 `G-06`, 🟡 `G-07`, 🟡 `G-08`, 🟡 `G-09`, 🟡 `G-10`, 🟡 `G-11-1`, 🟡 `G-11-2`, 🟢 `G-12`, 🟡 `G-13`, 🟡 `G-15` | `C-01` → 🔬 SPIKE-06a<br>`D-01` → 🔬 SPIKE-06b<br>`D-02` → 🔬 SPIKE-06b<br>`D-04` → 🔬 SPIKE-06b<br>`E-01` → 🔬 SPIKE-03<br>`E-02` → 🔬 SPIKE-01<br>`E-03` → 🔬 SPIKE-02<br>`G-07` → 🔬 SPIKE-04<br>`G-11-1` → 🔬 SPIKE-04 | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 3 | 🔴 `E-04`, 🟡 `F-01`, 🟡 `F-02`, 🟡 `F-03`, 🟡 `F-04`, 🟡 `F-05`, 🟡 `F-07`, 🟢 `F-10`, 🟢 `F-12`, 🟠 `G-03`, 🟠 `G-16`, 🟡 `G-17` | `E-04` → 🔬 SPIKE-02<br>`F-01` → ⛔ BLOCKED-BY attachment domain (⛔ cross-subgraph — does not ship until plm-attachment is live)<br>`F-02` → ⛔ BLOCKED-BY discussion domain (⛔ cross-subgraph)<br>`F-03` → ⛔ BLOCKED-BY sample domain (⛔ cross-subgraph)<br>`F-05` → ⛔ BLOCKED-BY claim domain (⛔ cross-subgraph)<br>`F-07` → ⛔ BLOCKED-BY construction domain (⛔ cross-subgraph) | ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 4 | 🟢 `F-09`, 🟢 `F-11` | — | 🔗 Federation & Stitching |
 
-**Critical path:** `B-01` → `E-03` → `F-04` → `F-09` — 4 sequential stories; everything else hangs off this chain in parallel.
+**Critical path:** `B-01` → `E-03` → `F-03` → `F-09` — 4 sequential stories; everything else hangs off this chain in parallel.
 
 ---
 
@@ -162,30 +162,33 @@ global decision. ACL steps are noted in stories for context only.
 | 2 | 🔴 `E-03` (7–12d) 🔬 | 🔴 `G-02` (7–12d) |
 | 3 | 🔴 `G-01` (7–12d) | 🔴 `E-04` (7–12d) 🔬 |
 | 4 | 🟠 `C-01` (4–7d) 🔬 | 🟠 `G-03` (4–7d) |
-| 5 | 🟠 `E-02` (4–7d) 🔬 | 🟡 `F-01` (2–4d) ⛔ |
-| 6 | 🟠 `G-16` (4–7d) | 🟡 `F-03` (2–4d) ⛔ |
-| 7 | 🟡 `F-02` (2–4d) ⛔ | 🟡 `F-05` (2–4d) ⛔ |
-| 8 | 🟡 `F-04` (2–4d) *(grouped XS: +`F-06`, `F-08`)* | 🟡 `B-02` (2–4d) *(grouped XS: +`B-03`, `B-04`, `B-05`)* |
-| 9 | 🟡 `F-07` (2–4d) ⛔ | 🟡 `C-02` (2–4d) |
-| 10 | 🟡 `B-06` (2–4d) *(grouped XS: +`B-07`, `B-08`, `B-09`)* | 🟡 `C-04` (2–4d) |
-| 11 | 🟡 `C-03` (2–4d) | 🟡 `D-01` (2–4d) 🔬 |
-| 12 | 🟡 `C-05` (2–4d) | 🟡 `D-03` (2–4d) |
-| 13 | 🟡 `D-02` (2–4d) 🔬 | 🟡 `D-05` (2–4d) |
-| 14 | 🟡 `D-04` (2–4d) 🔬 | 🟡 `D-10` (2–4d) *(grouped XS: +`D-11`, `D-12`, `D-13`)* |
-| 15 | 🟡 `D-06` (2–4d) *(grouped XS: +`D-07`, `D-08`, `D-09`)* | 🟢 `F-10` (1–2d) |
-| 16 | 🟡 `D-14` (2–4d) *(grouped XS: +`D-15`, `D-16`, `D-17`)* | 🟡 `G-05` (2–4d) |
-| 17 | 🟡 `G-04` (2–4d) | 🟡 `G-07` (2–4d) 🔬 |
-| 18 | 🟡 `G-06` (2–4d) | 🟡 `G-09` (2–4d) |
-| 19 | 🟡 `G-08` (2–4d) | 🟡 `G-11-1` (2–4d) 🔬 |
-| 20 | 🟡 `G-10` (2–4d) | 🟡 `G-13` (2–4d) |
-| 21 | 🟡 `G-11-2` (2–4d) | 🟢 `B-10` (1–2d) *(grouped XS: +`B-11`)* |
-| 22 | 🟡 `G-15` (2–4d) | 🟢 `D-18` (1–2d) |
-| 23 | 🟢 `F-09` (1–2d) | 🟢 `F-11` (1–2d) |
-| 24 | 🟢 `F-12` (1–2d) | 🟢 `G-12` (1–2d) *(grouped XS: +`G-14`)* |
+| 5 | 🟡 `F-13` (2–4d) | 🟡 `F-01` (2–4d) ⛔ |
+| 6 | 🟠 `E-02` (4–7d) 🔬 | 🟡 `F-02` (2–4d) ⛔ |
+| 7 | 🟠 `G-16` (4–7d) | 🟡 `F-04` (2–4d) *(grouped XS: +`F-06`, `F-08`)* |
+| 8 | 🟡 `F-03` (2–4d) ⛔ | 🟡 `F-07` (2–4d) ⛔ |
+| 9 | 🟡 `F-05` (2–4d) ⛔ | 🟡 `B-06` (2–4d) *(grouped XS: +`B-07`, `B-08`, `B-09`)* |
+| 10 | 🟢 `F-14` (1–2d) | 🟡 `C-03` (2–4d) |
+| 11 | 🟡 `B-02` (2–4d) *(grouped XS: +`B-03`, `B-04`, `B-05`)* | 🟡 `C-05` (2–4d) |
+| 12 | 🟡 `C-02` (2–4d) | 🟡 `D-02` (2–4d) 🔬 |
+| 13 | 🟡 `C-04` (2–4d) | 🟡 `D-04` (2–4d) 🔬 |
+| 14 | 🟡 `D-01` (2–4d) 🔬 | 🟡 `D-06` (2–4d) *(grouped XS: +`D-07`, `D-08`, `D-09`)* |
+| 15 | 🟡 `D-03` (2–4d) | 🟡 `D-14` (2–4d) *(grouped XS: +`D-15`, `D-16`, `D-17`)* |
+| 16 | 🟡 `D-05` (2–4d) | 🟡 `G-04` (2–4d) |
+| 17 | 🟡 `D-10` (2–4d) *(grouped XS: +`D-11`, `D-12`, `D-13`)* | 🟡 `G-06` (2–4d) |
+| 18 | 🟢 `F-10` (1–2d) | 🟡 `G-08` (2–4d) |
+| 19 | 🟡 `G-05` (2–4d) | 🟡 `G-10` (2–4d) |
+| 20 | 🟡 `G-07` (2–4d) 🔬 | 🟡 `G-11-2` (2–4d) |
+| 21 | 🟡 `G-09` (2–4d) | 🟡 `G-15` (2–4d) |
+| 22 | 🟡 `G-11-1` (2–4d) 🔬 | 🟢 `B-10` (1–2d) *(grouped XS: +`B-11`)* |
+| 23 | 🟡 `G-13` (2–4d) | 🟢 `F-09` (1–2d) |
+| 24 | 🟡 `G-17` (2–4d) | 🟢 `F-12` (1–2d) |
+| 25 | 🟢 `D-18` (1–2d) | — |
+| 26 | 🟢 `F-11` (1–2d) | — |
+| 27 | 🟢 `G-12` (1–2d) *(grouped XS: +`G-14`)* | — |
 
-**BE-1:** `B-01` → `E-03` → `G-01` → `C-01` → `E-02` → `G-16` → `F-02` → `F-04` → `F-07` → `B-06` → `C-03` → `C-05` → `D-02` → `D-04` → `D-06` → `D-14` → `G-04` → `G-06` → `G-08` → `G-10` → `G-11-2` → `G-15` → `F-09` → `F-12`<br>**BE-2:** `E-01` → `G-02` → `E-04` → `G-03` → `F-01` → `F-03` → `F-05` → `B-02` → `C-02` → `C-04` → `D-01` → `D-03` → `D-05` → `D-10` → `F-10` → `G-05` → `G-07` → `G-09` → `G-11-1` → `G-13` → `B-10` → `D-18` → `F-11` → `G-12`
+**BE-1:** `B-01` → `E-03` → `G-01` → `C-01` → `F-13` → `E-02` → `G-16` → `F-03` → `F-05` → `F-14` → `B-02` → `C-02` → `C-04` → `D-01` → `D-03` → `D-05` → `D-10` → `F-10` → `G-05` → `G-07` → `G-09` → `G-11-1` → `G-13` → `G-17` → `D-18` → `F-11` → `G-12`<br>**BE-2:** `E-01` → `G-02` → `E-04` → `G-03` → `F-01` → `F-02` → `F-04` → `F-07` → `B-06` → `C-03` → `C-05` → `D-02` → `D-04` → `D-06` → `D-14` → `G-04` → `G-06` → `G-08` → `G-10` → `G-11-2` → `G-15` → `B-10` → `F-09` → `F-12`
 
-**Elapsed (nominal midpoints):** ~88 working days with 2 engineers vs ~174 days sequential.
+**Elapsed (nominal midpoints):** ~92 working days with 2 engineers vs ~182 days sequential.
 
 ---
 
@@ -241,7 +244,7 @@ global decision. ACL steps are noted in stories for context only.
 | 🔴🔬 🔷 `PRODUCT-BE-E-04`<br>`getProductTechPackBulkCountV1` (bulk wrapper, ordering fix)<br>🔴🔬 _Spike-gated on `SPIKE-02` (TechPack Aggregate) — see global Spike Detail_ | 🔴 Very High `XL` | Query<br>Calls: `attachment`, `search` | SPIKE-02, E-03 | **Intent —** Return TechPack counts for many products at once, in the caller's order.<br>**Today —** the bulk version runs all N single-product lookups concurrently and - returns them in whatever order they happen to finish — not the order the caller asked for. - If a…<br>**Done when:**<br>• `bulk(P1..Pn) == [single(P1)..single(Pn)]` in input order<br>• empty list → [] | ☐ order preserved<br>☐ empty<br>☐ Parity: DGS response matches spark-internal-graphql baseline |
 
 
-### 🔗 Phase F — Federation & Stitching (10 stories)
+### 🔗 Phase F — Federation & Stitching (12 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
@@ -252,12 +255,14 @@ global decision. ACL steps are noted in stories for context only.
 | 🔸 `PRODUCT-BE-F-05`<br>`ResourcesCount.claims` (federated, from Claim) | 🟡 Medium `M` | Field Resolver | E-03 | **Intent —** Fills in the product's claims count — answered by the Claims service once it's live.<br>**Done when:**<br>• `claims` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade<br>• Live in prod only after `spark-claims` is deployed |
 | 🔸 `PRODUCT-BE-F-07`<br>`ResourcesCount.constructions` (federated, from Construction) | 🟡 Medium `M` | Field Resolver | E-03 | **Intent —** Fills in the product's construction count — answered by the Construction service once it's live.<br>**Done when:**<br>• `constructions` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade<br>• Live in prod only after the construction subgraph is deployed |
 | 🔸 `PRODUCT-BE-F-09`<br>Retire the TechPack aggregation facade | 🟢 Low `XS` | Field Resolver | F-01, F-02, F-03, F-04, F-05, F-07 | **Intent —** Removes the temporary TechPack 'facade' once every count is served by its real owner.<br>**Today —** remove TechPackAggregatorClient; TechPackDataFetcher returns key+context only; decommission the facade<br>**Done when:**<br>• all 11 `ResourcesCount` fields resolve via federation<br>• facade health-check endpoint returns 404 (decommissioned)<br>• no orphaned config (feature flags, Feign client beans, etc. referencing the retired facade) |
-| 🔸 `PRODUCT-BE-F-10`<br>Hive Gateway supergraph composition | 🟢 Low `XS` | Field Resolver | — | **Intent —** Composes all the subgraphs into one federated graph at the gateway.<br>**Today —** add plm-product subgraph URL; verify composition with VMM/IG/CORONA/Doppler stubs; smoke-test cross-subgraph query<br>**Done when:**<br>• supergraph composes<br>• cross-subgraph smoke test passes |
+| 🔸 `PRODUCT-BE-F-10`<br>Hive Gateway supergraph composition | 🟢 Low `XS` | Field Resolver | F-13, F-14 | **Intent —** Composes all the subgraphs into one federated graph at the gateway.<br>**Today —** add plm-product subgraph URL; verify composition with VMM/IG/CORONA/Doppler stubs; smoke-test cross-subgraph query<br>**Done when:**<br>• supergraph composes<br>• cross-subgraph smoke test passes<br>• composition runs as a CI gate on every schema change (not a one-off) and fails on any `@key`/type-name mismatch between subgraphs (regression guard for federation-review/03 §R1–R5)<br>• zero remaining contract mismatches: `VMM_BusinessPartner`/`VMM_Brand` keyed `id`; every entity keyed `id` (Claims/Packaging/Watchlist/Dieline synthesize `id` from humanId — program decision 2026-07-17); `ProductDetails`/`MeasurementPaged` names aligned |
 | 🔸 `PRODUCT-BE-F-11`<br>Platform stub verification (VMM/IG/Doppler/CORONA/APEX) | 🟢 Low `XS` | Field Resolver | F-10 | **Intent —** Verifies each external platform (VMM, IG, etc.) resolves through its stub.<br>**Today —** confirm the gateway resolves full platform types from product-emitted @key stubs<br>**Done when:**<br>• each platform type resolves via its stub key |
 | 📄 `PRODUCT-BE-F-12`<br>Deferred partner-wrapper decision (drift mutations) | 🟢 Low `XS` | Schema | E-01 | **Intent —** Decide the fate of three drift partner mutations that have no resolvers.<br>**Today —** three old mutation names (removeProductBusinessPartner, - dropProductBusinessPartner, unDropProductBusinessPartner) still exist in the schema, but nothing calls them…<br>**Done when:**<br>• traffic survey complete<br>• decision implemented |
+| 🔸 `PRODUCT-BE-F-13`<br>`Product` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references | 🟡 Medium `M` | Field Resolver | B-01 | **Intent —** Lets *other* subgraphs (today: claims) turn a bare `Product{id}` reference into a full product through the gateway.<br>**Today —** @DgsEntityFetcher(name = "Product") → `productService<br>**Done when:**<br>• `_entities` resolves `Product` representations with a single batched backend call<br>• Unknown ids yield `null` entries without failing the whole `_entities` response<br>• End-to-end: a claims-subgraph query `{ getClaims { product { description } } }` hydrates through the gateway (pairs with CLAIM-BE-G-03)<br>• No ACL plumbing introduced |
+| 📄 `PRODUCT-BE-F-14`<br>Cross-subgraph contract alignment (keys, type names, paged wrappers) | 🟢 Low `XS` | Schema | — | **Intent —** Fixes the naming/key mismatches between product's stubs and the owning schemas so the supergraph can actually compose.<br>**Done when:**<br>• `plm-product` schema compiles standalone with every referenced type declared (including `TeamPaged`, `TeamPagedV2`, `WorkspacesPagedV2`, `DiscussionElastic`)<br>• `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts, including zero `@shareable` field-shape conflicts on `TeamPaged` (must match claims' declaration exactly)<br>• `CORONA_ItemDetails` entity form implemented per the 2026-07-17 decision (keyed `tcinId`; Corona inflates via the gateway)<br>• Blocks released: F-10, CLAIM-BE-F-01, CLAIM-BE-F-02 |
 
 
-### 🧪 Phase G — Field Resolvers & Tests (16 stories)
+### 🧪 Phase G — Field Resolvers & Tests (17 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria | Key Tests |
 |---|---|---|---|---|---|
@@ -277,4 +282,5 @@ global decision. ACL steps are noted in stories for context only.
 | 🔸 `PRODUCT-BE-G-13`<br>IG/tag/tcin/spg + template trivial-field group | 🟡 Medium `M` | Field Resolver<br>Calls: `ig`, `tag`, `corona` | — | **Intent —** Resolve a group of trivial IG / tag / TCIN / template fields.<br>**Today —** department/departments/clazz/brand/brands/divisions/productTemplateDepartments, tags, tcins, SPARK_Tcin.itemDetails (CORONA), SPARK_PackagingAttribute.spg (internal…<br>**Done when:**<br>• each field resolves to the right source | — |
 | 📄 `PRODUCT-BE-G-15`<br>Port product utils to Kotlin | 🟡 Medium `M` | Service | — | **Intent —** Port the shared product utility helpers to Kotlin.<br>**Today —** attachmentUtils, partnerUtils, teamUtils, productUtils, componentStatusUtils, resolvePaging, vmmUtils, accessControlUtils, removePartnerUtils<br>**Done when:**<br>• utils ported with unit tests<br>• counter logic fixed/verified<br>• ACL batch parallel-chunked | — |
 | 📄 `PRODUCT-BE-G-16`<br>Test coverage, parity harness, load & cut-over rehearsal | 🟠 High `L` | Tests | C-01, E-01, E-03, G-01, G-02 | **Intent —** The safety net: tests + parity + load checks proving the new Product DGS matches the old gateway before cut-over.<br>**Today —** ≥80% unit coverage; parity harness ≥50 fixtures (incl<br>**Done when:**<br>• unit ≥80%<br>• ≥50 parity fixtures green<br>• load p95 parity<br>• schema-diff intentional-only<br>• shadow-traffic rehearsal + rollback drill | ☐ Parity: DGS response matches spark-internal-graphql baseline<br>☐ Load: p95 latency is within spark-internal-graphql baseline<br>☐ contract<br>☐ Integration: shadow traffic rehearsal + rollback drill passes |
+| 🔸 `PRODUCT-BE-G-17`<br>Entity references on partner/lineage value types (recommended, PO-gated) | 🟡 Medium `M` | Field Resolver<br>Calls: `vmm` | G-01 | **Intent —** Adds `partner { … }` / `product { … }` object fields next to the existing ids on the<br>**Today —** schema adds partner: VMM_BusinessPartner (emit {id} key stub — the gateway<br>**Done when:**<br>• PO approval recorded (OQ-5) before implementation starts<br>• New object fields resolve; all existing id fields unchanged<br>• `product` lineage refs batch via DataLoader (no N+1 on `ancestryProducts`)<br>• Codegen/contract parity suite passes with the additive fields present | — |
 

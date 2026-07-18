@@ -111,7 +111,7 @@ pricing service).
 | 2 | 🟡 `B-02`, 🟢 `B-06`, 🟡 `C-01`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟡 `D-08`, 🟢 `D-09`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟢 `G-02`, 🟡 `G-03`, 🟠 `G-04`, 🟡 `G-05` | `E-01` → 🔬 SPIKE-01 | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
 | 3 | 🟡 `G-06` | — | 🧪 Field Resolvers & Tests |
 
-**Critical path:** `B-01` → `G-03` → `G-06` — 3 sequential stories; everything else hangs off this chain in parallel.
+**Critical path:** `B-01` → `E-01` → `G-06` — 3 sequential stories; everything else hangs off this chain in parallel.
 
 ---
 

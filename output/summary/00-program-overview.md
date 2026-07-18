@@ -25,12 +25,12 @@
 |---|---|
 | Total domains | 8 |
 | Target DGS services | 2 |
-| **Total backend stories** | **148** build stories (Phase-0 spikes tracked separately: 7 program spikes + their domain stubs) |
-| **Total frontend stories** | **38** (platform enablement complete — waves 1–4) |
-| Complexity (backend) | 🔴 6 Very High · 🟠 13 High · 🟡 93 Medium · 🟢 36 Low |
+| **Total backend stories** | **155** build stories (Phase-0 spikes tracked separately: 7 program spikes + their domain stubs) |
+| **Total frontend stories** | **40** (platform enablement complete — waves 1–4) |
+| Complexity (backend) | 🔴 6 Very High · 🟠 13 High · 🟡 96 Medium · 🟢 40 Low |
 | Open decisions | 34 |
 | **Backend effort (buffered +20%)** | **432–733 engineer-days** |
-| **Frontend effort (single-engineer)** | **158–245 engineer-days** |
+| **Frontend effort (single-engineer)** | **163–254 engineer-days** |
 
 ---
 
@@ -38,15 +38,15 @@
 
 | Domain | Target DGS | BE Stories | T-Shirt | 🔴 | 🟠 | 🟡 | 🟢 | BE effort (buffered) | FE Stories | FE effort | Top risk |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| [Product](./product/FederatedGqlBreakDown-BE-product.md) | `plm-product (host)` | **48** | XXL | 5 | 4 | 31 | 8 | 194–326d | 11 | 63–97d | 🔴 High TechPack aggregation + partner drop/undrop orchestration |
-| [BOM](./bom/FederatedGqlBreakDown-BE-bom.md) | `plm-product (co-located)` | **24** | XL | 1 | 2 | 16 | 5 | 68–114d | 6 | 27–42d | 🔴 High `updateBom` 3-step write — no rollback path today |
+| [Product](./product/FederatedGqlBreakDown-BE-product.md) | `plm-product (host)` | **51** | XXL | 5 | 4 | 33 | 9 | 194–326d | 12 | 66–102d | 🔴 High TechPack aggregation + partner drop/undrop orchestration |
+| [BOM](./bom/FederatedGqlBreakDown-BE-bom.md) | `plm-product (co-located)` | **25** | XL | 1 | 2 | 17 | 5 | 68–114d | 7 | 29–46d | 🔴 High `updateBom` 3-step write — no rollback path today |
 | [Packaging](./packaging/FederatedGqlBreakDown-BE-packaging.md) | `plm-product (co-located)` | **18** | L | 0 | 2 | 11 | 5 | 42–72d | 5 | 21–33d | 🟡 Medium `updatePackaging` multi-step write + elastic search cutover |
-| [Measurement](./measurement/FederatedGqlBreakDown-BE-measurement.md) | `plm-product (co-located)` | **14** | M | 0 | 1 | 8 | 5 | 32–55d | 4 | 12–19d | 🟡 Medium `updateMeasurement` 2-step write + master-data cache |
-| [Claims](./claims/FederatedGqlBreakDown-BE-claims.md) | `spark-claims (separate)` | **15** | L | 0 | 2 | 11 | 2 | 36–62d | 4 | 17–27d | 🟡 Medium `updateClaim` proxy-ACL multi-step + camelCase response bug |
+| [Measurement](./measurement/FederatedGqlBreakDown-BE-measurement.md) | `plm-product (co-located)` | **15** | M | 0 | 1 | 8 | 6 | 32–55d | 4 | 12–19d | 🟡 Medium `updateMeasurement` 2-step write + master-data cache |
+| [Claims](./claims/FederatedGqlBreakDown-BE-claims.md) | `spark-claims (separate)` | **16** | L | 0 | 2 | 11 | 3 | 36–62d | 4 | 17–27d | 🟡 Medium `updateClaim` proxy-ACL multi-step + camelCase response bug |
 | [Impression](./impression/FederatedGqlBreakDown-BE-impression.md) | `plm-product (co-located)` | **7** | XS | 0 | 0 | 2 | 5 | 11–18d | 2 | 3–5d | 🟢 Low Impression sub-type polymorphism (5 types) |
 | [Product Details](./productDetails/FederatedGqlBreakDown-BE-productDetails.md) | `plm-product (co-located)` | **11** | M | 0 | 1 | 8 | 2 | 24–42d | 3 | 8–12d | 🟡 Medium `updateProductDetailsSet` multi-step + elastic search |
-| [Watchlist](./watchlist/FederatedGqlBreakDown-BE-watchlist.md) | `plm-product (co-located)` | **11** | M | 0 | 1 | 6 | 4 | 25–44d | 3 | 7–10d | 🟡 Medium `updateWatchlistEntries` multi-step write |
-| **TOTAL** | — | **148** | — | **6** | **13** | **93** | **36** | **432–733d** | **38** | **158–245d** | — |
+| [Watchlist](./watchlist/FederatedGqlBreakDown-BE-watchlist.md) | `plm-product (co-located)` | **12** | M | 0 | 1 | 6 | 5 | 25–44d | 3 | 7–10d | 🟡 Medium `updateWatchlistEntries` multi-step write |
+| **TOTAL** | — | **155** | — | **6** | **13** | **96** | **40** | **432–733d** | **40** | **163–254d** | — |
 
 > BE counts + complexity are computed live from each domain's `be-04-stories.md`; FE counts + effort from `fe-08-frontend-stories.md` (same parsers as the breakdowns + Jira CSVs), so these totals always reconcile. BE effort is buffered +20%; FE effort is single-engineer, unbuffered. Each domain's FE stories live in `summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md`.
 
@@ -58,15 +58,15 @@
 
 | Domain | 🧱 A | 📖 B | 🔍 C | ✏️ D | ⚙️ E | 🔗 F | 🧪 G | Total |
 |---|---|---|---|---|---|---|---|---|
-| [Product](./product/FederatedGqlBreakDown-BE-product.md) | 0 | 4 | 5 | 9 | 4 | 10 | 16 | **48** |
-| [BOM](./bom/FederatedGqlBreakDown-BE-bom.md) | 1 | 4 | 3 | 2 | 1 | 2 | 11 | **24** |
+| [Product](./product/FederatedGqlBreakDown-BE-product.md) | 0 | 4 | 5 | 9 | 4 | 12 | 17 | **51** |
+| [BOM](./bom/FederatedGqlBreakDown-BE-bom.md) | 1 | 4 | 3 | 2 | 1 | 2 | 12 | **25** |
 | [Packaging](./packaging/FederatedGqlBreakDown-BE-packaging.md) | 0 | 3 | 1 | 6 | 1 | 1 | 6 | **18** |
-| [Measurement](./measurement/FederatedGqlBreakDown-BE-measurement.md) | 0 | 2 | 2 | 4 | 1 | 2 | 3 | **14** |
-| [Claims](./claims/FederatedGqlBreakDown-BE-claims.md) | 0 | 2 | 2 | 3 | 1 | 2 | 5 | **15** |
+| [Measurement](./measurement/FederatedGqlBreakDown-BE-measurement.md) | 0 | 2 | 2 | 4 | 1 | 2 | 4 | **15** |
+| [Claims](./claims/FederatedGqlBreakDown-BE-claims.md) | 0 | 2 | 2 | 3 | 1 | 2 | 6 | **16** |
 | [Impression](./impression/FederatedGqlBreakDown-BE-impression.md) | 0 | 2 | 0 | 1 | 0 | 1 | 3 | **7** |
 | [Product Details](./productDetails/FederatedGqlBreakDown-BE-productDetails.md) | 0 | 1 | 1 | 3 | 1 | 1 | 4 | **11** |
-| [Watchlist](./watchlist/FederatedGqlBreakDown-BE-watchlist.md) | 0 | 2 | 1 | 2 | 1 | 1 | 4 | **11** |
-| **TOTAL** | **1** | **20** | **15** | **30** | **10** | **20** | **52** | **148** |
+| [Watchlist](./watchlist/FederatedGqlBreakDown-BE-watchlist.md) | 0 | 2 | 1 | 2 | 1 | 1 | 5 | **12** |
+| **TOTAL** | **1** | **20** | **15** | **30** | **10** | **22** | **57** | **155** |
 
 ---
 
@@ -74,8 +74,8 @@
 
 | DGS Service | Phase | Domains | Combined stories |
 |---|---|---|---|
-| `plm-product` | 1 | Product · BOM · Measurement · Packaging · Impression · Product Details · Watchlist | 133 |
-| `spark-claims` | 1 | Claims | 15 |
+| `plm-product` | 1 | Product · BOM · Measurement · Packaging · Impression · Product Details · Watchlist | 139 |
+| `spark-claims` | 1 | Claims | 16 |
 | `plm-sample` | later | Sample | ~33 (estimate — analysis not yet regenerated) |
 | `plm-discussion` | later | Discussion | ~37 (estimate) |
 | `plm-workspace` | later | Workspace | ~32 (estimate) |
@@ -116,6 +116,9 @@ Tier 4 — Federation:  all F-phase stories, once the owning subgraph is live
 
 - **Per domain (backend):** open `summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md` (or the `.docx` for Confluence/Word).
 - **Per domain (frontend):** open `summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md` (generated by `generate_frontend.py`).
+- **Federation schema review:** `analysis/federation-review/` (hand-authored) — schema validation, cross-domain identifier inventory, required contract fixes (R1–R6), recommended entity references, entity-resolver analysis, and the risks/open-questions register. Required-fix stories: `PRODUCT-BE-F-13/F-14`, `CLAIM-BE-G-06`, `PRODUCT-FE-012`.
+- **Cross-domain field analysis:** `analysis/schemaAnalysis/00-cross-domain-field-inventory.md` (program roll-up of each domain's `be-06-cross-domain-field-analysis.md`) — which fields hydrate another domain, real client usage, complexity, federation recommendation.
+- **ACL research:** `analysis/aclResearch/00-acl-usage-inventory.md` (program roll-up of each domain's `be-07-acl-usage-analysis.md`) — classifies every ACL call site and proposes Mid-Request ACL Update for downstream-token cases; **supersedes** the "ACL is context-only, ignored" note in be-03/be-04 pending review (not yet applied to those docs).
 - **Jira:** import `jira/{domain}.csv` (or `jira/all-stories.csv`). See `PUSH-TO-JIRA-CONFLUENCE.md`.
 - **Read order by role + regeneration:** see `README.md`.
 
