@@ -4,8 +4,8 @@
 |---|---|
 | **Target DGS** | `plm-product (co-located)` |
 | **T-Shirt Size** | **XS** |
-| **Total Stories** | 7 |
-| **Complexity** | 🔴 0 Very High · 🟠 0 High · 🟡 2 Medium · 🟢 5 Low |
+| **Total Stories** | 8 |
+| **Complexity** | 🔴 0 Very High · 🟠 0 High · 🟡 2 Medium · 🟢 6 Low |
 | **Phase Coverage** | 📖 B · ✏️ D · 🔗 F · 🧪 G |
 | **Generated** | 2026-07-17 |
 
@@ -91,7 +91,7 @@ that proves the pipeline end-to-end.
 | Step | Stories (parallel set) | Entry gates in this step | Focus |
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
-| 2 | 🟢 `B-02`, 🟡 `D-01`, 🟢 `F-01`, 🟢 `G-01`, 🟡 `G-02` | `F-01` → ⛔ BLOCKED-BY product B-01 | Fan-out — 📖 Core Reads · ✏️ Mutations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
+| 2 | 🟢 `B-02`, 🟡 `D-01`, 🟢 `F-01`, 🟢 `G-01`, 🟡 `G-02`, 🟢 `G-04` | `F-01` → ⛔ BLOCKED-BY product B-01 | Fan-out — 📖 Core Reads · ✏️ Mutations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests |
 | 3 | 🟢 `G-03` | — | 🧪 Field Resolvers & Tests |
 
 **Critical path:** `B-01` → `D-01` → `G-03` — 3 sequential stories; everything else hangs off this chain in parallel.
@@ -107,11 +107,12 @@ that proves the pipeline end-to-end.
 | 1 | 🟢 `B-01` (1–2d) | ⏳ after `B-01` → 🟡 `G-02` (2–4d) |
 | 2 | 🟡 `D-01` (2–4d) | 🟢 `F-01` (1–2d) ⛔ |
 | 3 | 🟢 `B-02` (1–2d) | 🟢 `G-03` (1–2d) |
-| 4 | 🟢 `G-01` (1–2d) *(grouped XS: +`G-04`)* | — |
+| 4 | 🟢 `G-01` (1–2d) | — |
+| 5 | 🟢 `G-04` (1–2d) | — |
 
-**BE-1:** `B-01` → `D-01` → `B-02` → `G-01`<br>**BE-2:** `G-02` → `F-01` → `G-03`
+**BE-1:** `B-01` → `D-01` → `B-02` → `G-01` → `G-04`<br>**BE-2:** `G-02` → `F-01` → `G-03`
 
-**Elapsed (nominal midpoints):** ~8 working days with 2 engineers vs ~14 days sequential.
+**Elapsed (nominal midpoints):** ~9 working days with 2 engineers vs ~15 days sequential.
 
 ---
 
@@ -148,11 +149,12 @@ that proves the pipeline end-to-end.
 | 🔸 `IMPRESSION-BE-F-01`<br>`Product.impressions` / `impressionCounts` (internal field resolver) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose impressions and their counts on the Product type.<br>**Done when:**<br>• `Product.impressions` and `Product.impressionCounts` resolve in-process via `impressionService`<br>• No HTTP call is made during resolution (verified by unit test mock)<br>• Output matches the current product-side resolver (parity) |
 
 
-### 🧪 Phase G — Field Resolvers & Tests (3 stories)
+### 🧪 Phase G — Field Resolvers & Tests (4 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `IMPRESSION-BE-G-01`<br>`Impression` field resolvers · `attachment` entity reference | 🟢 Low `XS` | Field Resolver<br>Calls: `attachment` | B-01 | **Grouped XS story —** combines former `G-04` (one PR train)<br>**Intent —** Resolve the individual Impression fields; Adds `attachment { … }` next to `attachmentId` so clients get file metadata without a<br>**Today —** schema adds attachment: Attachment (declare the `Attachment @extends<br>**Done when:**<br>• `Impression` field resolvers: `businessPartners` and `owningBusinessPartner` resolve correctly from `partnerIds` / `owningPartnerId`<br>• `Impression` field resolvers: `workspaces` returns `[]` when `workspaceContext` is empty; the workspace service is not called<br>• `Impression` field resolvers: `createdBy` / `updatedBy`: `null` id returns `null` — no exception thrown<br>• `attachment` entity reference: PO approval recorded (OQ-5) before implementation starts<br>• `attachment` entity reference: `attachment { id }` resolves as a stub; `attachmentId` unchanged (parity)<br>• `attachment` entity reference: Null-safe when `attachmentId` is absent |
+| 🔸 `IMPRESSION-BE-G-01`<br>`Impression` field resolvers (5 fields) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Resolve the individual Impression fields.<br>**Done when:**<br>• `businessPartners` and `owningBusinessPartner` resolve correctly from `partnerIds` / `owningPartnerId`<br>• `workspaces` returns `[]` when `workspaceContext` is empty; the workspace service is not called<br>• `createdBy` / `updatedBy`: `null` id returns `null` — no exception thrown |
 | 🔸 `IMPRESSION-BE-G-02`<br>`ImpressionCount.counts` aggregation | 🟡 Medium `M` | Field Resolver | B-01 | **Intent —** Aggregate the per-type impression counts.<br>**Done when:**<br>• One row per product partner containing the correct filtered impression count<br>• Final row is always `{ bpType: 'totalCount', counts: <total impressions length> }`<br>• Empty impressions list or missing product → `[{ bpType: 'totalCount', counts: 0 }]` — no exception is propagated<br>• Product is fetched in-process; no HTTP call is made |
 | 🔸 `IMPRESSION-BE-G-03`<br>Test coverage & parity | 🟢 Low `XS` | Field Resolver | B-01, B-02, D-01, G-02 | **Intent —** Prove the impression logic matches the old gateway.<br>**Done when:**<br>• Unit test coverage ≥ 80% for all impression data fetchers<br>• Parity tests are green for search, counts, and the update mutation<br>• The `counts` error-fallback path is explicitly covered by a unit test |
+| 🔸 `IMPRESSION-BE-G-04`<br>`attachment` entity reference (recommended, PO-gated) | 🟢 Low `XS` | Field Resolver<br>Calls: `attachment` | B-01 | **Intent —** Adds `attachment { … }` next to `attachmentId` so clients get file metadata without a<br>**Today —** schema adds attachment: Attachment (declare the `Attachment @extends<br>**Done when:**<br>• PO approval recorded (OQ-5) before implementation starts<br>• `attachment { id }` resolves as a stub; `attachmentId` unchanged (parity)<br>• Null-safe when `attachmentId` is absent |
 

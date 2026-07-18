@@ -1,6 +1,6 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,PRODUCT-BE-B-01,(Product) getProduct(id) [PRODUCT-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 1 of 51 (Product backend, step 1)
+Story,PRODUCT-BE-B-01,(Product) getProduct(id) [PRODUCT-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 1 of 70 (Product backend, step 1)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* No
 
@@ -28,7 +28,7 @@ Story,PRODUCT-BE-B-01,(Product) getProduct(id) [PRODUCT-BE-B-01],,Federate Break
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-B-02,(Product) getProductsByIds · getProductStatus · getProductVersions · getCopyStatus [PRODUCT-BE-B-02],,Federate BreakDown Product,B,M,dgs-migration,product,query,,,To Do,"*Implementation Order:* 2 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-B-02,(Product) getProductsByIds(ids) [PRODUCT-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 2 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -36,11 +36,7 @@ Story,PRODUCT-BE-B-02,(Product) getProductsByIds · getProductStatus · getProdu
 * None
 
 *Blocks:*
-* PRODUCT-FE-002
 * PRODUCT-FE-003
-* PRODUCT-FE-004
-
-*Grouped XS story — combines:* B-03, B-04, B-05 (one PR train; ACs of all grouped ops apply)
 
 *Current Behaviour:*
 * `getByIdList.load(ids)` `GET ${v1}?productId={csv}&page=0&size=10000&sort=createdDate,desc`; primes `getByID`.
@@ -52,7 +48,20 @@ Story,PRODUCT-BE-B-02,(Product) getProductsByIds · getProductStatus · getProdu
 1. returns paged products for ids
 2. primes single-id loader
 
-*From B-03 (`getProductStatus`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-B-03,(Product) getProductStatus (cacheable) [PRODUCT-BE-B-03],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 3 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-004
+
 *Current Behaviour:*
 * `getStatus.load()` master status list.
 
@@ -63,7 +72,20 @@ Story,PRODUCT-BE-B-02,(Product) getProductsByIds · getProductStatus · getProdu
 1. returns statuses
 2. cached
 
-*From B-04 (`getProductVersions`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-B-04,(Product) getProductVersions(id) [PRODUCT-BE-B-04],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 4 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-002
+
 *Current Behaviour:*
 * `getVersions.load({id})` `GET ${v1}/{id}/versions?page=0&size=10000`.
 
@@ -73,7 +95,20 @@ Story,PRODUCT-BE-B-02,(Product) getProductsByIds · getProductStatus · getProdu
 *Acceptance Criteria:*
 1. returns versions
 
-*From B-05 (`getCopyStatus`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-B-05,(Product) getCopyStatus(id) [PRODUCT-BE-B-05],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 5 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
 *Current Behaviour:*
 * `getCopyStatus.load(id)` `GET ${v2}/count/resource-type?copyId={id}`.
 
@@ -87,7 +122,7 @@ Story,PRODUCT-BE-B-02,(Product) getProductsByIds · getProductStatus · getProdu
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-B-06,(Product) getProductTemplateById · getProductRules · getProductRulesById · getAllAvailableRules [PRODUCT-BE-B-06],,Federate BreakDown Product,B,M,dgs-migration,product,query,,,To Do,"*Implementation Order:* 3 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-B-06,(Product) getProductTemplateById(id) [PRODUCT-BE-B-06],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 6 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -95,9 +130,7 @@ Story,PRODUCT-BE-B-06,(Product) getProductTemplateById · getProductRules · get
 * None
 
 *Blocks:*
-* PRODUCT-FE-006
-
-*Grouped XS story — combines:* B-07, B-08, B-09 (one PR train; ACs of all grouped ops apply)
+* None
 
 *Current Behaviour:*
 * `getByID.load(id)` → `response || {}` (empty object on miss — **preserve**).
@@ -108,7 +141,20 @@ Story,PRODUCT-BE-B-06,(Product) getProductTemplateById · getProductRules · get
 *Acceptance Criteria:*
 1. returns product or empty object (not null)
 
-*From B-07 (`getProductRules`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-B-07,(Product) getProductRules [PRODUCT-BE-B-07],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 7 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-006
+
 *Current Behaviour:*
 * `getAllRules.load()` `GET ${base}/spark_rules/v1` → `content`.
 
@@ -118,7 +164,20 @@ Story,PRODUCT-BE-B-06,(Product) getProductTemplateById · getProductRules · get
 *Acceptance Criteria:*
 1. returns rules content
 
-*From B-08 (`getProductRulesById`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-B-08,(Product) getProductRulesById(id) [PRODUCT-BE-B-08],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 8 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-006
+
 *Current Behaviour:*
 * `getRuleById.load(id)` `GET ${base}/spark_rules/v1/{id}`.
 
@@ -128,7 +187,20 @@ Story,PRODUCT-BE-B-06,(Product) getProductTemplateById · getProductRules · get
 *Acceptance Criteria:*
 1. returns rule
 
-*From B-09 (`getAllAvailableRules`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-B-09,(Product) getAllAvailableRules [PRODUCT-BE-B-09],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 9 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-006
+
 *Current Behaviour:*
 * `getAvailableRules.load()` `GET …/spark_rules/v1/rules`.
 
@@ -142,7 +214,7 @@ Story,PRODUCT-BE-B-06,(Product) getProductTemplateById · getProductRules · get
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-B-10,(Product) getProductDeptRules · getProductBPRules [PRODUCT-BE-B-10],,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 4 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-B-10,"(Product) getProductDeptRules(productIds, departmentIds, activeOnly) [PRODUCT-BE-B-10]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 10 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -151,8 +223,6 @@ Story,PRODUCT-BE-B-10,(Product) getProductDeptRules · getProductBPRules [PRODUC
 
 *Blocks:*
 * PRODUCT-FE-006
-
-*Grouped XS story — combines:* B-11 (one PR train; ACs of all grouped ops apply)
 
 *Current Behaviour:*
 * **flag fork** `USE_NEW_RULES_API ? ruleLibrary.searchRuleLibrary : product.searchProductDeptRules` `GET …/spark_rules/v1/search?productIds=&departmentIds=&activeOnly=`. **PO decision:** flag cutover (rules may move to spark-tag DGS).
@@ -164,7 +234,20 @@ Story,PRODUCT-BE-B-10,(Product) getProductDeptRules · getProductBPRules [PRODUC
 1. default `activeOnly=true`
 2. flag selects the correct backend
 
-*From B-11 (`getProductBPRules`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-B-11,"(Product) getProductBPRules(productIds, businessPartnerIds, activeOnly) [PRODUCT-BE-B-11]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,To Do,"*Implementation Order:* 11 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-006
+
 *Current Behaviour:*
 * same as B-10 with `businessPartnerIds`.
 
@@ -178,7 +261,7 @@ Story,PRODUCT-BE-B-10,(Product) getProductDeptRules · getProductBPRules [PRODUC
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-C-01,(Product) getProducts(...) two-stage hydration [PRODUCT-BE-C-01],,Federate BreakDown Product,C,L,dgs-migration,product,search,,SPIKE-06a,To Do,"*Implementation Order:* 5 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-C-01,(Product) getProducts(...) two-stage hydration [PRODUCT-BE-C-01],,Federate BreakDown Product,C,L,dgs-migration,product,search,,SPIKE-06a,To Do,"*Implementation Order:* 12 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -212,7 +295,7 @@ Story,PRODUCT-BE-C-01,(Product) getProducts(...) two-stage hydration [PRODUCT-BE
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-C-02,(Product) getProductTemplates(...) [PRODUCT-BE-C-02],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,To Do,"*Implementation Order:* 6 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-C-02,(Product) getProductTemplates(...) [PRODUCT-BE-C-02],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,To Do,"*Implementation Order:* 13 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -236,7 +319,7 @@ Story,PRODUCT-BE-C-02,(Product) getProductTemplates(...) [PRODUCT-BE-C-02],,Fede
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-C-03,(Product) getCategories(...) [PRODUCT-BE-C-03],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,To Do,"*Implementation Order:* 7 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-C-03,(Product) getCategories(...) [PRODUCT-BE-C-03],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,To Do,"*Implementation Order:* 14 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -260,7 +343,7 @@ Story,PRODUCT-BE-C-03,(Product) getCategories(...) [PRODUCT-BE-C-03],,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-C-04,(Product) getRatingByTcin(tcin) (external rating) [PRODUCT-BE-C-04],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,To Do,"*Implementation Order:* 8 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-C-04,(Product) getRatingByTcin(tcin) (external rating) [PRODUCT-BE-C-04],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,To Do,"*Implementation Order:* 15 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -285,7 +368,7 @@ Story,PRODUCT-BE-C-04,(Product) getRatingByTcin(tcin) (external rating) [PRODUCT
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-C-05,(Product) searchProductRules(...) [PRODUCT-BE-C-05],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,To Do,"*Implementation Order:* 9 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-C-05,(Product) searchProductRules(...) [PRODUCT-BE-C-05],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,To Do,"*Implementation Order:* 16 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -309,7 +392,7 @@ Story,PRODUCT-BE-C-05,(Product) searchProductRules(...) [PRODUCT-BE-C-05],,Feder
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-01,(Product) addProduct [PRODUCT-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPIKE-06b,To Do,"*Implementation Order:* 10 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-01,(Product) addProduct [PRODUCT-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPIKE-06b,To Do,"*Implementation Order:* 17 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -337,7 +420,7 @@ Story,PRODUCT-BE-D-01,(Product) addProduct [PRODUCT-BE-D-01],,Federate BreakDown
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-02,(Product) addProducts (bulk) [PRODUCT-BE-D-02],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPIKE-06b,To Do,"*Implementation Order:* 11 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-02,(Product) addProducts (bulk) [PRODUCT-BE-D-02],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPIKE-06b,To Do,"*Implementation Order:* 18 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -364,7 +447,7 @@ Story,PRODUCT-BE-D-02,(Product) addProducts (bulk) [PRODUCT-BE-D-02],,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-03,(Product) bulkUpdateProducts [PRODUCT-BE-D-03],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 12 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-03,(Product) bulkUpdateProducts [PRODUCT-BE-D-03],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 19 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -387,7 +470,7 @@ Story,PRODUCT-BE-D-03,(Product) bulkUpdateProducts [PRODUCT-BE-D-03],,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-04,(Product) updateProduct [PRODUCT-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPIKE-06b,To Do,"*Implementation Order:* 13 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-04,(Product) updateProduct [PRODUCT-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPIKE-06b,To Do,"*Implementation Order:* 20 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -414,7 +497,7 @@ Story,PRODUCT-BE-D-04,(Product) updateProduct [PRODUCT-BE-D-04],,Federate BreakD
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-05,(Product) carryForwardProduct [PRODUCT-BE-D-05],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 14 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-05,(Product) carryForwardProduct [PRODUCT-BE-D-05],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 21 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -437,7 +520,7 @@ Story,PRODUCT-BE-D-05,(Product) carryForwardProduct [PRODUCT-BE-D-05],,Federate 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-06,(Product) addTeamsToProduct 🔀 Collab Canvas · addBusinessPartnersToProductWithType 🔀 Collab Canvas · removeProductResources · updateBusinessPartnerStatuses [PRODUCT-BE-D-06],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 15 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-06,(Product) addTeamsToProduct 🔀 Collab Canvas [PRODUCT-BE-D-06],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 22 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -446,9 +529,6 @@ Story,PRODUCT-BE-D-06,(Product) addTeamsToProduct 🔀 Collab Canvas · addBusin
 
 *Blocks:*
 * PRODUCT-FE-008
-* PRODUCT-FE-009
-
-*Grouped XS story — combines:* D-07, D-08, D-09 (one PR train; ACs of all grouped ops apply)
 
 *Current Behaviour:*
 * `POST ${v1}/{productId}/resources/bulk` + manage_workspace_teams.
@@ -460,7 +540,20 @@ Story,PRODUCT-BE-D-06,(Product) addTeamsToProduct 🔀 Collab Canvas · addBusin
 1. adds teams + new partners + workspace links
 2. partner-add failure exits early with a thrown typed error (today `return new Error(...)` — standardized per ADR-011 §4 pin-down 4, accepted deviation); teams are not added after a failed partner add (legacy order preserved)
 
-*From D-07 (`addBusinessPartnersToProductWithType` 🔀 Collab Canvas):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-07,(Product) addBusinessPartnersToProductWithType 🔀 Collab Canvas [PRODUCT-BE-D-07],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 23 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-008
+
 *Current Behaviour:*
 * `POST ${v1}/{productId}/partners-add/bulk`; success = response has `product_id` and no `status_code`; failure = log + `return new Error(...)` (returned, not thrown — surfaces as a field error).
 
@@ -471,7 +564,20 @@ Story,PRODUCT-BE-D-06,(Product) addTeamsToProduct 🔀 Collab Canvas · addBusin
 1. adds partners with type
 2. failure throws a typed `DgsException` instead of `return new Error(...)` (accepted parity deviation, ADR-011 §4 pin-down 4)
 
-*From D-08 (`removeProductResources`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-08,(Product) removeProductResources [PRODUCT-BE-D-08],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 24 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
 *Current Behaviour:*
 * `DELETE ${v1}/{productId}/resources/bulk`.
 
@@ -481,7 +587,20 @@ Story,PRODUCT-BE-D-06,(Product) addTeamsToProduct 🔀 Collab Canvas · addBusin
 *Acceptance Criteria:*
 1. removes resources
 
-*From D-09 (`updateBusinessPartnerStatuses`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-09,(Product) updateBusinessPartnerStatuses [PRODUCT-BE-D-09],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 25 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-009
+
 *Current Behaviour:*
 * `PUT ${v1}/{productId}/status_update/bulk`.
 
@@ -495,7 +614,7 @@ Story,PRODUCT-BE-D-06,(Product) addTeamsToProduct 🔀 Collab Canvas · addBusin
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-10,(Product) updateViewToggle · updateWorkspaceAttributes 🔀 Collab Canvas · updateProductTeamsWorkspaceContext · linkProduct [PRODUCT-BE-D-10],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 16 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-10,(Product) updateViewToggle [PRODUCT-BE-D-10],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 26 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -504,9 +623,6 @@ Story,PRODUCT-BE-D-10,(Product) updateViewToggle · updateWorkspaceAttributes �
 
 *Blocks:*
 * PRODUCT-FE-007
-* PRODUCT-FE-008
-
-*Grouped XS story — combines:* D-11, D-12, D-13 (one PR train; ACs of all grouped ops apply)
 
 *Current Behaviour:*
 * `PUT ${v1}` view toggle.
@@ -517,7 +633,20 @@ Story,PRODUCT-BE-D-10,(Product) updateViewToggle · updateWorkspaceAttributes �
 *Acceptance Criteria:*
 1. toggles hidden
 
-*From D-11 (`updateWorkspaceAttributes` 🔀 Collab Canvas):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-11,(Product) updateWorkspaceAttributes 🔀 Collab Canvas [PRODUCT-BE-D-11],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 27 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
 *Current Behaviour:*
 * `PUT ${v1}/{productId}` workspace attrs.
 
@@ -527,7 +656,20 @@ Story,PRODUCT-BE-D-10,(Product) updateViewToggle · updateWorkspaceAttributes �
 *Acceptance Criteria:*
 1. updates workspace attrs
 
-*From D-12 (`updateProductTeamsWorkspaceContext`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-12,(Product) updateProductTeamsWorkspaceContext [PRODUCT-BE-D-12],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 28 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-008
+
 *Current Behaviour:*
 * `PUT` team-workspace add/remove.
 
@@ -537,7 +679,20 @@ Story,PRODUCT-BE-D-10,(Product) updateViewToggle · updateWorkspaceAttributes �
 *Acceptance Criteria:*
 1. adds/removes team-workspace pairs
 
-*From D-13 (`linkProduct`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-13,(Product) linkProduct [PRODUCT-BE-D-13],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 29 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-007
+
 *Current Behaviour:*
 * `PUT` link — **throws on backend error** (only mutation that does).
 
@@ -552,7 +707,7 @@ Story,PRODUCT-BE-D-10,(Product) updateViewToggle · updateWorkspaceAttributes �
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-14,(Product) unlinkProduct · addProductRule · updateProductRule · deleteProductRule [PRODUCT-BE-D-14],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 17 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-14,(Product) unlinkProduct [PRODUCT-BE-D-14],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 30 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -560,10 +715,7 @@ Story,PRODUCT-BE-D-14,(Product) unlinkProduct · addProductRule · updateProduct
 * None
 
 *Blocks:*
-* PRODUCT-FE-006
 * PRODUCT-FE-007
-
-*Grouped XS story — combines:* D-15, D-16, D-17 (one PR train; ACs of all grouped ops apply)
 
 *Current Behaviour:*
 * `PUT` unlink.
@@ -574,7 +726,20 @@ Story,PRODUCT-BE-D-14,(Product) unlinkProduct · addProductRule · updateProduct
 *Acceptance Criteria:*
 1. unlinks parent/child
 
-*From D-15 (`addProductRule`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-15,(Product) addProductRule [PRODUCT-BE-D-15],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 31 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-006
+
 *Current Behaviour:*
 * `POST …/spark_rules/v1`.
 
@@ -584,7 +749,20 @@ Story,PRODUCT-BE-D-14,(Product) unlinkProduct · addProductRule · updateProduct
 *Acceptance Criteria:*
 1. creates rule
 
-*From D-16 (`updateProductRule`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-16,(Product) updateProductRule [PRODUCT-BE-D-16],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 32 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-006
+
 *Current Behaviour:*
 * `PUT …/spark_rules/v1/{id}`.
 
@@ -594,7 +772,20 @@ Story,PRODUCT-BE-D-14,(Product) unlinkProduct · addProductRule · updateProduct
 *Acceptance Criteria:*
 1. updates rule
 
-*From D-17 (`deleteProductRule`):*
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-D-17,(Product) deleteProductRule [PRODUCT-BE-D-17],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 33 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PRODUCT-FE-006
+
 *Current Behaviour:*
 * `DELETE …/spark_rules/v1/{id}` → Boolean.
 
@@ -608,7 +799,7 @@ Story,PRODUCT-BE-D-14,(Product) unlinkProduct · addProductRule · updateProduct
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-D-18,(Product) updateComponentStatus (bulk) [PRODUCT-BE-D-18],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 18 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-D-18,(Product) updateComponentStatus (bulk) [PRODUCT-BE-D-18],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,To Do,"*Implementation Order:* 34 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -631,7 +822,7 @@ Story,PRODUCT-BE-D-18,(Product) updateComponentStatus (bulk) [PRODUCT-BE-D-18],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-E-01,(Product) productBusinessPartnerActions (REMOVE/DROP/UNDROP) [PRODUCT-BE-E-01],,Federate BreakDown Product,E,XL,dgs-migration,product,complex,,SPIKE-03,To Do,"*Implementation Order:* 19 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-E-01,(Product) productBusinessPartnerActions (REMOVE/DROP/UNDROP) [PRODUCT-BE-E-01],,Federate BreakDown Product,E,XL,dgs-migration,product,complex,,SPIKE-03,To Do,"*Implementation Order:* 35 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Highest — *Parallelizable:* Yes
 
@@ -674,7 +865,7 @@ Story,PRODUCT-BE-E-01,(Product) productBusinessPartnerActions (REMOVE/DROP/UNDRO
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-E-02,(Product) updateComponentStatuses (5-loader fan-out) [PRODUCT-BE-E-02],,Federate BreakDown Product,E,L,dgs-migration,product,complex,,SPIKE-01,To Do,"*Implementation Order:* 20 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-E-02,(Product) updateComponentStatuses (5-loader fan-out) [PRODUCT-BE-E-02],,Federate BreakDown Product,E,L,dgs-migration,product,complex,,SPIKE-01,To Do,"*Implementation Order:* 36 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -708,7 +899,7 @@ Story,PRODUCT-BE-E-02,(Product) updateComponentStatuses (5-loader fan-out) [PROD
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-E-03,"(Product) getProductTechPackCountV1 stub + aggregation facade (facade-then-federate, Phase 1) [PRODUCT-BE-E-03]",,Federate BreakDown Product,E,XL,dgs-migration,product,complex,,SPIKE-02,To Do,"*Implementation Order:* 21 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-E-03,"(Product) getProductTechPackCountV1 stub + aggregation facade (facade-then-federate, Phase 1) [PRODUCT-BE-E-03]",,Federate BreakDown Product,E,XL,dgs-migration,product,complex,,SPIKE-02,To Do,"*Implementation Order:* 37 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Highest — *Parallelizable:* Yes
 
@@ -720,9 +911,11 @@ Story,PRODUCT-BE-E-03,"(Product) getProductTechPackCountV1 stub + aggregation fa
 * PRODUCT-BE-F-01 — ResourcesCount.productAttachments + discussionAttachments
 * PRODUCT-BE-F-02 — ResourcesCount.discussions
 * PRODUCT-BE-F-03 — ResourcesCount.sample
-* PRODUCT-BE-F-04 — ResourcesCount.measurementSets · ResourcesCount.productBoms + packagingBoms + boms · ResourcesCount.watchlists
+* PRODUCT-BE-F-04 — ResourcesCount.measurementSets
 * PRODUCT-BE-F-05 — ResourcesCount.claims
+* PRODUCT-BE-F-06 — ResourcesCount.productBoms + packagingBoms + boms
 * PRODUCT-BE-F-07 — ResourcesCount.constructions
+* PRODUCT-BE-F-08 — ResourcesCount.watchlists
 * PRODUCT-BE-G-16 — Test coverage, parity harness, load & cut-over rehearsal
 * PRODUCT-FE-010
 
@@ -754,7 +947,7 @@ Story,PRODUCT-BE-E-03,"(Product) getProductTechPackCountV1 stub + aggregation fa
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-E-04,"(Product) getProductTechPackBulkCountV1 (bulk wrapper, ordering fix) [PRODUCT-BE-E-04]",,Federate BreakDown Product,E,XL,dgs-migration,product,complex,,"SPIKE-02, E-03",To Do,"*Implementation Order:* 38 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-E-04,"(Product) getProductTechPackBulkCountV1 (bulk wrapper, ordering fix) [PRODUCT-BE-E-04]",,Federate BreakDown Product,E,XL,dgs-migration,product,complex,,"SPIKE-02, E-03",To Do,"*Implementation Order:* 55 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Highest — *Parallelizable:* Yes
 
@@ -785,7 +978,7 @@ Story,PRODUCT-BE-E-04,"(Product) getProductTechPackBulkCountV1 (bulk wrapper, or
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-01,"(Product) ResourcesCount.productAttachments + discussionAttachments (federated, from Attachment) [PRODUCT-BE-F-01]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, attachment domain (⛔ cross-subgraph — does not ship until `plm-attachment` is live)",To Do,"*Implementation Order:* 39 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-F-01,"(Product) ResourcesCount.productAttachments + discussionAttachments (federated, from Attachment) [PRODUCT-BE-F-01]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, attachment domain (⛔ cross-subgraph — does not ship until `plm-attachment` is live)",To Do,"*Implementation Order:* 56 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -807,7 +1000,7 @@ Story,PRODUCT-BE-F-01,"(Product) ResourcesCount.productAttachments + discussionA
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-02,"(Product) ResourcesCount.discussions (federated, from Discussion) [PRODUCT-BE-F-02]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, discussion domain (⛔ cross-subgraph)",To Do,"*Implementation Order:* 40 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-F-02,"(Product) ResourcesCount.discussions (federated, from Discussion) [PRODUCT-BE-F-02]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, discussion domain (⛔ cross-subgraph)",To Do,"*Implementation Order:* 57 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -825,7 +1018,7 @@ Story,PRODUCT-BE-F-02,"(Product) ResourcesCount.discussions (federated, from Dis
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-03,"(Product) ResourcesCount.sample (federated, from Sample) [PRODUCT-BE-F-03]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, sample domain (⛔ cross-subgraph)",To Do,"*Implementation Order:* 41 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-F-03,"(Product) ResourcesCount.sample (federated, from Sample) [PRODUCT-BE-F-03]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, sample domain (⛔ cross-subgraph)",To Do,"*Implementation Order:* 58 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -843,7 +1036,7 @@ Story,PRODUCT-BE-F-03,"(Product) ResourcesCount.sample (federated, from Sample) 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-04,(Product) ResourcesCount.measurementSets · ResourcesCount.productBoms + packagingBoms + boms · ResourcesCount.watchlists [PRODUCT-BE-F-04],,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,E-03,To Do,"*Implementation Order:* 42 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-F-04,"(Product) ResourcesCount.measurementSets (internal, from Measurement) [PRODUCT-BE-F-04]",,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,E-03,To Do,"*Implementation Order:* 59 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -853,24 +1046,14 @@ Story,PRODUCT-BE-F-04,(Product) ResourcesCount.measurementSets · ResourcesCount
 *Blocks:*
 * PRODUCT-BE-F-09 — Retire the TechPack aggregation facade
 
-*Grouped XS story — combines:* F-06, F-08 (one PR train; ACs of all grouped ops apply)
-
 *Acceptance Criteria:*
 1. `measurementSets` resolves in-process; no gateway hop; parity vs facade
-
-*From F-06 (`ResourcesCount.productBoms` + `packagingBoms` + `boms`):*
-*Acceptance Criteria:*
-1. `productBoms`/`packagingBoms`/`boms` resolve in-process; no gateway hop; parity vs facade
-
-*From F-08 (`ResourcesCount.watchlists`):*
-*Acceptance Criteria:*
-1. `watchlists` resolves in-process; no gateway hop; parity vs facade
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-05,"(Product) ResourcesCount.claims (federated, from Claim) [PRODUCT-BE-F-05]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, claim domain (⛔ cross-subgraph)",To Do,"*Implementation Order:* 43 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-F-05,"(Product) ResourcesCount.claims (federated, from Claim) [PRODUCT-BE-F-05]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, claim domain (⛔ cross-subgraph)",To Do,"*Implementation Order:* 60 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -888,7 +1071,24 @@ Story,PRODUCT-BE-F-05,"(Product) ResourcesCount.claims (federated, from Claim) [
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-07,"(Product) ResourcesCount.constructions (federated, from Construction) [PRODUCT-BE-F-07]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, construction domain (⛔ cross-subgraph)",To Do,"*Implementation Order:* 44 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-F-06,"(Product) ResourcesCount.productBoms + packagingBoms + boms (internal, from BOM) [PRODUCT-BE-F-06]",,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,E-03,To Do,"*Implementation Order:* 61 of 70 (Product backend, step 3)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-E-03 — getProductTechPackCountV1 stub + aggregation facade
+
+*Blocks:*
+* PRODUCT-BE-F-09 — Retire the TechPack aggregation facade
+
+*Acceptance Criteria:*
+1. `productBoms`/`packagingBoms`/`boms` resolve in-process; no gateway hop; parity vs facade
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-F-07,"(Product) ResourcesCount.constructions (federated, from Construction) [PRODUCT-BE-F-07]",,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,"E-03, construction domain (⛔ cross-subgraph)",To Do,"*Implementation Order:* 62 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -906,7 +1106,24 @@ Story,PRODUCT-BE-F-07,"(Product) ResourcesCount.constructions (federated, from C
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-09,(Product) Retire the TechPack aggregation facade [PRODUCT-BE-F-09],,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,"F-01, F-02, F-03, F-04, F-05, F-07",To Do,"*Implementation Order:* 50 of 51 (Product backend, step 4)
+Story,PRODUCT-BE-F-08,"(Product) ResourcesCount.watchlists (internal, from Watchlist) [PRODUCT-BE-F-08]",,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,E-03,To Do,"*Implementation Order:* 63 of 70 (Product backend, step 3)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PRODUCT-BE-E-03 — getProductTechPackCountV1 stub + aggregation facade
+
+*Blocks:*
+* PRODUCT-BE-F-09 — Retire the TechPack aggregation facade
+
+*Acceptance Criteria:*
+1. `watchlists` resolves in-process; no gateway hop; parity vs facade
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-F-09,(Product) Retire the TechPack aggregation facade [PRODUCT-BE-F-09],,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,"F-01, F-02, F-03, F-04, F-05, F-06, F-07, F-08",To Do,"*Implementation Order:* 69 of 70 (Product backend, step 4)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -914,9 +1131,11 @@ Story,PRODUCT-BE-F-09,(Product) Retire the TechPack aggregation facade [PRODUCT-
 * PRODUCT-BE-F-01 — ResourcesCount.productAttachments + discussionAttachments
 * PRODUCT-BE-F-02 — ResourcesCount.discussions
 * PRODUCT-BE-F-03 — ResourcesCount.sample
-* PRODUCT-BE-F-04 — ResourcesCount.measurementSets · ResourcesCount.productBoms + packagingBoms + boms · ResourcesCount.watchlists
+* PRODUCT-BE-F-04 — ResourcesCount.measurementSets
 * PRODUCT-BE-F-05 — ResourcesCount.claims
+* PRODUCT-BE-F-06 — ResourcesCount.productBoms + packagingBoms + boms
 * PRODUCT-BE-F-07 — ResourcesCount.constructions
+* PRODUCT-BE-F-08 — ResourcesCount.watchlists
 
 *Blocks:*
 * None
@@ -933,7 +1152,7 @@ Story,PRODUCT-BE-F-09,(Product) Retire the TechPack aggregation facade [PRODUCT-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-10,(Product) Hive Gateway supergraph composition [PRODUCT-BE-F-10],,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,"F-13, F-14",To Do,"*Implementation Order:* 45 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-F-10,(Product) Hive Gateway supergraph composition [PRODUCT-BE-F-10],,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,"F-13, F-14",To Do,"*Implementation Order:* 64 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -957,7 +1176,7 @@ Story,PRODUCT-BE-F-10,(Product) Hive Gateway supergraph composition [PRODUCT-BE-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-11,(Product) Platform stub verification (VMM/IG/Doppler/CORONA/APEX) [PRODUCT-BE-F-11],,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,F-10,To Do,"*Implementation Order:* 51 of 51 (Product backend, step 4)
+Story,PRODUCT-BE-F-11,(Product) Platform stub verification (VMM/IG/Doppler/CORONA/APEX) [PRODUCT-BE-F-11],,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,F-10,To Do,"*Implementation Order:* 70 of 70 (Product backend, step 4)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -977,7 +1196,7 @@ Story,PRODUCT-BE-F-11,(Product) Platform stub verification (VMM/IG/Doppler/CORON
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-12,(Product) Deferred partner-wrapper decision (drift mutations) [PRODUCT-BE-F-12],,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,E-01,To Do,"*Implementation Order:* 46 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-F-12,(Product) Deferred partner-wrapper decision (drift mutations) [PRODUCT-BE-F-12],,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,E-01,To Do,"*Implementation Order:* 65 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -1001,7 +1220,7 @@ Story,PRODUCT-BE-F-12,(Product) Deferred partner-wrapper decision (drift mutatio
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-13,(Product) Product entity fetcher (@DgsEntityFetcher) for cross-subgraph references [PRODUCT-BE-F-13],,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,B-01,To Do,"*Implementation Order:* 22 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-F-13,(Product) Product entity fetcher (@DgsEntityFetcher) for cross-subgraph references [PRODUCT-BE-F-13],,Federate BreakDown Product,F,M,dgs-migration,product,field-resolver,,B-01,To Do,"*Implementation Order:* 38 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1024,7 +1243,7 @@ Story,PRODUCT-BE-F-13,(Product) Product entity fetcher (@DgsEntityFetcher) for c
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-F-14,"(Product) Cross-subgraph contract alignment (keys, type names, paged wrappers) [PRODUCT-BE-F-14]",,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 23 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-F-14,"(Product) Cross-subgraph contract alignment (keys, type names, paged wrappers) [PRODUCT-BE-F-14]",,Federate BreakDown Product,F,XS,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 39 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -1045,7 +1264,7 @@ Story,PRODUCT-BE-F-14,"(Product) Cross-subgraph contract alignment (keys, type n
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-01,(Product) Product.attachmentsWithMetaData [PRODUCT-BE-G-01],,Federate BreakDown Product,G,XL,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 24 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-01,(Product) Product.attachmentsWithMetaData [PRODUCT-BE-G-01],,Federate BreakDown Product,G,XL,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 40 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Highest — *Parallelizable:* Yes
 
@@ -1080,7 +1299,7 @@ Story,PRODUCT-BE-G-01,(Product) Product.attachmentsWithMetaData [PRODUCT-BE-G-01
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-02,(Product) Product.components [PRODUCT-BE-G-02],,Federate BreakDown Product,G,XL,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 25 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-02,(Product) Product.components [PRODUCT-BE-G-02],,Federate BreakDown Product,G,XL,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 41 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Highest — *Parallelizable:* Yes
 
@@ -1114,7 +1333,7 @@ Story,PRODUCT-BE-G-02,(Product) Product.components [PRODUCT-BE-G-02],,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-03,(Product) Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData [PRODUCT-BE-G-03],,Federate BreakDown Product,G,L,dgs-migration,product,field-resolver,,G-01,To Do,"*Implementation Order:* 47 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-G-03,(Product) Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData [PRODUCT-BE-G-03],,Federate BreakDown Product,G,L,dgs-migration,product,field-resolver,,G-01,To Do,"*Implementation Order:* 66 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -1144,7 +1363,7 @@ Story,PRODUCT-BE-G-03,(Product) Product.attachments + attachmentsV3 + attachment
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-04,(Product) ProductsCategories.categories (12-case) + DopplerDepartment fields [PRODUCT-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 26 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-04,(Product) ProductsCategories.categories (12-case) + DopplerDepartment fields [PRODUCT-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 42 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1168,7 +1387,7 @@ Story,PRODUCT-BE-G-04,(Product) ProductsCategories.categories (12-case) + Dopple
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-05,(Product) Product.samples + sampleIds + elasticSamplesList [PRODUCT-BE-G-05],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 27 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-05,(Product) Product.samples + sampleIds + elasticSamplesList [PRODUCT-BE-G-05],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 43 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1192,7 +1411,7 @@ Story,PRODUCT-BE-G-05,(Product) Product.samples + sampleIds + elasticSamplesList
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-06,(Product) Product.teams + discussionsV2 + discussionsCount + workspaces [PRODUCT-BE-G-06],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 28 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-06,(Product) Product.teams + discussionsV2 + discussionsCount + workspaces [PRODUCT-BE-G-06],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 44 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1215,7 +1434,7 @@ Story,PRODUCT-BE-G-06,(Product) Product.teams + discussionsV2 + discussionsCount
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-07,(Product) Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status [PRODUCT-BE-G-07],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,SPIKE-04,To Do,"*Implementation Order:* 29 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-07,(Product) Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status [PRODUCT-BE-G-07],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,SPIKE-04,To Do,"*Implementation Order:* 45 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1241,7 +1460,7 @@ Story,PRODUCT-BE-G-07,(Product) Product.vendorAttributes + businessPartners + dr
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-08,(Product) Product.measurementSets + claims + bom + productBom + packagingBom + productDetails + variations + associateProductsAsks [PRODUCT-BE-G-08],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 30 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-08,(Product) Product.measurementSets + claims + bom + productBom + packagingBom + productDetails + variations + associateProductsAsks [PRODUCT-BE-G-08],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 46 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1265,7 +1484,7 @@ Story,PRODUCT-BE-G-08,(Product) Product.measurementSets + claims + bom + product
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-09,(Product) Product.productWorkspaceAttributes + productWorkspaceInfo [PRODUCT-BE-G-09],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 31 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-09,(Product) Product.productWorkspaceAttributes + productWorkspaceInfo [PRODUCT-BE-G-09],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 47 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1289,7 +1508,7 @@ Story,PRODUCT-BE-G-09,(Product) Product.productWorkspaceAttributes + productWork
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-10,(Product) Product.ancestryProducts + rating + reservedDpcis [PRODUCT-BE-G-10],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 32 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-10,(Product) Product.ancestryProducts + rating + reservedDpcis [PRODUCT-BE-G-10],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 48 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1313,7 +1532,7 @@ Story,PRODUCT-BE-G-10,(Product) Product.ancestryProducts + rating + reservedDpci
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-11-1,(Product) Product.notRemovablePartnerIds + notRemovableWorkspaceIds [PRODUCT-BE-G-11-1],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,SPIKE-04,To Do,"*Implementation Order:* 33 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-11-1,(Product) Product.notRemovablePartnerIds + notRemovableWorkspaceIds [PRODUCT-BE-G-11-1],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,SPIKE-04,To Do,"*Implementation Order:* 49 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1339,7 +1558,7 @@ Story,PRODUCT-BE-G-11-1,(Product) Product.notRemovablePartnerIds + notRemovableW
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-11-2,(Product) Product.associateProductsAsks + Product.variations [PRODUCT-BE-G-11-2],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 34 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-11-2,(Product) Product.associateProductsAsks + Product.variations [PRODUCT-BE-G-11-2],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 50 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1363,7 +1582,7 @@ Story,PRODUCT-BE-G-11-2,(Product) Product.associateProductsAsks + Product.variat
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-12,(Product) Product.division **bug fix** · Simple user/status fields + trivial pass-throughs [PRODUCT-BE-G-12],,Federate BreakDown Product,G,XS,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 35 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-12,(Product) Product.division **bug fix** (wrong loader) [PRODUCT-BE-G-12],,Federate BreakDown Product,G,XS,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 51 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -1372,8 +1591,6 @@ Story,PRODUCT-BE-G-12,(Product) Product.division **bug fix** · Simple user/stat
 
 *Blocks:*
 * None
-
-*Grouped XS story — combines:* G-14 (one PR train; ACs of all grouped ops apply)
 
 *Current Behaviour:*
 * `Product.division` is supposed to return the product's **division** - (a specific org unit). - Instead, the source code has a copy-paste-style mistake: it calls `ig.department.getByID(...)` — the **department** lookup — and returns that instead. - So today, every caller of `Product.division` (and `DopplerDepartment.division`, which has the identical bug) has actually been receiving a **department**-shaped object mislabeled as a division, for as long as this bug has existed. - **Concretely:** ```kotlin // source (bug): division field is wired to the department loader fun division(product: Product) = igClient.department.getById(product.divisionId) // wrong client! // target (fixed): division field wired to the correct division loader fun division(product: Product) = igClient.division.getById(product.divisionId) // correct ``` - **Why this matters (not just a mechanical fix):** if any client (internal tool, downstream service, cached UI - state) has been silently relying on the department-shaped fields that happen to overlap with what it expected from ""division"", fixing the bug changes their response shape with no code change on their end — effectively a breaking change disguised as a bug fix.
@@ -1385,23 +1602,11 @@ Story,PRODUCT-BE-G-12,(Product) Product.division **bug fix** · Simple user/stat
 1. `Product.division` and `DopplerDepartment.division` both return the true division shape (via `DivisionService`), not the department shape
 2. The client-shape-change risk is logged with the PO and confirmed via a client survey before rollout
 
-*From G-14 (Simple user/status fields + trivial pass-throughs):*
-*Current Behaviour:*
-* `createdBy`/`updatedBy`/`versionCreatedBy` (user-profile), `ProductComponentStatus.updatedBy`, `SPARK_ResourcesCount.productThumbnailId` (re-fetch product), plus ~60 direct scalar pass-throughs (DTO-mapped).
-
-*Target:*
-* thin `@DgsData` for user/thumbnail; Jackson DTO mapping for scalars. - **Example:** `createdBy` → federated reference to `user-profile` by id, `null` id → `null`, no call made; the ~60 scalar fields (`name`, `status`, `createdAt`, etc.) need no resolver at all — Jackson maps them straight from the REST response DTO to the GraphQL type by field name.
-
-*Acceptance Criteria:*
-1. user fields resolve (null id → null)
-2. `productThumbnailId` re-fetches
-3. scalars mapped
-
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-13,(Product) IG/tag/tcin/spg + template trivial-field group [PRODUCT-BE-G-13],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 36 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-13,(Product) IG/tag/tcin/spg + template trivial-field group [PRODUCT-BE-G-13],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 52 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1424,7 +1629,32 @@ Story,PRODUCT-BE-G-13,(Product) IG/tag/tcin/spg + template trivial-field group [
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-15,(Product) Port product utils to Kotlin [PRODUCT-BE-G-15],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 37 of 51 (Product backend, step 2)
+Story,PRODUCT-BE-G-14,(Product) Simple user/status fields + trivial pass-throughs (bundle) [PRODUCT-BE-G-14],,Federate BreakDown Product,G,XS,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 53 of 70 (Product backend, step 2)
+*Domain:* Product — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* None
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
+* `createdBy`/`updatedBy`/`versionCreatedBy` (user-profile), `ProductComponentStatus.updatedBy`, `SPARK_ResourcesCount.productThumbnailId` (re-fetch product), plus ~60 direct scalar pass-throughs (DTO-mapped).
+
+*Target:*
+* thin `@DgsData` for user/thumbnail; Jackson DTO mapping for scalars. - **Example:** `createdBy` → federated reference to `user-profile` by id, `null` id → `null`, no call made; the ~60 scalar fields (`name`, `status`, `createdAt`, etc.) need no resolver at all — Jackson maps them straight from the REST response DTO to the GraphQL type by field name.
+
+*Acceptance Criteria:*
+1. user fields resolve (null id → null)
+2. `productThumbnailId` re-fetches
+3. scalars mapped
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PRODUCT-BE-G-15,(Product) Port product utils to Kotlin [PRODUCT-BE-G-15],,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,,To Do,"*Implementation Order:* 54 of 70 (Product backend, step 2)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1449,7 +1679,7 @@ Story,PRODUCT-BE-G-15,(Product) Port product utils to Kotlin [PRODUCT-BE-G-15],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-16,"(Product) Test coverage, parity harness, load & cut-over rehearsal [PRODUCT-BE-G-16]",,Federate BreakDown Product,G,L,dgs-migration,product,field-resolver,,"C-01, E-01, E-03, G-01, G-02",To Do,"*Implementation Order:* 48 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-G-16,"(Product) Test coverage, parity harness, load & cut-over rehearsal [PRODUCT-BE-G-16]",,Federate BreakDown Product,G,L,dgs-migration,product,field-resolver,,"C-01, E-01, E-03, G-01, G-02",To Do,"*Implementation Order:* 67 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* High — *Parallelizable:* Yes
 
@@ -1483,7 +1713,7 @@ Story,PRODUCT-BE-G-16,"(Product) Test coverage, parity harness, load & cut-over 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PRODUCT-BE-G-17,"(Product) Entity references on partner/lineage value types (recommended, PO-gated) [PRODUCT-BE-G-17]",,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,G-01,"Recommended (PO-gated — federation-review/03 §2 REC-5/REC-6, OQ-5)","*Implementation Order:* 49 of 51 (Product backend, step 3)
+Story,PRODUCT-BE-G-17,"(Product) Entity references on partner/lineage value types (recommended, PO-gated) [PRODUCT-BE-G-17]",,Federate BreakDown Product,G,M,dgs-migration,product,field-resolver,,G-01,"Recommended (PO-gated — federation-review/03 §2 REC-5/REC-6, OQ-5)","*Implementation Order:* 68 of 70 (Product backend, step 3)
 *Domain:* Product — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1507,7 +1737,7 @@ Story,PRODUCT-BE-G-17,"(Product) Entity references on partner/lineage value type
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-queries [PRODUCT-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01,To Do,"*Implementation Order:* 52 of 63 (Product combined — frontend #1, cutover step 1)
+Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-queries [PRODUCT-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01,To Do,"*Implementation Order:* 71 of 82 (Product combined — frontend #1, cutover step 1)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -1550,20 +1780,20 @@ Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-quer
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers [PRODUCT-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-02 PRODUCT-FE-001,To Do,"*Implementation Order:* 54 of 63 (Product combined — frontend #3, cutover step 2)
+Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers [PRODUCT-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-04 PRODUCT-FE-001,To Do,"*Implementation Order:* 73 of 82 (Product combined — frontend #3, cutover step 2)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
 * PRODUCT-BE-B-01 — getProduct
-* PRODUCT-BE-B-02 — getProductsByIds · getProductStatus · getProductVersions · getCopyStatus
+* PRODUCT-BE-B-04 — getProductVersions
 * PRODUCT-FE-001 — Migrate `getProduct` documents in product-queries
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-B-02, PRODUCT-FE-001
+* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-B-04, PRODUCT-FE-001
 * *Operations:* {{getProduct}}, {{getProductVersions}}
 
 * *Business objective:*
@@ -1591,13 +1821,13 @@ Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-S-02 PRODUCT-BE-B-02,To Do,"*Implementation Order:* 62 of 63 (Product combined — frontend #11, cutover step 5)
+Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-S-02 PRODUCT-BE-B-02,To Do,"*Implementation Order:* 81 of 82 (Product combined — frontend #11, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
 *Depends On:*
 * PRODUCT-BE-S-02
-* PRODUCT-BE-B-02 — getProductsByIds · getProductStatus · getProductVersions · getCopyStatus
+* PRODUCT-BE-B-02 — getProductsByIds
 
 *Blocks:*
 * None
@@ -1632,18 +1862,18 @@ Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-F
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context reads [PRODUCT-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-02,To Do,"*Implementation Order:* 53 of 63 (Product combined — frontend #2, cutover step 1)
+Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context reads [PRODUCT-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-03,To Do,"*Implementation Order:* 72 of 82 (Product combined — frontend #2, cutover step 1)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
-* PRODUCT-BE-B-02 — getProductsByIds · getProductStatus · getProductVersions · getCopyStatus
+* PRODUCT-BE-B-03 — getProductStatus
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-02
+* *Depends on:* PRODUCT-BE-B-03
 * *Operations:* {{getProductStatus}}
 
 * *Business objective:*
@@ -1672,7 +1902,7 @@ Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context r
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads [PRODUCT-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-C-02 PRODUCT-BE-C-03,To Do,"*Implementation Order:* 55 of 63 (Product combined — frontend #4, cutover step 2)
+Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads [PRODUCT-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-C-02 PRODUCT-BE-C-03,To Do,"*Implementation Order:* 74 of 82 (Product combined — frontend #4, cutover step 2)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1713,21 +1943,26 @@ Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-FE-006],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-06 PRODUCT-BE-B-10 PRODUCT-BE-C-05 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 56 of 63 (Product combined — frontend #5, cutover step 3)
+Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-FE-006],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-07 PRODUCT-BE-B-08 PRODUCT-BE-B-09 PRODUCT-BE-B-10 PRODUCT-BE-B-11 PRODUCT-BE-C-05 PRODUCT-BE-D-15 PRODUCT-BE-D-16 PRODUCT-BE-D-17,To Do,"*Implementation Order:* 75 of 82 (Product combined — frontend #5, cutover step 3)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
-* PRODUCT-BE-B-06 — getProductTemplateById · getProductRules · getProductRulesById · getAllAvailableRules
-* PRODUCT-BE-B-10 — getProductDeptRules · getProductBPRules
+* PRODUCT-BE-B-07 — getProductRules
+* PRODUCT-BE-B-08 — getProductRulesById
+* PRODUCT-BE-B-09 — getAllAvailableRules
+* PRODUCT-BE-B-10 — getProductDeptRules
+* PRODUCT-BE-B-11 — getProductBPRules
 * PRODUCT-BE-C-05 — searchProductRules
-* PRODUCT-BE-D-14 — unlinkProduct · addProductRule · updateProductRule · deleteProductRule
+* PRODUCT-BE-D-15 — addProductRule
+* PRODUCT-BE-D-16 — updateProductRule
+* PRODUCT-BE-D-17 — deleteProductRule
 
 *Blocks:*
 * None
 
 * *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-06, PRODUCT-BE-B-10, PRODUCT-BE-C-05, PRODUCT-BE-D-14
+* *Depends on:* PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-D-15, PRODUCT-BE-D-16, PRODUCT-BE-D-17
 * *Operations:* {{getProductRules}}, {{getProductRulesById}}, {{getAllAvailableRules}}, {{getProductDeptRules}}, {{getProductBPRules}}, {{searchProductRules}}, {{addProductRule}}, {{updateProductRule}}, {{deleteProductRule}}
 
 * *Business objective:*
@@ -1757,7 +1992,7 @@ Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-01 PRODUCT-BE-D-02 PRODUCT-BE-D-03 PRODUCT-BE-D-04 PRODUCT-BE-D-05 PRODUCT-BE-D-10 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 57 of 63 (Product combined — frontend #6, cutover step 3)
+Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-01 PRODUCT-BE-D-02 PRODUCT-BE-D-03 PRODUCT-BE-D-04 PRODUCT-BE-D-05 PRODUCT-BE-D-10 PRODUCT-BE-D-13 PRODUCT-BE-D-14,To Do,"*Implementation Order:* 76 of 82 (Product combined — frontend #6, cutover step 3)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1767,14 +2002,15 @@ Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-0
 * PRODUCT-BE-D-03 — bulkUpdateProducts
 * PRODUCT-BE-D-04 — updateProduct
 * PRODUCT-BE-D-05 — carryForwardProduct
-* PRODUCT-BE-D-10 — updateViewToggle · updateWorkspaceAttributes 🔀 Collab Canvas · updateProductTeamsWorkspaceContext · linkProduct
-* PRODUCT-BE-D-14 — unlinkProduct · addProductRule · updateProductRule · deleteProductRule
+* PRODUCT-BE-D-10 — updateViewToggle
+* PRODUCT-BE-D-13 — linkProduct
+* PRODUCT-BE-D-14 — unlinkProduct
 
 *Blocks:*
 * None
 
 * *Type:* Mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-D-01, PRODUCT-BE-D-02, PRODUCT-BE-D-03, PRODUCT-BE-D-04, PRODUCT-BE-D-05, PRODUCT-BE-D-10, PRODUCT-BE-D-14
+* *Depends on:* PRODUCT-BE-D-01, PRODUCT-BE-D-02, PRODUCT-BE-D-03, PRODUCT-BE-D-04, PRODUCT-BE-D-05, PRODUCT-BE-D-10, PRODUCT-BE-D-13, PRODUCT-BE-D-14
 * *Operations:* {{addProduct}}, {{addProducts}}, {{updateProduct}}, {{bulkUpdateProducts}}, {{carryForwardProduct}}, {{updateViewToggle}}, {{linkProduct}}, {{unlinkProduct}}
 
 * *Business objective:*
@@ -1803,20 +2039,21 @@ Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-0
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations [PRODUCT-FE-008],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-06 PRODUCT-BE-D-10 PRODUCT-FE-001,To Do,"*Implementation Order:* 58 of 63 (Product combined — frontend #7, cutover step 3)
+Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations [PRODUCT-FE-008],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-06 PRODUCT-BE-D-07 PRODUCT-BE-D-12 PRODUCT-FE-001,To Do,"*Implementation Order:* 77 of 82 (Product combined — frontend #7, cutover step 3)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
-* PRODUCT-BE-D-06 — addTeamsToProduct 🔀 Collab Canvas · addBusinessPartnersToProductWithType 🔀 Collab Canvas · removeProductResources · updateBusinessPartnerStatuses
-* PRODUCT-BE-D-10 — updateViewToggle · updateWorkspaceAttributes 🔀 Collab Canvas · updateProductTeamsWorkspaceContext · linkProduct
+* PRODUCT-BE-D-06 — addTeamsToProduct 🔀 Collab Canvas
+* PRODUCT-BE-D-07 — addBusinessPartnersToProductWithType 🔀 Collab Canvas
+* PRODUCT-BE-D-12 — updateProductTeamsWorkspaceContext
 * PRODUCT-FE-001 — Migrate `getProduct` documents in product-queries
 
 *Blocks:*
 * None
 
 * *Type:* Mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-D-06, PRODUCT-BE-D-10, PRODUCT-FE-001
+* *Depends on:* PRODUCT-BE-D-06, PRODUCT-BE-D-07, PRODUCT-BE-D-12, PRODUCT-FE-001
 * *Operations:* {{addTeamsToProduct}}, {{addBusinessPartnersToProductWithType}}, {{updateProductTeamsWorkspaceContext}}
 
 * *Business objective:*
@@ -1845,19 +2082,19 @@ Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRODUCT-FE-009],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,mutation-migration-(complex),,PRODUCT-BE-S-03 PRODUCT-BE-D-06,To Do,"*Implementation Order:* 63 of 63 (Product combined — frontend #12, cutover step 5)
+Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRODUCT-FE-009],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,mutation-migration-(complex),,PRODUCT-BE-S-03 PRODUCT-BE-D-09,To Do,"*Implementation Order:* 82 of 82 (Product combined — frontend #12, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
 *Depends On:*
 * PRODUCT-BE-S-03
-* PRODUCT-BE-D-06 — addTeamsToProduct 🔀 Collab Canvas · addBusinessPartnersToProductWithType 🔀 Collab Canvas · removeProductResources · updateBusinessPartnerStatuses
+* PRODUCT-BE-D-09 — updateBusinessPartnerStatuses
 
 *Blocks:*
 * None
 
 * *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* product
-* *Depends on:* PRODUCT-BE-S-03, PRODUCT-BE-D-06
+* *Depends on:* PRODUCT-BE-S-03, PRODUCT-BE-D-09
 * *Operations:* {{productBusinessPartnerActions}}, {{updateBusinessPartnerStatuses}}
 
 * *Business objective:*
@@ -1887,7 +2124,7 @@ Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRO
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-federate) [PRODUCT-FE-010],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration-(staged),,PRODUCT-BE-E-03 PRODUCT-BE-E-04,To Do,"*Implementation Order:* 59 of 63 (Product combined — frontend #8, cutover step 4)
+Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-federate) [PRODUCT-FE-010],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration-(staged),,PRODUCT-BE-E-03 PRODUCT-BE-E-04,To Do,"*Implementation Order:* 78 of 82 (Product combined — frontend #8, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1928,7 +2165,7 @@ Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-fe
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-011],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-01 PRODUCT-BE-D-18 PRODUCT-BE-E-02,To Do,"*Implementation Order:* 60 of 63 (Product combined — frontend #9, cutover step 4)
+Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-011],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-01 PRODUCT-BE-D-18 PRODUCT-BE-E-02,To Do,"*Implementation Order:* 79 of 82 (Product combined — frontend #9, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1969,7 +2206,7 @@ Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-0
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-012,"[Product FE] Verify fragment type-conditions, `__typename` logic and cache keys against federated type names [PRODUCT-FE-012]",,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,verification-/-refactor,,PRODUCT-BE-F-14,To Do,"*Implementation Order:* 61 of 63 (Product combined — frontend #10, cutover step 4)
+Story,PRODUCT-FE-012,"[Product FE] Verify fragment type-conditions, `__typename` logic and cache keys against federated type names [PRODUCT-FE-012]",,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,verification-/-refactor,,PRODUCT-BE-F-14,To Do,"*Implementation Order:* 80 of 82 (Product combined — frontend #10, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 

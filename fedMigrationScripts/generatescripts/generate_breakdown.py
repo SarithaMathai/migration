@@ -141,11 +141,10 @@ DOMAIN_OWNERS = {
 }
 PRIORITY_MAP = {"very high": "Highest", "high": "High", "medium": "Medium", "low": "Low"}
 
-# Merge logically-related XS stories into one story (fewer, chunkier tickets).
-# Grouping rule: same phase + same operation type + identical in-domain dependency set,
-# 🟢 Low complexity only, never the module-init scaffold / spike-gated / blocked stories.
-MERGE_XS = True
-MAX_XS_GROUP = 4          # ≥3 grouped XS promote the merged story to 🟡 Medium (M)
+# XS story merging is OFF (user decision, 2026-07-17): every story stays separate,
+# one ticket per operation — do not group XS/Low stories into combined tickets.
+MERGE_XS = False
+MAX_XS_GROUP = 4          # ≥3 grouped XS promote the merged story to 🟡 Medium (M) — unused while MERGE_XS is off
 
 TSHIRT_DATA = {
     "product":        (76, 330),

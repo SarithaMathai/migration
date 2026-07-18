@@ -26,7 +26,7 @@
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
 | `PDTL-FE-001` | Migrate product-details reads | Query migration | 🟢 Low | 2–3 days | `PDTL-BE-B-01` | `getProductDetailsById`, `getProductDetailComponentStatus` |
-| `PDTL-FE-002` | Migrate product-details simple mutations | Mutation migration | 🟡 Medium | 3–4 days | `PDTL-BE-D-01`, `PDTL-BE-D-02`, `PDTL-BE-D-04` | `createProductDetailsSet`, `productDetailLockUnlock`, `cloneFilesForProductDetails`, `updateProductDetailComponentStatus` |
+| `PDTL-FE-002` | Migrate product-details simple mutations | Mutation migration | 🟡 Medium | 3–4 days | `PDTL-BE-D-01`, `PDTL-BE-D-03`, `PDTL-BE-D-04`, `PDTL-BE-D-05` | `createProductDetailsSet`, `productDetailLockUnlock`, `cloneFilesForProductDetails`, `updateProductDetailComponentStatus` |
 | `PDTL-FE-003` | Migrate `updateProductDetailsSet` saga handling | Mutation migration (complex) | 🟡 Medium | 3–5 days | `PDTL-BE-E-01` | `updateProductDetailsSet` |
 
 ---
@@ -38,7 +38,7 @@
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
 | 1 | 🟢 `PDTL-FE-001` | `PDTL-FE-001` → `PDTL-BE-B-01` | Reads cutover — needs backend phase A/B reads live |
-| 3 | 🟡 `PDTL-FE-002` | `PDTL-FE-002` → `PDTL-BE-D-01`, `PDTL-BE-D-02`, `PDTL-BE-D-04` | Writes — needs backend phase D mutations |
+| 3 | 🟡 `PDTL-FE-002` | `PDTL-FE-002` → `PDTL-BE-D-01`, `PDTL-BE-D-03`, `PDTL-BE-D-04`, `PDTL-BE-D-05` | Writes — needs backend phase D mutations |
 | 4 | 🟡 `PDTL-FE-003` | `PDTL-FE-003` → `PDTL-BE-E-01` | Complex writes / sagas — needs backend phase E + ADR ratification |
 
 **Cutover flow:** `PDTL-FE-001` → `PDTL-FE-002` → `PDTL-FE-003`.

@@ -25,10 +25,10 @@
 
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
-| `MST-FE-001` | Migrate measurement reads and retire `humanId` | Query migration | 🟡 Medium | 4–6 days | `MST-BE-B-01`, `MST-BE-B-02` | `getMeasurementByIds`, `getMeasurementSetStatus`, `getMeasurementComponentStatus` |
+| `MST-FE-001` | Migrate measurement reads and retire `humanId` | Query migration | 🟡 Medium | 4–6 days | `MST-BE-B-01`, `MST-BE-B-04` | `getMeasurementByIds`, `getMeasurementSetStatus`, `getMeasurementComponentStatus` |
 | `MST-FE-002` | Migrate measurement list/search reads | Query migration | 🟡 Medium | 3–5 days | `MST-BE-C-01`, `MST-BE-C-02` | `getMeasurements`, `getMeasurementsElastic` |
-| `MST-FE-003` | Migrate measurement master-data reads | Query migration | 🟢 Low | 1–2 days | `MST-BE-B-02` | `getUnitsOfMeasure`, `getThicknessUnitsOfMeasure` |
-| `MST-FE-004` | Migrate measurement mutations | Mutation migration | 🟡 Medium | 4–6 days | `MST-BE-D-02`, `MST-BE-D-06`, `MST-BE-D-07` | `lockMeasurementSet`, `unlockMeasurementSet`, `putSampleMeasurementSet`, `deleteSampleMeasurementSet` |
+| `MST-FE-003` | Migrate measurement master-data reads | Query migration | 🟢 Low | 1–2 days | `MST-BE-B-02`, `MST-BE-B-03` | `getUnitsOfMeasure`, `getThicknessUnitsOfMeasure` |
+| `MST-FE-004` | Migrate measurement mutations | Mutation migration | 🟡 Medium | 4–6 days | `MST-BE-D-03`, `MST-BE-D-04`, `MST-BE-D-06`, `MST-BE-D-07` | `lockMeasurementSet`, `unlockMeasurementSet`, `putSampleMeasurementSet`, `deleteSampleMeasurementSet` |
 
 ---
 
@@ -38,9 +38,9 @@
 
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
-| 1 | 🟡 `MST-FE-001`, 🟢 `MST-FE-003` | `MST-FE-001` → `MST-BE-B-01`, `MST-BE-B-02`<br>`MST-FE-003` → `MST-BE-B-02` | Reads cutover — needs backend phase A/B reads live |
+| 1 | 🟡 `MST-FE-001`, 🟢 `MST-FE-003` | `MST-FE-001` → `MST-BE-B-01`, `MST-BE-B-04`<br>`MST-FE-003` → `MST-BE-B-02`, `MST-BE-B-03` | Reads cutover — needs backend phase A/B reads live |
 | 2 | 🟡 `MST-FE-002` | `MST-FE-002` → `MST-BE-C-01`, `MST-BE-C-02` | Search & listing — needs backend phase C |
-| 3 | 🟡 `MST-FE-004` | `MST-FE-004` → `MST-BE-D-02`, `MST-BE-D-06`, `MST-BE-D-07` | Writes — needs backend phase D mutations |
+| 3 | 🟡 `MST-FE-004` | `MST-FE-004` → `MST-BE-D-03`, `MST-BE-D-04`, `MST-BE-D-06`, `MST-BE-D-07` | Writes — needs backend phase D mutations |
 
 **Cutover flow:** `MST-FE-001` → `MST-FE-003` → `MST-FE-002` → `MST-FE-004`.
 

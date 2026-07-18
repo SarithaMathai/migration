@@ -25,6 +25,7 @@ affected domain stories are updated, per `fedMigrationScripts/reference/SPIKE-AD
 | [cross-domain-association](cross-domain-association/00-overview.md) | `SPIKE-06a` (Hydration) / `SPIKE-06b` (Association) | [ADR-011](cross-domain-association/01-adr-cross-domain-association.md) — sync orchestration + shared association component *(06b only; 06a concludes via `PRODUCT-BE-S-02`)* | product · bom |
 | [attachments-enrichment](attachments-enrichment/00-overview.md) | — (cutover pattern) | [ADR-018](attachments-enrichment/01-adr-attachments-enrichment.md) — owner-computed enrichment, shared library + per-surface policy | product · workspace |
 | [components-and-counts-rollups](components-and-counts-rollups/00-overview.md) | — (cutover pattern) | [ADR-014](components-and-counts-rollups/01-adr-components-counts-rollups.md) — owner-computed rollups + four fixes | product · workspace |
+| [acl](acl/00-overview.md) | — (cutover pattern) | [ADR-019](acl/01-adr-acl-mid-request-update.md) — Mid-Request ACL Update for downstream-token call sites | program-wide (product · bom · productDetails · packaging · watchlist) |
 
 Stories gated on a spike are marked 🔴🔬 in their domain page with the spike id in
 **Depends On** — see the Phase 0 table in the program breakdown
