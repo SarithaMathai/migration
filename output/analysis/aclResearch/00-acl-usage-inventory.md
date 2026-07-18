@@ -1,6 +1,6 @@
 # ACL Research — Usage Inventory (Program Roll-Up)
 
-> **Scope:** 8 phase-1 domains · **Generated:** 2026-07-17 · **Pipeline Version:** 1.0
+> **Scope:** 8 phase-1 domains · **Generated:** 2026-07-18 · **Pipeline Version:** 1.0
 > Aggregates each domain's `be-07-acl-usage-analysis.md`. Regenerate via `python fedMigrationScripts/generatescripts/generate_acl_analysis.py`.
 
 ## Key Finding
@@ -62,4 +62,4 @@ Every domain's `be-03-schema.graphql` header and `be-04-stories.md` currently st
 | watchlist | `Mutation.cloneFilesForWatchlist` | `attachment` | Mid-Request ACL Update — SparkSecurityService.updateCurrentUserPermissions(capabilityToken) refreshes the thread's security context before the downstream call to `attachment`, avoiding re-authentication |
 
 ---
-*Program roll-up · generated 2026-07-17 from each domain's `be-07-acl-usage-analysis.md`.*
+*Program roll-up · generated 2026-07-18 from each domain's `be-07-acl-usage-analysis.md`.*

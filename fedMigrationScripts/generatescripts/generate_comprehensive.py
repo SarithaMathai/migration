@@ -78,11 +78,17 @@ DGS_MAP = {
 COMPLEX_STORIES: dict[str, dict] = {
     "product": {
         "intro": (
-            "Four stories in this domain (2 Very High + 2 High) were broken into "
-            "**M-size (≤5 day) sub-tasks** in Jira. Two Very High stories are also "
-            "covered by dedicated complex-case breakdowns."
+            "Several stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira. "
+            "A number of them are also covered by dedicated complex-case breakdowns — see "
+            "each case's `01-stories.md` for the full cross-domain story set."
         ),
         "very_high": [
+            {
+                "id": "PRODUCT-BE-E-00",
+                "name": "WriteSaga shared module (Sprint 0, critical path)",
+                "subtasks": "E-00-1 ordered-steps + policy engine · E-00-2 default policy table + compensation inventory",
+                "complex_case": "non-atomic-write-saga",
+            },
             {
                 "id": "PRODUCT-BE-E-01",
                 "name": "productBusinessPartnerActions (drop/undrop)",
@@ -90,28 +96,78 @@ COMPLEX_STORIES: dict[str, dict] = {
                 "complex_case": "partner-drop-undrop-write",
             },
             {
+                "id": "PRODUCT-BE-E-03",
+                "name": "TechPack stub + facade (facade-then-federate, draft ADR-015 Option B)",
+                "subtasks": "E-03 thin stub + aggregation facade",
+                "complex_case": "techpack",
+            },
+            {
+                "id": "PRODUCT-BE-E-04",
+                "name": "TechPack bulk wrapper (ordering fix)",
+                "subtasks": "E-04 bulk wrapper (input-ordered)",
+                "complex_case": "techpack",
+            },
+            {
                 "id": "PRODUCT-BE-G-01",
                 "name": "Product.attachmentsWithMetaData",
                 "subtasks": "G-01-1 per-domain service call + merge · G-01-2 metadata hydration + counts",
                 "complex_case": "attachments-enrichment",
             },
+            {
+                "id": "PRODUCT-BE-G-02",
+                "name": "Product.components (fan-out + rollups)",
+                "subtasks": "G-02-1 batched-ACL fan-out · G-02-2 count rollups + type tagging",
+                "complex_case": "components-and-counts-rollups",
+            },
+            {
+                "id": "PRODUCT-BE-G-11-1",
+                "name": "Product.notRemovablePartnerIds + notRemovableWorkspaceIds",
+                "subtasks": "G-11-1-1 lane clients (discussion/attachment/sample/watchlist) · G-11-1-2 union + parallelization",
+                "complex_case": "notRemovable-undroppable-partners",
+            },
         ],
         "high": [
             {"id": "PRODUCT-BE-E-02", "name": "updateComponentStatuses (5-loader fan-out)", "subtasks": "E-02-1 loader scaffold + status updates · E-02-2 parity + count validation"},
             {"id": "PRODUCT-BE-G-03", "name": "Product.attachments / attachmentsV3 / attachmentSummary", "subtasks": "G-03-1 attachments + attachmentsV3 · G-03-2 attachmentSummary + draft filtering"},
-        ],
-        "delegated": [
-            {"id": "PRODUCT-BE-E-03/E-04", "name": "TechPack stub + facade (facade-then-federate, draft ADR-015 Option B)", "case": "complexStories/techpack/"},
-            {"id": "PRODUCT-BE-G-02",    "name": "components (fan-out + rollups)", "case": "complexStories/components-and-counts-rollups/"},
+            {
+                "id": "PRODUCT-BE-G-07",
+                "name": "unDroppablePartners semantics",
+                "subtasks": "G-07-1 design-partner gate + dps exclusion · G-07-2 numeric-grantee filter",
+                "complex_case": "notRemovable-undroppable-partners",
+            },
+            {
+                "id": "PRODUCT-BE-D-01",
+                "name": "addProduct (shared association component)",
+                "subtasks": "D-01-1 workspace link via component",
+                "complex_case": "cross-domain-association",
+            },
+            {
+                "id": "PRODUCT-BE-D-02",
+                "name": "addProducts bulk (shared association component)",
+                "subtasks": "D-02-1 workspace link · D-02-2 attachment-metadata client call (replaces cross-resolver import)",
+                "complex_case": "cross-domain-association",
+            },
+            {
+                "id": "PRODUCT-BE-D-04",
+                "name": "updateProduct (shared association component)",
+                "subtasks": "D-04-1 template-attachment archiving via component",
+                "complex_case": "cross-domain-association",
+            },
         ],
     },
     "bom": {
-        "intro": "Two stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
+        "intro": "Several stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "very_high": [
             {"id": "BOM-BE-E-01", "name": "updateBom — 3-step orchestrated write", "subtasks": "E-01-1 workspace-assoc + body PUT · E-01-2 permissions PUT + rollback framework", "complex_case": "non-atomic-write-saga"},
         ],
         "high": [
             {"id": "BOM-BE-G-08", "name": "BomTrimMaterial field resolvers (7 types + dispatcher)", "subtasks": "G-08-1 dispatcher scaffold + type resolution · G-08-2 7 TrimMaterial field resolvers"},
+            {
+                "id": "BOM-BE-A-05",
+                "name": "Shared CI conformance gate + code→type registry",
+                "subtasks": "A-05-1 SDL↔enum↔fixture conformance library · A-05-2 code→type registry seeding",
+                "complex_case": "polymorphic-type-resolution",
+            },
         ],
     },
     "workspace": {
@@ -273,11 +329,11 @@ def parse_stories(stories_path: Path) -> list[dict]:
         if phase_m:
             phase = phase_m.group(1)
         else:
-            yaml_p = re.search(r"\bphase:\s*([A-G])\b", body, re.IGNORECASE)
+            yaml_p = re.search(r"\bphase:\s*([A-H])\b", body, re.IGNORECASE)
             if yaml_p:
                 phase = yaml_p.group(1).upper()
             else:
-                id_p = re.search(r"-BE-([A-G])-\d", sid)
+                id_p = re.search(r"-BE-([A-H])-\d", sid)
                 phase = id_p.group(1) if id_p else "?"
         dep_m     = DEPENDS_RE.search(body)
         depends   = dep_m.group(1).strip() if dep_m else "—"

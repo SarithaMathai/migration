@@ -3,11 +3,12 @@
 Master runner — regenerates the publication artifacts for every phase-1 domain.
 
 Output structure (all paths relative to the migration repo root — per-domain breakdowns live
-in output/summary/{domain}/, backend artifacts carry -BE- in the name; the -FE- frontend
-counterparts come from generate_frontend.py into the same domain folder):
+in output/summary/{domain}/; each is ONE merged Backend + Frontend page — the Frontend
+section is built by generate_frontend.py's build_fe_section() and merged in by
+generate_breakdown.py / generate_word.py, no separate -FE- file):
   output/summary/{domain}/
-    FederatedGqlBreakDown-BE-{domain}.docx Word/Confluence-ready breakdown (tables, icons, formatting)
-    FederatedGqlBreakDown-BE-{domain}.md   Confluence-ready breakdown (Markdown fallback)
+    FederatedGqlBreakDown-{domain}.docx    Word/Confluence-ready breakdown (tables, icons, formatting)
+    FederatedGqlBreakDown-{domain}.md      Confluence-ready breakdown (Markdown fallback)
     {domain}-comprehensive.md             Full engineering doc (OPT-IN: --full)
     {domain}-po-review.md                 PO/stakeholder executive review (OPT-IN: --full)
   output/jira/{domain}.csv             Jira-import CSV per domain
@@ -193,7 +194,7 @@ def build_program_overview() -> str:
         total, vh, h, m, lo = live[key]
         ts = tshirt(total, ehi)
         fc, flo, fhi = fe_by_dom.get(key, (0, 0, 0))
-        L.append(f"| [{label}](./{key}/FederatedGqlBreakDown-BE-{key}.md) | `{dgs}` | **{total}** | {ts} | "
+        L.append(f"| [{label}](./{key}/FederatedGqlBreakDown-{key}.md) | `{dgs}` | **{total}** | {ts} | "
                  f"{vh} | {h} | {m} | {lo} | {elo}–{ehi}d | {fc} | {flo}–{fhi}d | {rl} {risk} |")
     L += [
         f"| **TOTAL** | — | **{total_stories}** | — | **{tvh}** | **{th}** | **{tm}** | **{tl}** | "
@@ -202,7 +203,7 @@ def build_program_overview() -> str:
         "> BE counts + complexity are computed live from each domain's `be-04-stories.md`; FE counts + effort from "
         "`fe-08-frontend-stories.md` (same parsers as the breakdowns + Jira CSVs), so these totals always reconcile. "
         "BE effort is buffered +20%; FE effort is single-engineer, unbuffered. Each domain's FE stories live in "
-        "`summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md`.",
+        "`summary/{domain}/FederatedGqlBreakDown-{domain}.md` (Frontend section).",
         "",
         "---",
         "",
@@ -220,7 +221,7 @@ def build_program_overview() -> str:
     for (key,label,*_rest) in DOMAIN_META:
         pc = phase_counts.get(key, {})
         cells = " | ".join(str(pc.get(p, 0)) for p in breakdown_mod.PHASE_SEQ)
-        L.append(f"| [{label}](./{key}/FederatedGqlBreakDown-BE-{key}.md) | {cells} | **{live[key][0]}** |")
+        L.append(f"| [{label}](./{key}/FederatedGqlBreakDown-{key}.md) | {cells} | **{live[key][0]}** |")
     phase_tot = {p: sum(phase_counts.get(d[0], {}).get(p, 0) for d in DOMAIN_META)
                  for p in breakdown_mod.PHASE_SEQ}
     L += [
@@ -253,29 +254,32 @@ def build_program_overview() -> str:
         "                      sequenced first among them because every domain reads through it)",
         "Tier 2 — Co-located:  Impression → Measurement → ProductDetails → Watchlist → BOM → Packaging  (phase 1)",
         "Tier 3 — Separate:    Claims (phase 1) · Attachment · Discussion · Sample · Workspace  (later phase)",
-        "Tier 4 — Federation:  all F-phase stories, once the owning subgraph is live",
+        "Tier 4 — Federation:  all Phase H entity-resolution stories, once the owning subgraph is live",
         "```",
         "",
         "## Cross-domain blockers (true federation — a separate DGS must migrate first)",
         "",
         "| Blocked story | Domain | Waits on |",
         "|---|---|---|",
-        "| `PRODUCT-BE-F-01` (attachments) | product | **attachment** (`plm-attachment`, later phase) |",
-        "| `PRODUCT-BE-F-02` (discussions) | product | **discussion** (`plm-discussion`, later phase) |",
-        "| `PRODUCT-BE-F-03` (sample) | product | **sample** (`plm-sample`, later phase) |",
-        "| `PRODUCT-BE-F-05` (claims) | product | **claims** (`spark-claims`, phase 1) |",
-        "| `PRODUCT-BE-F-07` (constructions) | product | **construction** (no subgraph scheduled yet — `F-07` stays blocked until one exists) |",
-        "| `MST-BE-F-02` (sampleMeasurement) | measurement | **sample** (`plm-sample`, later phase) |",
+        "| `PRODUCT-BE-H-01` (attachments) | product | **attachment** (`plm-attachment`, later phase) |",
+        "| `PRODUCT-BE-H-02` (discussions) | product | **discussion** (`plm-discussion`, later phase) |",
+        "| `PRODUCT-BE-H-03` (sample) | product | **sample** (`plm-sample`, later phase) |",
+        "| `PRODUCT-BE-H-04` (claims) | product | **claims** (`spark-claims`, phase 1) |",
+        "| `PRODUCT-BE-H-05` (constructions) | product | **construction** (no subgraph scheduled yet — `H-05` stays blocked until one exists) |",
+        "| `MST-BE-H-01` (sampleMeasurement) | measurement | **sample** (`plm-sample`, later phase) |",
         "",
         "> Internal (NOT blockers, same `plm-product` subgraph): `BOM-BE-F-01/F-02`, `PRODUCT-BE-F-04/F-06/F-08`, "
-        "`MST-BE-F-01`, `IMPRESSION-BE-F-01`, `PDTL-BE-F-01`, `PKG-BE-F-01`.",
+        "`MST-BE-F-01`, `IMPRESSION-BE-F-01`, `PDTL-BE-F-01`, `PKG-BE-F-01`. Cross-subgraph entity resolution "
+        "(Phase H) is now split out from platform/gateway work that stays Phase F — see `PRODUCT-BE-H-06` "
+        "(the `Product` entity fetcher) for the one Phase H story with no later-phase blocker.",
         "",
         "---",
         "",
         "## How to consume",
         "",
-        "- **Per domain (backend):** open `summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md` (or the `.docx` for Confluence/Word).",
-        "- **Per domain (frontend):** open `summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md` (generated by `generate_frontend.py`).",
+        "- **Per domain (backend + frontend):** open `summary/{domain}/FederatedGqlBreakDown-{domain}.md` "
+        "(or the `.docx` for Confluence/Word) — one merged page: `## Backend` then `## Frontend` "
+        "(the Frontend section is generated by `generate_frontend.py`'s `build_fe_section()`).",
         "- **Federation schema review:** `analysis/federation-review/` (hand-authored) — schema validation, "
         "cross-domain identifier inventory, required contract fixes (R1–R6), recommended entity references, "
         "entity-resolver analysis, and the risks/open-questions register. Required-fix stories: "
@@ -412,6 +416,20 @@ def main() -> None:
         except Exception as e:
             print(f"  FAIL all-stories.csv: {type(e).__name__}: {e}")
 
+        # Complex-case sub-task CSVs — output/complexStories/<case>/<case>.csv, imported
+        # separately into Jira nested under each case's home stub (never double-counted
+        # against the domain/all-stories totals above). Needs every domain's
+        # be-04-stories.md to exist (already true by this point) — no dependency on the
+        # domain CSVs just written.
+        try:
+            complex_gen = importlib.util.spec_from_file_location(
+                "complex_generate", HERE.parent.parent / "output" / "complexStories" / "generate.py")
+            complex_mod = importlib.util.module_from_spec(complex_gen)
+            complex_gen.loader.exec_module(complex_mod)
+            complex_mod.generate_all(complex_mod.ALL_CASES)
+        except Exception as e:
+            print(f"  FAIL complex-case CSVs: {type(e).__name__}: {e}")
+
         # Frontend inventory docs + FE Jira rows appended into output/jira/{domain}.csv
         # (runs AFTER the backend jira CSVs above so the combined files carry both)
         try:
@@ -430,7 +448,13 @@ def main() -> None:
         except Exception as e:
             print(f"  FAIL ACL analysis roll-up: {type(e).__name__}: {e}")
 
-        # Program-level team plan (2 BE + 2 FE engineers) — needs both BE + FE parsers
+        # Cross-domain dependency table — every Blocked-by across all 8 domains, one place.
+        try:
+            _load("generate_cross_domain_deps").main()
+        except Exception as e:
+            print(f"  FAIL cross-domain dependency table: {type(e).__name__}: {e}")
+
+        # Program-level team plan (team size from team_config.py) — needs both BE + FE parsers
         try:
             _load("generate_team_plan").main()
         except Exception as e:

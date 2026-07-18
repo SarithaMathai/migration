@@ -85,5 +85,7 @@ This case is done when:
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task
-breakdown are produced when the ADR is ratified and land here.*
+*This folder holds the problem brief (this file) + the decided ADR ([01-adr-acl-mid-request-update.md](./01-adr-acl-mid-request-update.md)). Unlike the other complex cases, this decision has no
+`01-stories.md` of its own — per ADR-019 §5, it's implemented as one line added to each of the 31
+downstream-token call sites' existing migration story (across bom, product, productDetails, packaging,
+watchlist), not as new dedicated stories.*

@@ -22,9 +22,11 @@ Outputs:
   output/confluence/frontend-confluence-documentation.md
   output/jira/{domain}.csv     COMBINED backend + frontend rows (FE rows appended to the
       backend CSV written by generate_jira; idempotent) + all-frontend-stories.csv
-  output/summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md|.docx   per-domain FE breakdown
-      pages, next to the FederatedGqlBreakDown-BE-{domain} backend breakdowns; the same page
-      is co-located as output/analysis/{domain}/fe-{domain}-breakdown.md (only when 08 exists)
+  build_fe_section(dom, group, ops) — FE section markdown, consumed by generate_breakdown.py's
+      generate_breakdown_for(domain) to merge into ONE output/summary/{domain}/
+      FederatedGqlBreakDown-{domain}.md|.docx (Backend + Frontend sections, no more standalone
+      FE file); the same section is also co-located as
+      output/analysis/{domain}/fe-{domain}-breakdown.md (only when 08 exists) via emit_fe_breakdowns()
 
 Run (from anywhere — paths resolve relative to this script):
     python fedMigrationScripts/generatescripts/generate_frontend.py
@@ -46,6 +48,8 @@ if hasattr(sys.stdout, "reconfigure"):
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
+
+from team_config import N_FE_ENGINEERS
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -1384,7 +1388,8 @@ def emit_dependency_matrix(stories):
     write(FE_OUT / "fe-09-story-dependency-matrix.md", "\n".join(L))
 
 
-# ─── Per-domain FE breakdown pages (output/summary/{domain}/FederatedGqlBreakDown-FE-*) ─
+# ─── Per-domain FE section builder — merged by generate_breakdown.py / generate_word.py
+# into output/summary/{domain}/FederatedGqlBreakDown-{domain} (no standalone -FE- file) ─
 SUMMARY_OUT = ROOT / "output" / "summary"
 IMPACT_ICONS = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}
 
@@ -1466,20 +1471,28 @@ def fe_order_map_lines(group):
     return L
 
 
-def fe_team_plan_lines(group, n_eng=2):
-    """Markdown lines for 'Recommended Story Graph — 2 Frontend Engineers' — the staged
-    order map packed onto a fixed FE pair. Lanes re-sync at each step because the step's
-    backend gate — not engineer availability — is the limiter."""
+def fe_team_plan_lines(group, n_eng=N_FE_ENGINEERS):
+    """Markdown lines for 'Recommended Story Graph — N Frontend Engineer(s)' — the staged
+    order map packed onto a team of n_eng (default: team_config.N_FE_ENGINEERS) FE
+    engineers. Steps re-sync at each stage because the stage's backend gate — not
+    engineer availability — is the limiter."""
     stage = fe_stages(group)
     lane_of = {}                     # story id -> lane (keep FE→FE chains on one engineer)
+    eng_word = "Engineer" if n_eng == 1 else "Engineers"
     hdr = " | ".join(f"👤 FE-{e + 1}" for e in range(n_eng))
+    if n_eng == 1:
+        model_note = ("> The staged order map above, run by **one frontend engineer**. Steps re-sync at "
+                       "each stage because the stage's **backend gate** — not engineer availability — is "
+                       "the limiter.")
+    else:
+        model_note = (f"> The order map above packed onto **{n_eng} frontend engineers**. Lanes re-sync at each "
+                       "step because the step's **backend gate** — not engineer availability — is the limiter; "
+                       "in a single-story step a free engineer pairs on parity checks/rollout or pre-pulls "
+                       "the next unblocked story. FE→FE chains stay with one engineer for context.")
     L = [
-        f"## Recommended Story Graph — {n_eng} Frontend Engineers",
+        f"## Recommended Story Graph — {n_eng} Frontend {eng_word}",
         "",
-        "> The order map above packed onto **two frontend engineers**. Lanes re-sync at each "
-        "step because the step's **backend gate** — not engineer availability — is the limiter; "
-        "in a single-story step the second engineer pairs on parity checks/rollout or pre-pulls "
-        "the next unblocked story. FE→FE chains stay with one engineer for context.",
+        model_note,
         "",
         f"| Step | {hdr} | Backend gate (focus) |",
         "|---|" + "---|" * (n_eng + 1),
@@ -1508,140 +1521,138 @@ def fe_team_plan_lines(group, n_eng=2):
                 for s in lane) or "—")
         label = STAGE_LABELS.get(n, "Follow-on cutover — after the stories it depends on")
         L.append(f"| {n} | " + " | ".join(cells) + f" | {label} |")
+    if n_eng == 1:
+        L += [
+            "",
+            f"**Elapsed (nominal midpoints):** ~{team_days:.0f} FE build days — calendar time is set "
+            "by the backend gates, not FE capacity.",
+            "",
+        ]
+    else:
+        L += [
+            "",
+            f"**Elapsed (nominal midpoints):** ~{team_days:.0f} FE build days with {n_eng} engineers "
+            f"vs ~{solo_days:.0f} single-engineer — calendar time is set by the backend gates, "
+            "not FE capacity.",
+            "",
+        ]
+    return L
+
+
+def build_fe_section(dom, group, ops):
+    """Build the Frontend section's markdown lines for one phase-1 domain (starts at
+    '# {title}' h1; generate_breakdown.py's merge step demotes headings when it
+    concatenates this under the domain's combined '## Frontend' section). Pulled out of
+    the old emit_fe_breakdowns() so generate_breakdown.py can call it directly and merge
+    it with the backend section into ONE FederatedGqlBreakDown-{domain} page — there is
+    no more standalone FederatedGqlBreakDown-FE-{domain} file."""
+    label = DOMAIN_LABELS.get(dom, dom.title())
+    dgs = DOMAIN_DGS.get(dom, "?")
+    hi = sum(1 for s in group if (s["impact"] or "").startswith("High"))
+    me = sum(1 for s in group if (s["impact"] or "").startswith("Medium"))
+    lo = sum(1 for s in group if (s["impact"] or "").startswith("Low"))
+    e_lo = sum(_effort_range(s["effort"])[0] for s in group)
+    e_hi = sum(_effort_range(s["effort"])[1] for s in group)
+
+    title = f"Federated GraphQL Breakdown — {label} · Frontend"
+    L = [
+        f"# {title}",
+        "",
+        "| | |",
+        "|---|---|",
+        "| **Client** | `pdex-ui-react` (Apollo Client) |",
+        f"| **Backend subgraph** | `{dgs}` |",
+        f"| **Total FE Stories** | {len(group)} |",
+        f"| **Impact** | 🔴 {hi} High · 🟡 {me} Medium · 🟢 {lo} Low |",
+        f"| **Estimated effort** | {e_lo}–{e_hi} days (single-engineer) |",
+    ]
+    rows = [(o, r) for o in ops for r in o["roots"] if r["phase1"] and r["domain"] == dom]
+    files = {o["src"] for o, _ in rows}
+    comps = {c for o, _ in rows for c in o["components"]}
+    L.append(f"| **Phase-1 surface** | {len(rows)} operation-to-root-field rows · "
+             f"{len(files)} client files · {len(comps)} components |")
+    L += [
+        f"| **Generated** | {TODAY} |",
+        "",
+        "> A frontend story is **Done only after every backend story it depends on has been "
+        "delivered**. Full story text (objectives, required changes, AC, testing) lives in "
+        "fe-08-frontend-stories.md — the hand-authored source of truth; this page is the "
+        "per-domain planning view.",
+        "",
+        "---",
+        "",
+        "## What Are We Changing?",
+        "",
+    ]
+    L += [
+        f"- Point the **{label}** GraphQL operations in `pdex-ui-react` at the federated "
+        f"router (subgraph `{dgs}`) behind the platform feature flag, then remove "
+        "legacy-gateway assumptions (typenames, cache keys, fragments).",
+        "- Cutover is per-domain and reversible: dual-run first, flag flip after parity, "
+        "legacy path kept until the exit criterion holds.",
+    ]
     L += [
         "",
-        f"**Elapsed (nominal midpoints):** ~{team_days:.0f} FE build days with {n_eng} engineers "
-        f"vs ~{solo_days:.0f} single-engineer — calendar time is set by the backend gates, "
-        "not FE capacity.",
+        "---",
+        "",
+        "## Stories",
+        "",
+        "| Story | Title | Type | Impact | Effort | Depends on | Operations |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for s in group:
+        deps = ", ".join(f"`{d}`" for d in s["depends"]) or "—"
+        ops_cell = ", ".join(f"`{x}`" for x in s["operations"] if x and x != "—") or "—"
+        L.append(f"| `{s['id']}` | {md_escape(s['title'])} | {s['type'] or '—'} "
+                 f"| {_impact_icon(s['impact'])} {s['impact'] or '—'} | {s['effort'] or '—'} "
+                 f"| {deps} | {ops_cell} |")
+    L += ["", "---", ""]
+    L += fe_order_map_lines(group)
+    L += ["---", ""]
+    L += fe_team_plan_lines(group)
+    L += [
+        "---",
+        "",
+        "## References",
+        "",
+        "- fe-08-frontend-stories.md — full story text (source of truth).",
+        "- fe-09-story-dependency-matrix.md — FE ↔ BE dependency matrix.",
+        "- fe-10-migration-sequencing.md — program-level waves and external gates.",
+        "- fe-03-merged-inventory.md — every operation × backend root field for this domain.",
+        f"- FederatedGqlBreakDown-{dom}.md — the combined Backend + Frontend breakdown this "
+        "section lives in.",
         "",
     ]
     return L
 
 
 def emit_fe_breakdowns(stories, ops):
-    """One FederatedGqlBreakDown-FE-{domain} page per phase-1 domain, in
-    output/summary/{domain}/ next to the FederatedGqlBreakDown-BE-{domain} backend breakdowns."""
+    """Co-locate the FE section's markdown next to each domain's backend analysis
+    (output/analysis/{domain}/fe-{domain}-breakdown.md) for domain-first reading.
+
+    The FE section no longer gets its own FederatedGqlBreakDown-FE-{domain}.md/.docx —
+    generate_breakdown.py now calls build_fe_section() directly and merges it with the
+    backend content into one FederatedGqlBreakDown-{domain} page (+ .docx via
+    generate_word.py). This function only keeps the analysis/-side co-located copy."""
     if not stories:
         print("  (fe-08-frontend-stories.md not found — skipping FE breakdowns)")
         return
-    SUMMARY_OUT.mkdir(parents=True, exist_ok=True)
 
     by_dom = defaultdict(list)
     for s in stories:
         by_dom[domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])].append(s)
 
-    # Optional .docx twin — reuses generate_word's Markdown→Word renderer.
-    try:
-        import importlib.util as _ilu
-        spec = _ilu.spec_from_file_location("generate_word", HERE / "generate_word.py")
-        gw = _ilu.module_from_spec(spec)
-        spec.loader.exec_module(gw)
-    except Exception as e:
-        gw = None
-        print(f"  (docx renderer unavailable — FE breakdowns as .md only: {type(e).__name__}: {e})")
-
     for dom in [d for d in PHASE1_ORDER if d in by_dom]:
         group = sorted(by_dom.get(dom, []), key=lambda s: s["id"])
         if not group:
             continue
-        label = DOMAIN_LABELS.get(dom, dom.title())
-        dgs = DOMAIN_DGS.get(dom, "?")
-        hi = sum(1 for s in group if (s["impact"] or "").startswith("High"))
-        me = sum(1 for s in group if (s["impact"] or "").startswith("Medium"))
-        lo = sum(1 for s in group if (s["impact"] or "").startswith("Low"))
-        e_lo = sum(_effort_range(s["effort"])[0] for s in group)
-        e_hi = sum(_effort_range(s["effort"])[1] for s in group)
+        L = build_fe_section(dom, group, ops)
 
-        title = f"Federated GraphQL Breakdown — {label} · Frontend"
-        L = [
-            f"# {title}",
-            "",
-            "| | |",
-            "|---|---|",
-            "| **Client** | `pdex-ui-react` (Apollo Client) |",
-            f"| **Backend subgraph** | `{dgs}` |",
-            f"| **Total FE Stories** | {len(group)} |",
-            f"| **Impact** | 🔴 {hi} High · 🟡 {me} Medium · 🟢 {lo} Low |",
-            f"| **Estimated effort** | {e_lo}–{e_hi} days (single-engineer) |",
-        ]
-        rows = [(o, r) for o in ops for r in o["roots"] if r["phase1"] and r["domain"] == dom]
-        files = {o["src"] for o, _ in rows}
-        comps = {c for o, _ in rows for c in o["components"]}
-        L.append(f"| **Phase-1 surface** | {len(rows)} operation-to-root-field rows · "
-                 f"{len(files)} client files · {len(comps)} components |")
-        L += [
-            f"| **Generated** | {TODAY} |",
-            "",
-            "> A frontend story is **Done only after every backend story it depends on has been "
-            "delivered**. Full story text (objectives, required changes, AC, testing) lives in "
-            "fe-08-frontend-stories.md — the hand-authored source of truth; this page is the "
-            "per-domain planning view.",
-            "",
-            "---",
-            "",
-            "## What Are We Changing?",
-            "",
-        ]
-        L += [
-            f"- Point the **{label}** GraphQL operations in `pdex-ui-react` at the federated "
-            f"router (subgraph `{dgs}`) behind the platform feature flag, then remove "
-            "legacy-gateway assumptions (typenames, cache keys, fragments).",
-            "- Cutover is per-domain and reversible: dual-run first, flag flip after parity, "
-            "legacy path kept until the exit criterion holds.",
-        ]
-        L += [
-            "",
-            "---",
-            "",
-            "## Stories",
-            "",
-            "| Story | Title | Type | Impact | Effort | Depends on | Operations |",
-            "|---|---|---|---|---|---|---|",
-        ]
-        for s in group:
-            deps = ", ".join(f"`{d}`" for d in s["depends"]) or "—"
-            ops_cell = ", ".join(f"`{x}`" for x in s["operations"] if x and x != "—") or "—"
-            L.append(f"| `{s['id']}` | {md_escape(s['title'])} | {s['type'] or '—'} "
-                     f"| {_impact_icon(s['impact'])} {s['impact'] or '—'} | {s['effort'] or '—'} "
-                     f"| {deps} | {ops_cell} |")
-        L += ["", "---", ""]
-        L += fe_order_map_lines(group)
-        L += ["---", ""]
-        L += fe_team_plan_lines(group)
-        L += [
-            "---",
-            "",
-            "## References",
-            "",
-            "- fe-08-frontend-stories.md — full story text (source of truth).",
-            "- fe-09-story-dependency-matrix.md — FE ↔ BE dependency matrix.",
-            "- fe-10-migration-sequencing.md — program-level waves and external gates.",
-            "- fe-03-merged-inventory.md — every operation × backend root field for this domain.",
-            f"- FederatedGqlBreakDown-BE-{dom}.md — the backend breakdown this cutover follows.",
-            "",
-        ]
-        dom_out = SUMMARY_OUT / dom
-        dom_out.mkdir(parents=True, exist_ok=True)
-        out = dom_out / f"FederatedGqlBreakDown-FE-{dom}.md"
-        out.write_text("\n".join(L), encoding="utf-8")
-        print(f"  wrote {out.relative_to(ROOT)}")
-
-        # same page co-located with the domain's backend analysis (domain-first reading)
+        # co-located with the domain's backend analysis (domain-first reading)
         dom_copy = BE_ANALYSIS / dom / f"fe-{dom}-breakdown.md"
         if dom_copy.parent.is_dir():
             dom_copy.write_text("\n".join(L), encoding="utf-8")
             print(f"  wrote {dom_copy.relative_to(ROOT)}")
-
-        if gw is not None:
-            doc = gw.Document()
-            style = doc.styles["Normal"]
-            style.font.name = "Calibri"
-            style.font.size = gw.Pt(10)
-            tp = doc.add_paragraph()
-            gw.add_run(tp, title, bold=True, size_pt=20, color_hex=gw.C_TITLE)
-            gw.render_md_block(doc, L[1:])
-            doc.save(str(dom_out / f"FederatedGqlBreakDown-FE-{dom}.docx"))
-            print(f"  wrote output/summary/{dom}/FederatedGqlBreakDown-FE-{dom}.docx")
 
 
 # ─── Docs 00 / 10 / Confluence index — narrative templated here, numbers computed ─

@@ -8,7 +8,10 @@
 > **⚠ Map authority:** the legacy resolver source is the authority for every table below — these were
 > read from the code, not from drafted pseudo-code.
 > **Related:** ADR-014 pin-down 6 (`bom.type 2 → packagingBom` lands in this spike's `code → type`
-> registry) · ADR-015/016 (federation end-states that consume the same entity keys).
+> registry) · ADR-015/016 (federation end-states that consume the same entity keys) · ADR-019 (Mid-Request
+> ACL Update) — six of the per-variant `libraryResource` loaders in §1's material table (trim/wash/fabric/
+> combination/materialHub/search) are **downstream-token** call sites per ADR-019 §1 and
+> `output/analysis/bom/be-07-acl-usage-analysis.md`; this ADR assumes ADR-019's mechanism for them.
 > **Evidence:** `resolvers/product/SPARK_Bom.js` + `resolvers/SPARK_SampleV2.js` +
 > `resolvers/SPARK_MaterialHub.js` + `resolvers/material/SPARK_BaseMaterialCommonFields.js` +
 > `utils/materials/colorUtils.js` + `resolvers/SPARK_Search.js` at `https://github.com/XXX`.
@@ -36,11 +39,15 @@
   through the generic `SPARK_BomMaterial`, whose `libraryResource` resolves via
   `materialHub.getHubMaterial(JWT)`. Casing 9 "properly" would break them.
 - Per-variant drift surface — each concrete type re-implements `libraryResource` against a different
-  sibling: trim → `trim.getTrimBatch` (🟡) · wash → `wash.getWash(JWT)` (🟡) · fabric →
-  `search.searchFabricSpecCombos` (🔴 search) · fabricSpec → `fabric.getSpecificationByID` (🟡) ·
+  sibling: trim → `trim.getTrimBatch` (🟡) · wash → `wash.getWash(JWT)` (🟡, **downstream-token → Mid-Request
+  ACL Update** before the call, per ADR-019) · fabric → `search.searchFabricSpecCombos` (🔴 search,
+  **downstream-token → Mid-Request ACL Update**) · fabricSpec → `fabric.getSpecificationByID` (🟡) ·
   combination → `combination.getById` (🟡) · base → `materialHub.getHubMaterial(JWT)` (🟡) —
   plus per-variant `weight` / `countryOfOrigin` / trim-only `sizeValue`/`sizeCaption`/`facilityName`.
   🐞 fields added to one impl and not the others is exactly the "silent drift" the brief describes.
+  (Per `output/analysis/bom/be-07-acl-usage-analysis.md`: `SPARK_BomWashMaterial.libraryResource` is
+  downstream-token to `wash`; `SPARK_BomMaterialSearchResult.fabric`/`.relatedMaterials` are
+  downstream-token to `fabric`/`search` respectively — these ride the same JWT-then-call shape.)
 
 ### 2 · `SPARK_BomImpressionDetailsInterface.__resolveType` (bom, 5 impls)
 
@@ -55,7 +62,11 @@
 | **default** (601 BASE + unknown) | `SPARK_BomBaseImpressionDetails` |
 
 - Internal/external branch rides along: `SPARK_BomImpressionDetails_Unified.libraryResource` picks
-  `search.getMaterialByIds` for internal users vs a JWT-scoped path for external.
+  `search.getMaterialByIds` for internal users vs a JWT-scoped path for external — the external path is a
+  **downstream-token** site (`search` target, per ADR-019 §1 and be-07): Mid-Request ACL Update refreshes
+  the thread's security context before the call. `SPARK_BomFabricLibraryImpressionDetails.libraryResource`
+  and `SPARK_BomTrimLibraryImpressionDetails.libraryResource` are the same downstream-token shape, also
+  targeting `search`.
 
 ### 3 · `SPARK_SampleAsset` union (sample, `Color | Artwork`)
 
@@ -100,8 +111,8 @@
 
 | Dispatch site | Home subgraph | Discriminator | Impls | Default branch | Per-variant EXT calls | True cross-subgraph? |
 |---|---|---|---|---|---|---|
-| `BomMaterialInterface` | `plm-product` (co-located bom) | `materialCategory.code` (int) | 7 | ✅ load-bearing (1/5/**9**→`BomMaterial`) | trim 🟡 · wash 🟡 · fabric 🟡 · combination 🟡 · search 🔴 · materialHub 🟡 | resolution **local**; variant fields cross |
-| `BomImpressionDetailsInterface` | `plm-product` | `impression.type` (int) | 5 | ✅ (601+unknown→Base) | search 🔴 (materials) | resolution local |
+| `BomMaterialInterface` | `plm-product` (co-located bom) | `materialCategory.code` (int) | 7 | ✅ load-bearing (1/5/**9**→`BomMaterial`) | trim 🟡 · wash 🟡 (downstream-token → Mid-Request ACL Update) · fabric 🟡 (downstream-token) · combination 🟡 · search 🔴 (downstream-token) · materialHub 🟡 | resolution **local**; variant fields cross |
+| `BomImpressionDetailsInterface` | `plm-product` | `impression.type` (int) | 5 | ✅ (601+unknown→Base) | search 🔴 (materials; downstream-token → Mid-Request ACL Update) | resolution local |
 | `SampleAsset` union | `plm-sample` | id prefix | 2 | 🐞 `null` → field error | material/artwork loaders + 🐞 cross-resolver import | resolution local; **asset fetch crosses** |
 | `SampleV2.parent*` | `plm-sample` | id prefix per field | 6 fields | n/a (per-field `null`) | product · trim · colorArchroma · combination · fabric | each gate targets a different subgraph |
 | Materials search | `plm-elastic-search` rows, typed by material domain | `type` (string) + shape | 3 + 2 | ✅ (`UserDefinedMaterial`) | — | **yes at end-state** — stubs must resolve on owners |
@@ -132,6 +143,9 @@
 - Search's polymorphic lane lands **later phase** — the pattern must be decided now so `plm-sample` and
   `plm-elastic-search` inherit a playbook, not a per-team reinvention.
 - Consistency: no cross-resolver imports survive (ADR-011/012/016 stance).
+- The six wash/fabric/search-targeting `libraryResource` loaders are downstream-token sites (ADR-019) —
+  their per-variant client calls must carry Mid-Request ACL Update; this is loader plumbing, not a change
+  to any dispatch table, so it does not compete with Option B's playbook.
 
 ### Assumptions, constraints & success criteria
 
@@ -186,7 +200,9 @@
   3. prefix gates (`SampleV2.parent*`) use the same enum of `RESOURCE_TYPE_PREFIXES` — one source for
      `isColorId`-style families,
   4. per-variant field resolvers live one-file-per-concrete-type, named after it (drift is then visible
-     in the file tree).
+     in the file tree); the wash/fabric/search-targeting loaders (downstream-token, ADR-019) call
+     **Mid-Request ACL Update** (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`)
+     before their sibling-domain call — one line inside that variant's file, not a dispatch-table change.
 - **The CI conformance gate** (a shared test utility, run in each subgraph's build):
   - parse the subgraph SDL: every member of every interface/union **must** have ≥ 1 enum row targeting
     it, and every enum row's target **must** exist in the SDL (catches both add-and-forget directions),
@@ -240,7 +256,8 @@
 | 5 | String-typed hub dispatch 🐞 | preserve strings vs backend code | preserve the exact strings in the enum (with source-of-string comment); pin both strings + default in the golden fixture |
 | 6 | `SampleV2.asset` cross-resolver import 🐞 | — | replace with a material-service client call (ADR-011 stance); the union dispatch itself is unchanged |
 | 7 | Conformance gate ownership | per-team copies vs shared library | one shared test library, versioned with the schema-registry tooling; each subgraph pins it in CI |
-| 8 | Internal/external impression branch | fold into dispatch vs keep field-level | keep field-level (it selects a *data path*, not a *type*); document so nobody "simplifies" it into the type resolver |
+| 8 | Internal/external impression branch | fold into dispatch vs keep field-level | keep field-level (it selects a *data path*, not a *type*); document so nobody "simplifies" it into the type resolver — the external path's capability token is a downstream-token site (ADR-019), so it also keeps its Mid-Request ACL Update call |
+| 9 | Downstream-token loaders (wash/fabric/search, 6 sites) | plumbing lives per-variant vs in a shared client | Mid-Request ACL Update inside each variant's own service client (consistent with cross-domain-association's shared-component pattern where a client is shared, resolver-local otherwise); not a new decision, just ADR-019 applied at the loader |
 
 ---
 

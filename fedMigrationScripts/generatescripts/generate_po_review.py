@@ -223,7 +223,7 @@ def build_migration_approach(po_text: str, domain: str) -> str:
 
     # Build from phase table rows (columns: Phase | Name | Stories | Effort | ...)
     phase_rows = re.findall(
-        r"^\|\s*([A-G])\s*\|\s*([^|*\n]+?)\s*\|",
+        r"^\|\s*([A-H])\s*\|\s*([^|*\n]+?)\s*\|",
         po_text, re.MULTILINE
     )
     # Filter out header rows, total rows, and Phase A (dissolved)
@@ -345,7 +345,7 @@ def build_po_review(domain: str) -> str:
         lines += [
             f"> 🔬 Open decisions marked **Spike** are tracked as real, estimable Phase 0 stories — "
             f"see *Phase 0 — Spikes* in [`../finalOutput/{domain}/be-04-stories.md`](../finalOutput/{domain}/be-04-stories.md) "
-            f"and [`FederatedGqlBreakDown-BE-{domain}.md`](./FederatedGqlBreakDown-BE-{domain}.md) "
+            f"and [`FederatedGqlBreakDown-{domain}.md`](./FederatedGqlBreakDown-{domain}.md) "
             f"for the full write-up (unknowns, candidate patterns, examples).",
             "",
         ]

@@ -18,7 +18,7 @@ It is **mid-sized and mid-risk**: 7 queries, 6 mutations, 17 field resolvers on 
 **proxy/external ACL** path plus workspace association, with no rollback today.
 
 **ACL note:** the current code obtains capability tokens via ACL (including the proxy variant for update);
-Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
+Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permission-check and own-domain-token call sites stay resolver-local (context-only, unchanged); downstream-token call sites — where a resolver hands its token to a *different* domain's loader — use **Mid-Request ACL Update** (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) before the downstream call.
 
 ## Migration Scope
 | Surface | Count | Notes |
@@ -69,7 +69,7 @@ claims subgraph (spark-claims) depends on:
  spark-claims backend REST claim base (create/search/export/lock/...)
  cross-subgraph (federation): product, search 🔴, workspace, user-profile, team
  Hive Gateway → VMM (business/design partners)
- contributes → plm-product: Product.claims (F-01) ; ResourcesCount.claims (F-02, TechPack PRODUCT-BE-F-05)
+ contributes → plm-product: Product.claims (H-01) ; ResourcesCount.claims (H-02, TechPack PRODUCT-BE-H-04)
 ```
 
 ## Recommended Sprint Sequencing

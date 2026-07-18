@@ -5,7 +5,12 @@
 > **Scope:** who **owns** the partner drop/undrop/remove fan-out, and how it is **orchestrated** —
 > the generic failure *machinery* (WriteSaga) is `SPIKE-01`'s decision, consumed here, not made here.
 > **Related:** ADR-011 (cross-domain association writes) — same sync-orchestration stance ·
-> `SPIKE-04` (not-removable/undroppable *reads*) is separate.
+> `SPIKE-04` (not-removable/undroppable *reads*) is separate · ADR-019 (Mid-Request ACL Update) —
+> `DROP_UNDROP_PARTNER`'s sample-domain call is a **downstream-token** site per ADR-019 §1
+> (`Mutation.productBusinessPartnerActions` → `sampleV2`); every other ACL call in this dispatcher
+> (the batched permission read that filters the walk, the bulk `dropPartnerFromResources`/
+> `unDropPartnerFromResources` calls, the product-scoped capability JWT) is permission-check or
+> own-domain-token and stays resolver-local, unchanged.
 > **Evidence:** `resolvers/SPARK_Product.js` + `services/Product.js` + `utils/commonLoaders.js`
 > at `https://github.com/XXX`.
 
@@ -29,7 +34,8 @@
 2. Clean recently-viewed — `recentlyViewed.deleteRecentlyViewedByPartner` (`resourceType: 'product'`).
 3. Clean to-dos — `todo.deleteToDoByBusinessPartner`.
 4. Clean favorites — `favorite.deleteFavoritesByBusinessPartner`.
-5. ACL capability token for the product, then `product.removeProductBusinessPartner` —
+5. Capability token for the product (own-domain-token — gates this domain's own
+   `removeProductBusinessPartner` call, not a cross-domain call), then `product.removeProductBusinessPartner` —
    `DELETE ${v2}/{productId}/partners/bulk?partnerList={partnerId}`.
 
 - **Failure:** strictly sequential, no compensation — a failure at step 3 leaves teams removed,
@@ -44,15 +50,19 @@
    ← full Relationship-Service traversal, and that service is **being retired**.
 2. **Filter to what the partner is actually on** — `filterResourcesByPartner` → batched
    `getAccessControlBatch` (chunks of 100) over all ids + `productId`; remove ids where the partner
-   holds no permissions.
+   holds no permissions. (permission-check — resolver-local, unaffected by ADR-019.)
 3. Build the ACL payload — `getPermissionMapForBulkACLCall` → per-resource dropped-permission map
    (`Bps`/`Dps`/`MerchVendor`/`FabricSupplier`/`Ids` groups; `Ids` keeps its grantee list).
-4. Capability JWT for product + all surviving ids + `SAMPLE_EVALUTION`.
-5. **Design-partner branch** — if `partnerType !== DESIGN_PARTNER` and samples exist:
-   `sampleV2.dropSamples` / `unDropSamples` (by `dropped` flag).
+4. Capability JWT for product + all surviving ids + `SAMPLE_EVALUTION` (own-domain-token for the product
+   write; the same token is also the one minted for step 5's downstream call — see below).
+5. **Design-partner branch** — if `partnerType !== DESIGN_PARTNER` and samples exist: **Mid-Request ACL
+   Update** (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)` — downstream-token site,
+   `sampleV2` target, per ADR-019 §1) before `sampleV2.dropSamples` / `unDropSamples` (by `dropped` flag).
 6. `Promise.all([...])` — **in parallel**: product write
-   `POST ${v2}/{productId}/drop-undrop-partner` + the sample call. **Then**, sequentially:
-   - `accessControl.dropPartnerFromResources` / `unDropPartnerFromResources(toBePermissionsMap)`,
+   `POST ${v2}/{productId}/drop-undrop-partner` + the sample call (ACL-refreshed per step 5). **Then**,
+   sequentially:
+   - `accessControl.dropPartnerFromResources` / `unDropPartnerFromResources(toBePermissionsMap)`
+     (own-domain-token — the bulk ACL mutation itself, not a downstream data call),
    - if dropping: `UserProfileAttributes.Mutation.deleteAllUserProfileDataForAPartner(...)` —
      **called by importing another domain's resolver directly** (same anti-pattern ADR-011 removes in D-02).
 
@@ -68,8 +78,8 @@ user-activity services (🔵).
 | Case | Product | Relationship | ACL | SampleV2 | RecentlyViewed | Todo | Favorite | UserProfile | Calls |
 |---|---|---|---|---|---|---|---|---|---|
 | `REMOVE_TEAM` | ✅ | — | — | — | — | — | — | — | 1 |
-| `REMOVE_PARTNER` | ✅ ×2 | — | ✅ token | — | ✅ | ✅ | ✅ | — | 5–6 |
-| `DROP_UNDROP_PARTNER` | ✅ | ✅ traversal | ✅ batch read + bulk drop/undrop + token | ✅ (non-design) | — | — | — | ✅ (drop only, cross-resolver) | 7–9 |
+| `REMOVE_PARTNER` | ✅ ×2 | — | ✅ token (own-domain-token) | — | ✅ | ✅ | ✅ | — | 5–6 |
+| `DROP_UNDROP_PARTNER` | ✅ | ✅ traversal | ✅ batch read (permission-check) + bulk drop/undrop (own-domain-token) + token → **Mid-Request ACL Update** before the sample call (downstream-token) | ✅ (non-design) | — | — | — | ✅ (drop only, cross-resolver) | 7–9 |
 
 > **Key findings:**
 > - `REMOVE_TEAM` needs no pattern — plain mutation.
@@ -146,7 +156,11 @@ user-activity services (🔵).
   endpoint — sample (`dropSamples`/`unDropSamples`, exists), ACL bulk drop/undrop (exists),
   user-profile purge (exists behind the resolver import — becomes a client call), activity cleanup
   (recentlyViewed/todo/favorite, exist). Each participant also **enumerates its own children** for a
-  product/workspace — replacing the Relationship traversal with per-domain enumeration.
+  product/workspace — replacing the Relationship traversal with per-domain enumeration. The sample step is
+  a **downstream-token** site (ADR-019 §1) — the saga step calls **Mid-Request ACL Update**
+  (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) immediately before
+  `sampleV2.dropSamples`/`unDropSamples`; every other participant call is unaffected (own-domain-token or
+  permission-check).
 - **Orchestration:** the owner runs the steps through `SPIKE-01`'s `WriteSaga` — one step per
   participant, per-step policy declared (see pin-downs), result surfaces
   `COMMITTED | COMPENSATED | PARTIAL_FAILURE` with per-step detail.
@@ -210,7 +224,7 @@ sequenceDiagram
     activate PP
     PP->>PB: 1 · partner-status write (drop)
     PB-->>PP: ok
-    PP->>SM: 2 · dropSamples (skipped for design partner)
+    PP->>SM: 2 · Mid-Request ACL Update, then dropSamples (skipped for design partner)
     SM-->>PP: ok
     PP->>ACL: 3 · bulk dropPartnerFromResources
     ACL-->>PP: ok — must complete before return

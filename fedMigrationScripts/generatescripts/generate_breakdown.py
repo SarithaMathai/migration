@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate FederatedGqlBreakDown-BE-{domain}.md and Federated+Graphql+Stories+-+BreakDown.md.
+Generate FederatedGqlBreakDown-{domain}.md and Federated+Graphql+Stories+-+BreakDown.md.
 
 Format mirrors the reference Word docs in 'final PO BreakDown Doc/':
   - Compact header banner
@@ -8,11 +8,11 @@ Format mirrors the reference Word docs in 'final PO BreakDown Doc/':
   - Stories rendered as TABLES (one row per story) grouped by phase — Confluence-ready
   - High/VH tests shown beneath the phase table, not inline
 
-Output (per-domain artifacts in output/summary/{domain}/ — BE artifacts carry -BE- in the
-name, next to the FederatedGqlBreakDown-FE-{domain} frontend breakdowns from
-generate_frontend.py; program-level pages stay at the summary/ root):
-  output/summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md   (per domain)
-  output/summary/Federated+Graphql+Stories+-+BreakDown.md        (global)
+Output (per-domain artifacts in output/summary/{domain}/ — ONE merged page per domain,
+'## Backend' section from build_breakdown() here + '## Frontend' section from
+generate_frontend.py's build_fe_section(); program-level pages stay at the summary/ root):
+  output/summary/{domain}/FederatedGqlBreakDown-{domain}.md   (per domain, Backend + Frontend)
+  output/summary/Federated+Graphql+Stories+-+BreakDown.md     (global)
 
 Run:
     python generate_breakdown.py              # all domains + global
@@ -24,6 +24,8 @@ import re
 import sys
 from pathlib import Path
 from datetime import date
+
+from team_config import N_BE_ENGINEERS
 
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 HERE      = Path(__file__).resolve().parent
@@ -89,7 +91,7 @@ DGS_MAP = {
 
 PHASE_ICONS = {
     "S": "🔬", "A": "🧱", "B": "📖", "C": "🔍", "D": "✏️",
-    "E": "⚙️", "F": "🔗", "G": "🧪",
+    "E": "⚙️", "F": "🔗", "G": "🧪", "H": "🧬",
 }
 PHASE_NAMES = {
     "S": "Spikes",
@@ -100,6 +102,7 @@ PHASE_NAMES = {
     "E": "Complex Operations",
     "F": "Federation & Stitching",
     "G": "Field Resolvers & Tests",
+    "H": "Entity Resolution",
 }
 TYPE_ICONS = {
     "query":          "🔷",
@@ -127,8 +130,11 @@ SIZE_MAP = {"low": "XS", "medium": "M", "high": "L", "very high": "XL"}
 # 2-engineer lane plans and the program-level team plan.
 EFFORT_DAYS = {"low": (1, 2), "medium": (2, 4), "high": (4, 7), "very high": (7, 12)}
 
-# Domain ownership for the 2 BE + 2 FE team (one engineer owns a domain end-to-end;
-# lanes match 01-implementation-plan-2BE-2FE.md). Product FE is split across both.
+# Domain ownership — stale from the retired 2 BE + 2 FE team model (lanes referenced
+# 01-implementation-plan-2BE-2FE.md, now 01-implementation-plan-1BE-1FE.md, a single
+# sequential lane per role). Left as historical per-domain labels; not rewired to the
+# 1BE+1FE model since generate_jira.py/generate_project_plan.py consume these labels as
+# Owner metadata — reassigning them is a separate decision, not a mechanical rename.
 DOMAIN_OWNERS = {
     "product":        {"be": "BE-1", "fe": "FE-1 + FE-2"},
     "claims":         {"be": "BE-1", "fe": "FE-2"},
@@ -246,7 +252,7 @@ def spike_how_to_read() -> list[str]:
         "",
         "**🔧 Engineer:**",
         "",
-        "1. In the **domain A–G table**, find your story. If it's **🔴🔬 with `SPIKE-0x` in Depends On**, the complex part is blocked until that spike concludes — check its status first.",
+        "1. In the **domain A–H table**, find your story. If it's **🔴🔬 with `SPIKE-0x` in Depends On**, the complex part is blocked until that spike concludes — check its status first.",
         "2. **Follow the `SPIKE-0x` id → Spike Detail**: the **intended cross-domain steps** (your target flow) + the resolver table (external services you'll call + what each resolver does today = your parity target).",
         "3. **Research so far** — the **Phase 0 — Program Spikes** table links each spike to its `complexStories/<case>/` brief.",
         "4. **Non-gated stories** (no 🔴🔬) — build straight from the story's Acceptance Criteria; no spike needed.",
@@ -284,32 +290,32 @@ def program_spike_table() -> list[str]:
         "is left inconsistent. Choose the failure strategy: (a) compensating saga · (b) compensation-log + "
         "best-effort · (c) best-effort. | bom `E-01` · claims `E-01` · measurement `E-01` · packaging `E-01` · "
         "productDetails `E-01` · watchlist `E-01` · product `E-02` | all "
-        "`E`-phase writes | `complexStories/non-atomic-write-saga/` (brief + draft ADR-013) | 🟠 Draft ADR-013 proposed (shared `WriteSaga`, per-step policy) — ratification pending |",
+        "`E`-phase writes | `complexStories/non-atomic-write-saga/` (brief + draft ADR-013 + [story breakdown](../../output/complexStories/non-atomic-write-saga/01-stories.md)) | 🟠 Draft ADR-013 proposed — shared `WriteSaga` module built (`PRODUCT-BE-E-00`, Sprint 0); consumers wired — ratification pending |",
         "| `SPIKE-02` | 🔬 **TechPack Aggregate** — build a `ProductTechPack` entity where **every field is "
-        "computed from a different microservice REST API**; ratify the assembly pattern under federation. | product `E-03/E-04` | product techpack | "
-        "`complexStories/techpack/` (brief + draft ADR-015) | 🟠 Draft ADR-015 proposed (facade-then-federate, ADR-015 Option B = catalogue \"Option D (hybrid)\") — ratification pending |",
+        "computed from a different microservice REST API**; ratify the assembly pattern under federation. | product `E-03`/`E-04` | product techpack | "
+        "`complexStories/techpack/` (brief + draft ADR-015 + [story breakdown](../../output/complexStories/techpack/01-stories.md)) | 🟠 Draft ADR-015 proposed (facade-then-federate, ADR-015 Option B = catalogue \"Option D (hybrid)\") — full phase 1–3 story chain built (`E-03`/`E-04`, `H-01`–`H-06`, `F-09`) — ratification pending |",
         "| `SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business "
         "partner across every referencing child domain; decide ownership (domain subgraph vs workspace) and the "
         "write saga. | product `E-01` · workspace `E-01` (later phase) | partner-write "
-        "`E`/`F` | `complexStories/partner-drop-undrop-write/` (brief + draft ADR-012) | 🟠 Draft ADR-012 proposed (owner-orchestrated saga + participant contract) — ratification pending |",
+        "`E`/`F` | `complexStories/partner-drop-undrop-write/` (brief + draft ADR-012 + [story breakdown](../../output/complexStories/partner-drop-undrop-write/01-stories.md)) | 🟠 Draft ADR-012 proposed (owner-orchestrated saga + participant contract, via `PRODUCT-BE-E-00`) — ratification pending |",
         "| `SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which "
         "partners cannot be removed/dropped because still referenced (cross-domain `@requires` union). | product "
         "`G-07` · `G-11-1` · workspace `G-05` (later phase) | partner-read fields | "
-        "`complexStories/notRemovable-undroppable-partners/` (brief + draft ADR-016) | 🟠 Draft ADR-016 proposed (owner-`@requires` lane aggregation) — ratification pending |",
+        "`complexStories/notRemovable-undroppable-partners/` (brief + draft ADR-016 + [story breakdown](../../output/complexStories/notRemovable-undroppable-partners/01-stories.md)) | 🟠 Draft ADR-016 proposed (owner-`@requires` lane aggregation) — ratification pending |",
         "| `SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category "
         "dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant "
         "+ CI schema-conformance. | bom `A-04`/`G-08` (+ sample `A-04`/`G-02`, search `B-01`/`C-02` — later phase) | type-resolver + "
-        "variant fields | `complexStories/polymorphic-type-resolution/` (brief + draft ADR-017) | 🟠 Draft ADR-017 proposed (per-site ports + CI conformance gate) — code→type table to confirm at ratification |",
+        "variant fields | `complexStories/polymorphic-type-resolution/` (brief + draft ADR-017 + [story breakdown](../../output/complexStories/polymorphic-type-resolution/01-stories.md)) | 🟠 Draft ADR-017 proposed (per-site ports + CI conformance gate, `BOM-BE-A-05` built) — code→type table to confirm at ratification |",
         "| `SPIKE-06a` | 🔬 **Hydration** — how a domain *reads* another's entity (federated `@key` ref vs "
         "REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product "
         "`S-02` (gates `C-01`) · bom `B-05` | hydration + rollout (reads) | "
-        "`complexStories/cross-domain-association/` | 🔴 Open — per-edge rule to decide (no draft ADR yet) |",
+        "`complexStories/cross-domain-association/` | 🔴 Open — per-edge rule to decide (concludes via `PRODUCT-BE-S-02`, no draft ADR of its own — distinct from 06b/ADR-011 below) |",
         "| `SPIKE-06b` | 🔬 **Cross-Domain Association** — one pattern for a mutation that also *links* its "
         "record into a sibling domain (workspace/attachment), incl. sync-vs-async and partial-failure "
         "handling. `D-03` is a pure passthrough (no cross-domain call); `D-06`/`D-07`/`D-11` are single-backend writes "
         "— the product backend owns all endpoints, no sibling service called (draft ADR-011 §1). | product `S-01` "
         "(gates `D-01`/`D-02`/`D-04` only — see scope note) | association-side writes (D-01/D-02/D-04) | "
-        "`complexStories/cross-domain-association/` (brief + draft ADR-011) | 🟠 Draft ADR-011 proposed (sync orchestration + shared association component) — ratification pending |",
+        "`complexStories/cross-domain-association/` (brief + draft ADR-011 + [story breakdown](../../output/complexStories/cross-domain-association/01-stories.md)) | 🟠 Draft ADR-011 proposed (sync orchestration + shared association component) — `D-01`/`D-02`/`D-04` ACs updated — ratification pending |",
         "",
         "> **Sequencing:** `SPIKE-01/02/03` are on the critical path (they block `E`-phase writes and "
         "TechPack); run them in Sprint 0 alongside each domain's `B-01` module scaffold. `04/05/06a/06b` block "
@@ -331,11 +337,11 @@ def program_spike_table() -> list[str]:
         "| `attachmentsWithMetaData` enrichment | 📎 **One attachments tab, three sources** — files, discussion "
         "files, and sample files must merge into one ordered, ACL-filtered feed without a Relationship-Service "
         "walk. | product `G-01/G-03` · workspace `G-01/G-03` (later phase) | "
-        "`complexStories/attachments-enrichment/` |",
+        "`complexStories/attachments-enrichment/` (brief + draft ADR-018 + [story breakdown](../../output/complexStories/attachments-enrichment/01-stories.md)) |",
         "| `components` + `counts` rollups | 🧮 **Five domains, one dashboard number** — a product's component "
         "list and a workspace's counts strip both roll up parallel per-domain fan-outs plus a batched ACL call "
         "into a single screen's worth of data. | product `G-02` · workspace `G-02/G-04` (later phase) | "
-        "`complexStories/components-and-counts-rollups/` |",
+        "`complexStories/components-and-counts-rollups/` (brief + draft ADR-014 + [story breakdown](../../output/complexStories/components-and-counts-rollups/01-stories.md)) |",
         "",
         "---",
         "",
@@ -682,11 +688,11 @@ def parse_stories(path: Path) -> list[dict]:
         if phase_m:
             phase = phase_m.group(1)
         else:
-            yaml_p = re.search(r"\bphase:\s*([A-G])\b", body, re.IGNORECASE)
+            yaml_p = re.search(r"\bphase:\s*([A-H])\b", body, re.IGNORECASE)
             if yaml_p:
                 phase = yaml_p.group(1).upper()
             else:
-                id_p = re.search(r"-BE-([A-G])-\d", sid)
+                id_p = re.search(r"-BE-([A-H])-\d", sid)
                 phase = id_p.group(1) if id_p else "?"
 
         dep_m    = DEPENDS_RE.search(body)
@@ -772,7 +778,7 @@ def parse_stories(path: Path) -> list[dict]:
 # ─── XS story merging (fewer, chunkier tickets) ───────────────────────────────
 def _dep_id_key(depends: str) -> tuple:
     """Canonical in-domain dependency key for grouping: the sorted short ids."""
-    return tuple(sorted(set(re.findall(r"\b(?:[A-Z]+-BE-)?([A-G]-\d+(?:-\d+)?)\b", depends or ""))))
+    return tuple(sorted(set(re.findall(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", depends or ""))))
 
 
 def _op_name(title: str) -> str:
@@ -831,7 +837,7 @@ def merge_xs_stories(stories: list[dict]) -> list[dict]:
 
     out = keep + merged_out
     if remap:
-        pat = re.compile(r"\b((?:[A-Z]+-BE-)?)([A-G]-\d+(?:-\d+)?)\b")
+        pat = re.compile(r"\b((?:[A-Z]+-BE-)?)([A-H]-\d+(?:-\d+)?)\b")
         for s in out:
             if s.get("depends") and s["depends"] != "—":
                 s["depends"] = dedupe_ids(pat.sub(
@@ -859,11 +865,11 @@ def group_by_phase(stories: list[dict]) -> dict[str, list]:
 
 
 # ─── Recommended implementation order (story map) ─────────────────────────────
-PHASE_SEQ = "ABCDEFG"
+PHASE_SEQ = "ABCDEFGH"
 
 
 def _short_id(full_id: str) -> str:
-    m = re.search(r"-BE-([A-G]-\d+(?:-\d+)?)$", full_id)
+    m = re.search(r"-BE-([A-H]-\d+(?:-\d+)?)$", full_id)
     return m.group(1) if m else full_id
 
 
@@ -889,7 +895,7 @@ def _dependency_graph(stories: list[dict]):
     gates: dict[str, list] = {}
     for k, s in by_short.items():
         d = set()
-        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-G]-\d+(?:-\d+)?)\b", s["depends"]):
+        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s["depends"]):
             if m.group(1) in by_short and m.group(1) != k:
                 d.add(m.group(1))
         spike = spike_for(s)
@@ -937,15 +943,18 @@ def compute_implementation_order(stories: list[dict]):
     waves = [sorted((by_short[k] for k in level if level[k] == n), key=wave_key)
              for n in range(1, max(level.values(), default=0) + 1)]
 
-    # Longest dependency chain (critical path), reconstructed through the DAG.
+    # Longest dependency chain (critical path), reconstructed through the DAG. `deps[k]` is
+    # a set — iterate it in sorted order so a tie between two equal-length chains resolves
+    # the same way on every run (sets have no stable order across interpreter instances,
+    # so an unsorted max() here previously picked a different chain each run).
     chain: dict[str, list] = {}
     def chain_for(k: str) -> list:
         if k not in chain:
             chain[k] = []                       # cycle guard
-            best = max((chain_for(d) for d in deps[k]), key=len, default=[])
+            best = max((chain_for(d) for d in sorted(deps[k])), key=len, default=[])
             chain[k] = best + [k]
         return chain[k]
-    crit = max((chain_for(k) for k in by_short), key=len, default=[])
+    crit = max((chain_for(k) for k in sorted(by_short)), key=len, default=[])
 
     return waves, gates, crit
 
@@ -1000,7 +1009,7 @@ def implementation_order_md(stories: list[dict]) -> list[str]:
 
 
 # ─── Recommended story graph — 2 backend engineers ────────────────────────────
-def _schedule_lanes(stories: list[dict], n_eng: int = 2):
+def _schedule_lanes(stories: list[dict], n_eng: int = N_BE_ENGINEERS):
     """Greedy list-scheduling of the dependency graph onto n engineers.
 
     Returns (lanes, elapsed, sequential): lanes[e] = [(short_id, start, finish, stalled)],
@@ -1053,10 +1062,11 @@ def _schedule_lanes(stories: list[dict], n_eng: int = 2):
     return lanes, max(eng_free, default=0.0), sum(dur(k) for k in by_short)
 
 
-def team_plan_md(stories: list[dict], n_eng: int = 2) -> list[str]:
-    """Markdown lines for 'Recommended Story Graph — 2 Backend Engineers' — the order
-    map above packed onto a fixed 2-engineer team. Shared by the .md breakdown and the
-    .docx renderer. Grouped-XS merges have already happened in parse_stories."""
+def team_plan_md(stories: list[dict], n_eng: int = N_BE_ENGINEERS) -> list[str]:
+    """Markdown lines for 'Recommended Story Graph — N Backend Engineer(s)' — the order
+    map above packed onto a team of n_eng (default: team_config.N_BE_ENGINEERS) backend
+    engineers. Shared by the .md breakdown and the .docx renderer. Grouped-XS merges have
+    already happened in parse_stories."""
     if not stories:
         return []
     by_short, deps, gates, _scaffold = _dependency_graph(stories)
@@ -1076,11 +1086,12 @@ def team_plan_md(stories: list[dict], n_eng: int = 2) -> list[str]:
         return txt
 
     hdr = " | ".join(f"👤 BE-{e + 1}" for e in range(n_eng))
+    eng_word = "Engineer" if n_eng == 1 else "Engineers"
     lines = [
-        f"## Recommended Story Graph — {n_eng} Backend Engineers",
+        f"## Recommended Story Graph — {n_eng} Backend {eng_word}",
         "",
         "> The order map above assumes unlimited parallelism; this packs the **same dependency "
-        f"graph onto {n_eng} backend engineers** (greedy critical-chain scheduling, nominal "
+        f"graph onto {n_eng} backend {eng_word.lower()}** (greedy critical-chain scheduling, nominal "
         "day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as "
         "one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates "
         "that slide a slot without reshuffling the lanes.",
@@ -1096,12 +1107,13 @@ def team_plan_md(stories: list[dict], n_eng: int = 2) -> list[str]:
     for e, lane in enumerate(lanes, 1):
         chain = " → ".join(f"`{k}`" for k, *_ in lane) or "—"
         flows.append(f"**BE-{e}:** {chain}")
+    lines += ["", "<br>".join(flows), ""]
+    if n_eng == 1:
+        lines.append(f"**Elapsed (nominal midpoints):** ~{elapsed:.0f} working days.")
+    else:
+        lines.append(f"**Elapsed (nominal midpoints):** ~{elapsed:.0f} working days with {n_eng} engineers "
+                      f"vs ~{sequential:.0f} days sequential.")
     lines += [
-        "",
-        "<br>".join(flows),
-        "",
-        f"**Elapsed (nominal midpoints):** ~{elapsed:.0f} working days with {n_eng} engineers "
-        f"vs ~{sequential:.0f} days sequential.",
         "",
         "---",
         "",
@@ -1468,11 +1480,13 @@ def program_overview_preamble() -> list[str]:
         "**Engineering model:** every story is self-contained in one PR — schema additions, DGS data fetcher, "
         "Kotlin REST service method, and Hive registry push. There are no separate service-layer stories.",
         "",
-        "**ACL note:** the current gateway obtains per-resource ACL capability tokens. Per the program-level "
-        "working decision, ACL is **not** re-implemented in the DGS layer — each domain service performs its own "
-        "access control. Each complex case carries a scenario ADR (`complexStories/*/02-adr-noacl-*.md`) recording "
-        "this assumption's impact; those ratify together with the global decision. ACL is noted in stories for "
-        "context only.",
+        "**ACL note:** the current gateway obtains per-resource ACL capability tokens. Per ADR-019 "
+        "(`complexStories/acl/01-adr-acl-mid-request-update.md`), permission-check and own-domain-token call "
+        "sites stay resolver-local (context-only, as before); the 31 downstream-token call sites — where a "
+        "resolver hands its token to a *different* domain's loader — use **Mid-Request ACL Update** "
+        "(`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) before the downstream call. "
+        "Each complex case's own ADR carries an ACL note applying this classification to its specific call "
+        "sites.",
         "",
         "---",
         "",
@@ -1485,12 +1499,12 @@ def program_overview_preamble() -> list[str]:
         "| **subgraph** | one DGS (e.g. `plm-product`, `plm-sample`) |",
         "| **co-located** | a domain compiling into `plm-product` (in-process call, not a gateway hop) |",
         "| **CAT-1…5** | story categories: 1 schema · 2 resolver · 3 service · 4 federation · 5 tests |",
-        "| **Phase A–G** | the migration order within a domain (see the phases table below) |",
+        "| **Phase A–H** | the migration order within a domain (see the phases table below) |",
         "| **EXT severity** | 🔴 critical/sequential · 🟡 single enrichment call · 🔵 optional/gateway |",
         "",
         "---",
         "",
-        "## The migration phases (A→G) — the order of replacement",
+        "## The migration phases (A→H) — the order of replacement",
         "",
         "Stories are grouped into phases that encode the replacement order within a domain:",
         "",
@@ -1500,8 +1514,9 @@ def program_overview_preamble() -> list[str]:
         "| **B / C** | query resolvers (reads) | CAT-2 |",
         "| **D** | mutation resolvers (writes) | CAT-2 |",
         "| **E** | complex operations (multi-step writes, aggregations) — often a stub + facade pointing at a complex case | CAT-2 |",
-        "| **F** | federation boundaries — one story per cross-domain edge (`@extends @external`) | CAT-4 |",
+        "| **F** | federation platform work — gateway composition, facade retirement, stub verification, contract alignment (not entity resolution itself) | CAT-4 |",
         "| **G** | field resolvers (incl. the heavy ones) + the domain parity harness | CAT-2/CAT-5 |",
+        "| **H** | cross-subgraph entity resolution — real `@DgsEntityFetcher`/`@key` fields resolved by a *separate* subgraph (split out from Phase F) | CAT-4 |",
         "",
         "> **Phase 0 = Spikes** — time-boxed research producing a recorded decision before the phase it blocks.",
         "",
@@ -1596,7 +1611,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
          f"({', '.join(DOMAIN_LABELS[d] for d in domains)}). The full-program overview is the untouched "
          "`Federated+Graphql+Stories+-+BreakDown` page." if is_custom else
          "> **Program overview** — the full `spark-internal-graphql` → Netflix DGS migration at a glance. "
-         "Each domain's phase tables live in its own FederatedGqlBreakDown-BE-<domain> breakdown page (see the Domain "
+         "Each domain's phase tables live in its own FederatedGqlBreakDown-<domain> breakdown page (see the Domain "
          "Index); the complex, cross-cutting problems are centralized here as **program spikes** (below)."),
         "",
         "| | |",
@@ -1605,7 +1620,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
         f"| **Domains** | {n_domains} |",
         f"| **Target DGS services** | {n_dgs} |",
         f"| **Total Backend Stories** | **{grand_total}** |",
-        f"| **Total Frontend Stories** | **{fe_total}** · {fe_lo}–{fe_hi}d single-engineer (per-domain pages `FederatedGqlBreakDown-FE-<domain>`) |",
+        f"| **Total Frontend Stories** | **{fe_total}** · {fe_lo}–{fe_hi}d single-engineer (Frontend section of each per-domain `FederatedGqlBreakDown-<domain>` page) |",
         f"| **Complexity (backend)** | 🔴 {grand_vh} Very High · 🟠 {grand_hi} High · 🟡 {grand_me} Medium · 🟢 {grand_lo} Low |",
         f"| **Phase Coverage** | 🔬 {len(SPIKE_TITLES)} Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |",
         f"| **Cross-domain spikes** | 🔬 {len(SPIKE_TITLES)} program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |",
@@ -1622,11 +1637,11 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     lines += [
         "## Domain Index",
         "",
-        "> Each domain's full story detail is in its own breakdown pages — backend `FederatedGqlBreakDown-BE-<domain>`, "
-        "frontend `FederatedGqlBreakDown-FE-<domain>` (both in `output/summary/<domain>/`). "
+        "> Each domain's full story detail is in its own breakdown page — `FederatedGqlBreakDown-<domain>` "
+        "(in `output/summary/<domain>/`), one merged page with a `## Backend` and a `## Frontend` section. "
         "Complexity columns are backend; FE effort is single-engineer, unbuffered.",
         "",
-        "| # | Domain | Target DGS | T-Shirt | BE Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | FE Stories | FE effort | Breakdown pages |",
+        "| # | Domain | Target DGS | T-Shirt | BE Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | FE Stories | FE effort | Breakdown page |",
         "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
 
@@ -1635,7 +1650,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
         lines.append(
             f"| {i} | **{label}** | `{dgs}` | **{ts}** | "
             f"**{total}** | {vh} | {hi} | {me} | {lo} | **{fc}** | {flo}–{fhi}d | "
-            f"`FederatedGqlBreakDown-BE-{domain}` · `FederatedGqlBreakDown-FE-{domain}` |"
+            f"`FederatedGqlBreakDown-{domain}` |"
         )
 
     lines += [
@@ -1651,22 +1666,84 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     lines += build_spike_detail(domain_data)
 
     # Per-domain story detail intentionally NOT included here — this is an overview.
-    # Each domain's phase tables live in its own FederatedGqlBreakDown-BE-<domain> breakdown.
+    # Each domain's phase tables live in its own FederatedGqlBreakDown-<domain> breakdown.
 
     text = re.sub(r"\n+(?:---\s*)+$", "\n", "\n".join(lines))   # drop any trailing horizontal rule
     return strip_relative_links(repo_linkify(text))
 
 
 # ─── Runner ────────────────────────────────────────────────────────────────────
+def _demote_headings(text: str, levels: int = 1) -> str:
+    """Shift every Markdown ATX heading (# / ## / ### …) down by `levels` (adds that many
+    '#'). Used when merging a section that was built as its own standalone page (starting
+    at h1) into a combined page, so it nests correctly under a '## Backend' / '## Frontend'
+    top-level heading instead of colliding with it."""
+    return re.sub(r"(?m)^(#{1,6})(\s)", lambda m: ("#" * (len(m.group(1)) + levels)) + m.group(2), text)
+
+
+def _load_frontend_mod():
+    # Cross-module import, same importlib.util pattern generate_all.py / generate_team_plan.py
+    # use for sibling generator scripts.
+    import importlib.util as _ilu
+    spec = _ilu.spec_from_file_location("generate_frontend", HERE / "generate_frontend.py")
+    mod = _ilu.module_from_spec(spec)          # type: ignore[arg-type]
+    spec.loader.exec_module(mod)                # type: ignore[union-attr]
+    return mod
+
+
+def build_fe_section_for(domain: str) -> str | None:
+    """Load generate_frontend.py and build this domain's Frontend section markdown
+    (the FE-08 stories grouped for `domain`), or None if fe-08-frontend-stories.md has
+    no stories for this domain / doesn't exist."""
+    try:
+        fe_mod = _load_frontend_mod()
+        stories = fe_mod.parse_fe_stories()
+    except Exception:
+        return None
+    if not stories:
+        return None
+    from collections import defaultdict as _dd
+    by_dom = _dd(list)
+    for s in stories:
+        by_dom[fe_mod.domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])].append(s)
+    group = sorted(by_dom.get(domain, []), key=lambda s: s["id"])
+    if not group:
+        return None
+    ops = []
+    try:
+        client_defs = fe_mod.load_client_defs()
+        usage_idx = fe_mod.load_usage_index()
+        registry = fe_mod.build_schema_registry()
+        be_stories = fe_mod.load_be_stories()
+        ops, _frags, _coverage, _fragments = fe_mod.cross_reference(
+            client_defs, registry, usage_idx, be_stories)
+    except Exception:
+        ops = []
+    lines = fe_mod.build_fe_section(domain, group, ops)
+    return "\n".join(lines)
+
+
 def generate_breakdown_for(domain: str) -> None:
-    # Per-domain artifacts live in output/summary/{domain}/ (BE + FE breakdowns
-    # side by side); only the program-level pages stay at the summary/ root.
+    # Per-domain artifact lives in output/summary/{domain}/ — ONE merged page:
+    # '## Backend' (this module's build_breakdown) + '## Frontend' (generate_frontend.py's
+    # build_fe_section), divided by a '---' like every other major-section break in this doc set.
     domain_dir = OUT_DIR / domain
     domain_dir.mkdir(parents=True, exist_ok=True)
-    content  = build_breakdown(domain)
-    out_file = domain_dir / f"FederatedGqlBreakDown-BE-{domain}.md"
+
+    # levels=2: each source page's own title starts at h1 (#) — demoting by 2 makes it h3
+    # (###), correctly nesting UNDER the '## Backend' / '## Frontend' wrapper (h2) below,
+    # not colliding with it at the same level.
+    be_content = _demote_headings(build_breakdown(domain), levels=2)
+    fe_raw = build_fe_section_for(domain)
+
+    parts = ["## Backend", "", be_content, ""]
+    if fe_raw:
+        parts += ["---", "", "## Frontend", "", _demote_headings(fe_raw, levels=2), ""]
+
+    content = "\n".join(parts)
+    out_file = domain_dir / f"FederatedGqlBreakDown-{domain}.md"
     out_file.write_text(content, encoding="utf-8")
-    print(f"  OK {domain}/FederatedGqlBreakDown-BE-{domain}.md ({len(content):,} chars)")
+    print(f"  OK {domain}/FederatedGqlBreakDown-{domain}.md ({len(content):,} chars)")
 
 
 def generate_global() -> None:

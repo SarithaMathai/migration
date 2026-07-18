@@ -19,14 +19,14 @@
 
 | Domain | Breakdown page | Stories source |
 |---|---|---|
-| Product | `output/summary/product/FederatedGqlBreakDown-BE-product.md` (+ .docx) | `output/analysis/product/be-04-stories.md` |
-| BOM | `output/summary/bom/FederatedGqlBreakDown-BE-bom.md` | `output/analysis/bom/be-04-stories.md` |
-| Measurement | `output/summary/measurement/FederatedGqlBreakDown-BE-measurement.md` | `output/analysis/measurement/be-04-stories.md` |
-| Product Details | `output/summary/productDetails/FederatedGqlBreakDown-BE-productDetails.md` | `output/analysis/productDetails/be-04-stories.md` |
-| Packaging | `output/summary/packaging/FederatedGqlBreakDown-BE-packaging.md` | `output/analysis/packaging/be-04-stories.md` |
-| Watchlist | `output/summary/watchlist/FederatedGqlBreakDown-BE-watchlist.md` | `output/analysis/watchlist/be-04-stories.md` |
-| Impression | `output/summary/impression/FederatedGqlBreakDown-BE-impression.md` | `output/analysis/impression/be-04-stories.md` |
-| Claims | `output/summary/claims/FederatedGqlBreakDown-BE-claims.md` | `output/analysis/claims/be-04-stories.md` |
+| Product | `output/summary/product/FederatedGqlBreakDown-product.md` (+ .docx) | `output/analysis/product/be-04-stories.md` |
+| BOM | `output/summary/bom/FederatedGqlBreakDown-bom.md` | `output/analysis/bom/be-04-stories.md` |
+| Measurement | `output/summary/measurement/FederatedGqlBreakDown-measurement.md` | `output/analysis/measurement/be-04-stories.md` |
+| Product Details | `output/summary/productDetails/FederatedGqlBreakDown-productDetails.md` | `output/analysis/productDetails/be-04-stories.md` |
+| Packaging | `output/summary/packaging/FederatedGqlBreakDown-packaging.md` | `output/analysis/packaging/be-04-stories.md` |
+| Watchlist | `output/summary/watchlist/FederatedGqlBreakDown-watchlist.md` | `output/analysis/watchlist/be-04-stories.md` |
+| Impression | `output/summary/impression/FederatedGqlBreakDown-impression.md` | `output/analysis/impression/be-04-stories.md` |
+| Claims | `output/summary/claims/FederatedGqlBreakDown-claims.md` | `output/analysis/claims/be-04-stories.md` |
 
 - Program overview (all domains, effort, sequencing): `output/summary/00-program-overview.md`.
 - Global breakdown: `output/summary/Federated+Graphql+Stories+-+BreakDown.md` (+ .docx).

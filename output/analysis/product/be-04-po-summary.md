@@ -13,10 +13,10 @@
 - We recommend the **facade-then-federate** approach for TechPack (draft **ADR-015** Option B; the pattern `techpack-migration-options.md` labels "Option D (hybrid)"): ship a thin query over a temporary aggregation facade so it works on day 1, then federate each piece to its owning domain, then retire the facade (`F-09`).
 
 **ACL note:** the legacy gateway obtains per-resource capability tokens via ACL on nearly every call. Per
-the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service
-performs its own access control. Each complex case carries a scenario ADR
-(`complexStories/*/02-adr-noacl-*.md`) recording this assumption's impact; those ratify together with the
-global decision. ACL steps are noted in stories for context only.
+**ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permission-check and own-domain-token
+call sites stay resolver-local (context-only, unchanged); downstream-token call sites — where a resolver
+hands its token to a *different* domain's loader — use **Mid-Request ACL Update**
+(`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) before the downstream call.
 
 ## Deployment model — ship on green, per story
 

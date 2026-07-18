@@ -86,11 +86,11 @@ subgraph; then retire the facade. Fix the **bulk ordering bug** during the port.
 ## 8. ACL Handling
 The source curries capability tokens via `getUserPermissionsJWT`/`getAccessControlBatch` on nearly every
 read/write because product resources are partner/workspace-scoped and the backend authorizes per resource.
-**Per the program-level working decision, the DGS layer carries no ACL plumbing story** — each domain
-service performs its own access control. Each affected operation carries a one-line context note; the
-`accessControl` loader is marked **context-only**, not a 🔴 build dependency. The per-case impact of this
-assumption is recorded in the scenario ADRs (`complexStories/*/02-adr-noacl-*.md`), which ratify together
-with the global decision.
+Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permission-check and own-domain-token
+call sites stay resolver-local — the `accessControl` loader is marked **context-only** for those, not a 🔴
+build dependency. Downstream-token call sites (where a resolver hands its token to a *different* domain's
+loader) use **Mid-Request ACL Update** (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`)
+before the downstream call instead.
 
 ## 9. Open Questions
 1. TechPack facade: Node extract vs Kotlin aggregation service? — **direction resolved**: facade-then-federate

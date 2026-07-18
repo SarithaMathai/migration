@@ -73,9 +73,9 @@ The cutover pattern is done when the following are recorded:
 - The parity target against the legacy `attachmentsWithMetaData` behaviour.
 - **Draft decision:** [ADR-018 (draft)](./01-adr-attachments-enrichment.md) proposes owner-computed
   enrichment over a shared library with a per-surface policy table (Option A; federated per-domain lanes
-  recorded as end-state) — status 🔴 Proposed, pending ratification. Scenario variant under the domain-ACL
-  assumption: [ADR-018-noACL](./02-adr-noacl-attachments-enrichment.md).
+  recorded as end-state) — status 🔴 Proposed, pending ratification. ACL is out of scope for this case
+  (ADR-019 — see ADR-018's ACL note).
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task breakdown are produced by the spike and land here when it concludes.*
+*This folder holds the problem brief (this file) + the draft decision ([01-adr-attachments-enrichment.md](./01-adr-attachments-enrichment.md)) + the story breakdown implementing it ([01-stories.md](./01-stories.md)) — the concrete story ids in each affected domain's be-04-stories.md, cross-referenced by pin-down.*

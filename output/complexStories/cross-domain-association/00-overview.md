@@ -76,10 +76,11 @@ The spikes are done when the following are recorded and ratified:
 - **Draft decision (06b):** [ADR-011 (draft)](./01-adr-cross-domain-association.md) proposes synchronous
   in-subgraph orchestration through one shared association component (Option B), with the event-driven
   pattern recorded as end-state behind a transactional-outbox precondition — status 🔴 Proposed, pending
-  ratification. It also **descopes** `D-03`/`D-06`/`D-07`/`D-11` (no cross-subgraph write). Scenario variant
-  under the domain-ACL assumption: [ADR-011-noACL](./02-adr-noacl-cross-domain-association.md).
+  ratification. It also **descopes** `D-03`/`D-06`/`D-07`/`D-11` (no cross-subgraph write). D-01/D-02/D-04's
+  capability tokens are downstream-token sites resolved by ADR-019 (Mid-Request ACL Update) — see ADR-011's
+  ACL note.
   06a has no draft ADR yet — it concludes via `PRODUCT-BE-S-02`.
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task breakdown are produced by the spike and land here when it concludes.*
+*This folder holds the problem brief (this file) + the draft decision ([01-adr-cross-domain-association.md](./01-adr-cross-domain-association.md)) + the story breakdown implementing it ([01-stories.md](./01-stories.md)) — the concrete story ids in each affected domain's be-04-stories.md, cross-referenced by pin-down.*

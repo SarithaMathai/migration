@@ -54,8 +54,6 @@ graph TD
   S02[S-02 federation rollout-order spike] -.informs.-> G
   S03[S-03 searchMaterialsBom DTO spike] --> C02[C-02 searchMaterialsBom]
   B01 --> G
-  G --> G16[G-16 Tests & parity]
-  E01 --> G16
   PROD[product Phase 3] -.blocked.-> F01[F-01 Product extension]
   PRODF[product TechPack facade] -.blocked.-> F02[F-02 ResourcesCount.bomsCount]
 ```
@@ -75,6 +73,12 @@ graph TD
 ### BOM-BE-S-01 · `updateBom` failure-strategy spike
 - **Type:** Spike · **Phase:** S · **Complexity:** Medium · **Category:** CAT-1 · **Depends on:** — · **Blocks:** E-01
 - **Status:** ⬜ Not Started
+
+> **Superseded by ADR-013 (ratification pending).** All three "What's unknown" questions below are answered
+> by the program-level decision: Option B, one shared `WriteSaga` module (built in `PRODUCT-BE-E-00`), BOM
+> shares it rather than solving standalone, failure is synchronous/visible via `PARTIAL_FAILURE` with
+> per-step detail. `BOM-BE-E-01` already implements the concrete choice. This spike is kept as the historical
+> record of the question; closing/removing spike stories is a separate housekeeping decision, not made here.
 
 - **Layman summary:** `updateBom` today does three separate write calls in a row — save the workspace links,
 - save the bom body, save the permissions — and if the 2nd or 3rd call fails, the 1st one is already committed and nothing undoes it.
@@ -222,7 +226,80 @@ default branches exactly (HUB code 9 must fall through to `BomMaterial`). Source
 
 1. Each `materialCategory.code` maps to the type in the table above; unknown codes → `BomMaterial`.
 2. Each impression `type` maps correctly; unknown → `BomBaseImpressionDetails`.
-3. `BomConstants` holds all 21 category codes + 5 impression codes (verify values against backend).
+3. `BomConstants` holds all 21 category codes + 5 impression codes (verify values against backend, ADR-017 pin-down 1).
+
+---
+
+### BOM-BE-A-05 · Shared CI conformance gate + `code → type` registry (`SPIKE-05`)
+- **Type:** Service · **Phase:** A · **Complexity:** Medium · **Category:** CAT-1 · **Depends on:** A-04 · **Blocks:** every future PR touching a polymorphic dispatch site (this domain and, later phase, sample/search)
+
+- **In plain terms:** Build the one shared test library that fails a PR when a schema type, a dispatch enum, and a golden fixture disagree — so the next added material/impression variant can't silently drift the way today's five hand-maintained switch tables can.
+
+- **As a** DGS migration engineer **I want** a shared conformance-check library and a human-readable
+`code → type` registry **so that** every polymorphic dispatch site (bom now; sample and search in later
+phases) inherits one drift guard instead of each domain reinventing review-only vigilance.
+
+- **Current Behaviour, in plain terms:** today there are five hand-maintained dispatch tables across three
+domains (`BomMaterialInterface`, `BomImpressionDetailsInterface`, `SampleAsset`, `SampleV2.parent*` prefix
+gates, materials-search `type`-string dispatch) with **no guard** — an added interface impl with no
+matching dispatch row, or a dispatch row targeting a type that no longer exists, fails silently at runtime
+(the wrong fragment renders, nothing throws). See
+[ADR-017 §1](../../complexStories/polymorphic-type-resolution/01-adr-polymorphic-type-resolution.md) for
+the full table-by-table inventory.
+- **Pattern (draft ADR-017 Option B, pending ratification):** `BOM-BE-A-04` already does the per-site
+port (constants enum + dumb-lookup `@DgsTypeResolver`) for bom's two dispatch sites — this story builds the
+**shared** pieces that sit alongside every per-site port: (1) a CI conformance-check test library, versioned
+with the schema-registry tooling and pinned by each affected subgraph's own build (ADR-017 pin-down 7); (2)
+the `SPIKE-05` `code → type` registry — one human-readable master table seeded from ADR-017 §1, including
+ADR-014's `type 2 → packagingBom` row (cross-reference to the components-and-counts-rollups case).
+
+- **The conformance gate's three checks (ADR-017 §3-B):**
+```
+1. Parse the subgraph SDL: every member of every interface/union must have ≥1 enum row targeting it,
+   and every enum row's target must exist in the SDL — catches both "add a type, forget the row" and
+   "add a row, forget the type."
+2. The default branch must be declared EXPLICITLY in the enum — no implicit fall-through allowed
+   (closes ADR-017 pin-down 2: HUB code 9 / COMPONENT 1 / OTHER 5 must be a named DEFAULT row, not an
+   accidental "else" branch that could later be cased away and silently break hub-material rendering).
+3. A golden-table fixture per dispatch site (code/prefix → type snapshot) diffed on every build; a
+   mapping change requires a fixture change in the same PR — mapping changes become reviewable events,
+   not silent diffs.
+```
+
+- **Files to Create:** shared library — `conformance-gate/DispatchConformanceCheck.kt` (the three checks
+above, generic over any SDL + enum pair); `conformance-gate/CodeToTypeRegistry.md` (the human-readable
+`SPIKE-05` registry, seeded from ADR-017 §1 + ADR-014 pin-down 6); per-subgraph wiring —
+`bom/build.gradle.kts` pins the shared library into bom's CI build against `BomConstants.kt` +
+`bom.graphqls`.
+
+#### Acceptance Criteria
+
+1. The conformance library's three checks (SDL↔enum, explicit-default, golden-fixture-diff) run against
+   `BomConstants.kt` + `bom.graphqls` in bom's CI build and pass on the current (correct) mapping.
+2. Demonstrably fails on each drift direction, proven by a negative test per direction: an SDL member with
+   no enum row; an enum row with no SDL type; an undeclared/implicit default; a mapping change with no
+   fixture change in the same commit.
+3. Golden-table fixtures exist for both of bom's dispatch sites (`BomMaterialInterface`,
+   `BomImpressionDetailsInterface`), seeded from ADR-017 §1 and backend-verified per `A-04` AC-3 — including
+   a HUB (code 9) material row and an unknown/missing category-code row (ADR-017 §5 fixture list).
+4. The `code → type` registry (`CodeToTypeRegistry.md`) is a standalone, human-readable page covering all
+   five dispatch sites named in ADR-017 §1 (the three not yet built — `SampleAsset`, `SampleV2.parent*`,
+   materials search — are recorded as later-phase rows so `SAMPLE-BE-A-04`/`SAMPLE-BE-G-02` and
+   `SEARCH-BE-B-01`/`SEARCH-BE-C-02` inherit the table rather than re-deriving it), and includes ADR-014's
+   `type 2 → packagingBom` row.
+5. The library is versioned with the schema-registry tooling and documented as a single shared artifact —
+   no domain forks its own copy (ADR-017 pin-down 7).
+6. This story does not touch any per-variant field resolver or dispatch table itself — those are `A-04`'s
+   and each per-variant `G-0x` story's own scope; this story only builds and wires the shared gate + registry.
+
+#### Test Cases
+
+- [ ] Unit: SDL member with no enum row → conformance check fails the build
+- [ ] Unit: enum row with no matching SDL type → conformance check fails the build
+- [ ] Unit: an implicit/undeclared default branch → conformance check fails the build
+- [ ] Unit: a mapping row changed with no corresponding fixture change in the same diff → conformance check fails the build
+- [ ] Integration: bom's actual `BomConstants.kt` + `bom.graphqls` pass all three checks today
+- [ ] Golden fixture: HUB (code 9) material, unknown/missing category code, both impression defaults
 
 ---
 
@@ -592,7 +669,7 @@ After success, `bomDataLoader.prime(humanId, bom)`.
 ---
 
 ### BOM-BE-E-01 · `updateBom` — 3-step orchestrated write
-- **Type:** Mutation · **Phase:** E · **Complexity:** Very High · **Category:** CAT-2 · **Depends on:** D-02, S-01 · **EXT:** 🟡 `workspaceV2`
+- **Type:** Mutation · **Phase:** E · **Complexity:** Very High · **Category:** CAT-2 · **Depends on:** D-02, S-01 · **EXT:** 🟡 `workspaceV2` · **Blocked by:** product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)
 
 - **In plain terms:** Edit a BOM — a 3-step write (workspace + body + permissions) that has no rollback today.
 
@@ -612,13 +689,16 @@ chosen failure strategy **so that** body, workspace, and permission updates stay
 - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association step).
 - **Target DGS Implementation:** `BomUpdateOrchestrator` running steps in order: workspace assoc → body PUT
 - (`omitParamsInBody`) → optional permissions PUT.
-- **Failure strategy is whatever `BOM-BE-S-01` concludes** (program id `SPIKE-01`; saga / compensation-log / best-effort) — see that spike for the reasoning; this story implements the choice.
-- **Draft direction (pending ratification):** ADR-013 (`complexStories/non-atomic-write-saga/01-adr-non-atomic-write-saga.md`) proposes the shared `WriteSaga` with per-step policy — for `updateBom`: workspace assoc `COMPENSATE` → body PUT = point of no return → permissions `RETRY` then `PARTIAL_FAILURE`; the never-checked `updatePermissions` response becomes checked by construction (ADR-013 pin-down 5).
+- **Failure strategy (draft ADR-013, pending ratification):** against the shared `WriteSaga` module built in
+`PRODUCT-BE-E-00` — workspace assoc `COMPENSATE` → body PUT = point of no return → permissions `RETRY` then
+`PARTIAL_FAILURE`; the never-checked `updatePermissions` response becomes checked by construction (ADR-013
+pin-down 5). `BOM-BE-S-01`'s three open questions (§"What's unknown") are all answered by ADR-013's decision —
+see that story's note.
 - Replace the `validationErrors||message` shape-sniff with a typed `BomValidationException`.
 - Prime the read cache on success.
-- **Files / Dependencies:** `service/BomUpdateOrchestrator.kt`, `BomMutationDataFetcher.kt`; D-02 (shares the workspace step); reuses the shared `WriteSaga` framework from `../../complexStories/non-atomic-write-saga/` if `S-01` adopts it.
+- **Files / Dependencies:** `service/BomUpdateOrchestrator.kt`, `BomMutationDataFetcher.kt`; D-02 (shares the workspace step); consumes the shared `WriteSaga` module from `PRODUCT-BE-E-00`.
 
-- **Pseudocode (shape only — exact compensation depends on `S-01`'s answer):**
+- **Pseudocode (steps + policy per ADR-013 §4-B):**
 ```kotlin
 class BomUpdateOrchestrator(private val saga: WriteSaga) {
 
@@ -626,18 +706,18 @@ class BomUpdateOrchestrator(private val saga: WriteSaga) {
     saga.step("workspace-assoc",
       // do:
       { workspaceCtx?.let { manageBomWorkspaces(humanId, it.toAdd, it.toRemove) } },
-      // compensate (undo), only meaningful if S-01 picks the saga pattern:
+      // compensate (undo) — COMPENSATE policy per ADR-013 §4-B:
       { workspaceCtx?.let { manageBomWorkspaces(humanId, toAdd = it.toRemove, toRemove = it.toAdd) } }
     )
 
     saga.step("body-put",
       { restClient.putBom(humanId, body.omit("humanId")) },  // throws BomValidationException on validationErrors/message
-      { /* no compensation — this step throwing means nothing after it ran */ }
+      { /* point of no return — no compensation, per ADR-013 §4-B */ }
     )
 
     saga.step("permissions-put",
       { partners?.let { restClient.putPermissions(humanId, it) } },
-      { /* compensation TBD by S-01: restore previous partner list, or log+alert */ }
+      { /* RETRY then PARTIAL_FAILURE — no compensation, stale ACL surfaced per ADR-013 §4-B */ }
     )
 
     val result = saga.finish()          // COMMITTED | COMPENSATED | PARTIAL_FAILURE
@@ -652,7 +732,9 @@ class BomUpdateOrchestrator(private val saga: WriteSaga) {
 1. Parity for 5 fixtures: body-only; body+workspace-add; body+workspace-remove; body+partners; body+workspace+partners.
 2. Workspace step runs **before** the body PUT; permissions step only when `businessPartners` present.
 3. Body PUT omits `humanId` from the body.
-4. Chosen failure strategy implemented; partial failure emits a compensation-log entry (if (b)/(c)) or compensates (if (a)).
+4. Failure strategy per ADR-013 §4-B implemented: a workspace-step failure after the body PUT compensates
+   (dissociate/re-associate); a permissions-step failure retries then surfaces `PARTIAL_FAILURE` with
+   per-step detail (stale ACL made visible, not silently swallowed).
 5. Backend `validationErrors`/`message` → `BomValidationException`.
 6. Read cache updated with the returned bom.
 
@@ -661,7 +743,7 @@ class BomUpdateOrchestrator(private val saga: WriteSaga) {
 - [ ] Unit: order workspace→body→perms
 - [ ] Unit: no-workspace skip
 - [ ] Unit: no-partners skip
-- [ ] Unit: step-3 failure path (strategy)
+- [ ] Unit: step-3 (permissions) failure path yields `PARTIAL_FAILURE` with per-step detail
 - [ ] Parity: 5 fixtures
 
 ---
@@ -1183,25 +1265,6 @@ fun relatedMaterialsExternal(args: SearchArgs, detail: SearchResult) {
 
 ---
 
-### BOM-BE-G-16 · Test coverage & parity harness
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** E-01, G-08, G-10
-
-- **In plain terms:** The safety net: automated tests + a parity harness that prove the new BOM DGS returns exactly what the old gateway did before we switch traffic.
-
-- **As a** DGS migration engineer **I want** unit + integration + parity coverage **so that** the BOM subgraph
-matches spark-internal-graphql before cut-over.
-- **Target DGS Implementation:** ≥80% unit coverage on fetchers/services; a parity harness recording ≥30
-query/mutation fixtures (all 7 material variants + both impression branches represented) and diffing JSON;
-a CI schema-conformance check across the 7 material impls.
-
-#### Acceptance Criteria
-
-1. Unit coverage ≥80%.
-2. Parity harness covers all 7 material types + internal/external impression branch + `updateBom` 5 fixtures.
-3. Schema-conformance check fails the build if an impl misses an interface field.
-
----
-
 ### BOM-BE-G-17 · `supplier` entity references on material rows (recommended, PO-gated)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** G-01 · **EXT:** 🔵 `vmm`
 - **Status:** Recommended (PO-gated — federation-review/03 §2 REC-1; answer OQ-3 snapshot-semantics first)
@@ -1214,14 +1277,15 @@ schema without an entity counterpart (18 client selections in
 `src/libs/product-queries/src/queries/BomQueries.tsx`). Both existing fields stay — `supplierName` may be an
 authoring-time snapshot (OQ-3), so the entity ref sits **beside** it, never replaces it.
 - **Target DGS Implementation:** add `supplier: VMM_BusinessPartner` to `BomMaterialInterface` and all 7
-implementations (schema-conformance check from G-16 enforces the fan-out); resolver emits a `{id: supplierId}`
+implementations (each impl must add the field — no shared conformance check enforces the fan-out, verify
+manually against the 7-impl list); resolver emits a `{id: supplierId}`
 key stub — the gateway hydrates from VMM; null-safe when `supplierId` is empty. Facility/laundry refs are
 deferred pending a `VMM_Location` stub decision (federation-review/03 §3).
 
 #### Acceptance Criteria
 
 1. PO approval recorded (OQ-5) and OQ-3 answered before implementation starts.
-2. `supplier` present on the interface + all 7 impls; conformance check green.
+2. `supplier` present on the interface + all 7 impls.
 3. `supplierId`/`supplierName` continue to return unchanged values (parity).
 4. Stub emission only — no direct VMM calls from the BOM subgraph.
 
@@ -1233,18 +1297,25 @@ deferred pending a `VMM_Location` stub decision (federation-review/03 §3).
 |------|-----------|--------|------------|-------|
 | `updateBom` 3-step non-atomic write | Medium | High | `S-01` spike picks a failure strategy (saga/compensation/best-effort) before `E-01` starts | Tech Lead |
 | Impression library-resource `args.ids` contract | Medium | Medium | `G-10` moves `bomIds` to DGS local context | Backend Eng |
-| 7-variant polymorphism drift | Medium | Medium | G-16 CI schema-conformance check | Backend Eng |
+| 7-variant polymorphism drift | Medium | Medium | Manual verify against the 7-impl list per change (no shared CI conformance check today) | Backend Eng |
 | Sibling material subgraphs not federated yet | High | Medium | `S-02` spike sets the hub/trim/wash/fabric/combination rollout order | Platform |
 | Trim 15-case dispatcher porting errors (G-08) | Medium | Medium | Parity table per trim type | Backend Eng |
 | Latent bugs (`getHubMaterial` await; `getFabricMaterial` null; array mutation) | Medium | Low | Fix on port (G-03/G-05/G-15) + unit tests | Backend Eng |
 | F-01/F-02 are internal (same subgraph) — depend on Product/ResourcesCount types existing | Low | Low | Sequence after product B-01; no gateway block | Tech Lead |
 
 ## 5. Summary
-- **Stories:** 40 (S:3 · A:1 · B:7 · C:5 · D:5 · E:1 · F:2 · G:16). G-17 (recommended, PO-gated) added by the federation review.
-  > **Note — A:1** is the `BOM-BE-A-04` TypeResolver story (one dedicated PR for `BomMaterialInterface` + `BomImpressionDetailsInterface`). All other former Phase A work is folded into B-01.
-  > **B:7 / G:15** (down from 8/16): `B-02` (`getBomDataV2`) and `G-02` (`BomMaterial_Unified`) are removed — see
-  > the `Bom_Unified` deprecation decision. `G-10` is kept but rescoped (still counts toward G:15).
-- **Critical path:** S-01 → E-01, and G-08/G-10→G-16.
+- **Stories:** 40 (S:3 · A:2 · B:7 · C:5 · D:5 · E:1 · F:2 · G:15). `A-05` (shared CI conformance gate +
+  `code → type` registry, ADR-017) added — the shared drift guard `A-04` and every per-variant `G-0x` story
+  build against. G-17 (recommended, PO-gated) added by the federation review. `G-15` (`BomMaterialSearchResult`
+  field resolvers) is real field-resolver scope, not a bug-fix/test story — restored after being
+  miscategorized and removed alongside `G-16`. Bug-fix/test-coverage stories (`G-16` only) tracked outside
+  this Jira pipeline, created manually.
+  > **Note — A:2** is `BOM-BE-A-04` (the TypeResolver story, one dedicated PR for `BomMaterialInterface` +
+  > `BomImpressionDetailsInterface`) plus `BOM-BE-A-05` (the shared CI conformance gate + registry it and
+  > every per-variant `G-0x` story depend on). All other former Phase A work is folded into B-01.
+  > **B:7 / G:14** (down from 8/16): `B-02` (`getBomDataV2`) and `G-02` (`BomMaterial_Unified`) are removed — see
+  > the `Bom_Unified` deprecation decision. `G-10` is kept but rescoped (still counts toward G:14).
+- **Critical path:** S-01 → E-01.
 - **Highest risk:** `updateBom` atomicity (`E-01`, pending `S-01`); impression `args.ids` contract (`G-10`).
 - **Monorepo:** F-01/F-02 are **internal** field resolvers in the same `plm-product` subgraph (not gateway
   federation). Real cross-subgraph federation in BOM is only the **material DGS** references (hub/trim/wash/

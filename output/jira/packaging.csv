@@ -1,6 +1,6 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,PKG-BE-B-01,(Packaging) getPackagings(...) [PKG-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,,To Do,"*Implementation Order:* 1 of 24 (Packaging backend, step 1)
+Story,PKG-BE-B-01,(Packaging) getPackagings(...) [PKG-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,,To Do,"*Implementation Order:* 1 of 23 (Packaging backend, step 1)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* No
 
@@ -30,7 +30,6 @@ Story,PKG-BE-B-01,(Packaging) getPackagings(...) [PKG-BE-B-01],,Federate BreakDo
 * PKG-BE-G-03 — product + workspaces + attachments
 * PKG-BE-G-04 — suggestedRetailPriceByDPCI + waveDescription + retailPrice
 * PKG-BE-G-05 — Dieline + PrinterDieline + PackagingElement field resolvers
-* PKG-BE-G-06 — Tests, parity harness
 * PKG-FE-001
 
 *Current Behaviour:*
@@ -46,7 +45,7 @@ Story,PKG-BE-B-01,(Packaging) getPackagings(...) [PKG-BE-B-01],,Federate BreakDo
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-B-02,(Packaging) getPackagingById(packagingId) [PKG-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 2 of 24 (Packaging backend, step 2)
+Story,PKG-BE-B-02,(Packaging) getPackagingById(packagingId) [PKG-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 2 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -69,7 +68,7 @@ Story,PKG-BE-B-02,(Packaging) getPackagingById(packagingId) [PKG-BE-B-02],,Feder
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-B-03,(Packaging) getDielines(...) [PKG-BE-B-03],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 3 of 24 (Packaging backend, step 2)
+Story,PKG-BE-B-03,(Packaging) getDielines(...) [PKG-BE-B-03],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 3 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -92,7 +91,7 @@ Story,PKG-BE-B-03,(Packaging) getDielines(...) [PKG-BE-B-03],,Federate BreakDown
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-B-04,"(Packaging) getPackagingFieldValuesByType(type, ids) [PKG-BE-B-04]",,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 4 of 24 (Packaging backend, step 2)
+Story,PKG-BE-B-04,"(Packaging) getPackagingFieldValuesByType(type, ids) [PKG-BE-B-04]",,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 4 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -115,7 +114,7 @@ Story,PKG-BE-B-04,"(Packaging) getPackagingFieldValuesByType(type, ids) [PKG-BE-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-B-05,(Packaging) getDielineEvaluationStatuses (cacheable) [PKG-BE-B-05],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 5 of 24 (Packaging backend, step 2)
+Story,PKG-BE-B-05,(Packaging) getDielineEvaluationStatuses (cacheable) [PKG-BE-B-05],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 5 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -138,7 +137,7 @@ Story,PKG-BE-B-05,(Packaging) getDielineEvaluationStatuses (cacheable) [PKG-BE-B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-B-06,(Packaging) getCountries(codes) (cacheable) [PKG-BE-B-06],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 6 of 24 (Packaging backend, step 2)
+Story,PKG-BE-B-06,(Packaging) getCountries(codes) (cacheable) [PKG-BE-B-06],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,To Do,"*Implementation Order:* 6 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -161,7 +160,7 @@ Story,PKG-BE-B-06,(Packaging) getCountries(codes) (cacheable) [PKG-BE-B-06],,Fed
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-C-01,(Packaging) getPackagingElastic(parentHumanId) [PKG-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,packaging,search,,B-01,To Do,"*Implementation Order:* 7 of 24 (Packaging backend, step 2)
+Story,PKG-BE-C-01,(Packaging) getPackagingElastic(parentHumanId) [PKG-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,packaging,search,,B-01,To Do,"*Implementation Order:* 7 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -184,7 +183,7 @@ Story,PKG-BE-C-01,(Packaging) getPackagingElastic(parentHumanId) [PKG-BE-C-01],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-01,(Packaging) addPackaging [PKG-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 8 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-01,(Packaging) addPackaging [PKG-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 8 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -208,7 +207,7 @@ Story,PKG-BE-D-01,(Packaging) addPackaging [PKG-BE-D-01],,Federate BreakDown Pro
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-02,(Packaging) evaluateDieline [PKG-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 9 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-02,(Packaging) evaluateDieline [PKG-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 9 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -231,7 +230,7 @@ Story,PKG-BE-D-02,(Packaging) evaluateDieline [PKG-BE-D-02],,Federate BreakDown 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-03,(Packaging) bulkAddPackagings [PKG-BE-D-03],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 10 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-03,(Packaging) bulkAddPackagings [PKG-BE-D-03],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 10 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -255,7 +254,7 @@ Story,PKG-BE-D-03,(Packaging) bulkAddPackagings [PKG-BE-D-03],,Federate BreakDow
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-04,(Packaging) bulkUpdatePackagings [PKG-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 11 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-04,(Packaging) bulkUpdatePackagings [PKG-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 11 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -279,7 +278,7 @@ Story,PKG-BE-D-04,(Packaging) bulkUpdatePackagings [PKG-BE-D-04],,Federate Break
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-05,(Packaging) exportPackaging [PKG-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 12 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-05,(Packaging) exportPackaging [PKG-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 12 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -302,7 +301,7 @@ Story,PKG-BE-D-05,(Packaging) exportPackaging [PKG-BE-D-05],,Federate BreakDown 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-06,(Packaging) lockPackaging [PKG-BE-D-06],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 13 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-06,(Packaging) lockPackaging [PKG-BE-D-06],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 13 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -325,7 +324,7 @@ Story,PKG-BE-D-06,(Packaging) lockPackaging [PKG-BE-D-06],,Federate BreakDown Pr
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-07,(Packaging) unlockPackaging [PKG-BE-D-07],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 14 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-07,(Packaging) unlockPackaging [PKG-BE-D-07],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 14 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -348,7 +347,7 @@ Story,PKG-BE-D-07,(Packaging) unlockPackaging [PKG-BE-D-07],,Federate BreakDown 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-08,(Packaging) cloneFilesForDielines [PKG-BE-D-08],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 15 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-08,(Packaging) cloneFilesForDielines [PKG-BE-D-08],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 15 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -371,7 +370,7 @@ Story,PKG-BE-D-08,(Packaging) cloneFilesForDielines [PKG-BE-D-08],,Federate Brea
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-D-09,(Packaging) updatePackagingComponentStatus [PKG-BE-D-09],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 16 of 24 (Packaging backend, step 2)
+Story,PKG-BE-D-09,(Packaging) updatePackagingComponentStatus [PKG-BE-D-09],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,To Do,"*Implementation Order:* 16 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -395,7 +394,7 @@ Story,PKG-BE-D-09,(Packaging) updatePackagingComponentStatus [PKG-BE-D-09],,Fede
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-E-01,(Packaging) updatePackaging (multi-step write) [PKG-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,packaging,complex,,"SPIKE-01, B-01",To Do,"*Implementation Order:* 17 of 24 (Packaging backend, step 2)
+Story,PKG-BE-E-01,(Packaging) updatePackaging (multi-step write) [PKG-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,packaging,complex,,"SPIKE-01, B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Implementation Order:* 17 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -403,7 +402,6 @@ Story,PKG-BE-E-01,(Packaging) updatePackaging (multi-step write) [PKG-BE-E-01],,
 * PKG-BE-B-01 — getPackagings
 
 *Blocks:*
-* PKG-BE-G-06 — Tests, parity harness
 * PKG-FE-005
 
 *Requires spike:* SPIKE-01 (Non-Atomic Write Saga) — see program spike
@@ -433,7 +431,7 @@ Story,PKG-BE-E-01,(Packaging) updatePackaging (multi-step write) [PKG-BE-E-01],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-F-01,"(Packaging) Product packaging links (internal, same subgraph) [PKG-BE-F-01]",,Federate BreakDown Product,F,XS,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 18 of 24 (Packaging backend, step 2)
+Story,PKG-BE-F-01,"(Packaging) Product packaging links (internal, same subgraph) [PKG-BE-F-01]",,Federate BreakDown Product,F,XS,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 18 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -456,7 +454,7 @@ Story,PKG-BE-F-01,"(Packaging) Product packaging links (internal, same subgraph)
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-G-01,(Packaging) access + businessPartner + participantDetails [PKG-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 19 of 24 (Packaging backend, step 2)
+Story,PKG-BE-G-01,(Packaging) access + businessPartner + participantDetails [PKG-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 19 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -476,7 +474,7 @@ Story,PKG-BE-G-01,(Packaging) access + businessPartner + participantDetails [PKG
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-G-02,(Packaging) createdBy + updatedBy + dielineEvaluators [PKG-BE-G-02],,Federate BreakDown Product,G,XS,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 20 of 24 (Packaging backend, step 2)
+Story,PKG-BE-G-02,(Packaging) createdBy + updatedBy + dielineEvaluators [PKG-BE-G-02],,Federate BreakDown Product,G,XS,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 20 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -496,7 +494,7 @@ Story,PKG-BE-G-02,(Packaging) createdBy + updatedBy + dielineEvaluators [PKG-BE-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-G-03,(Packaging) product + workspaces + attachments [PKG-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 21 of 24 (Packaging backend, step 2)
+Story,PKG-BE-G-03,(Packaging) product + workspaces + attachments [PKG-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 21 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -504,7 +502,7 @@ Story,PKG-BE-G-03,(Packaging) product + workspaces + attachments [PKG-BE-G-03],,
 * PKG-BE-B-01 — getPackagings
 
 *Blocks:*
-* PKG-BE-G-06 — Tests, parity harness
+* None
 
 *Current Behaviour:*
 * `product` (internal, only if `parentId` starts `'PID'`); `workspaces` → (🔴 search) `getWorkspacesPagedV3({q:""id:(...)""})`.content; `attachments` → (🔴 search) `searchAttachmentsByRelatedResource(humanId)`.
@@ -517,7 +515,7 @@ Story,PKG-BE-G-03,(Packaging) product + workspaces + attachments [PKG-BE-G-03],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-G-04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + retailPrice [PKG-BE-G-04],,Federate BreakDown Product,G,L,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 22 of 24 (Packaging backend, step 2)
+Story,PKG-BE-G-04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + retailPrice [PKG-BE-G-04],,Federate BreakDown Product,G,L,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 22 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -525,7 +523,7 @@ Story,PKG-BE-G-04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + ret
 * PKG-BE-B-01 — getPackagings
 
 *Blocks:*
-* PKG-BE-G-06 — Tests, parity harness
+* None
 
 *Current Behaviour:*
 * `suggestedRetailPriceByDPCI` — gated on `requiresSuggestedRetailPrice` + a BP id: - collect printer ids from `packagingElements` → (own) `getDielines(printerIds)` → unique dpcis → (🔵 apex/pricing) `getRetailPriceByDpci({dpcis, bpId, productId})`; else `[]`. - `waveDescription` → (🟡 tag) `getTag(wave).name` if `wave`, else `waveDescription`. - `retailPrice` → `0` (deprecated).
@@ -548,7 +546,7 @@ Story,PKG-BE-G-04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + ret
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-G-05,(Packaging) Dieline + PrinterDieline + PackagingElement field resolvers [PKG-BE-G-05],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 23 of 24 (Packaging backend, step 2)
+Story,PKG-BE-G-05,(Packaging) Dieline + PrinterDieline + PackagingElement field resolvers [PKG-BE-G-05],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,To Do,"*Implementation Order:* 23 of 23 (Packaging backend, step 2)
 *Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -568,33 +566,8 @@ Story,PKG-BE-G-05,(Packaging) Dieline + PrinterDieline + PackagingElement field 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PKG-BE-G-06,"(Packaging) Tests, parity harness [PKG-BE-G-06]",,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,"B-01, E-01, G-03, G-04",To Do,"*Implementation Order:* 24 of 24 (Packaging backend, step 3)
-*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
-*Priority:* Medium — *Parallelizable:* No
-
-*Depends On:*
-* PKG-BE-B-01 — getPackagings
-* PKG-BE-E-01 — updatePackaging
-* PKG-BE-G-03 — product + workspaces + attachments
-* PKG-BE-G-04 — suggestedRetailPriceByDPCI + waveDescription + retailPrice
-
-*Blocks:*
-* None
-
-*Target:*
-* ≥80% unit coverage; parity fixtures (incl. the multi-step `updatePackaging`, the pricing chain, attachment-by-search fields, create/bulk error contracts); contract test (schema diff intentional-only, incl. `@deprecated`).
-
-*Acceptance Criteria:*
-1. unit ≥80%
-2. parity green
-3. schema-diff intentional
-
-*Definition of Done:*
-* PR merged on green (unit + parity tests pass)
-* Schema change pushed to Hive; operation(s) resolvable through the federated router
-* Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,PKG-FE-001,[Packaging FE] Migrate packaging reads [PKG-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-01 PKG-BE-B-02,To Do,"*Implementation Order:* 25 of 29 (Packaging combined — frontend #1, cutover step 1)
+Story,PKG-FE-001,[Packaging FE] Migrate packaging reads [PKG-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-01 PKG-BE-B-02,To Do,"*Implementation Order:* 24 of 28 (Packaging combined — frontend #1, cutover step 1)
 *Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -634,7 +607,7 @@ Story,PKG-FE-001,[Packaging FE] Migrate packaging reads [PKG-FE-001],,Federate B
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PKG-FE-002,[Packaging FE] Migrate packaging master-data reads and retire deprecated fields [PKG-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-04 PKG-BE-B-06,To Do,"*Implementation Order:* 26 of 29 (Packaging combined — frontend #2, cutover step 1)
+Story,PKG-FE-002,[Packaging FE] Migrate packaging master-data reads and retire deprecated fields [PKG-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-04 PKG-BE-B-06,To Do,"*Implementation Order:* 25 of 28 (Packaging combined — frontend #2, cutover step 1)
 *Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -671,7 +644,7 @@ Story,PKG-FE-002,[Packaging FE] Migrate packaging master-data reads and retire d
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PKG-FE-003,[Packaging FE] Migrate dieline flows [PKG-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-+-mutation-migration,,PKG-BE-B-03 PKG-BE-B-05 PKG-BE-D-02,To Do,"*Implementation Order:* 27 of 29 (Packaging combined — frontend #3, cutover step 3)
+Story,PKG-FE-003,[Packaging FE] Migrate dieline flows [PKG-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-+-mutation-migration,,PKG-BE-B-03 PKG-BE-B-05 PKG-BE-D-02,To Do,"*Implementation Order:* 26 of 28 (Packaging combined — frontend #3, cutover step 3)
 *Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -710,7 +683,7 @@ Story,PKG-FE-003,[Packaging FE] Migrate dieline flows [PKG-FE-003],,Federate Bre
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PKG-FE-004,[Packaging FE] Migrate packaging simple mutations and export [PKG-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,mutation-migration,,PKG-BE-D-01 PKG-BE-D-03 PKG-BE-D-04 PKG-BE-D-05 PKG-BE-D-06 PKG-BE-D-07 PKG-BE-D-09,To Do,"*Implementation Order:* 28 of 29 (Packaging combined — frontend #4, cutover step 3)
+Story,PKG-FE-004,[Packaging FE] Migrate packaging simple mutations and export [PKG-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,mutation-migration,,PKG-BE-D-01 PKG-BE-D-03 PKG-BE-D-04 PKG-BE-D-05 PKG-BE-D-06 PKG-BE-D-07 PKG-BE-D-09,To Do,"*Implementation Order:* 27 of 28 (Packaging combined — frontend #4, cutover step 3)
 *Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -752,7 +725,7 @@ Story,PKG-FE-004,[Packaging FE] Migrate packaging simple mutations and export [P
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PKG-FE-005,[Packaging FE] Migrate `updatePackaging` saga handling and packet information [PKG-FE-005],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,packaging,mutation-migration-(complex),,PKG-BE-E-01,To Do,"*Implementation Order:* 29 of 29 (Packaging combined — frontend #5, cutover step 4)
+Story,PKG-FE-005,[Packaging FE] Migrate `updatePackaging` saga handling and packet information [PKG-FE-005],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,packaging,mutation-migration-(complex),,PKG-BE-E-01,To Do,"*Implementation Order:* 28 of 28 (Packaging combined — frontend #5, cutover step 4)
 *Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
 *Priority:* High — *Parallelizable:* No
 

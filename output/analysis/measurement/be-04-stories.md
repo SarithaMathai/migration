@@ -16,7 +16,7 @@ Engineers: read *Current Behaviour → Target → Files → Acceptance → Tests
 | D | Mutations (simple) | D-01–D-07 |
 | E | Complex (`updateMeasurement`) | E-01 |
 | F | Federation Contributions | F-01–F-02 (BLOCKED-BY product/sample) |
-| G | Field Resolvers & Tests | G-01–G-04 (G-04 recommended, PO-gated — federation review) |
+| G | Field Resolvers | G-01–G-04 (G-04 recommended, PO-gated — federation review) |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
@@ -25,7 +25,6 @@ Engineers: read *Current Behaviour → Target → Files → Acceptance → Tests
 graph TD
   B01["B-01 getMeasurementByIds\n(DGS module init in this PR)"]-->B[B-01-B-05 Reads]&C[C-01-C-02 Listing]&D[D-01-D-07 Mutations]&E01[E-01 updateMeasurement]
   B01-->G01[G-01 Measurement fields]&G02[G-02 SampleSet fields]
-  G01-->G03[G-03 Tests]
   PROD[product Phase 3]-.->F01[F-01 Product.measurementSets]
   SAMP[sample Phase 3]-.->F02[F-02 SampleV2.sampleMeasurement]
 ```
@@ -265,9 +264,12 @@ graph TD
 ---
 
 ### MST-BE-E-01 · `updateMeasurement` — 2-step orchestrated write
-- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `workspaceV2`
+- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `workspaceV2` · **Blocked by:** product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)
 
-> **Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — draft ADR-013, ratification pending.** This is the program's **pilot** saga adoption (smallest real case, ADR-013 §5 build order): workspace assoc `COMPENSATE` → body PUT = point of no return; injected step-2 failure must yield `COMPENSATED` (set not moved) with per-step detail.
+> **Draft ADR-013, ratification pending.** This is the program's **pilot** saga adoption (smallest real case,
+> ADR-013 §5 build order) against the shared `WriteSaga` module built in `PRODUCT-BE-E-00`: workspace assoc
+> `COMPENSATE` → body PUT = point of no return; injected step-2 failure must yield `COMPENSATED` (set not
+> moved) with per-step detail.
 
 - **In plain terms:** Edit a measurement set — a 2-step write (workspace + body) that has no rollback today.
 
@@ -323,8 +325,8 @@ Depends on `Product` existing (product A-02), not on a separate deployment.
 
 ---
 
-### MST-BE-F-02 · Contribute `sampleMeasurement` to the `SampleV2` entity
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** sample
+### MST-BE-H-01 · Contribute `sampleMeasurement` to the `SampleV2` entity
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** sample
 
 - **In plain terms:** Contribute a sample's measurement set to the Sample entity.
 
@@ -379,27 +381,12 @@ Depends on `Product` existing (product A-02), not on a separate deployment.
 
 ---
 
-### MST-BE-G-03 · Test coverage & parity
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B-01, C-01, E-01, G-01
-
-- **In plain terms:** Prove the measurement subgraph matches the old gateway.
-
-- **Target DGS Implementation:** ≥80% unit coverage; parity fixtures for the 7 queries + 8 mutations + `updateMeasurement` 3 fixtures + the relationship path.
-
-#### Acceptance Criteria
-
-1. Unit ≥80%.
-2. Parity green for reads/writes incl. `getMeasurements` relationship path.
-3. `updateMeasurement` failure path covered.
-
----
-
 ### MST-BE-G-04 · `SampleMeasurementSet.sample` forward reference (recommended, PO-gated)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged) · **EXT:** 🟡 `sample`
 - **Status:** Recommended (PO-gated — federation-review/03 §2 REC-4)
 
 - **In plain terms:** Adds `sample { … }` on the sample measurement set — the forward twin of the existing
-reverse extension (`SampleV2.sampleMeasurement`, **MST-BE-F-02**).
+reverse extension (`SampleV2.sampleMeasurement`, **MST-BE-H-01**).
 
 - **Context:** `SampleMeasurementSet` is keyed on `sampleId` but exposes no way to walk to the sample entity;
 sample screens re-query by id today. `sampleId` stays — it is the `@key`.
@@ -411,7 +398,7 @@ until then).
 
 1. PO approval recorded (OQ-5) before implementation starts.
 2. `sample { id }` resolves as a stub; `sampleId` unchanged.
-3. Pairs cleanly with MST-BE-F-02 (no circular resolution at the gateway — verified by a two-hop smoke query).
+3. Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query).
 
 ---
 
@@ -425,7 +412,7 @@ until then).
 | F-01 internal (same subgraph, depends on Product type); F-02 federated (sample DGS) | Low | Low | Sequence F-01 after product A-02; F-02 after sample migrates | Tech Lead |
 
 ## 5. Summary
-- **Stories:** 21 (B:5 · C:2 · D:7 · E:1 · F:2 · G:4). G-04 (recommended, PO-gated) added by the federation review.
+- **Stories:** 20 (B:5 · C:2 · D:7 · E:1 · F:2 · G:3). G-04 (recommended, PO-gated) added by the federation review. Bug-fix/test-coverage stories (`G-03`) tracked outside this Jira pipeline, created manually.
 - **Critical path:** E-01; C-01.
 - **Highest risk:** `updateMeasurement` 2-step write; relationship dependency in `getMeasurements`.
 - **Independent of federation:** ships before F-01/F-02.

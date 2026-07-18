@@ -8,6 +8,11 @@
 > ADR-011/012/013.
 > **Related:** `SPIKE-06a` (hydration — the search→canonical two-stage read recurs here) ·
 > `SPIKE-05` (the `code → type` tagging table) · techpack case (same fan-out root).
+> **ACL note:** out of scope for ADR-019 (Mid-Request ACL Update) — the per-claim N+1
+> `getUserAccessUnencoded` calls and the batched `getAccessControlBatch` join are both **permission-check**
+> shaped (resolver-local reads/filters over this product's own component ids, not a token handed to
+> another domain's loader) — confirmed in `output/analysis/product/be-07-acl-usage-analysis.md`
+> (`components` rows). Nothing below changes.
 > **Evidence:** `resolvers/SPARK_Product.js` (components, ~190 ln) + `resolvers/SPARK_WorkspaceV2.js`
 > (counts, ~85 ln; verified from the jun30 snapshot) at `https://github.com/XXX`.
 

@@ -16,14 +16,14 @@ Each story is self-contained. Full pseudo-logic in [be-02-resolver-analysis.md](
 | D | Mutations (simple) | D-01–D-02 |
 | E | Complex (multi-step write) | E-01 |
 | F | Federation (internal) | F-01–F-02 |
-| G | Field Resolvers & Tests | G-01–G-05 (G-05 recommended, PO-gated — federation review) |
+| G | Field Resolvers | G-01–G-05 (G-05 recommended, PO-gated — federation review) |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## 2. Dependency Graph
 ```mermaid
 graph TD
-  B01["B-01"] & C01["C-01"] & E01["E-01"] & G02["G-02"] --> G04["G-04"]
+  B01["B-01"] --> G02["G-02"] --> G05["G-05"]
 ```
 
 ---
@@ -130,9 +130,12 @@ product `humanId`s → (🔴 search) `searchWatchlist({ q:"parentId:(... OR ...)
 ---
 
 ### WATCHLIST-BE-E-01 · `updateWatchlistEntries` (multi-step write)
-- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment` · 🔵 `userGroup`
+- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment` · 🔵 `userGroup` · **Blocked by:** product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)
 
-> **Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — draft ADR-013, ratification pending.** The unawaited per-entry user-group map is **awaited and ordered before the body** (accepted deviation, ADR-013 pin-down 2 — closes the race/unhandled-rejection defect); attachment archive is a `RECORD` step; JWT no longer fetched when the archive list is empty.
+> **Draft ADR-013, ratification pending.** Against the shared `WriteSaga` module built in `PRODUCT-BE-E-00`:
+> the unawaited per-entry user-group map is **awaited and ordered before the body** (accepted deviation,
+> ADR-013 pin-down 2 — closes the race/unhandled-rejection defect); attachment archive is a `RECORD` step;
+> JWT no longer fetched when the archive list is empty.
 
 - **In plain terms:** Edit watchlist entries — a multi-step write (user-groups + body); today the group step isn't awaited (a bug).
 
@@ -243,23 +246,6 @@ is co-located; analogous to `BOM-BE-F-06` / `MST-BE-F-04`).
 
 ---
 
-### WATCHLIST-BE-G-04 · Tests, parity harness
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B-01, C-01, E-01, G-02
-
-- **In plain terms:** Prove the watchlist subgraph matches the old gateway.
-
-- **Target:** ≥80% unit coverage; parity fixtures (incl. `getWatchlistByFilter` chain, the multi-step
-`updateWatchlistEntries` with the await fix, create+user-group, computed flatteners); contract test (schema
-diff intentional-only). 
-
-#### Acceptance Criteria
-
-1. unit ≥80%.
-2. parity green.
-3. schema-diff intentional.
-
----
-
 ### WATCHLIST-BE-G-05 · `WatchlistPartner.partner` entity reference (recommended, PO-gated)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** G-02 · **EXT:** 🔵 `vmm`
 - **Status:** Recommended (PO-gated — federation-review/03 §2 REC-3)
@@ -289,8 +275,8 @@ emits `{id: partnerId}` — gateway hydrates from VMM; null-safe on missing `par
 | Product `PRODUCT-BE-F-08` mislabel (corrected to internal) | — | Low | F-08 reclassified CAT-2 internal | Product Owner |
 
 ## 5. Summary
-- **Stories:** 14 (B:3 · C:1 · D:2 · E:1 · F:2 · G:5). G-05 (recommended, PO-gated) added by the federation review.
-- **Critical path:** A-02/C-01→E-01→G-02→G-04.
+- **Stories:** 13 (B:3 · C:1 · D:2 · E:1 · F:2 · G:4). G-05 (recommended, PO-gated) added by the federation review. Bug-fix/test-coverage stories (`G-04`) tracked outside this Jira pipeline, created manually.
+- **Critical path:** A-02/C-01→E-01→G-02.
 - **Highest risk:** `updateWatchlistEntries` (E-01) — multi-step + un-awaited user-group map.
 - **Co-located:** watchlist is in the `plm-product` monorepo; `Product.watchlists` + TechPack count resolve internally.
 

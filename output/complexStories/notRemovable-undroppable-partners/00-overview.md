@@ -83,9 +83,9 @@ The spike is done when all of the following are recorded and ratified:
 - **Proposal so far (light, to validate):** each domain contributes its own partner slice; the entity owner combines them.
 - **Draft decision:** [ADR-016 (draft)](./01-adr-notremovable-undroppable-partners.md) proposes
   owner-`@requires` lane aggregation (Option B, phase 1 = direct calls behind the same aggregator field) —
-  status 🔴 Proposed, pending ratification. Scenario variant under the domain-ACL assumption:
-  [ADR-016-noACL](./02-adr-noacl-notremovable-undroppable-partners.md).
+  status 🔴 Proposed, pending ratification. ACL is out of scope for this case (ADR-019 — see ADR-016's
+  ACL note).
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task breakdown are produced by the spike and land here when it concludes.*
+*This folder holds the problem brief (this file) + the draft decision ([01-adr-notremovable-undroppable-partners.md](./01-adr-notremovable-undroppable-partners.md)) + the story breakdown implementing it ([01-stories.md](./01-stories.md)) — the concrete story ids in each affected domain's be-04-stories.md, cross-referenced by pin-down.*

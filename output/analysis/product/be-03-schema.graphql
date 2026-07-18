@@ -72,7 +72,7 @@ type CORONA_ItemDetails @key(fields: "tcinId") @extends {               # 🔜
 # --- Sibling DGS subgraph stubs ---
 # Most are co-located in `plm-product` or arrive in phase 2. EXCEPTION (✅ confirmed 2026-07-17,
 # federation-review/08 OQ-6): `Claims` is a SEPARATE subgraph (repo `spark-claims`) — Product.claims /
-# Claims.product cross the Hive Gateway (hence PRODUCT-BE-F-13, the Product entity fetcher).
+# Claims.product cross the Hive Gateway (hence PRODUCT-BE-H-06, the Product entity fetcher).
 type Attachment      @key(fields: "id") @extends { id: ID! @external }      # 🔜 attachment subgraph
 type SampleV2        @key(fields: "id") @extends { id: ID! @external }      # 🔜 sample subgraph
 type Tag             @key(fields: "id") @extends { id: ID! @external }      # 🔜 tag subgraph

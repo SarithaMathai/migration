@@ -1,6 +1,6 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,PDTL-BE-B-01,(Product Details) getProductDetailsById(ids) [PDTL-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,productDetails,query,,,To Do,"*Implementation Order:* 1 of 13 (Product Details backend, step 1)
+Story,PDTL-BE-B-01,(Product Details) getProductDetailsById(ids) [PDTL-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,productDetails,query,,,To Do,"*Implementation Order:* 1 of 12 (Product Details backend, step 1)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* No
 
@@ -19,7 +19,6 @@ Story,PDTL-BE-B-01,(Product Details) getProductDetailsById(ids) [PDTL-BE-B-01],,
 * PDTL-BE-G-01 — access + currentUserPermissions + participantDetails
 * PDTL-BE-G-02 — product + createdBy + updatedBy + businessPartners + workspaces
 * PDTL-BE-G-03 — attachment + item attachment/constructionSetAttachments + category subCategories
-* PDTL-BE-G-04 — Tests, parity harness
 * PDTL-FE-001
 
 *Current Behaviour:*
@@ -35,7 +34,7 @@ Story,PDTL-BE-B-01,(Product Details) getProductDetailsById(ids) [PDTL-BE-B-01],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-C-01,(Product Details) getProductDetailsElastic(resourceId) [PDTL-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,productDetails,search,,B-01,To Do,"*Implementation Order:* 2 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-C-01,(Product Details) getProductDetailsElastic(resourceId) [PDTL-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,productDetails,search,,B-01,To Do,"*Implementation Order:* 2 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -59,7 +58,7 @@ Story,PDTL-BE-C-01,(Product Details) getProductDetailsElastic(resourceId) [PDTL-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-D-01,(Product Details) createProductDetailsSet [PDTL-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 3 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-D-01,(Product Details) createProductDetailsSet [PDTL-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 3 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -83,7 +82,7 @@ Story,PDTL-BE-D-01,(Product Details) createProductDetailsSet [PDTL-BE-D-01],,Fed
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-D-02,(Product Details) updateProductDetailAccess [PDTL-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 4 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-D-02,(Product Details) updateProductDetailAccess [PDTL-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 4 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -106,7 +105,7 @@ Story,PDTL-BE-D-02,(Product Details) updateProductDetailAccess [PDTL-BE-D-02],,F
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-D-03,(Product Details) productDetailLockUnlock [PDTL-BE-D-03],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 5 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-D-03,(Product Details) productDetailLockUnlock [PDTL-BE-D-03],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 5 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -129,7 +128,7 @@ Story,PDTL-BE-D-03,(Product Details) productDetailLockUnlock [PDTL-BE-D-03],,Fed
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-D-04,(Product Details) cloneFilesForProductDetails [PDTL-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 6 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-D-04,(Product Details) cloneFilesForProductDetails [PDTL-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 6 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -153,7 +152,7 @@ Story,PDTL-BE-D-04,(Product Details) cloneFilesForProductDetails [PDTL-BE-D-04],
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-D-05,(Product Details) updateProductDetailComponentStatus [PDTL-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 7 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-D-05,(Product Details) updateProductDetailComponentStatus [PDTL-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,To Do,"*Implementation Order:* 7 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -177,7 +176,7 @@ Story,PDTL-BE-D-05,(Product Details) updateProductDetailComponentStatus [PDTL-BE
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-E-01,(Product Details) updateProductDetailsSet (multi-step write) [PDTL-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,productDetails,complex,,"SPIKE-01, B-01",To Do,"*Implementation Order:* 8 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-E-01,(Product Details) updateProductDetailsSet (multi-step write) [PDTL-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,productDetails,complex,,"SPIKE-01, B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Implementation Order:* 8 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -185,7 +184,6 @@ Story,PDTL-BE-E-01,(Product Details) updateProductDetailsSet (multi-step write) 
 * PDTL-BE-B-01 — getProductDetailsById
 
 *Blocks:*
-* PDTL-BE-G-04 — Tests, parity harness
 * PDTL-FE-003
 
 *Requires spike:* SPIKE-01 (Non-Atomic Write Saga) — see program spike
@@ -212,7 +210,7 @@ Story,PDTL-BE-E-01,(Product Details) updateProductDetailsSet (multi-step write) 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-F-01,"(Product Details) Product.productDetails (internal, same subgraph) [PDTL-BE-F-01]",,Federate BreakDown Product,F,XS,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Implementation Order:* 9 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-F-01,"(Product Details) Product.productDetails (internal, same subgraph) [PDTL-BE-F-01]",,Federate BreakDown Product,F,XS,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Implementation Order:* 9 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -235,7 +233,7 @@ Story,PDTL-BE-F-01,"(Product Details) Product.productDetails (internal, same sub
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-G-01,(Product Details) access + currentUserPermissions + participantDetails [PDTL-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Implementation Order:* 10 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-G-01,(Product Details) access + currentUserPermissions + participantDetails [PDTL-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Implementation Order:* 10 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -243,7 +241,7 @@ Story,PDTL-BE-G-01,(Product Details) access + currentUserPermissions + participa
 * PDTL-BE-B-01 — getProductDetailsById
 
 *Blocks:*
-* PDTL-BE-G-04 — Tests, parity harness
+* None
 
 *Current Behaviour:*
 * `access` → `accessControl.getPermissions([humanId||id])[0]`; `currentUserPermissions` → `getUserAccessUnencoded(humanId||id)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.)
@@ -258,7 +256,7 @@ Story,PDTL-BE-G-01,(Product Details) access + currentUserPermissions + participa
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-G-02,(Product Details) product + createdBy + updatedBy + businessPartners + workspaces [PDTL-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Implementation Order:* 11 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-G-02,(Product Details) product + createdBy + updatedBy + businessPartners + workspaces [PDTL-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Implementation Order:* 11 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -282,7 +280,7 @@ Story,PDTL-BE-G-02,(Product Details) product + createdBy + updatedBy + businessP
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-G-03,(Product Details) attachment + item attachment/constructionSetAttachments + category subCategories [PDTL-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Implementation Order:* 12 of 13 (Product Details backend, step 2)
+Story,PDTL-BE-G-03,(Product Details) attachment + item attachment/constructionSetAttachments + category subCategories [PDTL-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,To Do,"*Implementation Order:* 12 of 12 (Product Details backend, step 2)
 *Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -306,32 +304,8 @@ Story,PDTL-BE-G-03,(Product Details) attachment + item attachment/constructionSe
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,PDTL-BE-G-04,"(Product Details) Tests, parity harness [PDTL-BE-G-04]",,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,"B-01, E-01, G-01",To Do,"*Implementation Order:* 13 of 13 (Product Details backend, step 3)
-*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
-*Priority:* Medium — *Parallelizable:* No
-
-*Depends On:*
-* PDTL-BE-B-01 — getProductDetailsById
-* PDTL-BE-E-01 — updateProductDetailsSet
-* PDTL-BE-G-01 — access + currentUserPermissions + participantDetails
-
-*Blocks:*
-* None
-
-*Target:*
-* ≥80% unit coverage; parity fixtures (incl. the multi-step `updateProductDetailsSet`, the create error-contract, attachment-by-search fields); contract test (schema diff intentional-only).
-
-*Acceptance Criteria:*
-1. unit ≥80%
-2. parity fixtures green
-3. schema-diff intentional-only
-
-*Definition of Done:*
-* PR merged on green (unit + parity tests pass)
-* Schema change pushed to Hive; operation(s) resolvable through the federated router
-* Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,productDetails,query-migration,,PDTL-BE-B-01,To Do,"*Implementation Order:* 14 of 16 (Product Details combined — frontend #1, cutover step 1)
+Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,productDetails,query-migration,,PDTL-BE-B-01,To Do,"*Implementation Order:* 13 of 15 (Product Details combined — frontend #1, cutover step 1)
 *Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Low — *Parallelizable:* No
 
@@ -367,7 +341,7 @@ Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-00
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations [PDTL-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration,,PDTL-BE-D-01 PDTL-BE-D-03 PDTL-BE-D-04 PDTL-BE-D-05,To Do,"*Implementation Order:* 15 of 16 (Product Details combined — frontend #2, cutover step 3)
+Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations [PDTL-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration,,PDTL-BE-D-01 PDTL-BE-D-03 PDTL-BE-D-04 PDTL-BE-D-05,To Do,"*Implementation Order:* 14 of 15 (Product Details combined — frontend #2, cutover step 3)
 *Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Medium — *Parallelizable:* No
 
@@ -406,7 +380,7 @@ Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PDTL-FE-003,[Product Details FE] Migrate `updateProductDetailsSet` saga handling [PDTL-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration-(complex),,PDTL-BE-E-01,To Do,"*Implementation Order:* 16 of 16 (Product Details combined — frontend #3, cutover step 4)
+Story,PDTL-FE-003,[Product Details FE] Migrate `updateProductDetailsSet` saga handling [PDTL-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration-(complex),,PDTL-BE-E-01,To Do,"*Implementation Order:* 15 of 15 (Product Details combined — frontend #3, cutover step 4)
 *Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Medium — *Parallelizable:* No
 

@@ -35,8 +35,8 @@ deliverables under `output/`. Two parts:
 
 | File | Purpose | Audience | Regenerable? |
 |---|---|---|---|
-| `FederatedGqlBreakDown-BE-{domain}.md` | **Confluence breakdown** — phase tables (1 row/story), spikes, deployment model, **§5b complex breakdowns**, risks, decisions, dep map | PO + Eng | ✅ generated |
-| `FederatedGqlBreakDown-BE-{domain}.docx` | Same, Word format | Word/Confluence upload | ✅ generated |
+| `FederatedGqlBreakDown-{domain}.md` | **Confluence breakdown** — one merged page: `## Backend` (phase tables — 1 row/story, spikes, deployment model, **§5b complex breakdowns**, risks, decisions, dep map) then `## Frontend` | PO + Eng | ✅ generated |
+| `FederatedGqlBreakDown-{domain}.docx` | Same, Word format | Word/Confluence upload | ✅ generated |
 | `{domain}-comprehensive.md` | **Heavy** eng doc — every story's full body (CB, examples, pseudocode, target, AC, tests) + **§8b complex breakdowns** | Engineers | ✅ generated |
 | `{domain}-po-review.md` | Executive review — scope, deployment, risks, **decisions**, capacity, **Phase-2 complex breakdowns** | PO / Stakeholders | ✅ generated |
 

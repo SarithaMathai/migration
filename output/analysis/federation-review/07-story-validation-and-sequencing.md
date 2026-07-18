@@ -34,7 +34,7 @@ Every new story carries the standard metadata block (Type / Phase / Complexity /
 
 ## 3. Domain implementation roadmap — what changes
 
-- **Wave order is unchanged** (per [01-implementation-plan-2BE-2FE.md](../program/01-implementation-plan-2BE-2FE.md) and [02-project-plan.md](../program/02-project-plan.md)).
+- **Wave order is unchanged** (per [01-implementation-plan-1BE-1FE.md](../program/01-implementation-plan-1BE-1FE.md) and [02-project-plan.md](../program/02-project-plan.md)).
 - **Insertions:**
   - PRODUCT-BE-F-14 lands **before** PRODUCT-BE-F-10 (composition) — earliest free BE-1 slot in the product Phase-F window; it is small (schema verification + wrapper declarations) and unblocks the claims lane.
   - PRODUCT-BE-F-13 lands in the same window, before the claims FE cutover (CLAIM-FE-002 is the first cross-subgraph cutover and needs `Claims.product` to hydrate).

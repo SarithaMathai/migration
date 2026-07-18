@@ -14,7 +14,7 @@ The one genuinely harder piece is **`updateWatchlistEntries`**, a multi-step wri
 the body, then attachment archival) that today **does not await** its per-entry user-group updates — a race
 to fix on the port.
 
-**ACL note:** the current code obtains per-resource capability tokens via ACL; Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
+**ACL note:** the current code obtains per-resource capability tokens via ACL. Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permission-check and own-domain-token call sites stay resolver-local (context-only, unchanged); downstream-token call sites (e.g. the attachment-archive step in `updateWatchlistEntries`) use **Mid-Request ACL Update** before the downstream call.
 
 ## Migration Scope
 | Surface | Count | Notes |

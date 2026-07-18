@@ -10,6 +10,12 @@
 > **Related:** ADR-014 (owner-computed rollups — same stance) · ADR-015 (facade-then-federate phasing) ·
 > ADR-016 (consumes this read cross-resolver today — that coupling dies with ADR-016 §4) ·
 > `SPIKE-06a` (hydration).
+> **ACL note:** out of scope for ADR-019 (Mid-Request ACL Update) — the two capability tokens
+> (`getUserAccessByPost` for attachment/sample ids), the viewer-permission lookup
+> (`getUserAccessUnencoded`), and the thin-variant engine's `accessControl.getPermissions` are all
+> **permission-check** shaped (resolver-local reads of the current resource's access, not a token handed
+> to another domain's loader) — confirmed in `output/analysis/product/be-07-acl-usage-analysis.md`
+> (`attachmentsWithMetaData` rows). Nothing below changes.
 > **Evidence:** `resolvers/SPARK_Product.js` + `resolvers/SPARK_WorkspaceV2.js` +
 > `utils/Product/attachmentUtils.js` + `utils/discussionUtils.js` at `https://github.com/XXX`.
 

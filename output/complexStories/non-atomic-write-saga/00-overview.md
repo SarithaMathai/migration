@@ -74,9 +74,11 @@ The spike is done when all of the following are recorded and ratified:
 - How each write step can be undone (or explicitly declared not-undoable).
 - **Proposal so far (light, to validate):** one shared write-step recorder reused by every multi-step mutation, so the failure handling is decided once.
 - **Draft decision:** [ADR-013 (draft)](./01-adr-non-atomic-write-saga.md) proposes a shared `WriteSaga`
-  with per-step declared policy (Option B) — status 🔴 Proposed, pending ratification. Scenario variant
-  under the domain-ACL assumption: [ADR-013-noACL](./02-adr-noacl-non-atomic-write-saga.md) (verdict: no change).
+  with per-step declared policy (Option B) — status 🔴 Proposed, pending ratification. The attachment-archive
+  steps in `updatePackaging`, `updateProductDetailsSet`, and `updateWatchlistEntries` are downstream-token
+  sites resolved by ADR-019 (Mid-Request ACL Update); every other capability token in this case stays
+  resolver-local (see ADR-013's ACL note).
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task breakdown are produced by the spike and land here when it concludes.*
+*This folder holds the problem brief (this file) + the draft decision ([01-adr-non-atomic-write-saga.md](./01-adr-non-atomic-write-saga.md)) + the story breakdown implementing it ([01-stories.md](./01-stories.md)) — the concrete story ids in each affected domain's be-04-stories.md, cross-referenced by pin-down.*

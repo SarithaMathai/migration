@@ -15,7 +15,7 @@ that proves the pipeline end-to-end.
 - The only mild wrinkle is the counts query: today it returns the impressions **list** and a field resolver aggregates per-partner counts (re-fetching the product).
 - We recommend a cleaner typed result as a fast-follow, but the existing contract can be preserved exactly.
 
-**ACL note:** the current code obtains a per-product capability token via ACL; Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
+**ACL note:** the current code obtains a per-product capability token via ACL. Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permission-check and own-domain-token call sites stay resolver-local (context-only, unchanged); downstream-token call sites use **Mid-Request ACL Update** before the downstream call. Impression has zero downstream-token sites.
 
 ## Migration Scope
 | Surface | Count | Notes |

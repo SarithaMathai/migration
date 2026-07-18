@@ -1,6 +1,6 @@
 # Story Dependency Matrix — Frontend × Backend
 
-> Generated from fe-08-frontend-stories.md · 2026-07-17
+> Generated from fe-08-frontend-stories.md · 2026-07-18
 > A frontend story is not Done until every backend story it depends on has been delivered.
 
 | FE story | Title | Impact | Depends on (BE / FE) | Domain |
@@ -13,7 +13,7 @@
 | BOM-FE-006 | Migrate BOM mutations including `updateBom` saga handling | High | BOM-BE-D-01, BOM-BE-D-03, BOM-BE-D-04, BOM-BE-D-05, BOM-BE-S-01 | BOM |
 | BOM-FE-007 | Adopt BOM `supplier` entity references (optional, PO-gated) | Low | BOM-BE-G-17, BOM-FE-002 | BOM |
 | CLAIM-FE-001 | Split the claim fragment factory and re-target claim fragments | Medium | — | Claims |
-| CLAIM-FE-002 | Migrate claim reads (first cross-subgraph cutover) | High | CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-FE-001 | Claims |
+| CLAIM-FE-002 | Migrate claim reads (first cross-subgraph cutover) | High | CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-FE-001, PRODUCT-BE-H-06 | Claims |
 | CLAIM-FE-003 | Migrate claim simple mutations and export | Medium | CLAIM-BE-D-01, CLAIM-BE-D-02, CLAIM-BE-D-03, CLAIM-BE-D-04, CLAIM-BE-D-05 | Claims |
 | CLAIM-FE-004 | Migrate `updateClaim` multi-step write handling | High | CLAIM-BE-E-01 | Claims |
 | IMPRESSION-FE-001 | Migrate `getBomDataAndImpressions` (with BOM wave) | Low | IMPRESSION-BE-B-01, BOM-BE-B-01, BOM-FE-002 | Impression |
@@ -39,7 +39,7 @@
 | PRODUCT-FE-007 | Migrate simple product mutations | Medium | PRODUCT-BE-D-01, PRODUCT-BE-D-02, PRODUCT-BE-D-03, PRODUCT-BE-D-04, PRODUCT-BE-D-05, PRODUCT-BE-D-10, PRODUCT-BE-D-13, PRODUCT-BE-D-14 | Product |
 | PRODUCT-FE-008 | Migrate team and partner assignment mutations | Medium | PRODUCT-BE-D-06, PRODUCT-BE-D-07, PRODUCT-BE-D-12, PRODUCT-FE-001 | Product |
 | PRODUCT-FE-009 | Migrate partner drop/undrop orchestration | High | PRODUCT-BE-S-03, PRODUCT-BE-D-09 | Product |
-| PRODUCT-FE-010 | Migrate TechPack count queries (facade-then-federate) | Medium | PRODUCT-BE-E-03, PRODUCT-BE-E-04 | Product |
+| PRODUCT-FE-010 | Migrate TechPack count queries (facade-then-federate) | Medium | PRODUCT-BE-E-03, PRODUCT-BE-E-04, PRODUCT-BE-H-01, PRODUCT-BE-H-02, PRODUCT-BE-H-03, PRODUCT-BE-H-04, PRODUCT-BE-H-05 | Product |
 | PRODUCT-FE-011 | Migrate component status rollups | Medium | PRODUCT-BE-B-01, PRODUCT-BE-D-18, PRODUCT-BE-E-02 | Product |
 | PRODUCT-FE-012 | Verify fragment type-conditions, `__typename` logic and cache keys against federated type names | Medium | PRODUCT-BE-F-14 | Product |
 | WATCHLIST-FE-001 | Migrate watchlist reads | Low | WATCHLIST-BE-B-01, WATCHLIST-BE-C-01 | Watchlist |
@@ -142,6 +142,12 @@
 | PRODUCT-BE-E-03 | PRODUCT-FE-010 |
 | PRODUCT-BE-E-04 | PRODUCT-FE-010 |
 | PRODUCT-BE-F-14 | PRODUCT-FE-012 |
+| PRODUCT-BE-H-01 | PRODUCT-FE-010 |
+| PRODUCT-BE-H-02 | PRODUCT-FE-010 |
+| PRODUCT-BE-H-03 | PRODUCT-FE-010 |
+| PRODUCT-BE-H-04 | PRODUCT-FE-010 |
+| PRODUCT-BE-H-05 | PRODUCT-FE-010 |
+| PRODUCT-BE-H-06 | CLAIM-FE-002 |
 | PRODUCT-BE-S-02 | PRODUCT-FE-003 |
 | PRODUCT-BE-S-03 | PRODUCT-FE-009 |
 | WATCHLIST-BE-B-01 | WATCHLIST-FE-001 |

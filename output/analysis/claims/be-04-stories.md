@@ -17,14 +17,14 @@ cross-subgraph).
 | D | Mutations (simple) | D-01–D-05 |
 | E | Complex (proxy-ACL multi-step write) | E-01 |
 | F | Federation Contributions (BLOCKED-BY product) | F-01–F-02 |
-| G | Field Resolvers & Tests | G-01–G-05 |
+| G | Field Resolvers & Tests | G-01–G-06 |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## 2. Dependency Graph
 ```mermaid
 graph TD
-  B01["B-01"] & E01["E-01"] & G02["G-02"] & G03["G-03"] --> G05["G-05"]
+  B01["B-01"] --> G02["G-02"] & G03["G-03"] & G06["G-06"]
 ```
 
 ---
@@ -207,9 +207,13 @@ graph TD
 ---
 
 ### CLAIM-BE-E-01 · `updateClaim` (proxy ACL + multi-step write)
-- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `workspaceV2`
+- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `workspaceV2` · **Blocked by:** product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)
 
-> **Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — draft ADR-013, ratification pending.** Implement as ordered `WriteSaga` steps (proxy-ACL context → workspace assoc `COMPENSATE` → body PUT = point of no return); the unchecked workspace-association response becomes checked by construction (ADR-013 §5 pin-down 5). The claim proxy-permission rule is verified per ADR-013-noACL pin-down N1 before the resolver's proxy JWT is dropped.
+> **Draft ADR-013, ratification pending.** Implement as ordered `WriteSaga` steps against the shared module
+> built in `PRODUCT-BE-E-00` (proxy-ACL context → workspace assoc `COMPENSATE` → body PUT = point of no
+> return); the unchecked workspace-association response becomes checked by construction (ADR-013 §5
+> pin-down 5). The claim proxy-permission rule (own-domain-token, resolver-local — unaffected by ADR-019)
+> is verified before the resolver's proxy JWT is dropped.
 
 - **In plain terms:** Edit a claim — a multi-step write (permissions + workspace + body) that has no rollback today.
 
@@ -239,16 +243,16 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### Phase F — Federation Contributions (BLOCKED-BY product)
+### Phase H — Entity Resolution (cross-domain @key)
 
 ---
 
-### CLAIM-BE-F-01 · `Product.claims` (federation contribution)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** product
+### CLAIM-BE-H-01 · `Product.claims` (federation contribution)
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** product
 
 - **In plain terms:** Expose a product's claims on the Product type (federation contribution).
 
-- **Target:** `extend type Product @key(fields:"id") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] }` with a `@DgsEntityFetcher`; the claims subgraph fills `Product.claims` over the gateway. **BLOCKED-BY:** the `Product` entity existing (plm-product Phase A) **and PRODUCT-BE-F-14** (product-side stub aligned to the `Claims` type name; `Claims.id` is synthesized from humanId so federation keys on `id` — federation-review/03 §R3, program decision 2026-07-17). For the reverse direction (`Claims.product` hydration) see PRODUCT-BE-F-13.
+- **Target:** `extend type Product @key(fields:"id") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] }` with a `@DgsEntityFetcher`; the claims subgraph fills `Product.claims` over the gateway. **BLOCKED-BY:** the `Product` entity existing (plm-product Phase A) **and PRODUCT-BE-F-14** (product-side stub aligned to the `Claims` type name; `Claims.id` is synthesized from humanId so federation keys on `id` — federation-review/03 §R3, program decision 2026-07-17). For the reverse direction (`Claims.product` hydration) see PRODUCT-BE-H-06.
 
 #### Acceptance Criteria
 
@@ -257,8 +261,8 @@ ACL is **context-only** (note it; build nothing).
 
 ---
 
-### CLAIM-BE-F-02 · `ResourcesCount.claims` (TechPack — claims side of PRODUCT-BE-F-05)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** product
+### CLAIM-BE-H-02 · `ResourcesCount.claims` (TechPack — claims side of PRODUCT-BE-H-04)
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B-01 · **Blocked by:** product
 
 - **In plain terms:** Contribute the claims count to the product TechPack rollup.
 
@@ -312,7 +316,7 @@ ACL is **context-only** (note it; build nothing).
 - **In plain terms:** Resolve the parent product and its related-partner context on a claim.
 - **Federation note (federation-review/04 §4):** `Claims.product` emits only a `Product{id}` key stub —
 end-to-end hydration through the gateway requires plm-product's `Product` entity fetcher
-(**PRODUCT-BE-F-13**); the local stub emission itself is not blocked. `systemTeams`/`statuses` shapes
+(**PRODUCT-BE-H-06**); the local stub emission itself is not blocked. `systemTeams`/`statuses` shapes
 depend on CLAIM-BE-G-06 (value-type alignment).
 
 - **Current Behaviour:** `product` (🟡 product, only if `parentId` starts `'PID'`); `parentDetails` →
@@ -345,23 +349,6 @@ depend on CLAIM-BE-G-06 (value-type alignment).
 
 1. each resolves; `workspaces` null when empty.
 2. `claimName` mirrors `guestFacingClaim`.
-
----
-
-### CLAIM-BE-G-05 · Tests, parity harness
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B-01, E-01, G-02, G-03
-
-- **In plain terms:** Prove the claims subgraph matches the old gateway.
-
-- **Target:** ≥80% unit coverage; parity fixtures (incl. `updateClaim` proxy path, `bulkUpdateClaim`
-camelCase fix, the `businessPartner` 3-way fallback, `parentDetails` elastic lookups); contract test
-(schema diff intentional-only). 
-
-#### Acceptance Criteria
-
-1. unit ≥80%.
-2. parity green.
-3. schema-diff intentional.
 
 ---
 
@@ -403,8 +390,8 @@ the product definitions.
 | Federation contributions wait on product (F-01/F-02) | Low | Low | Post-launch; not on critical path | Product Owner |
 
 ## 5. Summary
-- **Stories:** 21 (B:5 · C:2 · D:5 · E:1 · F:2 · G:6). G-06 (value-type alignment) added by the federation review.
-- **Critical path:** A-02/E-01→G-02/G-03→G-05.
+- **Stories:** 20 (B:5 · C:2 · D:5 · E:1 · F:2 · G:5). G-06 (value-type alignment) added by the federation review. Bug-fix/test-coverage stories (`G-05`) tracked outside this Jira pipeline, created manually.
+- **Critical path:** A-02/E-01→G-02/G-03.
 - **Highest risk:** `updateClaim` (E-01); the `bulkUpdateClaim` transform bug (D-02).
 - **Separate subgraph:** claims contributes `Product.claims` + TechPack `ResourcesCount.claims` (Phase F).
 

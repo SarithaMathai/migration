@@ -69,9 +69,10 @@ The spike is done when all of the following are recorded and ratified:
 - How each resolver dispatches rows to the right variant, and how CI keeps schema and mapping in sync.
 - **Proposal so far (light, to validate):** one dispatcher per interface/union + per-variant resolvers, with a CI conformance check.
 - **Draft decision:** [ADR-017 (draft)](./01-adr-polymorphic-type-resolution.md) proposes per-site ports +
-  shared playbook + CI conformance gate (Option B) — status 🔴 Proposed, pending ratification. Scenario
-  variant under the domain-ACL assumption: [ADR-017-noACL](./02-adr-noacl-polymorphic-type-resolution.md).
+  shared playbook + CI conformance gate (Option B) — status 🔴 Proposed, pending ratification. Six of the
+  material `libraryResource` loaders (wash/fabric/search) are downstream-token sites resolved by ADR-019
+  (Mid-Request ACL Update); dispatch-table resolution itself involves no ACL (see ADR-017's ACL note).
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task breakdown are produced by the spike and land here when it concludes.*
+*This folder holds the problem brief (this file) + the draft decision ([01-adr-polymorphic-type-resolution.md](./01-adr-polymorphic-type-resolution.md)) + the story breakdown implementing it ([01-stories.md](./01-stories.md)) — the concrete story ids in each affected domain's be-04-stories.md, cross-referenced by pin-down.*

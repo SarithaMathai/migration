@@ -8,7 +8,7 @@
 | **Impact** | 🔴 0 High · 🟡 2 Medium · 🟢 1 Low |
 | **Estimated effort** | 8–12 days (single-engineer) |
 | **Phase-1 surface** | 7 operation-to-root-field rows · 2 client files · 4 components |
-| **Generated** | 2026-07-17 |
+| **Generated** | 2026-07-18 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 
@@ -45,17 +45,17 @@
 
 ---
 
-## Recommended Story Graph — 2 Frontend Engineers
+## Recommended Story Graph — 1 Frontend Engineer
 
-> The order map above packed onto **two frontend engineers**. Lanes re-sync at each step because the step's **backend gate** — not engineer availability — is the limiter; in a single-story step the second engineer pairs on parity checks/rollout or pre-pulls the next unblocked story. FE→FE chains stay with one engineer for context.
+> The staged order map above, run by **one frontend engineer**. Steps re-sync at each stage because the stage's **backend gate** — not engineer availability — is the limiter.
 
-| Step | 👤 FE-1 | 👤 FE-2 | Backend gate (focus) |
-|---|---|---|---|
-| 1 | 🟢 `PDTL-FE-001` (2–3d) | — | Reads cutover — needs backend phase A/B reads live |
-| 3 | 🟡 `PDTL-FE-002` (3–4d) | — | Writes — needs backend phase D mutations |
-| 4 | 🟡 `PDTL-FE-003` (3–5d) | — | Complex writes / sagas — needs backend phase E + ADR ratification |
+| Step | 👤 FE-1 | Backend gate (focus) |
+|---|---|---|
+| 1 | 🟢 `PDTL-FE-001` (2–3d) | Reads cutover — needs backend phase A/B reads live |
+| 3 | 🟡 `PDTL-FE-002` (3–4d) | Writes — needs backend phase D mutations |
+| 4 | 🟡 `PDTL-FE-003` (3–5d) | Complex writes / sagas — needs backend phase E + ADR ratification |
 
-**Elapsed (nominal midpoints):** ~10 FE build days with 2 engineers vs ~10 single-engineer — calendar time is set by the backend gates, not FE capacity.
+**Elapsed (nominal midpoints):** ~10 FE build days — calendar time is set by the backend gates, not FE capacity.
 
 ---
 
@@ -65,4 +65,4 @@
 - fe-09-story-dependency-matrix.md — FE ↔ BE dependency matrix.
 - fe-10-migration-sequencing.md — program-level waves and external gates.
 - fe-03-merged-inventory.md — every operation × backend root field for this domain.
-- FederatedGqlBreakDown-BE-productDetails.md — the backend breakdown this cutover follows.
+- FederatedGqlBreakDown-productDetails.md — the combined Backend + Frontend breakdown this section lives in.

@@ -195,18 +195,18 @@ stories:
   - CLAIM-BE-A-04
   blocked_by: none
   ext_services: *id001
-- id: CLAIM-BE-F-01
+- id: CLAIM-BE-H-01
   summary: Product.claims (federation contribution)
-  phase: F
+  phase: H
   category: CAT-4
   complexity: Medium
   depends_on:
   - CLAIM-BE-A-04
   ext_services: []
   blocked_by: product
-- id: CLAIM-BE-F-02
-  summary: ResourcesCount.claims (TechPack — see PRODUCT-BE-F-05)
-  phase: F
+- id: CLAIM-BE-H-02
+  summary: ResourcesCount.claims (TechPack — see PRODUCT-BE-H-04)
+  phase: H
   category: CAT-4
   complexity: Low
   depends_on:

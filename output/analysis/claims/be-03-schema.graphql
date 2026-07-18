@@ -193,7 +193,7 @@ extend type Mutation {
 #   id: ID! @external
 #   claims(partnerIds: [String], includeClaims: Boolean): [Claims]      # F-01
 # }
-# extend type ResourcesCount @key(fields: "productId partnerId") {       # F-02 (TechPack — see PRODUCT-BE-F-05)
+# extend type ResourcesCount @key(fields: "productId partnerId") {       # H-02 (TechPack — see PRODUCT-BE-H-04)
 #   productId: ID! @external
 #   partnerId: ID! @external
 #   claims: [ID]

@@ -7,8 +7,8 @@
 
 | Entity | Owner (subgraph) | Referenced by | `@key` | Entity resolver required? | Notes |
 |---|---|---|---|---|---|
-| `Product` | plm-product | claims (**separate** DGS: `Claims.product`, `Product.claims` extension), all co-located domains | `id` | **YES — missing story; added as PRODUCT-BE-F-13** | The only phase-1 owned entity that a *separate* subgraph resolves through `_entities` |
-| `ResourcesCount` | plm-product (product) | claims (CLAIM-BE-F-02), phase-2 attachment/discussion/sample/construction | `productId partnerId` | Yes — ✅ covered (PRODUCT-BE-B-14/TechPack story implements `@DgsEntityFetcher(name="ResourcesCount")`) | Composite key; stub `[ID]` fields by design |
+| `Product` | plm-product | claims (**separate** DGS: `Claims.product`, `Product.claims` extension), all co-located domains | `id` | **YES — missing story; added as PRODUCT-BE-H-06** | The only phase-1 owned entity that a *separate* subgraph resolves through `_entities` |
+| `ResourcesCount` | plm-product (product) | claims (CLAIM-BE-H-02), phase-2 attachment/discussion/sample/construction | `productId partnerId` | Yes — ✅ covered (PRODUCT-BE-B-14/TechPack story implements `@DgsEntityFetcher(name="ResourcesCount")`) | Composite key; stub `[ID]` fields by design |
 | `Bom` | plm-product (bom) | product (co-located), impression (co-located) | `id` | No (internal) | Add one only if a phase-2 external subgraph starts referencing Bom |
 | `Measurement` | plm-product (measurement) | product (co-located) | `id` (synthesized from `humanId`) | No (internal) | Synthesized-id wrap is the program standard (OQ-1 ✅ resolved 2026-07-17) |
 | `SampleMeasurementSet` | plm-product (measurement) | sample (phase-2, via `SampleV2.sampleMeasurement` MST-BE-F-04) | `sampleId` | Deferred to MST-BE-F-04 | — |
@@ -17,7 +17,7 @@
 | `Dieline` | plm-product (packaging) | — (own queries only) | `id` (synthesized from `humanId`) | No | — |
 | `ProductDetails` | plm-product (productDetails) | product (co-located) | `id` | No (internal) | Product stub name aligned in R4 |
 | `Watchlist` | plm-product (watchlist) | product (co-located, `ResourcesCount.watchlists`) | `id` (synthesized from `humanId`) | No (internal) | — |
-| `Claims` | **spark-claims** (separate) | product (`Product.claims`) | `id` (synthesized from `humanId`) | Yes — ✅ covered (CLAIM-BE-F-01 `@DgsEntityFetcher` fills `Product.claims` over the gateway) | Product-side stub fixed by R3 |
+| `Claims` | **spark-claims** (separate) | product (`Product.claims`) | `id` (synthesized from `humanId`) | Yes — ✅ covered (CLAIM-BE-H-01 `@DgsEntityFetcher` fills `Product.claims` over the gateway) | Product-side stub fixed by R3 |
 | `ProductRules` | plm-product (product) | — (own queries only) | `id` | No | Phase-4 question: stays in plm-product vs own DGS |
 
 ## 2. Referenced external entities (stubs) — who must resolve them
@@ -47,7 +47,7 @@
 
 ## 4. Entity-resolver recommendations (actionable list)
 
-1. **PRODUCT-BE-F-13 (new, REQUIRED):** `@DgsEntityFetcher(name = "Product")` in plm-product resolving `_entities([{__typename:"Product", id}])` → `productService.getById(id)` with a DataLoader batch. Without it, `Claims.product` (and every future external subgraph's `product` ref) returns null through the gateway. Blocks nothing locally; **blocks CLAIM-BE-G-03 end-to-end**.
-2. **CLAIM-BE-F-01 / CLAIM-BE-F-02:** unchanged — claims-side entity fetchers for the `Product`/`ResourcesCount` extensions; now explicitly depend on R3 (key/name alignment).
+1. **PRODUCT-BE-H-06 (new, REQUIRED):** `@DgsEntityFetcher(name = "Product")` in plm-product resolving `_entities([{__typename:"Product", id}])` → `productService.getById(id)` with a DataLoader batch. Without it, `Claims.product` (and every future external subgraph's `product` ref) returns null through the gateway. Blocks nothing locally; **blocks CLAIM-BE-G-03 end-to-end**.
+2. **CLAIM-BE-H-01 / CLAIM-BE-H-02:** unchanged — claims-side entity fetchers for the `Product`/`ResourcesCount` extensions; now explicitly depend on R3 (key/name alignment).
 3. **Co-located domains:** do **not** add defensive entity fetchers now (YAGNI — nothing external references them in phase 1); revisit per-domain when phase-2 subgraphs (sample→measurement, search→watchlist) come online.
 4. **Platform stubs:** no resolvers to write; PRODUCT-BE-F-11 verifies the gateway hydrates them from `@key` stubs (now keyed `id` per R1/R2).

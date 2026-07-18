@@ -18,14 +18,14 @@
 | D | Mutations (simple) | D-01–D-05 |
 | E | Complex (multi-step write) | E-01 |
 | F | Federation (internal) | F-01 |
-| G | Field Resolvers & Tests | G-01–G-04 |
+| G | Field Resolvers | G-01–G-03 |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
 ## 2. Dependency Graph
 ```mermaid
 graph TD
-  B01["B-01"] & E01["E-01"] & G01["G-01"] --> G04["G-04"]
+  B01["B-01"] --> G01["G-01"]
 ```
 
 ---
@@ -147,9 +147,12 @@ graph TD
 ---
 
 ### PDTL-BE-E-01 · `updateProductDetailsSet` (multi-step write)
-- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment` · 🟡 `workspaceV2`
+- **Type:** Mutation · **Phase:** E · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment` · 🟡 `workspaceV2` · **Blocked by:** product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)
 
-> **Spike-gated on `SPIKE-01` (Non-Atomic Write Saga) — draft ADR-013, ratification pending.** Saga steps: workspace assoc `COMPENSATE` (fix the copy-paste 'measurement set' error text) → attachment archive `RECORD` (destructive step currently runs before the body — order preserved for parity, failure now visible) → body PUT checked (today returned unchecked, ADR-013 pin-down 5).
+> **Draft ADR-013, ratification pending.** Against the shared `WriteSaga` module built in `PRODUCT-BE-E-00`:
+> workspace assoc `COMPENSATE` (fix the copy-paste 'measurement set' error text) → attachment archive
+> `RECORD` (destructive step currently runs before the body — order preserved for parity, failure now
+> visible) → body PUT checked (today returned unchecked, ADR-013 pin-down 5).
 
 - **In plain terms:** Edit a product-detail set — a multi-step write (workspace + body) with no rollback today.
 
@@ -245,22 +248,6 @@ workspace, attachment, and body changes stay consistent.
 
 ---
 
-### PDTL-BE-G-04 · Tests, parity harness
-- **Type:** Tests · **Phase:** G · **Complexity:** Medium · **Category:** CAT-5 · **Depends on:** B-01, E-01, G-01
-
-- **In plain terms:** Prove the product-details subgraph matches the old gateway.
-
-- **Target:** ≥80% unit coverage; parity fixtures (incl. the multi-step `updateProductDetailsSet`, the
-create error-contract, attachment-by-search fields); contract test (schema diff intentional-only). 
-
-#### Acceptance Criteria
-
-1. unit ≥80%.
-2. parity fixtures green.
-3. schema-diff intentional-only.
-
----
-
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |------|-----------|--------|------------|-------|
@@ -270,8 +257,8 @@ create error-contract, attachment-by-search fields); contract test (schema diff 
 | `getProductDetailsElastic.types` schema drift (C-01) | Low | Low | Drop or add to schema | Backend Eng |
 
 ## 5. Summary
-- **Stories:** 13 (B:1 · C:1 · D:5 · E:1 · F:1 · G:4).
-- **Critical path:** A-02/E-01→G-01→G-04.
+- **Stories:** 12 (B:1 · C:1 · D:5 · E:1 · F:1 · G:3). Bug-fix/test-coverage stories (`G-04`) tracked outside this Jira pipeline, created manually.
+- **Critical path:** A-02/E-01→G-01.
 - **Highest risk:** `updateProductDetailsSet` (E-01).
 - **Co-located:** productDetails is in the `plm-product` monorepo; `Product.productDetails` resolves internally.
 

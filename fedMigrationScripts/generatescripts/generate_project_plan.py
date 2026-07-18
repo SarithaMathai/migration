@@ -13,13 +13,16 @@ Ordering rules (per domain):
     while keeping the cutover discipline sequential: reads flip before writes before
     sagas (the FE stage order from the FE breakdown pages).
   • Domains run in the program cutover order (pilot first, Product last) — staffing and
-    calendar for the 2 BE + 2 FE team live in 01-implementation-plan-2BE-2FE.md.
+    calendar for the team live in 01-implementation-plan-{N_BE_ENGINEERS}BE-{N_FE_ENGINEERS}FE.md
+    (team size set in team_config.py).
 """
 
 import importlib.util
 import re
 from datetime import date
 from pathlib import Path
+
+from team_config import N_BE_ENGINEERS, N_FE_ENGINEERS
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -51,7 +54,7 @@ ORDER_WHY = {
     "impression":     "Wave 4 rider — flips with its partner domains (BOM / Product)",
 }
 
-_BE_SHORT_RE = re.compile(r"-BE-([A-G]-\d+(?:-\d+)?)$")
+_BE_SHORT_RE = re.compile(r"-BE-([A-H]-\d+(?:-\d+)?)$")
 
 
 def _fe_by_domain():
@@ -164,7 +167,7 @@ def domain_plan_lines(dom: str, be_stories: list[dict], fe_group: list[dict]) ->
     exp_deps: dict[str, list] = {}
     for k, s in by_short.items():
         exp_deps[k] = [d for d in dict.fromkeys(
-            re.findall(r"\b(?:[A-Z]+-BE-)?([A-G]-\d+(?:-\d+)?)\b", s["depends"] or ""))
+            re.findall(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s["depends"] or ""))
             if d in by_short and d != k]
     blocks: dict[str, list] = {k: [] for k in by_short}
     for k, ds in exp_deps.items():
@@ -263,8 +266,9 @@ def build_project_plan() -> str:
         "One combined implementation sequence per domain: backend build steps from the story "
         "dependency graph, frontend cutovers slotted into the earliest step after their "
         "backend dependencies (reads flip before writes before sagas).",
-        "> Staffing + calendar for the 2 BE + 2 FE team: see 01-implementation-plan-2BE-2FE.md. "
-        "Day figures are AI-estimated nominal midpoints — confirm in refinement.",
+        f"> Staffing + calendar for the {N_BE_ENGINEERS} BE + {N_FE_ENGINEERS} FE team: see "
+        f"01-implementation-plan-{N_BE_ENGINEERS}BE-{N_FE_ENGINEERS}FE.md (team size set in "
+        "team_config.py). Day figures are AI-estimated nominal midpoints — confirm in refinement.",
         "",
         "---",
         "",

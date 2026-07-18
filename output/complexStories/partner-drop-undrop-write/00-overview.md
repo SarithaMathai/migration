@@ -87,8 +87,9 @@ The spike is done when all of the following are recorded and ratified:
 - **Proposal so far (light, to validate):** the resource owner orchestrates the fan-out; each domain exposes its own drop/undrop step.
 - **Draft decision:** [ADR-012 (draft)](./01-adr-partner-drop-undrop.md) proposes an owner-orchestrated
   saga over a per-domain participant contract (Option B) — status 🔴 Proposed, pending ratification.
-  Scenario variant under the domain-ACL assumption: [ADR-012-noACL](./02-adr-noacl-partner-drop-undrop.md).
+  `DROP_UNDROP_PARTNER`'s sample-domain call is a downstream-token site resolved by ADR-019 (Mid-Request
+  ACL Update); every other ACL call in this case stays resolver-local (see ADR-012's ACL note).
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task breakdown are produced by the spike and land here when it concludes.*
+*This folder holds the problem brief (this file) + the draft decision ([01-adr-partner-drop-undrop.md](./01-adr-partner-drop-undrop.md)) + the story breakdown implementing it ([01-stories.md](./01-stories.md)) — the concrete story ids in each affected domain's be-04-stories.md, cross-referenced by pin-down.*

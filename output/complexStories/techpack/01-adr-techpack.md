@@ -7,6 +7,11 @@
 > ~8 domains' data, today one 200-line helper. Reads only; no writes in this case.
 > **Related:** ADR-014 (components/counts rollups — same owner-computed-read stance) ·
 > `SPIKE-06a` (hydration) · the `TechPack/` spike clone validated the federated end-state E2E.
+> **ACL note:** out of scope for ADR-019 (Mid-Request ACL Update) — the walk's partner-permission batch
+> filter (step 1) and the capability token before attachment hydration (step 4) are both **permission-check**
+> shaped (a resolver-local read filter over the walked ids, not a token handed to another domain's loader
+> for its own call) — see ADR-019 §1 and `output/analysis/product/be-07-acl-usage-analysis.md` (`components`'
+> "bulk/partner ACL-filtered resource tree" row is the same shape). Nothing below changes.
 > **Evidence:** `resolvers/SPARK_Product.js` (Q8/Q9 + `getTechPackResourceCountMap`) +
 > `utils/commonLoaders.js` + `utils/accessControlUtils.js` + `services/Search.js` / `Attachment.js` /
 > `Relationship.js` / `AccessControl.js` at `https://github.com/XXX`.

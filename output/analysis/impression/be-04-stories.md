@@ -17,7 +17,7 @@ Each story is self-contained: read *Current Behaviour → Target → Acceptance 
 | B | Core Reads | B-01–B-02 |
 | D | Mutations | D-01 |
 | F | Federation Contributions | F-01 *(BLOCKED-BY product)* |
-| G | Field Resolvers & Tests | G-01–G-04 (G-04 recommended, PO-gated — federation review) |
+| G | Field Resolvers | G-01–G-04 (G-04 recommended, PO-gated — federation review) |
 
 > **Note — Phase A dissolved.** Schema skeleton, owned types, external stubs, and `ImpressionService`/`ImpressionClient` setup are a one-time checklist inside **B-01** (completed in the same PR). No separate Phase A stories exist.
 
@@ -28,8 +28,6 @@ Each story is self-contained: read *Current Behaviour → Target → Acceptance 
 ```mermaid
 graph TD
   B01["B-01 searchImpressions\n(DGS init + ImpressionService)"] --> B02 & D01 & G01 & G02
-  G01 --> G03[G-03 Tests]
-  G02 --> G03
   PROD[product Phase 3] -.blocked.-> F01[F-01 Product extension]
 ```
 
@@ -348,39 +346,6 @@ Product exposes `impressions` and `impressionCounts` resolved via the impression
 
 ---
 
-### IMPRESSION-BE-G-03 · Test coverage & parity
-
-- **Type:** Story  ·  **Phase:** G  ·  **Complexity:** Low  ·  **Category:** CAT-5  ·  **Depends on:** B-01, B-02, D-01, G-02
-
-- **In plain terms:** Prove the impression logic matches the old gateway.
-
----
-
-#### Target
-
-- Unit test coverage ≥ 80% across all impression data fetchers.
-- Parity fixtures for: `searchImpressionsByProductId`, `getImpressionCountsByProductId`, `updateImpressions`, and the `counts` aggregation (including the error → 0 fallback path).
-
----
-
-#### Acceptance Criteria
-
-1. Unit test coverage ≥ 80% for all impression data fetchers.
-2. Parity tests are green for search, counts, and the update mutation.
-3. The `counts` error-fallback path is explicitly covered by a unit test.
-
----
-
-#### Test Cases
-
-- [ ] Parity: `searchImpressionsByProductId` — DGS response matches spark-internal-graphql for a representative product id
-- [ ] Parity: `getImpressionCountsByProductId` — per-partner rows and `totalCount` row match
-- [ ] Parity: `updateImpressions` — mutation response matches spark-internal-graphql
-- [ ] Unit: `counts_errorFallback` — error during aggregation returns `[{totalCount:0}]`
-- [ ] Load: `searchImpressionsByProductId` p95 latency is within the spark-internal-graphql baseline
-
----
-
 ### IMPRESSION-BE-G-04 · `attachment` entity reference (recommended, PO-gated)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🔴 `attachment`
 - **Status:** Recommended (PO-gated — federation-review/03 §2 REC-2)
@@ -416,7 +381,7 @@ separate attachment-API round-trip.
 
 ## 5. Summary
 
-- **Stories:** 8 (B:2 · D:1 · F:1 · G:4). G-04 (recommended, PO-gated) added by the federation review.
+- **Stories:** 7 (B:2 · D:1 · F:1 · G:3). G-04 (recommended, PO-gated) added by the federation review. Bug-fix/test-coverage stories (`G-03`) tracked outside this Jira pipeline, created manually.
 - **Phase A dissolved** — DGS module init + `ImpressionService`/`ImpressionClient` folded into B-01.
 - **No High/Very-High stories** — `counts` aggregation is the only Medium.
 - **Lowest-risk domain** — recommended as the first migration to prove the end-to-end pipeline.

@@ -36,8 +36,8 @@ object on **update** — preserved.
 - **External (federation):** `Product` (`product`, `parentDetails`), `search` (elastic claims + teams),
   `workspace`, `user-profile` (`createdBy`/`updatedBy`/`substantiatedBy`/participants), `access-control`,
   `team` (`TeamPaged`); **gateway stitch:** `VMM` (business/design partners).
-- **Contributes back** (Phase F, BLOCKED-BY product): `extend type Product { claims }` (F-01) and the
-  TechPack `ResourcesCount.claims` count (F-02 — the claims side of `PRODUCT-BE-F-05`).
+- **Contributes back** (Phase H, BLOCKED-BY product): `extend type Product { claims }` (H-01) and the
+  TechPack `ResourcesCount.claims` count (H-02 — the claims side of `PRODUCT-BE-H-04`).
 
 ## 4. Migration Approach  *(Confluence approach page)*
 

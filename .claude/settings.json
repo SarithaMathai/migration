@@ -6,7 +6,16 @@
       "Bash(git -C /c/Saritha/jul4/migration log --oneline -5)",
       "Bash(git -C /c/Saritha/jul4/migration status --short)",
       "Bash(python3 -c ' *)",
-      "Bash(PYTHONIOENCODING=utf-8 python3 -c ' *)"
+      "Bash(PYTHONIOENCODING=utf-8 python3 -c ' *)",
+      "Bash(python -c ' *)",
+      "Bash(python3 -m py_compile fedMigrationScripts/generatescripts/team_config.py)",
+      "Bash(python3 -m py_compile fedMigrationScripts/generatescripts/team_config.py fedMigrationScripts/generatescripts/generate_breakdown.py fedMigrationScripts/generatescripts/generate_frontend.py fedMigrationScripts/generatescripts/generate_team_plan.py fedMigrationScripts/generatescripts/generate_project_plan.py fedMigrationScripts/generatescripts/generate_all.py fedMigrationScripts/generatescripts/generate_comprehensive.py fedMigrationScripts/generatescripts/generate_jira.py output/complexStories/generate.py)",
+      "Bash(python3 fedMigrationScripts/generatescripts/generate_all.py)",
+      "Bash(python3 -m pip show python-docx)",
+      "Bash(python3 -m pip install python-docx)",
+      "Bash(tee /tmp/regen_log.txt)",
+      "Bash(git rm *)",
+      "Bash(git status *)"
     ]
   }
 }

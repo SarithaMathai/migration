@@ -17,7 +17,7 @@
 | D | Mutations (simple) | D-01–D-18 |
 | E | Complex Operations (partner actions, component fan-out, TechPack) | E-01–E-04 |
 | F | Federation & Stitching (TechPack federate + gateway + decisions; **F-13/F-14 added by the federation review**) | F-01–F-14 |
-| G | Field Resolvers, Bug-fixes, Utils, Tests (**G-11 split into G-11-1/G-11-2**; **G-17 added, recommended/PO-gated**) | G-01–G-10, G-11-1, G-11-2, G-12–G-17 |
+| G | Field Resolvers, Utils (**G-11 split into G-11-1/G-11-2**; **G-17 added, recommended/PO-gated**) | G-01–G-11-2, G-13–G-15, G-17 |
 
 > **Phase 0 note.** Three items that used to sit as open "Decisions Required" bullets, or as a bare annotation
 > on a story row, are now real spike stories: `S-01` (cross-domain association pattern, program id
@@ -47,12 +47,11 @@ graph TD
   B01["B-01 getProduct + one-time DGS module scaffold\n(product.graphqls, scalars, service + Feign wiring)"]-->B[B Reads]&C[C Search]&D[D Mutations]&G[G Field resolvers]
   D-->E01 & E02[E-02 componentStatuses]
   B01-->E03[E-03 TechPack facade]-->E04[E-04 TechPack bulk]
-  E03-->F01[F-01-F-08 subgraph placeholders]-->F09[F-09 retire facade]
-  B01-->F13[F-13 Product entity fetcher]
+  E03-->H01[H-01-H-05 subgraph federation]-->F09[F-09 retire facade]
+  B01-->H06[H-06 Product entity fetcher]
   F14[F-14 contract alignment: keys/names/paged wrappers]-->F10[F-10 Hive composition]
-  F13-->F10
+  H06-->F10
   F09-->F10
-  G-->G16[G-16 Tests]
 ```
 
 > **F-13/F-14 added by the federation review (2026-07-17):** `F-14` is a schema-only fix with no
@@ -481,7 +480,7 @@ returns canonical records enriched with elastic flags.
 #### Acceptance Criteria
 
 1. bulk creates.
-2. attachment links applied via the shared association component; no-rollback behaviour documented (compensation deferred to `SPIKE-01`).
+2. attachment links applied via the shared association component; no-rollback behaviour documented (compensation deferred to the shared `WriteSaga` module, `PRODUCT-BE-E-00`, per ADR-011 pin-down 2).
 3. no resolver import remains; the formerly fire-and-forget attachment re-point is awaited and its failure visible (accepted deviations per ADR-011 §4).
 
 ---
@@ -514,6 +513,7 @@ returns canonical records enriched with elastic flags.
 1. updates product.
 2. optional copy.
 3. removed-template attachments archived (template branch).
+4. attachment archiving applied via the shared association component (no bespoke fan-out code).
 
 ---
 
@@ -718,8 +718,90 @@ returns canonical records enriched with elastic flags.
 
 ---
 
+### PRODUCT-BE-E-00 · `WriteSaga` shared module (Sprint 0, critical path)
+- **Type:** Service · **Phase:** E · **Complexity:** High · **Category:** CAT-3 · **Depends on:** — · **Blocks:** E-01, E-02, and every other domain's E-phase multi-step write story
+
+- **In plain terms:** Build the one shared "ordered steps + per-step failure policy" mechanism every multi-step write in the program will use, instead of nine domains each guessing their own.
+
+- **As a** DGS migration engineer **I want** one shared `WriteSaga` module **so that** every multi-step mutation
+gets ordered execution, a declared per-step failure policy, and a visible result — instead of a bespoke,
+undocumented guess per mutation.
+
+- **Current Behaviour, in plain terms:** today, nine different multi-step "save" mutations across seven domains
+(`updateBom`, `updateMeasurement`, `updatePackaging`, `updateProductDetailsSet`, `updateWatchlistEntries`,
+`updateClaim`, `updateComponentStatuses`, plus the later-phase sample mutations) each hand-roll their own
+ordering and failure handling — none of them roll back, most don't even check every step's response, and one
+has an unawaited race. There is no shared answer to "step 2 failed, what happens to step 1's already-committed
+change?" — see [ADR-013 §1-§2](../../complexStories/non-atomic-write-saga/01-adr-non-atomic-write-saga.md) for
+the full write-by-write inventory and the write-operations grid.
+- **Pattern (draft ADR-013 Option B, pending ratification):** one shared `WriteSaga` module, living in
+`plm-product`, reused by every subgraph. Ordered steps, each declaring an `action` + a `policy` —
+`COMPENSATE(inverse)` (an inverse call exists and is cheap — workspace associate/dissociate, relationship
+add/remove) · `RETRY(n)` then `PARTIAL_FAILURE` (ACL/permissions writes after the body) · `RECORD` + reconcile
+(destructive steps with no reliable inverse, e.g. attachment archive/attrs — the Mid-Request ACL Update call
+for those downstream-token sites rides inside the attachment-client call itself, it is not a separate saga
+step). The body PUT (the primary write) is the point of no return: fail there, stop, and compensate whatever
+already committed. Parallel fan-out branches (e.g. `updateComponentStatuses`) are isolated per branch with an
+aggregated result, never a bare `Promise.all` first-rejection-wins. See
+[ADR-013 §4 Option B](../../complexStories/non-atomic-write-saga/01-adr-non-atomic-write-saga.md) for the full
+default policy table and the `updateBom` step-3-failure sequence diagram.
+
+- **Example (the module's shape, from ADR-013 §4):**
+```kotlin
+class WriteSaga {
+  fun <T> step(name: String, action: () -> T, compensation: (() -> Unit)? = null, policy: StepPolicy = StepPolicy.RECORD)
+  fun finish(): SagaResult   // COMMITTED | COMPENSATED | PARTIAL_FAILURE, with per-step detail
+}
+
+// a consumer (e.g. updateBom, PRODUCT-BE-... / BOM-BE-E-01) declares its steps against the shared module:
+saga.step("workspace-assoc", { workspaceAssocHelper.associate(...) }, { workspaceAssocHelper.dissociate(...) }, COMPENSATE)
+saga.step("body", { bomService.updateBom(input) }, policy = POINT_OF_NO_RETURN)
+saga.step("permissions", { bomService.updatePermissions(jwt) }, policy = RETRY_THEN_PARTIAL_FAILURE)
+val result = saga.finish()
+```
+
+- **Files to Create:** `plm-product/.../saga/WriteSaga.kt`, `plm-product/.../saga/StepPolicy.kt`,
+`plm-product/.../saga/SagaResult.kt` — the module and its policy table only; no consumer wiring in this story.
+
+#### Acceptance Criteria
+
+1. `WriteSaga` executes ordered steps, stops at the first non-retryable failure, and runs declared
+   compensations (in reverse order) for every already-completed step that has one.
+2. Every step's response is checked by construction — there is no code path where a step's result is silently
+   ignored (closes ADR-013 pin-down 5).
+3. `finish()` returns `COMMITTED` (all steps succeeded), `COMPENSATED` (a step failed, compensations ran, no
+   net change), or `PARTIAL_FAILURE` (a step failed, some compensations don't exist or also failed) — always
+   with per-step detail, never a bare generic error (ADR-013 pin-down 6; surfaced via GraphQL error extensions
+   by each consumer).
+4. Parallel fan-out steps isolate per-branch failures and aggregate a per-branch result — a `Promise.all`-style
+   first-rejection-wins is not possible through this API (ADR-013 pin-down 7).
+5. Compensation inventory completed and recorded before any consumer story starts: for every step kind in the
+   §4-B policy table, confirm the declared inverse actually exists (workspace associate↔dissociate,
+   relationship add↔remove); anything without a confirmed inverse defaults to `RECORD`, never assumed
+   (ADR-013 pin-down 1 — this is a blocking pre-condition on every consumer story, not optional polish).
+6. Injected mid-sequence failures in unit tests yield `COMPENSATED` or `PARTIAL_FAILURE` with correct per-step
+   detail for at least one `COMPENSATE`, one `RETRY`, and one `RECORD` step in the same saga run.
+7. Zero consumer-facing API changes are needed if a later step kind's policy is refined (e.g. Option D's
+   backend-composed atomic endpoints replace a saga step with one call) — the saga's public contract is
+   step-name + action + compensation + policy, nothing consumer-specific leaks in.
+8. This story ships alone — no domain's E-phase mutation story is modified here; `MST-BE-E-01`
+   (`updateMeasurement`, the smallest real case) is the designated pilot adopter in its own story, followed by
+   `BOM-BE-E-01`, `PKG-BE-E-01`, `PDTL-BE-E-01`, `WATCHLIST-BE-E-01`, `CLAIM-BE-E-01`, `PRODUCT-BE-E-02`, and the
+   later-phase sample mutations, each per their own story's acceptance criteria.
+
+#### Test Cases
+
+- [ ] Unit: a 3-step saga where step 2 fails → step 1's compensation runs, step 3 never runs, result is `COMPENSATED`
+- [ ] Unit: a step with `RETRY(n)` policy fails `n` times then still fails → result is `PARTIAL_FAILURE` with that step's detail
+- [ ] Unit: a step with `RECORD` policy fails → saga continues past it (not a hard stop), failure recorded in per-step detail
+- [ ] Unit: a step declares `COMPENSATE` but its own compensation call also fails → surfaced as `PARTIAL_FAILURE`, not silently swallowed
+- [ ] Unit: a 5-branch parallel fan-out where 1 branch fails → the other 4 branches' results are still returned, aggregated
+- [ ] Integration: compensation inventory checklist (pin-down 1) run and recorded against real backend endpoints before this story closes
+
+---
+
 ### PRODUCT-BE-E-01 · `productBusinessPartnerActions` (REMOVE/DROP/UNDROP)
-- **Type:** Mutation · **Phase:** E · **Complexity:** Very High · **Category:** CAT-2 · **Depends on:** S-03 · **EXT:** 🟡 `sampleV2` · 🔵 `recentlyViewed` · 🔵 `todo` · 🔵 `favorite`
+- **Type:** Mutation · **Phase:** E · **Complexity:** Very High · **Category:** CAT-2 · **Depends on:** S-03, E-00 · **EXT:** 🟡 `sampleV2` · 🔵 `recentlyViewed` · 🔵 `todo` · 🔵 `favorite`
 
 - **In plain terms:** Remove / drop / undrop a business partner across a product — a ~220-line orchestrated write.
 
@@ -730,13 +812,14 @@ stays consistent across cleanup services.
 - Partner update + cleanup across `recentlyViewed`/`todo`/`favorite`/`sampleV2`/accessControl.
 - No rollback.
 - (ACL context.)
-- **Target:** `ProductBusinessPartnerActionService` with 3 strategy methods. **Failure strategy is whatever
-`PRODUCT-BE-S-03` concludes** (the spike the reviewer asked to run first) — this story implements the choice,
-reusing the shared `WriteSaga` from `../../complexStories/non-atomic-write-saga/` if S-03 adopts it.
+- **Target:** `ProductBusinessPartnerActionService` with 3 strategy methods, orchestrated via the shared
+`WriteSaga` module built in `PRODUCT-BE-E-00`. **Failure strategy is whatever `PRODUCT-BE-S-03` concludes**
+(the spike the reviewer asked to run first) for the fan-out-specific compensation choices; the underlying
+saga mechanism itself is settled by ADR-013 (`PRODUCT-BE-E-00`).
 - **Draft direction (pending ratification):** [ADR-012](../../complexStories/partner-drop-undrop-write/01-adr-partner-drop-undrop.md)
-proposes Option B — the resource owner (`plm-product`) orchestrates via `SPIKE-01`'s `WriteSaga` over a
-per-domain participant contract; **security ordering constraint:** on drop, the ACL bulk-drop must complete
-before the mutation returns success (testable invariant, ADR-012 §4).
+proposes Option B — the resource owner (`plm-product`) orchestrates via the shared `WriteSaga` (`PRODUCT-BE-E-00`)
+over a per-domain participant contract; **security ordering constraint:** on drop, the ACL bulk-drop must
+complete before the mutation returns success (testable invariant, ADR-012 §4).
 
 - **Pseudocode (shape only — the exact fan-out compensation depends on `S-03`'s answer):**
 ```kotlin
@@ -771,6 +854,11 @@ class ProductBusinessPartnerActionService(private val saga: WriteSaga) {
 4. on DROP, ACL revocation completes **before** the mutation returns success; on UNDROP, ACL restore precedes participant undrops — proven by an automated test, not convention (ADR-012 §4 ordering constraint).
 5. no Relationship-Service traversal and no `UserProfileAttributes` resolver import remain in the ported flow (replaced by participant enumeration + a user-profile client call).
 
+> **Note:** ADR-012 pin-down 4 (async-refinement scope — recentlyViewed/todo/favorite/user-profile only, never
+> ACL or partner status) and pin-down 6 (keep the `actionType` dispatcher shape for phase-1 parity; splitting
+> is a v2 API question) are scope/architecture statements, not independently testable behavior — no dedicated
+> AC needed; honored by construction in the service shape above.
+
 #### Test Cases
 
 - [ ] REMOVE
@@ -784,7 +872,7 @@ class ProductBusinessPartnerActionService(private val saga: WriteSaga) {
 ---
 
 ### PRODUCT-BE-E-02 · `updateComponentStatuses` (5-loader fan-out)
-- **Type:** Mutation · **Phase:** E · **Complexity:** High · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🟡 `claim`
+- **Type:** Mutation · **Phase:** E · **Complexity:** High · **Category:** CAT-2 · **Depends on:** E-00 · **EXT:** 🟡 `claim`
 
 - **In plain terms:** Update a product's component statuses, fanning out to 5 sibling loaders.
 
@@ -793,7 +881,7 @@ class ProductBusinessPartnerActionService(private val saga: WriteSaga) {
 - The bug: a loop variable meant to be captured per-iteration is instead shared across iterations ("shadow-var bug"), so by the time the async callbacks run, they can all see the *last* loop value instead of their own — a classic closure-over-loop-variable mistake. parallel fan-out to `bom`/`measurement`/`productDetail`/`packaging` (internal) + `claim` (🟡 EXT).
 - **Target:** `coroutineScope { launch {…} } ×5` with structured concurrency; claim via `ClaimClient`.
 - Fix the shadow var.
-- **Pattern (spike-gated, `SPIKE-01` — draft ADR-013, pending ratification):** parallel fan-out branches run as isolated `WriteSaga` steps with an aggregated per-domain result (ADR-013 pin-down 7); the duplicated `claimIds` DTO bug and the void return are fixed as accepted deviations (pin-down 4).
+- **Pattern (draft ADR-013, pending ratification):** parallel fan-out branches run as isolated `WriteSaga` steps (built in `PRODUCT-BE-E-00`) with an aggregated per-domain result (ADR-013 pin-down 7); the duplicated `claimIds` DTO bug and the void return are fixed as accepted deviations (pin-down 4).
 
 - **Example (the bug, and the fix):**
 ```kotlin
@@ -846,7 +934,7 @@ it works on day 1 while per-subgraph federation is sequenced.
 - See [02 §Helper](./be-02-resolver-analysis.md).
 - **Target (facade-then-federate Phase 1, ADR-015 Option B):** `@DgsQuery getProductTechPackCountV1(...)` → `TechPackAggregatorClient.getCount(...)` (Feign to a facade extracted from `getTechPackResourceCountMap`, behavior-frozen except the pinned deviations in ADR-015 §4); `@DgsEntityFetcher(name="ResourcesCount")` rebuilds the entity from `_entities`. See [reference-federation-patterns.md §3](../../../fedMigrationScripts/reference/reference-federation-patterns.md).
 
-- **Example — the eventual target shape (each domain answers its own slice, no relationship-graph walk; see `F-01`-`F-08`):**
+- **Example — the eventual target shape (each domain answers its own slice, no relationship-graph walk; see `H-01`-`H-05` + the co-located `F-04`/`F-06`/`F-08`):**
 ```graphql
 # plm-product — defines the shell (the extend-type end-state, ADR-015 §3-B Phase 2/3; the facade in this story is the interim step)
 type ProductTechPack @key(fields: "productId partnerId") {
@@ -859,7 +947,7 @@ extend type ProductTechPack @key(fields: "productId partnerId") {
 }
 ```
 - **This story's facade**, in the interim, answers all 11 `ResourcesCount` fields itself by calling into each
-domain's existing REST/elastic endpoint — same external contract as the eventual federated version, so `F-01`-`F-08`
+domain's existing REST/elastic endpoint — same external contract as the eventual federated version, so `H-01`-`H-05` (+ the co-located `F-04`/`F-06`/`F-08`)
 can swap the facade out one domain at a time without a breaking schema change.
 
 #### Acceptance Criteria
@@ -867,7 +955,7 @@ can swap the facade out one domain at a time without a breaking schema change.
 1. Returns a fully populated 11-field `ResourcesCount` from the facade for a valid `(productId, partnerId, workspaceContext, parentProductId)` input.
 2. `@DgsEntityFetcher(name="ResourcesCount")` reconstructs the entity from key + context on an `_entities` query (federation-ready shell).
 3. Recorded-fixture parity vs `spark-internal-graphql` for ≥ 5 pinned inputs, including: a product **with a parent** (double-walk), > 100 walked ids (chunked ACL), a 3D attachment, and a critical thread whose parent discussion is outside the walk — 100% field-value match modulo the ADR-015 §4 deviation list (parallelized elastic/ACL calls; counts unchanged).
-4. Facade is observable: per-slice latency + error metrics and a health endpoint exist (they gate the `F-01`–`F-08` re-homings and the `F-09` retirement check).
+4. Facade is observable: per-slice latency + error metrics and a health endpoint exist (they gate the `H-01`–`H-05` re-homings and the `F-09` retirement check).
 5. Facade is behavior-frozen: deviations limited to ADR-015 §4 pin-downs; `CODEOWNERS` guard in place so new feature work lands in the owning domain's `F0x` story instead.
 
 #### Test Cases
@@ -918,7 +1006,7 @@ val results = inputs.map { byProductId.getValue(it.productId) }        // now or
 
 ---
 
-> **Phase F — how `ResourcesCount` gets filled (read once, applies to F-01–F-08).** `ResourcesCount` is the
+> **Phase F/H — how `ResourcesCount` gets filled (read once, applies to H-01–H-05 + the co-located F-04/F-06/F-08).** `ResourcesCount` is the
 > TechPack badge-count aggregate; it is **owned by `product`** in the `plm-product` subgraph, and each of its
 > 11 fields is contributed by whichever domain owns that data. Two contribution mechanisms — and this is
 > exactly where the **ship-on-green exception** lives:
@@ -931,73 +1019,6 @@ val results = inputs.map { byProductId.getValue(it.productId) }        // now or
 >
 > Ownership map: F-01 Attachment · F-02 Discussion · F-03 Sample · F-04 Measurement · F-05 Claim · F-06 BOM ·
 > F-07 Construction · F-08 Watchlist. Federation-pattern reference: `scripts/reference-federation-patterns.md §0/§3`.
-
----
-
-### PRODUCT-BE-F-01 · `ResourcesCount.productAttachments` + `discussionAttachments` (federated, from Attachment)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** attachment domain (⛔ cross-subgraph — does not ship until `plm-attachment` is live)
-
-- **In plain terms:** Contribute attachment counts to the product's TechPack rollup (from Attachment).
-
-- **Current Behaviour, in plain terms:** today the TechPack facade computes these two attachment counts itself
-by walking the product's relationship graph. Once `plm-attachment` is federated, **Attachment** answers these
-fields directly against its own store, filtered by partner — no graph walk, no serial ACL.
-
-- **Example — the federated shape (this is the representative case; `F-02`/`F-03`/`F-05`/`F-07` are identical in
-shape, just a different owning subgraph + field name):**
-```graphql
-# plm-attachment — owns productAttachments/discussionAttachments, extends the shell product defines
-extend type ResourcesCount @key(fields: "productId partnerId") {
-  productAttachments: [ID!]!    @requires(fields: "parentProductId")
-  discussionAttachments: [ID!]! @requires(fields: "parentProductId")
-}
-```
-```kotlin
-// plm-attachment implements the entity fetcher + the field resolvers directly against its own store
-@DgsEntityFetcher(name = "ResourcesCount")
-fun resourcesCount(values: Map<String, Any>): ResourcesCount =
-  ResourcesCount(productId = values["productId"] as String, partnerId = values["partnerId"] as String)
-
-@DgsData(parentType = "ResourcesCount", field = "productAttachments")
-fun productAttachments(dfe: DgsDataFetchingEnvironment): List<String> {
-  val rc = dfe.getSource<ResourcesCount>()
-  return attachmentService.getIdsByProductAndPartner(rc.productId, rc.partnerId)   // no relationship-graph walk
-}
-```
-
-#### Acceptance Criteria
-
-1. `productAttachments`/`discussionAttachments` resolve on the federated `ResourcesCount`; the `E-03` facade stops populating them.
-2. Parity vs the facade for the same inputs.
-3. Field is live in prod only after `plm-attachment` is deployed (ship gate honored).
-
----
-
-### PRODUCT-BE-F-02 · `ResourcesCount.discussions` (federated, from Discussion)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** discussion domain (⛔ cross-subgraph)
-
-- **In plain terms:** Fills in the product's discussion count — answered by the Discussion service once it's live.
-
-Same federated shape as `F-01`, owned by **Discussion** (`plm-discussion`). Full body lives in the discussion domain's stories.
-
-#### Acceptance Criteria
-
-1. `discussions` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
-2. Live in prod only after `plm-discussion` is deployed.
-
----
-
-### PRODUCT-BE-F-03 · `ResourcesCount.sample` (federated, from Sample)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** sample domain (⛔ cross-subgraph)
-
-- **In plain terms:** Fills in the product's sample count — answered by the Sample service once it's live.
-
-Same federated shape as `F-01`, owned by **Sample** (`plm-sample`).
-
-#### Acceptance Criteria
-
-1. `sample` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
-2. Live in prod only after `plm-sample` is deployed.
 
 ---
 
@@ -1016,20 +1037,6 @@ Same federated shape as `F-01`, owned by **Sample** (`plm-sample`).
 
 ---
 
-### PRODUCT-BE-F-05 · `ResourcesCount.claims` (federated, from Claim)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** claim domain (⛔ cross-subgraph)
-
-- **In plain terms:** Fills in the product's claims count — answered by the Claims service once it's live.
-
-Same federated shape as `F-01`, owned by **Claim** (`spark-claims`).
-
-#### Acceptance Criteria
-
-1. `claims` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
-2. Live in prod only after `spark-claims` is deployed.
-
----
-
 ### PRODUCT-BE-F-06 · `ResourcesCount.productBoms` + `packagingBoms` + `boms` (internal, from BOM)
 - **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** E-03
 
@@ -1041,20 +1048,6 @@ Same federated shape as `F-01`, owned by **Claim** (`spark-claims`).
 #### Acceptance Criteria
 
 1. `productBoms`/`packagingBoms`/`boms` resolve in-process; no gateway hop; parity vs facade.
-
----
-
-### PRODUCT-BE-F-07 · `ResourcesCount.constructions` (federated, from Construction)
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** construction domain (⛔ cross-subgraph)
-
-- **In plain terms:** Fills in the product's construction count — answered by the Construction service once it's live.
-
-Same federated shape as `F-01`, owned by **Construction**.
-
-#### Acceptance Criteria
-
-1. `constructions` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
-2. Live in prod only after the construction subgraph is deployed.
 
 ---
 
@@ -1073,17 +1066,17 @@ calling `watchlistService` directly. No separate deploy.
 ---
 
 ### PRODUCT-BE-F-09 · Retire the TechPack aggregation facade
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** F-01, F-02, F-03, F-04, F-05, F-06, F-07, F-08
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** H-01, H-02, H-03, F-04, H-04, F-06, H-05, F-08
 
 - **In plain terms:** Removes the temporary TechPack 'facade' once every count is served by its real owner.
 
 - **Context:** this is the cleanup story once all 8 sibling domains have shipped their federated
-`ResourcesCount` fields (`F-01`-`F-08`) — the temporary `E-03` facade is no longer needed for anything.
+`ResourcesCount` fields (`H-01`-`H-05` + the co-located `F-04`/`F-06`/`F-08`) — the temporary `E-03` facade is no longer needed for anything.
 - **Target:** remove `TechPackAggregatorClient`; `TechPackDataFetcher` returns key+context only; decommission the facade.
 
 - **Example:** before this story, `getProductTechPackCountV1` calls `TechPackAggregatorClient.getCount(...)` (the
 facade). After: it returns only `ResourcesCount(productId, partnerId)` — the shell — and the gateway fans out
-to `F-01`-`F-08`'s federated resolvers for the 11 count fields, same as any other federated entity.
+to `H-01`-`H-05`'s (+ the co-located `F-04`/`F-06`/`F-08`) federated resolvers for the 11 count fields, same as any other federated entity.
 
 #### Acceptance Criteria
 
@@ -1094,7 +1087,7 @@ to `F-01`-`F-08`'s federated resolvers for the 11 count fields, same as any othe
 ---
 
 ### PRODUCT-BE-F-10 · Hive Gateway supergraph composition
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** F-13, F-14
+- **Type:** Field Resolver · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** H-06, F-14
 
 - **In plain terms:** Composes all the subgraphs into one federated graph at the gateway.
 
@@ -1156,37 +1149,6 @@ querying `{ businessPartners { id name } }` should come back with `name` populat
 
 ---
 
-### PRODUCT-BE-F-13 · `Product` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references
-- **Type:** Field Resolver · **Phase:** F · **Complexity:** Medium · **Category:** CAT-3 · **Depends on:** B-01 · **EXT:** —
-
-- **In plain terms:** Lets *other* subgraphs (today: claims) turn a bare `Product{id}` reference into a full product through the gateway.
-
-- **Context (federation-review/04 §4):** the claims subgraph is a **separate DGS** (`spark-claims`). Its
-`Claims.product` field emits only a `Product` key stub; the Hive Gateway then calls `plm-product`'s
-`_entities(representations: [{__typename: "Product", id: …}])` to hydrate it. DGS does **not** generate that
-resolver automatically — without an explicit `@DgsEntityFetcher(name = "Product")`, `Claims.product` (and any
-future external subgraph's product reference) resolves to `null`. `ResourcesCount` already has its entity
-fetcher (TechPack story); `Product` itself had none.
-- **Target DGS Implementation:** `@DgsEntityFetcher(name = "Product")` → `productService.getById(id)` behind a
-`DataLoader` (one batched backend call per request, not per representation); null-tolerant (missing id → null
-entry, no exception, per federation spec).
-- **Files / Dependencies:** `ProductEntityFetcher.kt`; reuses the B-01 service path.
-
-- **Example:**
-```
-POST /graphql  { _entities(representations: [{__typename:"Product", id:"PID1"}, {__typename:"Product", id:"PID2"}]) { ... on Product { id description } } }
-→ one batched productService call → [Product{PID1}, Product{PID2}]
-```
-
-#### Acceptance Criteria
-
-1. `_entities` resolves `Product` representations with a single batched backend call.
-2. Unknown ids yield `null` entries without failing the whole `_entities` response.
-3. End-to-end: a claims-subgraph query `{ getClaims { product { description } } }` hydrates through the gateway (pairs with CLAIM-BE-G-03).
-4. No ACL plumbing introduced.
-
----
-
 ### PRODUCT-BE-F-14 · Cross-subgraph contract alignment (keys, type names, paged wrappers)
 - **Type:** Schema · **Phase:** F · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** — · **EXT:** —
 
@@ -1213,7 +1175,137 @@ verification + the remaining declaration work into the DGS implementation:
 1. `plm-product` schema compiles standalone with every referenced type declared (including `TeamPaged`, `TeamPagedV2`, `WorkspacesPagedV2`, `DiscussionElastic`).
 2. `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts, including zero `@shareable` field-shape conflicts on `TeamPaged` (must match claims' declaration exactly).
 3. `CORONA_ItemDetails` entity form implemented per the 2026-07-17 decision (keyed `tcinId`; Corona inflates via the gateway).
-4. Blocks released: F-10, CLAIM-BE-F-01, CLAIM-BE-F-02.
+4. Blocks released: F-10, CLAIM-BE-H-01, CLAIM-BE-H-02.
+
+---
+
+### Phase H — Entity Resolution (cross-domain @key)
+
+---
+
+### PRODUCT-BE-H-01 · `ResourcesCount.productAttachments` + `discussionAttachments` (federated, from Attachment)
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** attachment domain (⛔ cross-subgraph — does not ship until `plm-attachment` is live)
+
+- **In plain terms:** Contribute attachment counts to the product's TechPack rollup (from Attachment).
+
+- **Current Behaviour, in plain terms:** today the TechPack facade computes these two attachment counts itself
+by walking the product's relationship graph. Once `plm-attachment` is federated, **Attachment** answers these
+fields directly against its own store, filtered by partner — no graph walk, no serial ACL.
+
+- **Example — the federated shape (this is the representative case; `F-02`/`F-03`/`F-05`/`F-07` are identical in
+shape, just a different owning subgraph + field name):**
+```graphql
+# plm-attachment — owns productAttachments/discussionAttachments, extends the shell product defines
+extend type ResourcesCount @key(fields: "productId partnerId") {
+  productAttachments: [ID!]!    @requires(fields: "parentProductId")
+  discussionAttachments: [ID!]! @requires(fields: "parentProductId")
+}
+```
+```kotlin
+// plm-attachment implements the entity fetcher + the field resolvers directly against its own store
+@DgsEntityFetcher(name = "ResourcesCount")
+fun resourcesCount(values: Map<String, Any>): ResourcesCount =
+  ResourcesCount(productId = values["productId"] as String, partnerId = values["partnerId"] as String)
+
+@DgsData(parentType = "ResourcesCount", field = "productAttachments")
+fun productAttachments(dfe: DgsDataFetchingEnvironment): List<String> {
+  val rc = dfe.getSource<ResourcesCount>()
+  return attachmentService.getIdsByProductAndPartner(rc.productId, rc.partnerId)   // no relationship-graph walk
+}
+```
+
+#### Acceptance Criteria
+
+1. `productAttachments`/`discussionAttachments` resolve on the federated `ResourcesCount`; the `E-03` facade stops populating them.
+2. Parity vs the facade for the same inputs.
+3. Field is live in prod only after `plm-attachment` is deployed (ship gate honored).
+
+---
+
+### PRODUCT-BE-H-02 · `ResourcesCount.discussions` (federated, from Discussion)
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** discussion domain (⛔ cross-subgraph)
+
+- **In plain terms:** Fills in the product's discussion count — answered by the Discussion service once it's live.
+
+Same federated shape as `H-01`, owned by **Discussion** (`plm-discussion`). Full body lives in the discussion domain's stories.
+
+#### Acceptance Criteria
+
+1. `discussions` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
+2. Live in prod only after `plm-discussion` is deployed.
+
+---
+
+### PRODUCT-BE-H-03 · `ResourcesCount.sample` (federated, from Sample)
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** sample domain (⛔ cross-subgraph)
+
+- **In plain terms:** Fills in the product's sample count — answered by the Sample service once it's live.
+
+Same federated shape as `H-01`, owned by **Sample** (`plm-sample`).
+
+#### Acceptance Criteria
+
+1. `sample` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
+2. Live in prod only after `plm-sample` is deployed.
+
+---
+
+### PRODUCT-BE-H-04 · `ResourcesCount.claims` (federated, from Claim)
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** claim domain (⛔ cross-subgraph)
+
+- **In plain terms:** Fills in the product's claims count — answered by the Claims service once it's live.
+
+Same federated shape as `H-01`, owned by **Claim** (`spark-claims`).
+
+#### Acceptance Criteria
+
+1. `claims` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
+2. Live in prod only after `spark-claims` is deployed.
+
+---
+
+### PRODUCT-BE-H-05 · `ResourcesCount.constructions` (federated, from Construction)
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Medium · **Category:** CAT-4 · **Depends on:** E-03 · **Blocked by:** construction domain (⛔ cross-subgraph)
+
+- **In plain terms:** Fills in the product's construction count — answered by the Construction service once it's live.
+
+Same federated shape as `H-01`, owned by **Construction**.
+
+#### Acceptance Criteria
+
+1. `constructions` resolves on the federated `ResourcesCount`; facade stops populating it; parity vs facade.
+2. Live in prod only after the construction subgraph is deployed.
+
+---
+
+### PRODUCT-BE-H-06 · `Product` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Medium · **Category:** CAT-3 · **Depends on:** B-01 · **EXT:** —
+
+- **In plain terms:** Lets *other* subgraphs (today: claims) turn a bare `Product{id}` reference into a full product through the gateway.
+
+- **Context (federation-review/04 §4):** the claims subgraph is a **separate DGS** (`spark-claims`). Its
+`Claims.product` field emits only a `Product` key stub; the Hive Gateway then calls `plm-product`'s
+`_entities(representations: [{__typename: "Product", id: …}])` to hydrate it. DGS does **not** generate that
+resolver automatically — without an explicit `@DgsEntityFetcher(name = "Product")`, `Claims.product` (and any
+future external subgraph's product reference) resolves to `null`. `ResourcesCount` already has its entity
+fetcher (TechPack story); `Product` itself had none.
+- **Target DGS Implementation:** `@DgsEntityFetcher(name = "Product")` → `productService.getById(id)` behind a
+`DataLoader` (one batched backend call per request, not per representation); null-tolerant (missing id → null
+entry, no exception, per federation spec).
+- **Files / Dependencies:** `ProductEntityFetcher.kt`; reuses the B-01 service path.
+
+- **Example:**
+```
+POST /graphql  { _entities(representations: [{__typename:"Product", id:"PID1"}, {__typename:"Product", id:"PID2"}]) { ... on Product { id description } } }
+→ one batched productService call → [Product{PID1}, Product{PID2}]
+```
+
+#### Acceptance Criteria
+
+1. `_entities` resolves `Product` representations with a single batched backend call.
+2. Unknown ids yield `null` entries without failing the whole `_entities` response.
+3. End-to-end: a claims-subgraph query `{ getClaims { product { description } } }` hydrates through the gateway (pairs with CLAIM-BE-G-03).
+4. No ACL plumbing introduced.
 
 ---
 
@@ -1265,6 +1357,15 @@ class AttachmentEnrichmentService(
 
 1. parity for mixed attachment/discussion/thread/sample.
 2. ordering rank preserved (product=0, discussion=1, sample=2; createdAt DESC tiebreak).
+3. product side hydrates both v2 and v3 attachment ids (no v2-ignoring gap) — the workspace-side v2-ignoring behaviour (ADR-018 pin-down 2) does not apply here; confirmed by fixture.
+4. thread→parent-discussion lookup guarded — a thread whose parent discussion falls outside the walk is skipped + logged, not a crash (accepted deviation, ADR-018 pin-down 3).
+5. discussion data sourced via a direct discussion-service client + one batched replies call — the cross-resolver import and the per-discussion reply N+1 are both gone (ADR-018 pin-down 4).
+6. `attachmentElasticResponseFeatureFlag` state surveyed across every environment BEFORE fixtures are recorded — blocking precondition on fixture recording (ADR-018 pin-down 5).
+7. draft-filter TODO ("ACL should be doing this") kept verbatim in the ported code — filter not removed; ACL-enforcement backlog item filed separately (ADR-018 pin-down 7).
+8. `createAttachmentPaged`'s `relatedResources` precedence bug preserved exactly as today's output — pinned by a fixture using a row with its own non-empty `relatedResources` (ADR-018 pin-down 9).
+9. independent fetches (token, discussions, threads, samples) run in parallel — accepted performance fix (ADR-018 pin-down 10).
+
+> **Note:** the missing-ACL skip+log behaviour here is intentionally asymmetric with `G-02`'s missing-ACL throw (ADR-014 pin-down 2) — each surface's UI is calibrated to its own behaviour; this asymmetry is by design (ADR-018 pin-down 8) and should not be "fixed" to match.
 
 #### Test Cases
 
@@ -1304,6 +1405,10 @@ The 5-type merge (measurement/claim/bom/productDetail/packaging) and count rollu
 2. `archivedCount`/`countByComponents` match source exactly (incl. name/status fallbacks and `type 2 → packagingBom`).
 3. ACL batched — exactly one `getAccessControlBatch` call per resolution (no N+1), asserted by a call-count test.
 4. no `info.variableValues` read; explicit field args confirmed against UI queries (contract test, ADR-014 pin-down 5).
+5. sample→discussion **+1** roll-up quirk preserved exactly, not "fixed" to real counts — pinned by a dedicated fixture documenting the quirk as intentional (ADR-014 pin-down 4).
+6. packaging elastic query joins the 4-way `Promise.all` (5-way parallel) instead of running sequentially after — accepted performance fix, not a behaviour change (ADR-014 pin-down 7).
+
+> **Note:** ADR-014 pin-downs 3 (`counts` scalar-`0` → zeros-object fix) and 8 (`WorkspaceV2.products` include-flags delegation) are `WorkspaceV2`-side, not `Product`-side — they belong to the later-phase `WorkspaceV2` twin story (`WORKSPACE-BE-G-02`/`G-04`), not here.
 
 #### Test Cases
 
@@ -1329,10 +1434,14 @@ counts; all four share the one `G-01` service instance rather than each re-imple
 
 1. each field returns its shape.
 2. shares G-01 service.
+3. thin fields inherit all of `G-01`'s fixtures/pin-downs by construction (no separate fixture set).
 
 #### Test Cases
 
 - [ ] each field
+- [ ] draft discussion attachment fixture (draft filter)
+- [ ] workspace-v2-only-attachments fixture
+- [ ] both `attachmentsV3` modes (args-present elastic vs args-absent walk/flag) produce parity output
 - [ ] Parity: DGS response matches spark-internal-graphql baseline
 
 ---
@@ -1524,6 +1633,12 @@ val removable = vmmService.getBusinessPartners(product.id) +
 1. `notRemovablePartnerIds`/`notRemovableWorkspaceIds` return the same results as source (same logical union
    of the underlying sibling data).
 2. No reflective resolver invocation remains — every call is a direct, statically-typed service method call.
+3. samples lane's `variableValues` coupling contract-checked against the UI's samples queries BEFORE cutover — this is a blocking pre-condition, not a nice-to-have (ADR-016 pin-down 2).
+4. the 5 sequential source fetches (discussions/attachments/components/samples/watchlists) parallelize — accepted deviation, union output is order-insensitive (ADR-016 pin-down 3).
+5. the serial ACL chunk loop (`getAccessControlBatch`) parallelizes — same fix family as ADR-015 pin-down 3 (ADR-016 pin-down 4).
+6. watchlist lane's `productWorkspaceInfo[0]`-only / first-workspace-only scope preserved exactly as today's semantics (ADR-016 pin-down 8).
+7. the Relationship-Service walk inside `unDroppablePartners`'s owner-enumeration client is a quarantined interim — each lane's future arrival deletes its own share of the walk (ADR-016 pin-down 9).
+8. schema-diff gate proves no lane field (`…PartnerIds` naming + externals until fed-2/`@inaccessible` is usable) is exposed to clients (ADR-016 pin-down 10).
 
 ---
 
@@ -1547,41 +1662,6 @@ val removable = vmmService.getBusinessPartners(product.id) +
 
 ---
 
-### PRODUCT-BE-G-12 · `Product.division` **bug fix** (wrong loader)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔵 `ig`
-
-- **In plain terms:** Fix the wrong-loader bug so `division` returns the product's actual division.
-
-- **Context — why this exists as its own story:** every other `G0x` story is a straight port (make the new code
-behave like the old code). This one is different: it's a **known bug in the code being migrated**, and fixing
-it changes what callers actually receive. It's called out separately so the PO explicitly signs off on
-*when* the fix ships, rather than it sneaking in as a side effect of an unrelated port.
-
-- **Current Behaviour, in plain terms:** `Product.division` is supposed to return the product's **division**
-- (a specific org unit).
-- Instead, the source code has a copy-paste-style mistake: it calls `ig.department.getByID(...)` — the **department** lookup — and returns that instead.
-- So today, every caller of `Product.division` (and `DopplerDepartment.division`, which has the identical bug) has actually been receiving a **department**-shaped object mislabeled as a division, for as long as this bug has existed.
-
-- **Concretely:**
-```kotlin
-// source (bug): division field is wired to the department loader
-fun division(product: Product) = igClient.department.getById(product.divisionId)   // wrong client!
-
-// target (fixed): division field wired to the correct division loader
-fun division(product: Product) = igClient.division.getById(product.divisionId)     // correct
-```
-
-- **Why this matters (not just a mechanical fix):** if any client (internal tool, downstream service, cached UI
-- state) has been silently relying on the department-shaped fields that happen to overlap with what it expected from "division", fixing the bug changes their response shape with no code change on their end — effectively a breaking change disguised as a bug fix.
-- **Target:** wire to `DivisionService` (the correct division lookup); confirm via a quick client survey that nothing depends on the old (department-shaped) response before shipping.
-
-#### Acceptance Criteria
-
-1. `Product.division` and `DopplerDepartment.division` both return the true division shape (via `DivisionService`), not the department shape.
-2. The client-shape-change risk is logged with the PO and confirmed via a client survey before rollout.
-
----
-
 ### PRODUCT-BE-G-13 · IG/tag/tcin/spg + template trivial-field group
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔵 `ig` · 🟡 `tag` · 🔵 `corona`
 
@@ -1589,9 +1669,10 @@ fun division(product: Product) = igClient.division.getById(product.divisionId)  
 
 - **Current Behaviour:** `department`/`departments`/`clazz`/`brand`/`brands`/`divisions`/`productTemplateDepartments`, `tags`, `tcins`, `SPARK_Tcin.itemDetails` (CORONA), `SPARK_PackagingAttribute.spg` (internal fileLibrary), `SPARK_ProductRules.*`, `VMM_BusinessPartnerCategory.*`, `MasterProductStatus.*`. **Target:** group into one PR; federated/internal references.
 
-- **Example:** `department`/`divisions` → federated references to `ig`'s subgraph (**note:** unlike `G-12`'s bug,
-these already call the correct IG endpoint — they're grouped here only because they're trivial, not because
-they share `G-12`'s issue); `SPARK_Tcin.itemDetails` → federated reference to CORONA; `SPARK_PackagingAttribute.spg`
+- **Example:** `department`/`divisions` → federated references to `ig`'s subgraph (**note:** unlike the known
+`Product.division`/`DopplerDepartment.division` wrong-loader bug — tracked outside this Jira pipeline — these
+already call the correct IG endpoint; they're grouped here only because they're trivial); `SPARK_Tcin.itemDetails`
+→ federated reference to CORONA; `SPARK_PackagingAttribute.spg`
 → internal `fileLibraryService` call (co-located, no federation).
 
 #### Acceptance Criteria
@@ -1641,33 +1722,6 @@ rather than one giant call or 500 sequential ones.
 
 ---
 
-### PRODUCT-BE-G-16 · Test coverage, parity harness, load & cut-over rehearsal
-- **Type:** Tests · **Phase:** G · **Complexity:** High · **Category:** CAT-5 · **Depends on:** C-01, E-01, E-03, G-01, G-02
-
-- **In plain terms:** The safety net: tests + parity + load checks proving the new Product DGS matches the old gateway before cut-over.
-
-> Depends transitively on the Phase 0 spikes through `C-01` (needs `S-02`) and `E-01` (needs `S-03`) — this story
-> can't finalize its `getProducts`/partner-action parity fixtures until those spikes' decisions are implemented.
-
-- **Target:** ≥80% unit coverage; parity harness ≥50 fixtures (incl. TechPack, partner actions, components, attachmentsWithMetaData, the division-bug-fix, rules flag both paths); load test p95 for `getProduct`/`getProducts`/`components`/`attachmentsWithMetaData`/TechPack; contract test (schema diff shows only intentional changes); cut-over rehearsal (shadow traffic). 
-
-#### Acceptance Criteria
-
-1. unit ≥80%.
-2. ≥50 parity fixtures green.
-3. load p95 parity.
-4. schema-diff intentional-only.
-5. shadow-traffic rehearsal + rollback drill.
-
-#### Test Cases
-
-- [ ] Parity: DGS response matches spark-internal-graphql baseline
-- [ ] Load: p95 latency is within spark-internal-graphql baseline
-- [ ] contract
-- [ ] Integration: shadow traffic rehearsal + rollback drill passes
-
----
-
 ### PRODUCT-BE-G-17 · Entity references on partner/lineage value types (recommended, PO-gated)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** G-01 · **EXT:** 🔵 `vmm`
 - **Status:** Recommended (PO-gated — federation-review/03 §2 REC-5/REC-6, OQ-5)
@@ -1701,16 +1755,19 @@ hydrates) on `ProductVendorAttributes` + `WorkspaceInfoPartner`, and `product: P
 | `attachmentsWithMetaData` perf (G-01) | Medium | High | Parallel fetch + cached relationship walk | Backend Eng |
 | `getProducts` workspace-filter/staleness handling (C-01) | Medium | Medium | `S-02` spike resolves the two-stage hydration design before `C-01` starts | Backend Eng |
 | Cross-domain association pattern inconsistency (D-01/D-02/D-04) | Medium | Medium | `S-01` spike (program id `SPIKE-06b`, draft ADR-011) sets one pattern; D-03/D-06/D-07/D-11 descoped (single-backend) | Tech Lead |
-| `Product.division` bug fix (G-12) breaks clients | Medium | Medium | Client survey before rollout | PO |
+| `Product.division`/`DopplerDepartment.division` wrong-loader bug fix breaks clients | Medium | Medium | Client survey before rollout; tracked outside this Jira pipeline, created manually | PO |
 | 8 TechPack placeholders block on 8 domains | High | Medium | Facade keeps day-1 function; retire only when all live | Tech Lead |
 | `USE_NEW_RULES_API` legacy delete | Low | High | Verify all envs; staged rollout | PO |
 | Drift wrappers may have live consumers | Medium | Medium | Traffic survey (F-12) | PO |
 | External rating secret | Low | Medium | Vault | Platform |
 
 ## 5. Summary
-- **Stories:** 73 (S:3 · B:11 · C:5 · D:18 · E:4 · F:14 · G:18). `G-11` was **split into G-11-1/G-11-2** (+1 to G);
-  `F` counts F-01–F-08 (8 per-subgraph federation stories) + F-09–F-14 (F-13 entity fetcher and F-14 contract
-  alignment added by the federation review; G-17 is recommended/PO-gated).
-- **Critical path:** S-01/S-02/S-03 → B-01 → C-01/D-01-D-04/E-01 → E-03 (TechPack facade) → G-01 → G-02 → G-16.
+- **Stories:** 71 (S:3 · B:11 · C:5 · D:18 · E:5 · F:6 · H:6 · G:16). `E-00` (shared `WriteSaga` module, Sprint 0)
+  added per ADR-013's build order — the module every other E-phase write depends on. `G-11` was **split into G-11-1/G-11-2** (+1 to G);
+  `H` counts the 6 real cross-subgraph entity-resolution stories (5 `ResourcesCount` federated slices + the
+  `Product` entity fetcher — see Phase H); `F` covers the remaining federation-platform work (facade retirement,
+  gateway composition, stub verification, contract alignment; G-17 is recommended/PO-gated). Bug-fix/
+  test-coverage stories (former `G-12`, `G-16`) tracked outside this Jira pipeline, created manually.
+- **Critical path:** S-01/S-02/S-03 → B-01 → C-01/D-01-D-04/E-01 → E-03 (TechPack facade) → G-01 → G-02.
 - **Highest risk:** TechPack (E-03/E-04); `productBusinessPartnerActions` (E-01, pending `S-03`).
 - **Host DGS:** product is the home of the whole product family; co-located siblings resolve internally.

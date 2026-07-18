@@ -11,6 +11,11 @@
 > the `removablePartner/` spike clone validated the owner-`@requires` lane aggregation E2E.
 > **Evidence:** `utils/removePartnerUtils.js` + `utils/commonLoaders.js` + `resolvers/SPARK_Product.js` +
 > `resolvers/SPARK_WorkspaceV2.js` at `https://github.com/XXX`.
+> **ACL note:** out of scope for ADR-019 (Mid-Request ACL Update) — every ACL call here
+> (`getAccessControlBatch` joins for attachments/components/watchlists, `getPermissions`/
+> `getChunkedPermissions` for `unDroppablePartners`) is **permission-check** shaped: a resolver-local batch
+> read/filter over this resource's own children, never a token minted to call *another* domain's data
+> loader. None of these call sites appear in ADR-019 §1's downstream-token table. Nothing below changes.
 
 ---
 

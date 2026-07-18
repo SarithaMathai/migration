@@ -72,9 +72,8 @@ The cutover pattern is done when the following are recorded:
 - How the fan-out stays within the latency budget of the dashboard views.
 - **Draft decision:** [ADR-014 (draft)](./01-adr-components-counts-rollups.md) proposes owner-computed
   rollups, lift-and-shift semantics + the four fixes (Option A) — status 🔴 Proposed, pending
-  ratification. Scenario variant under the domain-ACL assumption:
-  [ADR-014-noACL](./02-adr-noacl-components-counts-rollups.md).
+  ratification. ACL is out of scope for this case (ADR-019 — see ADR-014's ACL note).
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task breakdown are produced by the spike and land here when it concludes.*
+*This folder holds the problem brief (this file) + the draft decision ([01-adr-components-counts-rollups.md](./01-adr-components-counts-rollups.md)) + the story breakdown implementing it ([01-stories.md](./01-stories.md)) — the concrete story ids in each affected domain's be-04-stories.md, cross-referenced by pin-down.*

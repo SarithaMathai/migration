@@ -1,6 +1,6 @@
 ﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,MST-BE-B-01,(Measurement) getMeasurementByIds data fetcher [MST-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,,To Do,"*Implementation Order:* 1 of 21 (Measurement backend, step 1)
+Story,MST-BE-B-01,(Measurement) getMeasurementByIds data fetcher [MST-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,,To Do,"*Implementation Order:* 1 of 20 (Measurement backend, step 1)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* No
 
@@ -23,10 +23,9 @@ Story,MST-BE-B-01,(Measurement) getMeasurementByIds data fetcher [MST-BE-B-01],,
 * MST-BE-D-07 — deleteSampleMeasurementSet mutation
 * MST-BE-E-01 — updateMeasurement — 2-step orchestrated write
 * MST-BE-F-01 — Implement Product.measurementSets
-* MST-BE-F-02 — Contribute sampleMeasurement to the SampleV2 entity
+* MST-BE-H-01 — Contribute sampleMeasurement to the SampleV2 entity
 * MST-BE-G-01 — Measurement field resolvers
 * MST-BE-G-02 — SampleMeasurementSet field resolvers
-* MST-BE-G-03 — Test coverage & parity
 * MST-FE-001
 
 *Current Behaviour:*
@@ -44,7 +43,7 @@ Story,MST-BE-B-01,(Measurement) getMeasurementByIds data fetcher [MST-BE-B-01],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-B-02,(Measurement) getUnitsOfMeasure (cacheable) [MST-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B-01,To Do,"*Implementation Order:* 2 of 21 (Measurement backend, step 2)
+Story,MST-BE-B-02,(Measurement) getUnitsOfMeasure (cacheable) [MST-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B-01,To Do,"*Implementation Order:* 2 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -69,7 +68,7 @@ Story,MST-BE-B-02,(Measurement) getUnitsOfMeasure (cacheable) [MST-BE-B-02],,Fed
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-B-03,(Measurement) getThicknessUnitsOfMeasure (cacheable) [MST-BE-B-03],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B-01,To Do,"*Implementation Order:* 3 of 21 (Measurement backend, step 2)
+Story,MST-BE-B-03,(Measurement) getThicknessUnitsOfMeasure (cacheable) [MST-BE-B-03],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B-01,To Do,"*Implementation Order:* 3 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -93,7 +92,7 @@ Story,MST-BE-B-03,(Measurement) getThicknessUnitsOfMeasure (cacheable) [MST-BE-B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-B-04,(Measurement) getMeasurementSetStatus (cacheable) [MST-BE-B-04],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B-01,To Do,"*Implementation Order:* 4 of 21 (Measurement backend, step 2)
+Story,MST-BE-B-04,(Measurement) getMeasurementSetStatus (cacheable) [MST-BE-B-04],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B-01,To Do,"*Implementation Order:* 4 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -118,7 +117,7 @@ Story,MST-BE-B-04,(Measurement) getMeasurementSetStatus (cacheable) [MST-BE-B-04
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-B-05,(Measurement) getSampleMeasurement data fetcher [MST-BE-B-05],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B-01,To Do,"*Implementation Order:* 5 of 21 (Measurement backend, step 2)
+Story,MST-BE-B-05,(Measurement) getSampleMeasurement data fetcher [MST-BE-B-05],,Federate BreakDown Product,B,XS,dgs-migration,measurement,query,,B-01,To Do,"*Implementation Order:* 5 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -142,7 +141,7 @@ Story,MST-BE-B-05,(Measurement) getSampleMeasurement data fetcher [MST-BE-B-05],
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-C-01,(Measurement) getMeasurements data fetcher (relationship + listing) [MST-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,measurement,search,,B-01,To Do,"*Implementation Order:* 6 of 21 (Measurement backend, step 2)
+Story,MST-BE-C-01,(Measurement) getMeasurements data fetcher (relationship + listing) [MST-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,measurement,search,,B-01,To Do,"*Implementation Order:* 6 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -150,7 +149,6 @@ Story,MST-BE-C-01,(Measurement) getMeasurements data fetcher (relationship + lis
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 
 *Blocks:*
-* MST-BE-G-03 — Test coverage & parity
 * MST-FE-002
 
 *Current Behaviour:*
@@ -168,7 +166,7 @@ Story,MST-BE-C-01,(Measurement) getMeasurements data fetcher (relationship + lis
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-C-02,(Measurement) getMeasurementsElastic data fetcher [MST-BE-C-02],,Federate BreakDown Product,C,XS,dgs-migration,measurement,search,,B-01,To Do,"*Implementation Order:* 7 of 21 (Measurement backend, step 2)
+Story,MST-BE-C-02,(Measurement) getMeasurementsElastic data fetcher [MST-BE-C-02],,Federate BreakDown Product,C,XS,dgs-migration,measurement,search,,B-01,To Do,"*Implementation Order:* 7 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -193,7 +191,7 @@ Story,MST-BE-C-02,(Measurement) getMeasurementsElastic data fetcher [MST-BE-C-02
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-D-01,(Measurement) addMeasurement mutation [MST-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 8 of 21 (Measurement backend, step 2)
+Story,MST-BE-D-01,(Measurement) addMeasurement mutation [MST-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 8 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -218,7 +216,7 @@ Story,MST-BE-D-01,(Measurement) addMeasurement mutation [MST-BE-D-01],,Federate 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-D-02,(Measurement) updateMeasurementAccess mutation [MST-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 9 of 21 (Measurement backend, step 2)
+Story,MST-BE-D-02,(Measurement) updateMeasurementAccess mutation [MST-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 9 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -243,7 +241,7 @@ Story,MST-BE-D-02,(Measurement) updateMeasurementAccess mutation [MST-BE-D-02],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-D-03,(Measurement) lockMeasurementSet mutation [MST-BE-D-03],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 10 of 21 (Measurement backend, step 2)
+Story,MST-BE-D-03,(Measurement) lockMeasurementSet mutation [MST-BE-D-03],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 10 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -267,7 +265,7 @@ Story,MST-BE-D-03,(Measurement) lockMeasurementSet mutation [MST-BE-D-03],,Feder
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-D-04,(Measurement) unlockMeasurementSet mutation [MST-BE-D-04],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 11 of 21 (Measurement backend, step 2)
+Story,MST-BE-D-04,(Measurement) unlockMeasurementSet mutation [MST-BE-D-04],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 11 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -291,7 +289,7 @@ Story,MST-BE-D-04,(Measurement) unlockMeasurementSet mutation [MST-BE-D-04],,Fed
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-D-05,(Measurement) updateMeasurementComponentStatus mutation [MST-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 12 of 21 (Measurement backend, step 2)
+Story,MST-BE-D-05,(Measurement) updateMeasurementComponentStatus mutation [MST-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 12 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -316,7 +314,7 @@ Story,MST-BE-D-05,(Measurement) updateMeasurementComponentStatus mutation [MST-B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-D-06,(Measurement) putSampleMeasurementSet mutation [MST-BE-D-06],,Federate BreakDown Product,D,M,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 13 of 21 (Measurement backend, step 2)
+Story,MST-BE-D-06,(Measurement) putSampleMeasurementSet mutation [MST-BE-D-06],,Federate BreakDown Product,D,M,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 13 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -341,7 +339,7 @@ Story,MST-BE-D-06,(Measurement) putSampleMeasurementSet mutation [MST-BE-D-06],,
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-D-07,(Measurement) deleteSampleMeasurementSet mutation [MST-BE-D-07],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 14 of 21 (Measurement backend, step 2)
+Story,MST-BE-D-07,(Measurement) deleteSampleMeasurementSet mutation [MST-BE-D-07],,Federate BreakDown Product,D,XS,dgs-migration,measurement,mutation,,B-01,To Do,"*Implementation Order:* 14 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -365,7 +363,7 @@ Story,MST-BE-D-07,(Measurement) deleteSampleMeasurementSet mutation [MST-BE-D-07
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-E-01,(Measurement) updateMeasurement — 2-step orchestrated write [MST-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,measurement,complex,,"SPIKE-01, B-01",To Do,"*Implementation Order:* 15 of 21 (Measurement backend, step 2)
+Story,MST-BE-E-01,(Measurement) updateMeasurement — 2-step orchestrated write [MST-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,measurement,complex,,"SPIKE-01, B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Implementation Order:* 15 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -373,7 +371,7 @@ Story,MST-BE-E-01,(Measurement) updateMeasurement — 2-step orchestrated write 
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 
 *Blocks:*
-* MST-BE-G-03 — Test coverage & parity
+* None
 
 *Requires spike:* SPIKE-01 (Non-Atomic Write Saga) — see program spike
 
@@ -400,7 +398,7 @@ Story,MST-BE-E-01,(Measurement) updateMeasurement — 2-step orchestrated write 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-F-01,(Measurement) Implement Product.measurementSets (internal) [MST-BE-F-01],,Federate BreakDown Product,F,M,dgs-migration,measurement,field-resolver,,B-01,To Do,"*Implementation Order:* 16 of 21 (Measurement backend, step 2)
+Story,MST-BE-F-01,(Measurement) Implement Product.measurementSets (internal) [MST-BE-F-01],,Federate BreakDown Product,F,M,dgs-migration,measurement,field-resolver,,B-01,To Do,"*Implementation Order:* 16 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -425,7 +423,7 @@ Story,MST-BE-F-01,(Measurement) Implement Product.measurementSets (internal) [MS
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-F-02,(Measurement) Contribute sampleMeasurement to the SampleV2 entity [MST-BE-F-02],,Federate BreakDown Product,F,XS,dgs-migration,measurement,field-resolver,,"B-01, sample",To Do,"*Implementation Order:* 17 of 21 (Measurement backend, step 2)
+Story,MST-BE-H-01,(Measurement) Contribute sampleMeasurement to the SampleV2 entity [MST-BE-H-01],,Federate BreakDown Product,H,XS,dgs-migration,measurement,entity-resolver,,"B-01, sample",To Do,"*Implementation Order:* 19 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -449,7 +447,7 @@ Story,MST-BE-F-02,(Measurement) Contribute sampleMeasurement to the SampleV2 ent
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,B-01,To Do,"*Implementation Order:* 18 of 21 (Measurement backend, step 2)
+Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,B-01,To Do,"*Implementation Order:* 17 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -457,7 +455,7 @@ Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 
 *Blocks:*
-* MST-BE-G-03 — Test coverage & parity
+* None
 
 *Current Behaviour:*
 * `access`/`currentUserPermissions` (ACL — context only), `businessPartners` (loadBps), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`), `product` (PID-prefixed → internal `product.getByID`), `workspaces` (`getWorkspacesByIdsV2` or null), `status` (`{code:statusId, description:statusName}` computed), `updatedFromResource` (switch type='sample' → `sampleV2.getSampleById`), `measurementTemplates` (`measurementTemplate.getMeasurementTemplatesByIds(...).content`), `sizeTemplate` (`sizeTemplate.getSizeTemplates([id])[0]`), `tightFitTemplate` (`tightFit.getTightFitByIdAndVersion({id,version})`), `participantDetails` (`getUserGroup`). - **EXT:** 🟡 workspaceV2/sampleV2/measurementTemplate/sizeTemplate/tightFit; 🔵 vmm/user-profile.
@@ -476,7 +474,7 @@ Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-02,(Measurement) SampleMeasurementSet field resolvers (2 fields) [MST-BE-G-02],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-01,To Do,"*Implementation Order:* 19 of 21 (Measurement backend, step 2)
+Story,MST-BE-G-02,(Measurement) SampleMeasurementSet field resolvers (2 fields) [MST-BE-G-02],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-01,To Do,"*Implementation Order:* 18 of 20 (Measurement backend, step 2)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -497,34 +495,9 @@ Story,MST-BE-G-02,(Measurement) SampleMeasurementSet field resolvers (2 fields) 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-03,(Measurement) Test coverage & parity [MST-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,"B-01, C-01, E-01, G-01",To Do,"*Implementation Order:* 20 of 21 (Measurement backend, step 3)
+Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,"B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged)",Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 20 of 20 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
-*Priority:* Medium — *Parallelizable:* Yes
-
-*Depends On:*
-* MST-BE-B-01 — getMeasurementByIds data fetcher
-* MST-BE-C-01 — getMeasurements data fetcher
-* MST-BE-E-01 — updateMeasurement — 2-step orchestrated write
-* MST-BE-G-01 — Measurement field resolvers
-
-*Blocks:*
-* None
-
-*Target:*
-* ≥80% unit coverage; parity fixtures for the 7 queries + 8 mutations + `updateMeasurement` 3 fixtures + the relationship path.
-
-*Acceptance Criteria:*
-1. Unit ≥80%
-2. Parity green for reads/writes incl. `getMeasurements` relationship path
-3. `updateMeasurement` failure path covered
-
-*Definition of Done:*
-* PR merged on green (unit + parity tests pass)
-* Schema change pushed to Hive; operation(s) resolvable through the federated router
-* Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,"B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged)",Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 21 of 21 (Measurement backend, step 3)
-*Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
-*Priority:* Low — *Parallelizable:* Yes
+*Priority:* Low — *Parallelizable:* No
 
 *Depends On:*
 * MST-BE-B-02 — getUnitsOfMeasure
@@ -539,14 +512,14 @@ Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (
 *Acceptance Criteria:*
 1. PO approval recorded (OQ-5) before implementation starts
 2. `sample { id }` resolves as a stub; `sampleId` unchanged
-3. Pairs cleanly with MST-BE-F-02 (no circular resolution at the gateway — verified by a two-hop smoke query)
+3. Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId` [MST-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-B-04,To Do,"*Implementation Order:* 22 of 25 (Measurement combined — frontend #1, cutover step 1)
+Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId` [MST-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-B-04,To Do,"*Implementation Order:* 21 of 24 (Measurement combined — frontend #1, cutover step 1)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -588,7 +561,7 @@ Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId`
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-C-01 MST-BE-C-02,To Do,"*Implementation Order:* 24 of 25 (Measurement combined — frontend #3, cutover step 2)
+Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-C-01 MST-BE-C-02,To Do,"*Implementation Order:* 23 of 24 (Measurement combined — frontend #3, cutover step 2)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 
@@ -625,7 +598,7 @@ Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-003],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,measurement,query-migration,,MST-BE-B-02 MST-BE-B-03,To Do,"*Implementation Order:* 23 of 25 (Measurement combined — frontend #2, cutover step 1)
+Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-003],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,measurement,query-migration,,MST-BE-B-02 MST-BE-B-03,To Do,"*Implementation Order:* 22 of 24 (Measurement combined — frontend #2, cutover step 1)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -662,7 +635,7 @@ Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,mutation-migration,,MST-BE-D-03 MST-BE-D-04 MST-BE-D-06 MST-BE-D-07,To Do,"*Implementation Order:* 25 of 25 (Measurement combined — frontend #4, cutover step 3)
+Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,mutation-migration,,MST-BE-D-03 MST-BE-D-04 MST-BE-D-06 MST-BE-D-07,To Do,"*Implementation Order:* 24 of 24 (Measurement combined — frontend #4, cutover step 3)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 

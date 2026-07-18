@@ -113,6 +113,7 @@ PHASE_LABEL = {
     "E": "complex",
     "F": "field-resolver",
     "G": "field-resolver",
+    "H": "entity-resolver",
 }
 DEFAULT_STATUS = "To Do"
 
@@ -418,8 +419,8 @@ def epic_row() -> list:
     ]
 
 
-_SHORT_BE_RE = re.compile(r"-BE-([A-G]-\d+(?:-\d+)?)$")
-_DEP_ID_RE   = re.compile(r"\b((?:[A-Z]+-BE-)?)([A-G]-\d+(?:-\d+)?)\b")
+_SHORT_BE_RE = re.compile(r"-BE-([A-H]-\d+(?:-\d+)?)$")
+_DEP_ID_RE   = re.compile(r"\b((?:[A-Z]+-BE-)?)([A-H]-\d+(?:-\d+)?)\b")
 
 
 def _short_be(full_id: str) -> str:
@@ -468,7 +469,7 @@ def build_story_rows(domain: str) -> list[list]:
         short2full = {_short_be(s["id"]): s["id"] for s in bstories}
         blocks = {s["id"]: [] for s in bstories}
         for s in bstories:
-            for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-G]-\d+(?:-\d+)?)\b", s["depends"] or ""):
+            for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s["depends"] or ""):
                 dep_full = short2full.get(m.group(1))
                 if dep_full and dep_full != s["id"]:
                     blocks[dep_full].append(s["id"])
@@ -489,7 +490,7 @@ def build_story_rows(domain: str) -> list[list]:
             return ""
         lv = level.get(s["id"], 0)
         dep_fulls = []
-        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-G]-\d+(?:-\d+)?)\b",
+        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b",
                              remap_deps(_strip_domain_spike_refs(s["depends"])) or ""):
             full = next((f for f in bd_title if _short_be(f) == m.group(1)), None)
             if full and full != s["id"] and full not in dep_fulls:

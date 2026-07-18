@@ -108,8 +108,8 @@ for a single whole-program import.
 
 ## 2. Confluence — publish the breakdown & PO pages
 
-**Source:** `output/summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md` (backend breakdown) and
-`output/summary/{domain}/FederatedGqlBreakDown-FE-{domain}.md` (frontend breakdown), one folder per domain under `output/summary/`.
+**Source:** `output/summary/{domain}/FederatedGqlBreakDown-{domain}.md` — one merged page per domain
+(`## Backend` then `## Frontend` sections), one folder per domain under `output/summary/`.
 They are already Confluence-safe (no relative links). (PO-review deep-dives exist only after a
 `generate_all.py --full` run, under `output/summary/{domain}/`.)
 
@@ -119,14 +119,10 @@ They are already Confluence-safe (no relative links). (PO-review deep-dives exis
 Using the Confluence MCP tools, publish these pages into space <SPACE_KEY> under the parent page
 "Federation Graph Migration ▸ Domains" (find the parent by title; create it if missing):
 
-- Title: "BOM — Federated GraphQL Breakdown (Backend)"
-  Body: the markdown in output/summary/bom/FederatedGqlBreakDown-BE-bom.md
-- Title: "BOM — Federated GraphQL Breakdown (Frontend)"
-  Body: the markdown in output/summary/bom/FederatedGqlBreakDown-FE-bom.md
-- Title: "Product — Federated GraphQL Breakdown (Backend)"
-  Body: output/summary/product/FederatedGqlBreakDown-BE-product.md
-- Title: "Product — Federated GraphQL Breakdown (Frontend)"
-  Body: output/summary/product/FederatedGqlBreakDown-FE-product.md
+- Title: "BOM — Federated GraphQL Breakdown"
+  Body: the markdown in output/summary/bom/FederatedGqlBreakDown-bom.md
+- Title: "Product — Federated GraphQL Breakdown"
+  Body: output/summary/product/FederatedGqlBreakDown-product.md
 
 Rules:
 - FORMATTING — convert Markdown to Confluence storage format faithfully and completely:
@@ -160,7 +156,7 @@ PAGES (9) — create under a parent page "Federation Graph Migration" (find by t
    (the overview breakdown for the 8 modules below — make it the parent's first child)
 2–9. One page per module, under a child parent "Domains", titled
    "<Domain> — Federated GraphQL Breakdown", from
-   output/summary/<domain>/FederatedGqlBreakDown-BE-<domain>.md, for exactly these 8:
+   output/summary/<domain>/FederatedGqlBreakDown-<domain>.md, for exactly these 8:
    product, bom, claims, productDetails, packaging, watchlist, measurement, impression
    (display names: Product, BOM, Claims, Product Details, Packaging, Watchlist,
    Measurement, Impression).

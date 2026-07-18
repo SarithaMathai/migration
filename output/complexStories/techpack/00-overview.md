@@ -75,9 +75,8 @@ The spike is done when all of the following are recorded and ratified:
 - **Proposal so far (light, to validate):** each owning domain contributes its slice to one shared entity, instead of one helper calling every service.
 - **Draft decision:** [ADR-015 (draft)](./01-adr-techpack.md) proposes **facade-then-federate**
   (ADR-015 §3 Option B; the pattern `techpack-migration-options.md` calls "Option D (hybrid)") — status
-  🔴 Proposed, pending ratification. Scenario variant under the domain-ACL assumption:
-  [ADR-015-noACL](./02-adr-noacl-techpack.md) (verdict: no change).
+  🔴 Proposed, pending ratification. ACL is out of scope for this case (ADR-019 — see ADR-015's ACL note).
 
 ---
 
-*This folder holds the problem brief only — the research so far. The decision and the detailed design/task breakdown are produced by the spike and land here when it concludes.*
+*This folder holds the problem brief (this file) + the draft decision ([01-adr-techpack.md](./01-adr-techpack.md)) + the story breakdown implementing it ([01-stories.md](./01-stories.md)) — the concrete story ids in each affected domain's be-04-stories.md, cross-referenced by pin-down.*

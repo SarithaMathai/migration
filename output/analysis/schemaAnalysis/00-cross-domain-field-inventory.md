@@ -1,6 +1,6 @@
 # Schema Analysis — Cross-Domain Field Inventory (Program Roll-Up)
 
-> **Scope:** 8 phase-1 domains · **Generated:** 2026-07-17 · **Pipeline Version:** 1.0
+> **Scope:** 8 phase-1 domains · **Generated:** 2026-07-18 · **Pipeline Version:** 1.0
 > Aggregates each domain's `be-06-cross-domain-field-analysis.md`. Regenerate via `python fedMigrationScripts/generatescripts/generate_schema_analysis.py`.
 
 ## Program Totals
@@ -168,4 +168,4 @@ Fields that hydrate from another domain but were not matched to any operation in
 | `SPARK_ParentDetails.systemTeams` | `search` (SearchService (elastic)) | Low |
 
 ---
-*Program roll-up · generated 2026-07-17 from each domain's `be-06-cross-domain-field-analysis.md`.*
+*Program roll-up · generated 2026-07-18 from each domain's `be-06-cross-domain-field-analysis.md`.*

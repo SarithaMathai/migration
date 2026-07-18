@@ -7,7 +7,7 @@
 
 ## Your path
 
-1. **Shape of the migration — the domain breakdown:** `output/summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md`
+1. **Shape of the migration — the domain breakdown:** `output/summary/{domain}/FederatedGqlBreakDown-{domain}.md` (`## Backend` section)
    - Phase A–G structure, the **spike-gated stories** (🔴🔬), dependencies, and pointers to the complex cases.
      This is the map; use it to see boundaries and sequencing at a glance.
 

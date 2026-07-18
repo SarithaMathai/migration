@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate FederatedGqlBreakDown-BE-{domain}.docx — Microsoft Word format.
+Generate FederatedGqlBreakDown-{domain}.docx — Microsoft Word format.
 
 Styles match the reference docs in 'final PO BreakDown Doc/':
   - Title: bold 20pt blue
@@ -9,8 +9,12 @@ Styles match the reference docs in 'final PO BreakDown Doc/':
   - Story tables with colored headers and complexity-coded text
   - Emoji icons throughout (paste into Confluence cleanly)
 
-Output:  output/summary/{domain}/FederatedGqlBreakDown-BE-{domain}.docx  (per-domain subfolder)
-         output/summary/Federated+Graphql+Stories+-+BreakDown.docx       (global, summary/ root)
+The per-domain doc is ONE merged Backend + Frontend page (mirrors generate_breakdown.py's
+.md merge): '## Backend' (build_word_doc's existing content) then '## Frontend'
+(generate_frontend.py's build_fe_section(), rendered via render_md_block).
+
+Output:  output/summary/{domain}/FederatedGqlBreakDown-{domain}.docx  (per-domain subfolder)
+         output/summary/Federated+Graphql+Stories+-+BreakDown.docx    (global, summary/ root)
 
 Run:
     python generate_word.py              # all phase-1 domains + global
@@ -623,6 +627,9 @@ def build_word_doc(domain: str) -> Document:
     # ── Metrics banner ─────────────────────────────────────────────────────
     add_metrics_banner(doc, domain, stories)
 
+    # ── Backend section marker (mirrors the '## Backend' heading in the merged .md) ──
+    section_heading(doc, "Backend", level=1)
+
     # ── §1 What Are We Building? ───────────────────────────────────────────
     if po.get("what"):
         section_heading(doc, "What Are We Building?")
@@ -749,7 +756,7 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         ["Domains", str(len(domains))],
         ["Target DGS services", str(_n_dgs)],
         ["Total Backend Stories", str(_g[0])],
-        ["Total Frontend Stories", f"{_fe_n} · {_fe_lo}–{_fe_hi}d single-engineer (per-domain pages FederatedGqlBreakDown-FE-<domain>)"],
+        ["Total Frontend Stories", f"{_fe_n} · {_fe_lo}–{_fe_hi}d single-engineer (Frontend section of each per-domain FederatedGqlBreakDown-<domain> page)"],
         ["Complexity (backend)", f"🔴 {_g[1]} Very High · 🟠 {_g[2]} High · 🟡 {_g[3]} Medium · 🟢 {_g[4]} Low"],
         ["Generated", today],
     ], col_widths=[2.2, 5.5])
@@ -786,7 +793,7 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         idx_rows.append([str(i), label, DGS_MAP[domain], ts,
                          str(total), str(vh), str(hi), str(me), str(lo),
                          str(fc), f"{flo}–{fhi}d",
-                         f"FederatedGqlBreakDown-BE-{domain} · FederatedGqlBreakDown-FE-{domain}"])
+                         f"FederatedGqlBreakDown-{domain}"])
     idx_rows.append(["", "TOTAL", "—", "—",
                      str(grand[0]), str(grand[1]), str(grand[2]), str(grand[3]), str(grand[4]),
                      str(_fe_n), f"{_fe_lo}–{_fe_hi}d", "—"])
@@ -809,21 +816,61 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
     render_md_block(doc, bd.build_spike_detail(dd))
 
     # Per-domain story detail intentionally NOT included — this is an overview.
-    # Each domain's phase tables are in its own FederatedGqlBreakDown-BE-<domain> breakdown.
+    # Each domain's phase tables are in its own FederatedGqlBreakDown-<domain> breakdown.
 
     return doc
 
 
+# ─── Frontend section (merged into the same per-domain .docx) ─────────────────
+def _fe_section_lines_for(domain: str) -> "list[str] | None":
+    """Load generate_frontend.py and build this domain's Frontend section markdown lines
+    (same data as generate_breakdown.py's build_fe_section_for(), used for the .md merge),
+    or None if fe-08-frontend-stories.md has no stories for this domain / doesn't exist."""
+    try:
+        fe_mod = _load("generate_frontend")
+        stories = fe_mod.parse_fe_stories()
+    except Exception:
+        return None
+    if not stories:
+        return None
+    from collections import defaultdict as _dd
+    by_dom = _dd(list)
+    for s in stories:
+        by_dom[fe_mod.domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])].append(s)
+    group = sorted(by_dom.get(domain, []), key=lambda s: s["id"])
+    if not group:
+        return None
+    ops = []
+    try:
+        client_defs = fe_mod.load_client_defs()
+        usage_idx = fe_mod.load_usage_index()
+        registry = fe_mod.build_schema_registry()
+        be_stories = fe_mod.load_be_stories()
+        ops, _frags, _coverage, _fragments = fe_mod.cross_reference(
+            client_defs, registry, usage_idx, be_stories)
+    except Exception:
+        ops = []
+    return fe_mod.build_fe_section(domain, group, ops)
+
+
 # ─── Runner ────────────────────────────────────────────────────────────────────
 def generate_word_for(domain: str) -> None:
-    # Per-domain artifacts live in output/summary/{domain}/ (BE + FE breakdowns
-    # side by side); only the program-level pages stay at the summary/ root.
+    # Per-domain artifact lives in output/summary/{domain}/ — ONE merged .docx:
+    # '## Backend' (build_word_doc) + '## Frontend' (generate_frontend.py's build_fe_section),
+    # same merge convention as generate_breakdown.py's .md.
     domain_dir = OUTPUT / domain
     domain_dir.mkdir(parents=True, exist_ok=True)
-    doc      = build_word_doc(domain)
-    out_file = domain_dir / f"FederatedGqlBreakDown-BE-{domain}.docx"
+    doc = build_word_doc(domain)
+
+    fe_lines = _fe_section_lines_for(domain)
+    if fe_lines:
+        doc.add_page_break()
+        section_heading(doc, "Frontend", level=1)
+        render_md_block(doc, fe_lines)
+
+    out_file = domain_dir / f"FederatedGqlBreakDown-{domain}.docx"
     doc.save(str(out_file))
-    print(f"  OK {domain}/FederatedGqlBreakDown-BE-{domain}.docx")
+    print(f"  OK {domain}/FederatedGqlBreakDown-{domain}.docx")
 
 
 def generate_global_word() -> None:

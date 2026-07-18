@@ -13,7 +13,7 @@
 `getMeasurements` depends on the **relationship** service to find a product's measurement-set ids, and the
 template/size/tight-fit references are **separate sibling domains** we only reference (not migrate here).
 
-**ACL note:** the current code obtains per-resource capability tokens via ACL; Per the program-level working decision, **the DGS layer carries no ACL plumbing story** — each domain service performs its own access control; scenario ADRs (`complexStories/*/02-adr-noacl-*.md`) record the assumption's impact and ratify with the global decision. ACL is noted in stories for context only.
+**ACL note:** the current code obtains per-resource capability tokens via ACL. Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permission-check and own-domain-token call sites stay resolver-local (context-only, unchanged); measurement has zero downstream-token sites.
 
 ## Migration Scope
 | Surface | Count | Notes |

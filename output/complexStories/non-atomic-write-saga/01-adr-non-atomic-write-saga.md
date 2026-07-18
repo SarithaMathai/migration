@@ -9,6 +9,11 @@
 > **Evidence:** `resolvers/product/SPARK_Bom.js` · `SPARK_Measurement.js` · `SPARK_Packaging.js` ·
 > `SPARK_ProductDetail.js` · `SPARK_Watchlist.js` · `SPARK_Claims.js` · `resolvers/SPARK_Product.js` ·
 > `utils/workspaceAssociationHelper.js` at `https://github.com/XXX`.
+> **Related:** ADR-019 (Mid-Request ACL Update) — the attachment-archive steps in `updatePackaging`
+> (×2), `updateProductDetailsSet`, and `updateWatchlistEntries` are **downstream-token** call sites per
+> ADR-019 §1 (target `attachment`); every other capability token below (workspace-association tokens,
+> body-write tokens, `bom.updatePermissions`, the claim proxy JWT) is **own-domain-token** or
+> **permission-check** and stays resolver-local, unchanged.
 > *(`updateSamplesV2` / `bulkEvaluateSamples` are later-phase; steps below come from the earlier sample-domain
 > analysis, not re-verified in this pass.)*
 
@@ -21,19 +26,20 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 ### `updateBom` (`BOM-BE-E-01`) — 3 writes, 3 services
 
-1. Capability JWT for the bom.
+1. Capability JWT for the bom (own-domain-token — gates this domain's own `workspaceAssociationHelper`/
+   `bom` loader calls; resolver-local, unaffected by ADR-019).
 2. **Workspace association commits first** — if `workspaceContext` has adds/removes:
    `workspaceAssociationHelper(BOM)` → bom-service associate/dissociate.
    ⚠ adds and removes are **two separate loads** — two commits, not one.
 3. Body — `bom.updateBom` PUT; `validationErrors || message` → throw.
 4. If `businessPartners`: `bom.updatePermissions(permissionJWT)` — **response never checked** for
-   validation errors.
+   validation errors (own-domain-token — the bom service's own permissions write, not a cross-domain call).
 
 - **Gap:** bom moved between workspaces but body unsaved (2✓ 3✗) · body saved but ACL stale (3✓ 4✗).
 
 ### `updateMeasurement` (`MST-BE-E-01`) — 2 writes
 
-1. Capability JWT.
+1. Capability JWT (own-domain-token; unaffected by ADR-019).
 2. **Workspace association commits first** (checked — throws on `validationErrors`).
 3. Body — `measurement.updateMeasurement` PUT (checked — throws).
 
@@ -41,10 +47,13 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 ### `updatePackaging` (`PKG-BE-E-01`) — body first, then attachments, error check LAST
 
-1. Capability JWT; body — `packaging.updatePackaging` PUT.
-2. `attachmentsToRemove`? → JWT, `attachment.archiveAttachmentBulkV2`, then `removeRelationship`
+1. Capability JWT (own-domain-token); body — `packaging.updatePackaging` PUT.
+2. `attachmentsToRemove`? → mint a capability token, **Mid-Request ACL Update**
+   (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)` — downstream-token site,
+   `attachment` target, per ADR-019) before `attachment.archiveAttachmentBulkV2`, then `removeRelationship`
    (Relationship service).
-3. `attachmentsToAdd`? → `addBulkRelationShip` (reject if status ≥ 400), JWT, then
+3. `attachmentsToAdd`? → `addBulkRelationShip` (reject if status ≥ 400), capability token +
+   **Mid-Request ACL Update** (downstream-token, `attachment` target), then
    `attachment.bulkUpdateAttributes`.
 4. 🐞 **Only now** is step 1's response checked — `validationErrors || message` → throw.
 
@@ -53,9 +62,11 @@ fails, the resource is left inconsistent, and nothing detects it.**
 
 ### `updateProductDetailsSet` (`PDTL-BE-E-01`) — destructive step before the body
 
-1. Capability JWT; **workspace association commits first** (checked — throws;
+1. Capability JWT (own-domain-token); **workspace association commits first** (checked — throws;
    🐞 error text says *"measurement set"* — copy-paste).
-2. `deleteAttachmentIds`? → JWT, `attachment.archiveAttachmentBulkV3` — **archives before the body write**.
+2. `deleteAttachmentIds`? → mint a capability token, **Mid-Request ACL Update** (downstream-token,
+   `attachment` target, per ADR-019) before `attachment.archiveAttachmentBulkV3` — **archives before the
+   body write**.
 3. Body — `ProductDetails.updateProductDetailsSet` PUT (returned unchecked to the caller).
 
 - **Gap:** attachments archived, set moved — then the body fails: destructive steps already done (1–2✓ 3✗).
@@ -66,7 +77,8 @@ fails, the resource is left inconsistent, and nothing detects it.**
    **the map is never awaited**. The user-group writes race step 2; a failure inside is an
    **unhandled rejection** (the thrown errors go nowhere).
 2. Body — `watchlist.updateWatchlistEntries` (checked — throws).
-3. Collect `removedAttachmentIds` → JWT (fetched even when the list is empty) →
+3. Collect `removedAttachmentIds` → capability token (fetched even when the list is empty), **Mid-Request
+   ACL Update** (downstream-token, `attachment` target, per ADR-019) →
    `attachment.archiveAttachmentBulkV3` (awaited).
 
 - **Gap:** entries saved while user-groups silently failed, or vice versa — order not even deterministic.
@@ -74,7 +86,8 @@ fails, the resource is left inconsistent, and nothing detects it.**
 ### `updateClaim` (`CLAIM-BE-E-01`) — proxy ACL, unchecked association
 
 1. **Proxy capability JWT** — `getUserPermissionsJWTByProxy({id, proxyIds: [parentId], basePermissions})` —
-   permissions borrowed from the parent product.
+   permissions borrowed from the parent product (own-domain-token — gates this domain's own `claim`/
+   `workspaceAssociationHelper` calls; resolver-local, unaffected by ADR-019).
 2. Workspace association — `workspaceAssociationHelper(CLAIM)`; 🐞 **return value never checked**.
 3. Body — `claim.updateClaim` PUT (checked — throws).
 
@@ -105,12 +118,12 @@ Order of the step in each row: `①②③…` = commit order · `∥` = parallel
 
 | Mutation | Workspace assoc | Body write | Permissions / ACL | Attachment | Relationship | UserGroup | 5-domain fan-out | Steps | Checked? |
 |---|---|---|---|---|---|---|---|---|---|
-| `updateBom` | ① (2 loads) | ② | ③ ✗? | — | — | — | — | 3–4 | partial |
+| `updateBom` | ① (2 loads) | ② | ③ ✗? (own-domain-token) | — | — | — | — | 3–4 | partial |
 | `updateMeasurement` | ① | ② | — | — | — | — | — | 2 | yes |
-| `updatePackaging` | — | ① (checked **last** 🐞) | — | ② archive · ③ attrs | ② remove · ③ add | — | — | 4–5 | late |
-| `updateProductDetailsSet` | ① | ③ ✗? | — | ② archive (before body!) | — | — | — | 3 | partial |
-| `updateWatchlistEntries` | — | ② | — | ③ archive | — | ① 🔥 unawaited | — | 3 | race |
-| `updateClaim` | ② ✗? | ③ | ① proxy JWT | — | — | — | — | 3 | partial |
+| `updatePackaging` | — | ① (checked **last** 🐞) | — | ② archive · ③ attrs (both **downstream-token → Mid-Request ACL Update**) | ② remove · ③ add | — | — | 4–5 | late |
+| `updateProductDetailsSet` | ① | ③ ✗? | — | ② archive (before body!) (**downstream-token → Mid-Request ACL Update**) | — | — | — | 3 | partial |
+| `updateWatchlistEntries` | — | ② | — | ③ archive (**downstream-token → Mid-Request ACL Update**) | — | ① 🔥 unawaited | — | 3 | race |
+| `updateClaim` | ② ✗? | ③ | ① proxy JWT (own-domain-token) | — | — | — | — | 3 | partial |
 | `updateComponentStatuses` | — | — | — | — | — | — | ∥ ×5 (void return) | 5∥ | no |
 | `updateSamplesV2` *(later)* | — | ① | — | — | — | — | evaluation ② | 2 | — |
 | `bulkEvaluateSamples` *(later)* | — | ① bulk eval | — | — | — | — | new-rounds ② | 2 | — |
@@ -197,8 +210,8 @@ Recurring shapes the grid exposes:
 | workspace associate / dissociate | `COMPENSATE` — inverse exists | move is cheaply reversible |
 | relationship add / remove | `COMPENSATE` — inverse exists | link is cheaply reversible |
 | body PUT (the primary write) | point of no return — fail = stop + compensate priors | snapshot-undo not worth it |
-| ACL / permissions after body | `RETRY` then `PARTIAL_FAILURE` | stale ACL must be visible |
-| attachment archive / attrs | `RECORD` + reconcile | destructive, no reliable inverse |
+| ACL / permissions after body (own-domain-token, e.g. `bom.updatePermissions`) | `RETRY` then `PARTIAL_FAILURE` | stale ACL must be visible |
+| attachment archive / attrs (downstream-token — carries **Mid-Request ACL Update** before the call, per ADR-019) | `RECORD` + reconcile | destructive, no reliable inverse; the ACL refresh itself is not a separate saga step — it rides inside the attachment-client call |
 | parallel fan-out branches | isolate per branch, aggregate result | one failure must not hide the rest |
 
 - ➕ one decision, nine reuses · failures visible with per-step detail (satisfies every E-story AC) ·

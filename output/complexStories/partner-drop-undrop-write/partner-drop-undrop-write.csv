@@ -1,0 +1,36 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Sub-task,PRODUCT-BE-S-03,(Product) productBusinessPartnerActions failure-strategy spike (do this one first) [PRODUCT-BE-S-03],,,S,M,dgs-migration,product,complex-case,PRODUCT-BE-E-01,,🟠 Draft ADR-012 proposed (`complexStories/partner-drop-undrop-write/01-adr-partner-drop-undrop.md`) — ratification pending,"*Complex case:* partner-drop-undrop-write — see complexStories/partner-drop-undrop-write/00-overview.md and 01-adr-*.md
+
+*Summary:*
+* dropping or un-dropping a business partner from a product isn't one write — it's a - dispatcher with 3 cases (remove / drop / undrop), each of which fans out to *several* cleanup services (recently-viewed, todo, favorites, sample evaluations). - If one of those cleanup calls fails partway through, today there's no rollback and no record of what's now inconsistent. - This is the same shape of problem as BOM's `updateBom` (see `BOM-BE-S-01`) — same candidate patterns apply — but the concrete steps are different (it's a fan-out to N cleanup services, not a fixed 3-step sequence), so it needs its own answer. - **The reviewer marked this the first of the product spikes to run** — it blocks `E-01`, the single highest-risk mutation in the whole Product domain.
+
+*What's unknown:*
+* 1. Which failure strategy fits a *fan-out* shape (potentially failing independently in any of 4-5 places) rather than BOM's fixed 3-step sequence — a straight saga may not translate directly. 2. Whether `REMOVE`/`DROP`/`UNDROP` need the *same* strategy, or whether (e.g.) `UNDROP` — which is already a corrective action — can be best-effort while `DROP` needs stronger guarantees. - **Candidate patterns:** same three options as `BOM-BE-S-01` (saga w/ compensation, compensation-log + reconcile, documented best-effort) — see that spike for the general tradeoffs. This spike's job is picking the one that fits a fan-out (not sequential) shape. > **Prior art:** `../../complexStories/partner-drop-undrop-write/00-overview.md` > already designs this specific case, and the shared `WriteSaga` from > `../../complexStories/non-atomic-write-saga/00-overview.md` > is built to support fan-out steps, not just sequential ones — this spike's job is largely to confirm that > design fits and pick the per-cleanup-service compensation, not invent a new mechanism. - **Example:** `productBusinessPartnerActions(action: DROP_PARTNER, partnerId: ""BP42"")` updates the partner - status, then fans out to remove `BP42` from recently-viewed, todo, favorites, and sample evaluations. - If the ""favorites"" cleanup call fails, today: partner status is already dropped, the other 3 cleanups already ran, favorites cleanup silently didn't happen, caller gets a 500 with no indication which of the 4 fan-out calls actually failed.
+
+*Acceptance Criteria:*
+1. Failure strategy chosen and recorded here (may reuse the BOM `WriteSaga`/`WriteRegistry` shared infra)
+2. Per-cleanup-service compensation (or log-and-reconcile action) is specified for each of the 4-5 fan-out targets, concretely enough for `E-01` to implement
+3. `E-01`'s Target DGS Implementation is updated with the concrete choice"
+Sub-task,PRODUCT-BE-E-01,(Product) productBusinessPartnerActions (REMOVE/DROP/UNDROP) [PRODUCT-BE-E-01],,,E,XL,dgs-migration,product,complex-case,PRODUCT-BE-E-01,E-00,To Do,"*Complex case:* partner-drop-undrop-write — see complexStories/partner-drop-undrop-write/00-overview.md and 01-adr-*.md
+
+*Current Behaviour:*
+* removing, dropping, or un-dropping a business partner from a product - isn't one write — it's a ~220-line dispatcher that updates the partner's status and then fans out to clean up that partner's traces in 4 other places (recently-viewed, todo list, favorites, sample evaluations), with no undo if one of those cleanup calls fails partway through. ~220-line dispatcher, 3 cases (`REMOVE_PARTNER`/`DROP_PARTNER`/`UNDROP_PARTNER`). - Partner update + cleanup across `recentlyViewed`/`todo`/`favorite`/`sampleV2`/accessControl. - No rollback. - (ACL context.)
+
+*Target:*
+* `ProductBusinessPartnerActionService` with 3 strategy methods, orchestrated via the shared `WriteSaga` module built in `PRODUCT-BE-E-00`. **Failure strategy is whatever `PRODUCT-BE-S-03` concludes** (the spike the reviewer asked to run first) for the fan-out-specific compensation choices; the underlying saga mechanism itself is settled by ADR-013 (`PRODUCT-BE-E-00`). - **Draft direction (pending ratification):** ADR-012 proposes Option B — the resource owner (`plm-product`) orchestrates via the shared `WriteSaga` (`PRODUCT-BE-E-00`) over a per-domain participant contract; **security ordering constraint:** on drop, the ACL bulk-drop must complete before the mutation returns success (testable invariant, ADR-012 §4). - **Pseudocode (shape only — the exact fan-out compensation depends on `S-03`'s answer):** ```kotlin class ProductBusinessPartnerActionService(private val saga: WriteSaga) { fun execute(action: PartnerAction, productId: String, partnerId: String): Product { saga.step(""partner-status-update"", { restClient.updatePartnerStatus(productId, partnerId, action) }, { restClient.updatePartnerStatus(productId, partnerId, action.inverse()) } // compensation, if S-03 picks saga ) // fan-out cleanup — each is its own saga step so one failing doesn't silently skip the rest listOf(recentlyViewedClient, todoClient, favoriteClient, sampleV2Client).forEach { cleanupClient -> saga.step(""cleanup-${cleanupClient.name}"", { cleanupClient.removeReferencesTo(partnerId, productId) }, { /* compensation or log+reconcile — per S-03 */ } ) } val result = saga.finish() // COMMITTED | COMPENSATED | PARTIAL_FAILURE (with per-step detail) return result.product } } ```
+
+*Acceptance Criteria:*
+1. all 3 paths reach REST parity (recorded fixtures), incl. the design-partner branch (`skipSamples` when `partnerType == DESIGN_PARTNER`)
+2. partial-failure compensation log/strategy implemented per `SPIKE-03`'s decision (draft ADR-012: per-step policy — partner-status compensate · ACL retry-then-fail · activity/profile retry+reconcile)
+3. cleanup fan-out runs per case, with per-target failure isolation (one cleanup failing is visible and doesn't silently swallow the others)
+4. on DROP, ACL revocation completes **before** the mutation returns success; on UNDROP, ACL restore precedes participant undrops — proven by an automated test, not convention (ADR-012 §4 ordering constraint)
+5. no Relationship-Service traversal and no `UserProfileAttributes` resolver import remain in the ported flow (replaced by participant enumeration + a user-profile client call). > **Note:** ADR-012 pin-down 4 (async-refinement scope — recentlyViewed/todo/favorite/user-profile only, never > ACL or partner status) and pin-down 6 (keep the `actionType` dispatcher shape for phase-1 parity; splitting > is a v2 API question) are scope/architecture statements, not independently testable behavior — no dedicated > AC needed; honored by construction in the service shape above
+
+*Test Cases:*
+* [ ] REMOVE
+* [ ] DROP
+* [ ] UNDROP
+* [ ] design-partner branch (samples skipped)
+* [ ] partial-failure per step
+* [ ] ACL-before-return ordering invariant
+* [ ] Parity: DGS response matches spark-internal-graphql baseline"

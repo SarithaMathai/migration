@@ -15,7 +15,7 @@
    - All 13 domains: totals, per-domain table, target DGS groupings, top risks, open decisions, recommended
      sequencing, and cross-domain blockers.
 
-3. **Approve the plan — the breakdown:** `summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md`
+3. **Approve the plan — the breakdown:** `summary/{domain}/FederatedGqlBreakDown-{domain}.md`
    - Every story in one table (ID, summary, size, dependencies, status), the **Phase-0 spikes**, the
      **§5b complex-story breakdowns**, risks, decisions, and the dependency map. This is the page you sign off.
 

@@ -1,18 +1,18 @@
 # Federated GraphQL — Migration Overview · All Domains
 
-> **Program overview** — the full `spark-internal-graphql` → Netflix DGS migration at a glance. Each domain's phase tables live in its own FederatedGqlBreakDown-BE-<domain> breakdown page (see the Domain Index); the complex, cross-cutting problems are centralized here as **program spikes** (below).
+> **Program overview** — the full `spark-internal-graphql` → Netflix DGS migration at a glance. Each domain's phase tables live in its own FederatedGqlBreakDown-<domain> breakdown page (see the Domain Index); the complex, cross-cutting problems are centralized here as **program spikes** (below).
 
 | | |
 |---|---|
 | **Program** | `spark-internal-graphql` → Netflix DGS Federation (Hive Schema Registry) |
 | **Domains** | 8 |
 | **Target DGS services** | 2 |
-| **Total Backend Stories** | **208** |
-| **Total Frontend Stories** | **40** · 163–254d single-engineer (per-domain pages `FederatedGqlBreakDown-FE-<domain>`) |
-| **Complexity (backend)** | 🔴 6 Very High · 🟠 13 High · 🟡 79 Medium · 🟢 110 Low |
+| **Total Backend Stories** | **201** |
+| **Total Frontend Stories** | **40** · 163–254d single-engineer (Frontend section of each per-domain `FederatedGqlBreakDown-<domain>` page) |
+| **Complexity (backend)** | 🔴 6 Very High · 🟠 13 High · 🟡 74 Medium · 🟢 108 Low |
 | **Phase Coverage** | 🔬 7 Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |
 | **Cross-domain spikes** | 🔬 7 program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
-| **Generated** | 2026-07-17 |
+| **Generated** | 2026-07-18 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G
 
@@ -33,7 +33,7 @@ Each DGS is a Kotlin/Spring Boot service that exposes its domain's schema as a f
 
 **Engineering model:** every story is self-contained in one PR — schema additions, DGS data fetcher, Kotlin REST service method, and Hive registry push. There are no separate service-layer stories.
 
-**ACL note:** the current gateway obtains per-resource ACL capability tokens. Per the program-level working decision, ACL is **not** re-implemented in the DGS layer — each domain service performs its own access control. Each complex case carries a scenario ADR ([`complexStories/*/02-adr-noacl-*.md`](https://github.com/XXX/blob/main/output/complexStories/*/02-adr-noacl-*.md)) recording this assumption's impact; those ratify together with the global decision. ACL is noted in stories for context only.
+**ACL note:** the current gateway obtains per-resource ACL capability tokens. Per ADR-019 ([`complexStories/acl/01-adr-acl-mid-request-update.md`](https://github.com/XXX/blob/main/output/complexStories/acl/01-adr-acl-mid-request-update.md)), permission-check and own-domain-token call sites stay resolver-local (context-only, as before); the 31 downstream-token call sites — where a resolver hands its token to a *different* domain's loader — use **Mid-Request ACL Update** (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) before the downstream call. Each complex case's own ADR carries an ACL note applying this classification to its specific call sites.
 
 ---
 
@@ -46,12 +46,12 @@ Each DGS is a Kotlin/Spring Boot service that exposes its domain's schema as a f
 | **subgraph** | one DGS (e.g. `plm-product`, `plm-sample`) |
 | **co-located** | a domain compiling into `plm-product` (in-process call, not a gateway hop) |
 | **CAT-1…5** | story categories: 1 schema · 2 resolver · 3 service · 4 federation · 5 tests |
-| **Phase A–G** | the migration order within a domain (see the phases table below) |
+| **Phase A–H** | the migration order within a domain (see the phases table below) |
 | **EXT severity** | 🔴 critical/sequential · 🟡 single enrichment call · 🔵 optional/gateway |
 
 ---
 
-## The migration phases (A→G) — the order of replacement
+## The migration phases (A→H) — the order of replacement
 
 Stories are grouped into phases that encode the replacement order within a domain:
 
@@ -61,8 +61,9 @@ Stories are grouped into phases that encode the replacement order within a domai
 | **B / C** | query resolvers (reads) | CAT-2 |
 | **D** | mutation resolvers (writes) | CAT-2 |
 | **E** | complex operations (multi-step writes, aggregations) — often a stub + facade pointing at a complex case | CAT-2 |
-| **F** | federation boundaries — one story per cross-domain edge (`@extends @external`) | CAT-4 |
+| **F** | federation platform work — gateway composition, facade retirement, stub verification, contract alignment (not entity resolution itself) | CAT-4 |
 | **G** | field resolvers (incl. the heavy ones) + the domain parity harness | CAT-2/CAT-5 |
+| **H** | cross-subgraph entity resolution — real `@DgsEntityFetcher`/`@key` fields resolved by a *separate* subgraph (split out from Phase F) | CAT-4 |
 
 > **Phase 0 = Spikes** — time-boxed research producing a recorded decision before the phase it blocks.
 
@@ -81,7 +82,7 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 **🔧 Engineer:**
 
-1. In the **domain A–G table**, find your story. If it's **🔴🔬 with `SPIKE-0x` in Depends On**, the complex part is blocked until that spike concludes — check its status first.
+1. In the **domain A–H table**, find your story. If it's **🔴🔬 with `SPIKE-0x` in Depends On**, the complex part is blocked until that spike concludes — check its status first.
 2. **Follow the `SPIKE-0x` id → Spike Detail**: the **intended cross-domain steps** (your target flow) + the resolver table (external services you'll call + what each resolver does today = your parity target).
 3. **Research so far** — the **Phase 0 — Program Spikes** table links each spike to its `complexStories/<case>/` brief.
 4. **Non-gated stories** (no 🔴🔬) — build straight from the story's Acceptance Criteria; no spike needed.
@@ -99,13 +100,13 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 | Spike ID | Bucket / Generic Problem | Domains affected (home story) | Blocks | Research so far | Status |
 |---|---|---|---|---|---|
-| `SPIKE-01` | 🔬 **Non-Atomic Write Saga** — a mutation fans out across ≥2 REST services (workspace-assoc · body · permissions · component-status) with no transaction; on partial failure state is left inconsistent. Choose the failure strategy: (a) compensating saga · (b) compensation-log + best-effort · (c) best-effort. | bom `E-01` · claims `E-01` · measurement `E-01` · packaging `E-01` · productDetails `E-01` · watchlist `E-01` · product `E-02` | all `E`-phase writes | [`complexStories/non-atomic-write-saga`](https://github.com/XXX/tree/main/output/complexStories/non-atomic-write-saga) (brief + draft ADR-013) | 🟠 Draft ADR-013 proposed (shared `WriteSaga`, per-step policy) — ratification pending |
-| `SPIKE-02` | 🔬 **TechPack Aggregate** — build a `ProductTechPack` entity where **every field is computed from a different microservice REST API**; ratify the assembly pattern under federation. | product `E-03/E-04` | product techpack | [`complexStories/techpack`](https://github.com/XXX/tree/main/output/complexStories/techpack) (brief + draft ADR-015) | 🟠 Draft ADR-015 proposed (facade-then-federate, ADR-015 Option B = catalogue "Option D (hybrid)") — ratification pending |
-| `SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business partner across every referencing child domain; decide ownership (domain subgraph vs workspace) and the write saga. | product `E-01` · workspace `E-01` (later phase) | partner-write `E`/`F` | [`complexStories/partner-drop-undrop-write`](https://github.com/XXX/tree/main/output/complexStories/partner-drop-undrop-write) (brief + draft ADR-012) | 🟠 Draft ADR-012 proposed (owner-orchestrated saga + participant contract) — ratification pending |
-| `SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which partners cannot be removed/dropped because still referenced (cross-domain `@requires` union). | product `G-07` · `G-11-1` · workspace `G-05` (later phase) | partner-read fields | [`complexStories/notRemovable-undroppable-partners`](https://github.com/XXX/tree/main/output/complexStories/notRemovable-undroppable-partners) (brief + draft ADR-016) | 🟠 Draft ADR-016 proposed (owner-`@requires` lane aggregation) — ratification pending |
-| `SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant + CI schema-conformance. | bom `A-04`/`G-08` (+ sample `A-04`/`G-02`, search `B-01`/`C-02` — later phase) | type-resolver + variant fields | [`complexStories/polymorphic-type-resolution`](https://github.com/XXX/tree/main/output/complexStories/polymorphic-type-resolution) (brief + draft ADR-017) | 🟠 Draft ADR-017 proposed (per-site ports + CI conformance gate) — code→type table to confirm at ratification |
-| `SPIKE-06a` | 🔬 **Hydration** — how a domain *reads* another's entity (federated `@key` ref vs REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product `S-02` (gates `C-01`) · bom `B-05` | hydration + rollout (reads) | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — per-edge rule to decide (no draft ADR yet) |
-| `SPIKE-06b` | 🔬 **Cross-Domain Association** — one pattern for a mutation that also *links* its record into a sibling domain (workspace/attachment), incl. sync-vs-async and partial-failure handling. `D-03` is a pure passthrough (no cross-domain call); `D-06`/`D-07`/`D-11` are single-backend writes — the product backend owns all endpoints, no sibling service called (draft ADR-011 §1). | product `S-01` (gates `D-01`/`D-02`/`D-04` only — see scope note) | association-side writes (D-01/D-02/D-04) | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) (brief + draft ADR-011) | 🟠 Draft ADR-011 proposed (sync orchestration + shared association component) — ratification pending |
+| `SPIKE-01` | 🔬 **Non-Atomic Write Saga** — a mutation fans out across ≥2 REST services (workspace-assoc · body · permissions · component-status) with no transaction; on partial failure state is left inconsistent. Choose the failure strategy: (a) compensating saga · (b) compensation-log + best-effort · (c) best-effort. | bom `E-01` · claims `E-01` · measurement `E-01` · packaging `E-01` · productDetails `E-01` · watchlist `E-01` · product `E-02` | all `E`-phase writes | [`complexStories/non-atomic-write-saga`](https://github.com/XXX/tree/main/output/complexStories/non-atomic-write-saga) (brief + draft ADR-013 + story breakdown) | 🟠 Draft ADR-013 proposed — shared `WriteSaga` module built (`PRODUCT-BE-E-00`, Sprint 0); consumers wired — ratification pending |
+| `SPIKE-02` | 🔬 **TechPack Aggregate** — build a `ProductTechPack` entity where **every field is computed from a different microservice REST API**; ratify the assembly pattern under federation. | product `E-03`/`E-04` | product techpack | [`complexStories/techpack`](https://github.com/XXX/tree/main/output/complexStories/techpack) (brief + draft ADR-015 + story breakdown) | 🟠 Draft ADR-015 proposed (facade-then-federate, ADR-015 Option B = catalogue "Option D (hybrid)") — full phase 1–3 story chain built (`E-03`/`E-04`, `H-01`–`H-06`, `F-09`) — ratification pending |
+| `SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business partner across every referencing child domain; decide ownership (domain subgraph vs workspace) and the write saga. | product `E-01` · workspace `E-01` (later phase) | partner-write `E`/`F` | [`complexStories/partner-drop-undrop-write`](https://github.com/XXX/tree/main/output/complexStories/partner-drop-undrop-write) (brief + draft ADR-012 + story breakdown) | 🟠 Draft ADR-012 proposed (owner-orchestrated saga + participant contract, via `PRODUCT-BE-E-00`) — ratification pending |
+| `SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which partners cannot be removed/dropped because still referenced (cross-domain `@requires` union). | product `G-07` · `G-11-1` · workspace `G-05` (later phase) | partner-read fields | [`complexStories/notRemovable-undroppable-partners`](https://github.com/XXX/tree/main/output/complexStories/notRemovable-undroppable-partners) (brief + draft ADR-016 + story breakdown) | 🟠 Draft ADR-016 proposed (owner-`@requires` lane aggregation) — ratification pending |
+| `SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant + CI schema-conformance. | bom `A-04`/`G-08` (+ sample `A-04`/`G-02`, search `B-01`/`C-02` — later phase) | type-resolver + variant fields | [`complexStories/polymorphic-type-resolution`](https://github.com/XXX/tree/main/output/complexStories/polymorphic-type-resolution) (brief + draft ADR-017 + story breakdown) | 🟠 Draft ADR-017 proposed (per-site ports + CI conformance gate, `BOM-BE-A-05` built) — code→type table to confirm at ratification |
+| `SPIKE-06a` | 🔬 **Hydration** — how a domain *reads* another's entity (federated `@key` ref vs REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product `S-02` (gates `C-01`) · bom `B-05` | hydration + rollout (reads) | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) | 🔴 Open — per-edge rule to decide (concludes via `PRODUCT-BE-S-02`, no draft ADR of its own — distinct from 06b/ADR-011 below) |
+| `SPIKE-06b` | 🔬 **Cross-Domain Association** — one pattern for a mutation that also *links* its record into a sibling domain (workspace/attachment), incl. sync-vs-async and partial-failure handling. `D-03` is a pure passthrough (no cross-domain call); `D-06`/`D-07`/`D-11` are single-backend writes — the product backend owns all endpoints, no sibling service called (draft ADR-011 §1). | product `S-01` (gates `D-01`/`D-02`/`D-04` only — see scope note) | association-side writes (D-01/D-02/D-04) | [`complexStories/cross-domain-association`](https://github.com/XXX/tree/main/output/complexStories/cross-domain-association) (brief + draft ADR-011 + story breakdown) | 🟠 Draft ADR-011 proposed (sync orchestration + shared association component) — `D-01`/`D-02`/`D-04` ACs updated — ratification pending |
 
 > **Sequencing:** `SPIKE-01/02/03` are on the critical path (they block `E`-phase writes and TechPack); run them in Sprint 0 alongside each domain's `B-01` module scaffold. `04/05/06a/06b` block specific reads/writes and can run in parallel. Each spike concludes with the decision recorded back into the affected domain stories.
 >
@@ -117,8 +118,8 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 | Bucket | Generic Problem | Domains affected (home story) | Research so far |
 |---|---|---|---|
-| `attachmentsWithMetaData` enrichment | 📎 **One attachments tab, three sources** — files, discussion files, and sample files must merge into one ordered, ACL-filtered feed without a Relationship-Service walk. | product `G-01/G-03` · workspace `G-01/G-03` (later phase) | [`complexStories/attachments-enrichment`](https://github.com/XXX/tree/main/output/complexStories/attachments-enrichment) |
-| `components` + `counts` rollups | 🧮 **Five domains, one dashboard number** — a product's component list and a workspace's counts strip both roll up parallel per-domain fan-outs plus a batched ACL call into a single screen's worth of data. | product `G-02` · workspace `G-02/G-04` (later phase) | [`complexStories/components-and-counts-rollups`](https://github.com/XXX/tree/main/output/complexStories/components-and-counts-rollups) |
+| `attachmentsWithMetaData` enrichment | 📎 **One attachments tab, three sources** — files, discussion files, and sample files must merge into one ordered, ACL-filtered feed without a Relationship-Service walk. | product `G-01/G-03` · workspace `G-01/G-03` (later phase) | [`complexStories/attachments-enrichment`](https://github.com/XXX/tree/main/output/complexStories/attachments-enrichment) (brief + draft ADR-018 + story breakdown) |
+| `components` + `counts` rollups | 🧮 **Five domains, one dashboard number** — a product's component list and a workspace's counts strip both roll up parallel per-domain fan-outs plus a batched ACL call into a single screen's worth of data. | product `G-02` · workspace `G-02/G-04` (later phase) | [`complexStories/components-and-counts-rollups`](https://github.com/XXX/tree/main/output/complexStories/components-and-counts-rollups) (brief + draft ADR-014 + story breakdown) |
 
 ---
 
@@ -137,19 +138,19 @@ Stories are grouped into phases that encode the replacement order within a domai
 
 ## Domain Index
 
-> Each domain's full story detail is in its own breakdown pages — backend `FederatedGqlBreakDown-BE-<domain>`, frontend `FederatedGqlBreakDown-FE-<domain>` (both in `output/summary/<domain>/`). Complexity columns are backend; FE effort is single-engineer, unbuffered.
+> Each domain's full story detail is in its own breakdown page — `FederatedGqlBreakDown-<domain>` (in `output/summary/<domain>/`), one merged page with a `## Backend` and a `## Frontend` section. Complexity columns are backend; FE effort is single-engineer, unbuffered.
 
-| # | Domain | Target DGS | T-Shirt | BE Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | FE Stories | FE effort | Breakdown pages |
+| # | Domain | Target DGS | T-Shirt | BE Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | FE Stories | FE effort | Breakdown page |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | **Bill of Materials (BOM)** | `plm-product (co-located)` | **XL** | **37** | 1 | 2 | 13 | 21 | **7** | 29–46d | `FederatedGqlBreakDown-BE-bom` · `FederatedGqlBreakDown-FE-bom` |
-| 2 | **Claims** | `spark-claims (separate)` | **L** | **21** | 0 | 2 | 9 | 10 | **4** | 17–27d | `FederatedGqlBreakDown-BE-claims` · `FederatedGqlBreakDown-FE-claims` |
-| 3 | **Impression** | `plm-product (co-located)` | **XS** | **8** | 0 | 0 | 2 | 6 | **2** | 3–5d | `FederatedGqlBreakDown-BE-impression` · `FederatedGqlBreakDown-FE-impression` |
-| 4 | **Measurement** | `plm-product (co-located)` | **M** | **21** | 0 | 1 | 6 | 14 | **4** | 12–19d | `FederatedGqlBreakDown-BE-measurement` · `FederatedGqlBreakDown-FE-measurement` |
-| 5 | **Packaging** | `plm-product (co-located)` | **L** | **24** | 0 | 2 | 9 | 13 | **5** | 21–33d | `FederatedGqlBreakDown-BE-packaging` · `FederatedGqlBreakDown-FE-packaging` |
-| 6 | **Product** | `plm-product (host)` | **XXL** | **70** | 5 | 4 | 27 | 34 | **12** | 66–102d | `FederatedGqlBreakDown-BE-product` · `FederatedGqlBreakDown-FE-product` |
-| 7 | **Product Details** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 7 | 5 | **3** | 8–12d | `FederatedGqlBreakDown-BE-productDetails` · `FederatedGqlBreakDown-FE-productDetails` |
-| 8 | **Watchlist** | `plm-product (co-located)` | **M** | **14** | 0 | 1 | 6 | 7 | **3** | 7–10d | `FederatedGqlBreakDown-BE-watchlist` · `FederatedGqlBreakDown-FE-watchlist` |
-| | **TOTAL** | — | — | **208** | **6** | **13** | **79** | **110** | **40** | **163–254d** | — |
+| 1 | **Bill of Materials (BOM)** | `plm-product (co-located)` | **XL** | **37** | 1 | 2 | 13 | 21 | **7** | 29–46d | `FederatedGqlBreakDown-bom` |
+| 2 | **Claims** | `spark-claims (separate)` | **L** | **20** | 0 | 2 | 8 | 10 | **4** | 17–27d | `FederatedGqlBreakDown-claims` |
+| 3 | **Impression** | `plm-product (co-located)` | **XS** | **7** | 0 | 0 | 2 | 5 | **2** | 3–5d | `FederatedGqlBreakDown-impression` |
+| 4 | **Measurement** | `plm-product (co-located)` | **M** | **20** | 0 | 1 | 5 | 14 | **4** | 12–19d | `FederatedGqlBreakDown-measurement` |
+| 5 | **Packaging** | `plm-product (co-located)` | **L** | **23** | 0 | 2 | 8 | 13 | **5** | 21–33d | `FederatedGqlBreakDown-packaging` |
+| 6 | **Product** | `plm-product (host)` | **XXL** | **69** | 5 | 4 | 27 | 33 | **12** | 66–102d | `FederatedGqlBreakDown-product` |
+| 7 | **Product Details** | `plm-product (co-located)` | **M** | **12** | 0 | 1 | 6 | 5 | **3** | 8–12d | `FederatedGqlBreakDown-productDetails` |
+| 8 | **Watchlist** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 5 | 7 | **3** | 7–10d | `FederatedGqlBreakDown-watchlist` |
+| | **TOTAL** | — | — | **201** | **6** | **13** | **74** | **108** | **40** | **163–254d** | — |
 
 ---
 
@@ -179,6 +180,7 @@ Stories are grouped into phases that encode the replacement order within a domai
 | 🔴🔬 `CLAIM-BE-E-01` `updateClaim` (proxy ACL + multi-step write) | claims | Mutation | `workspaceV2` | getUserPermissionsJWTByProxy({id:humanId, proxyIds:[parentId], basePermissions:true}) (proxy/external ACL path — context only); 2) if workspaceContext.{add,remove}… |
 | 🔴🔬 `MST-BE-E-01` `updateMeasurement` — 2-step orchestrated write | measurement | Mutation | `workspaceV2` | workspaceAssociations = sparkMeasurement.updateWorkspaceAssociations \|\| {}. token for [humanId]. 2. If add/remove workspaces → workspaceAssociationHelper(MEASUREMENT… |
 | 🔴🔬 `PKG-BE-E-01` `updatePackaging` (multi-step write) | packaging | Mutation | `attachment`, `relationship` | token; set humanId=packagingId; PUT packaging/v1 (body); 2) if attachmentsToRemove → (attachment) archiveAttachmentBulkV2 + (relationship) removeRelationship; 3) if… |
+| 🔴🔬 `PRODUCT-BE-E-00` `WriteSaga` shared module (Sprint 0, critical path) | product | Service | — (internal only) | — |
 | 🔴🔬 `PRODUCT-BE-E-02` `updateComponentStatuses` (5-loader fan-out) | product | Mutation | `claim` | updating component statuses fans out to 5 places in parallel (bom, - measurement, productDetail, packaging — all internal — plus claim, external). - The bug: a loop… |
 | 🔴🔬 `PDTL-BE-E-01` `updateProductDetailsSet` (multi-step write) | productDetails | Mutation | `attachment`, `workspaceV2` | if workspaceContext.{add,remove}Workspaces non-empty → workspaceAssociationHelper(PRODUCT_DETAIL, id, add, remove) (throws on error); 2) null workspaceContext; 3) if… |
 | 🔴🔬 `WATCHLIST-BE-E-01` `updateWatchlistEntries` (multi-step write) | watchlist | Mutation | `attachment`, `userGroup` | per-entry (currently NOT awaited — bug): getUserGroups([humanId]); if existing participants → updateUserGroup, else (user-group) addUserGroup (throw on error); 2)… |

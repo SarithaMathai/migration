@@ -5,6 +5,9 @@
 > **Scope:** the *write* half of cross-domain — a mutation that also links its record into a sibling domain.
 > Hydration (reads) is `SPIKE-06a`, **not** decided here.
 > **Prior art:** ADR-010 (Teams ↔ Domain association) — must stay consistent with it.
+> **Related:** ADR-019 (Mid-Request ACL Update) — D-01/D-02/D-04's capability tokens are **downstream-token**
+> call sites per ADR-019 §1 (`Mutation.addProduct`/`addProducts` → `workspaceV2`, `Mutation.addProducts`/
+> `updateProduct` → `attachment`); this ADR assumes ADR-019's mechanism for them.
 > **Evidence:** `resolvers/SPARK_Product.js` + `services/Product.js` at `https://github.com/XXX`.
 
 ---
@@ -14,8 +17,12 @@
 ### D-01 · `addProduct(workspaceId, sparkProduct, copyProduct)`
 
 1. Create product — `POST ${v1}`.
-2. `workspaceId`? → ACL token for the workspace, then `workspaceV2.addResourcesToWorkspaceV2` links the new id.
-3. `copyProduct`? → set `targetProductId` = new id, ACL token, `POST ${v2}/copy-details`;
+2. `workspaceId`? → mint a capability token scoped to the workspace, **Mid-Request ACL Update**
+   (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)` refreshes the thread's security
+   context — ADR-019 Option B; this is a downstream-token site, `workspaceV2` target), then
+   `workspaceV2.addResourcesToWorkspaceV2` links the new id.
+3. `copyProduct`? → set `targetProductId` = new id, capability token (own-domain-token — the copy-details
+   call stays on the product backend, unaffected by ADR-019), `POST ${v2}/copy-details`;
    graft `copyId` / `copyProductRequest` / `copyProductResources` onto the result.
 4. Return product.
 
@@ -23,7 +30,8 @@
 
 ### D-02 · `addProducts(workspaceId, products[])` — one create, four association fan-outs
 
-1. ACL token for the workspace, up front.
+1. Mint a capability token scoped to the workspace, up front; **Mid-Request ACL Update** before the
+   workspace call (downstream-token, `workspaceV2` target, per ADR-019).
 2. Bulk create — `POST ${v1}/bulk` (input `attachmentId` → `thumbnailId`).
 3. Per input with an `attachmentId` (created product matched back by `thumbnailId`), build:
    - attachment re-point — `{documentId, resource: {id: productId, type: 'product'}}`,
@@ -31,7 +39,9 @@
    - attachment attributes — `relatedResources: [productId]`; with `businessPartners` also
      `productPacketProps` (each partner `critical: true`) + `managePermissionsRequest.partnersToAdd`.
 4. Attachment metadata — calls `SPARK_Attachment.Mutation.bulkUpdateAttachmentsV2(...)`
-   **by importing the attachment resolver directly**. ← the coupling this spike exists to remove.
+   **by importing the attachment resolver directly**. ← the coupling this spike exists to remove. This is
+   also a **downstream-token** site (capability token minted then handed to `attachment`, per ADR-019) —
+   the replacement client call must carry **Mid-Request ACL Update** before calling `plm-attachment`.
 5. Relationship graph — `relationship.createBulkRelationship`; status ≥ 400 **rejects the whole mutation**,
    though products were created in step 2.
 6. Attachment re-point — `attachment.bulkUpdateResource` — **not awaited** (fire-and-forget).
@@ -51,7 +61,9 @@
 1. Update product (only if `input` has keys besides `id`) — `PUT ${v1}/{id}`.
 2. `copyProduct`? → same copy helper as D-01; merge copy metadata into the result.
 3. `removedProductTemplateAttachments`? → split: `humanId` → v3, `documentId` → v2;
-   per list: ACL token, then `archiveAttachmentBulkV2` / `archiveAttachmentBulkV3` (awaited).
+   per list: mint a capability token, **Mid-Request ACL Update** (downstream-token, `attachment` target,
+   per ADR-019 — two sites here, one per list), then `archiveAttachmentBulkV2` / `archiveAttachmentBulkV3`
+   (awaited).
 4. Return product.
 
 - **Failure:** sequential, no rollback — a failed archive errors the mutation after the update committed.
@@ -85,10 +97,10 @@ relationship → central platform service · ACL → AccessControlService.
 
 | Mutation | Product | Workspace | Attachment | Relationship | ACL | Cross-subgraph write? |
 |---|---|---|---|---|---|---|
-| D-01 `addProduct` | create + copy | ✅ | — | — | ✅ ×2 | **Yes** — workspace |
-| D-02 `addProducts` | bulk create | ✅ | ✅ metadata (cross-resolver) + re-point (unawaited) | ✅ | ✅ ×3 | **Yes** — 3 domains |
+| D-01 `addProduct` | create + copy | ✅ | — | — | ✅ ×2 (①=downstream-token → Mid-Request ACL Update, ②=own-domain-token) | **Yes** — workspace |
+| D-02 `addProducts` | bulk create | ✅ | ✅ metadata (cross-resolver) + re-point (unawaited) | ✅ | ✅ ×3 (workspace + attachment-metadata = downstream-token → Mid-Request ACL Update ×2; re-point token folds into the same attachment call) | **Yes** — 3 domains |
 | D-03 `bulkUpdateProducts` | mass_update | — | — | — | — | No |
-| D-04 `updateProduct` | update + copy | — | ✅ archive V2/V3 | — | ✅ | **Yes** — attachment |
+| D-04 `updateProduct` | update + copy | — | ✅ archive V2/V3 | — | ✅ (downstream-token ×2 → Mid-Request ACL Update; copy-details token is own-domain-token) | **Yes** — attachment |
 | D-06 `addTeamsToProduct` | 3 endpoints | — | — | — | — | No — single backend |
 | D-07 `addBusinessPartnersToProductWithType` | 1 endpoint | — | — | — | — | No — single backend |
 | D-11 `updateWorkspaceAttributes` | 1 endpoint | — | — | — | — | No — single backend |
@@ -106,7 +118,11 @@ relationship → central platform service · ACL → AccessControlService.
   (e.g. navigates straight to the workspace listing after `addProduct`).
 - Partial failure is real but undocumented: no rollback anywhere, one fire-and-forget call.
 - A federated gateway does **not** orchestrate multi-subgraph mutations natively.
-- ACL capability tokens must keep flowing (header forwarding via `@DgsContext` filter).
+- ACL capability tokens must keep flowing — for the downstream-token sites (D-01's workspace link, D-02's
+  workspace link + attachment metadata, D-04's attachment archive, ×5 total per ADR-019 §1) via
+  **Mid-Request ACL Update** (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) before
+  the sibling-domain call; the copy-details token (D-01/D-04) stays own-domain-token, resolver-local,
+  unchanged.
 - Collab Canvas consumes D-06/D-07/D-11 — its contract must not change in phase 1.
 - Must stay consistent with ADR-010.
 
@@ -117,8 +133,8 @@ relationship → central platform service · ACL → AccessControlService.
   boundaries; D-03/D-06/D-07/D-11 are single-backend (re-verified against the resolver source).
 - Sibling services (workspace, attachment, relationship) keep their current REST contracts through
   phase 1.
-- ACL capability tokens continue to flow via header forwarding (`@DgsContext` filter) under the current
-  program ACL stance; the noACL scenario ADR re-scores this premise.
+- ACL capability tokens continue to flow: downstream-token sites refresh the thread's security context via
+  Mid-Request ACL Update before the sibling call (ADR-019, ratified); own-domain-token sites are unaffected.
 
 **Constraints**
 - The mutation contract is synchronous read-after-write — the UI navigates immediately after `addProduct`;
@@ -158,7 +174,10 @@ relationship → central platform service · ACL → AccessControlService.
 ### B — Option A + shared association component ⭐
 
 - One internal component — `associate(sourceRef, targetDomain, targetRef, props)` — wraps the
-  workspace / attachment / relationship link calls; every gated mutation uses it.
+  workspace / attachment / relationship link calls; every gated mutation uses it. For the downstream-token
+  targets (workspace, attachment — 5 of the wrapped calls per ADR-019 §1), the component calls
+  **Mid-Request ACL Update** (`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) before
+  the sibling-domain call, once, inside the shared component — not duplicated per mutation.
 - Partial-failure policy (fail-fast · best-effort · compensate) is a **declared parameter** per mutation,
   not implicit resolver code.
 - ➕ kills the duplicated fan-outs (`PRODUCT-BE-S-01`'s stated problem) · failure policy explicit and testable ·
@@ -213,7 +232,7 @@ relationship → central platform service · ACL → AccessControlService.
 |---|---|---|---|
 | 1 | D-02 unawaited `bulkUpdateResource` | await vs preserve fire-and-forget | await; list as accepted parity deviation |
 | 2 | D-02 post-create reject on relationship failure | accept non-atomic vs compensate | accept + document; defer compensation to `SPIKE-01` (saga) |
-| 3 | D-02 cross-resolver import of `bulkUpdateAttachmentsV2` | — | replace with attachment-service client call inside the component |
+| 3 | D-02 cross-resolver import of `bulkUpdateAttachmentsV2` | — | replace with attachment-service client call inside the component; carries **Mid-Request ACL Update** before the call (downstream-token site, per ADR-019) |
 | 4 | D-06/D-07 `return new Error(...)` | keep vs standardize | thrown typed errors (`DgsException`); accepted parity deviation |
 
 ---

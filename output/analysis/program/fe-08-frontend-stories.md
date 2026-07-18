@@ -267,14 +267,14 @@
 ### PRODUCT-FE-010 · Migrate TechPack count queries (facade-then-federate)
 
 - **Type:** Query migration (staged) · **Impact:** Medium · **Domain:** product
-- **Depends on:** PRODUCT-BE-E-03, PRODUCT-BE-E-04
+- **Depends on:** PRODUCT-BE-E-03, PRODUCT-BE-E-04, PRODUCT-BE-H-01, PRODUCT-BE-H-02, PRODUCT-BE-H-03, PRODUCT-BE-H-04, PRODUCT-BE-H-05
 - **Operations:** `getProductTechPackCountV1`, `getProductTechPackBulkCountV1`
 
 - **Business objective:**
   - TechPack readiness counts remain correct on product list and detail screens through both migration steps.
 - **Technical objective:**
   - Step 1 (facade): keep the current document shapes, re-point to the router (facade preserves the contract — ADR-015 Option B, 🟠 draft; facade-then-federate).
-  - Step 2 (federate): replace the dedicated count queries with count fields selected on `Product` in existing documents.
+  - Step 2 (federate): replace the dedicated count queries with count fields selected on `Product` in existing documents (backed by `PRODUCT-BE-H-01`..`H-05`, each domain's federated `ResourcesCount` field, shipping independently as each subgraph goes live).
 - **Background / current implementation:**
   - `product-queries/ProductQueries.tsx` and `product-common/WorkspaceProductsQueries.ts`; the backend aggregates 7 sequential elastic queries per count.
 - **Required changes:**
@@ -1012,7 +1012,7 @@
 ### CLAIM-FE-002 · Migrate claim reads (first cross-subgraph cutover)
 
 - **Type:** Query migration · **Impact:** High · **Domain:** claims
-- **Depends on:** CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-FE-001
+- **Depends on:** CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-FE-001, PRODUCT-BE-H-06
 - **Operations:** `getClaims`, `getClaimByIds`, `getCommunicationChannels`, `getAllClaimsAbout`, `getClaimComponentStatus`
 
 - **Business objective:**
