@@ -16,8 +16,8 @@
 | C | Search & Listing | C-01–C-05 |
 | D | Mutations (simple) | D-01–D-18 |
 | E | Complex Operations (partner actions, component fan-out, TechPack) | E-01–E-04 |
-| F | Federation & Stitching (TechPack federate + gateway + decisions) | F-01–F-12 |
-| G | Field Resolvers, Bug-fixes, Utils, Tests (**G-11 split into G-11-1/G-11-2**) | G-01–G-10, G-11-1, G-11-2, G-12–G-16 |
+| F | Federation & Stitching (TechPack federate + gateway + decisions; **F-13/F-14 added by the federation review**) | F-01–F-14 |
+| G | Field Resolvers, Bug-fixes, Utils, Tests (**G-11 split into G-11-1/G-11-2**; **G-17 added, recommended/PO-gated**) | G-01–G-10, G-11-1, G-11-2, G-12–G-17 |
 
 > **Phase 0 note.** Three items that used to sit as open "Decisions Required" bullets, or as a bare annotation
 > on a story row, are now real spike stories: `S-01` (cross-domain association pattern, program id
@@ -48,8 +48,16 @@ graph TD
   D-->E01 & E02[E-02 componentStatuses]
   B01-->E03[E-03 TechPack facade]-->E04[E-04 TechPack bulk]
   E03-->F01[F-01-F-08 subgraph placeholders]-->F09[F-09 retire facade]
+  B01-->F13[F-13 Product entity fetcher]
+  F14[F-14 contract alignment: keys/names/paged wrappers]-->F10[F-10 Hive composition]
+  F13-->F10
+  F09-->F10
   G-->G16[G-16 Tests]
 ```
+
+> **F-13/F-14 added by the federation review (2026-07-17):** `F-14` is a schema-only fix with no
+> in-graph predecessor; `F-13` only needs the `B-01` scaffold (it reuses the `getProduct` service path).
+> Both must land before `F-10` (Hive composition) — see `F-10`'s own `Depends on` line.
 
 > **Reading the graph:** an arrow from `B-01` means *"needs the DGS module scaffold that B-01 lands"* (the
 > schema file, scalar registration, and service/Feign wiring) — **not** a dependency on `getProduct`'s logic.
@@ -1192,15 +1200,18 @@ verification + the remaining declaration work into the DGS implementation:
     Measurement pattern — so all stitching happens uniformly on `id`.
   - `ProductDetail` → `ProductDetails`; `MeasurementsPaged` → `MeasurementPaged` — R4.
   - `ProductComponentStatus` marked `@shareable` (claims duplicates it as a value type) — R5.
-  - Declare the cross-subgraph paged wrappers product references but never defines (`TeamPaged`, `TeamPagedV2`,
-    `WorkspacesPagedV2`, `DiscussionElastic`) — as `@shareable` value types or deferred-domain stubs.
+  - ✅ Declared the cross-subgraph paged wrappers product references but never defined (`TeamPaged`,
+    `TeamPagedV2`, `WorkspacesPagedV2`, `DiscussionElastic`) as `@shareable` placeholder value types
+    sized to today's field usage; `TeamPaged` is duplicated field-for-field in claims'
+    `be-03-schema.graphql` (R5) — both must stay in sync until the team subgraph (phase 2) becomes the
+    single owner and retires both duplicates.
   - `CORONA_ItemDetails` — ✅ decided (2026-07-17): stays an entity keyed `tcinId`; where a tcin exists the
     record carries `tcinId` and Corona inflates the item details from that key via the gateway.
 
 #### Acceptance Criteria
 
-1. `plm-product` schema compiles standalone with every referenced type declared.
-2. `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts.
+1. `plm-product` schema compiles standalone with every referenced type declared (including `TeamPaged`, `TeamPagedV2`, `WorkspacesPagedV2`, `DiscussionElastic`).
+2. `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts, including zero `@shareable` field-shape conflicts on `TeamPaged` (must match claims' declaration exactly).
 3. `CORONA_ItemDetails` entity form implemented per the 2026-07-17 decision (keyed `tcinId`; Corona inflates via the gateway).
 4. Blocks released: F-10, CLAIM-BE-F-01, CLAIM-BE-F-02.
 

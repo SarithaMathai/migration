@@ -41,11 +41,15 @@ type ProductComponentStatus @shareable {
 }
 type ResourcePermissions @shareable { resourceId: String, permissions: [PermissionEntry] }
 type PermissionEntry @shareable { permissionLevel: String, grantees: [String] }
-type TeamPaged @shareable { content: [Team], paging: Paging }
-# Subset the claims elastic search actually returns today; finalize the field list in CLAIM-BE-G-06.
-# ⚠ Revisit when the team DGS onboards (phase 2): Team then becomes that subgraph's entity.
-type Team @shareable { id: String, name: String }
+# @shareable value types must match FIELD-FOR-FIELD across every subgraph that declares them
+# (composition fails otherwise). `TeamPaged` is also declared in product/be-03-schema.graphql
+# (federation-review/03 §R4/§R5) — kept identical here: content: [TeamV2], paging: Paging, pageable:
+# Pageable. `Team` in the earlier draft of this file did not match product's shape and has been
+# removed; use the `TeamV2` stub (also declared, matching product) until the team DGS onboards.
+type TeamPaged @shareable { content: [TeamV2], paging: Paging, pageable: Pageable }
+type TeamV2 @extends @key(fields: "teamId") { teamId: ID! @external }
 type Paging @shareable { totalElements: Int, totalPages: Int, number: Int, size: Int }
+type Pageable @shareable { pageNumber: Int, pageSize: Int, offset: Int }
 
 # --- Owned entity: a claim ---
 # KEY (program decision 2026-07-17): all entities federate on `id` so gateway stitching is uniform.

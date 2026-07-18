@@ -307,7 +307,7 @@ ACL is **context-only** (note it; build nothing).
 ---
 
 ### CLAIM-BE-G-03 · `product` + `parentDetails` (otherClaimBps / systemTeams / droppedPartnerIds)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01 · **EXT:** 🟡 `product` · 🔴 `search`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** 🔶 High · **Category:** CAT-2 · **Depends on:** B-01, G-06 · **EXT:** 🟡 `product` · 🔴 `search`
 
 - **In plain terms:** Resolve the parent product and its related-partner context on a claim.
 - **Federation note (federation-review/04 §4):** `Claims.product` emits only a `Product{id}` key stub —
@@ -378,16 +378,18 @@ elastic call. The owners also model them as value types (product's `ResourcePerm
 with no key; `ProductComponentStatus` has no `id` field at all; `TeamPaged` is a paged wrapper with no
 identity). The schema file has been corrected; this story carries the implementation.
 - **Target DGS Implementation:** duplicate the value types `@shareable` in the claims schema
-(`ProductComponentStatus`, `CodeDescriptionOrder`, `ResourcePermissions` + `PermissionEntry`,
-`TeamPaged` + `Team` + `Paging`) matching the product-side shapes; finalize the `Team` field subset actually
-returned by the claims elastic search; contract test asserting shape equality with the product definitions.
+(`ProductComponentStatus`, `CodeDescriptionOrder`, `ResourcePermissions` + `PermissionEntry`, `TeamPaged` +
+`Paging` + `Pageable`) field-for-field matching product's declarations; `TeamPaged.content` resolves to the
+`TeamV2` stub (same as product) rather than a claims-local type, since `@shareable` types must be identical
+across every subgraph that declares them or composition fails; contract test asserting shape equality with
+the product definitions.
 
 #### Acceptance Criteria
 
 1. Claims subgraph composes with plm-product with zero `INVALID_FIELD_SHARING`/value-type conflicts.
 2. `statuses` / `currentUserPermissions` / `systemTeams` return locally-resolved data (parity vs the old gateway).
-3. `Team` field subset confirmed against the elastic response and documented.
-4. Revisit note recorded for the phase-2 team subgraph (Team becomes its entity then).
+3. `TeamPaged.content: [TeamV2]` resolves against the claims elastic response (map result rows to `{teamId}` stubs); documented.
+4. Revisit note recorded for the phase-2 team subgraph (TeamV2 becomes its full entity then; today it is a stitched stub).
 
 ---
 

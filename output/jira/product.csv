@@ -1036,8 +1036,8 @@ Story,PRODUCT-BE-F-14,"(Product) Cross-subgraph contract alignment (keys, type n
 * PRODUCT-FE-012
 
 *Acceptance Criteria:*
-1. `plm-product` schema compiles standalone with every referenced type declared
-2. `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts
+1. `plm-product` schema compiles standalone with every referenced type declared (including `TeamPaged`, `TeamPagedV2`, `WorkspacesPagedV2`, `DiscussionElastic`)
+2. `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts, including zero `@shareable` field-shape conflicts on `TeamPaged` (must match claims' declaration exactly)
 3. `CORONA_ItemDetails` entity form implemented per the 2026-07-17 decision (keyed `tcinId`; Corona inflates via the gateway)
 4. Blocks released: F-10, CLAIM-BE-F-01, CLAIM-BE-F-02
 

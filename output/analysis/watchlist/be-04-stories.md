@@ -16,7 +16,7 @@ Each story is self-contained. Full pseudo-logic in [be-02-resolver-analysis.md](
 | D | Mutations (simple) | D-01–D-02 |
 | E | Complex (multi-step write) | E-01 |
 | F | Federation (internal) | F-01–F-02 |
-| G | Field Resolvers & Tests | G-01–G-04 |
+| G | Field Resolvers & Tests | G-01–G-05 (G-05 recommended, PO-gated — federation review) |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
@@ -289,7 +289,7 @@ emits `{id: partnerId}` — gateway hydrates from VMM; null-safe on missing `par
 | Product `PRODUCT-BE-F-08` mislabel (corrected to internal) | — | Low | F-08 reclassified CAT-2 internal | Product Owner |
 
 ## 5. Summary
-- **Stories:** 13 (B:3 · C:1 · D:2 · E:1 · F:2 · G:4).
+- **Stories:** 14 (B:3 · C:1 · D:2 · E:1 · F:2 · G:5). G-05 (recommended, PO-gated) added by the federation review.
 - **Critical path:** A-02/C-01→E-01→G-02→G-04.
 - **Highest risk:** `updateWatchlistEntries` (E-01) — multi-step + un-awaited user-group map.
 - **Co-located:** watchlist is in the `plm-product` monorepo; `Product.watchlists` + TechPack count resolve internally.

@@ -17,7 +17,7 @@ Each story is self-contained: read *Current Behaviour → Target → Acceptance 
 | B | Core Reads | B-01–B-02 |
 | D | Mutations | D-01 |
 | F | Federation Contributions | F-01 *(BLOCKED-BY product)* |
-| G | Field Resolvers & Tests | G-01–G-03 |
+| G | Field Resolvers & Tests | G-01–G-04 (G-04 recommended, PO-gated — federation review) |
 
 > **Note — Phase A dissolved.** Schema skeleton, owned types, external stubs, and `ImpressionService`/`ImpressionClient` setup are a one-time checklist inside **B-01** (completed in the same PR). No separate Phase A stories exist.
 
@@ -416,7 +416,7 @@ separate attachment-API round-trip.
 
 ## 5. Summary
 
-- **Stories:** 7 (B:2 · D:1 · F:1 · G:3).
+- **Stories:** 8 (B:2 · D:1 · F:1 · G:4). G-04 (recommended, PO-gated) added by the federation review.
 - **Phase A dissolved** — DGS module init + `ImpressionService`/`ImpressionClient` folded into B-01.
 - **No High/Very-High stories** — `counts` aggregation is the only Medium.
 - **Lowest-risk domain** — recommended as the first migration to prove the end-to-end pipeline.

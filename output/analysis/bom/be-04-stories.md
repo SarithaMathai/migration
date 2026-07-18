@@ -21,7 +21,7 @@ resolver. **ACL note:** where a story says the current code obtains a capability
 | D | Mutations (simple) | D-01–D-05 | add / workspaces / lock / unlock / component-status |
 | E | Complex Operations | E-01 | `updateBom` 3-step non-atomic write — blocked by `S-01` |
 | F | Federation Contributions | F-01–F-02 | BLOCKED-BY product domain |
-| G | Field Resolvers & Tests | G-01, G-03–G-16 | one story per type block + parity harness. **`G-02` removed**, `G-10` repurposed — see Bom_Unified deprecation below |
+| G | Field Resolvers & Tests | G-01, G-03–G-17 | one story per type block + parity harness. **`G-02` removed**, `G-10` repurposed — see Bom_Unified deprecation below. `G-17` (supplier entity ref) added by the federation review — recommended/PO-gated |
 
 > **`Bom_Unified` deprecated.** The reviewer decision (formerly Decision #3) was: drop `Bom_Unified` as a
 > parallel type and use field selection on `Bom` instead. That removes `getBomDataV2` (`B-02`) and
@@ -1240,7 +1240,7 @@ deferred pending a `VMM_Location` stub decision (federation-review/03 §3).
 | F-01/F-02 are internal (same subgraph) — depend on Product/ResourcesCount types existing | Low | Low | Sequence after product B-01; no gateway block | Tech Lead |
 
 ## 5. Summary
-- **Stories:** 39 (S:3 · A:1 · B:7 · C:5 · D:5 · E:1 · F:2 · G:15).
+- **Stories:** 40 (S:3 · A:1 · B:7 · C:5 · D:5 · E:1 · F:2 · G:16). G-17 (recommended, PO-gated) added by the federation review.
   > **Note — A:1** is the `BOM-BE-A-04` TypeResolver story (one dedicated PR for `BomMaterialInterface` + `BomImpressionDetailsInterface`). All other former Phase A work is folded into B-01.
   > **B:7 / G:15** (down from 8/16): `B-02` (`getBomDataV2`) and `G-02` (`BomMaterial_Unified`) are removed — see
   > the `Bom_Unified` deprecation decision. `G-10` is kept but rescoped (still counts toward G:15).

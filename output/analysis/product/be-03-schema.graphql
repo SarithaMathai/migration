@@ -82,6 +82,17 @@ type UserProfileAttributes @key(fields: "id") @extends { id: ID! @external }    
 type Discussion      @key(fields: "discussionId") @extends { discussionId: ID! @external }  # 🔜 discussion subgraph
 type DiscussionThread @key(fields: "discussionThreadId") @extends { discussionThreadId: ID! @external }  # 🔜
 type FileLibrary     @key(fields: "id") @extends { id: ID! @external }      # 🔜 file-library subgraph
+
+# Cross-subgraph paged wrappers `Product` selects but does not own (federation-review/03 §R4,
+# PRODUCT-BE-F-14 AC1): declared here as @shareable value types so this file compiles standalone.
+# Each owning subgraph (workspace/team/discussion — phase 2) is the source of truth for the shape;
+# these are placeholders sized to today's field usage and MUST be reconciled when those subgraphs land.
+type WorkspacesPagedV2 @shareable { content: [WorkspaceV2], paging: Paging, pageable: Pageable }  # 🔜 workspace subgraph
+type TeamPagedV2       @shareable { content: [TeamV2], paging: Paging, pageable: Pageable }        # 🔜 team subgraph
+type DiscussionElastic @shareable { content: [Discussion], paging: Paging }                        # 🔜 discussion subgraph
+# `TeamPaged` is also declared (as a value type) in claims/be-03-schema.graphql (R5) — same shape,
+# both @shareable; team subgraph phase-2 onboarding will retire both duplicates in favor of one owner.
+type TeamPaged @shareable { content: [TeamV2], paging: Paging }
 type Bom             @key(fields: "id") @extends { id: ID! @external }      # 🔜 bom subgraph
 # Type names aligned with the owning schemas (federation-review/03 §R3-R4): claims owns `Claims`,
 # productDetails owns `ProductDetails`. KEYS (program decision 2026-07-17): every entity federates on

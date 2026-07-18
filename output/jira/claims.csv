@@ -354,12 +354,13 @@ Story,CLAIM-BE-G-02,(Claims) createdBy + updatedBy + businessPartner + designPar
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeams / droppedPartnerIds) [CLAIM-BE-G-03],,Federate BreakDown Product,G,L,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 13 of 16 (Claims backend, step 2)
+Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeams / droppedPartnerIds) [CLAIM-BE-G-03],,Federate BreakDown Product,G,L,dgs-migration,claims,field-resolver,,"B-01, G-06",To Do,"*Implementation Order:* 15 of 16 (Claims backend, step 3)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
-*Priority:* High — *Parallelizable:* Yes
+*Priority:* High — *Parallelizable:* No
 
 *Depends On:*
 * CLAIM-BE-B-01 — getClaims
+* CLAIM-BE-G-06 — Shared value-type alignment
 
 *Blocks:*
 * CLAIM-BE-G-05 — Tests, parity harness
@@ -384,7 +385,7 @@ Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeam
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName [CLAIM-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 14 of 16 (Claims backend, step 2)
+Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName [CLAIM-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 13 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -405,7 +406,7 @@ Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + Cl
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,"B-01, E-01, G-02, G-03",To Do,"*Implementation Order:* 16 of 16 (Claims backend, step 3)
+Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,"B-01, E-01, G-02, G-03",To Do,"*Implementation Order:* 16 of 16 (Claims backend, step 4)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* No
 
@@ -430,7 +431,7 @@ Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-06,(Claims) Shared value-type alignment (@shareable instead of entity stubs) [CLAIM-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 15 of 16 (Claims backend, step 2)
+Story,CLAIM-BE-G-06,(Claims) Shared value-type alignment (@shareable instead of entity stubs) [CLAIM-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 14 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -438,16 +439,16 @@ Story,CLAIM-BE-G-06,(Claims) Shared value-type alignment (@shareable instead of 
 * CLAIM-BE-B-01 — getClaims
 
 *Blocks:*
-* None
+* CLAIM-BE-G-03 — product + parentDetails
 
 *Target:*
-* duplicate the value types `@shareable` in the claims schema (`ProductComponentStatus`, `CodeDescriptionOrder`, `ResourcePermissions` + `PermissionEntry`, `TeamPaged` + `Team` + `Paging`) matching the product-side shapes; finalize the `Team` field subset actually returned by the claims elastic search; contract test asserting shape equality with the product definitions.
+* duplicate the value types `@shareable` in the claims schema (`ProductComponentStatus`, `CodeDescriptionOrder`, `ResourcePermissions` + `PermissionEntry`, `TeamPaged` + `Paging` + `Pageable`) field-for-field matching product's declarations; `TeamPaged.content` resolves to the `TeamV2` stub (same as product) rather than a claims-local type, since `@shareable` types must be identical across every subgraph that declares them or composition fails; contract test asserting shape equality with the product definitions.
 
 *Acceptance Criteria:*
 1. Claims subgraph composes with plm-product with zero `INVALID_FIELD_SHARING`/value-type conflicts
 2. `statuses` / `currentUserPermissions` / `systemTeams` return locally-resolved data (parity vs the old gateway)
-3. `Team` field subset confirmed against the elastic response and documented
-4. Revisit note recorded for the phase-2 team subgraph (Team becomes its entity then)
+3. `TeamPaged.content: [TeamV2]` resolves against the claims elastic response (map result rows to `{teamId}` stubs); documented
+4. Revisit note recorded for the phase-2 team subgraph (TeamV2 becomes its full entity then; today it is a stitched stub)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)

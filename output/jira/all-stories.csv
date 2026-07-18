@@ -1270,12 +1270,13 @@ Story,CLAIM-BE-G-02,(Claims) createdBy + updatedBy + businessPartner + designPar
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeams / droppedPartnerIds) [CLAIM-BE-G-03],,Federate BreakDown Product,G,L,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 13 of 16 (Claims backend, step 2)
+Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeams / droppedPartnerIds) [CLAIM-BE-G-03],,Federate BreakDown Product,G,L,dgs-migration,claims,field-resolver,,"B-01, G-06",To Do,"*Implementation Order:* 15 of 16 (Claims backend, step 3)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
-*Priority:* High — *Parallelizable:* Yes
+*Priority:* High — *Parallelizable:* No
 
 *Depends On:*
 * CLAIM-BE-B-01 — getClaims
+* CLAIM-BE-G-06 — Shared value-type alignment
 
 *Blocks:*
 * CLAIM-BE-G-05 — Tests, parity harness
@@ -1300,7 +1301,7 @@ Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeam
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName [CLAIM-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 14 of 16 (Claims backend, step 2)
+Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName [CLAIM-BE-G-04],,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 13 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1321,7 +1322,7 @@ Story,CLAIM-BE-G-04,(Claims) workspaces + ClaimSubstantiate.substantiatedBy + Cl
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,"B-01, E-01, G-02, G-03",To Do,"*Implementation Order:* 16 of 16 (Claims backend, step 3)
+Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate BreakDown Product,G,M,dgs-migration,claims,field-resolver,,"B-01, E-01, G-02, G-03",To Do,"*Implementation Order:* 16 of 16 (Claims backend, step 4)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Medium — *Parallelizable:* No
 
@@ -1346,7 +1347,7 @@ Story,CLAIM-BE-G-05,"(Claims) Tests, parity harness [CLAIM-BE-G-05]",,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,CLAIM-BE-G-06,(Claims) Shared value-type alignment (@shareable instead of entity stubs) [CLAIM-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 15 of 16 (Claims backend, step 2)
+Story,CLAIM-BE-G-06,(Claims) Shared value-type alignment (@shareable instead of entity stubs) [CLAIM-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,claims,field-resolver,,B-01,To Do,"*Implementation Order:* 14 of 16 (Claims backend, step 2)
 *Domain:* Claims — *Team:* Backend — *Owner:* BE-1
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -1354,16 +1355,16 @@ Story,CLAIM-BE-G-06,(Claims) Shared value-type alignment (@shareable instead of 
 * CLAIM-BE-B-01 — getClaims
 
 *Blocks:*
-* None
+* CLAIM-BE-G-03 — product + parentDetails
 
 *Target:*
-* duplicate the value types `@shareable` in the claims schema (`ProductComponentStatus`, `CodeDescriptionOrder`, `ResourcePermissions` + `PermissionEntry`, `TeamPaged` + `Team` + `Paging`) matching the product-side shapes; finalize the `Team` field subset actually returned by the claims elastic search; contract test asserting shape equality with the product definitions.
+* duplicate the value types `@shareable` in the claims schema (`ProductComponentStatus`, `CodeDescriptionOrder`, `ResourcePermissions` + `PermissionEntry`, `TeamPaged` + `Paging` + `Pageable`) field-for-field matching product's declarations; `TeamPaged.content` resolves to the `TeamV2` stub (same as product) rather than a claims-local type, since `@shareable` types must be identical across every subgraph that declares them or composition fails; contract test asserting shape equality with the product definitions.
 
 *Acceptance Criteria:*
 1. Claims subgraph composes with plm-product with zero `INVALID_FIELD_SHARING`/value-type conflicts
 2. `statuses` / `currentUserPermissions` / `systemTeams` return locally-resolved data (parity vs the old gateway)
-3. `Team` field subset confirmed against the elastic response and documented
-4. Revisit note recorded for the phase-2 team subgraph (Team becomes its entity then)
+3. `TeamPaged.content: [TeamV2]` resolves against the claims elastic response (map result rows to `{teamId}` stubs); documented
+4. Revisit note recorded for the phase-2 team subgraph (TeamV2 becomes its full entity then; today it is a stitched stub)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)
@@ -1607,6 +1608,7 @@ Story,MST-BE-B-02,(Measurement) getUnitsOfMeasure · getThicknessUnitsOfMeasure 
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 
 *Blocks:*
+* MST-BE-G-04 — SampleMeasurementSet.sample forward reference
 * MST-BE-G-04 — SampleMeasurementSet.sample forward reference
 * MST-FE-001
 * MST-FE-003
@@ -2004,7 +2006,7 @@ Story,MST-BE-G-03,(Measurement) Test coverage & parity [MST-BE-G-03],,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-02,Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 15 of 15 (Measurement backend, step 3)
+Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,"B-02 (carries B-02 `getSampleMeasurement`, grouped-XS merged)",Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 15 of 15 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -2020,7 +2022,7 @@ Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (
 *Acceptance Criteria:*
 1. PO approval recorded (OQ-5) before implementation starts
 2. `sample { id }` resolves as a stub; `sampleId` unchanged
-3. Pairs cleanly with F-04 (no circular resolution at the gateway — verified by a two-hop smoke query)
+3. Pairs cleanly with MST-BE-F-02 (no circular resolution at the gateway — verified by a two-hop smoke query)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)
@@ -3578,8 +3580,8 @@ Story,PRODUCT-BE-F-14,"(Product) Cross-subgraph contract alignment (keys, type n
 * PRODUCT-FE-012
 
 *Acceptance Criteria:*
-1. `plm-product` schema compiles standalone with every referenced type declared
-2. `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts
+1. `plm-product` schema compiles standalone with every referenced type declared (including `TeamPaged`, `TeamPagedV2`, `WorkspacesPagedV2`, `DiscussionElastic`)
+2. `hive compose` over plm-product + spark-claims + platform stubs reports zero key/name conflicts, including zero `@shareable` field-shape conflicts on `TeamPaged` (must match claims' declaration exactly)
 3. `CORONA_ItemDetails` entity form implemented per the 2026-07-17 decision (keyed `tcinId`; Corona inflates via the gateway)
 4. Blocks released: F-10, CLAIM-BE-F-01, CLAIM-BE-F-02
 

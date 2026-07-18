@@ -47,6 +47,7 @@ Story,MST-BE-B-02,(Measurement) getUnitsOfMeasure · getThicknessUnitsOfMeasure 
 
 *Blocks:*
 * MST-BE-G-04 — SampleMeasurementSet.sample forward reference
+* MST-BE-G-04 — SampleMeasurementSet.sample forward reference
 * MST-FE-001
 * MST-FE-003
 
@@ -443,7 +444,7 @@ Story,MST-BE-G-03,(Measurement) Test coverage & parity [MST-BE-G-03],,Federate B
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-02,Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 15 of 15 (Measurement backend, step 3)
+Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,"B-02 (carries B-02 `getSampleMeasurement`, grouped-XS merged)",Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 15 of 15 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -459,7 +460,7 @@ Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (
 *Acceptance Criteria:*
 1. PO approval recorded (OQ-5) before implementation starts
 2. `sample { id }` resolves as a stub; `sampleId` unchanged
-3. Pairs cleanly with F-04 (no circular resolution at the gateway — verified by a two-hop smoke query)
+3. Pairs cleanly with MST-BE-F-02 (no circular resolution at the gateway — verified by a two-hop smoke query)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)

@@ -16,7 +16,7 @@ Engineers: read *Current Behaviour → Target → Files → Acceptance → Tests
 | D | Mutations (simple) | D-01–D-07 |
 | E | Complex (`updateMeasurement`) | E-01 |
 | F | Federation Contributions | F-01–F-02 (BLOCKED-BY product/sample) |
-| G | Field Resolvers & Tests | G-01–G-03 |
+| G | Field Resolvers & Tests | G-01–G-04 (G-04 recommended, PO-gated — federation review) |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
@@ -395,11 +395,11 @@ Depends on `Product` existing (product A-02), not on a separate deployment.
 ---
 
 ### MST-BE-G-04 · `SampleMeasurementSet.sample` forward reference (recommended, PO-gated)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-05 · **EXT:** 🟡 `sample`
+- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged) · **EXT:** 🟡 `sample`
 - **Status:** Recommended (PO-gated — federation-review/03 §2 REC-4)
 
 - **In plain terms:** Adds `sample { … }` on the sample measurement set — the forward twin of the existing
-reverse extension (`SampleV2.sampleMeasurement`, F-04).
+reverse extension (`SampleV2.sampleMeasurement`, **MST-BE-F-02**).
 
 - **Context:** `SampleMeasurementSet` is keyed on `sampleId` but exposes no way to walk to the sample entity;
 sample screens re-query by id today. `sampleId` stays — it is the `@key`.
@@ -411,7 +411,7 @@ until then).
 
 1. PO approval recorded (OQ-5) before implementation starts.
 2. `sample { id }` resolves as a stub; `sampleId` unchanged.
-3. Pairs cleanly with F-04 (no circular resolution at the gateway — verified by a two-hop smoke query).
+3. Pairs cleanly with MST-BE-F-02 (no circular resolution at the gateway — verified by a two-hop smoke query).
 
 ---
 
@@ -425,7 +425,7 @@ until then).
 | F-01 internal (same subgraph, depends on Product type); F-02 federated (sample DGS) | Low | Low | Sequence F-01 after product A-02; F-02 after sample migrates | Tech Lead |
 
 ## 5. Summary
-- **Stories:** 20 (B:5 · C:2 · D:7 · E:1 · F:2 · G:3).
+- **Stories:** 21 (B:5 · C:2 · D:7 · E:1 · F:2 · G:4). G-04 (recommended, PO-gated) added by the federation review.
 - **Critical path:** E-01; C-01.
 - **Highest risk:** `updateMeasurement` 2-step write; relationship dependency in `getMeasurements`.
 - **Independent of federation:** ships before F-01/F-02.
