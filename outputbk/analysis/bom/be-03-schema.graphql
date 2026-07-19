@@ -1,0 +1,494 @@
+# =============================================================================
+# BOM Domain — Federated Target DGS Schema (translated from source SDL)
+# Generated: 2026-06-26
+# DGS Target: Green-field → plm-product subgraph
+# Source:    code/schemas/SPARK_Bom.txt (the real SDL) + code/resolvers/product/SPARK_Bom.txt (behaviour)
+# Target:    plm-product/apps/app/src/main/resources/schema/bom.graphqls
+#
+# This is the FEDERATED TARGET schema, translated from the source SDL (SPARK_ prefix dropped, @key added).
+# Nullability/return-types are taken from the SDL (verified against the resolver). `Bom.id`
+# is backed by the record's `id` (the SDL type exposes `humanId`; the resolver falls back `humanId || id`).
+#
+# Status Legend:  ✅ Exists in DGS  |  🔜 Needs migration (all below)  |  ⏭ Deferred
+# =============================================================================
+
+extend schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.3"
+    import: ["@key", "@extends", "@external", "@shareable", "@requires"]
+  )
+
+scalar DateTime
+
+# =============================================================================
+# 1. EXTERNAL STUBS — gateway-stitched platforms (🔵 never migrated to DGS)
+# =============================================================================
+
+type VMM_BusinessPartner @extends @key(fields: "id") { id: ID! @external }
+
+# =============================================================================
+# 2a. INTERNAL co-located types (SAME plm-product subgraph — monorepo)
+# `Product` and `ProductComponentStatus` are owned by the `product`/component code in the SAME
+# subgraph. They are NOT federation stubs — the `@extends @external` here is a compile placeholder
+# so bom.graphqls validates standalone; in the merged plm-product schema they are plain internal
+# types and `Bom.product` is an in-process @DgsData call. See 03-schema-analysis.md §4.
+# =============================================================================
+
+type Product @extends @key(fields: "id") { id: ID! @external }            # INTERNAL (same subgraph) — placeholder only
+
+# =============================================================================
+# 2b. EXTERNAL STUBS — separate DGS subgraphs (🔜 truly federated)
+# workspace, user-profile, tag, access-control, and the material DGSs (hub/trim/wash/fabric/combination).
+# =============================================================================
+type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
+type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
+type Tag @extends @key(fields: "id") { id: ID! @external }
+type UserGroup_Participants @extends @key(fields: "id") { id: ID! @external }
+type ResourcePermissions @extends @key(fields: "id") { id: ID! @external }
+type AccessControl @extends @key(fields: "id") { id: ID! @external }
+type ProductComponentStatus @extends @key(fields: "id") { id: ID! @external }
+
+# Material-library cross-domain (material-hub / trim / wash / fabric / combination DGSs)
+type HubMaterialInterface @extends @key(fields: "id") { id: ID! @external }
+type Material @extends @key(fields: "id") { id: ID! @external }
+type FabricSpecCombo @extends @key(fields: "id") { id: ID! @external }
+type FabricSpecification @extends @key(fields: "id") { id: ID! @external }
+type Fabric @extends @key(fields: "id") { id: ID! @external }
+type Trim @extends @key(fields: "id") { id: ID! @external }
+type Wash @extends @key(fields: "id") { id: ID! @external }
+type Combination @extends @key(fields: "id") { id: ID! @external }
+type BaseMaterial @extends @key(fields: "id") { id: ID! @external }
+type MaterialsPaged @extends @key(fields: "id") { id: ID! @external }
+type TrimColorRow @extends @key(fields: "id") { id: ID! @external }
+type TrimFinishRow @extends @key(fields: "id") { id: ID! @external }
+type TrimSize @extends @key(fields: "id") { id: ID! @external }
+type TrimSupplier @extends @key(fields: "id") { id: ID! @external }
+type MaterialOrigin @extends @key(fields: "id") { id: ID! @external }
+type UnitOfMeasure @extends @key(fields: "id") { id: ID! @external }
+
+# =============================================================================
+# 3. SHARED VALUE TYPES (@shareable)
+# =============================================================================
+
+type CodeDescription @shareable { code: Int, description: String }
+type UnitsOfMeasure @shareable { code: Int, description: String }
+type Paging @shareable { totalElements: Int, totalPages: Int, number: Int, size: Int }
+type ValueWithUnit @shareable { value: Float, unitOfMeasure: UnitOfMeasure }
+
+# =============================================================================
+# 4. OWNED TYPES — Bom + materials  (🔜 all need migration)
+# =============================================================================
+
+type Bom @key(fields: "id") {
+  id: ID!
+  humanId: String
+  parentId: String
+  product: Product
+  name: String
+  notes: String
+  status: CodeDescription
+  statuses: [ProductComponentStatus]
+  createdAt: DateTime
+  createdBy: UserProfileAttributes
+  updatedAt: DateTime
+  updatedBy: UserProfileAttributes
+  access: AccessControl
+  businessPartners: [VMM_BusinessPartner]
+  currentUserPermissions: ResourcePermissions
+  groupMode: CodeDescription
+  sections: [BomSection]
+  materials: [BomMaterialInterface]
+  workspaces: [WorkspaceV2]
+  workspaceContext: [ID]
+  libraryLinked: Boolean
+  manualLock: Boolean
+  version: Int
+  participantDetails: UserGroup_Participants
+  selectedProductImpressionIds: [String]
+  archived: Boolean
+  bomType: Int
+  type: CodeDescription
+  bomBaseType: Bom_Type
+}
+
+type BomPaged { content: [Bom] }
+type Bom_Type { type: Int }
+type BomSection { id: String, description: String }
+
+# Bom_Unified (parallel projection of Bom) is DEPRECATED — decision: use field selection on `Bom`
+# instead of a second type. Removed together with BomMaterial_Unified and BomMaterial_Library_Unified.
+# See bom/04-stories.md Phase 0 decision #3.
+
+# --- Material polymorphism: interface + 7 implementations (via @DgsTypeResolver) ---
+interface BomMaterialInterface {
+  rowId: String
+  description: String
+  additionalMaterialDetails: String
+  notes: String
+  quantity: String
+  quantityUom: UnitsOfMeasure
+  supplierId: String
+  supplierName: String
+  componentLocation: String
+  supplierArticleNumber: String
+  size: String
+  sizeUom: UnitsOfMeasure
+  sectionId: String
+  materialCategory: BomMaterialType
+  sectionName: String
+  recycledContent: Float
+  genericMaterialType: String
+  tcinIds: [String]
+  tcinDpcis: [TcinDpci]
+  defaultTcin: Boolean
+  attachmentIds: [String]
+  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean
+  isParent: Boolean
+  parentRowId: String
+  level: Int
+  countryOfOrigin: [Tag]
+  weight: ValueWithUnit
+  weightInGrams: Float
+  weightUomId: Int
+  thickness: Float
+  thicknessInMillimeters: Float
+  thicknessUomId: Int
+  thicknessUom: CodeDescription
+  length: Float
+  lengthInMillimeters: Float
+  lengthUomId: Int
+  lengthUom: CodeDescription
+  width: Float
+  widthInMillimeters: Float
+  widthUomId: Int
+  widthUom: CodeDescription
+}
+
+type BomMaterial implements BomMaterialInterface {
+  rowId: String  description: String  additionalMaterialDetails: String  notes: String
+  quantity: String  quantityUom: UnitsOfMeasure  supplierId: String  supplierName: String
+  facilityId: String  facilityName: String  componentLocation: String  supplierArticleNumber: String
+  size: String  sizeUom: UnitsOfMeasure  sectionId: String  materialCategory: BomMaterialType
+  sectionName: String  genericMaterialType: String  recycledContent: Float
+  libraryResourceId: String  libraryResource: HubMaterialInterface
+  impressionDetails: [BomImpressionDetailsInterface]
+  tcinIds: [String]  tcinDpcis: [TcinDpci]  defaultTcin: Boolean
+  attachmentIds: [String]  primaryMaterialAttachmentId: String  criticalToQuality: Boolean
+  yieldConsumption: Float  yieldConsumptionUom: CodeDescription  cuttableWidth: Float
+  weightUserOverride: Boolean  sizeUnitOfMeasure: UnitOfMeasure  sizeUserOverride: Boolean
+  origins: [MaterialOriginV2!]  certifications: [CodeDescription]
+  originsUserOverride: Boolean  certificationsUserOverride: Boolean
+  parentRowId: String  isParent: Boolean  parentLibraryResourceId: String  level: Int
+  countryOfOrigin: [Tag]
+  weight: ValueWithUnit  weightInGrams: Float  weightUomId: Int
+  thickness: Float  thicknessInMillimeters: Float  thicknessUomId: Int  thicknessUom: CodeDescription
+  length: Float  lengthInMillimeters: Float  lengthUomId: Int  lengthUom: CodeDescription
+  width: Float  widthInMillimeters: Float  widthUomId: Int  widthUom: CodeDescription
+}
+
+type MaterialOriginV2 { origin: CodeDescription, percentage: Float }
+
+type BomFabricMaterial implements BomMaterialInterface {
+  rowId: String  description: String  additionalMaterialDetails: String  notes: String
+  quantity: String  quantityUom: UnitsOfMeasure  supplierId: String  supplierName: String
+  componentLocation: String  supplierArticleNumber: String
+  size: String  sizeUom: UnitsOfMeasure  sectionId: String  materialCategory: BomMaterialType
+  sectionName: String  genericMaterialType: String  recycledContent: Float
+  libraryResourceId: String  libraryResource: FabricSpecCombo
+  impressionDetails: [BomImpressionDetailsInterface]
+  tcinIds: [String]  tcinDpcis: [TcinDpci]  defaultTcin: Boolean
+  attachmentIds: [String]  primaryMaterialAttachmentId: String  criticalToQuality: Boolean
+  yieldConsumption: Float  yieldConsumptionUom: CodeDescription  cuttableWidth: Float
+  parentRowId: String  isParent: Boolean  level: Int  countryOfOrigin: [Tag]
+  weight: ValueWithUnit  weightInGrams: Float  weightUomId: Int
+  thickness: Float  thicknessInMillimeters: Float  thicknessUomId: Int  thicknessUom: CodeDescription
+  length: Float  lengthInMillimeters: Float  lengthUomId: Int  lengthUom: CodeDescription
+  width: Float  widthInMillimeters: Float  widthUomId: Int  widthUom: CodeDescription
+}
+
+type BomFabricSpecMaterial implements BomMaterialInterface {
+  rowId: String  description: String  additionalMaterialDetails: String  notes: String
+  quantity: String  quantityUom: UnitsOfMeasure  supplierId: String  supplierName: String
+  componentLocation: String  supplierArticleNumber: String
+  size: String  sizeUom: UnitsOfMeasure  sectionId: String  materialCategory: BomMaterialType
+  sectionName: String  genericMaterialType: String  recycledContent: Float
+  libraryResourceId: String  libraryResource: FabricSpecification
+  impressionDetails: [BomBaseImpressionDetails]
+  tcinIds: [String]  tcinDpcis: [TcinDpci]  defaultTcin: Boolean
+  attachmentIds: [String]  primaryMaterialAttachmentId: String  criticalToQuality: Boolean
+  yieldConsumption: Float  yieldConsumptionUom: CodeDescription  cuttableWidth: Float
+  parentRowId: String  isParent: Boolean  level: Int  countryOfOrigin: [Tag]
+  weight: ValueWithUnit  weightInGrams: Float  weightUomId: Int
+  thickness: Float  thicknessInMillimeters: Float  thicknessUomId: Int  thicknessUom: CodeDescription
+  length: Float  lengthInMillimeters: Float  lengthUomId: Int  lengthUom: CodeDescription
+  width: Float  widthInMillimeters: Float  widthUomId: Int  widthUom: CodeDescription
+}
+
+type BomCombinationMaterial implements BomMaterialInterface {
+  rowId: String  description: String  additionalMaterialDetails: String  notes: String
+  quantity: String  quantityUom: UnitsOfMeasure  supplierId: String  supplierName: String
+  componentLocation: String  supplierArticleNumber: String
+  size: String  sizeUom: UnitsOfMeasure  sectionId: String  materialCategory: BomMaterialType
+  sectionName: String  genericMaterialType: String  recycledContent: Float
+  libraryResourceId: String  libraryResource: Combination
+  tcinIds: [String]  tcinDpcis: [TcinDpci]  defaultTcin: Boolean
+  attachmentIds: [String]  primaryMaterialAttachmentId: String  criticalToQuality: Boolean
+  yieldConsumption: Float  yieldConsumptionUom: CodeDescription  cuttableWidth: Float
+  parentRowId: String  isParent: Boolean  level: Int  countryOfOrigin: [Tag]
+  weight: ValueWithUnit  weightInGrams: Float  weightUomId: Int
+  thickness: Float  thicknessInMillimeters: Float  thicknessUomId: Int  thicknessUom: CodeDescription
+  length: Float  lengthInMillimeters: Float  lengthUomId: Int  lengthUom: CodeDescription
+  width: Float  widthInMillimeters: Float  widthUomId: Int  widthUom: CodeDescription
+}
+
+type BomTrimMaterial implements BomMaterialInterface {
+  rowId: String  description: String  additionalMaterialDetails: String  notes: String
+  quantity: String  quantityUom: UnitsOfMeasure  supplierId: String  supplierName: String
+  componentLocation: String  supplierArticleNumber: String
+  size: String  sizeUom: UnitsOfMeasure  sectionId: String  materialCategory: BomMaterialType
+  sectionName: String  genericMaterialType: String  recycledContent: Float
+  libraryResourceId: String  libraryResource: Trim
+  materialLibraryUom: CodeDescription
+  facilityId: String  facilityName: String
+  librarySizeId: Int  sizeValue: String  sizeCaption: BomSizeCaption
+  impressionDetails: [BomImpressionDetailsInterface]
+  tcinIds: [String]  tcinDpcis: [TcinDpci]  defaultTcin: Boolean
+  attachmentIds: [String]  primaryMaterialAttachmentId: String  criticalToQuality: Boolean
+  yieldConsumption: Float  yieldConsumptionUom: CodeDescription  cuttableWidth: Float
+  parentRowId: String  isParent: Boolean  level: Int  countryOfOrigin: [Tag]
+  weight: ValueWithUnit  weightInGrams: Float  weightUomId: Int
+  thickness: Float  thicknessInMillimeters: Float  thicknessUomId: Int  thicknessUom: CodeDescription
+  length: Float  lengthInMillimeters: Float  lengthUomId: Int  lengthUom: CodeDescription
+  width: Float  widthInMillimeters: Float  widthUomId: Int  widthUom: CodeDescription
+}
+
+type BomSizeCaption { edit: String, view: String }
+
+type BomWashMaterial implements BomMaterialInterface {
+  rowId: String  description: String  additionalMaterialDetails: String  notes: String
+  quantity: String  quantityUom: UnitsOfMeasure  supplierId: String  supplierName: String
+  componentLocation: String  supplierArticleNumber: String
+  size: String  sizeUom: UnitsOfMeasure  materialLibraryUom: CodeDescription
+  sectionId: String  materialCategory: BomMaterialType
+  sectionName: String  genericMaterialType: String  recycledContent: Float
+  libraryResourceId: String  libraryResource: Wash
+  laundryId: String  laundryName: String
+  impressionDetails: [BomImpressionDetailsInterface]
+  tcinIds: [String]  tcinDpcis: [TcinDpci]  defaultTcin: Boolean
+  attachmentIds: [String]  primaryMaterialAttachmentId: String  criticalToQuality: Boolean
+  yieldConsumption: Float  yieldConsumptionUom: CodeDescription  cuttableWidth: Float
+  parentRowId: String  isParent: Boolean  level: Int  countryOfOrigin: [Tag]
+  weight: ValueWithUnit  weightInGrams: Float  weightUomId: Int
+  thickness: Float  thicknessInMillimeters: Float  thicknessUomId: Int  thicknessUom: CodeDescription
+  length: Float  lengthInMillimeters: Float  lengthUomId: Int  lengthUom: CodeDescription
+  width: Float  widthInMillimeters: Float  widthUomId: Int  widthUom: CodeDescription
+}
+
+type BomPackagingMaterial implements BomMaterialInterface {
+  rowId: String  description: String  additionalMaterialDetails: String  notes: String
+  quantity: String  quantityUom: UnitsOfMeasure  supplierId: String  supplierName: String
+  componentLocation: String  supplierArticleNumber: String
+  size: String  sizeUom: UnitsOfMeasure
+  sectionId: String  materialCategory: BomMaterialType
+  sectionName: String  recycledContent: Float  genericMaterialType: String
+  attachmentIds: [String]  primaryMaterialAttachmentId: String  criticalToQuality: Boolean
+  defaultTcin: Boolean
+  impressionDetails: [BomImpressionDetailsInterface]
+  substrateType: CodeDescription  packagingFormat: CodeDescription  orderCode: String
+  tcinIds: [String]  tcinDpcis: [TcinDpci]
+  emptyPackageWeight: Float  postIndustrialRecycledContentPercentage: Float
+  parentRowId: String  isParent: Boolean  level: Int  countryOfOrigin: [Tag]
+  weight: ValueWithUnit  weightInGrams: Float  weightUomId: Int
+  thickness: Float  thicknessInMillimeters: Float  thicknessUomId: Int  thicknessUom: CodeDescription
+  length: Float  lengthInMillimeters: Float  lengthUomId: Int  lengthUom: CodeDescription
+  width: Float  widthInMillimeters: Float  widthUomId: Int  widthUom: CodeDescription
+}
+
+# --- Impressions: interface + 5 implementations (via @DgsTypeResolver) ---
+interface BomImpressionDetailsInterface { id: String, type: Int }
+
+type BomBaseImpressionDetails implements BomImpressionDetailsInterface {
+  id: String  type: Int  description: String
+}
+
+type BomFabricLibraryImpressionDetails implements BomImpressionDetailsInterface {
+  id: String  type: Int
+  libraryResource(ids: [String!]): Material
+  description: String
+}
+
+type BomTrimLibraryImpressionDetails implements BomImpressionDetailsInterface {
+  id: String  type: Int
+  libraryResource(ids: [String!]): Material
+  finishId: Int  finishRowId: String  colorRowId: String  rowId: String  dyedToMatch: Boolean
+  groundFinishRowId: String  groundColorRowId: String  textFinishRowId: String  textColorRowId: String
+  textColor: Material  groundColor: Material
+  textColorDyedToMatch: Boolean  groundColorDyedToMatch: Boolean
+  groundColorAvailable: Boolean  textColorAvailable: Boolean
+}
+
+type BomTrimZipperLibraryImpressionDetails implements BomImpressionDetailsInterface {
+  id: String  type: Int
+  sliderColorRowId: String  sliderFinishRowId: String
+  tapeColorRowId: String  teethColorRowId: String  teethFinishRowId: String
+  sliderColorDyedToMatch: Boolean  tapeColorDyedToMatch: Boolean  teethColorDyedToMatch: Boolean
+  sliderColor: Material  tapeColor: Material  teethColor: Material
+  sliderColorAvailable: Boolean  tapeColorAvailable: Boolean  teethColorAvailable: Boolean
+  libraryResourceAvailable: Boolean
+}
+
+type BomWashLibraryImpressionDetails implements BomImpressionDetailsInterface {
+  id: String  type: Int  applies: Boolean
+}
+
+# --- Bom master data + search ---
+type BomMaterialType {
+  id: String  code: Int  bomType: CodeDescription
+  description: String  libraryLink: Boolean  freeText: Boolean
+}
+
+type BomPackagingSubstrate { description: String, code: Int, materialType: BomMaterialType }
+
+type BomMaterialSearch { content: [BomMaterialSearchResult], paging: Paging }
+
+type BomMaterialSearchResult {
+  id: String  type: String  description: String  thumbnailId: String  status: String
+  tgtCode: String  targetSourced: Boolean  targetBranded: Boolean  longLeadTime: Boolean
+  trimType: CodeDescription  brand: CodeDescription  additionalInfo: String
+  trimSubType: [Int]  gvs: Boolean
+  baseMaterial: BaseMaterial
+  fabricId: String  fabricSpecId: String  parentComboId: String  parentComboDescription: String
+  fabricSpec: FabricSpecification
+  relatedMaterials: MaterialsPaged
+  fabric: Fabric
+  parentHumanId: String
+}
+
+type BomComboSupplier { fabricSupplier: BomComboFabricSupplier, fabricSpecCombo: FabricSpecCombo }
+type BomComboFabricSupplier { id: String, name: String }
+type TcinDpci { tcin: String, dpci: String }
+
+# =============================================================================
+# 5. INPUT TYPES
+# =============================================================================
+
+input BomInput {
+  name: String!  notes: String  parentId: String!  groupModeId: Int
+  sections: [BomSectionInput]  materials: [BomMaterialInput]  businessPartners: [BomPartnerInput]
+  workspaceContext: [ID]  participantDetails: UserGroup_ParticipantsInput
+  selectedProductImpressionIds: [String]  bomType: Int  bomBaseType: BomBaseTypeInput
+}
+
+input UpdateBomInput {
+  humanId: String  name: String!  notes: String  groupModeId: Int
+  sections: [BomSectionInput]  materials: [BomMaterialInput]  statusId: Int
+  businessPartners: [BomPartnerInput]  workspaceContext: PartialWorkspaceAssociationsInput
+  selectedProductImpressionIds: [String]  statuses: [WorkspaceStatusPairInput]  bomType: Int
+}
+
+input BomBaseTypeInput { type: Int }
+input BomSectionInput { id: String, description: String }
+input BomPartnerInput { partnerId: ID, partnerType: Int, systemTeamId: String }
+input TcinDpciInput { tcin: String, dpci: String }
+input MaterialLibraryInput { id: String }
+input UserGroup_ParticipantsInput { _placeholder: String }
+input PartialWorkspaceAssociationsInput { addWorkspaces: [ID], removeWorkspaces: [ID] }
+input WorkspaceStatusPairInput { workspaceId: ID, statusId: Int }
+input ComponentStatusInput { workspaceId: String!, type: String, statusId: Int }   # matches SDL SPARK_ComponentStatusInput
+input MaterialOriginInput { origin: Int, percentage: Float }
+input MaterialNestedSearchFilter {
+  type: String  fieldPath: String  nestedFieldPath: String  operator: String  values: [String]
+}
+
+input BomImpressionDetailsInput {
+  id: String  type: Int  libraryResource: MaterialLibraryInput  description: String
+  finishId: Int  finishRowId: String  colorRowId: String  rowId: String  dyedToMatch: Boolean
+  groundColor: MaterialLibraryInput  textColor: MaterialLibraryInput
+  textColorDyedToMatch: Boolean  groundColorDyedToMatch: Boolean
+  groundColorAvailable: Boolean  textColorAvailable: Boolean
+  groundFinishRowId: String  groundColorRowId: String  textFinishRowId: String  textColorRowId: String
+  sliderColorRowId: String  sliderFinishRowId: String
+  tapeColorRowId: String  teethColorRowId: String  teethFinishRowId: String
+  sliderColorDyedToMatch: Boolean  tapeColorDyedToMatch: Boolean  teethColorDyedToMatch: Boolean
+  sliderColor: MaterialLibraryInput  tapeColor: MaterialLibraryInput  teethColor: MaterialLibraryInput
+  sliderColorAvailable: Boolean  tapeColorAvailable: Boolean  teethColorAvailable: Boolean
+  libraryResourceAvailable: Boolean  applies: Boolean
+}
+
+input BomMaterialInput {
+  rowId: String  description: String!  additionalMaterialDetails: String  notes: String
+  quantity: String  quantityUomId: Int  supplierName: String  componentLocation: String
+  supplierArticleNumber: String  size: String  librarySizeId: Int  sizeUomId: Int  materialLibraryUomId: Int
+  sectionId: String  sectionName: String  materialCategoryId: Int
+  impressionDetails: [BomImpressionDetailsInput]  libraryResource: MaterialLibraryInput
+  recycledContent: Float  defaultTcin: Boolean  attachmentIds: [String]  primaryMaterialAttachmentId: String
+  criticalToQuality: Boolean  yieldConsumption: Float  yieldConsumptionUomId: Int  cuttableWidth: Float
+  parentRowId: String  isParent: Boolean  parentLibraryResourceId: String  level: Int
+  supplierId: ID  facilityId: String  facilityName: String  laundryId: String  laundryName: String
+  genericMaterialType: String  origins: [MaterialOriginInput!]  certifications: [Int]
+  originsUserOverride: Boolean  certificationsUserOverride: Boolean
+  weightUserOverride: Boolean  sizeUserOverride: Boolean
+  substrateTypeId: Int  packagingFormatId: Int  orderCode: String
+  tcinIds: [String]  tcinDpcis: [TcinDpciInput]
+  emptyPackageWeight: Float  postIndustrialRecycledContentPercentage: Float  countryOfOriginIds: [String]
+  weight: Float  weightInGrams: Float  weightUomId: Int
+  thickness: Float  thicknessInMillimeters: Float  thicknessUomId: Int
+  length: Float  lengthInMillimeters: Float  lengthUomId: Int
+  width: Float  widthInMillimeters: Float  widthUomId: Int
+}
+
+# =============================================================================
+# 6. ENUMS
+# =============================================================================
+enum SortDirection { ASC, DESC }
+
+# =============================================================================
+# 7. QUERIES  (🔜 all need migration — story phase in 04-stories.md)
+# =============================================================================
+extend type Query {
+  getBomByIds(ids: [String!]): [Bom]                                             # 🔜 B-01
+  getBomStatus: [CodeDescription]                                               # 🔜 B-03 (cacheable)
+  getBomByParentId(parentId: String!): BomPaged                                 # 🔜 B-04
+  getBomMaterialTypes(ids: [String]): [BomMaterialType]                          # 🔜 B-05 (merges hub)
+  getBomPackagingMaterialTypes: [BomMaterialType]                               # 🔜 B-06 (cacheable)
+  getBomPackagingSubstrates: [BomPackagingSubstrate]                            # 🔜 B-07 (cacheable)
+  getBomPackagingUnitOfMeasure: [UnitsOfMeasure]                                # 🔜 B-08 (cacheable)
+  getBomElastic(q: String!): [Bom]                                              # 🔜 C-01
+  searchMaterialsBom(
+    searchString: String  materialType: String  partnerIds: [ID]
+    internalOnly: Boolean  excludedTypes: [String]  size: Int = 20
+    sortField: String  sortDirection: SortDirection
+    nestedSearchFilters: [MaterialNestedSearchFilter]
+  ): BomMaterialSearch                                                          # 🔜 C-02
+  getComboSupplierForBom(comboId: String, partnerIds: [ID]): [BomComboSupplier] # 🔜 C-03
+  getValidTrimSuppliersForBom(merchVendorIds: [ID]): [Int]                       # 🔜 C-04
+  getValidRawMaterialSuppliersForBom(merchVendorIds: [ID]): [Int]               # 🔜 C-05
+}
+
+# =============================================================================
+# 8. MUTATIONS
+# =============================================================================
+extend type Mutation {
+  addBom(sparkBom: BomInput): Bom                                               # 🔜 D-01
+  updateBom(sparkBom: UpdateBomInput): Bom                                      # 🔜 E-01 (3-step, non-atomic)
+  manageBomWorkspaces(bomId: ID, workspacesToAdd: [ID], workspacesToRemove: [ID]): Bom   # 🔜 D-02
+  lockBom(bomId: String!): Bom                                                  # 🔜 D-03
+  unlockBom(bomId: String!): Bom                                               # 🔜 D-04
+  updateBomComponentStatus(productId: String!, ids: [String], status: ComponentStatusInput): BomPaged  # 🔜 D-05 (no JWT — confirm)
+}
+
+# =============================================================================
+# 9. FEDERATION — Bom contributions to other subgraphs (Phase F, BLOCKED-BY product)
+# =============================================================================
+# extend type Product @key(fields: "id") {           # F-01 — BLOCKED-BY product Phase 3
+#   id: ID! @external
+#   productBoms(includeAttachments: Boolean): [Bom]
+#   boms(types: [Int]): [Bom]
+#   packagingBoms: [Bom]
+# }
+# extend type ResourcesCount @key(fields: "productId partnerId") {   # F-02 — BLOCKED-BY product TechPack facade
+#   productId: ID! @external
+#   partnerId: ID! @external
+#   bomsCount: Int
+# }

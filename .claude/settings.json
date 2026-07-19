@@ -15,7 +15,13 @@
       "Bash(python3 -m pip install python-docx)",
       "Bash(tee /tmp/regen_log.txt)",
       "Bash(git rm *)",
-      "Bash(git status *)"
+      "Bash(git status *)",
+      "Bash(python fedMigrationScripts/generatescripts/generate_client_story_dependency.py)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('fedMigrationScripts/generatescripts/generate_client_story_dependency.py', encoding='utf-8'\\).read\\(\\)\\)\")",
+      "Bash(awk 'END{print NR-1}' output/jira/all-stories.csv)",
+      "Bash(grep -n \"\\\\.\\\\./\\\\.\\\\./fedMigrationScripts\\\\|\\\\.\\\\./fedMigrationScripts\" docs/instructions_po.md docs/instructions_engineer.md)",
+      "Bash(grep -n '\\\\.\\\\./\\\\.\\\\./fedMigrationScripts' docs/instructions_engineer.md docs/instructions_po.md)",
+      "Bash(python3 fedMigrationScripts/generatescripts/generate_cross_domain_deps.py)"
     ]
   }
 }

@@ -43,8 +43,9 @@ order to prioritize in — sequencing comes from three other signals, and they'r
    not scheduler-enforced, so if you prioritize a blocked story into an early sprint, it will sit
    un-startable until the thing it's blocked on lands. The full list is
    [`output/analysis/program/cross-domain-dependencies.md`](../output/analysis/program/cross-domain-dependencies.md)
-   — read the two tables there (six stories waiting on product's shared WriteSaga module; nine waiting
-   on a subgraph that isn't live yet) before you sequence anything that touches those domains.
+   — read the two tables there (7 stories waiting on shared infrastructure in another domain — 6 on
+   product's shared WriteSaga module, 1 on a plain intra-subgraph story; 8 waiting on a subgraph that
+   isn't live yet) before you sequence anything that touches those domains.
 3. **Complex-case ADR ratification status** (§3) — a story that implements an unratified draft ADR
    (currently: TechPack, `ADR-015`, 🟠 draft) shouldn't be prioritized into a near-term sprint even if
    nothing else blocks it, because the underlying design could still change.
@@ -99,7 +100,7 @@ not done yet"): [`output/summary/02-project-plan.md`](../output/summary/02-proje
 carries its Depends On / Blocks / Parallelizable metadata inline.
 
 **If the team size changes** (more engineers added/removed), the day-ranges in both lanes are
-regenerated from [`team_config.py`](../../fedMigrationScripts/generatescripts/team_config.py) — ask an
+regenerated from [`team_config.py`](../fedMigrationScripts/generatescripts/team_config.py) — ask an
 engineer to bump `N_BE_ENGINEERS`/`N_FE_ENGINEERS` there and regenerate; don't hand-adjust the dates in
 the plan doc, they'll drift from the underlying schedule.
 

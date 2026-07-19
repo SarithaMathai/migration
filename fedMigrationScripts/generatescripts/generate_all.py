@@ -454,6 +454,14 @@ def main() -> None:
         except Exception as e:
             print(f"  FAIL cross-domain dependency table: {type(e).__name__}: {e}")
 
+        # Field-indexed client-story dependency reports (output/clientStoryDependency/) —
+        # replaces the old by-hand Claude-prompt workflow (per-client-file-story-view.md)
+        # with a real generator; needs fe-08 + frontend-inventory.json + be-04/be-05 per domain.
+        try:
+            _load("generate_client_story_dependency").main()
+        except Exception as e:
+            print(f"  FAIL client story dependency reports: {type(e).__name__}: {e}")
+
         # Program-level team plan (team size from team_config.py) — needs both BE + FE parsers
         try:
             _load("generate_team_plan").main()
