@@ -390,10 +390,10 @@ the product definitions.
 | Federation contributions wait on product (H-01/H-02) | Low | Low | Post-launch; not on critical path | Product Owner |
 
 ## 5. Summary
-- **Stories:** 20 (B:5 · C:2 · D:5 · E:1 · F:2 · G:5). G-06 (value-type alignment) added by the federation review. Bug-fix/test-coverage stories (`G-05`) tracked outside this Jira pipeline, created manually.
+- **Stories:** 20 (B:5 · C:2 · D:5 · E:1 · H:2 · G:5). G-06 (value-type alignment) added by the federation review. Bug-fix/test-coverage stories (`G-05`) tracked outside this Jira pipeline, created manually.
 - **Critical path:** A-02/E-01→G-02/G-03.
 - **Highest risk:** `updateClaim` (E-01); the `bulkUpdateClaim` transform bug (D-02).
-- **Separate subgraph:** claims contributes `Product.claims` + TechPack `ResourcesCount.claims` (Phase F).
+- **Separate subgraph:** claims contributes `Product.claims` + TechPack `ResourcesCount.claims` (Phase H — claims is a separate subgraph, not co-located with `plm-product`; blocked until `spark-claims` deploys).
 
 ---
 - **Phase Completed:** Phase 4 — Migration Stories · **Domain:** `claims` · **Outputs:** be-04-stories.md, be-04-stories-index.yaml, be-04-po-summary.md.

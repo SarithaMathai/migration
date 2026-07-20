@@ -20,7 +20,7 @@ resolver. **ACL note:** where a story says the current code obtains a capability
 | C | Search & Listing | C-01–C-05 | elastic + supplier lookups |
 | D | Mutations (simple) | D-01–D-05 | add / workspaces / lock / unlock / component-status |
 | E | Complex Operations | E-01 | `updateBom` 3-step non-atomic write — blocked by `S-01` |
-| F | Federation Contributions | F-01–F-02 | BLOCKED-BY product domain |
+| F | Federation Contributions | F-01–F-02 | internal, same `plm-product` subgraph as product — ships on green, no gateway block |
 | G | Field Resolvers & Tests | G-01, G-03–G-17 | one story per type block + parity harness. **`G-02` removed**, `G-10` repurposed — see Bom_Unified deprecation below. `G-17` (supplier entity ref) added by the federation review — recommended/PO-gated |
 
 > **`Bom_Unified` deprecated.** The reviewer decision (formerly Decision #3) was: drop `Bom_Unified` as a

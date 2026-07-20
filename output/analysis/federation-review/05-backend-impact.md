@@ -36,7 +36,7 @@
 | BOM-BE-G-17 | `BomMaterialInterface.supplier` entity ref (+7 impls) | BOM-BE-G-01, R1 | Snapshot-semantics answer (OQ-3) first |
 | IMPRESSION-BE-G-04 | `Impression.attachment` entity ref | impression Phase B | Emits `@key` stub only — no resolver logic |
 | WATCHLIST-BE-G-05 | `WatchlistPartner.partner` entity ref | WATCHLIST-BE-G-02 | Replaces nothing; `partnerName` stays |
-| MST-BE-G-04 | `SampleMeasurementSet.sample` forward ref | MST-BE-B-05 | Pairs with MST-BE-F-04 |
+| MST-BE-H-02 | `SampleMeasurementSet.sample` forward ref | MST-BE-B-05 | Pairs with MST-BE-H-01 |
 | PRODUCT-BE-G-17 | Partner/lineage entity refs on product value types (REC-5/6) | PRODUCT-BE-G-01 | — |
 
 ## 3. Blocked-story map (delta only)

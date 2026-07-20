@@ -10,7 +10,7 @@
 |--------|-------|
 | Query resolvers | 7 (measurement) + 8 (sub-domains) = 15 |
 | Mutation resolvers | 8 (measurement) + 7 (sub-domains) = 15 |
-| Field resolvers | 15 (measurement) + 10 (sub-domains) = 25 |
+| Field resolvers | 15 (measurement) + 13 (sub-domains: 5 MeasurementTemplate, 3 SizeTemplate, 5 TightFit) = 28 |
 | Service methods | 18 (measurement) + 14 (sub-domains) = 32 |
 | EXT loader keys | 11 (2 🔴 · 6 🟡 · 3 🔵) + accessControl context-only — `measurementTemplate`/`sizeTemplate`/`tightFit` reclassified **internal** 2026-07-19 (see Monorepo correction below); sub-domains' own remaining EXT: 🔵 `ig`/`vmm`/`userAttributes` (field resolvers), 🔵 NEXUS (searchSparkSizes) |
 | Very High / High | 0 / 1 (`updateMeasurement`) |

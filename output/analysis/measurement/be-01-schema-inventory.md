@@ -119,7 +119,7 @@ beyond that.
 | Queries | 7 (measurement) + 8 (sub-domains: 2 measurementTemplate, 3 sizeTemplate, 2 tightFit, 1 sizes) = **15** |
 | Mutations | 8 (measurement) + 7 (sub-domains: 3 measurementTemplate, 2 sizeTemplate, 2 tightFit) = **15** |
 | Object types | 2 (`Measurement` set, `SampleMeasurementSet`) + 4 sub-domain owned types (`MeasurementTemplate`, `SizeTemplate`, `TightFit`, `Sizes`) + value types |
-| Field resolvers | 15 (13 on Measurement, 2 on SampleMeasurementSet) + 10 sub-domain (3 MeasurementTemplate, 2 SizeTemplate, 5 TightFit) |
+| Field resolvers | 15 (13 on Measurement, 2 on SampleMeasurementSet) + 13 sub-domain (5 MeasurementTemplate, 3 SizeTemplate, 5 TightFit) |
 | Service methods | 18 (measurement) + 14 (sub-domains: 5 measurementTemplate, 5 sizeTemplate, 4 tightFit) = **32** |
 | Cross-domain loader keys | 11 (+ accessControl context-only) — `measurementTemplate`/`sizeTemplate`/`tightFit` **reclassified internal** (2026-07-19), no longer counted as cross-domain |
 | EXT calls | 2 🔴 · 3 🟡 · 3 🔵 (measurement) + 🔵 `ig`/`vmm`/`userAttributes`/NEXUS on the sub-domains' own field resolvers |

@@ -8,12 +8,13 @@
 ## 1. Type Classification
 | Bucket | Count | Examples |
 |---|---|---|
-| Owned entities (`@key`) | 5 | `Measurement` (set — ⚠ SDL type has no `id` field; `id` synthesized from `humanId`, **confirm key**), `SampleMeasurementSet` (key `sampleId`), `MeasurementTemplate` (key `humanId`), `SizeTemplate` (key `humanId`), `TightFit` (key `humanId version` — composite) |
+| Owned entities (`@key`) | 5 | `Measurement` (set — ⚠ SDL type has no `id` field; `id` synthesized from `humanId`, **confirm key**), `SampleMeasurementSet` (key `sampleId`), `MeasurementTemplate` (key `id`, synthesized from `humanId`, ⚠ same caveat), `SizeTemplate` (key `id`, synthesized from `humanId`, ⚠ same caveat), `TightFit` (key `id version` — composite, `id` synthesized from `humanId`, ⚠ same caveat) |
 | Owned value types | 6 | `MeasurementRow`, `SampleMeasurementSetRow`, `PomSize`, `MeasurementSetCoreSize`, `MeasurementBaseType`, `MeasurementPaged` |
 | Sub-domain owned value types | ~10 | `MeasurementTemplateRow`, `SizeGroup`, `CoreSizes`, `GradeInfo`, `SizeValues`, `RowTolerance`, `TightFitsResponse`, `MeasurementTemplatesPaged`, `Sizes` (search-result union shape, no own `@key`) |
 | `@shareable` | 6 | `CodeDescription`, `SizeCodeDescription`, `UnitOfMeasure`, `Pom`, `Paging`, `Unit_Of_Measure` (SizeTemplate's own UoM shape) |
-| External stub — platform | 2 | `VMM_BusinessPartner` (measurement), `IG_Department`/`IG_Division`/`VMM_Brand` (sub-domain field resolvers — TightFit + MeasurementTemplate) |
-| External stub — sibling DGS | 8 | `WorkspaceV2`, `UserProfileAttributes`, `SampleV2`, `AccessControl`, `ResourcePermissions`, `UserGroup_Participants`, `ProductComponentStatus`, `Product` (internal, listed here only as the placeholder-stub convention) |
+| External stub — platform | 5 | `VMM_BusinessPartner` (measurement), `VMM_Brand`/`IG_Department`/`IG_Division` (sub-domain field resolvers — TightFit + MeasurementTemplate), `NEXUS_Attributes` (Sizes' `searchSparkSizes`) |
+| External stub — sibling DGS | 6 | `WorkspaceV2`, `UserProfileAttributes`, `SampleV2`, `AccessControl`, `ResourcePermissions`, `UserGroup_Participants` |
+| Internal placeholder (co-located, `@extends` used only as a standalone-compile stub) | 2 | `Product`, `ProductComponentStatus` — plain internal types in the merged schema, not true federation |
 | Inputs | ~24 | `MeasurementSetInput`, `MeasurementSetUpdateInput`, `SampleMeasurementSetInput`, `MeasurementTemplateInput`, `SizeTemplateInput`, `SizeTemplateUpdateInput`, `TightFitInput`, … |
 
 No interfaces — no `@DgsTypeResolver`. (`updatedFromResource` is currently mono-typed to `SampleV2`.)
@@ -28,7 +29,8 @@ No interfaces — no `@DgsTypeResolver`. (`updatedFromResource` is currently mon
 - 7 queries + 8 mutations (measurement) + 8 queries + 7 mutations (sub-domains) preserved with **exact
   operation names** (`0 ✅ | 30 🔜 | 0 ⏭`).
 - `SPARK_` dropped; the source type `SPARK_Measurements` → `Measurement`.
-- `TightFit` uses a composite key `id version` (kept as `humanId version` in the target — see be-03-schema.graphql key-synthesis note).
+- `TightFit` uses a composite key `id version` — `id` synthesized from `humanId` (no `id` field in the
+  source SDL), `version` is a real SDL field on the type. See be-03-schema.graphql's key-synthesis note.
 - `SizeTemplate`/`MeasurementTemplate` have no `id` field in their SDL either — `id` synthesized from
   `humanId` (same pattern as `Measurement`, `Claims`, `Packaging`, `Watchlist`, `Dieline` — program-wide
   convention, decided 2026-07-17).
@@ -99,6 +101,10 @@ the DGS implementation** (no ACL story) — noted for context only.
 3. Push `getMeasurements`/`getMeasurementsElastic` sort to backend?
 4. Adopt tagged `MeasurementAccessInput`?
 5. Are the 2 unused version service methods needed cross-domain?
+6. `humanId: String` is nullable in the source SDL for `Measurement`, `MeasurementTemplate`, `SizeTemplate`,
+   and `TightFit` alike, but all four synthesize their federation `@key` from it — same pre-existing risk
+   as `Measurement`'s own `⚠ confirm key` flag, now shared by the 3 sub-domain types. Confirm the backend
+   guarantees `humanId` is always populated for a persisted record before relying on it as a federation key.
 
 ---
 **Phase Completed:** Phase 3 · **Domain:** `measurement`.

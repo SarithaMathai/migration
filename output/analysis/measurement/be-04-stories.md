@@ -19,8 +19,8 @@ Engineers: read *Current Behaviour → Target → Files → Acceptance → Tests
 | D | Mutations (simple) | D-01–D-07 (measurement) + D-08–D-10 (sub-domains) |
 | E | Complex (`updateMeasurement`) | E-01 |
 | F | Federation Contributions (internal) | F-01 |
-| G | Field Resolvers | G-01–G-02, G-04 (measurement) + G-05–G-07 (sub-domains: MeasurementTemplate, SizeTemplate, TightFit) (G-04 recommended, PO-gated — federation review) |
-| H | Entity Resolution — cross-subgraph contribution (BLOCKED-BY sample) | H-01 |
+| G | Field Resolvers | G-01–G-02 (measurement) + G-05–G-07 (sub-domains: MeasurementTemplate, SizeTemplate, TightFit) |
+| H | Entity Resolution — cross-subgraph contribution (BLOCKED-BY sample) | H-01–H-02 (H-02 recommended, PO-gated — federation review) |
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories.
 
@@ -473,6 +473,27 @@ Depends on `Product` existing (product A-02), not on a separate deployment.
 
 ---
 
+### MST-BE-H-02 · `SampleMeasurementSet.sample` forward reference (recommended, PO-gated)
+- **Type:** Field Resolver · **Phase:** H · **Complexity:** Low · **Category:** CAT-4 · **Depends on:** B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged) · **EXT:** 🟡 `sample` · **Blocked by:** sample
+- **Status:** Recommended (PO-gated — federation-review/03 §2 REC-4)
+
+- **In plain terms:** Adds `sample { … }` on the sample measurement set — the forward twin of the existing
+reverse extension (`SampleV2.sampleMeasurement`, **MST-BE-H-01**).
+
+- **Context:** `SampleMeasurementSet` is keyed on `sampleId` but exposes no way to walk to the sample entity;
+sample screens re-query by id today. `sampleId` stays — it is the `@key`.
+- **Target DGS Implementation:** schema adds `sample: SampleV2` on `SampleMeasurementSet`; resolver emits
+`{id: sampleId}` — zero extra backend calls; hydrated by the sample subgraph (phase 2; stitched gateway
+until then). **BLOCKED-BY** sample domain Phase 3 (same gate as H-01).
+
+#### Acceptance Criteria
+
+1. PO approval recorded (OQ-5) before implementation starts.
+2. `sample { id }` resolves as a stub; `sampleId` unchanged.
+3. Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query).
+
+---
+
 ### MST-BE-G-01 · `Measurement` field resolvers (13 fields)
 - **Type:** Field Resolver · **Phase:** G · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** B-01, B-01, B-06, B-07, B-08 · **EXT:** 🟡 `workspaceV2` · 🟡 `sampleV2` · 🔵 `vmm` · 🔵 `userAttributes`
 
@@ -582,27 +603,6 @@ computed fallback), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`).
 
 ---
 
-### MST-BE-G-04 · `SampleMeasurementSet.sample` forward reference (recommended, PO-gated)
-- **Type:** Field Resolver · **Phase:** G · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged) · **EXT:** 🟡 `sample`
-- **Status:** Recommended (PO-gated — federation-review/03 §2 REC-4)
-
-- **In plain terms:** Adds `sample { … }` on the sample measurement set — the forward twin of the existing
-reverse extension (`SampleV2.sampleMeasurement`, **MST-BE-H-01**).
-
-- **Context:** `SampleMeasurementSet` is keyed on `sampleId` but exposes no way to walk to the sample entity;
-sample screens re-query by id today. `sampleId` stays — it is the `@key`.
-- **Target DGS Implementation:** schema adds `sample: SampleV2` on `SampleMeasurementSet`; resolver emits
-`{id: sampleId}` — zero extra backend calls; hydrated by the sample subgraph (phase 2; stitched gateway
-until then).
-
-#### Acceptance Criteria
-
-1. PO approval recorded (OQ-5) before implementation starts.
-2. `sample { id }` resolves as a stub; `sampleId` unchanged.
-3. Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query).
-
----
-
 ## 4. Risk Register
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|
@@ -614,11 +614,13 @@ until then).
 | F-01 internal (same subgraph, depends on Product type); F-02 federated (sample DGS) | Low | Low | Sequence F-01 after product A-02; F-02 after sample migrates | Tech Lead |
 
 ## 5. Summary
-- **Stories:** 20 + 10 sub-domain = **30** (B:5+4=9 · C:2 · D:7+3=10 · E:1 · F:2 · G:3+3=6). G-04
-(recommended, PO-gated) added by the federation review. Bug-fix/test-coverage stories (`G-03`) tracked
-outside this Jira pipeline, created manually. Sub-domain stories (B-06–B-09, D-08–D-10, G-05–G-07) folded
-in 2026-07-19 — `measurementTemplate`/`sizeTemplate`/`tightFit`/`sizes` are co-located `measurement`
-sub-domains, not external services (see be-01 §2 scope correction).
+- **Stories:** 20 + 10 sub-domain = **30** (B:5+4=9 · C:2 · D:7+3=10 · E:1 · F:2 · G:2+3=5 · H:1+1=2). H-02
+(recommended, PO-gated) added by the federation review — reclassified from G-04 to H-02 (cross-subgraph
+contribution, `Blocked by: sample`, matches this domain's own Phase H definition rather than Phase G's
+same-subgraph-only scope). Bug-fix/test-coverage stories (`G-03`) tracked outside this Jira pipeline,
+created manually. Sub-domain stories (B-06–B-09, D-08–D-10, G-05–G-07) folded in 2026-07-19 —
+`measurementTemplate`/`sizeTemplate`/`tightFit`/`sizes` are co-located `measurement` sub-domains, not
+external services (see be-01 §2 scope correction).
 - **Critical path:** E-01; C-01.
 - **Highest risk:** `updateMeasurement` 2-step write; relationship dependency in `getMeasurements`.
 - **Independent of federation:** ships before F-01/H-01. Sub-domain stories (B-06–B-09/D-08–D-10/G-05–G-07)

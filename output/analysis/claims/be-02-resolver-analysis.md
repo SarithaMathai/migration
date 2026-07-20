@@ -79,7 +79,7 @@ user-profile/userGroup) · accessControl **context-only**. `claim` is the owned 
 - **Preserve exactly:** `businessPartner` 3-way fallback (incl. `{bpId:0,bpName:'Target'}`); create/update
   throw-on-error contracts.
 - **Federation:** claims is a separate subgraph — it **contributes** `Product.claims` + TechPack
-  `ResourcesCount.claims` (Phase F).
+  `ResourcesCount.claims` (Phase H — cross-subgraph, blocked until `spark-claims` deploys).
 - **Quick wins:** the 5 simple reads (Q1–Q5), lock/unlock, requestClaimExport.
 
 ---
