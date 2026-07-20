@@ -21,7 +21,10 @@
       "Bash(awk 'END{print NR-1}' output/jira/all-stories.csv)",
       "Bash(grep -n \"\\\\.\\\\./\\\\.\\\\./fedMigrationScripts\\\\|\\\\.\\\\./fedMigrationScripts\" docs/instructions_po.md docs/instructions_engineer.md)",
       "Bash(grep -n '\\\\.\\\\./\\\\.\\\\./fedMigrationScripts' docs/instructions_engineer.md docs/instructions_po.md)",
-      "Bash(python3 fedMigrationScripts/generatescripts/generate_cross_domain_deps.py)"
+      "Bash(python3 fedMigrationScripts/generatescripts/generate_cross_domain_deps.py)",
+      "Bash(echo \"grep exit \\(1 = no failures\\): $?\")",
+      "Bash(python3 \"/c/Users/ercmt/AppData/Local/Temp/claude/c--Saritha-jul4-migration/1c6676c9-b623-4492-a48e-5576363c5c41/scratchpad/check_jira_csv.py\")",
+      "Bash(python3 \"/c/Users/ercmt/AppData/Local/Temp/claude/c--Saritha-jul4-migration/1c6676c9-b623-4492-a48e-5576363c5c41/scratchpad/check_id_consistency.py\")"
     ]
   }
 }

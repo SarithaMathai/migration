@@ -21,12 +21,14 @@
    - `be-01-schema-inventory.md` / `be-05-attribute-inventory.md` — the type/field surface + attribute mapping.
 
 3. **For the hard cross-domain stories:** `output/complexStories/{case}/`
-   - `00-overview.md` (banner: Summary · Spike/ADR · Status · who-reads-what) · `ARCHITECTURE.md`
-     (design) · `01-stories.md` (sub-tasks) · `implementation/` (pseudo-code + SDL per cross-service op).
-   - **8 cases** = the 6 program spikes (+ 2 read patterns). How a spike's ADR becomes these stories:
-     `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`.
+   - `00-overview.md` (banner: Summary · Spike/ADR · Status · who-reads-what) · `01-adr-{case}.md`
+     (draft ADR: today's behavior, options, trade-offs, decision) · `01-stories.md` (sub-tasks, cross-
+     referenced by pin-down — full story text stays in the domain's `be-04-stories.md`).
+   - **9 cases** = the 6 numbered program spikes + `cross-domain-association` (`SPIKE-06`) + `acl`
+     (ADR-019 draft) + one case still in problem-brief stage (`acl` has no `01-stories.md` yet). How a
+     spike's ADR becomes these stories: `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`.
 
-4. **Patterns & how-to:** `reference/` (e.g. `reference-federation-patterns.md`, `RUN-NEW-DOMAIN.md`).
+4. **Patterns & how-to:** `reference/` (e.g. `federation-patterns-condensed.md`, `RUN-NEW-DOMAIN.md`).
 
 ---
 

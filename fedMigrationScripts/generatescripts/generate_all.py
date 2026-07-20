@@ -448,6 +448,14 @@ def main() -> None:
         except Exception as e:
             print(f"  FAIL ACL analysis roll-up: {type(e).__name__}: {e}")
 
+        # External capability consolidation — one EXT-<TOKEN>-NN story per reusable
+        # external dependency (grouped by owning service/platform, not per domain/field);
+        # needs be-06 (schema_analysis_mod, just run above) + be-04 per domain.
+        try:
+            _load("generate_ext_capabilities").main()
+        except Exception as e:
+            print(f"  FAIL EXT capability stories: {type(e).__name__}: {e}")
+
         # Cross-domain dependency table — every Blocked-by across all 8 domains, one place.
         try:
             _load("generate_cross_domain_deps").main()

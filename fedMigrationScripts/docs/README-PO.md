@@ -12,8 +12,9 @@
      **ship-on-green** model. **No code.** This is your 1–2 page page (paste-ready for Confluence).
 
 2. **Zoom out — the whole program:** `summary/00-program-overview.md`
-   - All 13 domains: totals, per-domain table, target DGS groupings, top risks, open decisions, recommended
-     sequencing, and cross-domain blockers.
+   - All 8 phase-1 domains: totals, per-domain table, target DGS groupings, top risks, open decisions,
+     recommended sequencing, and cross-domain blockers. (5 more domains — attachment, discussion, sample,
+     search, workspace — join in a later phase.)
 
 3. **Approve the plan — the breakdown:** `summary/{domain}/FederatedGqlBreakDown-{domain}.md`
    - Every story in one table (ID, summary, size, dependencies, status), the **Phase-0 spikes**, the

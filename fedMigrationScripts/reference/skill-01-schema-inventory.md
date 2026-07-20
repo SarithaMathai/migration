@@ -28,7 +28,7 @@
 
 ## Mandatory sections (in order)
 
-1. Header block (per `reference-output-conventions`).
+1. Header block (per `output-conventions-condensed`).
 2. Context Registration — service class, base endpoint (quote the constructor line), auth pattern.
 3. Source File Manifest — schema / resolver / service / utils tables with line counts.
 4. Import Graph — which files import which utils.

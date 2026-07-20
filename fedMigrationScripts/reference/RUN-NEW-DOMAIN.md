@@ -14,8 +14,8 @@ layer (`confluence/{x}.md`, refreshed `jira/` via `generate.py`), and refreshes 
 
 ```
 Analyze the GraphQL domain "{DOMAIN}" for the Spark → plm-product DGS migration, following the
-framework in finalOutput/scripts/ (skills 01 → 02 → 03 → 04 → 05 → 06, reference-output-conventions,
-reference-federation-patterns, domain-service-catalog).
+framework in finalOutput/scripts/ (skills 01 → 02 → 03 → 04 → 05 → 06, output-conventions-condensed,
+federation-patterns-condensed, domain-service-catalog).
 
 Sources (the SDL is the schema source of truth; cross-check behaviour against the resolver):
 - schema  : code/schemas/{SPARK_Domain}.txt

@@ -53,7 +53,15 @@ DOMAIN_LABELS = fe.DOMAIN_LABELS
 DOMAIN_RESOLVER_FILE = {
     "product":        CODE_RESOLVERS / "SPARK_Product.txt",
     "bom":            CODE_RESOLVERS / "product" / "SPARK_Bom.txt",
-    "measurement":    CODE_RESOLVERS / "product" / "SPARK_Measurement.txt",
+    # measurement + its co-located sub-domains (folded in 2026-07-19 — same
+    # enterprise_product_development_products service base, own operations, not EXT;
+    # see output/analysis/measurement/be-01-schema-inventory.md §2 scope correction).
+    # A list here (rather than one path) is scanned as ONE domain by analyze_domain_resolvers.
+    "measurement":    [CODE_RESOLVERS / "product" / "SPARK_Measurement.txt",
+                        CODE_RESOLVERS / "SPARK_MeasurementTemplate.txt",
+                        CODE_RESOLVERS / "product" / "SPARK_SizeTemplate.txt",
+                        CODE_RESOLVERS / "product" / "SPARK_TightFit.txt",
+                        CODE_RESOLVERS / "product" / "SPARK_Sizes.txt"],
     "productDetails": CODE_RESOLVERS / "product" / "SPARK_ProductDetail.txt",
     "packaging":      CODE_RESOLVERS / "product" / "SPARK_Packaging.txt",
     "watchlist":      CODE_RESOLVERS / "product" / "SPARK_Watchlist.txt",
@@ -62,9 +70,13 @@ DOMAIN_RESOLVER_FILE = {
 }
 # The literal `ctx.loaders.<key>` string each domain's OWN resolver file uses to call
 # itself — verified against code/resolvers/**/*.txt (case-sensitive; productDetails and
-# claims use different casing/singular form than their domain key).
+# claims use different casing/singular form than their domain key). measurement's
+# sub-domain files call themselves via their OWN loader key (measurementTemplate/
+# sizeTemplate/tightFit), not "measurement" — all excluded here so a sub-domain's own
+# reference to ITSELF isn't miscounted as a cross-domain dependency of `measurement`.
 DOMAIN_LOADER_KEY = {
-    "product": "product", "bom": "bom", "measurement": "measurement",
+    "product": "product", "bom": "bom",
+    "measurement": {"measurement", "measurementTemplate", "sizeTemplate", "tightFit"},
     "productDetails": "ProductDetails", "packaging": "packaging",
     "watchlist": "watchlist", "impression": "impression", "claims": "claim",
 }
@@ -108,7 +120,13 @@ def load_loader_catalog():
 
 
 LOADER_CATALOG = load_loader_catalog()
-LOADER_TO_PHASE1_DOMAIN = {v: k for k, v in DOMAIN_LOADER_KEY.items()}
+# Invert DOMAIN_LOADER_KEY -> {own_loader_key: phase1_domain}. A domain's value may be a
+# single key (most domains) or a set of keys (measurement, which folds in 3 co-located
+# sub-domains each calling themselves via their OWN loader key — see DOMAIN_LOADER_KEY).
+LOADER_TO_PHASE1_DOMAIN = {}
+for _dom, _keys in DOMAIN_LOADER_KEY.items():
+    for _k in (_keys if isinstance(_keys, set) else {_keys}):
+        LOADER_TO_PHASE1_DOMAIN[_k] = _dom
 
 
 def classify_loader(key):
@@ -220,24 +238,32 @@ def parse_resolver_map(text):
 
 
 def analyze_domain_resolvers(domain):
-    """-> list of {block, field, loader_keys:set, has_jwt:bool} for every resolver field."""
-    path = DOMAIN_RESOLVER_FILE.get(domain)
-    if not path or not path.exists():
+    """-> list of {block, field, loader_keys:set, has_jwt:bool} for every resolver field.
+    `DOMAIN_RESOLVER_FILE[domain]` may be one path or a list of paths (a domain that folds
+    in co-located sub-domains, e.g. measurement + measurementTemplate/sizeTemplate/tightFit/
+    sizes, each its own resolver file but analyzed together as one domain)."""
+    paths = DOMAIN_RESOLVER_FILE.get(domain)
+    if not paths:
         return []
-    text = path.read_text(encoding="utf-8", errors="replace")
-    blocks = parse_resolver_map(text)
-    own_key = DOMAIN_LOADER_KEY.get(domain)
+    paths = paths if isinstance(paths, list) else [paths]
+    own_keys = DOMAIN_LOADER_KEY.get(domain)
+    own_keys = own_keys if isinstance(own_keys, set) else {own_keys}
     out = []
-    for block, fields in blocks.items():
-        for fname, body in fields.items():
-            # accessControl is cross-cutting auth, not a domain hydration — tracked
-            # separately in be-07-acl-usage-analysis.md (generate_acl_analysis.py).
-            keys = {k for k in LOADER_CALL_RE.findall(body) if k not in (own_key, "accessControl")}
-            out.append({
-                "block": block, "field": fname,
-                "loader_keys": keys, "has_jwt": bool(JWT_RE.search(body)),
-                "line": text[:text.index(body)].count("\n") + 1 if body in text else None,
-            })
+    for path in paths:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        blocks = parse_resolver_map(text)
+        for block, fields in blocks.items():
+            for fname, body in fields.items():
+                # accessControl is cross-cutting auth, not a domain hydration — tracked
+                # separately in be-07-acl-usage-analysis.md (generate_acl_analysis.py).
+                keys = {k for k in LOADER_CALL_RE.findall(body) if k not in own_keys and k != "accessControl"}
+                out.append({
+                    "block": block, "field": fname,
+                    "loader_keys": keys, "has_jwt": bool(JWT_RE.search(body)),
+                    "line": text[:text.index(body)].count("\n") + 1 if body in text else None,
+                })
     return out
 
 

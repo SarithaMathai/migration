@@ -69,6 +69,16 @@ PHASE1_SCHEMA_DOMAIN = {
     "SPARK_Bom":           "bom",
     "SPARK_Claims":        "claims",
     "SPARK_Measurement":   "measurement",
+    # measurement's co-located sub-domains (folded in 2026-07-19 — same
+    # enterprise_product_development_products service base, own operations, not a
+    # later-phase/platform domain; see output/analysis/measurement/be-01-schema-inventory.md
+    # §2 scope correction). Previously mapped via LATER_SCHEMA_LABEL below (now removed
+    # from there) — moving them here is what brings their operations into phase-1 FE
+    # story generation / jira export / clientStoryDependency scope.
+    "SPARK_MeasurementTemplate": "measurement",
+    "SPARK_SizeTemplate":  "measurement",
+    "SPARK_TightFit":      "measurement",
+    "SPARK_Sizes":         "measurement",
     "SPARK_Impression":    "impression",
     "SPARK_ProductDetail": "productDetails",
     "SPARK_Packaging":     "packaging",
@@ -104,15 +114,14 @@ LATER_SCHEMA_LABEL = {
     "SPARK_MaterialHub": "Materials Hub", "SPARK_Color": "Color",
     "SPARK_Trim": "Trim", "SPARK_Wash": "Wash", "SPARK_Palette": "Palette",
     "SPARK_Favorite": "Favorites", "SPARK_Tag": "Tags",
-    "SPARK_MeasurementTemplate": "Measurement (templates)",
-    "SPARK_TightFit": "Measurement (tight-fit)",
+    # SPARK_MeasurementTemplate / SPARK_TightFit / SPARK_SizeTemplate / SPARK_Sizes moved
+    # to PHASE1_SCHEMA_DOMAIN above (2026-07-19) — no longer later-phase/platform.
     "SPARK_SpecificationTemplate": "Product Details (templates)",
     "SPARK_AccessControl": "Access Control", "SPARK_Role": "Access Control",
     "SPARK_UserGroup": "Access Control", "SPARK_UserAttributes": "User",
     "SPARK_ActivityCenter": "Activity", "SPARK_AdminTools": "Admin",
     "SPARK_RuleLibrary": "Rules", "SPARK_ValueAssessment": "Value Assessment",
     "SPARK_Artwork": "Artwork", "SPARK_Pom": "Measurement (POM)",
-    "SPARK_Sizes": "Sizes", "SPARK_SizeTemplate": "Sizes",
     "SPARK_Status": "Status", "SPARK_RecentlyViewed": "Dashboard",
     "SPARK_ToDo": "Dashboard", "SPARK_Banner": "Dashboard",
     "SPARK_Notification": "Notifications", "SPARK_BackgroundNotifications": "Notifications",
@@ -909,8 +918,11 @@ def emit_backend_inventory(registry, ops, coverage):
     L.append("✅ = called by the frontend today · ⚠ = no frontend caller found (server-side or dead field)")
     L.append("")
     for dom in PHASE1_ORDER:
-        f = [k for k, v in PHASE1_SCHEMA_DOMAIN.items() if v == dom][0]
-        emit_file_section(f, DOMAIN_LABELS[dom], f" · DGS target: `{DOMAIN_DGS[dom]}`")
+        # a domain may own more than one schema file (measurement folds in its
+        # co-located sub-domains — measurementTemplate/sizeTemplate/tightFit/sizes)
+        dom_files = sorted(k for k, v in PHASE1_SCHEMA_DOMAIN.items() if v == dom)
+        for f in dom_files:
+            emit_file_section(f, DOMAIN_LABELS[dom], f" · DGS target: `{DOMAIN_DGS[dom]}`")
     L.append("## Out of scope")
     L.append("")
     L.append(f"- The remaining {len(list(SCHEMA_DIR.glob('*.txt'))) - len(p1_files)} schema files (later-phase and platform-stitched domains) are excluded per program scope.")
@@ -1034,7 +1046,9 @@ def emit_domain_analysis(ops, frags, registry):
         qs = [o for o in group if o["kind"] == "query"]
         ms = [o for o in group if o["kind"] == "mutation"]
         L.append(f"- Frontend operations: {len(group)} ({len(qs)} queries, {len(ms)} mutations)")
-        L.append(f"- Backend ownership: `{DOMAIN_DGS[dom]}` · schema `schemas/{[k for k,v in PHASE1_SCHEMA_DOMAIN.items() if v==dom][0]}.graphqls`")
+        dom_files = sorted(k for k, v in PHASE1_SCHEMA_DOMAIN.items() if v == dom)
+        schema_list = ", ".join(f"`schemas/{f}.graphqls`" for f in dom_files)
+        L.append(f"- Backend ownership: `{DOMAIN_DGS[dom]}` · schema {schema_list}")
         libs = sorted({o["lib"] for o in group})
         L.append(f"- Client ownership (libraries): {', '.join(f'`{x}`' for x in libs) or '—'}")
         cds = sorted({o["client_domain"] for o in group})
@@ -1191,7 +1205,7 @@ FE_EPIC_DESC = (
 )
 CSV_HEADER = ["Issue Type", "Story ID", "Summary", "Epic Name", "Epic Link", "Phase",
               "T-shirt size", "Labels", "Labels", "Labels", "Parent Link",
-              "Depends On", "Status", "Description"]
+              "Depends On", "External Dependency", "Status", "Description"]
 
 
 def impact_to_tshirt(impact):
@@ -1224,7 +1238,7 @@ def md_to_jira(md):
 
 def _fe_epic_row():
     return ["Epic", "", FE_EPIC_NAME, FE_EPIC_NAME, "", "", "",
-            "fed-graphql-fe", "frontend", "epic", "", "", "", FE_EPIC_DESC]
+            "fed-graphql-fe", "frontend", "epic", "", "", "", "", FE_EPIC_DESC]
 
 
 FE_DOD = ("*Definition of Done:*\n"
@@ -1290,6 +1304,25 @@ def _fe_meta(all_stories):
     return meta
 
 
+def _fe_ext_services(dom, depends):
+    """Union of external services (be-05 EXT (sev) column) across every BE story id in
+    `depends` — an FE story's own external exposure is whatever its BE prerequisites
+    already carry; same source generate_jira.py uses for BE rows, so the combined
+    per-domain CSV never disagrees with itself between BE and FE rows."""
+    try:
+        from generate_jira import _ext_services_for_story
+    except Exception:
+        return ""
+    svcs = set()
+    for d in depends:
+        if "-BE-" not in d:
+            continue
+        cell = _ext_services_for_story(dom, d)
+        if cell:
+            svcs.update(x.strip() for x in cell.split(","))
+    return ", ".join(sorted(svcs))
+
+
 def _fe_story_rows(stories_group):
     meta = _fe_meta(stories_group)
     rows = []
@@ -1298,11 +1331,12 @@ def _fe_story_rows(stories_group):
         label = DOMAIN_LABELS.get(dom, dom.title())
         desc = "\n\n".join(x for x in (
             meta.get(s["id"], ""), md_to_jira(_remap_body_be_ids(s["body"])), FE_DOD) if x)
+        ext = _fe_ext_services(dom, s["depends"])
         rows.append([
             "Story", s["id"], f"[{label} FE] {s['title']} [{s['id']}]",
             "", FE_EPIC_NAME, "FE", impact_to_tshirt(s["impact"]),
             "fed-graphql-fe", dom, (s["type"] or "migration").lower().replace(" ", "-"),
-            "", " ".join(s["depends"]), "To Do", desc,
+            "", " ".join(s["depends"]), ext, "To Do", desc,
         ])
     return rows
 

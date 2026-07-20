@@ -16,16 +16,19 @@
    - `be-03-schema-analysis.md` — **type classification, federation boundaries, `@key` candidates, gap analysis**.
    - `be-01-schema-inventory.md` — the full type/field surface being migrated.
 
-3. **The decisions you own — spikes & ADRs:** the 6 program spikes (`SPIKE-01…06`, in the global
-   breakdown's *Phase 0 — Program Spikes*).
+3. **The decisions you own — spikes & ADRs:** the 6 numbered program spikes (`SPIKE-01…06`, in the global
+   breakdown's *Phase 0 — Program Spikes*) plus the `acl` case (ADR-019 draft, not a numbered spike —
+   see below).
    - You **approve the option**; that decision becomes an ADR and drives the case design.
-   - Index of status + chosen option: [`adrs/adr-index.yaml`](../../adrs/adr-index.yaml).
+   - Index of status + chosen option: each case's `00-overview.md` banner (Spike · Status). There is no
+     separate `adrs/adr-index.yaml` — ratified ADRs live in `adrs/` as individual documents.
    - The full flow (where the ADR goes, multi-option handling, what to update):
      [`fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`](../reference/SPIKE-ADR-LIFECYCLE.md).
 
 4. **The hard cross-domain cases — the design detail:** `output/complexStories/{case}/`
-   - `00-overview.md` §2 (chosen approach + the ADR it came from) · `ARCHITECTURE.md` (C4 static view, NFR,
-     consistency) · `implementation/` (per-service SDL + pseudo-code).
+   - `00-overview.md` §2 (chosen approach + the ADR it came from) · `01-adr-{case}.md` (today's behavior,
+     decision drivers, options + trade-offs, proposed decision, consequences) · `01-stories.md` (sub-tasks
+     cross-referenced by pin-down — full story text is in the domain's `be-04-stories.md`, not duplicated).
 
 5. **Patterns:** `fedMigrationScripts/reference/federation-patterns.md` and `stitching-patterns.md`
    (`@key`, `@requires`, `@external`, `extend type`, entity fetchers, gateway stitch).
@@ -38,8 +41,12 @@
   `_entities` hop). The `be-03-schema-analysis.md` calls each out; confirm the ones marked *synthesized `@key`*.
 - **The spike decisions are yours to sign off** — edge rule (`@key`-ref vs client), non-atomic-write failure
   strategy, TechPack assembly pattern, polymorphic dispatch. Each lands in a `complexStories/<case>/`.
-- **ACL is context-only** — not re-implemented in the DGS layer (per decision). Stories note where the gateway
-  curries a token; there is **no ACL story**.
+- **ACL — be-03/be-04 say "context-only, ignored"; this is now under active revision.** The `be-07-acl-usage-analysis.md`
+  research (rolled up in `analysis/aclResearch/00-acl-usage-inventory.md`) found that's only true for
+  permission-check and own-domain-token call sites — **23 downstream-token call sites** across 8 domains mint
+  a capability token specifically to call another domain's API, where ACL *is* load-bearing. Draft ADR-019
+  (`complexStories/acl/`) proposes **Mid-Request ACL Update** to resolve these; not yet ratified or applied
+  back to be-03/be-04.
 - **Schema-drift ops** (declared in SDL, no resolver) are flagged ⏭ — decide keep-vs-`@deprecate`.
 
 ## When to open `code/`

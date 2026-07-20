@@ -91,6 +91,7 @@ def build_table() -> str:
     infra_rows = []    # blocked on a concrete story id in another domain
     subgraph_rows = [] # blocked on a not-yet-live subgraph/domain (no resolvable story id)
     dangling = []      # names a story id that does not exist anywhere
+    suspicious = []    # names a phase-1 domain but has no backtick-quoted id — likely a formatting slip
 
     for dom in ALL_DOMAINS:
         for row in find_blocked_stories(dom):
@@ -100,7 +101,16 @@ def build_table() -> str:
                 else:
                     dangling.append(row)
             else:
-                subgraph_rows.append(row)
+                # A real later-phase-subgraph gate names a domain OUTSIDE the 8 in-scope ones
+                # (attachment/discussion/sample/search/workspace/construction). If the raw text
+                # instead starts with an in-scope domain name, the author almost certainly meant
+                # a resolvable story id and just dropped the backticks — flag it instead of
+                # silently filing it as a subgraph gate (see IMPRESSION-BE-F-01, 2026-07-19).
+                first_word = row["raw"].split()[0].lower() if row["raw"] else ""
+                if first_word in ALL_DOMAINS:
+                    suspicious.append(row)
+                else:
+                    subgraph_rows.append(row)
 
     today = __import__("datetime").date.today().isoformat()
     L = [
@@ -155,11 +165,29 @@ def build_table() -> str:
         for r in dangling:
             L.append(f"| `{r['id']}` | {r['domain']} | {r['raw']} | `{r['target_id']}` |")
 
+    if suspicious:
+        L += [
+            "",
+            "---",
+            "",
+            "## ⚠ Suspicious — names an in-scope domain but no backtick-quoted story id "
+            "(likely a formatting slip, not a real subgraph gate)",
+            "",
+            "| Blocked story | Domain | Raw `Blocked by:` text |",
+            "|---|---|---|",
+        ]
+        for r in suspicious:
+            L.append(f"| `{r['id']}` | {r['domain']} | {r['raw']} |")
+        L.append("")
+        L.append("> Fix the source `**Blocked by:**` line to include the target story id in "
+                  "backticks (e.g. ``product (`PRODUCT-BE-B-01`, ...)``), then regenerate.")
+
     L += [
         "",
         "---",
         f"*{len(infra_rows)} infrastructure gate(s) · {len(subgraph_rows)} later-phase-subgraph "
-        f"gate(s){f' · {len(dangling)} dangling reference(s) — FIX BEFORE SHIP' if dangling else ''}.*",
+        f"gate(s){f' · {len(dangling)} dangling reference(s) — FIX BEFORE SHIP' if dangling else ''}"
+        f"{f' · {len(suspicious)} suspicious reference(s) — FIX BEFORE SHIP' if suspicious else ''}.*",
     ]
     return "\n".join(L)
 

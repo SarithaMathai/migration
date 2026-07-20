@@ -869,6 +869,15 @@ def group_by_phase(stories: list[dict]) -> dict[str, list]:
 PHASE_SEQ = "ABCDEFGH"
 
 
+def phase_icon_legend(phases_present: str | None = None) -> str:
+    """Build the '🧱 A · 📖 B · ...' legend fragment from PHASE_ICONS, so a phase
+    (e.g. H, added after this legend was first hand-written) can never silently be
+    used in a doc without being defined here. Pass the domain's actual phase letters
+    to scope the legend to what that page uses; omit for the full A-H legend."""
+    seq = phases_present if phases_present is not None else PHASE_SEQ
+    return " · ".join(f"{PHASE_ICONS[p]} {p}" for p in PHASE_SEQ if p in seq)
+
+
 def _short_id(full_id: str) -> str:
     m = re.search(r"-BE-([A-H]-\d+(?:-\d+)?)$", full_id)
     return m.group(1) if m else full_id
@@ -1122,6 +1131,48 @@ def team_plan_md(stories: list[dict], n_eng: int = N_BE_ENGINEERS) -> list[str]:
     return lines
 
 
+# ─── Live phase-summary table ─────────────────────────────────────────────────
+# Replaces the hand-authored "Story Summary by Phase" table from be-04-po-summary.md,
+# which drifted out of sync with be-04-stories.md in 4/8 domains (missing Phase H for
+# product, phantom rows, stale story counts — caught 2026-07-19 during a full-output
+# audit). Phase/Name/Stories/Effort are now always computed from the same parsed
+# `stories` list every other live count in this pipeline uses, so they can't drift.
+# "Ready when" is intentionally NOT reconstructed here — it was free-form dependency
+# prose that can't be derived mechanically without risking a misleading auto-summary;
+# the per-story "Depends On" column in the phase tables below is the live source of
+# truth for that.
+def live_phase_summary_md(stories: list[dict]) -> str:
+    by_phase: dict[str, list[dict]] = {}
+    for s in stories:
+        by_phase.setdefault(s["phase"], []).append(s)
+
+    lines = [
+        "| Phase | Name | Stories | Effort (est., +20% buffer) |",
+        "|-------|------|---------|----------------------------|",
+    ]
+    tot_n = tot_lo = tot_hi = 0
+    for p in PHASE_SEQ:
+        group = by_phase.get(p)
+        if not group:
+            continue
+        n = len(group)
+        lo = sum(EFFORT_DAYS.get(s["complexity"], (2, 4))[0] for s in group)
+        hi = sum(EFFORT_DAYS.get(s["complexity"], (2, 4))[1] for s in group)
+        lo_b, hi_b = round(lo * 1.2), round(hi * 1.2)
+        tot_n += n
+        tot_lo += lo_b
+        tot_hi += hi_b
+        lines.append(f"| {p} | {PHASE_NAMES[p]} | {n} | {lo_b}–{hi_b}d |")
+    lines.append(f"| **Total** | | **{tot_n}** | **{tot_lo}–{tot_hi}d** (buffered) |")
+    lines.append("")
+    lines.append("> Computed live from `be-04-stories.md` (phase + complexity per story) — "
+                  "always reconciles with the story tables below and the program overview. "
+                  "Effort = sum of per-story nominal day-ranges (Low 1–2 · Medium 2–4 · "
+                  "High 4–7 · Very High 7–12) × 1.2 buffer, AI-estimated — confirm in refinement. "
+                  "See each story's **Depends On** column for real sequencing.")
+    return "\n".join(lines)
+
+
 # ─── PO summary parser ────────────────────────────────────────────────────────
 def read_po_sections(po_path: Path) -> dict[str, str]:
     if not po_path.exists():
@@ -1307,7 +1358,7 @@ def build_breakdown(domain: str) -> str:
         "",
         "> **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  "
         "· 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  "
-        "· 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G",
+        f"· 🔬 Spike · 🔴🔬 spike-gated story · {phase_icon_legend()}",
         "",
         "---",
         "",
@@ -1391,13 +1442,10 @@ def build_breakdown(domain: str) -> str:
         ]
 
     # §3 — Effort by Phase + Capacity Planning
-    if po.get("phases") or po.get("capacity"):
-        lines += ["## Effort Snapshot", ""]
-        if po.get("phases"):
-            lines += [po["phases"], ""]
-        if po.get("capacity"):
-            lines += ["", "**Capacity Planning**", "", po["capacity"], ""]
-        lines += ["---", ""]
+    lines += ["## Effort Snapshot", "", live_phase_summary_md(stories), ""]
+    if po.get("capacity"):
+        lines += ["", "**Capacity Planning**", "", po["capacity"], ""]
+    lines += ["---", ""]
 
     # §4 — Sprint Sequencing
     if po.get("sprints"):
@@ -1438,8 +1486,9 @@ def build_breakdown(domain: str) -> str:
             vh_count    = sum(1 for s in ph_stories if s["complexity"] == "very high")
             hi_count    = sum(1 for s in ph_stories if s["complexity"] == "high")
 
+            story_word = "story" if len(ph_stories) == 1 else "stories"
             lines += [
-                f"### {phase_icon} Phase {phase_key} — {phase_name} ({len(ph_stories)} stories)",
+                f"### {phase_icon} Phase {phase_key} — {phase_name} ({len(ph_stories)} {story_word})",
                 "",
             ]
             lines += render_phase_table(phase_key, ph_stories)
@@ -1623,13 +1672,14 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
         f"| **Total Backend Stories** | **{grand_total}** |",
         f"| **Total Frontend Stories** | **{fe_total}** · {fe_lo}–{fe_hi}d single-engineer (Frontend section of each per-domain `FederatedGqlBreakDown-<domain>` page) |",
         f"| **Complexity (backend)** | 🔴 {grand_vh} Very High · 🟠 {grand_hi} High · 🟡 {grand_me} Medium · 🟢 {grand_lo} Low |",
-        f"| **Phase Coverage** | 🔬 {len(SPIKE_TITLES)} Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |",
+        f"| **Phase Coverage** | 🔬 {len(SPIKE_TITLES)} Spikes · " +
+        " · ".join(f"{PHASE_ICONS[p]} {p} {PHASE_NAMES[p]}" for p in PHASE_SEQ) + " |",
         f"| **Cross-domain spikes** | 🔬 {len(SPIKE_TITLES)} program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |",
         f"| **Generated** | {today} |",
         "",
         "> **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  "
         "· 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  "
-        "· 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G",
+        f"· 🔬 Spike · 🔴🔬 spike-gated story · {phase_icon_legend()}",
         "",
         "---",
         "",

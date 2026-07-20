@@ -509,6 +509,27 @@ def collect_op_fields(txt_filename, op_name, frag_index, const=None, visited=Non
                              "resolved_container": container_type,
                              "not_found_fragment": False, "group": group,
                              "container": container})
+                # A field's OWN sub-selection can itself be (or contain, at its TOP
+                # LEVEL only) a named-fragment spread — e.g. `content {
+                # ...measurementFieldsFragment }` or `product { ...ProductBaseInfoFragment
+                # }`. Those spread's fields are the REAL payload (e.g. `createdBy`,
+                # `businessPartners` inside `measurementFieldsFragment`) and must become
+                # their own rows so be-05/story matching can see them — otherwise
+                # they're only visible via the non-authoritative `children` list as an
+                # opaque `...FragmentName` token, and silently vanish from the Fields
+                # table entirely. Re-scan `sub`'s top-level tokens (not a raw substring
+                # search over the whole body) so this only fires for a spread sitting
+                # DIRECTLY in this field's own selection set — a spread buried several
+                # levels deeper inside one of `sub`'s OWN literal nested fields (e.g.
+                # `product { id, teams { ...SomeFragment } }`) must NOT trigger this,
+                # or `product`'s literal fields (`id`, `teams`, ...) get wrongly
+                # flattened into the OUTER container instead of staying one row each
+                # under `product`. Literal-only sub-selections stay at the coarser
+                # one-row grain the program brief calls for; walk() itself already
+                # skips re-visiting a fragment name seen elsewhere via `seen_frag`.
+                if sub is not None and any(t[0] in ("spread", "inline")
+                                            for t in _scan_top_level(sub)):
+                    walk(sub, via_fragment, group, name, container_type)
 
     # Descend into each root field's own selection set (the op body's top-level
     # tokens are the root field(s); their children are the real fields to index).
@@ -609,11 +630,56 @@ def load_schema_registry(domain):
     return result
 
 
+# A handful of source SDL types are renamed to the target schema beyond a plain
+# `SPARK_` prefix-drop (documented in each domain's be-03-schema-analysis.md — as of
+# this writing only measurement: `SPARK_Measurements` (plural) -> `Measurement`
+# (singular), per be-03-schema.graphql:49 and be-03-schema-analysis.md:22). Without
+# this, a client fragment declared `on SPARK_Measurements` resolves to container
+# "Measurements", which never matches be-05's Type column ("Measurement") — every
+# field inside that fragment (e.g. `createdBy`, `businessPartners`) then silently
+# collides as "declared on a different type" and drops out of by_type_field lookup.
+SCHEMA_TARGET_TYPE_RENAMES = {
+    "SPARK_Measurements": "Measurement",
+}
+
+
+_TYPE_OWNER_CACHE = None
+
+
+def type_owner_domain_map():
+    """-> {target type name: owning domain} across ALL 8 phase-1 domains, built once.
+    A domain "owns" a type if it defines that type's real body in its own
+    be-03-schema.graphql WITHOUT `@extends` (i.e. NOT in that domain's own
+    load_schema_registry()["external"] stub set — an `@extends` entry there is a
+    cross-subgraph reference to a type genuinely owned elsewhere, e.g. `Bom` is
+    `@extends`-stubbed in product/be-03-schema.graphql but really owned by `bom`).
+    Value types legitimately duplicated/`@shareable` across several subgraphs (e.g.
+    `CodeDescription`, `Paging`) resolve to MULTIPLE owners and are deliberately
+    EXCLUDED from this map — for those, the existing same-domain-first lookup stays
+    correct (there is no single other domain to redirect to)."""
+    global _TYPE_OWNER_CACHE
+    if _TYPE_OWNER_CACHE is not None:
+        return _TYPE_OWNER_CACHE
+    owner: dict[str, list] = {}
+    for dom in ALL_DOMAINS:
+        reg = load_schema_registry(dom)
+        for tname in reg["types"]:
+            if tname in reg["external"]:
+                continue
+            owner.setdefault(tname, []).append(dom)
+    _TYPE_OWNER_CACHE = {t: doms[0] for t, doms in owner.items() if len(doms) == 1}
+    return _TYPE_OWNER_CACHE
+
+
 def schema_target_type_name(sdl_source_type):
     """'SPARK_Product' -> 'Product' (federated target schema drops the SPARK_ prefix;
-    non-SPARK-prefixed source types, e.g. later-phase/platform ones, pass through as-is)."""
+    non-SPARK-prefixed source types, e.g. later-phase/platform ones, pass through as-is).
+    A small set of source types are renamed beyond prefix-drop — see
+    SCHEMA_TARGET_TYPE_RENAMES — checked first."""
     if not sdl_source_type:
         return None
+    if sdl_source_type in SCHEMA_TARGET_TYPE_RENAMES:
+        return SCHEMA_TARGET_TYPE_RENAMES[sdl_source_type]
     return sdl_source_type[len("SPARK_"):] if sdl_source_type.startswith("SPARK_") else sdl_source_type
 
 
@@ -944,6 +1010,22 @@ def guess_gap_phase(field, on_type, is_root):
 # ─── External-dependency gap -> real authored story (output/analysis/program/
 # ext-dependency-stories.md) ──────────────────────────────────────────────────
 STORY_HEADER_NUM_RE = re.compile(r"^### ([A-Z]+)-BE-([A-Z])-(\d+)[a-z]?\s*·", re.M)
+
+# (domain, field, service) -> a hand-authored be-04-stories.md story that already
+# does the entity-fetcher/platform-stub-verification work for that field, but was
+# never minted via ExtAuthoring.author() (so the automatic authored_by_field_ext
+# lookup below never finds it). Only add an entry here when a specific existing
+# story's body actually names the field and confirms it resolves the externally-
+# owned entity's full shape (not just "this domain calls that service somewhere") —
+# e.g. PRODUCT-BE-F-11 explicitly uses `Product.businessPartners` as its worked
+# example of resolving the `VMM_BusinessPartner` @extends stub end-to-end. Scoped
+# by domain so this can't leak onto a same-named field in another domain that has
+# no such story (e.g. BOM's businessPartners resolves via loadBusinessPartners,
+# not a platform-stub-verification story — no override for it).
+MANUAL_EXT_STORY_OVERRIDES = {
+    ("product", "businessPartners", "vmm"): "PRODUCT-BE-F-11",
+    ("product", "droppedPartners", "vmm"): "PRODUCT-BE-F-11",
+}
 
 
 class ExtAuthoring:
@@ -1290,6 +1372,69 @@ def process_story(fe_id, fe_meta, by_op_name, by_root_field, frag_index, be05_ca
                 # to root_container_types (the operation's own root type) when the walk
                 # couldn't resolve a container for this specific field.
                 resolved_container = fr.get("resolved_container")
+
+                # External-service-owned nested type check — BEFORE the be-05/schema
+                # lookups below, which are only valid for types this domain's own
+                # be-05/schema actually document. Some cross-service reference fields
+                # (e.g. Measurement.tightFitTemplate: TightFit) are `@extends`-stubbed
+                # in THIS domain's schema (co-located but externally owned — see
+                # be-03-schema.graphql's own "MONOREPO ... co-located" header comment)
+                # and are correctly tagged with an EXT service in be-05 (tightFitTemplate
+                # -> tightFit). But is_external_platform_type() only recognizes a fixed
+                # prefix list (VMM_/IG_/CORONA_/...) — a SPARK_-prefixed cross-service
+                # type like SPARK_TightFit doesn't match, so fields folded in from ITS
+                # OWN fragment (tightFitFragment's brands/departments/divisions) were
+                # being walked as if they were plain same-domain Measurement fields and
+                # then failing every be-05/schema lookup as a false "genuine gap" — when
+                # really they belong to the SAME external dependency as the container
+                # field that spreads the fragment. Detected generically (no hardcoded
+                # type/domain names): the field's resolved container is in this domain's
+                # own `@extends` stub set (schema_reg["external"]) AND is NOT itself the
+                # operation's root type (i.e. genuinely nested, not the root story's own
+                # shape) AND the enclosing container FIELD already carries a be-05 EXT
+                # tag — reuse that same tag rather than re-deriving one.
+                if (resolved_container and resolved_container in schema_reg["external"]
+                        and resolved_container not in root_container_types and fr.get("container")):
+                    container_hit = be05["fields"].get(fr["container"])
+                    if container_hit and container_hit.get("ext"):
+                        row["story"] = container_hit["story"]
+                        row["ext"] = container_hit["ext"]
+                        row["new"] = False
+                        row["notes"].add(f"external via `{fr['container']}`")
+                        gate = spike_gate_for_story(op_dom, row["story"], be04, field=fname)
+                        if gate:
+                            row["notes"].add(gate)
+                        continue
+
+                # Cross-domain redirect: `resolved_container` may be a real phase-1
+                # domain type OWNED BY A DIFFERENT DOMAIN than this operation's own
+                # (e.g. BOM's `product { ...ProductBaseInfoFragment }` — the fragment
+                # is declared `on SPARK_Product`, so `businessPartners`/`droppedPartners`
+                # inside it are Product's own fields, resolved by a PRODUCT-BE-G-xx
+                # story, not a BOM one). Without this, the field only ever gets checked
+                # against BOM's be-05 — which has no `Product` rows — and either
+                # misattributes to an unrelated BOM story via the bare-name fallback or
+                # wrongly becomes a "new gap" placeholder, silently hiding a real
+                # cross-domain backend prerequisite from this FE story's readiness.
+                # Skipped for value types with multiple legitimate owners (not in the
+                # map at all — see type_owner_domain_map) and for a container that IS
+                # this operation's own domain already (nothing to redirect).
+                owner_dom = type_owner_domain_map().get(resolved_container) if resolved_container else None
+                if owner_dom and owner_dom != op_dom:
+                    other_be05 = be05_cache.setdefault(owner_dom, load_be05(owner_dom))
+                    other_hit = other_be05["by_type_field"].get((resolved_container, lookup_name)) \
+                        or other_be05["fields"].get(lookup_name)
+                    if other_hit:
+                        other_be04 = be04_cache.setdefault(owner_dom, load_be04(owner_dom))
+                        row["story"] = other_hit["story"]
+                        row["ext"] = other_hit["ext"]
+                        row["new"] = False
+                        row["notes"].add(f"cross-domain: `{resolved_container}` owned by `{owner_dom}`")
+                        gate = spike_gate_for_story(owner_dom, row["story"], other_be04, field=fname)
+                        if gate:
+                            row["notes"].add(gate)
+                        continue
+
                 candidate_containers = [resolved_container] if resolved_container else root_container_types
                 hit = None
                 for container in candidate_containers:
@@ -1360,13 +1505,25 @@ def process_story(fe_id, fe_meta, by_op_name, by_root_field, frag_index, be05_ca
                         row["notes"].add(gate)
                     continue
                 # Bug-1 fallback — before ever declaring a gap, check whether this field
-                # is simply a PLAIN field on the type the root query already returns (the
+                # is simply a PLAIN field on the type it's actually declared on (the
                 # be-05 "pass-throughs" list is illustrative, not exhaustive — it names
                 # ~60 fields but the schema has more plain scalars/objects than that).
                 # If the schema shows it declared there with a non-external return type,
                 # it's a direct DTO field the root story already resolves — not a gap.
+                # `resolved_container` (the real nested type the walk found this field
+                # under, e.g. `BomMaterial` reached via `materials { ...BomDetails }`)
+                # is checked FIRST — falling straight to root_container_types (the
+                # operation's own root type, e.g. `Bom`) would only ever catch fields
+                # declared directly on the root, silently missing every plain field one
+                # or more levels down inside a nested fragment/object, which is exactly
+                # how BOM's material-level scalars (`criticalToQuality`, `cuttableWidth`,
+                # `certificationsUserOverride`, `colorRowId`, ...) were wrongly falling
+                # through to "genuine gap" despite being plain DTO fields all along.
                 plain_hit = False
-                for container in root_container_types:
+                candidate_plain_containers = (
+                    [resolved_container] if resolved_container else []
+                ) + root_container_types
+                for container in candidate_plain_containers:
                     covered, is_ext_ref = schema_covers_as_plain_field(schema_reg, container, fname)
                     if covered:
                         root_story = next((r["be_story"] for r in rec.get("roots", [])
@@ -1505,7 +1662,7 @@ def _is_plain_passthrough(row):
     return any(marker in n for n in row["notes"] for marker in _PASSTHROUGH_NOTE_MARKERS)
 
 
-def render_story_md(result):
+def render_story_md(result, ext_authoring=None):
     fe_id, title = result["fe_id"], result["title"]
     L = [f"## {fe_id} — {title}",
          f"Queries in scope: {', '.join(result['query_ops'])} · "
@@ -1540,9 +1697,24 @@ def render_story_md(result):
         (fname, on_type), row = item
         return (0 if row["story"] and row["story"].startswith("NEW-") else 1, fname.lower())
 
+    # (field, service label) -> real authored story id, from ext_authoring's registry —
+    # separate from `Story` (the story that RESOLVES the field), this names the real
+    # entity-fetcher/field-resolver story authored specifically FOR that external
+    # dependency, when one exists (often the same id as Story, since that's usually
+    # how the gap got resolved — but kept as its own column so a reader can tell "this
+    # EXT dependency has its own dedicated cross-team story" from "already folded into
+    # an existing story with no separate ticket," without cross-referencing
+    # ext-dependency-stories.md by hand).
+    authored_by_field_ext = {}
+    if ext_authoring is not None:
+        for entry in ext_authoring._authored.values():
+            authored_by_field_ext[(entry["field"], entry["service"])] = entry["id"]
+    story_domain = FE_TOKEN_DOMAIN.get(fe_id.split("-")[0])
+
     def render_row(fname, row):
         story = row["story"] or "—"
         ext_cell = "—"
+        ext_story = "—"
         if row["ext"]:
             svc = row["ext"][0]
             ext_cell = svc
@@ -1551,15 +1723,26 @@ def render_story_md(result):
                                  if s and s != story and not s.startswith("NEW-"))
                 if others:
                     ext_cell = f"{svc} — also {', '.join(others)}"
+            ext_story = (MANUAL_EXT_STORY_OVERRIDES.get((story_domain, fname, svc))
+                         or authored_by_field_ext.get((fname, svc), "—"))
         impacts = ", ".join(sorted(row["impacts"]))
         # keep 🔬 spike notes first
         note_list = sorted(row["notes"], key=lambda n: (0 if n.startswith("🔬") else 1, n))
         notes = "; ".join(note_list)
-        return (f"| {md_escape(fname)} | {story} | {md_escape(ext_cell)} | "
+        return (f"| {md_escape(fname)} | {story} | {md_escape(ext_cell)} | {ext_story} | "
                 f"{'Yes' if row['new'] else 'No'} | {md_escape(impacts)} | {md_escape(notes)} |")
 
     query_rows = {k: r for k, r in kept_rows.items() if r["is_query"]}
-    field_rows = {k: r for k, r in kept_rows.items() if not r["is_query"]}
+    # Fields table is scoped to DEPENDENCY-bearing rows only: a named External Dep
+    # service (row["ext"]) or a genuine unresolved gap (row["new"] — e.g. "fragment
+    # body not found in snapshot") — both are real dependencies blocking readiness,
+    # just not always yet attributed to a named service. A plain internal row (no
+    # ext, resolved by an existing same-DGS story) carries no cross-team dependency
+    # and is dropped from the table — but NEVER from `kept_rows`/the readiness count
+    # below, which must keep counting every field this story's queries touch,
+    # dependency-bearing or not, so "N of M resolve" stays accurate.
+    field_rows = {k: r for k, r in kept_rows.items()
+                  if not r["is_query"] and (r["ext"] or r["new"])}
 
     L.append("### Queries")
     L.append("")
@@ -1568,19 +1751,22 @@ def render_story_md(result):
              "field with no resolver of its own is not a distinct story and does not appear "
              "in either table.")
     L.append("")
-    L.append("| Query | Story | External Dep | New? | Impacts (queries) | Notes |")
-    L.append("|---|---|---|---|---|---|")
+    L.append("| Query | Story | External Dep | Ext-Story | New? | Impacts (queries) | Notes |")
+    L.append("|---|---|---|---|---|---|---|")
     for (fname, on_type), row in sorted(query_rows.items(), key=sort_key):
         L.append(render_row(fname, row))
 
     L.append("")
     L.append("### Fields")
     L.append("")
-    L.append("> Field/entity-level detail behind the queries above, for traceability — not "
-             "part of the readiness count except where `New?` = Yes (a genuine gap).")
+    L.append("> Dependency-bearing fields only — a named External Dep service, or a "
+             "genuine unresolved gap (`New?` = Yes) not yet attributed to one. Fields "
+             "with no cross-team dependency (resolved internally by an existing "
+             "same-DGS story) are omitted here but still counted in the readiness line "
+             "below.")
     L.append("")
-    L.append("| Field/Entity | Story | External Dep | New? | Impacts (queries) | Notes |")
-    L.append("|---|---|---|---|---|---|")
+    L.append("| Field/Entity | Story | External Dep | Ext-Story | New? | Impacts (queries) | Notes |")
+    L.append("|---|---|---|---|---|---|---|")
     for (fname, on_type), row in sorted(field_rows.items(), key=sort_key):
         L.append(render_row(fname, row))
 
@@ -1693,6 +1879,90 @@ def render_consolidated(all_results, ext_authoring):
     return "\n".join(L), len(gap_rows), len(authored), len(ext_rows)
 
 
+# ─── CSV exports (spreadsheet-friendly twins of the per-story .md / must-complete-
+# first line) — derived from the SAME `results`/`ext_authoring` data the .md files and
+# 00-NEWLY-IDENTIFIED-STORIES.md come from, so they can never drift out of sync with
+# them the way the old hand-exported CSV snapshots did. ──────────────────────────────
+import csv as _csv
+
+
+def write_field_resolvers_csv(all_results, ext_authoring, out_path):
+    """One row per (FE story × Query/Field row) — the CSV twin of every story's
+    Queries + Fields tables in its .md file. Same `_is_plain_passthrough` filter AND
+    same dependency-bearing-only Fields scoping as render_story_md (a Query row always
+    stays; a Field row stays only if it has a named External Dep or is a genuine New=Yes
+    gap) so row counts always match the .md files exactly."""
+    with out_path.open("w", newline="", encoding="utf-8") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["FE Story", "FE Story Title", "Section", "Field/Query",
+                    "Resolving BE Story", "External Dependency", "Ext-Story", "New Gap?",
+                    "Impacts (Queries)", "Notes"])
+        authored_by_field_ext = {}
+        for entry in ext_authoring._authored.values():
+            authored_by_field_ext[(entry["field"], entry["service"])] = entry["id"]
+        for res in all_results:
+            fe_id, title = res["fe_id"], res["title"]
+            story_domain = FE_TOKEN_DOMAIN.get(fe_id.split("-")[0])
+            kept_rows = {k: r for k, r in res["rows"].items() if not _is_plain_passthrough(r)}
+            display_rows = {k: r for k, r in kept_rows.items()
+                             if r["is_query"] or r["ext"] or r["new"]}
+            for (fname, on_type), row in sorted(display_rows.items(), key=lambda kv: kv[0][0].lower()):
+                section = "Query" if row["is_query"] else "Field"
+                ext = row["ext"][0] if row["ext"] else ""
+                ext_story = (MANUAL_EXT_STORY_OVERRIDES.get((story_domain, fname, ext))
+                             or authored_by_field_ext.get((fname, ext), "")) if ext else ""
+                notes = "; ".join(sorted(row["notes"], key=lambda n: (0 if n.startswith("🔬") else 1, n)))
+                w.writerow([fe_id, title, section, fname, row["story"] or "—", ext, ext_story,
+                            "Yes" if row["new"] else "No",
+                            ", ".join(sorted(row["impacts"])), notes])
+
+
+def write_external_dependency_stories_csv(all_results, ext_authoring, out_path):
+    """One row per (FE story × Must-complete-first dependency) — the CSV twin of every
+    story's 'Must complete first:' line (BE stories, unresolved Spikes, and NEW-...-??
+    internal placeholders). Same BE/spike/new extraction as render_story_md's preamble."""
+    authored = ext_authoring._authored
+    ext_by_story = {}
+    for entry in authored.values():
+        ext = entry["ext"]
+        title = (f"`{ext}` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references"
+                  if entry["is_entity_ref"] else
+                  f"`{entry['field']}` field resolver ({ext} external dependency)")
+        ext_by_story[entry["id"]] = {"service": entry["service"], "title": title}
+    with out_path.open("w", newline="", encoding="utf-8") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["FE Story", "FE Story Title", "Dependency Type", "Dependency Story/Spike",
+                    "Description", "External Service", "Is Externally-Owned Gap?"])
+        for res in all_results:
+            fe_id, title = res["fe_id"], res["title"]
+            kept_rows = {k: r for k, r in res["rows"].items() if not _is_plain_passthrough(r)}
+            be_ids, spike_ids, new_field = [], [], {}
+            for row in kept_rows.values():
+                sid = row["story"]
+                if sid and sid.startswith("NEW-"):
+                    new_field.setdefault(sid, row["field"])
+                elif sid and sid not in be_ids:
+                    be_ids.append(sid)
+                for n in row["notes"]:
+                    m = re.match(r'🔬 (SPIKE-0\d[a-z]?|[A-Z]+-BE-S-\d+[a-z]?)\b', n)
+                    if m and m.group(1) not in spike_ids:
+                        spike_ids.append(m.group(1))
+            for sid in sorted(be_ids):
+                ext_entry = ext_by_story.get(sid)
+                if ext_entry:
+                    w.writerow([fe_id, title, "BE", sid, ext_entry.get("title", ""),
+                                ext_entry["service"], "Yes"])
+                else:
+                    w.writerow([fe_id, title, "BE", sid, "", "", "No"])
+            for spid in sorted(spike_ids):
+                w.writerow([fe_id, title, "Spikes", spid,
+                            "Unresolved spike - gates dependent field(s) until decided", "", "No"])
+            for sid in sorted(new_field):
+                w.writerow([fe_id, title, "New", sid,
+                            f"Internal-only gap, no story authored yet: {new_field[sid]}",
+                            "", "No (internal placeholder)"])
+
+
 # ─── main ────────────────────────────────────────────────────────────────────
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1728,7 +1998,7 @@ def main():
             continue
         results.append(res)
         out_path = OUT_DIR / f"{fe_id}.md"
-        out_path.write_text(render_story_md(res), encoding="utf-8")
+        out_path.write_text(render_story_md(res, ext_authoring), encoding="utf-8")
         print(f"  OK {out_path.relative_to(ROOT)} ({len(res['rows'])} field rows)")
 
     # Apply queued sibling-confidence-match AC edits AFTER all 23 stories are processed
@@ -1754,6 +2024,14 @@ def main():
     out_path = OUT_DIR / "00-NEWLY-IDENTIFIED-STORIES.md"
     out_path.write_text(consolidated, encoding="utf-8")
     print(f"  OK {out_path.relative_to(ROOT)} ({len(consolidated):,} chars)")
+
+    fr_path = OUT_DIR / "field-resolvers.csv"
+    write_field_resolvers_csv(results, ext_authoring, fr_path)
+    print(f"  OK {fr_path.relative_to(ROOT)}")
+
+    ed_path = OUT_DIR / "external-dependency-stories.csv"
+    write_external_dependency_stories_csv(results, ext_authoring, ed_path)
+    print(f"  OK {ed_path.relative_to(ROOT)}")
 
     if skipped:
         print(f"  (skipped — no query operations found: {', '.join(skipped)})")

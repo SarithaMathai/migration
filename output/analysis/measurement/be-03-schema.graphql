@@ -1,0 +1,319 @@
+# =============================================================================
+# Measurement Domain — Federated Target DGS Schema (translated from source SDL)
+# Pipeline Version: 2.0 · Generated: 2026-06-26
+# DGS Target: Green-field → plm-product subgraph
+# Source:    code/schemas/SPARK_Measurement.txt (the real SDL) + code/resolvers/product/SPARK_Measurement.txt (behaviour)
+# Target:    plm-product/apps/app/src/main/resources/schema/measurement.graphqls
+# This is the FEDERATED TARGET schema, translated from the source SDL (SPARK_ prefix dropped, @key added).
+# Nullability/return-types are taken from the SDL (verified against the resolver). Operation names are
+# preserved EXACTLY from source (client contract). MeasurementTemplate/SizeTemplate/TightFit/Sizes are
+# co-located OWNED sub-domains (folded in 2026-07-19 — see 03-schema-analysis.md §1), not stubs.
+# Status: 🔜 all need migration. 30 operations total (15 measurement + 15 sub-domain).
+# =============================================================================
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@extends", "@external", "@shareable", "@requires"])
+
+scalar DateTime
+
+# --- Type references ---
+# MONOREPO: Product, ProductComponentStatus are CO-LOCATED in the same plm-product subgraph — they are
+# INTERNAL types (the @extends @external here is only a standalone-compile placeholder; in the merged
+# schema they are plain types resolved in-process). MeasurementTemplate/SizeTemplate/TightFit are OWNED
+# entities of THIS domain (2026-07-19 correction — see 03-schema-analysis.md §1/§3): they were previously
+# modeled as external-stub placeholders here because only their USE as a Measurement field was in scope;
+# they have their own operations (be-04-stories.md Phase B/D/G) and are now defined as real owned types
+# below, not placeholders. True federation stubs are the SEPARATE DGS subgraphs below (workspace,
+# user-profile, access-control, sample) + platforms VMM/IG/NEXUS. See 03-schema-analysis.md §3.
+
+# Internal (same subgraph — placeholders only):
+type Product @extends @key(fields: "id") { id: ID! @external }            # INTERNAL
+type ProductComponentStatus @extends @key(fields: "id") { id: ID! @external }  # INTERNAL
+
+# True federation stubs (separate DGS subgraphs + platform):
+type VMM_BusinessPartner @extends @key(fields: "id") { id: ID! @external }
+type VMM_Brand @extends @key(fields: "id") { id: ID! @external }
+type IG_Department @extends @key(fields: "id") { id: ID! @external }
+type IG_Division @extends @key(fields: "id") { id: ID! @external }
+type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
+type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
+type UserGroup_Participants @extends @key(fields: "id") { id: ID! @external }
+type AccessControl @extends @key(fields: "id") { id: ID! @external }
+type ResourcePermissions @extends @key(fields: "id") { id: ID! @external }
+type SampleV2 @extends @key(fields: "id") { id: ID! @external }
+type NEXUS_Attributes @extends @key(fields: "id") { id: ID! @external }
+
+# --- Shared value types ---
+type CodeDescription @shareable { code: Int, description: String }
+type SizeCodeDescription @shareable { code: String, description: String }
+type UnitOfMeasure @shareable { name: String, description: String, shortDescription: String, code: Int }
+type Pom @shareable { id: ID, code: String, description: String }
+type Paging @shareable { totalElements: Int, totalPages: Int, number: Int, size: Int }
+
+# --- Owned entity: the measurement set (source type SPARK_Measurements) ---
+# KEY (decided 2026-07-17, program-wide): the SDL `SPARK_Measurements` type has NO `id` field; the
+#   resolver identifies the set by `humanId` (== `measurementSetId` in the mutations). `id` below is
+#   SYNTHESIZED from humanId for the federation key. This synthesized-id wrap is now the STANDARD for
+#   every humanId-only entity (Claims, Packaging, Watchlist, Dieline) so stitching is uniform on `id`.
+type Measurement @key(fields: "id") {
+  id: ID!                       # synthesized from humanId (no `id` field exists in the SDL type)
+  humanId: String @deprecated(reason: "Use parentId")
+  resourceId: String
+  parentId: String
+  name: String
+  notes: String
+  type: String
+  baseType: MeasurementBaseType
+  manualLock: Boolean
+  version: Int
+  # NOTE: `statusId`/`statusName`/`businessPartnerIds` are record properties read internally to build
+  #   `status` (statusId/statusName → CodeDescription) and `businessPartners` (from businessPartnerIds).
+  #   They are NOT exposed fields in the SDL type — do not add them to the schema.
+  status: CodeDescription
+  statuses: [ProductComponentStatus]
+  toleranceSet: CodeDescription
+  defaultUnitOfMeasure: UnitOfMeasure
+  coreSizes: [MeasurementSetCoreSize]
+  rows: [MeasurementRow]
+  # field resolvers ↓
+  product: Product
+  workspaces: [WorkspaceV2]
+  workspaceContext: [ID]
+  businessPartners: [VMM_BusinessPartner]
+  participantDetails: UserGroup_Participants
+  access: AccessControl
+  currentUserPermissions: ResourcePermissions
+  measurementTemplates: [MeasurementTemplate]
+  sizeTemplate: SizeTemplate
+  tightFitTemplate: TightFit
+  updatedFromResource: SampleV2
+  createdAt: DateTime
+  createdBy: UserProfileAttributes
+  updatedAt: DateTime
+  updatedBy: UserProfileAttributes
+}
+
+type MeasurementPaged { content: [Measurement] }
+
+type SampleMeasurementSet @key(fields: "sampleId") {
+  sampleId: String!
+  measurementSetId: String
+  measurementSetName: String
+  measurementSetType: String
+  measurementSize: SizeCodeDescription
+  measurementSizeId: String       # synthesized from measurementSize.code
+  measurementSetVersion: Int
+  version: Int
+  rows: [SampleMeasurementSetRow]
+  createdAt: DateTime
+  createdBy: UserProfileAttributes
+}
+
+# --- Embedded value types ---
+type MeasurementRow {
+  rowId: String  critical: Boolean  sizeValues: [PomSize]  notes: String
+  pointOfMeasure: Pom  toleranceOver: String  toleranceUnder: String
+  baseSizeValue: Float  unitOfMeasure: UnitOfMeasure
+}
+type SampleMeasurementSetRow {
+  rowId: String  measurementNew: Float  measurementPartner: Float  measurementTarget: Float
+  measurementSetCritical: Boolean  requestedSampleSize: Float  pointOfMeasure: Pom
+  unitOfMeasure: UnitOfMeasure  toleranceOver: String  toleranceUnder: String  notes: String
+}
+type PomSize { code: String, description: String, diffFromNeighbor: Float, manualValue: Float, calculatedValue: Float, displayValue: Float }
+type MeasurementSetCoreSize { coreSizeId: ID, baseSize: SizeCodeDescription, sizeGroupId: ID, sizes: [SizeCodeDescription] }
+type MeasurementBaseType { type: Int }
+
+# =============================================================================
+# Sub-domains — MeasurementTemplate, SizeTemplate, TightFit, Sizes
+# Folded in 2026-07-19: co-located `measurement` sub-domains, own REST base
+# (enterprise_product_development_products/{measurement/templates,size_templates,tightfit}/v1),
+# own operations — NOT external services. See 03-schema-analysis.md §1/§3 for the correction.
+# =============================================================================
+
+# --- Owned entity: MeasurementTemplate (source type SPARK_MeasurementTemplate) ---
+# KEY: no `id` field in the SDL type — synthesized from `humanId`, same convention as Measurement/Claims/
+# Packaging/Watchlist/Dieline (decided 2026-07-17).
+type MeasurementTemplate @key(fields: "id") {
+  id: ID!                      # synthesized from humanId
+  humanId: String
+  name: String
+  status: CodeDescription
+  divisions: [IG_Division]     # 🔵 ig (platform)
+  brands: [VMM_Brand]          # 🔵 vmm (platform)
+  departments: [IG_Department] # 🔵 ig (platform)
+  version: Int
+  createdBy: UserProfileAttributes   # 🔵 user-profile
+  updatedBy: UserProfileAttributes   # 🔵 user-profile
+  createdAt: DateTime
+  updatedAt: DateTime
+  rows: [MeasurementTemplateRow]
+}
+type MeasurementTemplatesPaged { content: [MeasurementTemplate], pageable: Paging, paging: Paging }
+type MeasurementTemplateRow { pointOfMeasure: Pom, toleranceOver: String, toleranceUnder: String, unitOfMeasure: UnitOfMeasure }
+
+# --- Owned entity: SizeTemplate (source type SPARK_SizeTemplate) ---
+# KEY: no `id` field in the SDL type — synthesized from `humanId` (same convention).
+type SizeTemplate @key(fields: "id") {
+  id: ID!                      # synthesized from humanId
+  coreSizes: [CoreSizes]
+  createdAt: DateTime
+  createdBy: UserProfileAttributes   # 🔵 user-profile
+  humanId: String               # Computed: humanId || id
+  name: String
+  rows: [GradeInfo]
+  toleranceSet: [CodeDescription]
+  sizeCategory: CodeDescription
+  status: CodeDescription
+  updatedBy: UserProfileAttributes   # 🔵 user-profile
+  updatedAt: DateTime
+  categoryId: Int
+  version: Int
+  unitOfMeasure: Unit_Of_Measure
+}
+type CoreSizes { coreSizeId: ID, baseSize: SizeCodeDescription, sizeGroups: [SizeGroup], sizes: [SizeCodeDescription] }
+type SizeGroup { id: ID, name: String, baseSize: SizeCodeDescription, sizes: [SizeCodeDescription] }
+type GradeInfo { pointOfMeasure: Pom, sizeValues: [SizeValues], toleranceSet: [RowTolerance], unitOfMeasure: Unit_Of_Measure }
+type SizeValues { diffFromNeighbor: Float, code: String, description: String }
+type RowTolerance { materialType: CodeDescription, toleranceOver: String, toleranceUnder: String }
+type Unit_Of_Measure @shareable { code: Int, description: String, name: String, shortDescription: String }
+
+# --- Owned entity: TightFit (source type SPARK_TightFit) ---
+# KEY: composite `id version` — no `id` field in the SDL type either; synthesized from `humanId`
+# (matches the pre-existing placeholder key convention already used for this type).
+type TightFit @key(fields: "id version") {
+  id: ID!                      # synthesized from humanId
+  humanId: String
+  version: Int!
+  name: String
+  statusId: Int
+  statusName: String
+  divisions: [IG_Division]     # 🔵 ig (platform)
+  brands: [VMM_Brand]          # 🔵 vmm (platform)
+  departments: [IG_Department] # 🔵 ig (platform)
+  coreSizes: [MeasurementSetCoreSize]
+  rows: [MeasurementRow]
+  createdBy: UserProfileAttributes   # 🔵 user-profile
+  updatedBy: UserProfileAttributes   # 🔵 user-profile
+  createdAt: String
+  updatedAt: String
+}
+type TightFitsResponse { tightFits: [TightFit] }
+
+# --- Owned value type: Sizes (source type SPARK_Sizes — no own @key, a search-result shape) ---
+type Sizes { id: ID, name: String, source: String }   # source: 'Nexus' | 'Spark'
+
+# --- Inputs ---
+input MeasurementSetInput {
+  name: String!  notes: String  resourceId: String  type: String  baseType: MeasurementBaseTypeInput
+  toleranceSetId: Int  defaultUnitOfMeasureId: Int  statusId: Int
+  systemTeamIds: [String]  systemTeamDto: SystemTeamsWithTypeInput  workspaceContext: [ID]
+  sizeTemplate: VersionableIdInput  tightFitTemplate: VersionableIdInput
+  measurementTemplates: [VersionableIdInput]  coreSizes: [MeasurementSetCoreSizeInput]
+  rows: [MeasurementRowInput]  participantDetails: UserGroup_ParticipantsInput
+}
+input MeasurementSetUpdateInput {
+  humanId: String  resourceId: String  name: String  notes: String  type: String
+  baseType: MeasurementBaseTypeInput  toleranceSetId: Int  defaultUnitOfMeasureId: Int  statusId: Int
+  systemTeamDto: SystemTeamsWithTypeInput  statuses: [WorkspaceStatusPairInput]
+  sizeTemplate: VersionableIdInput  tightFitTemplate: VersionableIdInput
+  measurementTemplates: [VersionableIdInput]  coreSizes: [MeasurementSetCoreSizeInput]
+  rows: [MeasurementRowInput]  updateWorkspaceAssociations: PartialWorkspaceAssociationsInput
+}
+# Recommended tagged input (replaces the systemTeamIds|systemTeamDto either/or — M4 finding)
+input MeasurementAccessInput { systemTeamIds: [String], systemTeamDto: SystemTeamsWithTypeInput }
+input MeasurementRowInput {
+  rowId: String  critical: Boolean  sizeValues: [PomSizeInput]  notes: String  pointOfMeasure: PomInput
+  toleranceOver: String  toleranceUnder: String  baseSizeValue: Float  unitOfMeasureId: Int
+}
+input PomSizeInput { code: String, description: String, diffFromNeighbor: Float, manualValue: Float, calculatedValue: Float }
+input PomInput { id: ID, code: String, description: String }
+input MeasurementSetCoreSizeInput { coreSizeId: ID, baseSize: SizeCodeDescriptionInput, sizeGroupId: ID, sizes: [SizeCodeDescriptionInput] }
+input SizeCodeDescriptionInput { code: String, description: String }
+input MeasurementBaseTypeInput { type: Int }
+input SystemTeamsWithTypeInput { mvTeams: [String], dpTeams: [String] }
+input VersionableIdInput { id: ID!, version: Int }
+input PartialWorkspaceAssociationsInput { addWorkspaces: [WorkspaceAssociationInput], removeWorkspaces: [WorkspaceAssociationInput] }
+input WorkspaceAssociationInput { id: ID! }
+input WorkspaceStatusPairInput { workspaceId: ID!, statusId: Int! }
+input UserGroup_ParticipantsInput { _placeholder: String }
+input ComponentStatusInput { workspaceId: String!, type: String, statusId: Int }   # matches SDL SPARK_ComponentStatusInput
+input SampleMeasurementSetInput {
+  sampleId: String  measurementSetId: String  measurementSizeId: String  measurementSetVersion: Int
+  rows: [SampleMeasurementSetRowInput]
+}
+input SampleMeasurementSetRowInput {
+  rowId: String  measurementNew: Float  measurementPartner: Float  measurementTarget: Float
+  requestedSampleSize: Float  notes: String  updateParentMeasurementSet: Boolean
+}
+
+# --- Sub-domain inputs (MeasurementTemplate, SizeTemplate, TightFit) ---
+input MeasurementTemplateInput {
+  name: String  divisionIds: [Int]  brandIds: [Int]  departmentIds: [Int]
+  rows: [MeasurementTemplateRowInput]  templateId: String  statusId: Int
+}
+input MeasurementTemplateRowInput { pointOfMeasure: PomInput, toleranceOver: String, toleranceUnder: String, unitOfMeasureId: Int }
+input SizeTemplateInput {
+  id: ID  categoryId: Int  coreSizes: [SizeTemplateCoreSizesInput]  name: String
+  rows: [GradeInput]  toleranceSetIds: [Int]  unitOfMeasureId: Int
+}
+input SizeTemplateUpdateInput {
+  id: ID  categoryId: Int  coreSizes: [SizeTemplateCoreSizesInput]  name: String
+  rows: [GradeInput]  toleranceSetIds: [Int]  unitOfMeasureId: Int  statusId: Int
+}
+input SizeTemplateCoreSizesInput { coreSizeId: ID, baseSize: SizeCodeDescriptionInput, sizeGroups: [SizeGroupsInput], sizes: [SizeCodeDescriptionInput] }
+input SizeGroupsInput { id: ID, name: String, baseSize: SizeCodeDescriptionInput, sizes: [SizeCodeDescriptionInput] }
+input GradeInput { pointOfMeasure: PomInput, sizeValues: [SizeValuesInput], toleranceSet: [SizeTemplateToleranceInput], unitOfMeasureId: Int }
+input SizeValuesInput { diffFromNeighbor: Float, code: String, description: String }
+input SizeTemplateToleranceInput { materialTypeId: Int, toleranceOver: String, toleranceUnder: String }
+input TightFitInput {
+  tightFitId: String  name: String  statusId: Int  divisionIds: [Int]  brandIds: [Int]  departmentIds: [Int]
+  coreSizes: [MeasurementSetCoreSizeInput]  rows: [MeasurementRowInput]
+}
+
+# --- Queries (names + nullability + return types preserved from the SDL) ---
+extend type Query {
+  getMeasurementByIds(ids: [String], calculated: Boolean): MeasurementPaged           # 🔜 B-01 (SDL: paged, not a list)
+  getMeasurements(resourceId: String, businessPartnerIds: [String], calculated: Boolean, mustHaveRows: Boolean): MeasurementPaged  # 🔜 C-01
+  getMeasurementsElastic(resourceId: String): MeasurementPaged                        # 🔜 C-02
+  getUnitsOfMeasure(ids: [String]): [UnitOfMeasure]                                   # 🔜 B-02 (cacheable)
+  getThicknessUnitsOfMeasure: [UnitOfMeasure]                                         # 🔜 B-03 (cacheable)
+  getMeasurementSetStatus: [CodeDescription]                                          # 🔜 B-04 (cacheable)
+  getSampleMeasurement(sampleId: String): SampleMeasurementSet                        # 🔜 B-05 (SDL: single, not a list)
+  # --- sub-domain queries (folded in 2026-07-19) ---
+  getMeasurementTemplates(page: Int!, size: Int!): MeasurementTemplatesPaged          # 🔜 B-06
+  getMeasurementTemplatesByIds(ids: [String]): MeasurementTemplatesPaged              # 🔜 B-06
+  getSizeTemplates(ids: [VersionableIdInput]!): [SizeTemplate]                        # 🔜 B-07
+  getSizeCategories(ids: [String]): [CodeDescription]                                 # 🔜 B-07 (cacheable)
+  getMaterialTypes(ids: [String]): [CodeDescription]                                  # 🔜 B-07 (cacheable)
+  getTightFits(ids: [String], name: String, statusIds: [Int], brandIds: [Int], divisionIds: [Int], departmentIds: [Int]): TightFitsResponse  # 🔜 B-08
+  getTightFitByIdAndVersion(id: String, version: Int): TightFit                       # 🔜 B-08
+  searchSparkSizes(nameFilter: String, size: Int = 50): [Sizes]                       # 🔜 B-09
+}
+
+# --- Mutations (names + nullability + return types preserved from the SDL) ---
+extend type Mutation {
+  addMeasurement(sparkMeasurement: MeasurementSetInput): Measurement                   # 🔜 D-01
+  updateMeasurement(sparkMeasurement: MeasurementSetUpdateInput): Measurement          # 🔜 E-01 (2-step)
+  updateMeasurementAccess(measurementSetId: ID!, systemTeamIds: [String], systemTeamDto: SystemTeamsWithTypeInput): Measurement  # 🔜 D-02
+  lockMeasurementSet(measurementSetId: ID!): Measurement                               # 🔜 D-03
+  unlockMeasurementSet(measurementSetId: ID!): Measurement                             # 🔜 D-04
+  updateMeasurementComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): MeasurementPaged  # 🔜 D-05 (no JWT — confirm)
+  putSampleMeasurementSet(sampleMeasurementSet: SampleMeasurementSetInput!): SampleMeasurementSet  # 🔜 D-06
+  deleteSampleMeasurementSet(sampleId: String!): String                                # 🔜 D-07 (SDL: returns String)
+  # --- sub-domain mutations (folded in 2026-07-19) ---
+  addMeasurementTemplate(measurementTemplate: MeasurementTemplateInput): MeasurementTemplate   # 🔜 D-08
+  updateMeasurementTemplate(measurementTemplate: MeasurementTemplateInput): MeasurementTemplate # 🔜 D-08
+  deleteMeasurementTemplate(ids: [ID]): Boolean                                        # 🔜 D-08 (no JWT — confirm)
+  addSizeTemplate(sizeTemplate: SizeTemplateInput!): SizeTemplate                       # 🔜 D-09
+  updateSizeTemplate(sizeTemplate: SizeTemplateUpdateInput!): SizeTemplate              # 🔜 D-09
+  addTightFit(tightFit: TightFitInput): TightFit                                       # 🔜 D-10
+  updateTightFit(tightFit: TightFitInput): TightFit                                    # 🔜 D-10
+}
+
+# --- Federation: Measurement contributes to Product + SampleV2 (Phase F, BLOCKED-BY product/sample) ---
+# extend type Product @key(fields: "id") {
+#   id: ID! @external
+#   measurementSets(calculated: Boolean, businessPartnerIds: [String], mustHaveRows: Boolean): MeasurementPaged
+# }
+# extend type SampleV2 @key(fields: "id") { id: ID! @external  sampleMeasurement: SampleMeasurementSet }

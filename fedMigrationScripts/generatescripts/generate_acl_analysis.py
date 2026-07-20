@@ -109,7 +109,8 @@ def classify_acl_site(field_body, block, field, own_loader_key):
         use = use_re.search(rest)
         if use:
             target_key = use.group(1)
-            if target_key == own_loader_key:
+            own_keys = own_loader_key if isinstance(own_loader_key, set) else {own_loader_key}
+            if target_key in own_keys:
                 findings.append({
                     "kind": "own-domain-token",
                     "detail": f"`getUserPermissionsJWT` token passed to this domain's own "
@@ -175,17 +176,23 @@ def conflicts_with_superseded(f):
 
 
 def analyze_domain_acl(domain):
-    path = DOMAIN_RESOLVER_FILE.get(domain)
-    if not path or not path.exists():
+    """`DOMAIN_RESOLVER_FILE[domain]` may be one path or a list of paths (a domain that folds
+    in co-located sub-domains, e.g. measurement — see generate_schema_analysis.py)."""
+    paths = DOMAIN_RESOLVER_FILE.get(domain)
+    if not paths:
         return []
-    text = path.read_text(encoding="utf-8", errors="replace")
-    blocks = sa.parse_resolver_map(text)
+    paths = paths if isinstance(paths, list) else [paths]
     own_key = DOMAIN_LOADER_KEY.get(domain)
     out = []
-    for block, fields in blocks.items():
-        for fname, body in fields.items():
-            for finding in classify_acl_site(body, block, fname, own_key):
-                out.append({"block": block, "field": fname, **finding})
+    for path in paths:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        blocks = sa.parse_resolver_map(text)
+        for block, fields in blocks.items():
+            for fname, body in fields.items():
+                for finding in classify_acl_site(body, block, fname, own_key):
+                    out.append({"block": block, "field": fname, **finding})
     return out
 
 

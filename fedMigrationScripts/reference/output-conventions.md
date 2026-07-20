@@ -9,6 +9,9 @@ applyTo: "**/output/**/*.md,**/output/**/*.graphql,**/output/**/*.graphqls"
 Single source of truth for cross-cutting format rules used in every output artifact.
 All skills reference this file. Do not invent alternative formats.
 
+> See also [`output-conventions-condensed.md`](./output-conventions-condensed.md) — a shorter version
+> linked from `RUN-NEW-DOMAIN.md` and the skill-01/03/05 docs.
+
 ---
 
 ## 1. Output File Naming (Mandatory)

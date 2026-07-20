@@ -117,6 +117,33 @@ PHASE_LABEL = {
 }
 DEFAULT_STATUS = "To Do"
 
+# ─── External Dependency column (from be-05's structured EXT (sev) column — never
+# scraped from free-text prose, which is incidental and inconsistent story-to-story) ──
+_csd_module = None
+_ext_by_story_cache: dict[str, dict[str, list[str]]] = {}
+
+
+def _ext_services_for_story(domain: str, story_id: str) -> str:
+    """Comma-joined, sorted external services (e.g. 'user-profile, vmm') that `story_id`
+    depends on, per that domain's be-05-attribute-inventory.md EXT (sev) column —
+    aggregated across every field row be-05 attributes to this story. Empty string if
+    the story has no EXT-tagged fields (internal-only) or be-05 has no data for it."""
+    global _csd_module
+    if domain not in _ext_by_story_cache:
+        if _csd_module is None:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location(
+                "generate_client_story_dependency", HERE / "generate_client_story_dependency.py")
+            _csd_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(_csd_module)
+        be05 = _csd_module.load_be05(domain)
+        per_story: dict[str, set] = {}
+        for entry in be05["fields"].values():
+            if entry["ext"]:
+                per_story.setdefault(entry["story"], set()).update(entry["ext"])
+        _ext_by_story_cache[domain] = {sid: sorted(exts) for sid, exts in per_story.items()}
+    return ", ".join(_ext_by_story_cache[domain].get(story_id, []))
+
 # ─── Story parser ─────────────────────────────────────────────────────────────
 STORY_HEADER_RE = re.compile(
     r"^### ([A-Z]+-BE-([A-Za-z])-(\d+)(?:-\d+)?) · (.+)$", re.MULTILINE
@@ -384,7 +411,7 @@ def program_spike_rows() -> list[list]:
             f"(Program) {SPIKE_TITLES[b]} [SPIKE-{b}]",
             "", GLOBAL_EPIC_NAME, "S", "M",
             "dgs-migration", "all-domains", "spike",
-            "", "", DEFAULT_STATUS, desc,
+            "", "", "", DEFAULT_STATUS, desc,
         ])
     return rows
 
@@ -414,7 +441,7 @@ def epic_row() -> list:
     """The single shared epic row that every story/spike links to."""
     return [
         "Epic", "", GLOBAL_EPIC_NAME, GLOBAL_EPIC_NAME, "", "", "",
-        "dgs-migration", "all-domains", "epic", "", "", "",
+        "dgs-migration", "all-domains", "epic", "", "", "", "",
         GLOBAL_EPIC_DESC,
     ]
 
@@ -566,6 +593,8 @@ def build_story_rows(domain: str) -> list[list]:
         # Sequencing metadata first, Definition of Done last (story template convention)
         desc = "\n\n".join(x for x in (meta_block(s), desc, BE_DOD) if x)
 
+        ext = _ext_services_for_story(domain, s["id"])
+
         rows.append([
             "Story",
             s["id"],
@@ -577,6 +606,7 @@ def build_story_rows(domain: str) -> list[list]:
             "dgs-migration", domain, cat,
             "",                      # Parent Link
             dep,
+            ext,
             s["status"],
             desc,
         ])
@@ -593,7 +623,7 @@ HEADERS = [
     "Issue Type", "Story ID", "Summary", "Epic Name", "Epic Link",
     "Phase", "T-shirt size",
     "Labels", "Labels", "Labels",
-    "Parent Link", "Depends On", "Status", "Description",
+    "Parent Link", "Depends On", "External Dependency", "Status", "Description",
 ]
 
 

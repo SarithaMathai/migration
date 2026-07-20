@@ -22,7 +22,7 @@ nullability, types, inputs, `union`/`interface`, and `@deprecated`). Then transf
 4. **External stubs:** every type owned elsewhere (VMM_*, sibling DGS types) → `@extends @external` stub.
 5. **Shared types** (`Paging`, `CodeDescription`, `UnitsOfMeasure`, …) → `@shareable`.
 6. Header comment block + status legend (🔜 default green-field). Every field/op preceded by a `#`
-   comment with status + one-line purpose. Body order per `reference-output-conventions` §8.
+   comment with status + one-line purpose. Body order per `output-conventions-condensed` §8.
 7. Header note: `# TARGET schema translated from code/schemas/SPARK_{Domain}.txt — nullability from SDL`.
    Where the SDL and resolver disagree on behaviour, the resolver wins; note the discrepancy.
 
@@ -35,7 +35,7 @@ nullability, types, inputs, `union`/`interface`, and `@deprecated`). Then transf
 5. **Client Contract Verification** — every query+mutation confirmed preserved (`{n} ✅ | {n} 🔜 | {n} ⏭`).
 6. **Migration Approach** *(this section is the Confluence approach page)* — recommended sequencing,
    the chosen federation pattern per cross-domain boundary, and any Option A/B/C/D facade decisions.
-7. **Risks & Recommendations** (table per `reference-output-conventions` §6).
+7. **Risks & Recommendations** (table per `output-conventions-condensed` §6).
 
 ## Completion criteria
 - [ ] Every operation and type from the source SDL appears in the target schema (nullability preserved).

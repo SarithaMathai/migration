@@ -1,0 +1,422 @@
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,External Dependency,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,PDTL-BE-B-01,(Product Details) getProductDetailsById(ids) [PDTL-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,productDetails,query,,,,To Do,"*Implementation Order:* 1 of 12 (Product Details backend, step 1)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PDTL-BE-C-01 — getProductDetailsElastic
+* PDTL-BE-D-01 — createProductDetailsSet
+* PDTL-BE-D-02 — updateProductDetailAccess
+* PDTL-BE-D-03 — productDetailLockUnlock
+* PDTL-BE-D-04 — cloneFilesForProductDetails
+* PDTL-BE-D-05 — updateProductDetailComponentStatus
+* PDTL-BE-E-01 — updateProductDetailsSet
+* PDTL-BE-F-01 — Product.productDetails
+* PDTL-BE-G-01 — access + currentUserPermissions + participantDetails
+* PDTL-BE-G-02 — product + createdBy + updatedBy + businessPartners + workspaces
+* PDTL-BE-G-03 — attachment + item attachment/constructionSetAttachments + category subCategories
+* PDTL-FE-001
+
+*Current Behaviour:*
+* (ACL context) token for `ids` → `GET construction/v1?ids={csv}` → camelCase list.
+
+*Target:*
+* `@DgsQuery getProductDetailsById(ids): [ProductDetails]`.
+
+*Acceptance Criteria:*
+1. returns list for ids; empty → []
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-C-01,(Product Details) getProductDetailsElastic(resourceId) [PDTL-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,productDetails,search,,B-01,,To Do,"*Implementation Order:* 2 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
+* (🔴 search) `search.getProductDetailsElastic.load({ q:""parentId: {resourceId}"" })` → paged. - **EXT:** 🔴 search.
+
+*Target:*
+* `@DgsQuery → ProductDetailsPaged`. **Note:** the source resolver reads a `types` arg not in the SDL — drop (or add to schema) per 03-analysis §2.
+
+*Acceptance Criteria:*
+1. `parentId:` elastic query built
+2. paged shape returned
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-D-01,(Product Details) createProductDetailsSet [PDTL-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B-01,,To Do,"*Implementation Order:* 3 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* PDTL-FE-002
+
+*Current Behaviour:*
+* (ACL context) token for literal capability → `POST construction/v1` (snake_case). **If response has `validationErrors` or `message` → throw.**
+
+*Target:*
+* `@DgsMutation`; port the throw-on-error contract.
+
+*Acceptance Criteria:*
+1. creates set
+2. validation error → exception (not a partial object)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-D-02,(Product Details) updateProductDetailAccess [PDTL-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,,To Do,"*Implementation Order:* 4 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
+* map `managePermissionsRequest[].resourceId` → token → `PUT construction/v1/manage-permissions` (`primeKey=humanId`).
+
+*Target:*
+* `@DgsMutation → [ProductDetails]`.
+
+*Acceptance Criteria:*
+1. updates partner access for each resource
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-D-03,(Product Details) productDetailLockUnlock [PDTL-BE-D-03],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,,To Do,"*Implementation Order:* 5 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* PDTL-FE-002
+
+*Current Behaviour:*
+* token for `[constructionSetId]` → `PUT construction/v1/{id}/{lock|unlock}`.
+
+*Target:*
+* `@DgsMutation`.
+
+*Acceptance Criteria:*
+1. `isLock=true`→lock path, false→unlock path
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-D-04,(Product Details) cloneFilesForProductDetails [PDTL-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,productDetails,mutation,,B-01,,To Do,"*Implementation Order:* 6 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* PDTL-FE-002
+
+*Current Behaviour:*
+* token → `Promise.all(attachmentIds.map((id,i) => (🔴 attachment) cloneAttachmentV3({cloneReferences:[cloneReference[i]]}, id)))`, stamp `parentResource=id`, flatten. No rollback. **EXT:** 🔴 attachment.
+
+*Target:*
+* structured-concurrency fan-out via `AttachmentClient`.
+
+*Acceptance Criteria:*
+1. clones each id with its paired cloneReference
+2. `parentResource` stamped
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-D-05,(Product Details) updateProductDetailComponentStatus [PDTL-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,productDetails,mutation,,B-01,,To Do,"*Implementation Order:* 7 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* PDTL-FE-002
+
+*Current Behaviour:*
+* `PUT construction/v1/component_status_update`; wraps result as `{content}`. **No JWT — confirm backend-enforced.**
+
+*Target:*
+* `@DgsMutation → ProductDetailsPaged`.
+
+*Acceptance Criteria:*
+1. updates statuses; result wrapped as `{content}`
+2. no-token behaviour documented
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-E-01,(Product Details) updateProductDetailsSet (multi-step write) [PDTL-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,productDetails,complex,,"SPIKE-01, B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",,To Do,"*Implementation Order:* 8 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* PDTL-FE-003
+
+*Requires spike:* SPIKE-01 (Non-Atomic Write Saga) — see program spike
+
+*Current Behaviour:*
+* 1) if `workspaceContext.{add,remove}Workspaces` non-empty → `workspaceAssociationHelper(PRODUCT_DETAIL, id, add, remove)` (throws on error); 2) null `workspaceContext`; 3) if `deleteAttachmentIds` → (🔴 attachment) `archiveAttachmentBulkV3` (separate ACL token); 4) `PUT construction/v1/{id}`. **No rollback across steps.** - **EXT:** 🔴 attachment · 🟡 workspaceV2.
+
+*Target:*
+* ordered steps with a chosen failure strategy (**PO decision** saga / compensation log / best-effort).
+
+*Acceptance Criteria:*
+1. all 4 steps in order
+2. partial-failure strategy implemented
+3. workspace assoc throws propagate
+
+*Test Cases:*
+* [ ] full path
+* [ ] workspace-only
+* [ ] attachment-archive
+* [ ] partial-failure
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-F-01,"(Product Details) Product.productDetails (internal, same subgraph) [PDTL-BE-F-01]",,Federate BreakDown Product,F,XS,dgs-migration,productDetails,field-resolver,,B-01,,To Do,"*Implementation Order:* 9 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
+* Product exposes `productDetails` resolved from the co-located ProductDetails service.
+
+*Target:*
+* **internal** `@DgsData` on `Product` calling `ProductDetailsService` in-process (not gateway federation; depends only on the `Product` type existing).
+
+*Acceptance Criteria:*
+1. `Product.productDetails` resolves in-process; no gateway hop
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-G-01,(Product Details) access + currentUserPermissions + participantDetails [PDTL-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,user-profile,To Do,"*Implementation Order:* 10 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
+* `access` → `accessControl.getPermissions([humanId||id])[0]`; `currentUserPermissions` → `getUserAccessUnencoded(humanId||id)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.)
+
+*Target:*
+* thin `@DgsData`; ACL is context-only.
+
+*Acceptance Criteria:*
+1. each field resolves; null-safe on empty
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-G-02,(Product Details) product + createdBy + updatedBy + businessPartners + workspaces [PDTL-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,"user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 11 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
+* `product` (internal, only if `parentId` starts `'PID'`), `createdBy`/`updatedBy` (🟡 user-profile), `businessPartners` (🔵 vmm `loadBpsWithType`), `workspaces` (🟡 workspaceV2 by ids).
+
+*Target:*
+* internal + federated references.
+
+*Acceptance Criteria:*
+1. each resolves; `product` null when `parentId` not `PID*`
+2. null id → null user
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PDTL-BE-G-03,(Product Details) attachment + item attachment/constructionSetAttachments + category subCategories [PDTL-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,productDetails,field-resolver,,B-01,"search, specificationsTemplate",To Do,"*Implementation Order:* 12 of 12 (Product Details backend, step 2)
+*Domain:* Product Details — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
+* `ProductDetails.attachment` → (🔴 search) `searchAttachments([humanId||id])`, find - `relatedResources.length<=2`; `ProductDetailsItem.attachment` → `searchAttachments([templateId])[0]||{}`; `constructionSetAttachments` → `searchAttachments([id]).content||[]`; `CategoryWithSection.subCategories` → (internal `specificationsTemplate`) `getProductDetailsCategorySection()` find by `code`.
+
+*Target:*
+* shared search helper + internal master-data call.
+
+*Acceptance Criteria:*
+1. each field resolves to the right source
+2. `attachment` length-≤2 filter preserved
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
+Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,productDetails,query-migration,,PDTL-BE-B-01,,To Do,"*Implementation Order:* 13 of 15 (Product Details combined — frontend #1, cutover step 1)
+*Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* PDTL-BE-B-01 — getProductDetailsById
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* productDetails
+* *Depends on:* PDTL-BE-B-01
+* *Operations:* {{getProductDetailsById}}, {{getProductDetailComponentStatus}}
+
+* *Business objective:*
+** Specification screens read from the federated graph unchanged.
+* *Technical objective:*
+** Migrate the 2 read documents in {{product-details/SpecificationQueries.ts}} (fragment {{PRODUCT_DETAILS_DATA_FRAGMENT}}).
+* *Required changes:*
+** Fragment re-target; document re-point; model regeneration.
+
+*Acceptance Criteria*
+
+1. Specification screens render identically under the flag.
+
+*Testing*
+
+* Screen integration tests; snapshot regeneration.
+
+* *Risk:* Low.
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations [PDTL-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration,,PDTL-BE-D-01 PDTL-BE-D-03 PDTL-BE-D-04 PDTL-BE-D-05,,To Do,"*Implementation Order:* 14 of 15 (Product Details combined — frontend #2, cutover step 3)
+*Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* PDTL-BE-D-01 — createProductDetailsSet
+* PDTL-BE-D-03 — productDetailLockUnlock
+* PDTL-BE-D-04 — cloneFilesForProductDetails
+* PDTL-BE-D-05 — updateProductDetailComponentStatus
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Medium · *Domain:* productDetails
+* *Depends on:* PDTL-BE-D-01, PDTL-BE-D-03, PDTL-BE-D-04, PDTL-BE-D-05
+* *Operations:* {{createProductDetailsSet}}, {{productDetailLockUnlock}}, {{cloneFilesForProductDetails}}, {{updateProductDetailComponentStatus}}
+
+* *Business objective:*
+** Specification create, lock and clone flows write through the federated graph.
+* *Technical objective:*
+** Migrate the 4 single-step mutations with cache writes.
+* *Required changes:*
+** Input renames; response-driven cache updates.
+
+*Acceptance Criteria*
+
+1. Each flow completes and reflects in the UI without manual refresh.
+
+*Testing*
+
+* Mutation unit tests; clone-flow smoke test.
+
+* *Risk:* Low.
+* *Estimated effort:* 3–4 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PDTL-FE-003,[Product Details FE] Migrate `updateProductDetailsSet` saga handling [PDTL-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration-(complex),,PDTL-BE-E-01,,To Do,"*Implementation Order:* 15 of 15 (Product Details combined — frontend #3, cutover step 4)
+*Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* PDTL-BE-E-01 — updateProductDetailsSet
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* Medium · *Domain:* productDetails
+* *Depends on:* PDTL-BE-E-01
+* *Operations:* {{updateProductDetailsSet}}
+
+* *Business objective:*
+** Specification saves surface partial failures explicitly.
+* *Technical objective:*
+** Adopt the multi-step write contract (elastic-search step included — ADR-013 scope, 🟠 draft).
+* *Required changes:*
+** Saga-status rendering; remove compensating refetch.
+
+*Acceptance Criteria*
+
+1. Partial failure is visible and actionable on save.
+
+*Testing*
+
+* Induced step-failure contract tests; save E2E.
+
+* *Risk:* Medium — ADR-013 ratification dependency.
+* *Estimated effort:* 3–5 days
+
+---
+
+## Packaging
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"

@@ -3,6 +3,9 @@
 Patterns for entity federation, @key directives, entity fetchers, and cross-domain type composition.
 Used by `skills/federation-candidate-detection` and `skills/federation-schema-derivation`.
 
+> See also [`federation-patterns-condensed.md`](./federation-patterns-condensed.md) — a shorter version
+> scoped to writing CAT-4 (Phase F) stories, linked from each domain's `be-03`/`be-04` analysis docs.
+
 ---
 
 ## 1. Type Classification Categories

@@ -449,7 +449,8 @@ def add_story_table(doc: Document, phase_key: str, stories: list) -> None:
     ph_p = doc.add_paragraph()
     ph_p.paragraph_format.space_before = Pt(10)
     ph_p.paragraph_format.space_after  = Pt(3)
-    add_run(ph_p, f"{phase_icon} Phase {phase_key} — {phase_name}  ({len(stories)} stories)",
+    story_word = "story" if len(stories) == 1 else "stories"
+    add_run(ph_p, f"{phase_icon} Phase {phase_key} — {phase_name}  ({len(stories)} {story_word})",
             bold=True, size_pt=11, color_hex=fg)
     pPr = _get_or_add(ph_p._p, "w:pPr")
     shd = OxmlElement("w:shd")
@@ -651,17 +652,19 @@ def build_word_doc(domain: str) -> Document:
     add_domain_spike_map(doc, stories)
 
     # ── §3 Effort Snapshot ─────────────────────────────────────────────────
-    if po.get("phases") or po.get("capacity"):
+    # Computed live from be-04-stories.md (bd.live_phase_summary_md) rather than the
+    # hand-authored be-04-po-summary.md table, which drifted out of sync in 4/8 domains
+    # (missing Phase H for product, phantom rows — caught 2026-07-19 full-output audit).
+    live_phases_md = bd.live_phase_summary_md(stories)
+    if live_phases_md or po.get("capacity"):
         section_heading(doc, "Effort Snapshot by Phase")
-        if po.get("phases"):
-            hdrs, rows = parse_md_table(po["phases"])
-            if hdrs:
-                add_plain_table(doc, hdrs, rows, col_widths=[0.6, 3.0, 0.7, 2.5])
+        hdrs, rows = parse_md_table(live_phases_md)
+        if hdrs:
+            add_plain_table(doc, hdrs, rows, col_widths=[0.6, 3.0, 0.7, 2.5])
 
-        # Capacity planning
-        for line in (po.get("phases") or "").split("\n"):
+        for line in live_phases_md.split("\n"):
             line = line.strip()
-            if line.startswith(">") and "sprint" in line.lower():
+            if line.startswith(">"):
                 note_text = re.sub(r"^>\s*", "", line)
                 np = doc.add_paragraph()
                 add_run(np, "ℹ️  ", size_pt=9)

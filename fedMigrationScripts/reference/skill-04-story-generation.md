@@ -20,7 +20,7 @@
    external stubs, interface `@DgsTypeResolver`, service Kotlin port, ACL/JWT plumbing).
 3. **CAT-4 federation** stories (Phase F) — one per cross-domain boundary from the EXT inventory. For a
    composite-key aggregate (e.g. TechPack `ResourcesCount`), use the facade-then-federate pattern in
-   [`reference-federation-patterns.md`](./reference-federation-patterns.md): one Phase-E stub+facade
+   [`federation-patterns-condensed.md`](./federation-patterns-condensed.md): one Phase-E stub+facade
    story, one Phase-F placeholder per owning subgraph (`BLOCKED-BY: {domain}`), one retirement story.
 4. **Tests** — fold unit/integration/parity test cases into each story's Test Cases (not separate
    stories), plus one domain-level parity-harness story in Phase G.

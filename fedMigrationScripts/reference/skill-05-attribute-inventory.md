@@ -85,7 +85,7 @@ Columns:
   rows are at the top of each type group.
 - One row per field. Never collapse multiple fields into one row.
 - Every non-Direct row must have a **Story** value (it is a bug if a field resolver has no story).
-- Keep the same status/severity glyphs as `reference-output-conventions` (🔴/🟡/🔵).
+- Keep the same status/severity glyphs as `output-conventions-condensed` (🔴/🟡/🔵).
 
 ## Completion criteria
 
