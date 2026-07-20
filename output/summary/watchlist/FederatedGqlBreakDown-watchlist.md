@@ -222,7 +222,7 @@ to fix on the port.
 
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
-| `WATCHLIST-FE-001` | Migrate watchlist reads | Query migration | 🟢 Low | 2–3 days | `WATCHLIST-BE-B-01`, `WATCHLIST-BE-C-01` | `getWatchlistByIds`, `getWatchlistByFilter` |
+| `WATCHLIST-FE-001` | Migrate watchlist reads | Query migration | 🟢 Low | 2–3 days | `WATCHLIST-BE-B-01`, `WATCHLIST-BE-C-01`, `WATCHLIST-BE-G-01`, `WATCHLIST-BE-G-02`, `WATCHLIST-BE-G-03`, `WATCHLIST-BE-G-05` | `getWatchlistByIds`, `getWatchlistByFilter` |
 | `WATCHLIST-FE-002` | Migrate watchlist create and clone mutations | Mutation migration | 🟢 Low | 2–3 days | `WATCHLIST-BE-D-01`, `WATCHLIST-BE-D-02` | `createWatchlistEntries`, `cloneFilesForWatchlist` |
 | `WATCHLIST-FE-003` | Migrate `updateWatchlistEntries` saga handling | Mutation migration (complex) | 🟡 Medium | 3–4 days | `WATCHLIST-BE-E-01` | `updateWatchlistEntries` |
 
@@ -234,11 +234,10 @@ to fix on the port.
 
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
-| 2 | 🟢 `WATCHLIST-FE-001` | `WATCHLIST-FE-001` → `WATCHLIST-BE-B-01`, `WATCHLIST-BE-C-01` | Search & listing — needs backend phase C |
 | 3 | 🟢 `WATCHLIST-FE-002` | `WATCHLIST-FE-002` → `WATCHLIST-BE-D-01`, `WATCHLIST-BE-D-02` | Writes — needs backend phase D mutations |
-| 4 | 🟡 `WATCHLIST-FE-003` | `WATCHLIST-FE-003` → `WATCHLIST-BE-E-01` | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 4 | 🟢 `WATCHLIST-FE-001`, 🟡 `WATCHLIST-FE-003` | `WATCHLIST-FE-001` → `WATCHLIST-BE-B-01`, `WATCHLIST-BE-C-01`, `WATCHLIST-BE-G-01`, `WATCHLIST-BE-G-02` (+2)<br>`WATCHLIST-FE-003` → `WATCHLIST-BE-E-01` | Complex writes / sagas — needs backend phase E + ADR ratification |
 
-**Cutover flow:** `WATCHLIST-FE-001` → `WATCHLIST-FE-002` → `WATCHLIST-FE-003`.
+**Cutover flow:** `WATCHLIST-FE-002` → `WATCHLIST-FE-001` → `WATCHLIST-FE-003`.
 
 ---
 
@@ -248,9 +247,8 @@ to fix on the port.
 
 | Step | 👤 FE-1 | Backend gate (focus) |
 |---|---|---|
-| 2 | 🟢 `WATCHLIST-FE-001` (2–3d) | Search & listing — needs backend phase C |
 | 3 | 🟢 `WATCHLIST-FE-002` (2–3d) | Writes — needs backend phase D mutations |
-| 4 | 🟡 `WATCHLIST-FE-003` (3–4d) | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 4 | 🟡 `WATCHLIST-FE-003` (3–4d)<br>🟢 `WATCHLIST-FE-001` (2–3d) | Complex writes / sagas — needs backend phase E + ADR ratification |
 
 **Elapsed (nominal midpoints):** ~8 FE build days — calendar time is set by the backend gates, not FE capacity.
 

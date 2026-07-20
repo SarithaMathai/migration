@@ -116,7 +116,8 @@ Story,IMPRESSION-BE-G-01,(Impression) Impression field resolvers (5 fields) [IMP
 * IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
 
 *Blocks:*
-* None
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * 1. `businessPartners` — `loadBpsWithType(partnerIds.map(p => ({ partnerId: p })))` (🟡 vmm) 2. `owningBusinessPartner` — `loadBp(owningPartnerId)` (🔵 vmm) 3. `workspaces` — `getWorkspacesByIdsV2(workspaceContext)` or `[]` when context is empty (🟡 workspaceV2) 4. `createdBy` — `userAttributes.getUserByID.load(createdById)` (🔵 user-profile) 5. `updatedBy` — `userAttributes.getUserByID.load(updatedById)` (🔵 user-profile)
@@ -182,20 +183,30 @@ Story,IMPRESSION-BE-G-04,"(Impression) attachment entity reference (recommended,
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with BOM wave) [IMPRESSION-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 BOM-BE-B-01 BOM-FE-002,,To Do,"*Implementation Order:* 8 of 9 (Impression combined — frontend #1, cutover step 1)
+Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with BOM wave) [IMPRESSION-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,BOM-BE-A-04 BOM-BE-B-01 BOM-BE-B-03 BOM-BE-G-01 BOM-BE-G-03 BOM-BE-G-08 BOM-BE-G-12 BOM-BE-G-13 BOM-BE-G-17 BOM-FE-002 IMPRESSION-BE-B-01 IMPRESSION-BE-G-01 PRODUCT-BE-B-01,"user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 8 of 9 (Impression combined — frontend #1, cutover step 4)
 *Domain:* Impression — *Team:* Frontend — *Owner:* FE-2
-*Priority:* Low — *Parallelizable:* Yes
+*Priority:* Low — *Parallelizable:* No
 
 *Depends On:*
-* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+* BOM-BE-A-04
 * BOM-BE-B-01
+* BOM-BE-B-03
+* BOM-BE-G-01
+* BOM-BE-G-03
+* BOM-BE-G-08
+* BOM-BE-G-12
+* BOM-BE-G-13
+* BOM-BE-G-17
 * BOM-FE-002
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+* IMPRESSION-BE-G-01 — Impression field resolvers
+* PRODUCT-BE-B-01
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Low · *Domain:* impression
-* *Depends on:* IMPRESSION-BE-B-01, BOM-BE-B-01, BOM-FE-002
+* *Depends on:* BOM-BE-A-04, BOM-BE-B-01, BOM-BE-B-03, BOM-BE-G-01, BOM-BE-G-03, BOM-BE-G-08, BOM-BE-G-12, BOM-BE-G-13, BOM-BE-G-17, BOM-FE-002, IMPRESSION-BE-B-01, IMPRESSION-BE-G-01, PRODUCT-BE-B-01
 * *Operations:* {{searchImpressionsByProductId}}, {{getBomByIds}}
 
 * *Business objective:*
@@ -223,20 +234,40 @@ Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with Product wave) [IMPRESSION-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,IMPRESSION-BE-B-01 PRODUCT-BE-B-01 PRODUCT-FE-001,,To Do,"*Implementation Order:* 9 of 9 (Impression combined — frontend #2, cutover step 1)
+Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with Product wave) [IMPRESSION-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,BOM-BE-A-04 BOM-BE-B-01 BOM-BE-B-03 BOM-BE-G-01 BOM-BE-G-03 BOM-BE-G-08 BOM-BE-G-12 BOM-BE-G-13 BOM-BE-G-17 IMPRESSION-BE-B-01 IMPRESSION-BE-G-01 PRODUCT-BE-B-01 PRODUCT-BE-G-01 PRODUCT-BE-G-02 PRODUCT-BE-G-03 PRODUCT-BE-G-06 PRODUCT-BE-G-07 PRODUCT-BE-G-08 PRODUCT-BE-G-09 PRODUCT-BE-G-10 PRODUCT-BE-G-13 PRODUCT-BE-S-01 PRODUCT-FE-001,"user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 9 of 9 (Impression combined — frontend #2, cutover step 5)
 *Domain:* Impression — *Team:* Frontend — *Owner:* FE-2
-*Priority:* Low — *Parallelizable:* Yes
+*Priority:* Low — *Parallelizable:* No
 
 *Depends On:*
+* BOM-BE-A-04
+* BOM-BE-B-01
+* BOM-BE-B-03
+* BOM-BE-G-01
+* BOM-BE-G-03
+* BOM-BE-G-08
+* BOM-BE-G-12
+* BOM-BE-G-13
+* BOM-BE-G-17
 * IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+* IMPRESSION-BE-G-01 — Impression field resolvers
 * PRODUCT-BE-B-01
+* PRODUCT-BE-G-01
+* PRODUCT-BE-G-02
+* PRODUCT-BE-G-03
+* PRODUCT-BE-G-06
+* PRODUCT-BE-G-07
+* PRODUCT-BE-G-08
+* PRODUCT-BE-G-09
+* PRODUCT-BE-G-10
+* PRODUCT-BE-G-13
+* PRODUCT-BE-S-01
 * PRODUCT-FE-001
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Low · *Domain:* impression
-* *Depends on:* IMPRESSION-BE-B-01, PRODUCT-BE-B-01, PRODUCT-FE-001
+* *Depends on:* BOM-BE-A-04, BOM-BE-B-01, BOM-BE-B-03, BOM-BE-G-01, BOM-BE-G-03, BOM-BE-G-08, BOM-BE-G-12, BOM-BE-G-13, BOM-BE-G-17, IMPRESSION-BE-B-01, IMPRESSION-BE-G-01, PRODUCT-BE-B-01, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-S-01, PRODUCT-FE-001
 * *Operations:* {{searchImpressionsByProductId}}, {{getProduct}}
 
 * *Business objective:*

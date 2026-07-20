@@ -25,11 +25,8 @@ Queries in scope: getMeasurementByIds, getMeasurementSetStatus, getMeasurementCo
 | createdBy | MST-BE-G-07 | user-profile | — | No | getMeasurementByIds | via `...measurementFieldsFragment`; via `...tightFitFragment` |
 | departments | MST-BE-G-07 | ig | — | No | getMeasurementByIds | via `...tightFitFragment` |
 | divisions | MST-BE-G-07 | ig | — | No | getMeasurementByIds | via `...tightFitFragment` |
-| measurementTemplates | MST-BE-G-01 | measurementTemplate | — | No | getMeasurementByIds | via `...measurementFieldsFragment` |
 | participantDetails | MST-BE-G-01 | user-profile | — | No | getMeasurementByIds | via `...measurementFieldsFragment` |
-| sizeTemplate | MST-BE-G-01 | sizeTemplate | — | No | getMeasurementByIds | via `...measurementFieldsFragment` |
 | teams | MST-BE-G-01 | user-profile | — | No | getMeasurementByIds | external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment` |
-| tightFitTemplate | MST-BE-G-01 | tightFit | — | No | getMeasurementByIds | via `...measurementFieldsFragment` |
 | updatedBy | MST-BE-G-07 | user-profile | — | No | getMeasurementByIds | via `...measurementFieldsFragment`; via `...tightFitFragment` |
 | updatedFromResource | MST-BE-G-01 | sampleV2 | — | No | getMeasurementByIds | via `...measurementFieldsFragment` |
 | users | MST-BE-G-01 | user-profile | — | No | getMeasurementByIds | external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment` |

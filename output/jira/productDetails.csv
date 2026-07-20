@@ -241,7 +241,7 @@ Story,PDTL-BE-G-01,(Product Details) access + currentUserPermissions + participa
 * PDTL-BE-B-01 — getProductDetailsById
 
 *Blocks:*
-* None
+* PDTL-FE-001
 
 *Current Behaviour:*
 * `access` → `accessControl.getPermissions([humanId||id])[0]`; `currentUserPermissions` → `getUserAccessUnencoded(humanId||id)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.)
@@ -264,7 +264,7 @@ Story,PDTL-BE-G-02,(Product Details) product + createdBy + updatedBy + businessP
 * PDTL-BE-B-01 — getProductDetailsById
 
 *Blocks:*
-* None
+* PDTL-FE-001
 
 *Current Behaviour:*
 * `product` (internal, only if `parentId` starts `'PID'`), `createdBy`/`updatedBy` (🟡 user-profile), `businessPartners` (🔵 vmm `loadBpsWithType`), `workspaces` (🟡 workspaceV2 by ids).
@@ -288,7 +288,7 @@ Story,PDTL-BE-G-03,(Product Details) attachment + item attachment/constructionSe
 * PDTL-BE-B-01 — getProductDetailsById
 
 *Blocks:*
-* None
+* PDTL-FE-001
 
 *Current Behaviour:*
 * `ProductDetails.attachment` → (🔴 search) `searchAttachments([humanId||id])`, find - `relatedResources.length<=2`; `ProductDetailsItem.attachment` → `searchAttachments([templateId])[0]||{}`; `constructionSetAttachments` → `searchAttachments([id]).content||[]`; `CategoryWithSection.subCategories` → (internal `specificationsTemplate`) `getProductDetailsCategorySection()` find by `code`.
@@ -305,18 +305,21 @@ Story,PDTL-BE-G-03,(Product Details) attachment + item attachment/constructionSe
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,productDetails,query-migration,,PDTL-BE-B-01,,To Do,"*Implementation Order:* 13 of 15 (Product Details combined — frontend #1, cutover step 1)
+Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,productDetails,query-migration,,PDTL-BE-B-01 PDTL-BE-G-01 PDTL-BE-G-02 PDTL-BE-G-03,"search, specificationsTemplate, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 14 of 15 (Product Details combined — frontend #2, cutover step 4)
 *Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
-*Priority:* Low — *Parallelizable:* No
+*Priority:* Low — *Parallelizable:* Yes
 
 *Depends On:*
 * PDTL-BE-B-01 — getProductDetailsById
+* PDTL-BE-G-01 — access + currentUserPermissions + participantDetails
+* PDTL-BE-G-02 — product + createdBy + updatedBy + businessPartners + workspaces
+* PDTL-BE-G-03 — attachment + item attachment/constructionSetAttachments + category subCategories
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Low · *Domain:* productDetails
-* *Depends on:* PDTL-BE-B-01
+* *Depends on:* PDTL-BE-B-01, PDTL-BE-G-01, PDTL-BE-G-02, PDTL-BE-G-03
 * *Operations:* {{getProductDetailsById}}, {{getProductDetailComponentStatus}}
 
 * *Business objective:*
@@ -341,7 +344,7 @@ Story,PDTL-FE-001,[Product Details FE] Migrate product-details reads [PDTL-FE-00
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations [PDTL-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration,,PDTL-BE-D-01 PDTL-BE-D-03 PDTL-BE-D-04 PDTL-BE-D-05,,To Do,"*Implementation Order:* 14 of 15 (Product Details combined — frontend #2, cutover step 3)
+Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations [PDTL-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration,,PDTL-BE-D-01 PDTL-BE-D-03 PDTL-BE-D-04 PDTL-BE-D-05,,To Do,"*Implementation Order:* 13 of 15 (Product Details combined — frontend #1, cutover step 3)
 *Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Medium — *Parallelizable:* No
 
@@ -382,7 +385,7 @@ Story,PDTL-FE-002,[Product Details FE] Migrate product-details simple mutations 
 * No UI regression (component tests + smoke suite)"
 Story,PDTL-FE-003,[Product Details FE] Migrate `updateProductDetailsSet` saga handling [PDTL-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,productDetails,mutation-migration-(complex),,PDTL-BE-E-01,,To Do,"*Implementation Order:* 15 of 15 (Product Details combined — frontend #3, cutover step 4)
 *Domain:* Product Details — *Team:* Frontend — *Owner:* FE-1
-*Priority:* Medium — *Parallelizable:* No
+*Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
 * PDTL-BE-E-01 — updateProductDetailsSet

@@ -25,9 +25,9 @@
 
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
-| `MST-FE-001` | Migrate measurement reads and retire `humanId` | Query migration | 🟡 Medium | 4–6 days | `MST-BE-B-01`, `MST-BE-B-04` | `getMeasurementByIds`, `getMeasurementSetStatus`, `getMeasurementComponentStatus` |
-| `MST-FE-002` | Migrate measurement list/search reads | Query migration | 🟡 Medium | 3–5 days | `MST-BE-C-01`, `MST-BE-C-02` | `getMeasurements`, `getMeasurementsElastic` |
-| `MST-FE-003` | Migrate measurement master-data reads | Query migration | 🟢 Low | 1–2 days | `MST-BE-B-02`, `MST-BE-B-03` | `getUnitsOfMeasure`, `getThicknessUnitsOfMeasure` |
+| `MST-FE-001` | Migrate measurement reads and retire `humanId` | Query migration | 🟡 Medium | 4–6 days | `MST-BE-B-01`, `MST-BE-B-04`, `MST-BE-G-01`, `MST-BE-G-07` | `getMeasurementByIds`, `getMeasurementSetStatus`, `getMeasurementComponentStatus` |
+| `MST-FE-002` | Migrate measurement list/search reads | Query migration | 🟡 Medium | 3–5 days | `MST-BE-B-01`, `MST-BE-C-01`, `MST-BE-C-02`, `MST-BE-G-01`, `MST-BE-G-07` | `getMeasurements`, `getMeasurementsElastic` |
+| `MST-FE-003` | Migrate measurement master-data reads | Query migration | 🟢 Low | 1–2 days | `MST-BE-B-02`, `MST-BE-B-03`, `MST-BE-B-04` | `getUnitsOfMeasure`, `getThicknessUnitsOfMeasure` |
 | `MST-FE-004` | Migrate measurement mutations | Mutation migration | 🟡 Medium | 4–6 days | `MST-BE-D-03`, `MST-BE-D-04`, `MST-BE-D-06`, `MST-BE-D-07` | `lockMeasurementSet`, `unlockMeasurementSet`, `putSampleMeasurementSet`, `deleteSampleMeasurementSet` |
 
 ---
@@ -38,11 +38,11 @@
 
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
-| 1 | 🟡 `MST-FE-001`, 🟢 `MST-FE-003` | `MST-FE-001` → `MST-BE-B-01`, `MST-BE-B-04`<br>`MST-FE-003` → `MST-BE-B-02`, `MST-BE-B-03` | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🟡 `MST-FE-002` | `MST-FE-002` → `MST-BE-C-01`, `MST-BE-C-02` | Search & listing — needs backend phase C |
+| 1 | 🟢 `MST-FE-003` | `MST-FE-003` → `MST-BE-B-02`, `MST-BE-B-03`, `MST-BE-B-04` | Reads cutover — needs backend phase A/B reads live |
 | 3 | 🟡 `MST-FE-004` | `MST-FE-004` → `MST-BE-D-03`, `MST-BE-D-04`, `MST-BE-D-06`, `MST-BE-D-07` | Writes — needs backend phase D mutations |
+| 4 | 🟡 `MST-FE-001`, 🟡 `MST-FE-002` | `MST-FE-001` → `MST-BE-B-01`, `MST-BE-B-04`, `MST-BE-G-01`, `MST-BE-G-07`<br>`MST-FE-002` → `MST-BE-B-01`, `MST-BE-C-01`, `MST-BE-C-02`, `MST-BE-G-01` (+1) | Complex writes / sagas — needs backend phase E + ADR ratification |
 
-**Cutover flow:** `MST-FE-001` → `MST-FE-003` → `MST-FE-002` → `MST-FE-004`.
+**Cutover flow:** `MST-FE-003` → `MST-FE-004` → `MST-FE-001` → `MST-FE-002`.
 
 ---
 
@@ -52,9 +52,9 @@
 
 | Step | 👤 FE-1 | Backend gate (focus) |
 |---|---|---|
-| 1 | 🟡 `MST-FE-001` (4–6d)<br>🟢 `MST-FE-003` (1–2d) | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🟡 `MST-FE-002` (3–5d) | Search & listing — needs backend phase C |
+| 1 | 🟢 `MST-FE-003` (1–2d) | Reads cutover — needs backend phase A/B reads live |
 | 3 | 🟡 `MST-FE-004` (4–6d) | Writes — needs backend phase D mutations |
+| 4 | 🟡 `MST-FE-001` (4–6d)<br>🟡 `MST-FE-002` (3–5d) | Complex writes / sagas — needs backend phase E + ADR ratification |
 
 **Elapsed (nominal midpoints):** ~16 FE build days — calendar time is set by the backend gates, not FE capacity.
 

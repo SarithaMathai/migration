@@ -25,11 +25,8 @@ Queries in scope: getMeasurements, getMeasurementsElastic · Mutations excluded:
 | createdBy | MST-BE-G-07 | user-profile | — | No | getMeasurements | via `...measurementFieldsFragment`; via `...tightFitFragment` |
 | departments | MST-BE-G-07 | ig | — | No | getMeasurements | via `...tightFitFragment` |
 | divisions | MST-BE-G-07 | ig | — | No | getMeasurements | via `...tightFitFragment` |
-| measurementTemplates | MST-BE-G-01 | measurementTemplate | — | No | getMeasurements | via `...measurementFieldsFragment` |
 | participantDetails | MST-BE-G-01 | user-profile | — | No | getMeasurements | via `...measurementFieldsFragment` |
-| sizeTemplate | MST-BE-G-01 | sizeTemplate | — | No | getMeasurements | via `...measurementFieldsFragment` |
 | teams | MST-BE-G-01 | user-profile | — | No | getMeasurements | external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment` |
-| tightFitTemplate | MST-BE-G-01 | tightFit | — | No | getMeasurements | via `...measurementFieldsFragment` |
 | updatedBy | MST-BE-G-07 | user-profile | — | No | getMeasurements | via `...measurementFieldsFragment`; via `...tightFitFragment` |
 | updatedFromResource | MST-BE-G-01 | sampleV2 | — | No | getMeasurements | via `...measurementFieldsFragment` |
 | users | MST-BE-G-01 | user-profile | — | No | getMeasurements | external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment` |

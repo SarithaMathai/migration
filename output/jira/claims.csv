@@ -382,7 +382,7 @@ Story,CLAIM-BE-G-01,(Claims) access + currentUserPermissions + participantDetail
 * CLAIM-BE-B-01 — getClaims
 
 *Blocks:*
-* None
+* CLAIM-FE-002
 
 *Current Behaviour:*
 * `access` → `accessControl.getPermissions([humanId])[0]`; `currentUserPermissions` → `getUserAccessUnencoded(humanId)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.)
@@ -402,7 +402,7 @@ Story,CLAIM-BE-G-02,(Claims) createdBy + updatedBy + businessPartner + designPar
 * CLAIM-BE-B-01 — getClaims
 
 *Blocks:*
-* None
+* CLAIM-FE-002
 
 *Current Behaviour:*
 * users via 🟡 user-profile; `businessPartner` **3-way fallback** (`partnerId` || `{bpId:0,bpName:'Target'}` when no `dpPartnerId` || `dpPartnerId`); `designPartner` `dpPartnerId` or `{bpId:null,bpName:null}`.
@@ -427,7 +427,7 @@ Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeam
 * CLAIM-BE-G-06 — Shared value-type alignment
 
 *Blocks:*
-* None
+* CLAIM-FE-002
 
 *Current Behaviour:*
 * `product` (🟡 product, only if `parentId` starts `'PID'`); `parentDetails` → - `product.getByID(parentId)` (the product feeds `ParentDetails`): `otherClaimBps` (🔴 search `getClaimsElastic` → partner ids), `systemTeams` (🔴 search `searchTeams` from product BPs; empty→`{content:[]}`), `droppedPartnerIds` (direct).
@@ -532,15 +532,18 @@ Story,CLAIM-FE-001,[Claims FE] Split the claim fragment factory and re-target cl
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover) [CLAIM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,query-migration,,CLAIM-BE-B-01 CLAIM-BE-B-02 CLAIM-BE-B-03 CLAIM-BE-B-04 CLAIM-FE-001 PRODUCT-BE-H-06,,To Do,"*Implementation Order:* 22 of 24 (Claims combined — frontend #2, cutover step 2)
+Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover) [CLAIM-FE-002],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,query-migration,,CLAIM-BE-B-01 CLAIM-BE-B-02 CLAIM-BE-B-03 CLAIM-BE-B-04 CLAIM-BE-G-01 CLAIM-BE-G-02 CLAIM-BE-G-03 CLAIM-FE-001 PRODUCT-BE-H-06,"product, search, user-profile, vmm",To Do,"*Implementation Order:* 23 of 24 (Claims combined — frontend #3, cutover step 4)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
-*Priority:* High — *Parallelizable:* No
+*Priority:* High — *Parallelizable:* Yes
 
 *Depends On:*
 * CLAIM-BE-B-01 — getClaims
 * CLAIM-BE-B-02 — getClaimByIds
 * CLAIM-BE-B-03 — getCommunicationChannels
 * CLAIM-BE-B-04 — getAllClaimsAbout
+* CLAIM-BE-G-01 — access + currentUserPermissions + participantDetails
+* CLAIM-BE-G-02 — createdBy + updatedBy + businessPartner + designPartner
+* CLAIM-BE-G-03 — product + parentDetails
 * CLAIM-FE-001 — Split the claim fragment factory and re-target claim fragments
 * PRODUCT-BE-H-06
 
@@ -548,7 +551,7 @@ Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover
 * None
 
 * *Type:* Query migration · *Impact:* High · *Domain:* claims
-* *Depends on:* CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-FE-001, PRODUCT-BE-H-06
+* *Depends on:* CLAIM-BE-B-01, CLAIM-BE-B-02, CLAIM-BE-B-03, CLAIM-BE-B-04, CLAIM-BE-G-01, CLAIM-BE-G-02, CLAIM-BE-G-03, CLAIM-FE-001, PRODUCT-BE-H-06
 * *Operations:* {{getClaims}}, {{getClaimByIds}}, {{getCommunicationChannels}}, {{getAllClaimsAbout}}, {{getClaimComponentStatus}}
 
 * *Business objective:*
@@ -576,7 +579,7 @@ Story,CLAIM-FE-002,[Claims FE] Migrate claim reads (first cross-subgraph cutover
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,mutation-migration,,CLAIM-BE-D-01 CLAIM-BE-D-02 CLAIM-BE-D-03 CLAIM-BE-D-04 CLAIM-BE-D-05,,To Do,"*Implementation Order:* 23 of 24 (Claims combined — frontend #3, cutover step 3)
+Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,claims,mutation-migration,,CLAIM-BE-D-01 CLAIM-BE-D-02 CLAIM-BE-D-03 CLAIM-BE-D-04 CLAIM-BE-D-05,,To Do,"*Implementation Order:* 22 of 24 (Claims combined — frontend #2, cutover step 3)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 
@@ -618,7 +621,7 @@ Story,CLAIM-FE-003,[Claims FE] Migrate claim simple mutations and export [CLAIM-
 * No UI regression (component tests + smoke suite)"
 Story,CLAIM-FE-004,[Claims FE] Migrate `updateClaim` multi-step write handling [CLAIM-FE-004],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,claims,mutation-migration-(complex),,CLAIM-BE-E-01,,To Do,"*Implementation Order:* 24 of 24 (Claims combined — frontend #4, cutover step 4)
 *Domain:* Claims — *Team:* Frontend — *Owner:* FE-2
-*Priority:* High — *Parallelizable:* No
+*Priority:* High — *Parallelizable:* Yes
 
 *Depends On:*
 * CLAIM-BE-E-01 — updateClaim

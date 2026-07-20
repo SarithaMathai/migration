@@ -66,8 +66,8 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | D | Mutations | 10 | 14–29d |
 | E | Complex Operations | 1 | 5–8d |
 | F | Federation & Stitching | 1 | 2–5d |
-| G | Field Resolvers & Tests | 6 | 8–17d |
-| H | Entity Resolution | 1 | 1–2d |
+| G | Field Resolvers & Tests | 5 | 7–14d |
+| H | Entity Resolution | 2 | 2–5d |
 | **Total** | | **30** | **45–90d** (buffered) |
 
 > Computed live from `be-04-stories.md` (phase + complexity per story) — always reconciles with the story tables below and the program overview. Effort = sum of per-story nominal day-ranges (Low 1–2 · Medium 2–4 · High 4–7 · Very High 7–12) × 1.2 buffer, AI-estimated — confirm in refinement. See each story's **Depends On** column for real sequencing.
@@ -105,7 +105,7 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
 | 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟢 `B-07`, 🟢 `B-08`, 🟢 `B-09`, 🟡 `C-01`, 🟢 `C-02`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟡 `D-06`, 🟢 `D-07`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `G-02`, 🟢 `H-01` | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)<br>`H-01` → ⛔ BLOCKED-BY sample | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests · 🧬 Entity Resolution |
-| 3 | 🟢 `D-08`, 🟢 `D-09`, 🟢 `D-10`, 🟡 `G-01`, 🟢 `G-04`, 🟢 `G-05`, 🟢 `G-06`, 🟢 `G-07` | — | ✏️ Mutations · 🧪 Field Resolvers & Tests |
+| 3 | 🟢 `D-08`, 🟢 `D-09`, 🟢 `D-10`, 🟡 `G-01`, 🟢 `G-05`, 🟢 `G-06`, 🟢 `G-07`, 🟢 `H-02` | `H-02` → ⛔ BLOCKED-BY sample | ✏️ Mutations · 🧪 Field Resolvers & Tests · 🧬 Entity Resolution |
 
 **Critical path:** `B-01` → `B-06` → `D-08` — 3 sequential stories; everything else hangs off this chain in parallel.
 
@@ -142,13 +142,13 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | 23 | 🟢 `D-09` (1–2d) |
 | 24 | 🟢 `D-10` (1–2d) |
 | 25 | 🟢 `G-02` (1–2d) |
-| 26 | 🟢 `G-04` (1–2d) |
-| 27 | 🟢 `G-05` (1–2d) |
-| 28 | 🟢 `G-06` (1–2d) |
-| 29 | 🟢 `G-07` (1–2d) |
-| 30 | 🟢 `H-01` (1–2d) ⛔ |
+| 26 | 🟢 `G-05` (1–2d) |
+| 27 | 🟢 `G-06` (1–2d) |
+| 28 | 🟢 `G-07` (1–2d) |
+| 29 | 🟢 `H-01` (1–2d) ⛔ |
+| 30 | 🟢 `H-02` (1–2d) ⛔ |
 
-**BE-1:** `B-01` → `E-01` → `B-06` → `B-07` → `B-08` → `B-02` → `B-05` → `C-01` → `D-01` → `D-06` → `F-01` → `G-01` → `B-03` → `B-04` → `B-09` → `C-02` → `D-02` → `D-03` → `D-04` → `D-05` → `D-07` → `D-08` → `D-09` → `D-10` → `G-02` → `G-04` → `G-05` → `G-06` → `G-07` → `H-01`
+**BE-1:** `B-01` → `E-01` → `B-06` → `B-07` → `B-08` → `B-02` → `B-05` → `C-01` → `D-01` → `D-06` → `F-01` → `G-01` → `B-03` → `B-04` → `B-09` → `C-02` → `D-02` → `D-03` → `D-04` → `D-05` → `D-07` → `D-08` → `D-09` → `D-10` → `G-02` → `G-05` → `G-06` → `G-07` → `H-01` → `H-02`
 
 **Elapsed (nominal midpoints):** ~56 working days.
 
@@ -213,7 +213,7 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | 🔸 `MST-BE-F-01`<br>Implement `Product.measurementSets` (internal) | 🟡 Medium `M` | Field Resolver<br>Calls: `relationship` | B-01 | **Intent —** Expose a product's measurement sets on the Product type.<br>**Today —** product navigates to measurement sets via the relationship + getMeasurements flow<br>**Done when:**<br>• `Product.measurementSets` resolves internally via `measurementService`<br>• no gateway hop<br>• Parity vs current product resolver |
 
 
-##### 🧪 Phase G — Field Resolvers & Tests (6 stories)
+##### 🧪 Phase G — Field Resolvers & Tests (5 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
@@ -222,14 +222,14 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | 🔸 `MST-BE-G-05`<br>`MeasurementTemplate` field resolvers (5 fields) | 🟢 Low `XS` | Field Resolver<br>Calls: `ig`, `vmm`, `userAttributes` | B-06 | **Intent —** Resolve a measurement template's people and item-group fields.<br>**Today —** createdBy/updatedBy (getUserByIDOrNullIfNotFound), departments/divisions (ig.department\\|division.getByID, empty-tolerant), brands (brand.getBrand, skipped when…<br>**Done when:**<br>• All 5 fields resolve<br>• `departments`/`divisions` null-tolerant on empty ids<br>• `brands` skipped (null) when `brandIds === -1` |
 | 🔸 `MST-BE-G-06`<br>`SizeTemplate` field resolvers (3 fields) | 🟢 Low `XS` | Field Resolver<br>Calls: `userAttributes` | B-07 | **Intent —** Resolve a size template's computed id and people fields.<br>**Today —** humanId (humanId \\|\\| id — computed fallback), createdBy/updatedBy (getUserByIDOrNullIfNotFound)<br>**Done when:**<br>• All 3 fields resolve<br>• `humanId` falls back to `id` when the record has no `humanId` |
 | 🔸 `MST-BE-G-07`<br>`TightFit` field resolvers (5 fields) | 🟢 Low `XS` | Field Resolver<br>Calls: `ig`, `vmm`, `userAttributes` | B-08 | **Intent —** Resolve a tight-fit template's people and item-group fields.<br>**Today —** departments/divisions (ig.department\\|division.getByID, empty-tolerant), brands (brand.getBrand, skipped when brandIds === -1), createdBy/updatedBy…<br>**Done when:**<br>• All 5 fields resolve<br>• `departments`/`divisions` null-tolerant on empty ids<br>• `brands` skipped (null) when `brandIds === -1` |
-| 🔸 `MST-BE-G-04`<br>`SampleMeasurementSet.sample` forward reference (recommended, PO-gated) | 🟢 Low `XS` | Field Resolver<br>Calls: `sample` | B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged) | **Intent —** Adds `sample { … }` on the sample measurement set — the forward twin of the existing<br>**Today —** schema adds sample: SampleV2 on SampleMeasurementSet; resolver emits<br>**Done when:**<br>• PO approval recorded (OQ-5) before implementation starts<br>• `sample { id }` resolves as a stub; `sampleId` unchanged<br>• Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query) |
 
 
-##### 🧬 Phase H — Entity Resolution (1 story)
+##### 🧬 Phase H — Entity Resolution (2 stories)
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
 | 🔸 `MST-BE-H-01`<br>Contribute `sampleMeasurement` to the `SampleV2` entity | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Contribute a sample's measurement set to the Sample entity.<br>**Today —** sample navigates to its measurement set via getSampleMeasurement<br>**Done when:**<br>• `SampleV2.sampleMeasurement` resolves<br>• Parity vs current |
+| 🔸 `MST-BE-H-02`<br>`SampleMeasurementSet.sample` forward reference (recommended, PO-gated) | 🟢 Low `XS` | Field Resolver<br>Calls: `sample` | B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged) | **Intent —** Adds `sample { … }` on the sample measurement set — the forward twin of the existing<br>**Today —** schema adds sample: SampleV2 on SampleMeasurementSet; resolver emits<br>**Done when:**<br>• PO approval recorded (OQ-5) before implementation starts<br>• `sample { id }` resolves as a stub; `sampleId` unchanged<br>• Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query) |
 
 
 
@@ -264,9 +264,9 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
-| `MST-FE-001` | Migrate measurement reads and retire `humanId` | Query migration | 🟡 Medium | 4–6 days | `MST-BE-B-01`, `MST-BE-B-04` | `getMeasurementByIds`, `getMeasurementSetStatus`, `getMeasurementComponentStatus` |
-| `MST-FE-002` | Migrate measurement list/search reads | Query migration | 🟡 Medium | 3–5 days | `MST-BE-C-01`, `MST-BE-C-02` | `getMeasurements`, `getMeasurementsElastic` |
-| `MST-FE-003` | Migrate measurement master-data reads | Query migration | 🟢 Low | 1–2 days | `MST-BE-B-02`, `MST-BE-B-03` | `getUnitsOfMeasure`, `getThicknessUnitsOfMeasure` |
+| `MST-FE-001` | Migrate measurement reads and retire `humanId` | Query migration | 🟡 Medium | 4–6 days | `MST-BE-B-01`, `MST-BE-B-04`, `MST-BE-G-01`, `MST-BE-G-07` | `getMeasurementByIds`, `getMeasurementSetStatus`, `getMeasurementComponentStatus` |
+| `MST-FE-002` | Migrate measurement list/search reads | Query migration | 🟡 Medium | 3–5 days | `MST-BE-B-01`, `MST-BE-C-01`, `MST-BE-C-02`, `MST-BE-G-01`, `MST-BE-G-07` | `getMeasurements`, `getMeasurementsElastic` |
+| `MST-FE-003` | Migrate measurement master-data reads | Query migration | 🟢 Low | 1–2 days | `MST-BE-B-02`, `MST-BE-B-03`, `MST-BE-B-04` | `getUnitsOfMeasure`, `getThicknessUnitsOfMeasure` |
 | `MST-FE-004` | Migrate measurement mutations | Mutation migration | 🟡 Medium | 4–6 days | `MST-BE-D-03`, `MST-BE-D-04`, `MST-BE-D-06`, `MST-BE-D-07` | `lockMeasurementSet`, `unlockMeasurementSet`, `putSampleMeasurementSet`, `deleteSampleMeasurementSet` |
 
 ---
@@ -277,11 +277,11 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
-| 1 | 🟡 `MST-FE-001`, 🟢 `MST-FE-003` | `MST-FE-001` → `MST-BE-B-01`, `MST-BE-B-04`<br>`MST-FE-003` → `MST-BE-B-02`, `MST-BE-B-03` | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🟡 `MST-FE-002` | `MST-FE-002` → `MST-BE-C-01`, `MST-BE-C-02` | Search & listing — needs backend phase C |
+| 1 | 🟢 `MST-FE-003` | `MST-FE-003` → `MST-BE-B-02`, `MST-BE-B-03`, `MST-BE-B-04` | Reads cutover — needs backend phase A/B reads live |
 | 3 | 🟡 `MST-FE-004` | `MST-FE-004` → `MST-BE-D-03`, `MST-BE-D-04`, `MST-BE-D-06`, `MST-BE-D-07` | Writes — needs backend phase D mutations |
+| 4 | 🟡 `MST-FE-001`, 🟡 `MST-FE-002` | `MST-FE-001` → `MST-BE-B-01`, `MST-BE-B-04`, `MST-BE-G-01`, `MST-BE-G-07`<br>`MST-FE-002` → `MST-BE-B-01`, `MST-BE-C-01`, `MST-BE-C-02`, `MST-BE-G-01` (+1) | Complex writes / sagas — needs backend phase E + ADR ratification |
 
-**Cutover flow:** `MST-FE-001` → `MST-FE-003` → `MST-FE-002` → `MST-FE-004`.
+**Cutover flow:** `MST-FE-003` → `MST-FE-004` → `MST-FE-001` → `MST-FE-002`.
 
 ---
 
@@ -291,9 +291,9 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 
 | Step | 👤 FE-1 | Backend gate (focus) |
 |---|---|---|
-| 1 | 🟡 `MST-FE-001` (4–6d)<br>🟢 `MST-FE-003` (1–2d) | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🟡 `MST-FE-002` (3–5d) | Search & listing — needs backend phase C |
+| 1 | 🟢 `MST-FE-003` (1–2d) | Reads cutover — needs backend phase A/B reads live |
 | 3 | 🟡 `MST-FE-004` (4–6d) | Writes — needs backend phase D mutations |
+| 4 | 🟡 `MST-FE-001` (4–6d)<br>🟡 `MST-FE-002` (3–5d) | Complex writes / sagas — needs backend phase E + ADR ratification |
 
 **Elapsed (nominal midpoints):** ~16 FE build days — calendar time is set by the backend gates, not FE capacity.
 

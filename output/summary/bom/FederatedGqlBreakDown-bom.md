@@ -318,12 +318,12 @@ rest of the phase to finish.
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
 | `BOM-FE-001` | Statically expand BOM fragment factories (pre-cutover) | Refactor | 🔴 High | 3–4 days | — | — |
-| `BOM-FE-002` | Migrate BOM core reads | Query migration | 🔴 High | 6–10 days | `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-B-04`, `BOM-FE-001` | `getBomByIds`, `getBomByParentId`, `getBomStatus`, `getBomComponentStatus` |
-| `BOM-FE-003` | Migrate BOM search and elastic reads | Query migration | 🔴 High | 5–8 days | `BOM-BE-C-01`, `BOM-BE-S-03` | `getBomElastic`, `searchMaterialsBom` |
-| `BOM-FE-004` | Migrate BOM master-data reads | Query migration | 🟢 Low | 2–3 days | `BOM-BE-B-05`, `BOM-BE-B-06`, `BOM-BE-B-07`, `BOM-BE-B-08` | `getBomMaterialTypes`, `getBomPackagingMaterialTypes`, `getBomPackagingSubstrates`, `getBomPackagingUnitOfMeasure` |
+| `BOM-FE-002` | Migrate BOM core reads | Query migration | 🔴 High | 6–10 days | `BOM-BE-A-04`, `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-B-04`, `BOM-BE-G-01`, `BOM-BE-G-03`, `BOM-BE-G-08`, `BOM-BE-G-12`, `BOM-BE-G-13`, `BOM-BE-G-17`, `BOM-FE-001` | `getBomByIds`, `getBomByParentId`, `getBomStatus`, `getBomComponentStatus` |
+| `BOM-FE-003` | Migrate BOM search and elastic reads | Query migration | 🔴 High | 5–8 days | `BOM-BE-C-01`, `BOM-BE-G-01`, `BOM-BE-G-14`, `BOM-BE-S-03` | `getBomElastic`, `searchMaterialsBom` |
+| `BOM-FE-004` | Migrate BOM master-data reads | Query migration | 🟢 Low | 2–3 days | `BOM-BE-B-05`, `BOM-BE-B-06`, `BOM-BE-B-07`, `BOM-BE-B-08`, `BOM-BE-G-14` | `getBomMaterialTypes`, `getBomPackagingMaterialTypes`, `getBomPackagingSubstrates`, `getBomPackagingUnitOfMeasure` |
 | `BOM-FE-005` | Migrate BOM supplier reads | Query migration | 🟡 Medium | 3–5 days | `BOM-BE-C-03`, `BOM-BE-C-04`, `BOM-BE-C-05` | `getComboSupplierForBom`, `getValidTrimSuppliersForBom`, `getValidRawMaterialSuppliersForBom` |
 | `BOM-FE-006` | Migrate BOM mutations including `updateBom` saga handling | Mutation migration (complex) | 🔴 High | 8–12 days | `BOM-BE-D-01`, `BOM-BE-D-03`, `BOM-BE-D-04`, `BOM-BE-D-05`, `BOM-BE-S-01` | `addBom`, `lockBom`, `unlockBom`, `updateBom`, `updateBomComponentStatus` |
-| `BOM-FE-007` | Adopt BOM `supplier` entity references (optional, PO-gated) | Query enhancement | 🟢 Low | 2–4 days | `BOM-BE-G-17`, `BOM-FE-002` | `getBomByIds`, `getBomByParentId`, `searchMaterialsBom` |
+| `BOM-FE-007` | Adopt BOM `supplier` entity references (optional, PO-gated) | Query enhancement | 🟢 Low | 2–4 days | `BOM-BE-A-04`, `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-B-04`, `BOM-BE-G-01`, `BOM-BE-G-03`, `BOM-BE-G-08`, `BOM-BE-G-12`, `BOM-BE-G-13`, `BOM-BE-G-14`, `BOM-BE-G-17`, `BOM-BE-S-03`, `BOM-FE-002` | `getBomByIds`, `getBomByParentId`, `searchMaterialsBom` |
 
 ---
 
@@ -333,12 +333,12 @@ rest of the phase to finish.
 
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
-| 1 | 🔴 `BOM-FE-001`, 🟢 `BOM-FE-004` | `BOM-FE-004` → `BOM-BE-B-05`, `BOM-BE-B-06`, `BOM-BE-B-07`, `BOM-BE-B-08` | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🔴 `BOM-FE-002`, 🟡 `BOM-FE-005` | `BOM-FE-002` → `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-B-04`<br>`BOM-FE-005` → `BOM-BE-C-03`, `BOM-BE-C-04`, `BOM-BE-C-05` | Search & listing — needs backend phase C |
-| 4 | 🟢 `BOM-FE-007` | `BOM-FE-007` → `BOM-BE-G-17` | Complex writes / sagas — needs backend phase E + ADR ratification |
-| 5 | 🔴 `BOM-FE-003`, 🔴 `BOM-FE-006` | `BOM-FE-003` → `BOM-BE-C-01`, `BOM-BE-S-03`<br>`BOM-FE-006` → `BOM-BE-D-01`, `BOM-BE-D-03`, `BOM-BE-D-04`, `BOM-BE-D-05` (+1) | Externally gated — search/read-hub decision |
+| 1 | 🔴 `BOM-FE-001` | — | Reads cutover — needs backend phase A/B reads live |
+| 2 | 🟡 `BOM-FE-005` | `BOM-FE-005` → `BOM-BE-C-03`, `BOM-BE-C-04`, `BOM-BE-C-05` | Search & listing — needs backend phase C |
+| 4 | 🔴 `BOM-FE-002`, 🟢 `BOM-FE-004` | `BOM-FE-002` → `BOM-BE-A-04`, `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-B-04` (+6)<br>`BOM-FE-004` → `BOM-BE-B-05`, `BOM-BE-B-06`, `BOM-BE-B-07`, `BOM-BE-B-08` (+1) | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 5 | 🔴 `BOM-FE-003`, 🔴 `BOM-FE-006`, 🟢 `BOM-FE-007` | `BOM-FE-003` → `BOM-BE-C-01`, `BOM-BE-G-01`, `BOM-BE-G-14`, `BOM-BE-S-03`<br>`BOM-FE-006` → `BOM-BE-D-01`, `BOM-BE-D-03`, `BOM-BE-D-04`, `BOM-BE-D-05` (+1)<br>`BOM-FE-007` → `BOM-BE-A-04`, `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-B-04` (+8) | Externally gated — search/read-hub decision |
 
-**Cutover flow:** `BOM-FE-001` → `BOM-FE-004` → `BOM-FE-002` → `BOM-FE-005` → `BOM-FE-007` → `BOM-FE-003` → `BOM-FE-006`.
+**Cutover flow:** `BOM-FE-001` → `BOM-FE-005` → `BOM-FE-002` → `BOM-FE-004` → `BOM-FE-003` → `BOM-FE-006` → `BOM-FE-007`.
 
 ---
 
@@ -348,10 +348,10 @@ rest of the phase to finish.
 
 | Step | 👤 FE-1 | Backend gate (focus) |
 |---|---|---|
-| 1 | 🔴 `BOM-FE-001` (3–4d)<br>🟢 `BOM-FE-004` (2–3d) | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🔴 `BOM-FE-002` (6–10d)<br>🟡 `BOM-FE-005` (3–5d) | Search & listing — needs backend phase C |
-| 4 | 🟢 `BOM-FE-007` (2–4d) | Complex writes / sagas — needs backend phase E + ADR ratification |
-| 5 | 🔴 `BOM-FE-006` (8–12d)<br>🔴 `BOM-FE-003` (5–8d) | Externally gated — search/read-hub decision |
+| 1 | 🔴 `BOM-FE-001` (3–4d) | Reads cutover — needs backend phase A/B reads live |
+| 2 | 🟡 `BOM-FE-005` (3–5d) | Search & listing — needs backend phase C |
+| 4 | 🔴 `BOM-FE-002` (6–10d)<br>🟢 `BOM-FE-004` (2–3d) | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 5 | 🔴 `BOM-FE-006` (8–12d)<br>🔴 `BOM-FE-003` (5–8d)<br>🟢 `BOM-FE-007` (2–4d) | Externally gated — search/read-hub decision |
 
 **Elapsed (nominal midpoints):** ~38 FE build days — calendar time is set by the backend gates, not FE capacity.
 

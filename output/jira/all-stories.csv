@@ -108,6 +108,10 @@ Story,BOM-BE-A-04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [BOM-BE-A-04],
 
 *Blocks:*
 * BOM-BE-A-05 — Shared CI conformance gate + code → type registry
+* BOM-FE-002
+* BOM-FE-007
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Requires spike:* SPIKE-05 (Polymorphic Type Resolution) — see program spike
 
@@ -164,7 +168,9 @@ Story,BOM-BE-B-01,(BOM) getBomByIds data fetcher [BOM-BE-B-01],,Federate BreakDo
 
 *Blocks:*
 * BOM-FE-002
+* BOM-FE-007
 * IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * if `ids` empty → `[]`; else `GET {base}/…/bom/v1?ids={ids}` → `deepToCamelCase`. - **ACL note (context):** current impl gets a capability token for `ids` because boms are resource-scoped; ACL ignored in DGS.
@@ -190,6 +196,9 @@ Story,BOM-BE-B-03,(BOM) getBomStatus (cacheable master data) [BOM-BE-B-03],,Fede
 
 *Blocks:*
 * BOM-FE-002
+* BOM-FE-007
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `GET {base}/masterData?name=BomStatus`; transform `{key:value}` map → `[{code,description}]`. No ACL.
@@ -215,6 +224,7 @@ Story,BOM-BE-B-04,(BOM) getBomByParentId data fetcher [BOM-BE-B-04],,Federate Br
 
 *Blocks:*
 * BOM-FE-002
+* BOM-FE-007
 
 *Current Behaviour:*
 * today, the gateway fetches boms for a product and sorts them by `createdAt` DESC itself, in application code — the backend returns them unsorted. **ACL note (context):** capability token for `parentId`; ignored in DGS. - **Decision (resolved — was Decision #6):** push the sort to the backend. The Kotlin service **no longer** replicates `sortedByDescending { it.createdAt }` client-side — the REST call now asks the backend to sort.
@@ -680,6 +690,11 @@ Story,BOM-BE-G-01,(BOM) Bom field resolvers (9 shared fields) [BOM-BE-G-01],,Fed
 
 *Blocks:*
 * BOM-BE-G-17 — supplier entity references on material rows
+* BOM-FE-002
+* BOM-FE-003
+* BOM-FE-007
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * 9 fields — `humanId`, `access`, `currentUserPermissions`, `businessPartners`, `createdBy`, `updatedBy`, `product`, `workspaces`, `participantDetails` — that all need a little lookup logic rather than being plain pass-throughs (C1): `humanId` (`humanId ?? id`), `access` & `currentUserPermissions` (accessControl — **ACL context only, ignore in impl**), `businessPartners` (`loadBusinessPartners`), `createdBy`/`updatedBy` (`getUser`), `product` (if `parentId` starts `PID` → `product.getByID`, else null), `workspaces` (`getWorkspacesByIdsV2`), `participantDetails` (`getUserGroup`). - **EXT Service Calls:** 🟡 `workspaceV2`; 🔵 user-profile (`createdBy`/`updatedBy`/`participantDetails`); 🔵 teams (`businessPartners`). `product` is an internal same-DGS call.
@@ -705,7 +720,10 @@ Story,BOM-BE-G-03,(BOM) BomMaterial field resolvers (8 fields) [BOM-BE-G-03],,Fe
 * None
 
 *Blocks:*
-* None
+* BOM-FE-002
+* BOM-FE-007
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `BomMaterial` is the generic (""hub"") material row. Two of its fields — - `libraryResource` and `genericMaterialType` — both need the same lookup from the Material Hub service, but today's code fetches the hub row twice (once per field) instead of once and reusing it. - (C4): `libraryResource` (H5 hub), `genericMaterialType` (hub `baseMaterial.relatedMaterialType` precedence over local), `origins`/`certifications` (H3 coded-options filter+enrich), `weight` (H1), `sizeUnitOfMeasure` (H2), `countryOfOrigin` (tag), `parentLibraryResourceId`/`libraryResourceId` (Direct), `impressionDetails` (`material.impressions`). - Hub resource loaded twice (libraryResource + genericMaterialType) — DataLoader-memoized; consolidate. - **ACL context:** hub uses a capability token; ignore in impl. - **EXT:** 🟡 materialHub; 🔵 tag.
@@ -827,7 +845,10 @@ Story,BOM-BE-G-08,(BOM) BomTrimMaterial field resolvers (7 fields) — trim size
 * None
 
 *Blocks:*
-* None
+* BOM-FE-002
+* BOM-FE-007
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * - `libraryResource` = `trim.getTrimBatch.load(trimId)`. - `materialLibraryUom` = trim UoMs, find by `materialLibraryUomId.toString()` (preserve int→string coercion). - `sizeValue` = reload trim → match size by `librarySizeId` → `getTrimSizeValue(trimType, trimSubType, size)` — **15-case TRIM_TYPES** (`utils/bomUtils.js:57-114`). - `sizeCaption` = reload trim → `getBomSizeCaption(trim, size)` — **15-case**, returns `{edit, view}` (`utils/bomUtils.js:116-187`). - `facilityName` = if already set return it; else reload trim → find supplier by `supplierId` → facility by `facilityId` → `location.getLocationById(facilityId)` → `vmmFacility.name`. - `weight`, `countryOfOrigin` as G-03. The trim is loaded 3× (memoized) — consolidate. - **EXT:** 🟡 trim; 🔵 location (facility); 🔵 tag.
@@ -948,7 +969,10 @@ Story,BOM-BE-G-12,(BOM) BomTrimLibraryImpressionDetails field resolvers (3 field
 * BOM-BE-G-10 — Impression library-resource resolution
 
 *Blocks:*
-* None
+* BOM-FE-002
+* BOM-FE-007
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `libraryResource` (G-10 branch) + `groundColor`, `textColor` via `searchMaterialById`.
@@ -972,7 +996,10 @@ Story,BOM-BE-G-13,(BOM) BomTrimZipperLibraryImpressionDetails field resolvers (3
 * BOM-BE-G-10 — Impression library-resource resolution
 
 *Blocks:*
-* None
+* BOM-FE-002
+* BOM-FE-007
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `sliderColor`, `tapeColor`, `teethColor` via `searchMaterialById`. Unlike `G-11`/`G-12`, this type has no `libraryResource` field at all — just three colors — so it only needs `G-10`'s color loader, not the internal/external branch.
@@ -996,7 +1023,9 @@ Story,BOM-BE-G-14,(BOM) Trivial pass-through fields (bundle) [BOM-BE-G-14],,Fede
 * None
 
 *Blocks:*
-* None
+* BOM-FE-003
+* BOM-FE-004
+* BOM-FE-007
 
 *Current Behaviour:*
 * the only allowed bundle — fields that return a parent value with no service call: `BomMaterialType.id` = `` `${code}_${description}` `` (computed); `BomMaterialSearch.paging` = whole-object passthrough; every material type's `impressionDetails` = `parent.impressions` (rename); `*.libraryResourceId` = `get(parent,'libraryResource.id')`; `*.parentLibraryResourceId`; and ~30 scalar pass-throughs per material type covered by DTO mapping.
@@ -1048,7 +1077,10 @@ Story,BOM-BE-G-17,"(BOM) supplier entity references on material rows (recommende
 * BOM-BE-G-01 — Bom field resolvers
 
 *Blocks:*
+* BOM-FE-002
 * BOM-FE-007
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Target:*
 * add `supplier: VMM_BusinessPartner` to `BomMaterialInterface` and all 7 implementations (each impl must add the field — no shared conformance check enforces the fan-out, verify manually against the 7-impl list); resolver emits a `{id: supplierId}` key stub — the gateway hydrates from VMM; null-safe when `supplierId` is empty. Facility/laundry refs are deferred pending a `VMM_Location` stub decision (federation-review/03 §3).
@@ -1445,7 +1477,7 @@ Story,CLAIM-BE-G-01,(Claims) access + currentUserPermissions + participantDetail
 * CLAIM-BE-B-01 — getClaims
 
 *Blocks:*
-* None
+* CLAIM-FE-002
 
 *Current Behaviour:*
 * `access` → `accessControl.getPermissions([humanId])[0]`; `currentUserPermissions` → `getUserAccessUnencoded(humanId)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.)
@@ -1465,7 +1497,7 @@ Story,CLAIM-BE-G-02,(Claims) createdBy + updatedBy + businessPartner + designPar
 * CLAIM-BE-B-01 — getClaims
 
 *Blocks:*
-* None
+* CLAIM-FE-002
 
 *Current Behaviour:*
 * users via 🟡 user-profile; `businessPartner` **3-way fallback** (`partnerId` || `{bpId:0,bpName:'Target'}` when no `dpPartnerId` || `dpPartnerId`); `designPartner` `dpPartnerId` or `{bpId:null,bpName:null}`.
@@ -1490,7 +1522,7 @@ Story,CLAIM-BE-G-03,(Claims) product + parentDetails (otherClaimBps / systemTeam
 * CLAIM-BE-G-06 — Shared value-type alignment
 
 *Blocks:*
-* None
+* CLAIM-FE-002
 
 *Current Behaviour:*
 * `product` (🟡 product, only if `parentId` starts `'PID'`); `parentDetails` → - `product.getByID(parentId)` (the product feeds `ParentDetails`): `otherClaimBps` (🔴 search `getClaimsElastic` → partner ids), `systemTeams` (🔴 search `searchTeams` from product BPs; empty→`{content:[]}`), `droppedPartnerIds` (direct).
@@ -1672,7 +1704,8 @@ Story,IMPRESSION-BE-G-01,(Impression) Impression field resolvers (5 fields) [IMP
 * IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
 
 *Blocks:*
-* None
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * 1. `businessPartners` — `loadBpsWithType(partnerIds.map(p => ({ partnerId: p })))` (🟡 vmm) 2. `owningBusinessPartner` — `loadBp(owningPartnerId)` (🔵 vmm) 3. `workspaces` — `getWorkspacesByIdsV2(workspaceContext)` or `[]` when context is empty (🟡 workspaceV2) 4. `createdBy` — `userAttributes.getUserByID.load(createdById)` (🔵 user-profile) 5. `updatedBy` — `userAttributes.getUserByID.load(updatedById)` (🔵 user-profile)
@@ -1764,6 +1797,7 @@ Story,MST-BE-B-01,(Measurement) getMeasurementByIds data fetcher [MST-BE-B-01],,
 * MST-BE-G-01 — Measurement field resolvers
 * MST-BE-G-02 — SampleMeasurementSet field resolvers
 * MST-FE-001
+* MST-FE-002
 
 *Current Behaviour:*
 * `GET {base}/…/measurements/v1?ids=&calculated=&mustHaveRows=` → camelCase. **ACL note (context):** token for `ids`; ignored in DGS.
@@ -1788,7 +1822,7 @@ Story,MST-BE-B-02,(Measurement) getUnitsOfMeasure (cacheable) [MST-BE-B-02],,Fed
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 
 *Blocks:*
-* MST-BE-G-04 — SampleMeasurementSet.sample forward reference
+* MST-BE-H-02 — SampleMeasurementSet.sample forward reference
 * MST-FE-003
 
 *Current Behaviour:*
@@ -1838,6 +1872,7 @@ Story,MST-BE-B-04,(Measurement) getMeasurementSetStatus (cacheable) [MST-BE-B-04
 
 *Blocks:*
 * MST-FE-001
+* MST-FE-003
 
 *Current Behaviour:*
 * `GET {base}/masterData?name=MeasurementSetStatus` → `{key:value}` map → `[{code, description}]`.
@@ -1862,7 +1897,7 @@ Story,MST-BE-B-05,(Measurement) getSampleMeasurement data fetcher [MST-BE-B-05],
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 
 *Blocks:*
-* MST-BE-G-04 — SampleMeasurementSet.sample forward reference
+* MST-BE-H-02 — SampleMeasurementSet.sample forward reference
 
 *Current Behaviour:*
 * `GET {base}/…/measurements/v1/sample/{sampleId}` → camelCase. **ACL note (context):** token for `sampleId`; ignored in DGS.
@@ -2361,7 +2396,30 @@ Story,MST-BE-H-01,(Measurement) Contribute sampleMeasurement to the SampleV2 ent
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,"B-01, B-06, B-07, B-08","measurementTemplate, sampleV2, sizeTemplate, tightFit, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 26 of 30 (Measurement backend, step 3)
+Story,MST-BE-H-02,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-H-02]",,Federate BreakDown Product,H,XS,dgs-migration,measurement,entity-resolver,,"B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged), sample",,Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 30 of 30 (Measurement backend, step 3)
+*Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* MST-BE-B-02 — getUnitsOfMeasure
+* MST-BE-B-05 — getSampleMeasurement data fetcher
+
+*Blocks:*
+* None
+
+*Target:*
+* schema adds `sample: SampleV2` on `SampleMeasurementSet`; resolver emits `{id: sampleId}` — zero extra backend calls; hydrated by the sample subgraph (phase 2; stitched gateway until then). **BLOCKED-BY** sample domain Phase 3 (same gate as H-01).
+
+*Acceptance Criteria:*
+1. PO approval recorded (OQ-5) before implementation starts
+2. `sample { id }` resolves as a stub; `sampleId` unchanged
+3. Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,"B-01, B-06, B-07, B-08","sampleV2, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 26 of 30 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -2372,7 +2430,8 @@ Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-
 * MST-BE-B-08 — getTightFits + getTightFitByIdAndVersion data fetchers
 
 *Blocks:*
-* None
+* MST-FE-001
+* MST-FE-002
 
 *Current Behaviour:*
 * `access`/`currentUserPermissions` (ACL — context only), `businessPartners` (loadBps), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`), `product` (PID-prefixed → internal `product.getByID`), `workspaces` (`getWorkspacesByIdsV2` or null), `status` (`{code:statusId, description:statusName}` computed), `updatedFromResource` (switch type='sample' → `sampleV2.getSampleById`), `measurementTemplates` (`measurementTemplate.getMeasurementTemplatesByIds(...).content`), `sizeTemplate` (`sizeTemplate.getSizeTemplates([id])[0]`), `tightFitTemplate` (`tightFit.getTightFitByIdAndVersion({id,version})`), `participantDetails` (`getUserGroup`). - **EXT:** 🟡 workspaceV2/sampleV2; 🔵 vmm/user-profile. (`measurementTemplates`/`sizeTemplate`/`tightFitTemplate` **reclassified internal 2026-07-19** — plain in-process calls to this domain's own B-06/B-07/B-08 data fetchers, no longer counted as EXT; depends-on updated to require those stories exist first.)
@@ -2412,7 +2471,7 @@ Story,MST-BE-G-02,(Measurement) SampleMeasurementSet field resolvers (2 fields) 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-05,(Measurement) MeasurementTemplate field resolvers (5 fields) [MST-BE-G-05],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-06,,To Do,"*Implementation Order:* 28 of 30 (Measurement backend, step 3)
+Story,MST-BE-G-05,(Measurement) MeasurementTemplate field resolvers (5 fields) [MST-BE-G-05],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-06,,To Do,"*Implementation Order:* 27 of 30 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -2437,7 +2496,7 @@ Story,MST-BE-G-05,(Measurement) MeasurementTemplate field resolvers (5 fields) [
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-06,(Measurement) SizeTemplate field resolvers (3 fields) [MST-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-07,,To Do,"*Implementation Order:* 29 of 30 (Measurement backend, step 3)
+Story,MST-BE-G-06,(Measurement) SizeTemplate field resolvers (3 fields) [MST-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-07,,To Do,"*Implementation Order:* 28 of 30 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -2461,7 +2520,7 @@ Story,MST-BE-G-06,(Measurement) SizeTemplate field resolvers (3 fields) [MST-BE-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-07,(Measurement) TightFit field resolvers (5 fields) [MST-BE-G-07],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-08,"ig, user-profile, vmm",To Do,"*Implementation Order:* 30 of 30 (Measurement backend, step 3)
+Story,MST-BE-G-07,(Measurement) TightFit field resolvers (5 fields) [MST-BE-G-07],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-08,"ig, user-profile, vmm",To Do,"*Implementation Order:* 29 of 30 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -2469,7 +2528,8 @@ Story,MST-BE-G-07,(Measurement) TightFit field resolvers (5 fields) [MST-BE-G-07
 * MST-BE-B-08 — getTightFits + getTightFitByIdAndVersion data fetchers
 
 *Blocks:*
-* None
+* MST-FE-001
+* MST-FE-002
 
 *Current Behaviour:*
 * `departments`/`divisions` (`ig.department|division.getByID`, empty-tolerant), `brands` (`brand.getBrand`, skipped when `brandIds === -1`), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`).
@@ -2481,29 +2541,6 @@ Story,MST-BE-G-07,(Measurement) TightFit field resolvers (5 fields) [MST-BE-G-07
 1. All 5 fields resolve
 2. `departments`/`divisions` null-tolerant on empty ids
 3. `brands` skipped (null) when `brandIds === -1`
-
-*Definition of Done:*
-* PR merged on green (unit + parity tests pass)
-* Schema change pushed to Hive; operation(s) resolvable through the federated router
-* Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,"B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged)",,Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 27 of 30 (Measurement backend, step 3)
-*Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
-*Priority:* Low — *Parallelizable:* Yes
-
-*Depends On:*
-* MST-BE-B-02 — getUnitsOfMeasure
-* MST-BE-B-05 — getSampleMeasurement data fetcher
-
-*Blocks:*
-* None
-
-*Target:*
-* schema adds `sample: SampleV2` on `SampleMeasurementSet`; resolver emits `{id: sampleId}` — zero extra backend calls; hydrated by the sample subgraph (phase 2; stitched gateway until then).
-
-*Acceptance Criteria:*
-1. PO approval recorded (OQ-5) before implementation starts
-2. `sample { id }` resolves as a stub; `sampleId` unchanged
-3. Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)
@@ -2971,7 +3008,7 @@ Story,PKG-BE-G-01,(Packaging) access + businessPartner + participantDetails [PKG
 * PKG-BE-B-01 — getPackagings
 
 *Blocks:*
-* None
+* PKG-FE-001
 
 *Current Behaviour:*
 * `access` → `accessControl.getPermissions([humanId])[0]` (context); `businessPartner` → (🔵 vmm) `loadBpsWithType([businessPartner])[0]`; `participantDetails` → `getUserGroup(humanId||id)`.
@@ -2991,7 +3028,7 @@ Story,PKG-BE-G-02,(Packaging) createdBy + updatedBy + dielineEvaluators [PKG-BE-
 * PKG-BE-B-01 — getPackagings
 
 *Blocks:*
-* None
+* PKG-FE-001
 
 *Current Behaviour:*
 * `createdBy`/`updatedBy` (🟡 user-profile `getUser`); `dielineEvaluators` → map `userAttributes.getUserByID`, default `[]`.
@@ -3032,7 +3069,7 @@ Story,PKG-BE-G-04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + ret
 * PKG-BE-B-01 — getPackagings
 
 *Blocks:*
-* None
+* PKG-FE-001
 
 *Current Behaviour:*
 * `suggestedRetailPriceByDPCI` — gated on `requiresSuggestedRetailPrice` + a BP id: - collect printer ids from `packagingElements` → (own) `getDielines(printerIds)` → unique dpcis → (🔵 apex/pricing) `getRetailPriceByDpci({dpcis, bpId, productId})`; else `[]`. - `waveDescription` → (🟡 tag) `getTag(wave).name` if `wave`, else `waveDescription`. - `retailPrice` → `0` (deprecated).
@@ -3063,7 +3100,7 @@ Story,PKG-BE-G-05,(Packaging) Dieline + PrinterDieline + PackagingElement field 
 * PKG-BE-B-01 — getPackagings
 
 *Blocks:*
-* None
+* PKG-FE-003
 
 *Current Behaviour:*
 * `Dieline.evaluatedBy` (🟡 user-profile), `Dieline.attachments` (🔴 search), `Dieline.attachment` (🔴 attachment `getAttachmentsV3([attachmentId])[0]`); `PrinterDieline.dielines` (own `getDielines({printerIds, statusIds})`); `PackagingElement.packagingLibrary` (internal fileLibrary).
@@ -3086,7 +3123,9 @@ Story,PRODUCT-BE-B-01,(Product) getProduct(id) [PRODUCT-BE-B-01],,Federate Break
 * PRODUCT-BE-H-06 — Product entity fetcher  for cross-subgraph references
 * PRODUCT-FE-001
 * PRODUCT-FE-002
+* PRODUCT-FE-004
 * PRODUCT-FE-011
+* IMPRESSION-FE-001
 * IMPRESSION-FE-002
 
 *Current Behaviour:*
@@ -3112,6 +3151,7 @@ Story,PRODUCT-BE-B-02,(Product) getProductsByIds(ids) [PRODUCT-BE-B-02],,Federat
 
 *Blocks:*
 * PRODUCT-FE-003
+* PRODUCT-FE-004
 
 *Current Behaviour:*
 * `getByIdList.load(ids)` `GET ${v1}?productId={csv}&page=0&size=10000&sort=createdDate,desc`; primes `getByID`.
@@ -3135,7 +3175,9 @@ Story,PRODUCT-BE-B-03,(Product) getProductStatus (cacheable) [PRODUCT-BE-B-03],,
 * None
 
 *Blocks:*
+* PRODUCT-FE-003
 * PRODUCT-FE-004
+* PRODUCT-FE-005
 
 *Current Behaviour:*
 * `getStatus.load()` master status list.
@@ -4138,6 +4180,7 @@ Story,PRODUCT-BE-F-06,"(Product) ResourcesCount.productBoms + packagingBoms + bo
 
 *Blocks:*
 * PRODUCT-BE-F-09 — Retire the TechPack aggregation facade
+* PRODUCT-FE-010
 
 *Acceptance Criteria:*
 1. `productBoms`/`packagingBoms`/`boms` resolve in-process; no gateway hop; parity vs facade
@@ -4155,6 +4198,7 @@ Story,PRODUCT-BE-F-08,"(Product) ResourcesCount.watchlists (internal, from Watch
 
 *Blocks:*
 * PRODUCT-BE-F-09 — Retire the TechPack aggregation facade
+* PRODUCT-FE-010
 
 *Acceptance Criteria:*
 1. `watchlists` resolves in-process; no gateway hop; parity vs facade
@@ -4202,6 +4246,10 @@ Story,PRODUCT-BE-F-10,(Product) Hive Gateway supergraph composition [PRODUCT-BE-
 
 *Blocks:*
 * PRODUCT-BE-F-11 — Platform stub verification
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-004
+* PRODUCT-FE-011
 
 *Target:*
 * add `plm-product` subgraph URL; verify composition with VMM/IG/CORONA/Doppler stubs; smoke-test cross-subgraph query. - **Example:** `hive compose --subgraph plm-product=https://plm-product.internal/graphql` succeeds with no composition errors (no conflicting type definitions, no missing `@key` fields), then a smoke query like `{ getProduct(id: ""P1"") { name businessPartners { name } } }` resolves cleanly across the `plm-product` + VMM subgraphs.
@@ -4414,6 +4462,10 @@ Story,PRODUCT-BE-G-01,(Product) Product.attachmentsWithMetaData [PRODUCT-BE-G-01
 *Blocks:*
 * PRODUCT-BE-G-03 — Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData
 * PRODUCT-BE-G-17 — Entity references on partner/lineage value types
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * the attachments panel on a product shows a mixed feed — actual file - attachments, plus discussions and samples that are *also* surfaced as if they were attachments (each with their own metadata), plus threaded replies — sorted together by type-priority then recency. - Building that feed today is ~150 lines: walk the relationship graph to find related discussions/samples, fetch each category's data (v2 and v3 attachment APIs, batched discussion/thread/sample lookups), merge all 5 sources into one list, filter out drafts, then sort. - `relationship.searchByIds` → 5-bucket partition → v2+v3 attachment hydration → discussions/threads/samples batched → 5-source merge → draft filter → `orderProductAttachments`.
@@ -4453,7 +4505,10 @@ Story,PRODUCT-BE-G-02,(Product) Product.components [PRODUCT-BE-G-02],,Federate B
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * the components tab lists everything attached to a product — measurements, - claims, boms, product-details, packaging — tagged by type, with counts (how many are archived, how many per component type, broken down per business partner). - Today's biggest performance problem: for every claim in the result, it makes a **separate** ACL permission check call — 50 claims means 50 sequential ACL calls (""N+1""), instead of one batched call for all 50. ~190 ln — 4 parallel elastic (measurement/claim/bom/productDetail) + packaging + **per-claim N+1 ACL** + 5-type merge + count rollups.
@@ -4491,7 +4546,11 @@ Story,PRODUCT-BE-G-03,(Product) Product.attachments + attachmentsV3 + attachment
 * PRODUCT-BE-G-01 — Product.attachmentsWithMetaData
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-005
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * four related resolvers sharing `AttachmentEnrichmentService` (G-01).
@@ -4525,7 +4584,7 @@ Story,PRODUCT-BE-G-04,(Product) ProductsCategories.categories (12-case) + Dopple
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-005
 
 *Current Behaviour:*
 * `categories` is a polymorphic union — depending on which category type - the caller asked for, a different one of 12 branches builds the response shape. - Two of those branches (`DopplerDepartment.primaryCapacityTypeName` / `secondaryCapacityTypeName`) both need the same Doppler department lookup, so today's code memoizes that one call and reuses it for both fields. - 12-branch dispatcher; `DopplerDepartment.primary/secondaryCapacityTypeName` share one Doppler call (memoized).
@@ -4573,7 +4632,12 @@ Story,PRODUCT-BE-G-06,(Product) Product.teams + discussionsV2 + discussionsCount
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-004
+* PRODUCT-FE-005
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * team/discussion/workspace elastic lookups.
@@ -4596,7 +4660,13 @@ Story,PRODUCT-BE-G-07,(Product) Product.vendorAttributes + businessPartners + dr
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-004
+* PRODUCT-FE-005
+* PRODUCT-FE-006
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Requires spike:* SPIKE-04 (Not-Removable / Undroppable Partners) — see program spike
 
@@ -4626,7 +4696,12 @@ Story,PRODUCT-BE-G-08,(Product) Product.measurementSets + claims + bom + product
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-005
+* PRODUCT-FE-010
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * each of these 8 fields is ""go ask a sibling domain (bom, measurement, - etc.) for this product's data"" — but only if the caller asked for it (each has an `includeXxx: Boolean` flag to avoid an unnecessary call). - Since product, bom, measurement, etc. all live in the same `plm-product` service after migration, ""ask the sibling domain"" becomes a plain method call, not a network hop. sibling-domain passthroughs with `includeXxx` boolean branches — **internal same-DGS calls** (not cross-subgraph).
@@ -4650,7 +4725,11 @@ Story,PRODUCT-BE-G-09,(Product) Product.productWorkspaceAttributes + productWork
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-004
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `designCycle` is computed lazily today — an inline `async () => ...` - closure attached to the value, evaluated only if a caller actually reads that sub-field. - GraphQL/DGS already has a first-class way to express ""only compute this if asked"": a nested field resolver. - Same laziness, cleaner code. both produce shapes with a **deferred `designCycle: async()=>…`** field-on-value.
@@ -4674,7 +4753,10 @@ Story,PRODUCT-BE-G-10,(Product) Product.ancestryProducts + rating + reservedDpci
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `rating` via `RatingClient`; `reservedDpcis` via `getReservedDpcisFromApex`.
@@ -4758,7 +4840,14 @@ Story,PRODUCT-BE-G-13,(Product) IG/tag/tcin/spg + template trivial-field group [
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-003
+* PRODUCT-FE-004
+* PRODUCT-FE-005
+* PRODUCT-FE-006
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `department`/`departments`/`clazz`/`brand`/`brands`/`divisions`/`productTemplateDepartments`, `tags`, `tcins`, `SPARK_Tcin.itemDetails` (CORONA), `SPARK_PackagingAttribute.spg` (internal fileLibrary), `SPARK_ProductRules.*`, `VMM_BusinessPartnerCategory.*`, `MasterProductStatus.*`.
@@ -4781,7 +4870,10 @@ Story,PRODUCT-BE-G-14,(Product) Simple user/status fields + trivial pass-through
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-005
+* PRODUCT-FE-011
 
 *Current Behaviour:*
 * `createdBy`/`updatedBy`/`versionCreatedBy` (user-profile), `ProductComponentStatus.updatedBy`, `SPARK_ResourcesCount.productThumbnailId` (re-fetch product), plus ~60 direct scalar pass-throughs (DTO-mapped).
@@ -5087,7 +5179,7 @@ Story,PDTL-BE-G-01,(Product Details) access + currentUserPermissions + participa
 * PDTL-BE-B-01 — getProductDetailsById
 
 *Blocks:*
-* None
+* PDTL-FE-001
 
 *Current Behaviour:*
 * `access` → `accessControl.getPermissions([humanId||id])[0]`; `currentUserPermissions` → `getUserAccessUnencoded(humanId||id)[0]`; `participantDetails` → `getUserGroup(humanId)`. (ACL context.)
@@ -5110,7 +5202,7 @@ Story,PDTL-BE-G-02,(Product Details) product + createdBy + updatedBy + businessP
 * PDTL-BE-B-01 — getProductDetailsById
 
 *Blocks:*
-* None
+* PDTL-FE-001
 
 *Current Behaviour:*
 * `product` (internal, only if `parentId` starts `'PID'`), `createdBy`/`updatedBy` (🟡 user-profile), `businessPartners` (🔵 vmm `loadBpsWithType`), `workspaces` (🟡 workspaceV2 by ids).
@@ -5134,7 +5226,7 @@ Story,PDTL-BE-G-03,(Product Details) attachment + item attachment/constructionSe
 * PDTL-BE-B-01 — getProductDetailsById
 
 *Blocks:*
-* None
+* PDTL-FE-001
 
 *Current Behaviour:*
 * `ProductDetails.attachment` → (🔴 search) `searchAttachments([humanId||id])`, find - `relatedResources.length<=2`; `ProductDetailsItem.attachment` → `searchAttachments([templateId])[0]||{}`; `constructionSetAttachments` → `searchAttachments([id]).content||[]`; `CategoryWithSection.subCategories` → (internal `specificationsTemplate`) `getProductDetailsCategorySection()` find by `code`.
@@ -5387,7 +5479,7 @@ Story,WATCHLIST-BE-G-01,(Watchlist) Computed flatteners (status/reasons/inspecti
 * WATCHLIST-BE-B-01 — getWatchlistByIds
 
 *Blocks:*
-* None
+* WATCHLIST-FE-001
 
 *Current Behaviour:*
 * `statusId`=`status.code`, `statusName`=`status.description`, `reasonIds`=`reasons[].code`, `reasons`=`reasons[].description`; `WatchlistInspection.actionId`=`action.code`, `action`=`action.description`.
@@ -5411,6 +5503,7 @@ Story,WATCHLIST-BE-G-02,(Watchlist) createdBy + updatedBy + workspaces + partici
 
 *Blocks:*
 * WATCHLIST-BE-G-05 — WatchlistPartner.partner entity reference
+* WATCHLIST-FE-001
 
 *Current Behaviour:*
 * `createdBy`/`updatedBy` (🟡 user-profile); `workspaces` (🟡 workspaceV2 by `workspaceContext`); `participantDetails` (🔵 user-group `getUserGroups([humanId])[0].participantDetails`); `WatchlistPartner.partnerName` (🔵 vmm `getByID(partnerId).bpName`, null-safe).
@@ -5430,7 +5523,7 @@ Story,WATCHLIST-BE-G-03,(Watchlist) attachments + product [WATCHLIST-BE-G-03],,F
 * WATCHLIST-BE-B-01 — getWatchlistByIds
 
 *Blocks:*
-* None
+* WATCHLIST-FE-001
 
 *Current Behaviour:*
 * `attachments` → (🔴 search) `searchAttachmentsByRelatedResource(humanId)`; `product` (internal, only if `parentId` starts `'PID'`).
@@ -5451,7 +5544,7 @@ Story,WATCHLIST-BE-G-05,"(Watchlist) WatchlistPartner.partner entity reference (
 * WATCHLIST-BE-G-02 — createdBy + updatedBy + workspaces + participantDetails + partnerName
 
 *Blocks:*
-* None
+* WATCHLIST-FE-001
 
 *Target:*
 * schema adds `partner: VMM_BusinessPartner` on `WatchlistPartner`; resolver emits `{id: partnerId}` — gateway hydrates from VMM; null-safe on missing `partnerId`.

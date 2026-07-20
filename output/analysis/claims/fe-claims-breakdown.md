@@ -26,7 +26,7 @@
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
 | `CLAIM-FE-001` | Split the claim fragment factory and re-target claim fragments | Refactor | 🟡 Medium | 2–3 days | — | — |
-| `CLAIM-FE-002` | Migrate claim reads (first cross-subgraph cutover) | Query migration | 🔴 High | 6–10 days | `CLAIM-BE-B-01`, `CLAIM-BE-B-02`, `CLAIM-BE-B-03`, `CLAIM-BE-B-04`, `CLAIM-FE-001`, `PRODUCT-BE-H-06` | `getClaims`, `getClaimByIds`, `getCommunicationChannels`, `getAllClaimsAbout`, `getClaimComponentStatus` |
+| `CLAIM-FE-002` | Migrate claim reads (first cross-subgraph cutover) | Query migration | 🔴 High | 6–10 days | `CLAIM-BE-B-01`, `CLAIM-BE-B-02`, `CLAIM-BE-B-03`, `CLAIM-BE-B-04`, `CLAIM-BE-G-01`, `CLAIM-BE-G-02`, `CLAIM-BE-G-03`, `CLAIM-FE-001`, `PRODUCT-BE-H-06` | `getClaims`, `getClaimByIds`, `getCommunicationChannels`, `getAllClaimsAbout`, `getClaimComponentStatus` |
 | `CLAIM-FE-003` | Migrate claim simple mutations and export | Mutation migration | 🟡 Medium | 4–6 days | `CLAIM-BE-D-01`, `CLAIM-BE-D-02`, `CLAIM-BE-D-03`, `CLAIM-BE-D-04`, `CLAIM-BE-D-05` | `createClaim`, `bulkUpdateClaim`, `lockClaim`, `unlockClaim`, `requestClaimExport` |
 | `CLAIM-FE-004` | Migrate `updateClaim` multi-step write handling | Mutation migration (complex) | 🔴 High | 5–8 days | `CLAIM-BE-E-01` | `updateClaim` |
 
@@ -39,11 +39,10 @@
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
 | 1 | 🟡 `CLAIM-FE-001` | — | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🔴 `CLAIM-FE-002` | `CLAIM-FE-002` → `CLAIM-BE-B-01`, `CLAIM-BE-B-02`, `CLAIM-BE-B-03`, `CLAIM-BE-B-04` (+1) | Search & listing — needs backend phase C |
 | 3 | 🟡 `CLAIM-FE-003` | `CLAIM-FE-003` → `CLAIM-BE-D-01`, `CLAIM-BE-D-02`, `CLAIM-BE-D-03`, `CLAIM-BE-D-04` (+1) | Writes — needs backend phase D mutations |
-| 4 | 🔴 `CLAIM-FE-004` | `CLAIM-FE-004` → `CLAIM-BE-E-01` | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 4 | 🔴 `CLAIM-FE-002`, 🔴 `CLAIM-FE-004` | `CLAIM-FE-002` → `CLAIM-BE-B-01`, `CLAIM-BE-B-02`, `CLAIM-BE-B-03`, `CLAIM-BE-B-04` (+4)<br>`CLAIM-FE-004` → `CLAIM-BE-E-01` | Complex writes / sagas — needs backend phase E + ADR ratification |
 
-**Cutover flow:** `CLAIM-FE-001` → `CLAIM-FE-002` → `CLAIM-FE-003` → `CLAIM-FE-004`.
+**Cutover flow:** `CLAIM-FE-001` → `CLAIM-FE-003` → `CLAIM-FE-002` → `CLAIM-FE-004`.
 
 ---
 
@@ -54,9 +53,8 @@
 | Step | 👤 FE-1 | Backend gate (focus) |
 |---|---|---|
 | 1 | 🟡 `CLAIM-FE-001` (2–3d) | Reads cutover — needs backend phase A/B reads live |
-| 2 | 🔴 `CLAIM-FE-002` (6–10d) | Search & listing — needs backend phase C |
 | 3 | 🟡 `CLAIM-FE-003` (4–6d) | Writes — needs backend phase D mutations |
-| 4 | 🔴 `CLAIM-FE-004` (5–8d) | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 4 | 🔴 `CLAIM-FE-002` (6–10d)<br>🔴 `CLAIM-FE-004` (5–8d) | Complex writes / sagas — needs backend phase E + ADR ratification |
 
 **Elapsed (nominal midpoints):** ~22 FE build days — calendar time is set by the backend gates, not FE capacity.
 

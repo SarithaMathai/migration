@@ -246,9 +246,9 @@ pricing service).
 
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
-| `PKG-FE-001` | Migrate packaging reads | Query migration | 🟡 Medium | 5–8 days | `PKG-BE-B-01`, `PKG-BE-B-02` | `getPackagings`, `getPackagingById`, `getPackagingComponentStatus` |
+| `PKG-FE-001` | Migrate packaging reads | Query migration | 🟡 Medium | 5–8 days | `PKG-BE-B-01`, `PKG-BE-B-02`, `PKG-BE-G-01`, `PKG-BE-G-02`, `PKG-BE-G-04` | `getPackagings`, `getPackagingById`, `getPackagingComponentStatus` |
 | `PKG-FE-002` | Migrate packaging master-data reads and retire deprecated fields | Query migration | 🟢 Low | 2–3 days | `PKG-BE-B-04`, `PKG-BE-B-06` | `getCountries`, `getPackagingFieldValuesByType` |
-| `PKG-FE-003` | Migrate dieline flows | Query + mutation migration | 🟡 Medium | 4–6 days | `PKG-BE-B-03`, `PKG-BE-B-05`, `PKG-BE-D-02` | `getDielines`, `getDielineEvaluationStatuses`, `evaluateDieline` |
+| `PKG-FE-003` | Migrate dieline flows | Query + mutation migration | 🟡 Medium | 4–6 days | `PKG-BE-B-03`, `PKG-BE-B-05`, `PKG-BE-D-02`, `PKG-BE-G-05` | `getDielines`, `getDielineEvaluationStatuses`, `evaluateDieline` |
 | `PKG-FE-004` | Migrate packaging simple mutations and export | Mutation migration | 🟡 Medium | 5–8 days | `PKG-BE-D-01`, `PKG-BE-D-03`, `PKG-BE-D-04`, `PKG-BE-D-05`, `PKG-BE-D-06`, `PKG-BE-D-07`, `PKG-BE-D-09` | `addPackaging`, `bulkAddPackagings`, `bulkUpdatePackagings`, `exportPackaging`, `lockPackaging`, `unlockPackaging`, `updatePackagingComponentStatus` |
 | `PKG-FE-005` | Migrate `updatePackaging` saga handling and packet information | Mutation migration (complex) | 🔴 High | 5–8 days | `PKG-BE-E-01` | `updatePackaging`, `getPackagingPacketsInformation`, `getPackagingPacketInformation` |
 
@@ -260,11 +260,11 @@ pricing service).
 
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
-| 1 | 🟡 `PKG-FE-001`, 🟢 `PKG-FE-002` | `PKG-FE-001` → `PKG-BE-B-01`, `PKG-BE-B-02`<br>`PKG-FE-002` → `PKG-BE-B-04`, `PKG-BE-B-06` | Reads cutover — needs backend phase A/B reads live |
-| 3 | 🟡 `PKG-FE-003`, 🟡 `PKG-FE-004` | `PKG-FE-003` → `PKG-BE-B-03`, `PKG-BE-B-05`, `PKG-BE-D-02`<br>`PKG-FE-004` → `PKG-BE-D-01`, `PKG-BE-D-03`, `PKG-BE-D-04`, `PKG-BE-D-05` (+3) | Writes — needs backend phase D mutations |
-| 4 | 🔴 `PKG-FE-005` | `PKG-FE-005` → `PKG-BE-E-01` | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 1 | 🟢 `PKG-FE-002` | `PKG-FE-002` → `PKG-BE-B-04`, `PKG-BE-B-06` | Reads cutover — needs backend phase A/B reads live |
+| 3 | 🟡 `PKG-FE-004` | `PKG-FE-004` → `PKG-BE-D-01`, `PKG-BE-D-03`, `PKG-BE-D-04`, `PKG-BE-D-05` (+3) | Writes — needs backend phase D mutations |
+| 4 | 🟡 `PKG-FE-001`, 🟡 `PKG-FE-003`, 🔴 `PKG-FE-005` | `PKG-FE-001` → `PKG-BE-B-01`, `PKG-BE-B-02`, `PKG-BE-G-01`, `PKG-BE-G-02` (+1)<br>`PKG-FE-003` → `PKG-BE-B-03`, `PKG-BE-B-05`, `PKG-BE-D-02`, `PKG-BE-G-05`<br>`PKG-FE-005` → `PKG-BE-E-01` | Complex writes / sagas — needs backend phase E + ADR ratification |
 
-**Cutover flow:** `PKG-FE-001` → `PKG-FE-002` → `PKG-FE-003` → `PKG-FE-004` → `PKG-FE-005`.
+**Cutover flow:** `PKG-FE-002` → `PKG-FE-004` → `PKG-FE-001` → `PKG-FE-003` → `PKG-FE-005`.
 
 ---
 
@@ -274,9 +274,9 @@ pricing service).
 
 | Step | 👤 FE-1 | Backend gate (focus) |
 |---|---|---|
-| 1 | 🟡 `PKG-FE-001` (5–8d)<br>🟢 `PKG-FE-002` (2–3d) | Reads cutover — needs backend phase A/B reads live |
-| 3 | 🟡 `PKG-FE-004` (5–8d)<br>🟡 `PKG-FE-003` (4–6d) | Writes — needs backend phase D mutations |
-| 4 | 🔴 `PKG-FE-005` (5–8d) | Complex writes / sagas — needs backend phase E + ADR ratification |
+| 1 | 🟢 `PKG-FE-002` (2–3d) | Reads cutover — needs backend phase A/B reads live |
+| 3 | 🟡 `PKG-FE-004` (5–8d) | Writes — needs backend phase D mutations |
+| 4 | 🟡 `PKG-FE-001` (5–8d)<br>🔴 `PKG-FE-005` (5–8d)<br>🟡 `PKG-FE-003` (4–6d) | Complex writes / sagas — needs backend phase E + ADR ratification |
 
 **Elapsed (nominal midpoints):** ~27 FE build days — calendar time is set by the backend gates, not FE capacity.
 

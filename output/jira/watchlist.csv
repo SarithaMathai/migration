@@ -237,7 +237,7 @@ Story,WATCHLIST-BE-G-01,(Watchlist) Computed flatteners (status/reasons/inspecti
 * WATCHLIST-BE-B-01 — getWatchlistByIds
 
 *Blocks:*
-* None
+* WATCHLIST-FE-001
 
 *Current Behaviour:*
 * `statusId`=`status.code`, `statusName`=`status.description`, `reasonIds`=`reasons[].code`, `reasons`=`reasons[].description`; `WatchlistInspection.actionId`=`action.code`, `action`=`action.description`.
@@ -261,6 +261,7 @@ Story,WATCHLIST-BE-G-02,(Watchlist) createdBy + updatedBy + workspaces + partici
 
 *Blocks:*
 * WATCHLIST-BE-G-05 — WatchlistPartner.partner entity reference
+* WATCHLIST-FE-001
 
 *Current Behaviour:*
 * `createdBy`/`updatedBy` (🟡 user-profile); `workspaces` (🟡 workspaceV2 by `workspaceContext`); `participantDetails` (🔵 user-group `getUserGroups([humanId])[0].participantDetails`); `WatchlistPartner.partnerName` (🔵 vmm `getByID(partnerId).bpName`, null-safe).
@@ -280,7 +281,7 @@ Story,WATCHLIST-BE-G-03,(Watchlist) attachments + product [WATCHLIST-BE-G-03],,F
 * WATCHLIST-BE-B-01 — getWatchlistByIds
 
 *Blocks:*
-* None
+* WATCHLIST-FE-001
 
 *Current Behaviour:*
 * `attachments` → (🔴 search) `searchAttachmentsByRelatedResource(humanId)`; `product` (internal, only if `parentId` starts `'PID'`).
@@ -301,7 +302,7 @@ Story,WATCHLIST-BE-G-05,"(Watchlist) WatchlistPartner.partner entity reference (
 * WATCHLIST-BE-G-02 — createdBy + updatedBy + workspaces + participantDetails + partnerName
 
 *Blocks:*
-* None
+* WATCHLIST-FE-001
 
 *Target:*
 * schema adds `partner: VMM_BusinessPartner` on `WatchlistPartner`; resolver emits `{id: partnerId}` — gateway hydrates from VMM; null-safe on missing `partnerId`.
@@ -316,19 +317,23 @@ Story,WATCHLIST-BE-G-05,"(Watchlist) WatchlistPartner.partner entity reference (
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01,,To Do,"*Implementation Order:* 14 of 16 (Watchlist combined — frontend #1, cutover step 2)
+Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,query-migration,,WATCHLIST-BE-B-01 WATCHLIST-BE-C-01 WATCHLIST-BE-G-01 WATCHLIST-BE-G-02 WATCHLIST-BE-G-03 WATCHLIST-BE-G-05,"search, user-group, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 15 of 16 (Watchlist combined — frontend #2, cutover step 4)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
-*Priority:* Low — *Parallelizable:* No
+*Priority:* Low — *Parallelizable:* Yes
 
 *Depends On:*
 * WATCHLIST-BE-B-01 — getWatchlistByIds
 * WATCHLIST-BE-C-01 — getWatchlistByFilter
+* WATCHLIST-BE-G-01 — Computed flatteners
+* WATCHLIST-BE-G-02 — createdBy + updatedBy + workspaces + participantDetails + partnerName
+* WATCHLIST-BE-G-03 — attachments + product
+* WATCHLIST-BE-G-05 — WatchlistPartner.partner entity reference
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Low · *Domain:* watchlist
-* *Depends on:* WATCHLIST-BE-B-01, WATCHLIST-BE-C-01
+* *Depends on:* WATCHLIST-BE-B-01, WATCHLIST-BE-C-01, WATCHLIST-BE-G-01, WATCHLIST-BE-G-02, WATCHLIST-BE-G-03, WATCHLIST-BE-G-05
 * *Operations:* {{getWatchlistByIds}}, {{getWatchlistByFilter}}
 
 * *Business objective:*
@@ -353,7 +358,7 @@ Story,WATCHLIST-FE-001,[Watchlist FE] Migrate watchlist reads [WATCHLIST-FE-001]
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,,To Do,"*Implementation Order:* 15 of 16 (Watchlist combined — frontend #2, cutover step 3)
+Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutations [WATCHLIST-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,watchlist,mutation-migration,,WATCHLIST-BE-D-01 WATCHLIST-BE-D-02,,To Do,"*Implementation Order:* 14 of 16 (Watchlist combined — frontend #1, cutover step 3)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
 *Priority:* Low — *Parallelizable:* No
 
@@ -392,7 +397,7 @@ Story,WATCHLIST-FE-002,[Watchlist FE] Migrate watchlist create and clone mutatio
 * No UI regression (component tests + smoke suite)"
 Story,WATCHLIST-FE-003,[Watchlist FE] Migrate `updateWatchlistEntries` saga handling [WATCHLIST-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,watchlist,mutation-migration-(complex),,WATCHLIST-BE-E-01,,To Do,"*Implementation Order:* 16 of 16 (Watchlist combined — frontend #3, cutover step 4)
 *Domain:* Watchlist — *Team:* Frontend — *Owner:* FE-1
-*Priority:* Medium — *Parallelizable:* No
+*Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
 * WATCHLIST-BE-E-01 — updateWatchlistEntries

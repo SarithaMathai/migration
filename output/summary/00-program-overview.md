@@ -61,12 +61,12 @@
 | [Product](./product/FederatedGqlBreakDown-product.md) | 0 | 11 | 5 | 18 | 5 | 8 | 16 | 6 | **69** |
 | [BOM](./bom/FederatedGqlBreakDown-bom.md) | 2 | 7 | 5 | 5 | 1 | 2 | 15 | 0 | **37** |
 | [Packaging](./packaging/FederatedGqlBreakDown-packaging.md) | 0 | 6 | 1 | 9 | 1 | 1 | 5 | 0 | **23** |
-| [Measurement](./measurement/FederatedGqlBreakDown-measurement.md) | 0 | 9 | 2 | 10 | 1 | 1 | 6 | 1 | **30** |
+| [Measurement](./measurement/FederatedGqlBreakDown-measurement.md) | 0 | 9 | 2 | 10 | 1 | 1 | 5 | 2 | **30** |
 | [Claims](./claims/FederatedGqlBreakDown-claims.md) | 0 | 5 | 2 | 5 | 1 | 0 | 5 | 2 | **20** |
 | [Impression](./impression/FederatedGqlBreakDown-impression.md) | 0 | 2 | 0 | 1 | 0 | 1 | 3 | 0 | **7** |
 | [Product Details](./productDetails/FederatedGqlBreakDown-productDetails.md) | 0 | 1 | 1 | 5 | 1 | 1 | 3 | 0 | **12** |
 | [Watchlist](./watchlist/FederatedGqlBreakDown-watchlist.md) | 0 | 3 | 1 | 2 | 1 | 2 | 4 | 0 | **13** |
-| **TOTAL** | **2** | **44** | **17** | **55** | **11** | **16** | **57** | **9** | **211** |
+| **TOTAL** | **2** | **44** | **17** | **55** | **11** | **16** | **56** | **10** | **211** |
 
 ---
 

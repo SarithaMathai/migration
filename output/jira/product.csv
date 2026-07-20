@@ -11,7 +11,9 @@ Story,PRODUCT-BE-B-01,(Product) getProduct(id) [PRODUCT-BE-B-01],,Federate Break
 * PRODUCT-BE-H-06 — Product entity fetcher  for cross-subgraph references
 * PRODUCT-FE-001
 * PRODUCT-FE-002
+* PRODUCT-FE-004
 * PRODUCT-FE-011
+* IMPRESSION-FE-001
 * IMPRESSION-FE-002
 
 *Current Behaviour:*
@@ -37,6 +39,7 @@ Story,PRODUCT-BE-B-02,(Product) getProductsByIds(ids) [PRODUCT-BE-B-02],,Federat
 
 *Blocks:*
 * PRODUCT-FE-003
+* PRODUCT-FE-004
 
 *Current Behaviour:*
 * `getByIdList.load(ids)` `GET ${v1}?productId={csv}&page=0&size=10000&sort=createdDate,desc`; primes `getByID`.
@@ -60,7 +63,9 @@ Story,PRODUCT-BE-B-03,(Product) getProductStatus (cacheable) [PRODUCT-BE-B-03],,
 * None
 
 *Blocks:*
+* PRODUCT-FE-003
 * PRODUCT-FE-004
+* PRODUCT-FE-005
 
 *Current Behaviour:*
 * `getStatus.load()` master status list.
@@ -1063,6 +1068,7 @@ Story,PRODUCT-BE-F-06,"(Product) ResourcesCount.productBoms + packagingBoms + bo
 
 *Blocks:*
 * PRODUCT-BE-F-09 — Retire the TechPack aggregation facade
+* PRODUCT-FE-010
 
 *Acceptance Criteria:*
 1. `productBoms`/`packagingBoms`/`boms` resolve in-process; no gateway hop; parity vs facade
@@ -1080,6 +1086,7 @@ Story,PRODUCT-BE-F-08,"(Product) ResourcesCount.watchlists (internal, from Watch
 
 *Blocks:*
 * PRODUCT-BE-F-09 — Retire the TechPack aggregation facade
+* PRODUCT-FE-010
 
 *Acceptance Criteria:*
 1. `watchlists` resolves in-process; no gateway hop; parity vs facade
@@ -1127,6 +1134,10 @@ Story,PRODUCT-BE-F-10,(Product) Hive Gateway supergraph composition [PRODUCT-BE-
 
 *Blocks:*
 * PRODUCT-BE-F-11 — Platform stub verification
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-004
+* PRODUCT-FE-011
 
 *Target:*
 * add `plm-product` subgraph URL; verify composition with VMM/IG/CORONA/Doppler stubs; smoke-test cross-subgraph query. - **Example:** `hive compose --subgraph plm-product=https://plm-product.internal/graphql` succeeds with no composition errors (no conflicting type definitions, no missing `@key` fields), then a smoke query like `{ getProduct(id: ""P1"") { name businessPartners { name } } }` resolves cleanly across the `plm-product` + VMM subgraphs.
@@ -1339,6 +1350,10 @@ Story,PRODUCT-BE-G-01,(Product) Product.attachmentsWithMetaData [PRODUCT-BE-G-01
 *Blocks:*
 * PRODUCT-BE-G-03 — Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData
 * PRODUCT-BE-G-17 — Entity references on partner/lineage value types
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * the attachments panel on a product shows a mixed feed — actual file - attachments, plus discussions and samples that are *also* surfaced as if they were attachments (each with their own metadata), plus threaded replies — sorted together by type-priority then recency. - Building that feed today is ~150 lines: walk the relationship graph to find related discussions/samples, fetch each category's data (v2 and v3 attachment APIs, batched discussion/thread/sample lookups), merge all 5 sources into one list, filter out drafts, then sort. - `relationship.searchByIds` → 5-bucket partition → v2+v3 attachment hydration → discussions/threads/samples batched → 5-source merge → draft filter → `orderProductAttachments`.
@@ -1378,7 +1393,10 @@ Story,PRODUCT-BE-G-02,(Product) Product.components [PRODUCT-BE-G-02],,Federate B
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * the components tab lists everything attached to a product — measurements, - claims, boms, product-details, packaging — tagged by type, with counts (how many are archived, how many per component type, broken down per business partner). - Today's biggest performance problem: for every claim in the result, it makes a **separate** ACL permission check call — 50 claims means 50 sequential ACL calls (""N+1""), instead of one batched call for all 50. ~190 ln — 4 parallel elastic (measurement/claim/bom/productDetail) + packaging + **per-claim N+1 ACL** + 5-type merge + count rollups.
@@ -1416,7 +1434,11 @@ Story,PRODUCT-BE-G-03,(Product) Product.attachments + attachmentsV3 + attachment
 * PRODUCT-BE-G-01 — Product.attachmentsWithMetaData
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-005
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * four related resolvers sharing `AttachmentEnrichmentService` (G-01).
@@ -1450,7 +1472,7 @@ Story,PRODUCT-BE-G-04,(Product) ProductsCategories.categories (12-case) + Dopple
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-005
 
 *Current Behaviour:*
 * `categories` is a polymorphic union — depending on which category type - the caller asked for, a different one of 12 branches builds the response shape. - Two of those branches (`DopplerDepartment.primaryCapacityTypeName` / `secondaryCapacityTypeName`) both need the same Doppler department lookup, so today's code memoizes that one call and reuses it for both fields. - 12-branch dispatcher; `DopplerDepartment.primary/secondaryCapacityTypeName` share one Doppler call (memoized).
@@ -1498,7 +1520,12 @@ Story,PRODUCT-BE-G-06,(Product) Product.teams + discussionsV2 + discussionsCount
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-004
+* PRODUCT-FE-005
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * team/discussion/workspace elastic lookups.
@@ -1521,7 +1548,13 @@ Story,PRODUCT-BE-G-07,(Product) Product.vendorAttributes + businessPartners + dr
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-004
+* PRODUCT-FE-005
+* PRODUCT-FE-006
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Requires spike:* SPIKE-04 (Not-Removable / Undroppable Partners) — see program spike
 
@@ -1551,7 +1584,12 @@ Story,PRODUCT-BE-G-08,(Product) Product.measurementSets + claims + bom + product
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-005
+* PRODUCT-FE-010
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * each of these 8 fields is ""go ask a sibling domain (bom, measurement, - etc.) for this product's data"" — but only if the caller asked for it (each has an `includeXxx: Boolean` flag to avoid an unnecessary call). - Since product, bom, measurement, etc. all live in the same `plm-product` service after migration, ""ask the sibling domain"" becomes a plain method call, not a network hop. sibling-domain passthroughs with `includeXxx` boolean branches — **internal same-DGS calls** (not cross-subgraph).
@@ -1575,7 +1613,11 @@ Story,PRODUCT-BE-G-09,(Product) Product.productWorkspaceAttributes + productWork
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-004
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `designCycle` is computed lazily today — an inline `async () => ...` - closure attached to the value, evaluated only if a caller actually reads that sub-field. - GraphQL/DGS already has a first-class way to express ""only compute this if asked"": a nested field resolver. - Same laziness, cleaner code. both produce shapes with a **deferred `designCycle: async()=>…`** field-on-value.
@@ -1599,7 +1641,10 @@ Story,PRODUCT-BE-G-10,(Product) Product.ancestryProducts + rating + reservedDpci
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `rating` via `RatingClient`; `reservedDpcis` via `getReservedDpcisFromApex`.
@@ -1683,7 +1728,14 @@ Story,PRODUCT-BE-G-13,(Product) IG/tag/tcin/spg + template trivial-field group [
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-003
+* PRODUCT-FE-004
+* PRODUCT-FE-005
+* PRODUCT-FE-006
+* PRODUCT-FE-011
+* IMPRESSION-FE-002
 
 *Current Behaviour:*
 * `department`/`departments`/`clazz`/`brand`/`brands`/`divisions`/`productTemplateDepartments`, `tags`, `tcins`, `SPARK_Tcin.itemDetails` (CORONA), `SPARK_PackagingAttribute.spg` (internal fileLibrary), `SPARK_ProductRules.*`, `VMM_BusinessPartnerCategory.*`, `MasterProductStatus.*`.
@@ -1706,7 +1758,10 @@ Story,PRODUCT-BE-G-14,(Product) Simple user/status fields + trivial pass-through
 * None
 
 *Blocks:*
-* None
+* PRODUCT-FE-001
+* PRODUCT-FE-002
+* PRODUCT-FE-005
+* PRODUCT-FE-011
 
 *Current Behaviour:*
 * `createdBy`/`updatedBy`/`versionCreatedBy` (user-profile), `ProductComponentStatus.updatedBy`, `SPARK_ResourcesCount.productThumbnailId` (re-fetch product), plus ~60 direct scalar pass-throughs (DTO-mapped).
@@ -1772,19 +1827,31 @@ Story,PRODUCT-BE-G-17,"(Product) Entity references on partner/lineage value type
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-queries [PRODUCT-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01,,To Do,"*Implementation Order:* 70 of 81 (Product combined — frontend #1, cutover step 1)
+Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-queries [PRODUCT-FE-001],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-F-10 PRODUCT-BE-G-01 PRODUCT-BE-G-02 PRODUCT-BE-G-03 PRODUCT-BE-G-06 PRODUCT-BE-G-07 PRODUCT-BE-G-08 PRODUCT-BE-G-09 PRODUCT-BE-G-10 PRODUCT-BE-G-13 PRODUCT-BE-G-14 PRODUCT-BE-S-01,"apex, attachment, brand, corona, discussion, doppler, fileLibrary, ig, rating, relationship, search, tag, teamV2, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 74 of 81 (Product combined — frontend #5, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
 *Depends On:*
 * PRODUCT-BE-B-01 — getProduct
+* PRODUCT-BE-F-10 — Hive Gateway supergraph composition
+* PRODUCT-BE-G-01 — Product.attachmentsWithMetaData
+* PRODUCT-BE-G-02 — Product.components
+* PRODUCT-BE-G-03 — Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData
+* PRODUCT-BE-G-06 — Product.teams + discussionsV2 + discussionsCount + workspaces
+* PRODUCT-BE-G-07 — Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status
+* PRODUCT-BE-G-08 — Product.measurementSets + claims + bom + productBom + packagingBom + productDetails + variations + associateProductsAsks
+* PRODUCT-BE-G-09 — Product.productWorkspaceAttributes + productWorkspaceInfo
+* PRODUCT-BE-G-10 — Product.ancestryProducts + rating + reservedDpcis
+* PRODUCT-BE-G-13 — IG/tag/tcin/spg + template trivial-field group
+* PRODUCT-BE-G-14 — Simple user/status fields + trivial pass-throughs
+* PRODUCT-BE-S-01
 
 *Blocks:*
 * PRODUCT-FE-002 — Migrate shared-library `getProduct` consumers
 * PRODUCT-FE-008 — Migrate team and partner assignment mutations
 
 * *Type:* Query migration · *Impact:* High · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-01
+* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-F-10, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-S-01
 * *Operations:* {{getProduct}}
 
 * *Business objective:*
@@ -1815,20 +1882,32 @@ Story,PRODUCT-FE-001,[Product FE] Migrate `getProduct` documents in product-quer
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers [PRODUCT-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-04 PRODUCT-FE-001,,To Do,"*Implementation Order:* 72 of 81 (Product combined — frontend #3, cutover step 2)
+Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers [PRODUCT-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-04 PRODUCT-BE-F-10 PRODUCT-BE-G-01 PRODUCT-BE-G-02 PRODUCT-BE-G-03 PRODUCT-BE-G-06 PRODUCT-BE-G-07 PRODUCT-BE-G-08 PRODUCT-BE-G-09 PRODUCT-BE-G-10 PRODUCT-BE-G-13 PRODUCT-BE-G-14 PRODUCT-BE-S-01 PRODUCT-FE-001,"apex, attachment, brand, corona, discussion, doppler, fileLibrary, ig, rating, relationship, search, tag, teamV2, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 80 of 81 (Product combined — frontend #11, cutover step 6)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
 * PRODUCT-BE-B-01 — getProduct
 * PRODUCT-BE-B-04 — getProductVersions
+* PRODUCT-BE-F-10 — Hive Gateway supergraph composition
+* PRODUCT-BE-G-01 — Product.attachmentsWithMetaData
+* PRODUCT-BE-G-02 — Product.components
+* PRODUCT-BE-G-03 — Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData
+* PRODUCT-BE-G-06 — Product.teams + discussionsV2 + discussionsCount + workspaces
+* PRODUCT-BE-G-07 — Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status
+* PRODUCT-BE-G-08 — Product.measurementSets + claims + bom + productBom + packagingBom + productDetails + variations + associateProductsAsks
+* PRODUCT-BE-G-09 — Product.productWorkspaceAttributes + productWorkspaceInfo
+* PRODUCT-BE-G-10 — Product.ancestryProducts + rating + reservedDpcis
+* PRODUCT-BE-G-13 — IG/tag/tcin/spg + template trivial-field group
+* PRODUCT-BE-G-14 — Simple user/status fields + trivial pass-throughs
+* PRODUCT-BE-S-01
 * PRODUCT-FE-001 — Migrate `getProduct` documents in product-queries
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-B-04, PRODUCT-FE-001
+* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-B-04, PRODUCT-BE-F-10, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-S-01, PRODUCT-FE-001
 * *Operations:* {{getProduct}}, {{getProductVersions}}
 
 * *Business objective:*
@@ -1856,19 +1935,21 @@ Story,PRODUCT-FE-002,[Product FE] Migrate shared-library `getProduct` consumers 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-S-02 PRODUCT-BE-B-02,,To Do,"*Implementation Order:* 80 of 81 (Product combined — frontend #11, cutover step 5)
+Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-FE-003],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-02 PRODUCT-BE-B-03 PRODUCT-BE-G-13 PRODUCT-BE-S-02,"brand, corona, doppler, fileLibrary, ig, tag",To Do,"*Implementation Order:* 75 of 81 (Product combined — frontend #6, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
 *Depends On:*
-* PRODUCT-BE-S-02
 * PRODUCT-BE-B-02 — getProductsByIds
+* PRODUCT-BE-B-03 — getProductStatus
+* PRODUCT-BE-G-13 — IG/tag/tcin/spg + template trivial-field group
+* PRODUCT-BE-S-02
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* High · *Domain:* product
-* *Depends on:* PRODUCT-BE-S-02, PRODUCT-BE-B-02
+* *Depends on:* PRODUCT-BE-B-02, PRODUCT-BE-B-03, PRODUCT-BE-G-13, PRODUCT-BE-S-02
 * *Operations:* {{getProducts}}, {{getProductsByIds}}
 
 * *Business objective:*
@@ -1897,18 +1978,26 @@ Story,PRODUCT-FE-003,[Product FE] Migrate product list and bulk reads [PRODUCT-F
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context reads [PRODUCT-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-03,,To Do,"*Implementation Order:* 71 of 81 (Product combined — frontend #2, cutover step 1)
+Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context reads [PRODUCT-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-01 PRODUCT-BE-B-02 PRODUCT-BE-B-03 PRODUCT-BE-F-10 PRODUCT-BE-G-06 PRODUCT-BE-G-07 PRODUCT-BE-G-09 PRODUCT-BE-G-13 PRODUCT-BE-S-01,"brand, corona, discussion, doppler, fileLibrary, ig, search, tag, teamV2, vmm, workspaceV2",To Do,"*Implementation Order:* 76 of 81 (Product combined — frontend #7, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
+* PRODUCT-BE-B-01 — getProduct
+* PRODUCT-BE-B-02 — getProductsByIds
 * PRODUCT-BE-B-03 — getProductStatus
+* PRODUCT-BE-F-10 — Hive Gateway supergraph composition
+* PRODUCT-BE-G-06 — Product.teams + discussionsV2 + discussionsCount + workspaces
+* PRODUCT-BE-G-07 — Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status
+* PRODUCT-BE-G-09 — Product.productWorkspaceAttributes + productWorkspaceInfo
+* PRODUCT-BE-G-13 — IG/tag/tcin/spg + template trivial-field group
+* PRODUCT-BE-S-01
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-03
+* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-B-02, PRODUCT-BE-B-03, PRODUCT-BE-F-10, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-09, PRODUCT-BE-G-13, PRODUCT-BE-S-01
 * *Operations:* {{getProductStatus}}
 
 * *Business objective:*
@@ -1937,19 +2026,30 @@ Story,PRODUCT-FE-004,[Product FE] Migrate product status and workspace-context r
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads [PRODUCT-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-C-02 PRODUCT-BE-C-03,,To Do,"*Implementation Order:* 73 of 81 (Product combined — frontend #4, cutover step 2)
+Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads [PRODUCT-FE-005],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration,,PRODUCT-BE-B-03 PRODUCT-BE-C-02 PRODUCT-BE-C-03 PRODUCT-BE-G-03 PRODUCT-BE-G-04 PRODUCT-BE-G-06 PRODUCT-BE-G-07 PRODUCT-BE-G-08 PRODUCT-BE-G-13 PRODUCT-BE-G-14 PRODUCT-BE-H-07 PRODUCT-BE-S-01 PRODUCT-BE-S-02,"IG, VMM, attachment, brand, corona, discussion, doppler, fileLibrary, ig, search, tag, teamV2, user-profile, vmm",To Do,"*Implementation Order:* 77 of 81 (Product combined — frontend #8, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
+* PRODUCT-BE-B-03 — getProductStatus
 * PRODUCT-BE-C-02 — getProductTemplates
 * PRODUCT-BE-C-03 — getCategories
+* PRODUCT-BE-G-03 — Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData
+* PRODUCT-BE-G-04 — ProductsCategories.categories  + DopplerDepartment fields
+* PRODUCT-BE-G-06 — Product.teams + discussionsV2 + discussionsCount + workspaces
+* PRODUCT-BE-G-07 — Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status
+* PRODUCT-BE-G-08 — Product.measurementSets + claims + bom + productBom + packagingBom + productDetails + variations + associateProductsAsks
+* PRODUCT-BE-G-13 — IG/tag/tcin/spg + template trivial-field group
+* PRODUCT-BE-G-14 — Simple user/status fields + trivial pass-throughs
+* PRODUCT-BE-H-07
+* PRODUCT-BE-S-01
+* PRODUCT-BE-S-02
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-C-02, PRODUCT-BE-C-03
+* *Depends on:* PRODUCT-BE-B-03, PRODUCT-BE-C-02, PRODUCT-BE-C-03, PRODUCT-BE-G-03, PRODUCT-BE-G-04, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-H-07, PRODUCT-BE-S-01, PRODUCT-BE-S-02
 * *Operations:* {{getProductTemplates}}, {{getCategories}}
 
 * *Business objective:*
@@ -1978,7 +2078,7 @@ Story,PRODUCT-FE-005,[Product FE] Migrate template library and categories reads 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-FE-006],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-07 PRODUCT-BE-B-08 PRODUCT-BE-B-09 PRODUCT-BE-B-10 PRODUCT-BE-B-11 PRODUCT-BE-C-05 PRODUCT-BE-D-15 PRODUCT-BE-D-16 PRODUCT-BE-D-17,,To Do,"*Implementation Order:* 74 of 81 (Product combined — frontend #5, cutover step 3)
+Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-FE-006],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-07 PRODUCT-BE-B-08 PRODUCT-BE-B-09 PRODUCT-BE-B-10 PRODUCT-BE-B-11 PRODUCT-BE-C-05 PRODUCT-BE-D-15 PRODUCT-BE-D-16 PRODUCT-BE-D-17 PRODUCT-BE-G-07 PRODUCT-BE-G-13 PRODUCT-BE-H-08,"brand, corona, doppler, fileLibrary, ig, tag, vmm",To Do,"*Implementation Order:* 71 of 81 (Product combined — frontend #2, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1992,12 +2092,15 @@ Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-
 * PRODUCT-BE-D-15 — addProductRule
 * PRODUCT-BE-D-16 — updateProductRule
 * PRODUCT-BE-D-17 — deleteProductRule
+* PRODUCT-BE-G-07 — Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status
+* PRODUCT-BE-G-13 — IG/tag/tcin/spg + template trivial-field group
+* PRODUCT-BE-H-08
 
 *Blocks:*
 * None
 
 * *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-D-15, PRODUCT-BE-D-16, PRODUCT-BE-D-17
+* *Depends on:* PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-D-15, PRODUCT-BE-D-16, PRODUCT-BE-D-17, PRODUCT-BE-G-07, PRODUCT-BE-G-13, PRODUCT-BE-H-08
 * *Operations:* {{getProductRules}}, {{getProductRulesById}}, {{getAllAvailableRules}}, {{getProductDeptRules}}, {{getProductBPRules}}, {{searchProductRules}}, {{addProductRule}}, {{updateProductRule}}, {{deleteProductRule}}
 
 * *Business objective:*
@@ -2027,9 +2130,9 @@ Story,PRODUCT-FE-006,[Product FE] Migrate product rules administration [PRODUCT-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-01 PRODUCT-BE-D-02 PRODUCT-BE-D-03 PRODUCT-BE-D-04 PRODUCT-BE-D-05 PRODUCT-BE-D-10 PRODUCT-BE-D-13 PRODUCT-BE-D-14,,To Do,"*Implementation Order:* 75 of 81 (Product combined — frontend #6, cutover step 3)
+Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-01 PRODUCT-BE-D-02 PRODUCT-BE-D-03 PRODUCT-BE-D-04 PRODUCT-BE-D-05 PRODUCT-BE-D-10 PRODUCT-BE-D-13 PRODUCT-BE-D-14,,To Do,"*Implementation Order:* 70 of 81 (Product combined — frontend #1, cutover step 3)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
-*Priority:* Medium — *Parallelizable:* Yes
+*Priority:* Medium — *Parallelizable:* No
 
 *Depends On:*
 * PRODUCT-BE-D-01 — addProduct
@@ -2074,7 +2177,7 @@ Story,PRODUCT-FE-007,[Product FE] Migrate simple product mutations [PRODUCT-FE-0
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations [PRODUCT-FE-008],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-06 PRODUCT-BE-D-07 PRODUCT-BE-D-12 PRODUCT-FE-001,,To Do,"*Implementation Order:* 76 of 81 (Product combined — frontend #7, cutover step 3)
+Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations [PRODUCT-FE-008],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,mutation-migration,,PRODUCT-BE-D-06 PRODUCT-BE-D-07 PRODUCT-BE-D-12 PRODUCT-FE-001,,To Do,"*Implementation Order:* 81 of 81 (Product combined — frontend #12, cutover step 6)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -2117,7 +2220,7 @@ Story,PRODUCT-FE-008,[Product FE] Migrate team and partner assignment mutations 
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRODUCT-FE-009],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,mutation-migration-(complex),,PRODUCT-BE-S-03 PRODUCT-BE-D-09,,To Do,"*Implementation Order:* 81 of 81 (Product combined — frontend #12, cutover step 5)
+Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRODUCT-FE-009],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,product,mutation-migration-(complex),,PRODUCT-BE-S-03 PRODUCT-BE-D-09,,To Do,"*Implementation Order:* 78 of 81 (Product combined — frontend #9, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* High — *Parallelizable:* Yes
 
@@ -2159,13 +2262,16 @@ Story,PRODUCT-FE-009,[Product FE] Migrate partner drop/undrop orchestration [PRO
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-federate) [PRODUCT-FE-010],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration-(staged),,PRODUCT-BE-E-03 PRODUCT-BE-E-04 PRODUCT-BE-H-01 PRODUCT-BE-H-02 PRODUCT-BE-H-03 PRODUCT-BE-H-04 PRODUCT-BE-H-05,,To Do,"*Implementation Order:* 77 of 81 (Product combined — frontend #8, cutover step 4)
+Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-federate) [PRODUCT-FE-010],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-migration-(staged),,PRODUCT-BE-E-03 PRODUCT-BE-E-04 PRODUCT-BE-F-06 PRODUCT-BE-F-08 PRODUCT-BE-G-08 PRODUCT-BE-H-01 PRODUCT-BE-H-02 PRODUCT-BE-H-03 PRODUCT-BE-H-04 PRODUCT-BE-H-05,,To Do,"*Implementation Order:* 72 of 81 (Product combined — frontend #3, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
 * PRODUCT-BE-E-03 — getProductTechPackCountV1 stub + aggregation facade
 * PRODUCT-BE-E-04 — getProductTechPackBulkCountV1
+* PRODUCT-BE-F-06 — ResourcesCount.productBoms + packagingBoms + boms
+* PRODUCT-BE-F-08 — ResourcesCount.watchlists
+* PRODUCT-BE-G-08 — Product.measurementSets + claims + bom + productBom + packagingBom + productDetails + variations + associateProductsAsks
 * PRODUCT-BE-H-01 — ResourcesCount.productAttachments + discussionAttachments
 * PRODUCT-BE-H-02 — ResourcesCount.discussions
 * PRODUCT-BE-H-03 — ResourcesCount.sample
@@ -2176,7 +2282,7 @@ Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-fe
 * None
 
 * *Type:* Query migration (staged) · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-E-03, PRODUCT-BE-E-04, PRODUCT-BE-H-01, PRODUCT-BE-H-02, PRODUCT-BE-H-03, PRODUCT-BE-H-04, PRODUCT-BE-H-05
+* *Depends on:* PRODUCT-BE-E-03, PRODUCT-BE-E-04, PRODUCT-BE-F-06, PRODUCT-BE-F-08, PRODUCT-BE-G-08, PRODUCT-BE-H-01, PRODUCT-BE-H-02, PRODUCT-BE-H-03, PRODUCT-BE-H-04, PRODUCT-BE-H-05
 * *Operations:* {{getProductTechPackCountV1}}, {{getProductTechPackBulkCountV1}}
 
 * *Business objective:*
@@ -2205,7 +2311,7 @@ Story,PRODUCT-FE-010,[Product FE] Migrate TechPack count queries (facade-then-fe
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-011],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-01 PRODUCT-BE-D-18 PRODUCT-BE-E-02,,To Do,"*Implementation Order:* 78 of 81 (Product combined — frontend #9, cutover step 4)
+Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-011],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-01 PRODUCT-BE-D-18 PRODUCT-BE-E-02 PRODUCT-BE-F-10 PRODUCT-BE-G-01 PRODUCT-BE-G-02 PRODUCT-BE-G-03 PRODUCT-BE-G-06 PRODUCT-BE-G-07 PRODUCT-BE-G-08 PRODUCT-BE-G-09 PRODUCT-BE-G-10 PRODUCT-BE-G-13 PRODUCT-BE-G-14 PRODUCT-BE-S-01,"apex, attachment, brand, corona, discussion, doppler, fileLibrary, ig, rating, relationship, search, tag, teamV2, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 79 of 81 (Product combined — frontend #10, cutover step 5)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -2213,12 +2319,24 @@ Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-0
 * PRODUCT-BE-B-01 — getProduct
 * PRODUCT-BE-D-18 — updateComponentStatus
 * PRODUCT-BE-E-02 — updateComponentStatuses
+* PRODUCT-BE-F-10 — Hive Gateway supergraph composition
+* PRODUCT-BE-G-01 — Product.attachmentsWithMetaData
+* PRODUCT-BE-G-02 — Product.components
+* PRODUCT-BE-G-03 — Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData
+* PRODUCT-BE-G-06 — Product.teams + discussionsV2 + discussionsCount + workspaces
+* PRODUCT-BE-G-07 — Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status
+* PRODUCT-BE-G-08 — Product.measurementSets + claims + bom + productBom + packagingBom + productDetails + variations + associateProductsAsks
+* PRODUCT-BE-G-09 — Product.productWorkspaceAttributes + productWorkspaceInfo
+* PRODUCT-BE-G-10 — Product.ancestryProducts + rating + reservedDpcis
+* PRODUCT-BE-G-13 — IG/tag/tcin/spg + template trivial-field group
+* PRODUCT-BE-G-14 — Simple user/status fields + trivial pass-throughs
+* PRODUCT-BE-S-01
 
 *Blocks:*
 * None
 
 * *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-D-18, PRODUCT-BE-E-02
+* *Depends on:* PRODUCT-BE-B-01, PRODUCT-BE-D-18, PRODUCT-BE-E-02, PRODUCT-BE-F-10, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-S-01
 * *Operations:* {{getProduct}}, {{updateComponentStatus}}, {{updateComponentStatuses}}
 
 * *Business objective:*
@@ -2246,7 +2364,7 @@ Story,PRODUCT-FE-011,[Product FE] Migrate component status rollups [PRODUCT-FE-0
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-012,"[Product FE] Verify fragment type-conditions, `__typename` logic and cache keys against federated type names [PRODUCT-FE-012]",,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,verification-/-refactor,,PRODUCT-BE-F-14,,To Do,"*Implementation Order:* 79 of 81 (Product combined — frontend #10, cutover step 4)
+Story,PRODUCT-FE-012,"[Product FE] Verify fragment type-conditions, `__typename` logic and cache keys against federated type names [PRODUCT-FE-012]",,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,verification-/-refactor,,PRODUCT-BE-F-14,,To Do,"*Implementation Order:* 73 of 81 (Product combined — frontend #4, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 

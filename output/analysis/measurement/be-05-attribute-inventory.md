@@ -19,9 +19,9 @@ Resolution kinds: `Direct` · `Computed` · `Field-resolver` · `EXT` (severity)
 | `Measurement` | `workspaces` | `[WorkspaceV2]` | EXT | `:118-124` | 🟡 workspaceV2 | Low | G01 |
 | `Measurement` | `status` | `CodeDescription` | Computed | `:125-128` | — | Low | G01 |
 | `Measurement` | `updatedFromResource` | `SampleV2` | EXT (switch type='sample') | `:132-141` | 🟡 sampleV2 | Medium | G01 |
-| `Measurement` | `measurementTemplates` | `[MeasurementTemplate]` | EXT | `:142-149` | 🟡 measurementTemplate | Medium | G01 |
-| `Measurement` | `sizeTemplate` | `SizeTemplate` | EXT | `:150-155` | 🟡 sizeTemplate | Low | G01 |
-| `Measurement` | `tightFitTemplate` | `TightFit` | EXT | `:156-162` | 🟡 tightFit | Low | G01 |
+| `Measurement` | `measurementTemplates` | `[MeasurementTemplate]` | Field-resolver (internal) | `:142-149` | — (same DGS, co-located sub-domain — see B-06) | Medium | G01 |
+| `Measurement` | `sizeTemplate` | `SizeTemplate` | Field-resolver (internal) | `:150-155` | — (same DGS, co-located sub-domain — see B-07) | Low | G01 |
+| `Measurement` | `tightFitTemplate` | `TightFit` | Field-resolver (internal) | `:156-162` | — (same DGS, co-located sub-domain — see B-08) | Low | G01 |
 | `Measurement` | `participantDetails` | `UserGroup_Participants` | EXT | `:163` | 🔵 user-profile | Low | G01 |
 | `SampleMeasurementSet` | `createdBy` | `UserProfileAttributes` | EXT | `:166-170` | 🔵 user-profile | Low | G02 |
 | `SampleMeasurementSet` | `measurementSizeId` | `String` | Computed | `:171-173` | — | Low | G02 |

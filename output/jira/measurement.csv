@@ -27,6 +27,7 @@ Story,MST-BE-B-01,(Measurement) getMeasurementByIds data fetcher [MST-BE-B-01],,
 * MST-BE-G-01 — Measurement field resolvers
 * MST-BE-G-02 — SampleMeasurementSet field resolvers
 * MST-FE-001
+* MST-FE-002
 
 *Current Behaviour:*
 * `GET {base}/…/measurements/v1?ids=&calculated=&mustHaveRows=` → camelCase. **ACL note (context):** token for `ids`; ignored in DGS.
@@ -51,7 +52,7 @@ Story,MST-BE-B-02,(Measurement) getUnitsOfMeasure (cacheable) [MST-BE-B-02],,Fed
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 
 *Blocks:*
-* MST-BE-G-04 — SampleMeasurementSet.sample forward reference
+* MST-BE-H-02 — SampleMeasurementSet.sample forward reference
 * MST-FE-003
 
 *Current Behaviour:*
@@ -101,6 +102,7 @@ Story,MST-BE-B-04,(Measurement) getMeasurementSetStatus (cacheable) [MST-BE-B-04
 
 *Blocks:*
 * MST-FE-001
+* MST-FE-003
 
 *Current Behaviour:*
 * `GET {base}/masterData?name=MeasurementSetStatus` → `{key:value}` map → `[{code, description}]`.
@@ -125,7 +127,7 @@ Story,MST-BE-B-05,(Measurement) getSampleMeasurement data fetcher [MST-BE-B-05],
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 
 *Blocks:*
-* MST-BE-G-04 — SampleMeasurementSet.sample forward reference
+* MST-BE-H-02 — SampleMeasurementSet.sample forward reference
 
 *Current Behaviour:*
 * `GET {base}/…/measurements/v1/sample/{sampleId}` → camelCase. **ACL note (context):** token for `sampleId`; ignored in DGS.
@@ -624,7 +626,30 @@ Story,MST-BE-H-01,(Measurement) Contribute sampleMeasurement to the SampleV2 ent
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,"B-01, B-06, B-07, B-08","measurementTemplate, sampleV2, sizeTemplate, tightFit, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 26 of 30 (Measurement backend, step 3)
+Story,MST-BE-H-02,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-H-02]",,Federate BreakDown Product,H,XS,dgs-migration,measurement,entity-resolver,,"B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged), sample",,Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 30 of 30 (Measurement backend, step 3)
+*Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* MST-BE-B-02 — getUnitsOfMeasure
+* MST-BE-B-05 — getSampleMeasurement data fetcher
+
+*Blocks:*
+* None
+
+*Target:*
+* schema adds `sample: SampleV2` on `SampleMeasurementSet`; resolver emits `{id: sampleId}` — zero extra backend calls; hydrated by the sample subgraph (phase 2; stitched gateway until then). **BLOCKED-BY** sample domain Phase 3 (same gate as H-01).
+
+*Acceptance Criteria:*
+1. PO approval recorded (OQ-5) before implementation starts
+2. `sample { id }` resolves as a stub; `sampleId` unchanged
+3. Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,measurement,field-resolver,,"B-01, B-06, B-07, B-08","sampleV2, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 26 of 30 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -635,7 +660,8 @@ Story,MST-BE-G-01,(Measurement) Measurement field resolvers (13 fields) [MST-BE-
 * MST-BE-B-08 — getTightFits + getTightFitByIdAndVersion data fetchers
 
 *Blocks:*
-* None
+* MST-FE-001
+* MST-FE-002
 
 *Current Behaviour:*
 * `access`/`currentUserPermissions` (ACL — context only), `businessPartners` (loadBps), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`), `product` (PID-prefixed → internal `product.getByID`), `workspaces` (`getWorkspacesByIdsV2` or null), `status` (`{code:statusId, description:statusName}` computed), `updatedFromResource` (switch type='sample' → `sampleV2.getSampleById`), `measurementTemplates` (`measurementTemplate.getMeasurementTemplatesByIds(...).content`), `sizeTemplate` (`sizeTemplate.getSizeTemplates([id])[0]`), `tightFitTemplate` (`tightFit.getTightFitByIdAndVersion({id,version})`), `participantDetails` (`getUserGroup`). - **EXT:** 🟡 workspaceV2/sampleV2; 🔵 vmm/user-profile. (`measurementTemplates`/`sizeTemplate`/`tightFitTemplate` **reclassified internal 2026-07-19** — plain in-process calls to this domain's own B-06/B-07/B-08 data fetchers, no longer counted as EXT; depends-on updated to require those stories exist first.)
@@ -675,7 +701,7 @@ Story,MST-BE-G-02,(Measurement) SampleMeasurementSet field resolvers (2 fields) 
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-05,(Measurement) MeasurementTemplate field resolvers (5 fields) [MST-BE-G-05],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-06,,To Do,"*Implementation Order:* 28 of 30 (Measurement backend, step 3)
+Story,MST-BE-G-05,(Measurement) MeasurementTemplate field resolvers (5 fields) [MST-BE-G-05],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-06,,To Do,"*Implementation Order:* 27 of 30 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -700,7 +726,7 @@ Story,MST-BE-G-05,(Measurement) MeasurementTemplate field resolvers (5 fields) [
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-06,(Measurement) SizeTemplate field resolvers (3 fields) [MST-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-07,,To Do,"*Implementation Order:* 29 of 30 (Measurement backend, step 3)
+Story,MST-BE-G-06,(Measurement) SizeTemplate field resolvers (3 fields) [MST-BE-G-06],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-07,,To Do,"*Implementation Order:* 28 of 30 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -724,7 +750,7 @@ Story,MST-BE-G-06,(Measurement) SizeTemplate field resolvers (3 fields) [MST-BE-
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-07,(Measurement) TightFit field resolvers (5 fields) [MST-BE-G-07],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-08,"ig, user-profile, vmm",To Do,"*Implementation Order:* 30 of 30 (Measurement backend, step 3)
+Story,MST-BE-G-07,(Measurement) TightFit field resolvers (5 fields) [MST-BE-G-07],,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,B-08,"ig, user-profile, vmm",To Do,"*Implementation Order:* 29 of 30 (Measurement backend, step 3)
 *Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
 *Priority:* Low — *Parallelizable:* Yes
 
@@ -732,7 +758,8 @@ Story,MST-BE-G-07,(Measurement) TightFit field resolvers (5 fields) [MST-BE-G-07
 * MST-BE-B-08 — getTightFits + getTightFitByIdAndVersion data fetchers
 
 *Blocks:*
-* None
+* MST-FE-001
+* MST-FE-002
 
 *Current Behaviour:*
 * `departments`/`divisions` (`ig.department|division.getByID`, empty-tolerant), `brands` (`brand.getBrand`, skipped when `brandIds === -1`), `createdBy`/`updatedBy` (`getUserByIDOrNullIfNotFound`).
@@ -749,43 +776,22 @@ Story,MST-BE-G-07,(Measurement) TightFit field resolvers (5 fields) [MST-BE-G-07
 * PR merged on green (unit + parity tests pass)
 * Schema change pushed to Hive; operation(s) resolvable through the federated router
 * Response shape parity with the legacy gateway (no client-visible change)"
-Story,MST-BE-G-04,"(Measurement) SampleMeasurementSet.sample forward reference (recommended, PO-gated) [MST-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,measurement,field-resolver,,"B-02 (carries B-05 `getSampleMeasurement`, grouped-XS merged)",,Recommended (PO-gated — federation-review/03 §2 REC-4),"*Implementation Order:* 27 of 30 (Measurement backend, step 3)
-*Domain:* Measurement — *Team:* Backend — *Owner:* BE-2
-*Priority:* Low — *Parallelizable:* Yes
-
-*Depends On:*
-* MST-BE-B-02 — getUnitsOfMeasure
-* MST-BE-B-05 — getSampleMeasurement data fetcher
-
-*Blocks:*
-* None
-
-*Target:*
-* schema adds `sample: SampleV2` on `SampleMeasurementSet`; resolver emits `{id: sampleId}` — zero extra backend calls; hydrated by the sample subgraph (phase 2; stitched gateway until then).
-
-*Acceptance Criteria:*
-1. PO approval recorded (OQ-5) before implementation starts
-2. `sample { id }` resolves as a stub; `sampleId` unchanged
-3. Pairs cleanly with MST-BE-H-01 (no circular resolution at the gateway — verified by a two-hop smoke query)
-
-*Definition of Done:*
-* PR merged on green (unit + parity tests pass)
-* Schema change pushed to Hive; operation(s) resolvable through the federated router
-* Response shape parity with the legacy gateway (no client-visible change)"
 Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
-Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId` [MST-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-B-04,,To Do,"*Implementation Order:* 31 of 34 (Measurement combined — frontend #1, cutover step 1)
+Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId` [MST-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-B-04 MST-BE-G-01 MST-BE-G-07,"ig, sampleV2, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 33 of 34 (Measurement combined — frontend #3, cutover step 4)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
 * MST-BE-B-01 — getMeasurementByIds data fetcher
 * MST-BE-B-04 — getMeasurementSetStatus
+* MST-BE-G-01 — Measurement field resolvers
+* MST-BE-G-07 — TightFit field resolvers
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Medium · *Domain:* measurement
-* *Depends on:* MST-BE-B-01, MST-BE-B-04
+* *Depends on:* MST-BE-B-01, MST-BE-B-04, MST-BE-G-01, MST-BE-G-07
 * *Operations:* {{getMeasurementByIds}}, {{getMeasurementSetStatus}}, {{getMeasurementComponentStatus}}
 
 * *Business objective:*
@@ -815,19 +821,22 @@ Story,MST-FE-001,[Measurement FE] Migrate measurement reads and retire `humanId`
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-C-01 MST-BE-C-02,,To Do,"*Implementation Order:* 33 of 34 (Measurement combined — frontend #3, cutover step 2)
+Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-002],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,query-migration,,MST-BE-B-01 MST-BE-C-01 MST-BE-C-02 MST-BE-G-01 MST-BE-G-07,"ig, sampleV2, user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 34 of 34 (Measurement combined — frontend #4, cutover step 4)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
-*Priority:* Medium — *Parallelizable:* No
+*Priority:* Medium — *Parallelizable:* Yes
 
 *Depends On:*
+* MST-BE-B-01 — getMeasurementByIds data fetcher
 * MST-BE-C-01 — getMeasurements data fetcher
 * MST-BE-C-02 — getMeasurementsElastic data fetcher
+* MST-BE-G-01 — Measurement field resolvers
+* MST-BE-G-07 — TightFit field resolvers
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Medium · *Domain:* measurement
-* *Depends on:* MST-BE-C-01, MST-BE-C-02
+* *Depends on:* MST-BE-B-01, MST-BE-C-01, MST-BE-C-02, MST-BE-G-01, MST-BE-G-07
 * *Operations:* {{getMeasurements}}, {{getMeasurementsElastic}}
 
 * *Business objective:*
@@ -852,19 +861,20 @@ Story,MST-FE-002,[Measurement FE] Migrate measurement list/search reads [MST-FE-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-003],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,measurement,query-migration,,MST-BE-B-02 MST-BE-B-03,,To Do,"*Implementation Order:* 32 of 34 (Measurement combined — frontend #2, cutover step 1)
+Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-003],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,measurement,query-migration,,MST-BE-B-02 MST-BE-B-03 MST-BE-B-04,,To Do,"*Implementation Order:* 31 of 34 (Measurement combined — frontend #1, cutover step 1)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
-*Priority:* Low — *Parallelizable:* Yes
+*Priority:* Low — *Parallelizable:* No
 
 *Depends On:*
 * MST-BE-B-02 — getUnitsOfMeasure
 * MST-BE-B-03 — getThicknessUnitsOfMeasure
+* MST-BE-B-04 — getMeasurementSetStatus
 
 *Blocks:*
 * None
 
 * *Type:* Query migration · *Impact:* Low · *Domain:* measurement
-* *Depends on:* MST-BE-B-02, MST-BE-B-03
+* *Depends on:* MST-BE-B-02, MST-BE-B-03, MST-BE-B-04
 * *Operations:* {{getUnitsOfMeasure}}, {{getThicknessUnitsOfMeasure}}
 
 * *Business objective:*
@@ -889,7 +899,7 @@ Story,MST-FE-003,[Measurement FE] Migrate measurement master-data reads [MST-FE-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,mutation-migration,,MST-BE-D-03 MST-BE-D-04 MST-BE-D-06 MST-BE-D-07,,To Do,"*Implementation Order:* 34 of 34 (Measurement combined — frontend #4, cutover step 3)
+Story,MST-FE-004,[Measurement FE] Migrate measurement mutations [MST-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,measurement,mutation-migration,,MST-BE-D-03 MST-BE-D-04 MST-BE-D-06 MST-BE-D-07,,To Do,"*Implementation Order:* 32 of 34 (Measurement combined — frontend #2, cutover step 3)
 *Domain:* Measurement — *Team:* Frontend — *Owner:* FE-2
 *Priority:* Medium — *Parallelizable:* No
 

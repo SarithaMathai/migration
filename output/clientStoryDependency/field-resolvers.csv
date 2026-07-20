@@ -271,12 +271,9 @@ MST-FE-001,Migrate measurement reads and retire `humanId`,Field,divisions,MST-BE
 MST-FE-001,Migrate measurement reads and retire `humanId`,Query,getMeasurementByIds,MST-BE-B-01,,,No,"getMeasurementByIds, getMeasurementComponentStatus",
 MST-FE-001,Migrate measurement reads and retire `humanId`,Query,getMeasurementSetStatus,MST-BE-B-04,,,No,getMeasurementSetStatus,
 MST-FE-001,Migrate measurement reads and retire `humanId`,Field,measurementTemplateFragment,NEW-MST-BE-G-??,,,Yes,getMeasurementByIds,fragment body not found in snapshot
-MST-FE-001,Migrate measurement reads and retire `humanId`,Field,measurementTemplates,MST-BE-G-01,measurementTemplate,,No,getMeasurementByIds,via `...measurementFieldsFragment`
 MST-FE-001,Migrate measurement reads and retire `humanId`,Field,participantDetails,MST-BE-G-01,user-profile,,No,getMeasurementByIds,via `...measurementFieldsFragment`
-MST-FE-001,Migrate measurement reads and retire `humanId`,Field,sizeTemplate,MST-BE-G-01,sizeTemplate,,No,getMeasurementByIds,via `...measurementFieldsFragment`
 MST-FE-001,Migrate measurement reads and retire `humanId`,Field,sizeTemplateFragmentWithRows,NEW-MST-BE-G-??,,,Yes,getMeasurementByIds,fragment body not found in snapshot
 MST-FE-001,Migrate measurement reads and retire `humanId`,Field,teams,MST-BE-G-01,user-profile,,No,getMeasurementByIds,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
-MST-FE-001,Migrate measurement reads and retire `humanId`,Field,tightFitTemplate,MST-BE-G-01,tightFit,,No,getMeasurementByIds,via `...measurementFieldsFragment`
 MST-FE-001,Migrate measurement reads and retire `humanId`,Field,updatedBy,MST-BE-G-07,user-profile,,No,getMeasurementByIds,via `...measurementFieldsFragment`; via `...tightFitFragment`
 MST-FE-001,Migrate measurement reads and retire `humanId`,Field,updatedFromResource,MST-BE-G-01,sampleV2,,No,getMeasurementByIds,via `...measurementFieldsFragment`
 MST-FE-001,Migrate measurement reads and retire `humanId`,Field,users,MST-BE-G-01,user-profile,,No,getMeasurementByIds,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
@@ -289,12 +286,9 @@ MST-FE-002,Migrate measurement list/search reads,Field,divisions,MST-BE-G-07,ig,
 MST-FE-002,Migrate measurement list/search reads,Query,getMeasurements,MST-BE-C-01,,,No,getMeasurements,
 MST-FE-002,Migrate measurement list/search reads,Query,getMeasurementsElastic,MST-BE-C-02,,,No,getMeasurementsElastic,
 MST-FE-002,Migrate measurement list/search reads,Field,measurementTemplateFragment,NEW-MST-BE-G-??,,,Yes,getMeasurements,fragment body not found in snapshot
-MST-FE-002,Migrate measurement list/search reads,Field,measurementTemplates,MST-BE-G-01,measurementTemplate,,No,getMeasurements,via `...measurementFieldsFragment`
 MST-FE-002,Migrate measurement list/search reads,Field,participantDetails,MST-BE-G-01,user-profile,,No,getMeasurements,via `...measurementFieldsFragment`
-MST-FE-002,Migrate measurement list/search reads,Field,sizeTemplate,MST-BE-G-01,sizeTemplate,,No,getMeasurements,via `...measurementFieldsFragment`
 MST-FE-002,Migrate measurement list/search reads,Field,sizeTemplateFragmentWithRows,NEW-MST-BE-G-??,,,Yes,getMeasurements,fragment body not found in snapshot
 MST-FE-002,Migrate measurement list/search reads,Field,teams,MST-BE-G-01,user-profile,,No,getMeasurements,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
-MST-FE-002,Migrate measurement list/search reads,Field,tightFitTemplate,MST-BE-G-01,tightFit,,No,getMeasurements,via `...measurementFieldsFragment`
 MST-FE-002,Migrate measurement list/search reads,Field,updatedBy,MST-BE-G-07,user-profile,,No,getMeasurements,via `...measurementFieldsFragment`; via `...tightFitFragment`
 MST-FE-002,Migrate measurement list/search reads,Field,updatedFromResource,MST-BE-G-01,sampleV2,,No,getMeasurements,via `...measurementFieldsFragment`
 MST-FE-002,Migrate measurement list/search reads,Field,users,MST-BE-G-01,user-profile,,No,getMeasurements,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`

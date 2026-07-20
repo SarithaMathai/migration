@@ -26,6 +26,7 @@
 | Blocked story | Domain | Waits on |
 |---|---|---|
 | `MST-BE-H-01` — Contribute `sampleMeasurement` to the `SampleV2` entity | measurement | sample |
+| `MST-BE-H-02` — `SampleMeasurementSet.sample` forward reference (recommended, PO-gated) | measurement | sample |
 | `PRODUCT-BE-H-01` — `ResourcesCount.productAttachments` + `discussionAttachments` (federated, from Attachment) | product | attachment domain (⛔ cross-subgraph — does not ship until `plm-attachment` is live) |
 | `PRODUCT-BE-H-02` — `ResourcesCount.discussions` (federated, from Discussion) | product | discussion domain (⛔ cross-subgraph) |
 | `PRODUCT-BE-H-03` — `ResourcesCount.sample` (federated, from Sample) | product | sample domain (⛔ cross-subgraph) |
@@ -33,4 +34,4 @@
 | `PRODUCT-BE-H-05` — `ResourcesCount.constructions` (federated, from Construction) | product | construction domain (⛔ cross-subgraph) |
 
 ---
-*9 infrastructure gate(s) · 6 later-phase-subgraph gate(s).*
+*9 infrastructure gate(s) · 7 later-phase-subgraph gate(s).*
