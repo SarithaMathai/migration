@@ -7,8 +7,9 @@
 > **Just need "what's building and in what order"?** [`finalArtifacts/`](../finalArtifacts/) (repo root,
 > sibling of `output/`) is the slim entry point — `00-overview.md` (what/why), `00-sequencing.md` (build
 > order, one table per domain), `summary/{domain}/FederatedGqlBreakDown-{domain}.md` (Confluence-ready),
-> `summary/{domain}/story-dependency-graph-{domain}.md` (visual build-order + FE-readiness graphs). The
-> rest of this doc is for when you need the deeper per-domain detail or a specific decision to ratify.
+> `summary/{domain}/story-dependency-graph-{domain}.md` (visual: which backend stories must ship before
+> each frontend story can start). The rest of this doc is for when you need the deeper per-domain detail
+> or a specific decision to ratify.
 >
 > Start at [`output/overview/00-program-overview.md`](../output/overview/00-program-overview.md) if you
 > haven't yet — it's the one-page "what and why."

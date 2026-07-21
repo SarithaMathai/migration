@@ -26,7 +26,7 @@ implementing-engineer entry point. Copies only, no new content:
     00-sequencing.md               what's building + recommended build order (= 02-project-plan.md)
     summary/{domain}/
       FederatedGqlBreakDown-{domain}.md(+.docx)      Confluence-ready breakdown
-      story-dependency-graph-{domain}.md             2 mermaid graphs — BE build order + FE readiness
+      story-dependency-graph-{domain}.md             FE readiness — which BE stories gate each FE story
     jira/{domain}.csv, jira/all-stories.csv          import-ready, Acceptance Criteria only
   For full story detail (Current Behaviour, Target implementation, Kotlin snippets), go to
   output/analysis/{domain}/be-04-stories.md — finalArtifacts links back there, it never repeats it.
@@ -553,8 +553,8 @@ def main() -> None:
         except Exception as e:
             print(f"  FAIL finalArtifacts: {type(e).__name__}: {e}")
 
-        # Per-domain story dependency graphs (BE build order + FE readiness) — written directly
-        # into finalArtifacts/summary/{domain}/, since they have no other home in output/.
+        # Per-domain FE-readiness dependency graphs — written directly into
+        # finalArtifacts/summary/{domain}/, since they have no other home in output/.
         try:
             _load("generate_story_dependency_graphs").main()
         except Exception as e:

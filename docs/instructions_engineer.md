@@ -5,11 +5,11 @@
 > what depends on it, and know what "done" means — without needing someone to walk you through it.
 >
 > **Just need the sequencing, dependency graph, or the Jira ticket?** [`finalArtifacts/`](../finalArtifacts/)
-> (repo root, sibling of `output/`) is the slim entry point — `00-sequencing.md` (build order),
-> `summary/{domain}/FederatedGqlBreakDown-{domain}.md` (Confluence breakdown),
-> `summary/{domain}/story-dependency-graph-{domain}.md` (2 visual graphs: BE build order + what must ship
-> before FE can start), `jira/{domain}.csv` (import-ready, Acceptance Criteria only). Everything below is
-> for when you need the full story text to actually implement it.
+> (repo root, sibling of `output/`) is the slim entry point — `00-sequencing.md` (backend build order,
+> one table per domain), `summary/{domain}/FederatedGqlBreakDown-{domain}.md` (Confluence breakdown),
+> `summary/{domain}/story-dependency-graph-{domain}.md` (visual: which backend stories must ship before
+> each frontend story can start), `jira/{domain}.csv` (import-ready, Acceptance Criteria only). Everything
+> below is for when you need the full story text to actually implement it.
 >
 > Start at [`output/overview/00-program-overview.md`](../output/overview/00-program-overview.md) if you
 > haven't yet — it explains *why* this migration exists and the phase-lettering scheme (A–H) referenced
