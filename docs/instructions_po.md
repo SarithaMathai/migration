@@ -4,6 +4,11 @@
 > of this doc you can read the backlog, understand what's sequenced and why, and know what you're being
 > asked to review or ratify at each layer — without an engineer translating it for you each time.
 >
+> **Just need "what's building and in what order"?** [`output/finalArtifacts/`](../output/finalArtifacts/)
+> is the slim entry point — `00-overview.md` (what/why), `00-sequencing.md` (build order, one table per
+> domain), `{domain}/FederatedGqlBreakDown-{domain}.md` (Confluence-ready). The rest of this doc is for
+> when you need the deeper per-domain detail or a specific decision to ratify.
+>
 > Start at [`output/overview/00-program-overview.md`](../output/overview/00-program-overview.md) if you
 > haven't yet — it's the one-page "what and why."
 

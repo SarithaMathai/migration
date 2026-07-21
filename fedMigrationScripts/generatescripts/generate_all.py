@@ -19,6 +19,14 @@ Program-level:
   output/summary/00-program-overview.md                      Merged program overview
   output/jira/all-stories.csv                                All stories + program spikes, one file
 
+  output/finalArtifacts/          Slim PO + implementing-engineer entry point (copies only,
+    00-overview.md                no new content): overview + sequencing, the Confluence
+    00-sequencing.md              breakdown per domain, and Jira CSVs (AC-only description).
+    {domain}/FederatedGqlBreakDown-{domain}.md(+.docx)
+    jira/{domain}.csv, jira/all-stories.csv
+  For full story detail (Current Behaviour, Target implementation, Kotlin snippets), go to
+  output/analysis/{domain}/be-04-stories.md — finalArtifacts links back there, it never repeats it.
+
 Run (from anywhere — paths resolve relative to this script):
     python fedMigrationScripts/generatescripts/generate_all.py              # all domains
     python fedMigrationScripts/generatescripts/generate_all.py impression   # specific domain(s)
@@ -29,12 +37,15 @@ Run (from anywhere — paths resolve relative to this script):
   or the tables in generate_breakdown.py) or they will be lost.
 """
 
+import shutil
 import sys
 from pathlib import Path
 from datetime import date
 
 HERE = Path(__file__).resolve().parent
-OUTPUT = HERE.parent.parent / "output" / "summary"   # generated docs go to migration/output/summary/
+ROOT = HERE.parent.parent
+OUTPUT = ROOT / "output" / "summary"   # generated docs go to migration/output/summary/
+FINAL = ROOT / "output" / "finalArtifacts"
 
 # ─── Import the two per-domain generators ────────────────────────────────────
 # (Run from the same directory — direct import works)
@@ -300,6 +311,51 @@ def build_program_overview() -> str:
     return "\n".join(L)
 
 
+def build_final_artifacts() -> None:
+    """Assemble output/finalArtifacts/ — the slim, PO + implementing-engineer entry point.
+
+    Everything here is a copy of a file generated elsewhere in this run; no new content is
+    authored. Three things, matching what PO/engineers actually need day to day:
+      - what stories exist + recommended sequencing  -> 00-overview.md, 00-sequencing.md
+      - the Confluence-ready breakdown per domain     -> {domain}/FederatedGqlBreakDown-{domain}.md(+.docx)
+      - Jira-pushable rows (AC only)                  -> jira/{domain}.csv, jira/all-stories.csv
+
+    Deep-dive material (be-04-stories.md, *-comprehensive.md, output/analysis/, clientStoryDependency/,
+    complexStories/) stays out — "refer to the story for more detail" points back at output/analysis/,
+    not into this folder.
+    """
+    if FINAL.exists():
+        shutil.rmtree(FINAL)
+    FINAL.mkdir(parents=True)
+
+    copied, missing = [], []
+
+    def cp(src: Path, dst: Path) -> None:
+        if src.exists():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            copied.append(dst.relative_to(FINAL))
+        else:
+            missing.append(src.relative_to(ROOT))
+
+    cp(OUTPUT / "00-program-overview.md", FINAL / "00-overview.md")
+    cp(OUTPUT / "02-project-plan.md", FINAL / "00-sequencing.md")
+
+    for domain in ALL_DOMAINS:
+        for ext in (".md", ".docx"):
+            name = f"FederatedGqlBreakDown-{domain}{ext}"
+            cp(OUTPUT / domain / name, FINAL / domain / name)
+
+    jira_dir = ROOT / "output" / "jira"
+    cp(jira_dir / "all-stories.csv", FINAL / "jira" / "all-stories.csv")
+    for domain in ALL_DOMAINS:
+        cp(jira_dir / f"{domain}.csv", FINAL / "jira" / f"{domain}.csv")
+
+    print(f"  OK finalArtifacts/ ({len(copied)} files)")
+    for m in missing:
+        print(f"  ! finalArtifacts: missing source {m} — run a full `generate_all.py` first")
+
+
 # ─── Runner ───────────────────────────────────────────────────────────────────
 def main() -> None:
     args = sys.argv[1:]
@@ -481,6 +537,13 @@ def main() -> None:
             _load("generate_project_plan").main()
         except Exception as e:
             print(f"  FAIL project plan: {type(e).__name__}: {e}")
+
+        # finalArtifacts/ — the slim PO + engineer entry point, assembled last so every
+        # source file above (breakdowns, project plan, Jira CSVs) is fresh before copying.
+        try:
+            build_final_artifacts()
+        except Exception as e:
+            print(f"  FAIL finalArtifacts: {type(e).__name__}: {e}")
 
     print("\nDone. Run `python generate_all.py <domain>` to regenerate a single domain.\n")
 

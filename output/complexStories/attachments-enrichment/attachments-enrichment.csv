@@ -1,12 +1,6 @@
 Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Sub-task,PRODUCT-BE-G-01,(Product) Product.attachmentsWithMetaData [PRODUCT-BE-G-01],,,G,XL,dgs-migration,product,complex-case,PRODUCT-BE-G-01,,To Do,"*Complex case:* attachments-enrichment — see complexStories/attachments-enrichment/00-overview.md and 01-adr-*.md
 
-*Current Behaviour:*
-* the attachments panel on a product shows a mixed feed — actual file - attachments, plus discussions and samples that are *also* surfaced as if they were attachments (each with their own metadata), plus threaded replies — sorted together by type-priority then recency. - Building that feed today is ~150 lines: walk the relationship graph to find related discussions/samples, fetch each category's data (v2 and v3 attachment APIs, batched discussion/thread/sample lookups), merge all 5 sources into one list, filter out drafts, then sort. - `relationship.searchByIds` → 5-bucket partition → v2+v3 attachment hydration → discussions/threads/samples batched → 5-source merge → draft filter → `orderProductAttachments`.
-
-*Target:*
-* `AttachmentEnrichmentService` Kotlin port; keep the ""ACL should do draft filter"" TODO as a follow-up. - **Pattern (draft ADR-018, pending ratification):** owner-computed enrichment over one shared library with a per-surface policy table — this story builds the library + the product policy row; `G-03` becomes thin doors on it; the workspace phase adds its own policy row, not a redesign. Mandatory fixes ride the port as accepted deviations (parallel independent fetches, guarded thread→parent-discussion lookup, direct discussion client + batched replies). See ADR-018 §4. - **Pseudocode — the 5-source merge + ordering (the part parity tests actually check):** ```kotlin class AttachmentEnrichmentService( private val relationshipClient: RelationshipClient, private val attachmentClient: AttachmentClient, // v2 + v3 private val discussionClient: DiscussionClient, private val sampleClient: SampleClient, ) { fun attachmentsWithMetaData(productId: String): List<AttachmentWithMetaData> { val related = relationshipClient.searchByIds(productId) // 1 call, replaces N+1 graph walks val buckets = related.partitionByType() // 5 buckets: attachment/discussion/thread/sample/etc. val merged = listOf( attachmentClient.hydrateV2AndV3(buckets.attachments), discussionClient.batchGet(buckets.discussions), discussionClient.batchGetThreads(buckets.threads), sampleClient.batchGet(buckets.samples), ).flatten() .filterNot { it.isDraft } // draft filter (ACL should eventually own this — tracked as follow-up) return merged.sortedWith( compareBy<AttachmentWithMetaData> { it.typeRank() } // product=0, discussion=1, sample=2 .thenByDescending { it.createdAt } // tiebreak: newest first ) } } ```
-
 *Acceptance Criteria:*
 1. parity for mixed attachment/discussion/thread/sample
 2. ordering rank preserved (product=0, discussion=1, sample=2; createdAt DESC tiebreak)
@@ -21,14 +15,10 @@ Sub-task,PRODUCT-BE-G-01,(Product) Product.attachmentsWithMetaData [PRODUCT-BE-G
 *Test Cases:*
 * [ ] merge
 * [ ] ordering
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#PRODUCT-BE-G-01"
 Sub-task,PRODUCT-BE-G-03,(Product) Product.attachments + attachmentsV3 + attachmentSummary + ProductTemplate.attachmentsData [PRODUCT-BE-G-03],,,G,L,dgs-migration,product,complex-case,PRODUCT-BE-G-01,G-01,To Do,"*Complex case:* attachments-enrichment — see complexStories/attachments-enrichment/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* four related resolvers sharing `AttachmentEnrichmentService` (G-01).
-
-*Target:*
-* thin `@DgsData` fields over the shared service. - **Example:** `Product.attachments` calls `attachmentEnrichmentService.attachments(productId)` (the plain list, no discussion/sample merge); `attachmentsV3` calls the v3-shaped variant; `attachmentSummary` returns just the counts; all four share the one `G-01` service instance rather than each re-implementing hydration.
 
 *Acceptance Criteria:*
 1. each field returns its shape
@@ -40,4 +30,6 @@ Sub-task,PRODUCT-BE-G-03,(Product) Product.attachments + attachmentsV3 + attachm
 * [ ] draft discussion attachment fixture (draft filter)
 * [ ] workspace-v2-only-attachments fixture
 * [ ] both `attachmentsV3` modes (args-present elastic vs args-absent walk/flag) produce parity output
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#PRODUCT-BE-G-03"

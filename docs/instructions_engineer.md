@@ -4,6 +4,11 @@
 > first time. Goal: by the end of this doc you can find your story, understand what it depends on and
 > what depends on it, and know what "done" means — without needing someone to walk you through it.
 >
+> **Just need the sequencing or the Jira ticket?** [`output/finalArtifacts/`](../output/finalArtifacts/) is
+> the slim entry point — `00-sequencing.md` (build order), `{domain}/FederatedGqlBreakDown-{domain}.md`
+> (Confluence breakdown), `jira/{domain}.csv` (import-ready, Acceptance Criteria only). Everything below is
+> for when you need the full story text to actually implement it.
+>
 > Start at [`output/overview/00-program-overview.md`](../output/overview/00-program-overview.md) if you
 > haven't yet — it explains *why* this migration exists and the phase-lettering scheme (A–H) referenced
 > throughout this doc.

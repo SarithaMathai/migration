@@ -1,9 +1,6 @@
 Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Sub-task,PRODUCT-BE-E-00,"(Product) WriteSaga shared module (Sprint 0, critical path) [PRODUCT-BE-E-00]",,,E,L,dgs-migration,product,complex-case,PRODUCT-BE-E-02,,To Do,"*Complex case:* non-atomic-write-saga — see complexStories/non-atomic-write-saga/00-overview.md and 01-adr-*.md
 
-*Current Behaviour:*
-* today, nine different multi-step ""save"" mutations across seven domains (`updateBom`, `updateMeasurement`, `updatePackaging`, `updateProductDetailsSet`, `updateWatchlistEntries`, `updateClaim`, `updateComponentStatuses`, plus the later-phase sample mutations) each hand-roll their own ordering and failure handling — none of them roll back, most don't even check every step's response, and one has an unawaited race. There is no shared answer to ""step 2 failed, what happens to step 1's already-committed change?"" — see ADR-013 §1-§2 for the full write-by-write inventory and the write-operations grid. - **Pattern (draft ADR-013 Option B, pending ratification):** one shared `WriteSaga` module, living in `plm-product`, reused by every subgraph. Ordered steps, each declaring an `action` + a `policy` — `COMPENSATE(inverse)` (an inverse call exists and is cheap — workspace associate/dissociate, relationship add/remove) · `RETRY(n)` then `PARTIAL_FAILURE` (ACL/permissions writes after the body) · `RECORD` + reconcile (destructive steps with no reliable inverse, e.g. attachment archive/attrs — the Mid-Request ACL Update call for those downstream-token sites rides inside the attachment-client call itself, it is not a separate saga step). The body PUT (the primary write) is the point of no return: fail there, stop, and compensate whatever already committed. Parallel fan-out branches (e.g. `updateComponentStatuses`) are isolated per branch with an aggregated result, never a bare `Promise.all` first-rejection-wins. See ADR-013 §4 Option B for the full default policy table and the `updateBom` step-3-failure sequence diagram. - **Example (the module's shape, from ADR-013 §4):** ```kotlin class WriteSaga { fun <T> step(name: String, action: () -> T, compensation: (() -> Unit)? = null, policy: StepPolicy = StepPolicy.RECORD) fun finish(): SagaResult // COMMITTED | COMPENSATED | PARTIAL_FAILURE, with per-step detail } // a consumer (e.g. updateBom, PRODUCT-BE-... / BOM-BE-E-01) declares its steps against the shared module: saga.step(""workspace-assoc"", { workspaceAssocHelper.associate(...) }, { workspaceAssocHelper.dissociate(...) }, COMPENSATE) saga.step(""body"", { bomService.updateBom(input) }, policy = POINT_OF_NO_RETURN) saga.step(""permissions"", { bomService.updatePermissions(jwt) }, policy = RETRY_THEN_PARTIAL_FAILURE) val result = saga.finish() ``` - **Files to Create:** `plm-product/.../saga/WriteSaga.kt`, `plm-product/.../saga/StepPolicy.kt`, `plm-product/.../saga/SagaResult.kt` — the module and its policy table only; no consumer wiring in this story.
-
 *Acceptance Criteria:*
 1. `WriteSaga` executes ordered steps, stops at the first non-retryable failure, and runs declared compensations (in reverse order) for every already-completed step that has one
 2. Every step's response is checked by construction — there is no code path where a step's result is silently ignored (closes ADR-013 pin-down 5)
@@ -20,14 +17,10 @@ Sub-task,PRODUCT-BE-E-00,"(Product) WriteSaga shared module (Sprint 0, critical 
 * [ ] Unit: a step with `RECORD` policy fails → saga continues past it (not a hard stop), failure recorded in per-step detail
 * [ ] Unit: a step declares `COMPENSATE` but its own compensation call also fails → surfaced as `PARTIAL_FAILURE`, not silently swallowed
 * [ ] Unit: a 5-branch parallel fan-out where 1 branch fails → the other 4 branches' results are still returned, aggregated
-* [ ] Integration: compensation inventory checklist (pin-down 1) run and recorded against real backend endpoints before this story closes"
+* [ ] Integration: compensation inventory checklist (pin-down 1) run and recorded against real backend endpoints before this story closes
+
+*Full story:* be-04-stories.md#PRODUCT-BE-E-00"
 Sub-task,PRODUCT-BE-E-02,(Product) updateComponentStatuses (5-loader fan-out) [PRODUCT-BE-E-02],,,E,L,dgs-migration,product,complex-case,PRODUCT-BE-E-02,E-00,To Do,"*Complex case:* non-atomic-write-saga — see complexStories/non-atomic-write-saga/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* updating component statuses fans out to 5 places in parallel (bom, - measurement, productDetail, packaging — all internal — plus claim, external). - The bug: a loop variable meant to be captured per-iteration is instead shared across iterations (""shadow-var bug""), so by the time the async callbacks run, they can all see the *last* loop value instead of their own — a classic closure-over-loop-variable mistake. parallel fan-out to `bom`/`measurement`/`productDetail`/`packaging` (internal) + `claim` (🟡 EXT).
-
-*Target:*
-* `coroutineScope { launch {…} } ×5` with structured concurrency; claim via `ClaimClient`. - Fix the shadow var. - **Pattern (draft ADR-013, pending ratification):** parallel fan-out branches run as isolated `WriteSaga` steps (built in `PRODUCT-BE-E-00`) with an aggregated per-domain result (ADR-013 pin-down 7); the duplicated `claimIds` DTO bug and the void return are fixed as accepted deviations (pin-down 4). - **Example (the bug, and the fix):** ```kotlin // before (bug): all 5 launched coroutines can end up reading the same `loader` reference for (loader in listOf(bomLoader, measurementLoader, productDetailLoader, packagingLoader, claimLoader)) { launch { loader.updateStatus(componentId, status) } // `loader` here is not safely captured per-iteration } // after (fixed): structured concurrency with an explicit per-item bind coroutineScope { listOf(bomLoader, measurementLoader, productDetailLoader, packagingLoader, claimLoader).map { loader -> async { runCatching { loader.updateStatus(componentId, status) } } // each async captures its own `loader` }.awaitAll() } ```
 
 *Acceptance Criteria:*
 1. per-loader failures don't fail siblings
@@ -37,14 +30,10 @@ Sub-task,PRODUCT-BE-E-02,(Product) updateComponentStatuses (5-loader fan-out) [P
 *Test Cases:*
 * [ ] 5-way fan-out
 * [ ] partial failure isolation
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#PRODUCT-BE-E-02"
 Sub-task,MST-BE-E-01,(Measurement) updateMeasurement — 2-step orchestrated write [MST-BE-E-01],,,E,L,dgs-migration,measurement,complex-case,MST-BE-E-01,"B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Complex case:* non-atomic-write-saga — see complexStories/non-atomic-write-saga/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* 1. `workspaceAssociations = sparkMeasurement.updateWorkspaceAssociations || {}`. (ACL context) token for `[humanId]`. 2. **If** add/remove workspaces → `workspaceAssociationHelper(MEASUREMENT, humanId, add, remove)`; on its `validationErrors||message` → throw. **(commits first)** 3. `measurement.updateMeasurement(sparkMeasurement)` → `PUT …/measurements/v1/{humanId}` (`omitParamsInBody`). 4. On `validationErrors||message` → throw. Return measurement. - **Risk 🟡:** 2 sequential writes, no rollback — workspace change persists if body PUT fails. - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association).
-
-*Target:*
-* `MeasurementUpdateOrchestrator`: workspace assoc → body PUT. **PO decision E-01:** failure strategy (saga / compensation log / best-effort). Typed exception replaces shape-sniff; prime cache on success. - **Files:** `service/MeasurementUpdateOrchestrator.kt`, `MeasurementMutationDataFetcher.kt`.
 
 *Acceptance Criteria:*
 1. Parity for 3 fixtures: body-only; body+workspace-add; body+workspace-remove
@@ -57,14 +46,10 @@ Sub-task,MST-BE-E-01,(Measurement) updateMeasurement — 2-step orchestrated wri
 * [ ] Unit: order workspace→body
 * [ ] Unit: no-workspace skip
 * [ ] Unit: body-failure path
-* [ ] Parity: 3 fixtures"
+* [ ] Parity: 3 fixtures
+
+*Full story:* be-04-stories.md#MST-BE-E-01"
 Sub-task,BOM-BE-E-01,(BOM) updateBom — 3-step orchestrated write [BOM-BE-E-01],,,E,XL,dgs-migration,bom,complex-case,BOM-BE-E-01,"D-02, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Complex case:* non-atomic-write-saga — see complexStories/non-atomic-write-saga/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* editing a bom today is really three separate backend calls made one - after another, with no undo button: (1) if the caller changed which workspaces the bom belongs to, save that first; (2) save the actual bom fields; (3) if the caller changed business-partner permissions, save that last. - If call 2 or 3 fails, call 1 has already gone through — there's no way today to detect or undo that. 1. (ACL note — context) capability token obtained for `humanId` because the update is resource-scoped; ignored in DGS. 2. **If** `workspaceContext` has add/remove → `workspaceAssociationHelper(BOM, humanId, add, remove)` (**commits first**) → PUT `…/{bomId}/{associate|dissociate}_workspace`. 3. `bomService.updateBom(sparkBom)` → `PUT {base}/…/bom/v1/{humanId}` (`omitParamsInBody: true`). 4. If `validationErrors || message` → throw. 5. **If** `businessPartners` present → `bomService.updatePermissions().load(sparkBom)` → PUT `…/{humanId}/permission`. 6. Return the updated bom. - **Risk 🔴:** three sequential writes, **no rollback** today. Step-2 workspace change persists even if step 3 fails; step-5 permission update can leave ACL stale. - **EXT Service Calls:** **EXT** → key: `workspaceV2` · 🟡 (association step).
-
-*Target:*
-* `BomUpdateOrchestrator` running steps in order: workspace assoc → body PUT - (`omitParamsInBody`) → optional permissions PUT. - **Failure strategy (draft ADR-013, pending ratification):** against the shared `WriteSaga` module built in `PRODUCT-BE-E-00` — workspace assoc `COMPENSATE` → body PUT = point of no return → permissions `RETRY` then `PARTIAL_FAILURE`; the never-checked `updatePermissions` response becomes checked by construction (ADR-013 pin-down 5). `BOM-BE-S-01`'s three open questions (§""What's unknown"") are all answered by ADR-013's decision — see that story's note. - Replace the `validationErrors||message` shape-sniff with a typed `BomValidationException`. - Prime the read cache on success. - **Files / Dependencies:** `service/BomUpdateOrchestrator.kt`, `BomMutationDataFetcher.kt`; D-02 (shares the workspace step); consumes the shared `WriteSaga` module from `PRODUCT-BE-E-00`. - **Pseudocode (steps + policy per ADR-013 §4-B):** ```kotlin class BomUpdateOrchestrator(private val saga: WriteSaga) { fun updateBom(humanId: String, body: BomInput, workspaceCtx: WorkspaceContext?, partners: List<BusinessPartner>?): Bom { saga.step(""workspace-assoc"", // do: { workspaceCtx?.let { manageBomWorkspaces(humanId, it.toAdd, it.toRemove) } }, // compensate (undo) — COMPENSATE policy per ADR-013 §4-B: { workspaceCtx?.let { manageBomWorkspaces(humanId, toAdd = it.toRemove, toRemove = it.toAdd) } } ) saga.step(""body-put"", { restClient.putBom(humanId, body.omit(""humanId"")) }, // throws BomValidationException on validationErrors/message { /* point of no return — no compensation, per ADR-013 §4-B */ } ) saga.step(""permissions-put"", { partners?.let { restClient.putPermissions(humanId, it) } }, { /* RETRY then PARTIAL_FAILURE — no compensation, stale ACL surfaced per ADR-013 §4-B */ } ) val result = saga.finish() // COMMITTED | COMPENSATED | PARTIAL_FAILURE bomCache.prime(humanId, result.bom) // only on COMMITTED return result.bom } } ```
 
 *Acceptance Criteria:*
 1. Parity for 5 fixtures: body-only; body+workspace-add; body+workspace-remove; body+partners; body+workspace+partners
@@ -79,14 +64,10 @@ Sub-task,BOM-BE-E-01,(BOM) updateBom — 3-step orchestrated write [BOM-BE-E-01]
 * [ ] Unit: no-workspace skip
 * [ ] Unit: no-partners skip
 * [ ] Unit: step-3 (permissions) failure path yields `PARTIAL_FAILURE` with per-step detail
-* [ ] Parity: 5 fixtures"
+* [ ] Parity: 5 fixtures
+
+*Full story:* be-04-stories.md#BOM-BE-E-01"
 Sub-task,PKG-BE-E-01,(Packaging) updatePackaging (multi-step write) [PKG-BE-E-01],,,E,L,dgs-migration,packaging,complex-case,PKG-BE-E-01,"B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Complex case:* non-atomic-write-saga — see complexStories/non-atomic-write-saga/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* 1) token; set `humanId=packagingId`; `PUT packaging/v1` (body); 2) if `attachmentsToRemove` → (🔴 attachment) `archiveAttachmentBulkV2` + (🟡 relationship) `removeRelationship`; 3) if `attachmentsToAdd` → (🟡 relationship) `addBulkRelationShip` (**reject on status≥400**) then (🔴 attachment) `bulkUpdateAttributes`; 4) **throw on `validationErrors`/`message`**. No rollback. - **EXT:** 🔴 attachment · 🟡 relationship.
-
-*Target:*
-* ordered steps + chosen failure strategy (**PO decision**); **align** the add/remove error handling (the remove branch currently swallows errors).
 
 *Acceptance Criteria:*
 1. all branches in order
@@ -99,14 +80,10 @@ Sub-task,PKG-BE-E-01,(Packaging) updatePackaging (multi-step write) [PKG-BE-E-01
 * [ ] add
 * [ ] status≥400
 * [ ] partial-failure
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#PKG-BE-E-01"
 Sub-task,PDTL-BE-E-01,(Product Details) updateProductDetailsSet (multi-step write) [PDTL-BE-E-01],,,E,L,dgs-migration,productDetails,complex-case,PDTL-BE-E-01,"B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Complex case:* non-atomic-write-saga — see complexStories/non-atomic-write-saga/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* 1) if `workspaceContext.{add,remove}Workspaces` non-empty → `workspaceAssociationHelper(PRODUCT_DETAIL, id, add, remove)` (throws on error); 2) null `workspaceContext`; 3) if `deleteAttachmentIds` → (🔴 attachment) `archiveAttachmentBulkV3` (separate ACL token); 4) `PUT construction/v1/{id}`. **No rollback across steps.** - **EXT:** 🔴 attachment · 🟡 workspaceV2.
-
-*Target:*
-* ordered steps with a chosen failure strategy (**PO decision** saga / compensation log / best-effort).
 
 *Acceptance Criteria:*
 1. all 4 steps in order
@@ -118,14 +95,10 @@ Sub-task,PDTL-BE-E-01,(Product Details) updateProductDetailsSet (multi-step writ
 * [ ] workspace-only
 * [ ] attachment-archive
 * [ ] partial-failure
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#PDTL-BE-E-01"
 Sub-task,WATCHLIST-BE-E-01,(Watchlist) updateWatchlistEntries (multi-step write) [WATCHLIST-BE-E-01],,,E,L,dgs-migration,watchlist,complex-case,WATCHLIST-BE-E-01,"B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Complex case:* non-atomic-write-saga — see complexStories/non-atomic-write-saga/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* 1) **per-entry (currently NOT awaited — bug):** `getUserGroups([humanId])`; if existing participants → `updateUserGroup`, else (🔵 user-group) `addUserGroup` (throw on error); 2) (own) `updateWatchlistEntries(entries)` (throw on error); 3) collect `removedAttachmentIds` → (ACL) token → (🔴 attachment) `archiveAttachmentBulkV3`. **No rollback.** - **EXT:** 🔴 attachment · 🔵 user-group.
-
-*Target:*
-* **await** the per-entry user-group upserts (fix the race) before/with the body update; chosen failure strategy (**PO decision**).
 
 *Acceptance Criteria:*
 1. user-group upserts complete before the watchlist update (race fixed)
@@ -138,14 +111,10 @@ Sub-task,WATCHLIST-BE-E-01,(Watchlist) updateWatchlistEntries (multi-step write)
 * [ ] attachment archive
 * [ ] ordering/await
 * [ ] partial-failure
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#WATCHLIST-BE-E-01"
 Sub-task,CLAIM-BE-E-01,(Claims) updateClaim (proxy ACL + multi-step write) [CLAIM-BE-E-01],,,E,L,dgs-migration,claims,complex-case,CLAIM-BE-E-01,"B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",To Do,"*Complex case:* non-atomic-write-saga — see complexStories/non-atomic-write-saga/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* 1) `getUserPermissionsJWTByProxy({id:humanId, proxyIds:[parentId], basePermissions:true})` (proxy/external ACL path — context only); 2) if `workspaceContext.{add,remove}` non-empty → `workspaceAssociationHelper(CLAIM, humanId, add, remove)`; 3) `PUT {base}/{humanId}`; 4) **throw on `validationErrors`/`message`**. No rollback. - **EXT:** 🟡 workspaceV2.
-
-*Target:*
-* ordered steps + chosen failure strategy (**PO decision**). The proxy ACL is **context-only** (note it; build nothing).
 
 *Acceptance Criteria:*
 1. workspace assoc runs when present
@@ -157,4 +126,6 @@ Sub-task,CLAIM-BE-E-01,(Claims) updateClaim (proxy ACL + multi-step write) [CLAI
 * [ ] +workspace
 * [ ] validation-error→throw
 * [ ] partial-failure
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#CLAIM-BE-E-01"

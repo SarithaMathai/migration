@@ -1,12 +1,6 @@
 Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Sub-task,PRODUCT-BE-G-02,(Product) Product.components [PRODUCT-BE-G-02],,,G,XL,dgs-migration,product,complex-case,PRODUCT-BE-G-02,,To Do,"*Complex case:* components-and-counts-rollups — see complexStories/components-and-counts-rollups/00-overview.md and 01-adr-*.md
 
-*Current Behaviour:*
-* the components tab lists everything attached to a product — measurements, - claims, boms, product-details, packaging — tagged by type, with counts (how many are archived, how many per component type, broken down per business partner). - Today's biggest performance problem: for every claim in the result, it makes a **separate** ACL permission check call — 50 claims means 50 sequential ACL calls (""N+1""), instead of one batched call for all 50. ~190 ln — 4 parallel elastic (measurement/claim/bom/productDetail) + packaging + **per-claim N+1 ACL** + 5-type merge + count rollups.
-
-*Target:*
-* refactor N+1 ACL into a batched call; preserve type tagging + `cloneDeep(initialCountsByBp)`. - **Pattern (draft ADR-014, pending ratification):** owner-computed rollup — bom/measurement/packaging/productDetail queries become in-process calls (co-located), elastic/claims/ACL stay sibling clients; the four fixes (batched claim ACL, packaging joins the parallel group, explicit field args replacing `info.variableValues`, zeros-object) are accepted deviations. Preserve `type 2 → packagingBom` tagging (recorded in `SPIKE-05`'s code→type registry). See ADR-014 §4. - **Pseudocode — the N+1 → batched ACL fix (the actual point of this port):** ```kotlin // before (bug, N+1): one ACL call per claim val claimsWithAccess = claims.map { claim -> claim to aclClient.checkAccess(claim.id) } // 50 claims = 50 calls // after (fixed): one batched call for every claim id up front val accessByClaimId = aclClient.checkAccessBatch(claims.map { it.id }) // 50 claims = 1 call val claimsWithAccess = claims.map { claim -> claim to accessByClaimId.getValue(claim.id) } ``` The 5-type merge (measurement/claim/bom/productDetail/packaging) and count rollups (`archivedCount`, `countByComponents` per business partner) are ported as-is — same logic, same `cloneDeep(initialCountsByBp)` pattern to avoid mutating the shared initial-counts template across requests.
-
 *Acceptance Criteria:*
 1. parity for 50+ components, incl. a product with > 100 components (chunked ACL) and a claim with a missing ACL record (throw path preserved, ADR-014 pin-down 2)
 2. `archivedCount`/`countByComponents` match source exactly (incl. name/status fallbacks and `type 2 → packagingBom`)
@@ -19,4 +13,6 @@ Sub-task,PRODUCT-BE-G-02,(Product) Product.components [PRODUCT-BE-G-02],,,G,XL,d
 * [ ] merge
 * [ ] counts
 * [ ] batched ACL
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#PRODUCT-BE-G-02"

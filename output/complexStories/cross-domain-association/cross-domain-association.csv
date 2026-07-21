@@ -1,61 +1,41 @@
 Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Sub-task,PRODUCT-BE-D-01,(Product) addProduct [PRODUCT-BE-D-01],,,D,M,dgs-migration,product,complex-case,,,To Do,"*Complex case:* cross-domain-association — see complexStories/cross-domain-association/00-overview.md and 01-adr-*.md
 
-*Current Behaviour:*
-* `POST ${v1}` + optional `copyProductToProduct(copyProduct)` + workspace association.
-
-*Target:*
-* `@DgsMutation addProduct(workspaceId, sparkProduct, copyProduct): Product`; orchestrate create→copy→assoc **per `PRODUCT-BE-S-01`'s chosen cross-domain association pattern** (draft ADR-011 Option B: shared association component, sync, service-to-service REST).
-
 *Acceptance Criteria:*
 1. creates product
 2. optional copy runs when `copyProduct` present
 3. workspace assoc applied via the shared association component (no bespoke fan-out code)
-4. failure after create (link or copy fails) surfaces per the mutation's declared failure policy — default fail-fast, no rollback, documented (ADR-011 §4)"
+4. failure after create (link or copy fails) surfaces per the mutation's declared failure policy — default fail-fast, no rollback, documented (ADR-011 §4)
+
+*Full story:* be-04-stories.md#PRODUCT-BE-D-01"
 Sub-task,PRODUCT-BE-D-02,(Product) addProducts (bulk) [PRODUCT-BE-D-02],,,D,M,dgs-migration,product,complex-case,,,To Do,"*Complex case:* cross-domain-association — see complexStories/cross-domain-association/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* bulk `POST ${v1}/bulk` + attachment-link side-effects (no rollback — **preserve, flag**).
-
-*Target:*
-* `@DgsMutation` → `ProductBulkType`; attachment linking follows `PRODUCT-BE-S-01`'s pattern (draft ADR-011: the `bulkUpdateAttachmentsV2` cross-resolver import becomes an attachment-service client call inside the component; the unawaited `bulkUpdateResource` becomes awaited — both accepted deviations, ADR-011 §4 pin-downs 1/3).
 
 *Acceptance Criteria:*
 1. bulk creates
 2. attachment links applied via the shared association component; no-rollback behaviour documented (compensation deferred to the shared `WriteSaga` module, `PRODUCT-BE-E-00`, per ADR-011 pin-down 2)
-3. no resolver import remains; the formerly fire-and-forget attachment re-point is awaited and its failure visible (accepted deviations per ADR-011 §4)"
+3. no resolver import remains; the formerly fire-and-forget attachment re-point is awaited and its failure visible (accepted deviations per ADR-011 §4)
+
+*Full story:* be-04-stories.md#PRODUCT-BE-D-02"
 Sub-task,PRODUCT-BE-D-04,(Product) updateProduct [PRODUCT-BE-D-04],,,D,M,dgs-migration,product,complex-case,,,To Do,"*Complex case:* cross-domain-association — see complexStories/cross-domain-association/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* `PUT ${v1}/{id}` + optional copy + archive removed-template attachments (template branch).
-
-*Target:*
-* `@DgsMutation updateProduct(input, copyProduct): Product`; attachment archiving follows `PRODUCT-BE-S-01`'s pattern (draft ADR-011 Option B: shared association component, per-mutation declared failure policy).
 
 *Acceptance Criteria:*
 1. updates product
 2. optional copy
 3. removed-template attachments archived (template branch)
-4. attachment archiving applied via the shared association component (no bespoke fan-out code)"
+4. attachment archiving applied via the shared association component (no bespoke fan-out code)
+
+*Full story:* be-04-stories.md#PRODUCT-BE-D-04"
 Sub-task,PRODUCT-BE-D-06,(Product) addTeamsToProduct 🔀 Collab Canvas [PRODUCT-BE-D-06],,,D,XS,dgs-migration,product,complex-case,,,To Do,"*Complex case:* cross-domain-association — see complexStories/cross-domain-association/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* `POST ${v1}/{productId}/resources/bulk` + manage_workspace_teams.
-
-*Target:*
-* plain `@DgsMutation` (single-backend write).
 
 *Acceptance Criteria:*
 1. adds teams + new partners + workspace links
-2. partner-add failure exits early with a thrown typed error (today `return new Error(...)` — standardized per ADR-011 §4 pin-down 4, accepted deviation); teams are not added after a failed partner add (legacy order preserved)"
+2. partner-add failure exits early with a thrown typed error (today `return new Error(...)` — standardized per ADR-011 §4 pin-down 4, accepted deviation); teams are not added after a failed partner add (legacy order preserved)
+
+*Full story:* be-04-stories.md#PRODUCT-BE-D-06"
 Sub-task,PRODUCT-BE-D-07,(Product) addBusinessPartnersToProductWithType 🔀 Collab Canvas [PRODUCT-BE-D-07],,,D,XS,dgs-migration,product,complex-case,,,To Do,"*Complex case:* cross-domain-association — see complexStories/cross-domain-association/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* `POST ${v1}/{productId}/partners-add/bulk`; success = response has `product_id` and no `status_code`; failure = log + `return new Error(...)` (returned, not thrown — surfaces as a field error).
-
-*Target:*
-* plain `@DgsMutation`.
 
 *Acceptance Criteria:*
 1. adds partners with type
-2. failure throws a typed `DgsException` instead of `return new Error(...)` (accepted parity deviation, ADR-011 §4 pin-down 4)"
+2. failure throws a typed `DgsException` instead of `return new Error(...)` (accepted parity deviation, ADR-011 §4 pin-down 4)
+
+*Full story:* be-04-stories.md#PRODUCT-BE-D-07"

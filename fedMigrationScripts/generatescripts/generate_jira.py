@@ -252,31 +252,11 @@ def parse_stories(stories_path: Path) -> list[dict]:
                 if cleaned:
                     test_lines.append(f"[ ] {cleaned}")
 
-        # Build description
+        # Build description — Jira tickets carry Acceptance Criteria only (plus a back-link
+        # to the full story). Current Behaviour / Target implementation detail stays in
+        # be-04-stories.md; duplicating it into every ticket made tickets long without adding
+        # anything an engineer needs to start work — they follow the back-link for that.
         desc_parts = []
-
-        # Current Behaviour — handle both inline (**CB:**) and header (#### CB) formats
-        cb = (
-            extract_named_section(body, "Current Behaviour")
-            or _extract_inline_section(body, r"\*\*Current Behaviour[^:*]*:\*\*\s*", r"\*\*Target|\n\n####")
-        )
-        if cb and cb.lower() not in ("green-field", "—", ""):
-            # Strip EXT/ACL footnote lines
-            cb_clean = re.sub(r"> \*\*EXT[^\n]*\n?", "", cb)
-            cb_clean = re.sub(r"> \*\*ACL[^\n]*\n?", "", cb_clean)
-            cb_clean = clean_jira_text(cb_clean).rstrip(" -")
-            if cb_clean:
-                desc_parts.append(f"*Current Behaviour:*\n* {cb_clean}")
-
-        # Target — handle both formats
-        tgt = (
-            extract_named_section(body, "Target DGS Implementation")
-            or _extract_inline_section(body, r"\*\*Target(?: DGS Implementation)?[:\*]*\*?\s*", r"\n\n\*\*Files|\n\n####")
-        )
-        if tgt:
-            tgt_clean = clean_jira_text(tgt).rstrip(" -")
-            if tgt_clean:
-                desc_parts.append(f"*Target:*\n* {tgt_clean}")
 
         # Spike-specific: pull the plain-English summary + the unknowns so the ticket is
         # self-explanatory. The spike analysis reflects the research done so far; the ADR
@@ -316,6 +296,7 @@ def parse_stories(stories_path: Path) -> list[dict]:
                 else:
                     desc_parts.append("*Acceptance Criteria:*\n* " + clean_jira_text(acc_m.group(1)))
 
+        desc_parts.append(f"*Full story:* {stories_path.name}#{sid}")
         description = "\n\n".join(desc_parts)  # real paragraphs, preserved by CSV quoting
 
         stories.append({
@@ -339,9 +320,6 @@ try:
     from generate_breakdown import (
         spike_for as _spike_for, SPIKE_TITLES, SPIKE_LAYMAN, SPIKE_DECISION,
         SPIKE_STEPS, SPIKE_CASE_FOLDER, xs_merge_map as _xs_merge_map,
-        parse_stories as _bd_parse_stories, compute_implementation_order as _bd_order,
-        DOMAIN_OWNERS as _DOMAIN_OWNERS, PRIORITY_MAP as _PRIORITY_MAP,
-        PHASE_SEQ as _BD_PHASE_SEQ,
     )
 except Exception:                                    # pragma: no cover — fallback keeps CSVs generating
     _spike_for       = lambda s: None
@@ -351,34 +329,6 @@ except Exception:                                    # pragma: no cover — fall
     SPIKE_STEPS      = {}
     SPIKE_CASE_FOLDER = {}
     _xs_merge_map    = lambda domain: {}
-    _bd_parse_stories = lambda p: []
-    _bd_order        = lambda st: ([], {}, [])
-    _DOMAIN_OWNERS   = {}
-    _PRIORITY_MAP    = {}
-    _BD_PHASE_SEQ    = "ABCDEFG"
-
-
-_FE_STORIES_CACHE = None
-
-
-def _fe_stories() -> list[dict]:
-    """FE stories (dep-remapped) — used to list which FE stories a BE story Blocks."""
-    global _FE_STORIES_CACHE
-    if _FE_STORIES_CACHE is None:
-        try:
-            import importlib.util as _ilu
-            spec = _ilu.spec_from_file_location(
-                "generate_frontend", Path(__file__).resolve().parent / "generate_frontend.py")
-            gf = _ilu.module_from_spec(spec)
-            spec.loader.exec_module(gf)
-            _FE_STORIES_CACHE = gf.parse_fe_stories()
-        except Exception:
-            _FE_STORIES_CACHE = []
-    return _FE_STORIES_CACHE
-
-
-def _op_name(title: str) -> str:
-    return re.sub(r"\(.*?\)", "", title).replace("`", "").strip()
 
 _SPIKE_REF_RE = re.compile(r"\b(?:[A-Z]+-BE-)?S-?\d+\b")
 
@@ -472,76 +422,6 @@ def build_story_rows(domain: str) -> list[list]:
     gone_short = {_short_be(k): _short_be(v) for k, v in merge_map.items()}
     by_id      = {s["id"]: s for s in stories}
 
-    # Story-sequencing metadata (Implementation Order / Blocks / Parallelizable) — same
-    # dependency engine as the breakdown pages and 02-project-plan.md.
-    order_no: dict[str, int] = {}
-    level: dict[str, int] = {}
-    step_pop: dict[int, int] = {}
-    blocks: dict[str, list] = {}
-    bd_title: dict[str, str] = {}
-    total_ordered = 0
-    try:
-        bstories = [s for s in _bd_parse_stories(src_dir / "be-04-stories.md")
-                    if s.get("phase") != "S"]
-        waves, _g, _c = _bd_order(bstories)
-        level = {s["id"]: i for i, w in enumerate(waves, 1) for s in w}
-        for lv in level.values():
-            step_pop[lv] = step_pop.get(lv, 0) + 1
-        seq = sorted(bstories, key=lambda s: (
-            level.get(s["id"], 99),
-            _BD_PHASE_SEQ.find(s["phase"]) if s["phase"] in _BD_PHASE_SEQ else 99, s["id"]))
-        order_no = {s["id"]: n for n, s in enumerate(seq, 1)}
-        total_ordered = len(seq)
-        bd_title = {s["id"]: _op_name(s["title"]) for s in bstories}
-        short2full = {_short_be(s["id"]): s["id"] for s in bstories}
-        blocks = {s["id"]: [] for s in bstories}
-        for s in bstories:
-            for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s["depends"] or ""):
-                dep_full = short2full.get(m.group(1))
-                if dep_full and dep_full != s["id"]:
-                    blocks[dep_full].append(s["id"])
-        for fs in _fe_stories():
-            for d in fs["depends"]:
-                if d in blocks and fs["id"] not in blocks[d]:
-                    blocks[d].append(fs["id"])
-    except Exception:
-        pass
-    owner_be = _DOMAIN_OWNERS.get(domain, {}).get("be", "Backend")
-
-    def _named(full_id: str) -> str:
-        t = bd_title.get(full_id, "")
-        return f"{full_id} — {t}" if t else full_id
-
-    def meta_block(s: dict) -> str:
-        if s["id"] not in order_no:
-            return ""
-        lv = level.get(s["id"], 0)
-        dep_fulls = []
-        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b",
-                             remap_deps(_strip_domain_spike_refs(s["depends"])) or ""):
-            full = next((f for f in bd_title if _short_be(f) == m.group(1)), None)
-            if full and full != s["id"] and full not in dep_fulls:
-                dep_fulls.append(full)
-        blk = blocks.get(s["id"], [])
-        lines = [
-            f"*Implementation Order:* {order_no[s['id']]} of {total_ordered} "
-            f"({tag} backend, step {lv})",
-            f"*Domain:* {tag} — *Team:* Backend — *Owner:* {owner_be}",
-            f"*Priority:* {_PRIORITY_MAP.get(s['complexity'], 'Medium')} — "
-            f"*Parallelizable:* {'Yes' if step_pop.get(lv, 0) > 1 else 'No'}",
-            "",
-            "*Depends On:*",
-        ]
-        lines += [f"* {_named(f)}" for f in dep_fulls] or ["* None"]
-        lines += ["", "*Blocks:*"]
-        lines += [f"* {_named(b) if b in bd_title else b}" for b in blk] or ["* None"]
-        return "\n".join(lines)
-
-    BE_DOD = ("*Definition of Done:*\n"
-              "* PR merged on green (unit + parity tests pass)\n"
-              "* Schema change pushed to Hive; operation(s) resolvable through the federated router\n"
-              "* Response shape parity with the legacy gateway (no client-visible change)")
-
     def remap_deps(dep: str) -> str:
         if not dep or not gone_short:
             return dep
@@ -589,9 +469,6 @@ def build_story_rows(domain: str) -> list[list]:
             dep      = spike_id if not dep else f"{spike_id}, {dep}"
             note     = f"*Requires spike:* {spike_id} ({SPIKE_TITLES.get(b, '')}) — see program spike"
             desc     = (note + "\n\n" + desc) if desc else note
-
-        # Sequencing metadata first, Definition of Done last (story template convention)
-        desc = "\n\n".join(x for x in (meta_block(s), desc, BE_DOD) if x)
 
         ext = _ext_services_for_story(domain, s["id"])
 

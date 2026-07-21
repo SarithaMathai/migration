@@ -1,36 +1,27 @@
 Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
 Sub-task,BOM-BE-A-05,(BOM) Shared CI conformance gate + code → type registry (SPIKE-05) [BOM-BE-A-05],,,A,M,dgs-migration,bom,complex-case,BOM-BE-A-04,A-04,To Do,"*Complex case:* polymorphic-type-resolution — see complexStories/polymorphic-type-resolution/00-overview.md and 01-adr-*.md
 
-*Current Behaviour:*
-* today there are five hand-maintained dispatch tables across three domains (`BomMaterialInterface`, `BomImpressionDetailsInterface`, `SampleAsset`, `SampleV2.parent*` prefix gates, materials-search `type`-string dispatch) with **no guard** — an added interface impl with no matching dispatch row, or a dispatch row targeting a type that no longer exists, fails silently at runtime (the wrong fragment renders, nothing throws). See ADR-017 §1 for the full table-by-table inventory. - **Pattern (draft ADR-017 Option B, pending ratification):** `BOM-BE-A-04` already does the per-site port (constants enum + dumb-lookup `@DgsTypeResolver`) for bom's two dispatch sites — this story builds the **shared** pieces that sit alongside every per-site port: (1) a CI conformance-check test library, versioned with the schema-registry tooling and pinned by each affected subgraph's own build (ADR-017 pin-down 7); (2) the `SPIKE-05` `code → type` registry — one human-readable master table seeded from ADR-017 §1, including ADR-014's `type 2 → packagingBom` row (cross-reference to the components-and-counts-rollups case). - **The conformance gate's three checks (ADR-017 §3-B):** ``` 1. Parse the subgraph SDL: every member of every interface/union must have ≥1 enum row targeting it, and every enum row's target must exist in the SDL — catches both ""add a type, forget the row"" and ""add a row, forget the type."" 2. The default branch must be declared EXPLICITLY in the enum — no implicit fall-through allowed (closes ADR-017 pin-down 2: HUB code 9 / COMPONENT 1 / OTHER 5 must be a named DEFAULT row, not an accidental ""else"" branch that could later be cased away and silently break hub-material rendering). 3. A golden-table fixture per dispatch site (code/prefix → type snapshot) diffed on every build; a mapping change requires a fixture change in the same PR — mapping changes become reviewable events, not silent diffs. ``` - **Files to Create:** shared library — `conformance-gate/DispatchConformanceCheck.kt` (the three checks above, generic over any SDL + enum pair); `conformance-gate/CodeToTypeRegistry.md` (the human-readable `SPIKE-05` registry, seeded from ADR-017 §1 + ADR-014 pin-down 6); per-subgraph wiring — `bom/build.gradle.kts` pins the shared library into bom's CI build against `BomConstants.kt` + `bom.graphqls`.
-
 *Acceptance Criteria:*
 1. The conformance library's three checks (SDL↔enum, explicit-default, golden-fixture-diff) run against `BomConstants.kt` + `bom.graphqls` in bom's CI build and pass on the current (correct) mapping
 2. Demonstrably fails on each drift direction, proven by a negative test per direction: an SDL member with no enum row; an enum row with no SDL type; an undeclared/implicit default; a mapping change with no fixture change in the same commit
 3. Golden-table fixtures exist for both of bom's dispatch sites (`BomMaterialInterface`, `BomImpressionDetailsInterface`), seeded from ADR-017 §1 and backend-verified per `A-04` AC-3 — including a HUB (code 9) material row and an unknown/missing category-code row (ADR-017 §5 fixture list)
 4. The `code → type` registry (`CodeToTypeRegistry.md`) is a standalone, human-readable page covering all five dispatch sites named in ADR-017 §1 (the three not yet built — `SampleAsset`, `SampleV2.parent*`, materials search — are recorded as later-phase rows so `SAMPLE-BE-A-04`/`SAMPLE-BE-G-02` and `SEARCH-BE-B-01`/`SEARCH-BE-C-02` inherit the table rather than re-deriving it), and includes ADR-014's `type 2 → packagingBom` row
 5. The library is versioned with the schema-registry tooling and documented as a single shared artifact — no domain forks its own copy (ADR-017 pin-down 7)
-6. This story does not touch any per-variant field resolver or dispatch table itself — those are `A-04`'s and each per-variant `G-0x` story's own scope; this story only builds and wires the shared gate + registry"
+6. This story does not touch any per-variant field resolver or dispatch table itself — those are `A-04`'s and each per-variant `G-0x` story's own scope; this story only builds and wires the shared gate + registry
+
+*Full story:* be-04-stories.md#BOM-BE-A-05"
 Sub-task,BOM-BE-A-04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [BOM-BE-A-04],,,A,M,dgs-migration,bom,complex-case,BOM-BE-A-04,,To Do,"*Complex case:* polymorphic-type-resolution — see complexStories/polymorphic-type-resolution/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* - Material: switch on `material.materialCategory.code` → 4→Trim, 6→Wash, 2→Fabric, 15→Combination, 16→FabricSpec, {10,11,12,13,14,17–24}→Packaging, **default (1,5,9)→BomMaterial**. - Impression: switch on `impression.type` → 603→Trim, 605→TrimZipper, 604→Wash, 602→Fabric, **default 601→Base**.
-
-*Target:*
-* Two `@DgsTypeResolver(name=...)` functions mirroring the switches. Keep the default branches exactly (HUB code 9 must fall through to `BomMaterial`). Source the category codes from a `BomConstants.kt` enum (replaces the resolver's `MATERIAL_CATEGORY_ID` — fixes the circular import). - **Files to Create / Modify:** `dataFetcher/BomTypeResolvers.kt`; `model/BomConstants.kt`.
 
 *Acceptance Criteria:*
 1. Each `materialCategory.code` maps to the type in the table above; unknown codes → `BomMaterial`
 2. Each impression `type` maps correctly; unknown → `BomBaseImpressionDetails`
-3. `BomConstants` holds all 21 category codes + 5 impression codes (verify values against backend, ADR-017 pin-down 1)"
+3. `BomConstants` holds all 21 category codes + 5 impression codes (verify values against backend, ADR-017 pin-down 1)
+
+*Full story:* be-04-stories.md#BOM-BE-A-04"
 Sub-task,PRODUCT-BE-G-04,(Product) ProductsCategories.categories (12-case) + DopplerDepartment fields [PRODUCT-BE-G-04],,,G,M,dgs-migration,product,complex-case,BOM-BE-A-04,,To Do,"*Complex case:* polymorphic-type-resolution — see complexStories/polymorphic-type-resolution/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* `categories` is a polymorphic union — depending on which category type - the caller asked for, a different one of 12 branches builds the response shape. - Two of those branches (`DopplerDepartment.primaryCapacityTypeName` / `secondaryCapacityTypeName`) both need the same Doppler department lookup, so today's code memoizes that one call and reuses it for both fields. - 12-branch dispatcher; `DopplerDepartment.primary/secondaryCapacityTypeName` share one Doppler call (memoized).
-
-*Target:*
-* Kotlin dispatcher → 12 helpers; Doppler via DataLoader. - **Example:** `getCategories(type: ""department"")` → dispatches to the `department` branch → builds a `DopplerDepartment`; its two capacity-type-name fields both call `dopplerLoader.load(departmentId)` — same `DataLoader` batch key, so it's one Doppler call even though two fields need it.
 
 *Acceptance Criteria:*
 1. each category type built correctly
-2. Doppler fetched once"
+2. Doppler fetched once
+
+*Full story:* be-04-stories.md#PRODUCT-BE-G-04"

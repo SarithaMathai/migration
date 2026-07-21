@@ -10,14 +10,10 @@ Sub-task,PRODUCT-BE-S-03,(Product) productBusinessPartnerActions failure-strateg
 *Acceptance Criteria:*
 1. Failure strategy chosen and recorded here (may reuse the BOM `WriteSaga`/`WriteRegistry` shared infra)
 2. Per-cleanup-service compensation (or log-and-reconcile action) is specified for each of the 4-5 fan-out targets, concretely enough for `E-01` to implement
-3. `E-01`'s Target DGS Implementation is updated with the concrete choice"
+3. `E-01`'s Target DGS Implementation is updated with the concrete choice
+
+*Full story:* be-04-stories.md#PRODUCT-BE-S-03"
 Sub-task,PRODUCT-BE-E-01,(Product) productBusinessPartnerActions (REMOVE/DROP/UNDROP) [PRODUCT-BE-E-01],,,E,XL,dgs-migration,product,complex-case,PRODUCT-BE-E-01,E-00,To Do,"*Complex case:* partner-drop-undrop-write — see complexStories/partner-drop-undrop-write/00-overview.md and 01-adr-*.md
-
-*Current Behaviour:*
-* removing, dropping, or un-dropping a business partner from a product - isn't one write — it's a ~220-line dispatcher that updates the partner's status and then fans out to clean up that partner's traces in 4 other places (recently-viewed, todo list, favorites, sample evaluations), with no undo if one of those cleanup calls fails partway through. ~220-line dispatcher, 3 cases (`REMOVE_PARTNER`/`DROP_PARTNER`/`UNDROP_PARTNER`). - Partner update + cleanup across `recentlyViewed`/`todo`/`favorite`/`sampleV2`/accessControl. - No rollback. - (ACL context.)
-
-*Target:*
-* `ProductBusinessPartnerActionService` with 3 strategy methods, orchestrated via the shared `WriteSaga` module built in `PRODUCT-BE-E-00`. **Failure strategy is whatever `PRODUCT-BE-S-03` concludes** (the spike the reviewer asked to run first) for the fan-out-specific compensation choices; the underlying saga mechanism itself is settled by ADR-013 (`PRODUCT-BE-E-00`). - **Draft direction (pending ratification):** ADR-012 proposes Option B — the resource owner (`plm-product`) orchestrates via the shared `WriteSaga` (`PRODUCT-BE-E-00`) over a per-domain participant contract; **security ordering constraint:** on drop, the ACL bulk-drop must complete before the mutation returns success (testable invariant, ADR-012 §4). - **Pseudocode (shape only — the exact fan-out compensation depends on `S-03`'s answer):** ```kotlin class ProductBusinessPartnerActionService(private val saga: WriteSaga) { fun execute(action: PartnerAction, productId: String, partnerId: String): Product { saga.step(""partner-status-update"", { restClient.updatePartnerStatus(productId, partnerId, action) }, { restClient.updatePartnerStatus(productId, partnerId, action.inverse()) } // compensation, if S-03 picks saga ) // fan-out cleanup — each is its own saga step so one failing doesn't silently skip the rest listOf(recentlyViewedClient, todoClient, favoriteClient, sampleV2Client).forEach { cleanupClient -> saga.step(""cleanup-${cleanupClient.name}"", { cleanupClient.removeReferencesTo(partnerId, productId) }, { /* compensation or log+reconcile — per S-03 */ } ) } val result = saga.finish() // COMMITTED | COMPENSATED | PARTIAL_FAILURE (with per-step detail) return result.product } } ```
 
 *Acceptance Criteria:*
 1. all 3 paths reach REST parity (recorded fixtures), incl. the design-partner branch (`skipSamples` when `partnerType == DESIGN_PARTNER`)
@@ -33,4 +29,6 @@ Sub-task,PRODUCT-BE-E-01,(Product) productBusinessPartnerActions (REMOVE/DROP/UN
 * [ ] design-partner branch (samples skipped)
 * [ ] partial-failure per step
 * [ ] ACL-before-return ordering invariant
-* [ ] Parity: DGS response matches spark-internal-graphql baseline"
+* [ ] Parity: DGS response matches spark-internal-graphql baseline
+
+*Full story:* be-04-stories.md#PRODUCT-BE-E-01"
