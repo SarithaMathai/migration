@@ -1,7 +1,7 @@
-## PRODUCT-FE-003 — Migrate product list and bulk reads
-Queries in scope: getProducts, getProductsByIds · Mutations excluded: 0
+## PRODUCT-FE-003 — Migrate `getProductsByIds` documents (bulk-by-id reads)
+Queries in scope: getProductsByIds · Mutations excluded: 0
 
-**Must complete first:** BE — PRODUCT-BE-B-02, PRODUCT-BE-B-03, PRODUCT-BE-G-13, PRODUCT-BE-S-02 · New — NEW-PRODUCT-BE-G-??
+**Must complete first:** BE — PRODUCT-BE-B-02, PRODUCT-BE-B-03, PRODUCT-BE-G-13 · New — NEW-PRODUCT-BE-G-??
 
 ### Queries
 
@@ -9,7 +9,6 @@ Queries in scope: getProducts, getProductsByIds · Mutations excluded: 0
 
 | Query | Story | External Dep | Ext-Story | New? | Impacts (queries) | Notes |
 |---|---|---|---|---|---|---|
-| getProducts | PRODUCT-BE-S-02 | — | — | No | getProducts |  |
 | getProductsByIds | PRODUCT-BE-B-02 | — | — | No | getProductsByIds |  |
 | getProductStatus | PRODUCT-BE-B-03 | — | — | No | getProductsByIds |  |
 
@@ -23,4 +22,4 @@ Queries in scope: getProducts, getProductsByIds · Mutations excluded: 0
 | departments | PRODUCT-BE-G-13 | ig | — | No | getProductsByIds |  |
 
 ## PRODUCT-FE-003 — Readiness
-4 of 5 distinct fields/entities resolve to existing backend stories. 1 field(s) have no covering story yet (see the `NEW-...-??` placeholders above) and block full readiness until a real story is authored.
+3 of 4 distinct fields/entities resolve to existing backend stories. 1 field(s) have no covering story yet (see the `NEW-...-??` placeholders above) and block full readiness until a real story is authored.

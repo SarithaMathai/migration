@@ -1,103 +1,70 @@
 FE Story,FE Story Title,Dependency Type,Dependency Story/Spike,Description,External Service,Is Externally-Owned Gap?
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-B-01,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-F-10,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-01,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-02,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-03,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-06,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-07,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-08,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-09,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-10,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-13,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-14,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-S-01,,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Spikes,SPIKE-05,Unresolved spike - gates dependent field(s) until decided,,No
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: resourcePermissions",,No (internal placeholder)
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-B-01,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-B-04,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-F-10,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-01,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-02,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-03,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-06,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-07,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-08,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-09,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-10,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-13,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-14,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-S-01,,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Spikes,SPIKE-05,Unresolved spike - gates dependent field(s) until decided,,No
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: resourcePermissions",,No (internal placeholder)
-PRODUCT-FE-003,Migrate product list and bulk reads,BE,PRODUCT-BE-B-02,,,No
-PRODUCT-FE-003,Migrate product list and bulk reads,BE,PRODUCT-BE-B-03,,,No
-PRODUCT-FE-003,Migrate product list and bulk reads,BE,PRODUCT-BE-G-13,,,No
-PRODUCT-FE-003,Migrate product list and bulk reads,BE,PRODUCT-BE-S-02,,,No
-PRODUCT-FE-003,Migrate product list and bulk reads,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: roles",,No (internal placeholder)
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-B-01,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-B-02,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-B-03,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-F-10,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-G-06,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-G-07,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-G-09,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-G-13,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-S-01,,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
-PRODUCT-FE-004,Migrate product status and workspace-context reads,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: productSamplesReceivedBySampleType",,No (internal placeholder)
-PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-B-01,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-G-01,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-G-02,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-G-03,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-G-04,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-C-02,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-C-03,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-03,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-04,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-06,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-08,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-13,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-H-07,`IG_Clazz_Filter` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references,ig,Yes
-PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-S-02,,,No
-PRODUCT-FE-005,Migrate template library and categories reads,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: additionalInfo",,No (internal placeholder)
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-07,,,No
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-08,,,No
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-09,,,No
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-10,,,No
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-11,,,No
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-C-05,,,No
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-G-07,,,No
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-G-13,,,No
-PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-H-08,`IG_Clazz` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references,ig,Yes
-PRODUCT-FE-006,Migrate product rules administration,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-E-03,,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-E-04,,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-F-06,,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-F-08,,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-G-08,,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-01,,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-02,,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-03,,,No
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-05,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-B-01,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-F-10,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-01,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-02,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-03,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-06,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-07,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-08,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-09,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-10,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-13,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-14,,,No
-PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-S-01,,,No
-PRODUCT-FE-011,Migrate component status rollups,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
-PRODUCT-FE-011,Migrate component status rollups,Spikes,SPIKE-05,Unresolved spike - gates dependent field(s) until decided,,No
-PRODUCT-FE-011,Migrate component status rollups,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: resourcePermissions",,No (internal placeholder)
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-B-01,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-F-10,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-01,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-02,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-03,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-06,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-07,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-08,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-09,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-10,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-G-14,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",BE,PRODUCT-BE-S-01,,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Spikes,SPIKE-05,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: resourcePermissions",,No (internal placeholder)
+PRODUCT-FE-002,Migrate `getProducts` documents (list/search/bulk-create),BE,PRODUCT-BE-S-02,,,No
+PRODUCT-FE-003,Migrate `getProductsByIds` documents (bulk-by-id reads),BE,PRODUCT-BE-B-02,,,No
+PRODUCT-FE-003,Migrate `getProductsByIds` documents (bulk-by-id reads),BE,PRODUCT-BE-B-03,,,No
+PRODUCT-FE-003,Migrate `getProductsByIds` documents (bulk-by-id reads),BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-003,Migrate `getProductsByIds` documents (bulk-by-id reads),New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: roles",,No (internal placeholder)
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-B-01,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-B-02,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-B-03,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-F-10,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-G-06,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-G-07,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-G-09,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,BE,PRODUCT-BE-S-01,,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-004,Migrate `getProductStatus` documents,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: productSamplesReceivedBySampleType",,No (internal placeholder)
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,CLAIM-BE-B-01,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,CLAIM-BE-G-01,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,CLAIM-BE-G-02,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,CLAIM-BE-G-03,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,CLAIM-BE-G-04,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,PRODUCT-BE-C-02,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,PRODUCT-BE-G-03,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,PRODUCT-BE-G-06,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,PRODUCT-BE-G-08,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: additionalInfo",,No (internal placeholder)
+PRODUCT-FE-006,Migrate `getCategories` documents,BE,PRODUCT-BE-C-03,,,No
+PRODUCT-FE-006,Migrate `getCategories` documents,BE,PRODUCT-BE-G-04,,,No
+PRODUCT-FE-006,Migrate `getCategories` documents,BE,PRODUCT-BE-H-07,`IG_Clazz_Filter` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references,ig,Yes
+PRODUCT-FE-006,Migrate `getCategories` documents,BE,PRODUCT-BE-S-02,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-B-07,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-B-08,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-B-09,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-B-10,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-B-11,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-C-05,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-G-07,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-007,Migrate product rules administration,BE,PRODUCT-BE-H-08,`IG_Clazz` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references,ig,Yes
+PRODUCT-FE-007,Migrate product rules administration,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-E-03,,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-E-04,,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-F-06,,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-F-08,,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-G-08,,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-01,,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-02,,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-03,,,No
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-05,,,No
 BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-A-04,,,No
 BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-B-01,,,No
 BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-B-03,,,No

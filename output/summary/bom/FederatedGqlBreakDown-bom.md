@@ -9,7 +9,7 @@
 | **Total Stories** | 37 |
 | **Complexity** | 🔴 1 Very High · 🟠 2 High · 🟡 13 Medium · 🟢 21 Low |
 | **Phase Coverage** | 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -44,7 +44,7 @@ Per **ADR-019** ([`complexStories/acl/01-adr-acl-mid-request-update.md`](https:/
 | Impression polymorphism | 5 types + interface | B-01 |
 | External dependencies | 12 loader keys (2 🔴 · 6 🟡 · 4 🔵) | sibling DGS + VMM platform |
 | Federation contributions | 2 (Product extension, ResourcesCount.bomsCount) | BLOCKED-BY product |
-| **Total stories** | **36** | green-field build stories. The 3 Phase-0 spike stubs are tracked as **program spikes** in the global breakdown and Jira, not as rows here (see global Phase 0) |
+| **Total stories** | **37** | green-field build stories. The 3 Phase-0 spike stubs are tracked as **program spikes** in the global breakdown and Jira, not as rows here (see global Phase 0) |
 
 ---
 
@@ -119,7 +119,7 @@ rest of the phase to finish.
 | Sprint | Stories | Focus |
 |--------|---------|-------|
 | 0 | Program spikes | run in Sprint 0 (see global Phase 0 — Program Spikes) so E-01/rollout-order aren't waiting |
-| 1 | B-01 (DGS module init + service wiring + first resolver), A-05 (shared CI conformance gate) | schema, stubs, type resolvers, service port, drift guard |
+| 1 | A-04 (TypeResolver), A-05 (CI gate), B-01 (DGS module init + service wiring + first resolver) | schema, stubs, type resolvers, service port, drift guard |
 | 2 | B-01, B-03–B-08 + D-03/D-04 | reads (incl. 4 cacheable) + lock/unlock |
 | 3 | C-01–C-05 + D-01/D-02/D-05 | search/supplier + simple mutations |
 | 4 | E-01 | `updateBom` 3-step write (focused; needs `SPIKE-01` concluded) |
@@ -260,7 +260,7 @@ rest of the phase to finish.
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `BOM-BE-F-01`<br>Implement `Product.productBoms` / `boms` / `packagingBoms` (internal) | 🟡 Medium `M` | Field Resolver | — | **Intent —** Serve a product's BOM lists from BOM's own service instead of product reaching across.<br>**Today —** when a client asks a Product for its boms today, that resolver lives - in product's code and reaches across to BOM's data loader. - After migration, product and bom…<br>**Done when:**<br>• `Product.productBoms/boms/packagingBoms` resolve via `bomService` internally<br>• the equivalent product-side resolvers are removed<br>• `boms(types)` filters by bom type<br>• no gateway hop |
+| 🔸 `BOM-BE-F-01`<br>Implement `Product.productBoms` / `boms` / `packagingBoms` (internal) | 🟡 Medium `M` | Field Resolver | — | **Intent —** Serve a product's BOM lists from BOM's own service instead of product reaching across.<br>**Today —** when a client asks a Product for its boms today, that resolver lives - in product's code and reaches across to BOM's data loader. - After migration, product and bom…<br>**Done when:**<br>• `Product.productBoms/boms/packagingBoms` resolve via `bomService` internally<br>• the equivalent product-side resolvers are removed<br>• `boms(types)` filters by bom type<br>• no gateway hop<br>• Field resolver uses a `MappedBatchLoader<String, List<SPARK_Bom>>` (`bomsByProductIdLoader`) — when the parent query returns N products, boms are resolved in 1 batched call (not N) |
 | 🔸 `BOM-BE-F-02`<br>Fill `ResourcesCount.bomsCount` (internal) | 🟢 Low `XS` | Field Resolver<br>Calls: `search` | — | **Intent —** Let BOM own the 'how many boms' count shown on the TechPack panel.<br>**Today —** the TechPack summary panel shows "12 boms" for a product today by having product's orchestration code run an elastic count query. Once BOM owns this field, BOM's own…<br>**Done when:**<br>• `bomsCount` resolves internally on `ResourcesCount`<br>• count matches current elastic semantics<br>• no gateway hop for this field |
 
 
@@ -300,7 +300,7 @@ rest of the phase to finish.
 | **Impact** | 🔴 4 High · 🟡 1 Medium · 🟢 2 Low |
 | **Estimated effort** | 29–46 days (single-engineer) |
 | **Phase-1 surface** | 21 operation-to-root-field rows · 4 client files · 7 components |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

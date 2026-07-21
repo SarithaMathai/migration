@@ -86,6 +86,7 @@ rest of the phase to finish.
 | 7-variant polymorphism is easy to break when fields are added | 🟡 Medium | A shared CI conformance gate (`A-05`) guards this |
 | Trim size logic is intricate (15 cases × 2) | 🟡 Medium | One larger story (G-08) with a parity table |
 | Federation contributions wait on the product domain | 🟡 Low | F-01/F-02 are post-launch; not on the critical path |
+| DataLoader missing on F-01 field resolver | 🟡 Medium | N+1 risk when parent returns list; add `bomsByProductIdLoader` to F-01 AC |
 
 ## Decisions Required from Product Owner
 

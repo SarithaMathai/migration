@@ -1,6 +1,6 @@
 # Project Plan — Combined Backend + Frontend Story Order
 
-> 🏷️ **Tags:** `dgs-migration` · `project-plan` — **Generated:** 2026-07-19 · One combined implementation sequence per domain: backend build steps from the story dependency graph, frontend cutovers slotted into the earliest step after their backend dependencies (reads flip before writes before sagas).
+> 🏷️ **Tags:** `dgs-migration` · `project-plan` — **Generated:** 2026-07-21 · One combined implementation sequence per domain: backend build steps from the story dependency graph, frontend cutovers slotted into the earliest step after their backend dependencies (reads flip before writes before sagas).
 > Staffing + calendar for the 1 BE + 1 FE team: see 01-implementation-plan-1BE-1FE.md (team size set in team_config.py). Day figures are AI-estimated nominal midpoints — confirm in refinement.
 
 ---
@@ -15,7 +15,7 @@
 | 4 | **Packaging** | Wave 2 — parallel with the other wave-2 domains | 23 | 5 |
 | 5 | **BOM** | Wave 3 — high complexity, search-gated list views | 37 | 7 |
 | 6 | **Claims** | Wave 3 — first cross-subgraph cutover (`spark-claims`) | 20 | 4 |
-| 7 | **Product** | Wave 4 — largest surface, incremental slices, orchestrated writes last | 69 | 12 |
+| 7 | **Product** | Wave 4 — largest surface, incremental slices, orchestrated writes last | 69 | 13 |
 | 8 | **Impression** | Wave 4 rider — flips with its partner domains (BOM / Product) | 7 | 2 |
 
 > Wave-2/3 domains parallelize across the team — the numbering is the *flip* order. Phase-0 spikes (SPIKE-01…07) run before/alongside step 1 of the first domains; E-phase stories are gated on their outcomes.
@@ -374,22 +374,23 @@
 
 ## Product
 
-> Wave 4 — largest surface, incremental slices, orchestrated writes last · **69 BE + 12 FE stories** · ≈ 200 BE + 84 FE nominal days · **Owners:** Backend BE-1 · Frontend FE-1 + FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
+> Wave 4 — largest surface, incremental slices, orchestrated writes last · **69 BE + 13 FE stories** · ≈ 200 BE + 86 FE nominal days · **Owners:** Backend BE-1 · Frontend FE-1 + FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
 
 **Roadmap**
 
 - **Backend (BE-1):** `B-01` → (51 in parallel: `B-02` … `H-06`) → (14 in parallel: `E-01` … `H-05`) → `F-09` ‖ `F-11` ‖ `F-12`
 - **↓ unlocks frontend after backend step 2**
-- **Frontend (FE-1 + FE-2):** `PRODUCT-FE-007` → `PRODUCT-FE-006` ‖ `PRODUCT-FE-010` ‖ `PRODUCT-FE-012` → `PRODUCT-FE-001` ‖ `PRODUCT-FE-003` ‖ `PRODUCT-FE-004` ‖ `PRODUCT-FE-005` ‖ `PRODUCT-FE-009` ‖ `PRODUCT-FE-011` → `PRODUCT-FE-002` ‖ `PRODUCT-FE-008`
+- **Frontend (FE-1 + FE-2):** `PRODUCT-FE-003` → `PRODUCT-FE-008` → `PRODUCT-FE-006` ‖ `PRODUCT-FE-007` ‖ `PRODUCT-FE-011` ‖ `PRODUCT-FE-013` → `PRODUCT-FE-001` ‖ `PRODUCT-FE-002` ‖ `PRODUCT-FE-004` ‖ `PRODUCT-FE-005` ‖ `PRODUCT-FE-010` → `PRODUCT-FE-009` ‖ `PRODUCT-FE-012`
 
 | Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | — |
 | 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟢 `B-07`, 🟢 `B-08`, 🟢 `B-09`, 🟢 `B-10`, 🟢 `B-11`, 🟠 `C-01`, 🟡 `C-02`, 🟡 `C-03`, 🟡 `C-04`, 🟡 `C-05`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟡 `D-05`, 🟢 `D-06`, 🟢 `D-07`, 🟢 `D-08`, 🟢 `D-09`, 🟢 `D-10`, 🟢 `D-11`, 🟢 `D-12`, 🟢 `D-13`, 🟢 `D-14`, 🟢 `D-15`, 🟢 `D-16`, 🟢 `D-17`, 🟢 `D-18`, 🟠 `E-00`, 🔴 `E-03`, 🟢 `F-14`, 🔴 `G-01`, 🔴 `G-02`, 🟡 `G-04`, 🟡 `G-05`, 🟡 `G-06`, 🟡 `G-07`, 🟡 `G-08`, 🟡 `G-09`, 🟡 `G-10`, 🟡 `G-11-1`, 🟡 `G-11-2`, 🟡 `G-13`, 🟢 `G-14`, 🟡 `G-15`, 🟡 `H-06` | — | `C-01` → 🔬 SPIKE-06a<br>`D-01` → 🔬 SPIKE-06b<br>`D-02` → 🔬 SPIKE-06b<br>`D-04` → 🔬 SPIKE-06b<br>`E-00` → 🔬 SPIKE-01<br>`E-03` → 🔬 SPIKE-02<br>`G-07` → 🔬 SPIKE-04<br>`G-11-1` → 🔬 SPIKE-04 |
-| 3 | 🔴 `E-01`, 🟠 `E-02`, 🔴 `E-04`, 🟢 `F-04`, 🟢 `F-06`, 🟢 `F-08`, 🟢 `F-10`, 🟠 `G-03`, 🟡 `G-17`, 🟡 `H-01`, 🟡 `H-02`, 🟡 `H-03`, 🟡 `H-04`, 🟡 `H-05` | 🟡 `PRODUCT-FE-007` | `E-01` → 🔬 SPIKE-03<br>`E-02` → 🔬 SPIKE-01<br>`E-04` → 🔬 SPIKE-02<br>`H-01` → ⛔ BLOCKED-BY attachment domain (⛔ cross-subgraph — does not ship until plm-attachment is live)<br>`H-02` → ⛔ BLOCKED-BY discussion domain (⛔ cross-subgraph)<br>`H-03` → ⛔ BLOCKED-BY sample domain (⛔ cross-subgraph)<br>`H-04` → ⛔ BLOCKED-BY claim domain (⛔ cross-subgraph)<br>`H-05` → ⛔ BLOCKED-BY construction domain (⛔ cross-subgraph) |
-| 4 | 🟢 `F-09`, 🟢 `F-11`, 🟢 `F-12` | 🟡 `PRODUCT-FE-006`, 🟡 `PRODUCT-FE-010`, 🟡 `PRODUCT-FE-012` | — |
-| 5 | — | 🔴 `PRODUCT-FE-001`, 🔴 `PRODUCT-FE-003`, 🟡 `PRODUCT-FE-004`, 🟡 `PRODUCT-FE-005`, 🔴 `PRODUCT-FE-009`, 🟡 `PRODUCT-FE-011` | — |
-| 6 | — | 🟡 `PRODUCT-FE-002`, 🟡 `PRODUCT-FE-008` | — |
+| 3 | 🔴 `E-01`, 🟠 `E-02`, 🔴 `E-04`, 🟢 `F-04`, 🟢 `F-06`, 🟢 `F-08`, 🟢 `F-10`, 🟠 `G-03`, 🟡 `G-17`, 🟡 `H-01`, 🟡 `H-02`, 🟡 `H-03`, 🟡 `H-04`, 🟡 `H-05` | 🟡 `PRODUCT-FE-003` | `E-01` → 🔬 SPIKE-03<br>`E-02` → 🔬 SPIKE-01<br>`E-04` → 🔬 SPIKE-02<br>`H-01` → ⛔ BLOCKED-BY attachment domain (⛔ cross-subgraph — does not ship until plm-attachment is live)<br>`H-02` → ⛔ BLOCKED-BY discussion domain (⛔ cross-subgraph)<br>`H-03` → ⛔ BLOCKED-BY sample domain (⛔ cross-subgraph)<br>`H-04` → ⛔ BLOCKED-BY claim domain (⛔ cross-subgraph)<br>`H-05` → ⛔ BLOCKED-BY construction domain (⛔ cross-subgraph) |
+| 4 | 🟢 `F-09`, 🟢 `F-11`, 🟢 `F-12` | 🟡 `PRODUCT-FE-008` | — |
+| 5 | — | 🟢 `PRODUCT-FE-006`, 🟡 `PRODUCT-FE-007`, 🟡 `PRODUCT-FE-011`, 🟡 `PRODUCT-FE-013` | — |
+| 6 | — | 🔴 `PRODUCT-FE-001`, 🔴 `PRODUCT-FE-002`, 🟡 `PRODUCT-FE-004`, 🟡 `PRODUCT-FE-005`, 🔴 `PRODUCT-FE-010` | — |
+| 7 | — | 🟡 `PRODUCT-FE-009`, 🟡 `PRODUCT-FE-012` | — |
 
 ### Story sequence
 
@@ -398,89 +399,90 @@
 | Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
 |---|---|---|---|---|---|---|
 | 1 | 1 | 🟢 `B-01` — getProduct | Backend · BE-1 | None | every story in this domain (module scaffold) | No |
-| 2 | 2 | 🟢 `B-02` — getProductsByIds | Backend · BE-1 | None | `PRODUCT-FE-003`, `PRODUCT-FE-004` | Yes |
+| 2 | 2 | 🟢 `B-02` — getProductsByIds | Backend · BE-1 | None | `PRODUCT-FE-002`, `PRODUCT-FE-004` | Yes |
 | 3 | 2 | 🟢 `B-03` — getProductStatus | Backend · BE-1 | None | `PRODUCT-FE-003`, `PRODUCT-FE-004`, `PRODUCT-FE-005` | Yes |
-| 4 | 2 | 🟢 `B-04` — getProductVersions | Backend · BE-1 | None | `PRODUCT-FE-002` | Yes |
+| 4 | 2 | 🟢 `B-04` — getProductVersions | Backend · BE-1 | None | `PRODUCT-FE-001` | Yes |
 | 5 | 2 | 🟢 `B-05` — getCopyStatus | Backend · BE-1 | None | None | Yes |
 | 6 | 2 | 🟢 `B-06` — getProductTemplateById | Backend · BE-1 | None | None | Yes |
-| 7 | 2 | 🟢 `B-07` — getProductRules | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
-| 8 | 2 | 🟢 `B-08` — getProductRulesById | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
-| 9 | 2 | 🟢 `B-09` — getAllAvailableRules | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
-| 10 | 2 | 🟢 `B-10` — getProductDeptRules | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
-| 11 | 2 | 🟢 `B-11` — getProductBPRules | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
+| 7 | 2 | 🟢 `B-07` — getProductRules | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 8 | 2 | 🟢 `B-08` — getProductRulesById | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 9 | 2 | 🟢 `B-09` — getAllAvailableRules | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 10 | 2 | 🟢 `B-10` — getProductDeptRules | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 11 | 2 | 🟢 `B-11` — getProductBPRules | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
 | 12 | 2 | 🟠 `C-01` — getProducts two-stage hydration | Backend · BE-1 | None | None | Yes |
 | 13 | 2 | 🟡 `C-02` — getProductTemplates | Backend · BE-1 | None | `PRODUCT-FE-005` | Yes |
 | 14 | 2 | 🟡 `C-03` — getCategories | Backend · BE-1 | None | `PRODUCT-FE-005` | Yes |
 | 15 | 2 | 🟡 `C-04` — getRatingByTcin | Backend · BE-1 | None | None | Yes |
-| 16 | 2 | 🟡 `C-05` — searchProductRules | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
-| 17 | 2 | 🟡 `D-01` — addProduct | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
-| 18 | 2 | 🟡 `D-02` — addProducts | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
-| 19 | 2 | 🟡 `D-03` — bulkUpdateProducts | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
-| 20 | 2 | 🟡 `D-04` — updateProduct | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
-| 21 | 2 | 🟡 `D-05` — carryForwardProduct | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
-| 22 | 2 | 🟢 `D-06` — addTeamsToProduct 🔀 Collab Canvas | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
-| 23 | 2 | 🟢 `D-07` — addBusinessPartnersToProductWithType 🔀 … | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
+| 16 | 2 | 🟡 `C-05` — searchProductRules | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 17 | 2 | 🟡 `D-01` — addProduct | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
+| 18 | 2 | 🟡 `D-02` — addProducts | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
+| 19 | 2 | 🟡 `D-03` — bulkUpdateProducts | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
+| 20 | 2 | 🟡 `D-04` — updateProduct | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
+| 21 | 2 | 🟡 `D-05` — carryForwardProduct | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
+| 22 | 2 | 🟢 `D-06` — addTeamsToProduct 🔀 Collab Canvas | Backend · BE-1 | None | `PRODUCT-FE-009` | Yes |
+| 23 | 2 | 🟢 `D-07` — addBusinessPartnersToProductWithType 🔀 … | Backend · BE-1 | None | `PRODUCT-FE-009` | Yes |
 | 24 | 2 | 🟢 `D-08` — removeProductResources | Backend · BE-1 | None | None | Yes |
-| 25 | 2 | 🟢 `D-09` — updateBusinessPartnerStatuses | Backend · BE-1 | None | `PRODUCT-FE-009` | Yes |
-| 26 | 2 | 🟢 `D-10` — updateViewToggle | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 25 | 2 | 🟢 `D-09` — updateBusinessPartnerStatuses | Backend · BE-1 | None | `PRODUCT-FE-010` | Yes |
+| 26 | 2 | 🟢 `D-10` — updateViewToggle | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
 | 27 | 2 | 🟢 `D-11` — updateWorkspaceAttributes 🔀 Collab Canv… | Backend · BE-1 | None | None | Yes |
-| 28 | 2 | 🟢 `D-12` — updateProductTeamsWorkspaceContext | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
-| 29 | 2 | 🟢 `D-13` — linkProduct | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
-| 30 | 2 | 🟢 `D-14` — unlinkProduct | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
-| 31 | 2 | 🟢 `D-15` — addProductRule | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
-| 32 | 2 | 🟢 `D-16` — updateProductRule | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
-| 33 | 2 | 🟢 `D-17` — deleteProductRule | Backend · BE-1 | None | `PRODUCT-FE-006` | Yes |
-| 34 | 2 | 🟢 `D-18` — updateComponentStatus | Backend · BE-1 | None | `PRODUCT-FE-011` | Yes |
+| 28 | 2 | 🟢 `D-12` — updateProductTeamsWorkspaceContext | Backend · BE-1 | None | `PRODUCT-FE-009` | Yes |
+| 29 | 2 | 🟢 `D-13` — linkProduct | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
+| 30 | 2 | 🟢 `D-14` — unlinkProduct | Backend · BE-1 | None | `PRODUCT-FE-008` | Yes |
+| 31 | 2 | 🟢 `D-15` — addProductRule | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 32 | 2 | 🟢 `D-16` — updateProductRule | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 33 | 2 | 🟢 `D-17` — deleteProductRule | Backend · BE-1 | None | `PRODUCT-FE-007` | Yes |
+| 34 | 2 | 🟢 `D-18` — updateComponentStatus | Backend · BE-1 | None | `PRODUCT-FE-012` | Yes |
 | 35 | 2 | 🟠 `E-00` — WriteSaga shared module | Backend · BE-1 | None | `E-01`, `E-02` | Yes |
 | 36 | 2 | 🔴 `E-03` — getProductTechPackCountV1 stub + aggreg… | Backend · BE-1 | None | 10 stories: `E-04`, `F-04`, `F-06`, `F-08`, `H-01`, `H-02` … | Yes |
-| 37 | 2 | 🟢 `F-14` — Cross-subgraph contract alignment | Backend · BE-1 | None | `F-10`, `PRODUCT-FE-012` | Yes |
-| 38 | 2 | 🔴 `G-01` — Product.attachmentsWithMetaData | Backend · BE-1 | None | `G-03`, `G-17`, `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-011` | Yes |
-| 39 | 2 | 🔴 `G-02` — Product.components | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-011` | Yes |
+| 37 | 2 | 🟢 `F-14` — Cross-subgraph contract alignment | Backend · BE-1 | None | `F-10`, `PRODUCT-FE-013` | Yes |
+| 38 | 2 | 🔴 `G-01` — Product.attachmentsWithMetaData | Backend · BE-1 | None | `G-03`, `G-17`, `PRODUCT-FE-001` | Yes |
+| 39 | 2 | 🔴 `G-02` — Product.components | Backend · BE-1 | None | `PRODUCT-FE-001` | Yes |
 | 40 | 2 | 🟡 `G-04` — ProductsCategories.categories  + Dopple… | Backend · BE-1 | None | `PRODUCT-FE-005` | Yes |
 | 41 | 2 | 🟡 `G-05` — Product.samples + sampleIds + elasticSa… | Backend · BE-1 | None | None | Yes |
-| 42 | 2 | 🟡 `G-06` — Product.teams + discussionsV2 + discuss… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-004`, `PRODUCT-FE-005`, `PRODUCT-FE-011` | Yes |
-| 43 | 2 | 🟡 `G-07` — Product.vendorAttributes + businessPart… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-004`, `PRODUCT-FE-005`, `PRODUCT-FE-006`, `PRODUCT-FE-011` | Yes |
-| 44 | 2 | 🟡 `G-08` — Product.measurementSets + claims + bom … | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-005`, `PRODUCT-FE-010`, `PRODUCT-FE-011` | Yes |
-| 45 | 2 | 🟡 `G-09` — Product.productWorkspaceAttributes + pr… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-004`, `PRODUCT-FE-011` | Yes |
-| 46 | 2 | 🟡 `G-10` — Product.ancestryProducts + rating + res… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-011` | Yes |
+| 42 | 2 | 🟡 `G-06` — Product.teams + discussionsV2 + discuss… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-004`, `PRODUCT-FE-005` | Yes |
+| 43 | 2 | 🟡 `G-07` — Product.vendorAttributes + businessPart… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-004`, `PRODUCT-FE-005`, `PRODUCT-FE-007` | Yes |
+| 44 | 2 | 🟡 `G-08` — Product.measurementSets + claims + bom … | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-005`, `PRODUCT-FE-011` | Yes |
+| 45 | 2 | 🟡 `G-09` — Product.productWorkspaceAttributes + pr… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-004` | Yes |
+| 46 | 2 | 🟡 `G-10` — Product.ancestryProducts + rating + res… | Backend · BE-1 | None | `PRODUCT-FE-001` | Yes |
 | 47 | 2 | 🟡 `G-11-1` — Product.notRemovablePartnerIds + notRem… | Backend · BE-1 | None | None | Yes |
 | 48 | 2 | 🟡 `G-11-2` — Product.associateProductsAsks + Product… | Backend · BE-1 | None | None | Yes |
-| 49 | 2 | 🟡 `G-13` — IG/tag/tcin/spg + template trivial-fiel… | Backend · BE-1 | None | 7 stories: `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-003`, `PRODUCT-FE-004`, `PRODUCT-FE-005`, `PRODUCT-FE-006` … | Yes |
-| 50 | 2 | 🟢 `G-14` — Simple user/status fields + trivial pas… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-005`, `PRODUCT-FE-011` | Yes |
+| 49 | 2 | 🟡 `G-13` — IG/tag/tcin/spg + template trivial-fiel… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-004`, `PRODUCT-FE-005`, `PRODUCT-FE-006`, `PRODUCT-FE-007` | Yes |
+| 50 | 2 | 🟢 `G-14` — Simple user/status fields + trivial pas… | Backend · BE-1 | None | `PRODUCT-FE-001`, `PRODUCT-FE-005` | Yes |
 | 51 | 2 | 🟡 `G-15` — Port product utils to Kotlin | Backend · BE-1 | None | None | Yes |
 | 52 | 2 | 🟡 `H-06` — Product entity fetcher  for cross-subgr… | Backend · BE-1 | `B-01` — getProduct | `F-10` | Yes |
 | 53 | 3 | 🔴 `E-01` — productBusinessPartnerActions | Backend · BE-1 | `E-00` — WriteSaga shared module | `F-12` | Yes |
-| 54 | 3 | 🟠 `E-02` — updateComponentStatuses | Backend · BE-1 | `E-00` — WriteSaga shared module | `PRODUCT-FE-011` | Yes |
-| 55 | 3 | 🔴 `E-04` — getProductTechPackBulkCountV1 | Backend · BE-1 | `E-03` — getProductTechPackCount… | `PRODUCT-FE-010` | Yes |
+| 54 | 3 | 🟠 `E-02` — updateComponentStatuses | Backend · BE-1 | `E-00` — WriteSaga shared module | `PRODUCT-FE-012` | Yes |
+| 55 | 3 | 🔴 `E-04` — getProductTechPackBulkCountV1 | Backend · BE-1 | `E-03` — getProductTechPackCount… | `PRODUCT-FE-011` | Yes |
 | 56 | 3 | 🟢 `F-04` — ResourcesCount.measurementSets | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09` | Yes |
-| 57 | 3 | 🟢 `F-06` — ResourcesCount.productBoms + packagingB… | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-010` | Yes |
-| 58 | 3 | 🟢 `F-08` — ResourcesCount.watchlists | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-010` | Yes |
-| 59 | 3 | 🟢 `F-10` — Hive Gateway supergraph composition | Backend · BE-1 | `H-06` — Product entity fetcher …, `F-14` — Cross-subgraph contract… | `F-11`, `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-004`, `PRODUCT-FE-011` | Yes |
-| 60 | 3 | 🟠 `G-03` — Product.attachments + attachmentsV3 + a… | Backend · BE-1 | `G-01` — Product.attachmentsWith… | `PRODUCT-FE-001`, `PRODUCT-FE-002`, `PRODUCT-FE-005`, `PRODUCT-FE-011` | Yes |
+| 57 | 3 | 🟢 `F-06` — ResourcesCount.productBoms + packagingB… | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-011` | Yes |
+| 58 | 3 | 🟢 `F-08` — ResourcesCount.watchlists | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-011` | Yes |
+| 59 | 3 | 🟢 `F-10` — Hive Gateway supergraph composition | Backend · BE-1 | `H-06` — Product entity fetcher …, `F-14` — Cross-subgraph contract… | `F-11`, `PRODUCT-FE-001`, `PRODUCT-FE-004` | Yes |
+| 60 | 3 | 🟠 `G-03` — Product.attachments + attachmentsV3 + a… | Backend · BE-1 | `G-01` — Product.attachmentsWith… | `PRODUCT-FE-001`, `PRODUCT-FE-005`, `PRODUCT-FE-006` | Yes |
 | 61 | 3 | 🟡 `G-17` — Entity references on partner/lineage va… | Backend · BE-1 | `G-01` — Product.attachmentsWith… | None | Yes |
-| 62 | 3 | 🟡 `H-01` — ResourcesCount.productAttachments + dis… | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-010` | Yes |
-| 63 | 3 | 🟡 `H-02` — ResourcesCount.discussions | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-010` | Yes |
-| 64 | 3 | 🟡 `H-03` — ResourcesCount.sample | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-010` | Yes |
-| 65 | 3 | 🟡 `H-04` — ResourcesCount.claims | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-010` | Yes |
-| 66 | 3 | 🟡 `H-05` — ResourcesCount.constructions | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-010` | Yes |
-| 67 | 3 | 🟡 `PRODUCT-FE-007` — Migrate simple product mutations | Frontend · FE-1 + FE-2 | `D-01` — addProduct, `D-02` — addProducts, `D-03` — bulkUpdateProducts, `D-04` — updateProduct, `D-05` — carryForwardProduct, `D-10` — updateViewToggle, `D-13` — linkProduct, `D-14` — unlinkProduct | None | Yes |
+| 62 | 3 | 🟡 `H-01` — ResourcesCount.productAttachments + dis… | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-011` | Yes |
+| 63 | 3 | 🟡 `H-02` — ResourcesCount.discussions | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-011` | Yes |
+| 64 | 3 | 🟡 `H-03` — ResourcesCount.sample | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-011` | Yes |
+| 65 | 3 | 🟡 `H-04` — ResourcesCount.claims | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-011` | Yes |
+| 66 | 3 | 🟡 `H-05` — ResourcesCount.constructions | Backend · BE-1 | `E-03` — getProductTechPackCount… | `F-09`, `PRODUCT-FE-011` | Yes |
+| 67 | 3 | 🟡 `PRODUCT-FE-003` — Migrate getProductsByIds documents | Frontend · FE-1 + FE-2 | `B-03` — getProductStatus | None | Yes |
 | 68 | 4 | 🟢 `F-09` — Retire the TechPack aggregation facade | Backend · BE-1 | `H-01` — ResourcesCount.productA…, `H-02` — ResourcesCount.discussi…, `H-03` — ResourcesCount.sample, `F-04` — ResourcesCount.measurem…, `H-04` — ResourcesCount.claims, `F-06` — ResourcesCount.productB…, `H-05` — ResourcesCount.construc…, `F-08` — ResourcesCount.watchlis… | None | Yes |
 | 69 | 4 | 🟢 `F-11` — Platform stub verification | Backend · BE-1 | `F-10` — Hive Gateway supergraph… | None | Yes |
 | 70 | 4 | 🟢 `F-12` — Deferred partner-wrapper decision | Backend · BE-1 | `E-01` — productBusinessPartnerA… | None | Yes |
-| 71 | 4 | 🟡 `PRODUCT-FE-006` — Migrate product rules administration | Frontend · FE-1 + FE-2 | `B-07` — getProductRules, `B-08` — getProductRulesById, `B-09` — getAllAvailableRules, `B-10` — getProductDeptRules, `B-11` — getProductBPRules, `C-05` — searchProductRules, `D-15` — addProductRule, `D-16` — updateProductRule, `D-17` — deleteProductRule, `G-07` — Product.vendorAttribute…, `G-13` — IG/tag/tcin/spg + templ…, `PRODUCT-BE-H-08` | None | Yes |
-| 72 | 4 | 🟡 `PRODUCT-FE-010` — Migrate TechPack count queries | Frontend · FE-1 + FE-2 | `E-03` — getProductTechPackCount…, `E-04` — getProductTechPackBulkC…, `F-06` — ResourcesCount.productB…, `F-08` — ResourcesCount.watchlis…, `G-08` — Product.measurementSets…, `H-01` — ResourcesCount.productA…, `H-02` — ResourcesCount.discussi…, `H-03` — ResourcesCount.sample, `H-04` — ResourcesCount.claims, `H-05` — ResourcesCount.construc… | None | Yes |
-| 73 | 4 | 🟡 `PRODUCT-FE-012` — Verify fragment type-conditions, __type… | Frontend · FE-1 + FE-2 | `F-14` — Cross-subgraph contract… | None | Yes |
-| 74 | 5 | 🔴 `PRODUCT-FE-001` — Migrate getProduct documents in product… | Frontend · FE-1 + FE-2 | `B-01` — getProduct, `F-10` — Hive Gateway supergraph…, `G-01` — Product.attachmentsWith…, `G-02` — Product.components, `G-03` — Product.attachments + a…, `G-06` — Product.teams + discuss…, `G-07` — Product.vendorAttribute…, `G-08` — Product.measurementSets…, `G-09` — Product.productWorkspac…, `G-10` — Product.ancestryProduct…, `G-13` — IG/tag/tcin/spg + templ…, `G-14` — Simple user/status fiel…, `PRODUCT-BE-S-01` | `PRODUCT-FE-002`, `PRODUCT-FE-008` | Yes |
-| 75 | 5 | 🔴 `PRODUCT-FE-003` — Migrate product list and bulk reads | Frontend · FE-1 + FE-2 | `B-02` — getProductsByIds, `B-03` — getProductStatus, `G-13` — IG/tag/tcin/spg + templ…, `PRODUCT-BE-S-02` | None | Yes |
-| 76 | 5 | 🟡 `PRODUCT-FE-004` — Migrate product status and workspace-co… | Frontend · FE-1 + FE-2 | `B-01` — getProduct, `B-02` — getProductsByIds, `B-03` — getProductStatus, `F-10` — Hive Gateway supergraph…, `G-06` — Product.teams + discuss…, `G-07` — Product.vendorAttribute…, `G-09` — Product.productWorkspac…, `G-13` — IG/tag/tcin/spg + templ…, `PRODUCT-BE-S-01` | None | Yes |
-| 77 | 5 | 🟡 `PRODUCT-FE-005` — Migrate template library and categories… | Frontend · FE-1 + FE-2 | `B-03` — getProductStatus, `C-02` — getProductTemplates, `C-03` — getCategories, `G-03` — Product.attachments + a…, `G-04` — ProductsCategories.cate…, `G-06` — Product.teams + discuss…, `G-07` — Product.vendorAttribute…, `G-08` — Product.measurementSets…, `G-13` — IG/tag/tcin/spg + templ…, `G-14` — Simple user/status fiel…, `PRODUCT-BE-H-07`, `PRODUCT-BE-S-01`, `PRODUCT-BE-S-02` | None | Yes |
-| 78 | 5 | 🔴 `PRODUCT-FE-009` — Migrate partner drop/undrop orchestrati… | Frontend · FE-1 + FE-2 | `PRODUCT-BE-S-03`, `D-09` — updateBusinessPartnerSt… | None | Yes |
-| 79 | 5 | 🟡 `PRODUCT-FE-011` — Migrate component status rollups | Frontend · FE-1 + FE-2 | `B-01` — getProduct, `D-18` — updateComponentStatus, `E-02` — updateComponentStatuses, `F-10` — Hive Gateway supergraph…, `G-01` — Product.attachmentsWith…, `G-02` — Product.components, `G-03` — Product.attachments + a…, `G-06` — Product.teams + discuss…, `G-07` — Product.vendorAttribute…, `G-08` — Product.measurementSets…, `G-09` — Product.productWorkspac…, `G-10` — Product.ancestryProduct…, `G-13` — IG/tag/tcin/spg + templ…, `G-14` — Simple user/status fiel…, `PRODUCT-BE-S-01` | None | Yes |
-| 80 | 6 | 🟡 `PRODUCT-FE-002` — Migrate shared-library getProduct consu… | Frontend · FE-1 + FE-2 | `B-01` — getProduct, `B-04` — getProductVersions, `F-10` — Hive Gateway supergraph…, `G-01` — Product.attachmentsWith…, `G-02` — Product.components, `G-03` — Product.attachments + a…, `G-06` — Product.teams + discuss…, `G-07` — Product.vendorAttribute…, `G-08` — Product.measurementSets…, `G-09` — Product.productWorkspac…, `G-10` — Product.ancestryProduct…, `G-13` — IG/tag/tcin/spg + templ…, `G-14` — Simple user/status fiel…, `PRODUCT-BE-S-01`, `PRODUCT-FE-001` — Migrate getProduct docu… | None | Yes |
-| 81 | 6 | 🟡 `PRODUCT-FE-008` — Migrate team and partner assignment mut… | Frontend · FE-1 + FE-2 | `D-06` — addTeamsToProduct 🔀 Col…, `D-07` — addBusinessPartnersToPr…, `D-12` — updateProductTeamsWorks…, `PRODUCT-FE-001` — Migrate getProduct docu… | None | Yes |
+| 71 | 4 | 🟡 `PRODUCT-FE-008` — Migrate simple product mutations | Frontend · FE-1 + FE-2 | `D-01` — addProduct, `D-02` — addProducts, `D-03` — bulkUpdateProducts, `D-04` — updateProduct, `D-05` — carryForwardProduct, `D-10` — updateViewToggle, `D-13` — linkProduct, `D-14` — unlinkProduct | None | Yes |
+| 72 | 5 | 🟢 `PRODUCT-FE-006` — Migrate getCategories documents | Frontend · FE-1 + FE-2 | `G-03` — Product.attachments + a…, `G-13` — IG/tag/tcin/spg + templ… | None | Yes |
+| 73 | 5 | 🟡 `PRODUCT-FE-007` — Migrate product rules administration | Frontend · FE-1 + FE-2 | `B-07` — getProductRules, `B-08` — getProductRulesById, `B-09` — getAllAvailableRules, `B-10` — getProductDeptRules, `B-11` — getProductBPRules, `C-05` — searchProductRules, `D-15` — addProductRule, `D-16` — updateProductRule, `D-17` — deleteProductRule, `G-07` — Product.vendorAttribute…, `G-13` — IG/tag/tcin/spg + templ…, `PRODUCT-BE-H-08` | None | Yes |
+| 74 | 5 | 🟡 `PRODUCT-FE-011` — Migrate TechPack count queries | Frontend · FE-1 + FE-2 | `E-03` — getProductTechPackCount…, `E-04` — getProductTechPackBulkC…, `F-06` — ResourcesCount.productB…, `F-08` — ResourcesCount.watchlis…, `G-08` — Product.measurementSets…, `H-01` — ResourcesCount.productA…, `H-02` — ResourcesCount.discussi…, `H-03` — ResourcesCount.sample, `H-04` — ResourcesCount.claims, `H-05` — ResourcesCount.construc… | None | Yes |
+| 75 | 5 | 🟡 `PRODUCT-FE-013` — Verify fragment type-conditions, __type… | Frontend · FE-1 + FE-2 | `F-14` — Cross-subgraph contract… | None | Yes |
+| 76 | 6 | 🔴 `PRODUCT-FE-001` — Migrate all getProduct documents | Frontend · FE-1 + FE-2 | `B-01` — getProduct, `F-10` — Hive Gateway supergraph…, `G-01` — Product.attachmentsWith…, `G-02` — Product.components, `G-03` — Product.attachments + a…, `G-06` — Product.teams + discuss…, `G-07` — Product.vendorAttribute…, `G-08` — Product.measurementSets…, `G-09` — Product.productWorkspac…, `G-10` — Product.ancestryProduct…, `G-13` — IG/tag/tcin/spg + templ…, `G-14` — Simple user/status fiel…, `PRODUCT-BE-S-01`, `B-04` — getProductVersions | `PRODUCT-FE-009`, `PRODUCT-FE-012` | Yes |
+| 77 | 6 | 🔴 `PRODUCT-FE-002` — Migrate getProducts documents | Frontend · FE-1 + FE-2 | `B-02` — getProductsByIds, `G-13` — IG/tag/tcin/spg + templ…, `PRODUCT-BE-S-02` | None | Yes |
+| 78 | 6 | 🟡 `PRODUCT-FE-004` — Migrate getProductStatus documents | Frontend · FE-1 + FE-2 | `B-01` — getProduct, `B-02` — getProductsByIds, `B-03` — getProductStatus, `F-10` — Hive Gateway supergraph…, `G-06` — Product.teams + discuss…, `G-07` — Product.vendorAttribute…, `G-09` — Product.productWorkspac…, `G-13` — IG/tag/tcin/spg + templ…, `PRODUCT-BE-S-01` | None | Yes |
+| 79 | 6 | 🟡 `PRODUCT-FE-005` — Migrate getProductTemplates documents | Frontend · FE-1 + FE-2 | `B-03` — getProductStatus, `C-02` — getProductTemplates, `C-03` — getCategories, `G-03` — Product.attachments + a…, `G-04` — ProductsCategories.cate…, `G-06` — Product.teams + discuss…, `G-07` — Product.vendorAttribute…, `G-08` — Product.measurementSets…, `G-13` — IG/tag/tcin/spg + templ…, `G-14` — Simple user/status fiel…, `PRODUCT-BE-H-07`, `PRODUCT-BE-S-01`, `PRODUCT-BE-S-02` | None | Yes |
+| 80 | 6 | 🔴 `PRODUCT-FE-010` — Migrate partner drop/undrop orchestrati… | Frontend · FE-1 + FE-2 | `PRODUCT-BE-S-03`, `D-09` — updateBusinessPartnerSt… | None | Yes |
+| 81 | 7 | 🟡 `PRODUCT-FE-009` — Migrate team and partner assignment mut… | Frontend · FE-1 + FE-2 | `D-06` — addTeamsToProduct 🔀 Col…, `D-07` — addBusinessPartnersToPr…, `D-12` — updateProductTeamsWorks…, `PRODUCT-FE-001` — Migrate all getProduct … | None | Yes |
+| 82 | 7 | 🟡 `PRODUCT-FE-012` — Migrate component status mutations and … | Frontend · FE-1 + FE-2 | `D-18` — updateComponentStatus, `E-02` — updateComponentStatuses, `PRODUCT-FE-001` — Migrate all getProduct … | None | Yes |
 
 **Backend critical path:** `B-01` → `E-03` → `F-04` → `F-09`.
-**Frontend cutover flow:** `PRODUCT-FE-007` → `PRODUCT-FE-006` → `PRODUCT-FE-010` → `PRODUCT-FE-012` → `PRODUCT-FE-001` → `PRODUCT-FE-003` → `PRODUCT-FE-004` → `PRODUCT-FE-005` → `PRODUCT-FE-009` → `PRODUCT-FE-011` → `PRODUCT-FE-002` → `PRODUCT-FE-008`.
+**Frontend cutover flow:** `PRODUCT-FE-003` → `PRODUCT-FE-008` → `PRODUCT-FE-006` → `PRODUCT-FE-007` → `PRODUCT-FE-011` → `PRODUCT-FE-013` → `PRODUCT-FE-001` → `PRODUCT-FE-002` → `PRODUCT-FE-004` → `PRODUCT-FE-005` → `PRODUCT-FE-010` → `PRODUCT-FE-009` → `PRODUCT-FE-012`.
 
 **Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
 
@@ -526,4 +528,4 @@
 
 ---
 
-*Project plan · generated 2026-07-19 by generate_project_plan.py.*
+*Project plan · generated 2026-07-21 by generate_project_plan.py.*

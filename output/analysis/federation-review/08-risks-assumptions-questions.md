@@ -11,7 +11,7 @@
 | RK-3 | Claims is the only separate subgraph in phase 1 — every gateway-hop defect (auth propagation, partial `_entities` failures) surfaces there first with no prior art | Medium | Medium | Make CLAIM-FE-002 an explicit canary with rollback flag; PRODUCT-BE-F-13 ships DataLoader batching + null-tolerant hydration | BE-2 |
 | RK-4 | Phase-2 stubs (workspace, user-profile, attachment, sample, team, search) stay gateway-stitched — a stitching regression breaks 8 domains' field resolvers at once | Medium | High | PRODUCT-BE-F-11 stub-verification suite runs per deploy, not once | Platform |
 | RK-5 | Denormalized display pairs (`supplierName`, `facilityName`, `printer*`) may be authoring-time snapshots; converting to live entity refs (REC-1, facility/printer options) could change displayed history | Medium | Medium | OQ-3 answered before any REC adoption; RECs keep both fields | PO |
-| RK-6 | `Categories` interface→union change (already in the product schema) breaks clients selecting `id`/`name` without inline fragments | High (if unverified) | Medium | Existing A-04/G-04 verification + PRODUCT-FE-012 `__typename` sweep | FE |
+| RK-6 | `Categories` interface→union change (already in the product schema) breaks clients selecting `id`/`name` without inline fragments | High (if unverified) | Medium | Existing A-04/G-04 verification + PRODUCT-FE-013 `__typename` sweep | FE |
 | RK-7 | Regeneration discipline: hand edits to `output/jira/*` or `output/summary/*` are silently lost on the next `generate_all.py` run | Low | Low | This review only edited sources; note reiterated in 07 §4 | All |
 
 ## 2. Assumptions
@@ -19,7 +19,7 @@
 1. `plm-product` ships as **one** subgraph (monorepo decision holds); co-located references never traverse the gateway.
 2. ✅ Claims ships as `spark-claims`, a separate subgraph, in phase 1 — **confirmed 2026-07-17 (OQ-6)**; the stale "co-located" comment in the product schema has been corrected.
 3. ACL remains ignored in DGS implementations (stakeholder decision; unchanged by this review).
-4. The completed platform FE enablement (router flag, codegen, cache remap, fragment sweep) is a stable baseline; only the R3/R4 names need re-verification (PRODUCT-FE-012).
+4. The completed platform FE enablement (router flag, codegen, cache remap, fragment sweep) is a stable baseline; only the R3/R4 names need re-verification (PRODUCT-FE-013).
 5. Federation spec v2.3 across all subgraphs; no v1-style `extend` semantics at the gateway.
 6. `code/schemas/core.txt` is canonical for platform type shapes (`VMM_*`).
 

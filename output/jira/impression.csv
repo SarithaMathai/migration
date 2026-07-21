@@ -103,6 +103,7 @@ Story,IMPRESSION-BE-F-01,(Impression) Product.impressions / impressionCounts (in
 1. `Product.impressions` and `Product.impressionCounts` resolve in-process via `impressionService`
 2. No HTTP call is made during resolution (verified by unit test mock)
 3. Output matches the current product-side resolver (parity)
+4. Field resolver uses a `MappedBatchLoader<String, List<SPARK_Impression>>` (`impressionByProductIdLoader`) — when the parent query returns N products, impressions are resolved in 1 batched call (not N)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)

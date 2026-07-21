@@ -773,26 +773,42 @@ product → bom navigation lives with the BOM service inside `plm-product`.
 - in *product's* code and reaches across to BOM's data loader.
 - After migration, product and bom live in the same service (`plm-product`), so there's no reason for that indirection — BOM's own code should just answer the field directly.
 - `ctx.loaders.bom.getActiveBomsByProductId(...)` / `...AndBomType(...)`.
-- **Target DGS Implementation:** plain `@DgsData` field resolvers on the `Product` type (same subgraph) →
-`bomService.getActiveBomsByProductId` (and `...AndBomType` for `boms(types)`). **No** `@DgsEntityFetcher` /
+- **Target DGS Implementation:** `@DgsData` field resolvers on the `Product` type (same subgraph) →
+`bomService.getActiveBomsByProductId` (and `...AndBomType` for `boms(types)`), fronted by a
+`MappedBatchLoader<String, List<SPARK_Bom>>` (`bomsByProductIdLoader`) keyed on `product.id` — matches the
+pattern used by `PKG-BE-F-01`/`PDTL-BE-F-01`/`WATCHLIST-BE-F-01`/`IMPRESSION-BE-F-01`. **No** `@DgsEntityFetcher` /
 `@extends @external` — `Product` is an internal type, so this is a normal in-process method call, not a
 federation hop.
 
-- **Example (Kotlin, same-subgraph field resolver — no federation annotations needed):**
+- **Example (Kotlin, same-subgraph field resolver, DataLoader-batched):**
 ```kotlin
+@DgsDataLoader(name = "bomsByProductIdLoader")
+class BomsByProductIdDataLoader(
+    private val bomService: BomService
+) : MappedBatchLoader<String, List<Bom>> {
+    override fun load(productIds: Set<String>): CompletionStage<Map<String, List<Bom>>> {
+        return CompletableFuture.supplyAsync {
+            bomService.getActiveBomsByProductIds(productIds.toList())
+                .groupBy { it.productId }
+        }
+    }
+}
+
 @DgsComponent
-class ProductBomFieldResolver(private val bomService: BomService) {
+class ProductBomFieldResolver {
 
   @DgsData(parentType = "Product", field = "productBoms")
-  fun productBoms(dfe: DgsDataFetchingEnvironment): List<Bom> {
+  fun productBoms(dfe: DgsDataFetchingEnvironment): CompletableFuture<List<Bom>> {
     val product = dfe.getSource<Product>()
-    return bomService.getActiveBomsByProductId(product.id)
+    val loader = dfe.getDataLoader<String, List<Bom>>("bomsByProductIdLoader")
+    return loader.load(product.id)
   }
 
   @DgsData(parentType = "Product", field = "boms")
-  fun boms(dfe: DgsDataFetchingEnvironment, @InputArgument types: List<Int>?): List<Bom> {
+  fun boms(dfe: DgsDataFetchingEnvironment, @InputArgument types: List<Int>?): CompletableFuture<List<Bom>> {
     val product = dfe.getSource<Product>()
-    return bomService.getActiveBomsByProductIdAndBomType(product.id, types)
+    val loader = dfe.getDataLoader<String, List<Bom>>("bomsByProductIdLoader")
+    return loader.load(product.id).thenApply { boms -> types?.let { t -> boms.filter { it.bomType in t } } ?: boms }
   }
 }
 ```
@@ -803,6 +819,7 @@ class ProductBomFieldResolver(private val bomService: BomService) {
 2. the equivalent product-side resolvers are removed.
 3. `boms(types)` filters by bom type.
 4. no gateway hop.
+5. Field resolver uses a `MappedBatchLoader<String, List<SPARK_Bom>>` (`bomsByProductIdLoader`) — when the parent query returns N products, boms are resolved in 1 batched call (not N).
 
 ---
 

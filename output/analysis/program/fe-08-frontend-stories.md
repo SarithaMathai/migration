@@ -9,92 +9,102 @@
 
 ## Product
 
-### PRODUCT-FE-001 · Migrate `getProduct` documents in product-queries
+### PRODUCT-FE-001 · Migrate all `getProduct` documents (single root query, 17 flavors)
 
 - **Type:** Query migration · **Impact:** High · **Domain:** product
-- **Depends on:** PRODUCT-BE-B-01, PRODUCT-BE-F-10, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-S-01
+- **Depends on:** PRODUCT-BE-B-01, PRODUCT-BE-F-10, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-S-01, PRODUCT-BE-B-04
 - **Operations:** `getProduct`
 
 - **Business objective:**
-  - Product detail, scaffolding, files and team screens read from the federated graph with unchanged behaviour.
+  - Every screen that reads a single product — detail, scaffolding, files, teams, breadcrumbs, admin, status-update, discussion panes, DPCI lookup — reads from the federated graph with unchanged behaviour.
 - **Technical objective:**
-  - Re-point every `getProduct`-rooted document in `product-queries` (detail, scaffolding, workspaces, status-update info, files/components, teams) to federated shapes.
+  - Re-point every `getProduct`-rooted document, in every library, to federated shapes. This story is scoped to the **root query**, not to a library or screen — all 17 documents that select `getProduct` migrate together behind one flag so the `Product` entity normalizes identically everywhere on day one.
 - **Background / current implementation:**
-  - 10+ documents in `src/libs/product-queries/src/queries/ProductQueries.tsx`, `ProductFilesQueries.tsx`, `TeamTabQueries.ts`, `WorkspaceFilesQueries.ts` share the `getProduct` resolver; widest selections in the estate (`getProductScaffolding` 131 fields).
+  - 17 documents across 8 client libraries (`product-queries`, `core-discussions`, `spark-legacy`, `spark-ui-admin`, `product-packaging`) share the `getProduct` resolver with different selection sets:
+    - `product-queries/ProductQueries.tsx`: `GET_PRODUCT`, `GET_PRODUCT_MINIMAL`, `GET_SPARK_PRODUCT_SCAFFOLDING` (131 fields — widest selection in the estate), `GET_PRODUCT_AND_WORKSPACES`, `GET_PRODUCT_AND_WORKSPACES_WITH_STATUS`, `GET_PRODUCT_FOR_STATUS_UPDATE`
+    - `product-queries/ProductFilesQueries.tsx`: `GET_PRODUCT_WITH_ATTACHMENTS_AND_COMPONENTS`, `GET_PRODUCT_COMPONENT_STATUS_COUNTS`
+    - `product-queries/TeamTabQueries.ts`: `GET_PRODUCT_WITH_TEAMS`
+    - `product-queries/WorkspaceFilesQueries.ts`: `GET_PRODUCT_WITH_META_DATA`
+    - `product-queries/LegacyDiscussionQueries.ts`: `GET_PRODUCT_TEAMS`, `GET_SPARK_PRODUCT_BP`, `GET_SPARK_PRODUCT_V2`
+    - `core-discussions/DiscussionQueries.ts`: `GET_PRODUCT_TEAMS`, `GET_SPARK_PRODUCT_BP`, `GET_SPARK_PRODUCT_V2` (duplicate shapes of the three above, different library)
+    - `spark-ui-admin/uiAdminQueries.ts`: `GET_PRODUCT_BY_ID`
+    - `spark-legacy/breadcrumbs/BreadcrumbQueries.ts`: `GET_PRODUCT_CRUMB`
+    - `product-packaging/PackagingDetailsQueries.ts`: `USE_DPCI_INFO`
 - **Required changes:**
   - Fragment re-targeting; nested-entity selections for `createdBy`/`brand`/`department`.
   - TypeScript model and hook generic updates; mock/snapshot regeneration.
   - Attachment/discussion sub-selections stay entity-stitched — no document split.
+  - Consolidate the duplicate `GET_PRODUCT_TEAMS`/`GET_SPARK_PRODUCT_BP`/`GET_SPARK_PRODUCT_V2` shapes that exist in both `core-discussions` and `product-queries/LegacyDiscussionQueries.ts` onto a shared fragment where the selections are identical.
 
 #### Acceptance Criteria
 
-1. Product detail, files, teams and scaffolding screens render identically under the flag.
+1. All 17 `getProduct` documents, across all 8 libraries, render their screens identically under the flag.
 2. No selection requests a field absent from the federated `Product` type.
-3. Cache normalizes one `Product` entity across all migrated documents.
+3. Cache normalizes exactly one `Product` entity across all 17 documents (verified via Apollo devtools, one canonical entity per `id`).
+4. Duplicate discussion-shape documents across `core-discussions` and `product-queries/LegacyDiscussionQueries.ts` are reduced to shared fragments where shapes match.
 
 #### Testing
 
 - Side-by-side JSON diff of legacy vs federated responses per document; full product-screen integration suite under the flag.
 
-- **Risk:** High — largest regression surface in phase 1.
-- **Estimated effort:** 10–15 days
+- **Risk:** High — largest regression surface in phase 1 (17 call sites on one root field).
+- **Estimated effort:** 13–19 days
 
-### PRODUCT-FE-002 · Migrate shared-library `getProduct` consumers
-
-- **Type:** Query migration · **Impact:** Medium · **Domain:** product
-- **Depends on:** PRODUCT-BE-B-01, PRODUCT-BE-B-04, PRODUCT-BE-F-10, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-S-01, PRODUCT-FE-001
-- **Operations:** `getProduct`, `getProductVersions`
-
-- **Business objective:**
-  - Breadcrumbs, discussion panes, admin views and packaging DPCI lookups keep working after product cutover.
-- **Technical objective:**
-  - Migrate `getProduct`-rooted documents outside `product-queries`: `spark-legacy` breadcrumbs, `core-discussions`/`LegacyDiscussionQueries` team reads, `spark-ui-admin` (`getProductById`, `getProductVersions`), `product-packaging` (`getDpciInfo`).
-- **Background / current implementation:**
-  - 8 documents across 4 libraries duplicate slim `getProduct` selections.
-- **Required changes:**
-  - Same re-pointing pattern as PRODUCT-FE-001; consolidate duplicate slim selections onto a shared base fragment where identical.
-
-#### Acceptance Criteria
-
-1. Breadcrumb, discussion team pane, admin product view and DPCI lookup render identically under the flag.
-2. Duplicate selections reduced to shared fragments where shapes match.
-
-#### Testing
-
-- Component tests per consumer library; snapshot regeneration.
-
-- **Risk:** Medium — many small consumers, low individual complexity.
-- **Estimated effort:** 5–8 days
-
-### PRODUCT-FE-003 · Migrate product list and bulk reads
+### PRODUCT-FE-002 · Migrate `getProducts` documents (list/search/bulk-create)
 
 - **Type:** Query migration · **Impact:** High · **Domain:** product
-- **Depends on:** PRODUCT-BE-B-02, PRODUCT-BE-B-03, PRODUCT-BE-G-13, PRODUCT-BE-S-02
-- **Operations:** `getProducts`, `getProductsByIds`
+- **Depends on:** PRODUCT-BE-B-02, PRODUCT-BE-G-13, PRODUCT-BE-S-02
+- **Operations:** `getProducts`
 
 - **Business objective:**
-  - Workspace product listings and bulk flows read from the federated graph without pagination or filter regressions.
+  - Workspace product listings, sample-comparison and vendor-merge autocomplete read from the federated graph without pagination or filter regressions.
 - **Technical objective:**
-  - Migrate `getProducts` (list/search, 88-field document) and `getProductsByIds` (bulk discussion data, file metadata) documents.
+  - Migrate all 3 `getProducts`-rooted documents: `GET_ALL_PRODUCTS` (list/search, 88-field document, `product-queries`), `GET_PRODUCTS_WITH_SAMPLE_DETAILS` (`product-queries`, feeds `SampleCompare.tsx`), `PID_AND_WRK_ID_SEARCH` (`spark-legacy` vendor-merge autocomplete).
 - **Background / current implementation:**
-  - `product-queries/ProductQueries.tsx`, `product-common/WorkspaceProductsQueries.ts`, `workspaces/BulkDiscussionQueries.ts`, `spark-legacy` vendor merge.
+  - `product-queries/ProductQueries.tsx` (×2), `spark-legacy/admin/vendorMerge/VendorMergeQueries.ts`.
 - **Required changes:**
-  - Await the search-cutover decision carried by PRODUCT-BE-S-02 (elastic read-hub) — list shapes must not be migrated twice.
-  - `getBulkDiscussionData` also selects an access-control root (out of scope): keep that document on the legacy gateway until the access-control phase, or split (decision recorded in-story at grooming).
+  - Await the search-cutover decision carried by `PRODUCT-BE-S-02` (elastic read-hub) — list shapes must not be migrated twice.
 
 #### Acceptance Criteria
 
-1. List pagination, sorting and filters behave identically under the flag.
-2. The cross-domain document's routing decision is implemented and documented.
+1. List pagination, sorting and filters behave identically under the flag, across all 3 documents.
+2. Vendor-merge autocomplete and sample-compare screens are unaffected.
 
 #### Testing
 
-- List-screen integration tests with pagination fixtures; bulk-flow smoke tests.
+- List-screen integration tests with pagination fixtures; vendor-merge and sample-compare smoke tests.
 
 - **Risk:** High — blocked by the search spike outcome.
-- **Estimated effort:** 8–12 days
+- **Estimated effort:** 6–9 days
 
-### PRODUCT-FE-004 · Migrate product status and workspace-context reads
+### PRODUCT-FE-003 · Migrate `getProductsByIds` documents (bulk-by-id reads)
+
+- **Type:** Query migration · **Impact:** Medium · **Domain:** product
+- **Depends on:** PRODUCT-BE-B-03
+- **Operations:** `getProductsByIds`
+
+- **Business objective:**
+  - Bulk discussion-create and workspace-replace flows read product lists by id from the federated graph without regressions.
+- **Technical objective:**
+  - Migrate the 2 `getProductsByIds`-rooted documents: `GET_FILES_WITH_METADATA` (`product-common/WorkspaceProductsQueries.ts`) and `GET_TEAMS_PRODUCT_AND_WORKSPACE` (`product-queries/ProductQueries.tsx`).
+- **Background / current implementation:**
+  - `getBulkDiscussionData` (`workspaces/BulkDiscussionQueries.ts`) also roots on `getProductsByIds` but additionally selects an access-control root (`getRoles`) that is out of scope — keep that document on the legacy gateway until the access-control phase, or split (decision recorded in-story at grooming; same routing-decision pattern as the old `getBulkDiscussionData` note).
+- **Required changes:**
+  - Migrate the 2 in-scope documents; document the `getBulkDiscussionData` routing decision.
+
+#### Acceptance Criteria
+
+1. Files-with-metadata and team/workspace-replace flows render identically under the flag.
+2. The `getBulkDiscussionData` cross-domain document's routing decision is implemented and documented.
+
+#### Testing
+
+- Bulk-flow integration tests; team/workspace replace smoke test.
+
+- **Risk:** Medium.
+- **Estimated effort:** 4–6 days
+
+### PRODUCT-FE-004 · Migrate `getProductStatus` documents
 
 - **Type:** Query migration · **Impact:** Medium · **Domain:** product
 - **Depends on:** PRODUCT-BE-B-01, PRODUCT-BE-B-02, PRODUCT-BE-B-03, PRODUCT-BE-F-10, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-09, PRODUCT-BE-G-13, PRODUCT-BE-S-01
@@ -103,17 +113,16 @@
 - **Business objective:**
   - Status chips, workspace metrics and connected-component status views stay accurate per workspace.
 - **Technical objective:**
-  - Migrate the 4 `getProductStatus`-rooted documents (form data, status-update info, connected components, workspace metrics report count).
+  - Migrate the 2 `getProductStatus`-rooted documents: `GET_PRODUCT_FOR_STATUS_UPDATE` (`product-queries/ProductQueries.tsx`) and `GET_PRODUCT_STATUS` (`spark-legacy/connectedComponents/ConnectedComponentsQueries.ts`).
 - **Background / current implementation:**
-  - `getFormData` (132 fields, 5 root fields) is the widest multi-root document in the estate; also selects a tags root (out of scope).
+  - `GET_PRODUCT_FOR_STATUS_UPDATE` also selects `getProduct` (covered by FE-001's contract; verify parity post-cutover). `GET_PRODUCT_STATUS` multi-roots onto `getProductSampleEvaluationTypesV2`/`getSampleTrackingTypesV2` (out of scope for this story — those stay on their owning domain's migration).
 - **Required changes:**
-  - Migrate product roots; hold `getFormData` on the legacy gateway until its tags root migrates, or split into two documents (per [fe-07-network-call-analysis.md §2.1](./fe-07-network-call-analysis.md)).
-  - Workspace-filter arguments (`workspaceIdFilter`, `partnerIdFilter`) unchanged — verify against federated `ProductStatus`.
+  - Migrate product-status roots; workspace-filter arguments (`workspaceIdFilter`, `partnerIdFilter`) unchanged — verify against federated `ProductStatus`.
 
 #### Acceptance Criteria
 
-1. Status values match legacy per workspace/partner filter combination.
-2. `getFormData` routing decision implemented and documented.
+1. Status values match legacy per workspace/partner filter combination, across both documents.
+2. `GET_PRODUCT_FOR_STATUS_UPDATE`'s `getProduct` sub-selection stays in sync with FE-001's federated `Product` contract.
 
 #### Testing
 
@@ -122,35 +131,61 @@
 - **Risk:** Medium.
 - **Estimated effort:** 5–8 days
 
-### PRODUCT-FE-005 · Migrate template library and categories reads
+### PRODUCT-FE-005 · Migrate `getProductTemplates` documents
 
 - **Type:** Query migration · **Impact:** Medium · **Domain:** product
 - **Depends on:** PRODUCT-BE-B-03, PRODUCT-BE-C-02, PRODUCT-BE-C-03, PRODUCT-BE-G-03, PRODUCT-BE-G-04, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-H-07, PRODUCT-BE-S-01, PRODUCT-BE-S-02
-- **Operations:** `getProductTemplates`, `getCategories`
+- **Operations:** `getProductTemplates`
 
 - **Business objective:**
   - Template library browsing and template-driven creation keep working, including the claim/measurement/size template composition.
 - **Technical objective:**
-  - Migrate `getProductTemplates` (3 documents, one selecting 208 fields via 12 fragments) and `getCategories` (3 documents).
+  - Migrate all 3 `getProductTemplates`-rooted documents: `GET_ALL_PRODUCTS_TEMPLATES` (`spark-legacy/templateLibrary/ProductTemplateQueries.tsx`), `GET_PRODUCTS_WITH_IDS` (`claims/ClaimQueries.ts` — cross-library reuse of the same root query), `GET_PRODUCT_TEMPLATE` (`spark-legacy/templateLibrary/ProductTemplateQueries.tsx`, 208-field document via 12 fragments — widest fragment composition in phase 1).
 - **Background / current implementation:**
-  - `spark-legacy/templateLibrary/ProductTemplateQueries.tsx`, `claims/ClaimQueries.ts`, `product-common/WorkspaceProductsQueries.ts`.
-  - The wide template document embeds fragments defined outside the inventoried libraries (`sizeTemplateFragmentWithRows`, `measurementTemplateFragment`) — locate and inventory them during implementation.
+  - The wide template document (`GET_PRODUCT_TEMPLATE`) embeds fragments defined outside the inventoried libraries (`sizeTemplateFragmentWithRows`, `measurementTemplateFragment`) — locate and inventory them during implementation.
 - **Required changes:**
-  - Fragment re-target + document re-point; close the fragment inventory gap.
+  - Fragment re-target + document re-point across both libraries; close the fragment inventory gap.
 
 #### Acceptance Criteria
 
-1. Template library lists, previews and clone-from-template flows render identically.
-2. The two externally defined fragments are located, inventoried and migrated.
+1. Template library lists, previews and clone-from-template flows render identically, across all 3 documents.
+2. `ClaimBulkUpdate.tsx`'s use of `GET_PRODUCTS_WITH_IDS` is verified against the same federated contract as the template-library documents (same root query, different consumer).
+3. The two externally defined fragments (`sizeTemplateFragmentWithRows`, `measurementTemplateFragment`) are located, inventoried and migrated.
 
 #### Testing
 
-- Template library integration suite; clone-flow smoke test.
+- Template library integration suite; clone-flow smoke test; `ClaimBulkUpdate` smoke test.
 
 - **Risk:** Medium — widest fragment composition in phase 1.
-- **Estimated effort:** 5–8 days
+- **Estimated effort:** 6–9 days
 
-### PRODUCT-FE-006 · Migrate product rules administration
+### PRODUCT-FE-006 · Migrate `getCategories` documents
+
+- **Type:** Query migration · **Impact:** Low · **Domain:** product
+- **Depends on:** PRODUCT-BE-G-03, PRODUCT-BE-G-13
+- **Operations:** `getCategories`
+
+- **Business objective:**
+  - Template-library and product-list category filters keep working on the federated graph.
+- **Technical objective:**
+  - Migrate all 3 `getCategories`-rooted documents: `GET_PRODUCT_TEMPLATE_CATEGORY` (`spark-legacy/templateLibrary/ProductTemplateQueries.tsx`), `GET_WORKSPACE_CATEGORY`, `GET_WORKSPACE_CATEGORY_CLAZZ` (both `product-common/WorkspaceProductsQueries.ts`).
+- **Background / current implementation:**
+  - All 3 documents are thin, single-root, no fragments.
+- **Required changes:**
+  - Document re-point only; verify the `Categories` interface→union change (federation-review R4) doesn't require inline fragments here (cross-check against `PRODUCT-FE-013`'s sweep).
+
+#### Acceptance Criteria
+
+1. Template-library and product/user-list category filters render identically, across all 3 documents.
+
+#### Testing
+
+- Filter-form integration tests per consumer (`ProductTemplateSideFilterForm`, `ProductListSideFilterForm`, `UserListSideFilterForm`).
+
+- **Risk:** Low.
+- **Estimated effort:** 2–3 days
+
+### PRODUCT-FE-007 · Migrate product rules administration
 
 - **Type:** Query + mutation migration · **Impact:** Medium · **Domain:** product
 - **Depends on:** PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-D-15, PRODUCT-BE-D-16, PRODUCT-BE-D-17, PRODUCT-BE-G-07, PRODUCT-BE-G-13, PRODUCT-BE-H-08
@@ -159,27 +194,29 @@
 - **Business objective:**
   - Rules administration (admin console) is fully functional on the federated graph.
 - **Technical objective:**
-  - Migrate the 9 rules operations in `spark-legacy/routes/admin/routes/rules/graphql/AdminRulesQueries.ts` as one vertical slice.
+  - Migrate the 9 rules operations in `spark-legacy/routes/admin/routes/rules/graphql/AdminRulesQueries.ts` as one vertical slice. Each operation is single-document/single-root, so — unlike `getProduct`/`getProductTemplates` above — grouping by *workflow* rather than splitting one-story-per-query keeps this a coherent, reviewable unit; there is nothing to fold together per query since none of the 9 root fields repeat elsewhere in the client estate.
 - **Background / current implementation:**
   - Self-contained admin flow; shared `PRODUCT_RULES_FIELDS_FRAGMENT`.
   - `SPARK_ProductRules.businessPartners` is deprecated ("use rule attribute") and still selected.
+  - **Backend note:** these resolvers call a distinct REST base (`spark_rules/v1`), documented today as Product-owned (`ProductService` internal dataloaders — see `be-01-schema-inventory.md`), but the Product PO summary flags an **open decision** (`USE_NEW_RULES_API` cutover — rules may move to a separate `spark-tag` DGS) that blocks `PRODUCT-BE-B-10`/`B-11`/`C-05` (`getProductDeptRules`, `getProductBPRules`, `searchProductRules`). If that cutover lands before this story ships, those 3 operations move to a `spark-tag`-owned story and this story's scope shrinks to the remaining 6.
 - **Required changes:**
   - Replace the deprecated `businessPartners` selection with the rule-attribute shape before cutover.
-  - Re-point all 9 documents together (single flag scope).
+  - Re-point all 9 documents together (single flag scope) — re-verify scope against the `USE_NEW_RULES_API` decision before starting.
 
 #### Acceptance Criteria
 
 1. Rule list, search, create, update and delete work end-to-end under the flag.
 2. No selection references `businessPartners` on the rules type.
+3. Story scope re-confirmed against the `USE_NEW_RULES_API` decision at kickoff — if rules have moved to `spark-tag`, `getProductDeptRules`/`getProductBPRules`/`searchProductRules` are pulled into a separate `spark-tag`-owned story instead.
 
 #### Testing
 
 - Admin rules CRUD integration test; search fixture tests.
 
-- **Risk:** Low — isolated admin surface.
+- **Risk:** Low — isolated admin surface. **Open dependency:** `USE_NEW_RULES_API` decision (Product Owner, unresolved) may re-scope this story before implementation.
 - **Estimated effort:** 4–6 days
 
-### PRODUCT-FE-007 · Migrate simple product mutations
+### PRODUCT-FE-008 · Migrate simple product mutations
 
 - **Type:** Mutation migration · **Impact:** Medium · **Domain:** product
 - **Depends on:** PRODUCT-BE-D-01, PRODUCT-BE-D-02, PRODUCT-BE-D-03, PRODUCT-BE-D-04, PRODUCT-BE-D-05, PRODUCT-BE-D-10, PRODUCT-BE-D-13, PRODUCT-BE-D-14
@@ -188,7 +225,7 @@
 - **Business objective:**
   - Product create, edit, bulk-edit, carry-forward and link flows write through the federated graph.
 - **Technical objective:**
-  - Migrate the 8 single-step product mutations and their cache updates.
+  - Migrate the 8 single-step product mutations and their cache updates. `updateProduct` has 3 documents (`product-queries/ProductQueries.tsx`, `spark-legacy/carouselMutations`, `spark-legacy/templateLibrary/ProductTemplateQueries.tsx`) that all share the same input/response shape — kept together here rather than split into their own story, since (unlike `getProduct`'s 17 divergent selections) the 3 `updateProduct` call sites are near-identical thin wrappers over one mutation contract.
 - **Background / current implementation:**
   - Spread across `product-queries`, `product-common`, `spark-legacy`; several rely on `refetchQueries` after thin responses.
 - **Required changes:**
@@ -199,6 +236,7 @@
 
 1. Each flow completes and the UI reflects the write without a manual refresh.
 2. No migrated mutation triggers a full-document refetch that its response payload makes redundant.
+3. All 3 `updateProduct` call sites (product-queries, carousel, template library) migrate together and stay contract-identical.
 
 #### Testing
 
@@ -207,7 +245,7 @@
 - **Risk:** Medium.
 - **Estimated effort:** 6–10 days
 
-### PRODUCT-FE-008 · Migrate team and partner assignment mutations
+### PRODUCT-FE-009 · Migrate team and partner assignment mutations
 
 - **Type:** Mutation migration · **Impact:** Medium · **Domain:** product
 - **Depends on:** PRODUCT-BE-D-06, PRODUCT-BE-D-07, PRODUCT-BE-D-12, PRODUCT-FE-001
@@ -216,9 +254,9 @@
 - **Business objective:**
   - Team-tab management (add teams/partners, workspace context) writes through the federated graph.
 - **Technical objective:**
-  - Migrate the 3 team/partner mutations in `product-queries/TeamTabQueries.ts` with their team-tab read dependencies.
+  - Migrate the 3 team/partner mutations in `product-queries/TeamTabQueries.ts` and `spark-legacy/teams/TeamsQueries.tsx` with their team-tab read dependencies.
 - **Background / current implementation:**
-  - Mutations return slim payloads; team tab refetches `getProductWithTeams` after each write.
+  - Mutations return slim payloads; team tab refetches `GET_PRODUCT_WITH_TEAMS` (part of FE-001) after each write.
 - **Required changes:**
   - Align response selections with federated team entities (`TeamV2.teamId` key).
   - Cache write on mutation response; keep one guarded refetch only where the payload is insufficient.
@@ -235,7 +273,7 @@
 - **Risk:** Medium.
 - **Estimated effort:** 4–6 days
 
-### PRODUCT-FE-009 · Migrate partner drop/undrop orchestration
+### PRODUCT-FE-010 · Migrate partner drop/undrop orchestration
 
 - **Type:** Mutation migration (complex) · **Impact:** High · **Domain:** product
 - **Depends on:** PRODUCT-BE-S-03, PRODUCT-BE-D-09
@@ -264,7 +302,7 @@
 - **Risk:** High — blocked on two draft ADR ratifications.
 - **Estimated effort:** 8–12 days
 
-### PRODUCT-FE-010 · Migrate TechPack count queries (facade-then-federate)
+### PRODUCT-FE-011 · Migrate TechPack count queries (facade-then-federate)
 
 - **Type:** Query migration (staged) · **Impact:** Medium · **Domain:** product
 - **Depends on:** PRODUCT-BE-E-03, PRODUCT-BE-E-04, PRODUCT-BE-F-06, PRODUCT-BE-F-08, PRODUCT-BE-G-08, PRODUCT-BE-H-01, PRODUCT-BE-H-02, PRODUCT-BE-H-03, PRODUCT-BE-H-04, PRODUCT-BE-H-05
@@ -276,9 +314,9 @@
   - Step 1 (facade): keep the current document shapes, re-point to the router (facade preserves the contract — ADR-015 Option B, 🟠 draft; facade-then-federate).
   - Step 2 (federate): replace the dedicated count queries with count fields selected on `Product` in existing documents (backed by `PRODUCT-BE-H-01`..`H-05`, each domain's federated `ResourcesCount` field, shipping independently as each subgraph goes live).
 - **Background / current implementation:**
-  - `product-queries/ProductQueries.tsx` and `product-common/WorkspaceProductsQueries.ts`; the backend aggregates 7 sequential elastic queries per count.
+  - `product-queries/ProductQueries.tsx` (`GET_COUNT_V1`) and `product-common/WorkspaceProductsQueries.ts` (`BULK_TECHPACK_COUNTS`); the backend aggregates 7 sequential elastic queries per count.
 - **Required changes:**
-  - Step 1 is endpoint-only; Step 2 deletes 2 documents and extends `getProduct`/`getProducts` selections.
+  - Step 1 is endpoint-only; Step 2 deletes 2 documents and extends the `getProduct`/`getProducts` selections owned by FE-001/FE-002.
 
 #### Acceptance Criteria
 
@@ -292,24 +330,24 @@
 - **Risk:** Medium — two-step delivery, second step gated on federation of the counts.
 - **Estimated effort:** 4–6 days (step 1) + 4–6 days (step 2)
 
-### PRODUCT-FE-011 · Migrate component status rollups
+### PRODUCT-FE-012 · Migrate component status mutations and rollup counts
 
-- **Type:** Query + mutation migration · **Impact:** Medium · **Domain:** product
-- **Depends on:** PRODUCT-BE-B-01, PRODUCT-BE-D-18, PRODUCT-BE-E-02, PRODUCT-BE-F-10, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-S-01
-- **Operations:** `getProduct`, `updateComponentStatus`, `updateComponentStatuses`
+- **Type:** Mutation migration · **Impact:** Medium · **Domain:** product
+- **Depends on:** PRODUCT-BE-D-18, PRODUCT-BE-E-02, PRODUCT-FE-001
+- **Operations:** `updateComponentStatus`, `updateComponentStatuses`
 
 - **Business objective:**
   - Component status counts and bulk status updates behave identically on the federated graph.
 - **Technical objective:**
-  - Migrate `getProductComponentStatusCounts` (rooted on `getProduct`) and the two component-status mutations under the counts-rollup design (ADR-014 — 🟠 draft, ratification pending).
+  - Migrate the two component-status mutations under the counts-rollup design (ADR-014 — 🟠 draft, ratification pending). `getProductComponentStatusCounts` (rooted on `getProduct`) migrates as part of FE-001, not here — this story covers only the two write operations and verifies they reconcile against FE-001's rollup-count read.
 - **Background / current implementation:**
-  - `product-queries/ProductFilesQueries.tsx` reads rollup counts; `spark-legacy` connected-components flows write statuses singly and in bulk.
+  - `spark-legacy` connected-components flows write statuses singly and in bulk; `product-queries/ProductFilesQueries.tsx` reads the rollup counts (covered by FE-001).
 - **Required changes:**
   - Adopt the ratified rollup field shapes; align bulk mutation payload with per-item results.
 
 #### Acceptance Criteria
 
-1. Rollup counts equal legacy values across fixture products.
+1. Rollup counts (read via FE-001's `getProduct`) equal legacy values across fixture products after a write.
 2. Bulk status update renders per-item outcomes.
 
 #### Testing
@@ -317,9 +355,9 @@
 - Rollup parity fixtures; bulk-update integration test.
 
 - **Risk:** Medium — gated on ADR-014 ratification.
-- **Estimated effort:** 4–6 days
+- **Estimated effort:** 3–5 days
 
-### PRODUCT-FE-012 · Verify fragment type-conditions, `__typename` logic and cache keys against federated type names
+### PRODUCT-FE-013 · Verify fragment type-conditions, `__typename` logic and cache keys against federated type names
 
 - **Type:** Verification / refactor · **Impact:** Medium · **Domain:** product
 - **Depends on:** PRODUCT-BE-F-14
@@ -332,7 +370,7 @@
 - **Background / current implementation:**
   - The completed platform fragment sweep (former PLATFORM-FE-004) predates the R3/R4 contract alignment; `Claims`/`ProductDetails` conditions were never re-verified, and the humanId-only entities previously had no `id` to normalize on. Remaining explicit `keyFields`: `SampleMeasurementSet: ["sampleId"]`, `ResourcesCount: ["productId","partnerId"]`.
 - **Required changes:**
-  - Codemod/grep sweep for the legacy names; ensure `id` is selected on `Claims`/`Packaging`/`Watchlist`/`Dieline` selections (add where missing); add the two remaining `keyFields` entries; add a `__typename` assertion pass to the parity harness; inline-fragment adoption for `Categories` selections.
+  - Codemod/grep sweep for the legacy names; ensure `id` is selected on `Claims`/`Packaging`/`Watchlist`/`Dieline` selections (add where missing); add the two remaining `keyFields` entries; add a `__typename` assertion pass to the parity harness; inline-fragment adoption for `Categories` selections (cross-check against FE-006).
 
 #### Acceptance Criteria
 
@@ -347,7 +385,6 @@
 - **Risk:** Medium — silent cache mis-normalization is hard to spot in QA.
 - **Estimated effort:** 3–5 days
 
----
 
 ## BOM
 

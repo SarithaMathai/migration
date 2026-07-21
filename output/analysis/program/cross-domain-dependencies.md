@@ -1,6 +1,6 @@
 # Cross-Domain Dependencies
 
-> **Generated:** 2026-07-19 · by `generate_cross_domain_deps.py` — collects every `**Blocked by:**` line already declared in each domain's `be-04-stories.md`; adds nothing new. Regenerate after any story's `Blocked by:` field changes.
+> **Generated:** 2026-07-21 · by `generate_cross_domain_deps.py` — collects every `**Blocked by:**` line already declared in each domain's `be-04-stories.md`; adds nothing new. Regenerate after any story's `Blocked by:` field changes.
 > **`Depends on:` vs `Blocked by:`** — `Depends on:` is an intra-domain build-order edge the wave scheduler enforces (see each domain's "Recommended Implementation Order"). `Blocked by:` is documentation only: nothing in the generator pipeline currently treats it as a hard scheduling gate — it's the human-readable record of a cross-domain or cross-subgraph constraint the *program plan* (sprint sequencing, not the wave scheduler) has to honor by hand.
 
 ---

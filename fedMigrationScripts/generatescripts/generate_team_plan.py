@@ -254,7 +254,7 @@ def build_team_plan() -> str:
         f"- The frontend {fe_word_lower} gate-bound, not capacity-bound — between gates "
         "they work parity dashboards, dual-run monitoring and rollback drills, and "
         "pre-pull the next domain's fragment/codegen prep.",
-        "- Search-gated stories (`MST-FE-002`, `BOM-FE-003`, `PRODUCT-FE-003`) also wait on "
+        "- Search-gated stories (`MST-FE-002`, `BOM-FE-003`, `PRODUCT-FE-002`) also wait on "
         "the search read-hub decision — external to this plan and may slide independently.",
         "- Impression rides its partner flips (`IMPRESSION-FE-001` with `BOM-FE-002`, "
         "`IMPRESSION-FE-002` with `PRODUCT-FE-001`).",

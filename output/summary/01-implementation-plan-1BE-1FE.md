@@ -1,6 +1,6 @@
 # Implementation Plan — 1 Backend + 1 Frontend Engineer
 
-> 🏷️ **Tags:** `dgs-migration` · `team-plan` — **Generated:** 2026-07-19 · Derived from the same story parsers as the per-domain breakdowns (grouped-XS merges included), so story counts and day totals reconcile.
+> 🏷️ **Tags:** `dgs-migration` · `team-plan` — **Generated:** 2026-07-21 · Derived from the same story parsers as the per-domain breakdowns (grouped-XS merges included), so story counts and day totals reconcile.
 > Day figures are **nominal midpoints of AI-estimated ranges — confirm in refinement.** 1 sprint = 10 working days. d0 = program start. Team size and domain sequencing are set in `team_config.py` — change them there and regenerate.
 
 ---
@@ -42,11 +42,11 @@
 | 2 | **Packaging** | — | 27 | BE Packaging A–E done (d356) | d356–d382 (spr 36–39) |
 | 3 | **BOM** | — | 38 | BE BOM A–E done (d420) | d420–d458 (spr 43–46) |
 | 3 | **Claims** | — | 22 | BE Claims A–E done (d494) | d494–d516 (spr 50–52) |
-| 4 | **Product** | — | 84 | BE Product A–E done (d108) + pilot soak (d238) | d516–d600 (spr 52–60) |
-| 4 | **Impression** | — | 4 | BE Impression A–E done (d520) | d600–d604 (spr 60–61) |
+| 4 | **Product** | — | 86 | BE Product A–E done (d108) + pilot soak (d238) | d516–d602 (spr 52–61) |
+| 4 | **Impression** | — | 4 | BE Impression A–E done (d520) | d602–d606 (spr 61–61) |
 
 - The frontend engineer is gate-bound, not capacity-bound — between gates they work parity dashboards, dual-run monitoring and rollback drills, and pre-pull the next domain's fragment/codegen prep.
-- Search-gated stories (`MST-FE-002`, `BOM-FE-003`, `PRODUCT-FE-003`) also wait on the search read-hub decision — external to this plan and may slide independently.
+- Search-gated stories (`MST-FE-002`, `BOM-FE-003`, `PRODUCT-FE-002`) also wait on the search read-hub decision — external to this plan and may slide independently.
 - Impression rides its partner flips (`IMPRESSION-FE-001` with `BOM-FE-002`, `IMPRESSION-FE-002` with `PRODUCT-FE-001`).
 
 ---
@@ -59,8 +59,8 @@
 | 🔗 First cross-subgraph cutover (Claims FE) | d516 | 52 |
 | 🏁 Product backend complete (`plm-product` host) | d200 | 21 |
 | 🧱 Backend lane drained (both subgraphs schema-complete) | d528 | 53 |
-| ✅ All FE cutovers flipped | d604 | 61 |
-| **Program complete (excl. post-launch F-phase)** | **d604** | **61** |
+| ✅ All FE cutovers flipped | d606 | 61 |
+| **Program complete (excl. post-launch F-phase)** | **d606** | **61** |
 
 > ≈ **61 sprints (~30 months)** with this 1 BE + 1 FE team — see 00-program-overview.md for the program-level totals. Buffered (+20%) planning figure: ~73 sprints.
 
@@ -74,4 +74,4 @@
 - Team size and domain sequencing: `team_config.py`.
 
 ---
-*Team plan · generated 2026-07-19 by generate_team_plan.py.*
+*Team plan · generated 2026-07-21 by generate_team_plan.py.*

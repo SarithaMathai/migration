@@ -37,8 +37,8 @@ These 6 domains are **co-located in plm-product DGS**. Product resolves their fi
 
 | Domain | Entity | Resolution Pattern | Story | DataLoader? | Consumers (who calls it) | Notes |
 |---|---|---|---|---|---|---|
-| **bom** | `SPARK_Bom` | `@DgsData(parentType = "Product")` | BOM-BE-F-01 | ✅ `BomDataLoader` (BOM-BE-C-01) | product (Product.productBoms/boms/packagingBoms) | In-process — ships on green |
-| **measurement** | `SPARK_MeasurementSet` | `@DgsData(parentType = "Product")` | MST-BE-F-01 | ✅ `MeasurementDataLoader` (MST-BE-C-01) | product (Product.measurementSets) | In-process — ships on green |
+| **bom** | `SPARK_Bom` | `@DgsData(parentType = "Product")` | BOM-BE-F-01 | ✅ `bomsByProductIdLoader` (AC #5 on F-01) | product (Product.productBoms/boms/packagingBoms) | In-process — ships on green |
+| **measurement** | `SPARK_MeasurementSet` | `@DgsData(parentType = "Product")` | MST-BE-F-01 | ✅ `measurementSetsByProductIdLoader` (AC #4 on F-01) | product (Product.measurementSets) | In-process — ships on green |
 | **packaging** | `SPARK_Packaging` | `@DgsData(parentType = "Product")` | PKG-BE-F-01 | ❌ **NONE DEFINED** | product (Product.packagingBoms) | ⚠️ GAP — N+1 risk for list fields |
 | **productDetails** | `SPARK_ProductDetails` | `@DgsData(parentType = "Product")` | PDTL-BE-F-01 | ❌ **NONE DEFINED** | product (Product.productDetails) | ⚠️ GAP — N+1 risk for list fields |
 | **watchlist** | `SPARK_Watchlist` | `@DgsData(parentType = "Product")` | WATCHLIST-BE-F-01 | ❌ **NONE DEFINED** | product (Product.watchlists) | ⚠️ GAP — N+1 risk for list fields |
@@ -49,8 +49,8 @@ These 6 domains are **co-located in plm-product DGS**. Product resolves their fi
 | Domain | Has DataLoader Story? | Risk | Status |
 |---|---|---|---|
 | product | ✅ PRODUCT-BE-C-01 (ProductDataLoader), H-06 (entity fetcher) | None | ✅ Covered |
-| bom | ✅ BOM-BE-C-01 (BomDataLoader), BOM-BE-G-10 (MaterialDataLoader) | None | ✅ Covered |
-| measurement | ✅ MST-BE-C-01 (MeasurementDataLoader) | None | ✅ Covered |
+| bom | ✅ AC added to BOM-BE-F-01 | **Medium** — co-located, list fields | ✅ AC added — `bomsByProductIdLoader` |
+| measurement | ✅ AC added to MST-BE-F-01 | **Medium** — co-located, list field | ✅ AC added — `measurementSetsByProductIdLoader` |
 | claims | ✅ AC added to CLAIM-BE-H-01 | **High** — entity fetcher without batch = N+1 at gateway | ✅ AC added — `claimByIdLoader` |
 | packaging | ✅ AC added to PKG-BE-F-01 | **Medium** — co-located, but list fields hit REST N times | ✅ AC added — `packagingByProductIdLoader` |
 | productDetails | ✅ AC added to PDTL-BE-F-01 | **Medium** — co-located, list fields | ✅ AC added — `productDetailsByProductIdLoader` |
@@ -107,8 +107,8 @@ fun productBoms(dfe: DgsDataFetchingEnvironment): CompletableFuture<List<SPARK_B
 ```mermaid
 flowchart LR
     subgraph "plm-product DGS (co-located — @DgsData, no entity fetcher)"
-        BOM["BOM\n@DgsData + BomDataLoader"]
-        MST["MEASUREMENT\n@DgsData + MeasurementDataLoader"]
+        BOM["BOM\n@DgsData + bomsByProductIdLoader"]
+        MST["MEASUREMENT\n@DgsData + measurementSetsByProductIdLoader"]
         PKG["PACKAGING\n@DgsData + ⚠️ no DataLoader"]
         PDTL["PRODUCTDETAILS\n@DgsData + ⚠️ no DataLoader"]
         WL["WATCHLIST\n@DgsData + ⚠️ no DataLoader"]

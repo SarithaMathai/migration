@@ -9,7 +9,7 @@
 | **Total Stories** | 7 |
 | **Complexity** | 🔴 0 Very High · 🟠 0 High · 🟡 2 Medium · 🟢 5 Low |
 | **Phase Coverage** | 📖 B · ✏️ D · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -151,7 +151,7 @@ that proves the pipeline end-to-end.
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `IMPRESSION-BE-F-01`<br>`Product.impressions` / `impressionCounts` (internal field resolver) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose impressions and their counts on the Product type.<br>**Done when:**<br>• `Product.impressions` and `Product.impressionCounts` resolve in-process via `impressionService`<br>• No HTTP call is made during resolution (verified by unit test mock)<br>• Output matches the current product-side resolver (parity) |
+| 🔸 `IMPRESSION-BE-F-01`<br>`Product.impressions` / `impressionCounts` (internal field resolver) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose impressions and their counts on the Product type.<br>**Done when:**<br>• `Product.impressions` and `Product.impressionCounts` resolve in-process via `impressionService`<br>• No HTTP call is made during resolution (verified by unit test mock)<br>• Output matches the current product-side resolver (parity)<br>• Field resolver uses a `MappedBatchLoader<String, List<SPARK_Impression>>` (`impressionByProductIdLoader`) — when the parent query returns N products, impressions are resolved in 1 batched call (not N) |
 
 
 ##### 🧪 Phase G — Field Resolvers & Tests (3 stories)
@@ -178,7 +178,7 @@ that proves the pipeline end-to-end.
 | **Impact** | 🔴 0 High · 🟡 0 Medium · 🟢 2 Low |
 | **Estimated effort** | 3–5 days (single-engineer) |
 | **Phase-1 surface** | 2 operation-to-root-field rows · 2 client files · 4 components |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

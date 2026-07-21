@@ -1,135 +1,84 @@
 FE Story,FE Story Title,Section,Field/Query,Resolving BE Story,External Dependency,Ext-Story,New Gap?,Impacts (Queries),Notes
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,ancestryProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,attachments,PRODUCT-BE-G-03,attachment,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,attachmentsWithMetaData,PRODUCT-BE-G-01,attachment,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,brand,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,childProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,clazz,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,components,PRODUCT-BE-G-02,search,,No,getProduct,🔬 SPIKE-05 (gated)
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,createdBy,PRODUCT-BE-G-14,user-profile,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,currentUserPermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,department,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,departments,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,discussionsV2,PRODUCT-BE-G-06,discussion,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,division,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,droppedPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Query,getProduct,PRODUCT-BE-B-01,,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,isResourceCritical,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,linkedResourceId,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,resourcePermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,resourceTitle,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,status,PRODUCT-BE-G-07,vmm,,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,tags,PRODUCT-BE-G-13,tag,,No,getProduct,
-PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,workspaces,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,ancestryProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,attachments,PRODUCT-BE-G-03,attachment,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,attachmentsWithMetaData,PRODUCT-BE-G-01,attachment,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,brand,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,childProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,clazz,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,components,PRODUCT-BE-G-02,search,,No,getProduct,🔬 SPIKE-05 (gated)
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,createdBy,PRODUCT-BE-G-14,user-profile,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,currentUserPermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,department,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,departments,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,discussionsV2,PRODUCT-BE-G-06,discussion,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,division,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,droppedPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Query,getProduct,PRODUCT-BE-B-01,,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Query,getProductVersions,PRODUCT-BE-B-04,,,No,getProductVersions,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,isResourceCritical,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,linkedResourceId,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,resourcePermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,resourceTitle,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,status,PRODUCT-BE-G-07,vmm,,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,tags,PRODUCT-BE-G-13,tag,,No,getProduct,
-PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,workspaces,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
-PRODUCT-FE-003,Migrate product list and bulk reads,Field,departments,PRODUCT-BE-G-13,ig,,No,getProductsByIds,
-PRODUCT-FE-003,Migrate product list and bulk reads,Query,getProducts,PRODUCT-BE-S-02,,,No,getProducts,
-PRODUCT-FE-003,Migrate product list and bulk reads,Query,getProductsByIds,PRODUCT-BE-B-02,,,No,getProductsByIds,
-PRODUCT-FE-003,Migrate product list and bulk reads,Query,getProductStatus,PRODUCT-BE-B-03,,,No,getProductsByIds,
-PRODUCT-FE-003,Migrate product list and bulk reads,Field,roles,NEW-PRODUCT-BE-G-??,,,Yes,getProductsByIds,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProductStatus,🔬 SPIKE-04 (gated)
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,departments,PRODUCT-BE-G-13,ig,,No,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,firstRoundSampleReceivedBySampleFormat,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,firstRoundSampleReceivedBySampleType,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Query,getProduct,PRODUCT-BE-B-01,,,No,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Query,getProductsByIds,PRODUCT-BE-B-02,,,No,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Query,getProductStatus,PRODUCT-BE-B-03,,,No,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,productSamplesReceivedBySampleFormat,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,productSamplesReceivedBySampleType,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,status,PRODUCT-BE-G-07,vmm,,No,getProductStatus,🔬 SPIKE-04 (gated); via `...ProductVendorAttributesFragment`
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,teams,PRODUCT-BE-G-06,teamV2,,No,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,totalProducts,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,totalProductsRequested,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,totalProductsWithBp,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
-PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,vendorAttributes,PRODUCT-BE-G-07,vmm,,No,getProductStatus,🔬 SPIKE-04 (gated)
-PRODUCT-FE-005,Migrate template library and categories reads,Field,access,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,
-PRODUCT-FE-005,Migrate template library and categories reads,Field,additionalInfo,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProductTemplates,
-PRODUCT-FE-005,Migrate template library and categories reads,Field,brands,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,businessPartner,CLAIM-BE-G-02,vmm,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,categories,PRODUCT-BE-G-04,IG,,No,getCategories,
-PRODUCT-FE-005,Migrate template library and categories reads,Field,claimDetails,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,claimNotes,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,createdBy,CLAIM-BE-G-02,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,designPartner,CLAIM-BE-G-02,vmm,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,divisions,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
-PRODUCT-FE-005,Migrate template library and categories reads,Query,getCategories,PRODUCT-BE-C-03,,,No,getCategories,
-PRODUCT-FE-005,Migrate template library and categories reads,Query,getProductTemplates,PRODUCT-BE-C-02,,,No,getProductTemplates,
-PRODUCT-FE-005,Migrate template library and categories reads,Field,IG_Clazz_Filter,PRODUCT-BE-H-07,ig,PRODUCT-BE-H-07,No,getCategories,newly authored — PRODUCT-BE-H-07
-PRODUCT-FE-005,Migrate template library and categories reads,Field,parentDetails,CLAIM-BE-G-03,product,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,parentId,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,participantDetails,CLAIM-BE-G-01,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,product,CLAIM-BE-G-03,product,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,productTemplateDepartments,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,tags,PRODUCT-BE-G-13,tag,,No,getProductTemplates,via `...productTemplateDetails`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,teams,PRODUCT-BE-G-06,teamV2,,No,getProductTemplates,via `...LegacyComponentDiscussionParticipantsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,updatedBy,CLAIM-BE-G-02,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
-PRODUCT-FE-005,Migrate template library and categories reads,Field,users,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...LegacyComponentDiscussionParticipantsFragment`
-PRODUCT-FE-006,Migrate product rules administration,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",🔬 SPIKE-04 (gated); via `...ProductRules`
-PRODUCT-FE-006,Migrate product rules administration,Field,departments,PRODUCT-BE-G-13,ig,,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",via `...ProductRules`
-PRODUCT-FE-006,Migrate product rules administration,Query,getAllAvailableRules,PRODUCT-BE-B-09,,,No,getAllAvailableRules,
-PRODUCT-FE-006,Migrate product rules administration,Query,getProductBPRules,PRODUCT-BE-B-11,,,No,getProductBPRules,
-PRODUCT-FE-006,Migrate product rules administration,Query,getProductDeptRules,PRODUCT-BE-B-10,,,No,getProductDeptRules,
-PRODUCT-FE-006,Migrate product rules administration,Query,getProductRules,PRODUCT-BE-B-07,,,No,getProductRules,
-PRODUCT-FE-006,Migrate product rules administration,Query,getProductRulesById,PRODUCT-BE-B-08,,,No,getProductRulesById,
-PRODUCT-FE-006,Migrate product rules administration,Field,insightsClassExclusion,PRODUCT-BE-H-08,ig,PRODUCT-BE-H-08,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",newly authored — PRODUCT-BE-H-08; via `...ProductRules`
-PRODUCT-FE-006,Migrate product rules administration,Query,searchProductRules,PRODUCT-BE-C-05,,,No,searchProductRules,
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),Query,getProductTechPackBulkCountV1,PRODUCT-BE-E-04,,,No,getProductTechPackBulkCountV1,
-PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),Query,getProductTechPackCountV1,PRODUCT-BE-E-03,,,No,getProductTechPackCountV1,
-PRODUCT-FE-011,Migrate component status rollups,Field,ancestryProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,attachments,PRODUCT-BE-G-03,attachment,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,attachmentsWithMetaData,PRODUCT-BE-G-01,attachment,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,brand,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-011,Migrate component status rollups,Field,childProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,clazz,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,components,PRODUCT-BE-G-02,search,,No,getProduct,🔬 SPIKE-05 (gated)
-PRODUCT-FE-011,Migrate component status rollups,Field,createdBy,PRODUCT-BE-G-14,user-profile,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,currentUserPermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-011,Migrate component status rollups,Field,department,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,departments,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,discussionsV2,PRODUCT-BE-G-06,discussion,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,division,PRODUCT-BE-G-13,ig,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,droppedPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-011,Migrate component status rollups,Query,getProduct,PRODUCT-BE-B-01,,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,isResourceCritical,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-011,Migrate component status rollups,Field,linkedResourceId,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-011,Migrate component status rollups,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,resourcePermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,resourceTitle,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
-PRODUCT-FE-011,Migrate component status rollups,Field,status,PRODUCT-BE-G-07,vmm,,No,getProduct,🔬 SPIKE-04 (gated)
-PRODUCT-FE-011,Migrate component status rollups,Field,tags,PRODUCT-BE-G-13,tag,,No,getProduct,
-PRODUCT-FE-011,Migrate component status rollups,Field,workspaces,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,ancestryProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,attachments,PRODUCT-BE-G-03,attachment,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,attachmentsWithMetaData,PRODUCT-BE-G-01,attachment,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,brand,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,childProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,clazz,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,components,PRODUCT-BE-G-02,search,,No,getProduct,🔬 SPIKE-05 (gated)
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,createdBy,PRODUCT-BE-G-14,user-profile,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,currentUserPermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,department,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,departments,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,discussionsV2,PRODUCT-BE-G-06,discussion,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,division,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,droppedPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Query,getProduct,PRODUCT-BE-B-01,,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,isResourceCritical,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,linkedResourceId,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,resourcePermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,resourceTitle,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,status,PRODUCT-BE-G-07,vmm,,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,tags,PRODUCT-BE-G-13,tag,,No,getProduct,
+PRODUCT-FE-001,"Migrate all `getProduct` documents (single root query, 17 flavors)",Field,workspaces,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+PRODUCT-FE-002,Migrate `getProducts` documents (list/search/bulk-create),Query,getProducts,PRODUCT-BE-S-02,,,No,getProducts,
+PRODUCT-FE-003,Migrate `getProductsByIds` documents (bulk-by-id reads),Field,departments,PRODUCT-BE-G-13,ig,,No,getProductsByIds,
+PRODUCT-FE-003,Migrate `getProductsByIds` documents (bulk-by-id reads),Query,getProductsByIds,PRODUCT-BE-B-02,,,No,getProductsByIds,
+PRODUCT-FE-003,Migrate `getProductsByIds` documents (bulk-by-id reads),Query,getProductStatus,PRODUCT-BE-B-03,,,No,getProductsByIds,
+PRODUCT-FE-003,Migrate `getProductsByIds` documents (bulk-by-id reads),Field,roles,NEW-PRODUCT-BE-G-??,,,Yes,getProductsByIds,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProductStatus,🔬 SPIKE-04 (gated)
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,departments,PRODUCT-BE-G-13,ig,,No,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,firstRoundSampleReceivedBySampleFormat,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,firstRoundSampleReceivedBySampleType,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Query,getProduct,PRODUCT-BE-B-01,,,No,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Query,getProductsByIds,PRODUCT-BE-B-02,,,No,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Query,getProductStatus,PRODUCT-BE-B-03,,,No,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,productSamplesReceivedBySampleFormat,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,productSamplesReceivedBySampleType,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,status,PRODUCT-BE-G-07,vmm,,No,getProductStatus,🔬 SPIKE-04 (gated); via `...ProductVendorAttributesFragment`
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,teams,PRODUCT-BE-G-06,teamV2,,No,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,totalProducts,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,totalProductsRequested,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,totalProductsWithBp,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate `getProductStatus` documents,Field,vendorAttributes,PRODUCT-BE-G-07,vmm,,No,getProductStatus,🔬 SPIKE-04 (gated)
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,access,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,additionalInfo,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProductTemplates,
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,brands,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,businessPartner,CLAIM-BE-G-02,vmm,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,claimDetails,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,claimNotes,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,createdBy,CLAIM-BE-G-02,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,designPartner,CLAIM-BE-G-02,vmm,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,divisions,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Query,getProductTemplates,PRODUCT-BE-C-02,,,No,getProductTemplates,
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,parentDetails,CLAIM-BE-G-03,product,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,parentId,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,participantDetails,CLAIM-BE-G-01,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,product,CLAIM-BE-G-03,product,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,productTemplateDepartments,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,tags,PRODUCT-BE-G-13,tag,,No,getProductTemplates,via `...productTemplateDetails`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,teams,PRODUCT-BE-G-06,teamV2,,No,getProductTemplates,via `...LegacyComponentDiscussionParticipantsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,updatedBy,CLAIM-BE-G-02,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate `getProductTemplates` documents,Field,users,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...LegacyComponentDiscussionParticipantsFragment`
+PRODUCT-FE-006,Migrate `getCategories` documents,Field,categories,PRODUCT-BE-G-04,IG,,No,getCategories,
+PRODUCT-FE-006,Migrate `getCategories` documents,Query,getCategories,PRODUCT-BE-C-03,,,No,getCategories,
+PRODUCT-FE-006,Migrate `getCategories` documents,Field,IG_Clazz_Filter,PRODUCT-BE-H-07,ig,PRODUCT-BE-H-07,No,getCategories,newly authored — PRODUCT-BE-H-07
+PRODUCT-FE-007,Migrate product rules administration,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",🔬 SPIKE-04 (gated); via `...ProductRules`
+PRODUCT-FE-007,Migrate product rules administration,Field,departments,PRODUCT-BE-G-13,ig,,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",via `...ProductRules`
+PRODUCT-FE-007,Migrate product rules administration,Query,getAllAvailableRules,PRODUCT-BE-B-09,,,No,getAllAvailableRules,
+PRODUCT-FE-007,Migrate product rules administration,Query,getProductBPRules,PRODUCT-BE-B-11,,,No,getProductBPRules,
+PRODUCT-FE-007,Migrate product rules administration,Query,getProductDeptRules,PRODUCT-BE-B-10,,,No,getProductDeptRules,
+PRODUCT-FE-007,Migrate product rules administration,Query,getProductRules,PRODUCT-BE-B-07,,,No,getProductRules,
+PRODUCT-FE-007,Migrate product rules administration,Query,getProductRulesById,PRODUCT-BE-B-08,,,No,getProductRulesById,
+PRODUCT-FE-007,Migrate product rules administration,Field,insightsClassExclusion,PRODUCT-BE-H-08,ig,PRODUCT-BE-H-08,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",newly authored — PRODUCT-BE-H-08; via `...ProductRules`
+PRODUCT-FE-007,Migrate product rules administration,Query,searchProductRules,PRODUCT-BE-C-05,,,No,searchProductRules,
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),Query,getProductTechPackBulkCountV1,PRODUCT-BE-E-04,,,No,getProductTechPackBulkCountV1,
+PRODUCT-FE-011,Migrate TechPack count queries (facade-then-federate),Query,getProductTechPackCountV1,PRODUCT-BE-E-03,,,No,getProductTechPackCountV1,
 BOM-FE-002,Migrate BOM core reads,Field,additionalMaterialDetails,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
 BOM-FE-002,Migrate BOM core reads,Field,blue,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`
 BOM-FE-002,Migrate BOM core reads,Field,BomFabricSpecComboDetails,NEW-BOM-BE-G-??,,,Yes,getBomByParentId,fragment body not found in snapshot

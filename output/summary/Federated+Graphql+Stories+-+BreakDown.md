@@ -8,11 +8,11 @@
 | **Domains** | 8 |
 | **Target DGS services** | 2 |
 | **Total Backend Stories** | **211** |
-| **Total Frontend Stories** | **40** · 163–254d single-engineer (Frontend section of each per-domain `FederatedGqlBreakDown-<domain>` page) |
+| **Total Frontend Stories** | **41** · 165–256d single-engineer (Frontend section of each per-domain `FederatedGqlBreakDown-<domain>` page) |
 | **Complexity (backend)** | 🔴 6 Very High · 🟠 13 High · 🟡 74 Medium · 🟢 118 Low |
 | **Phase Coverage** | 🔬 7 Spikes · 🧱 A Foundation & Type Resolvers · 📖 B Core Reads · 🔍 C Search & Listing · ✏️ D Mutations · ⚙️ E Complex Operations · 🔗 F Federation & Stitching · 🧪 G Field Resolvers & Tests · 🧬 H Entity Resolution |
 | **Cross-domain spikes** | 🔬 7 program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -147,10 +147,10 @@ Stories are grouped into phases that encode the replacement order within a domai
 | 3 | **Impression** | `plm-product (co-located)` | **XS** | **7** | 0 | 0 | 2 | 5 | **2** | 3–5d | `FederatedGqlBreakDown-impression` |
 | 4 | **Measurement** | `plm-product (co-located)` | **M** | **30** | 0 | 1 | 5 | 24 | **4** | 12–19d | `FederatedGqlBreakDown-measurement` |
 | 5 | **Packaging** | `plm-product (co-located)` | **L** | **23** | 0 | 2 | 8 | 13 | **5** | 21–33d | `FederatedGqlBreakDown-packaging` |
-| 6 | **Product** | `plm-product (host)` | **XXL** | **69** | 5 | 4 | 27 | 33 | **12** | 66–102d | `FederatedGqlBreakDown-product` |
+| 6 | **Product** | `plm-product (host)` | **XXL** | **69** | 5 | 4 | 27 | 33 | **13** | 68–104d | `FederatedGqlBreakDown-product` |
 | 7 | **Product Details** | `plm-product (co-located)` | **M** | **12** | 0 | 1 | 6 | 5 | **3** | 8–12d | `FederatedGqlBreakDown-productDetails` |
 | 8 | **Watchlist** | `plm-product (co-located)` | **M** | **13** | 0 | 1 | 5 | 7 | **3** | 7–10d | `FederatedGqlBreakDown-watchlist` |
-| | **TOTAL** | — | — | **211** | **6** | **13** | **74** | **118** | **40** | **163–254d** | — |
+| | **TOTAL** | — | — | **211** | **6** | **13** | **74** | **118** | **41** | **165–256d** | — |
 
 ---
 

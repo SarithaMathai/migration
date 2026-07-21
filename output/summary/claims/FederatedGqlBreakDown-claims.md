@@ -9,7 +9,7 @@
 | **Total Stories** | 20 |
 | **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 8 Medium · 🟢 10 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🧪 G · 🧬 H |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -42,7 +42,7 @@ Per **ADR-019** ([`complexStories/acl/01-adr-acl-mid-request-update.md`](https:/
 | Field-resolver type blocks | 4 | `Claims` (11), `ParentDetails` (3), substantiate (1), claimDetails (1) |
 | External dependencies | 6 keys (1 🔴 · 3 🟡 · 2 🔵) | search 🔴; product/user-profile/workspace 🟡 |
 | Federation contributions | 2 (Product.claims, ResourcesCount.claims) | BLOCKED-BY product |
-| **Total stories** | **20** | green-field; separate subgraph |
+| **Total stories** | **21** | green-field; separate subgraph (G-06 added by federation review) |
 
 ---
 
@@ -205,7 +205,7 @@ Per **ADR-019** ([`complexStories/acl/01-adr-acl-mid-request-update.md`](https:/
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `CLAIM-BE-H-01`<br>`Product.claims` (federation contribution) | 🟡 Medium `M` | Field Resolver | B-01 | **Intent —** Expose a product's claims on the Product type (federation contribution).<br>**Today —** extend type Product @key(fields:"id") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] } with a @DgsEntityFetcher; the claims subgraph fills `Product<br>**Done when:**<br>• `Product.claims` resolves via federation<br>• parity vs the current in-gateway resolver |
+| 🔸 `CLAIM-BE-H-01`<br>`Product.claims` (federation contribution) | 🟡 Medium `M` | Field Resolver | B-01 | **Intent —** Expose a product's claims on the Product type (federation contribution).<br>**Today —** extend type Product @key(fields:"id") { claims(partnerIds:[String], includeClaims:Boolean): [Claims] } with a @DgsEntityFetcher; the claims subgraph fills `Product<br>**Done when:**<br>• `Product.claims` resolves via federation<br>• parity vs the current in-gateway resolver<br>• Entity fetcher uses a `MappedBatchLoader<String, Claims>` (`claimByIdLoader`) — batches all `Product.claims` resolutions within a single gateway request into one REST call. Returns `null` for unknown IDs (federation spec)<br>• Under a `getProducts(ids: [50 ids]) { claims { ... } }` query, exactly **1** batched call to the claims backend (not 50) |
 | 🔸 `CLAIM-BE-H-02`<br>`ResourcesCount.claims` (TechPack — claims side of PRODUCT-BE-H-04) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Contribute the claims count to the product TechPack rollup.<br>**Today —** extend type ResourcesCount @key(fields:"productId partnerId") { claims: [ID] } with a<br>**Done when:**<br>• field resolves on the federated `ResourcesCount`; parity vs facade |
 
 
@@ -224,7 +224,7 @@ Per **ADR-019** ([`complexStories/acl/01-adr-acl-mid-request-update.md`](https:/
 | **Impact** | 🔴 2 High · 🟡 2 Medium · 🟢 0 Low |
 | **Estimated effort** | 17–27 days (single-engineer) |
 | **Phase-1 surface** | 18 operation-to-root-field rows · 6 client files · 8 components |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

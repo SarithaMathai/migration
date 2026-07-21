@@ -8,8 +8,8 @@
 | Fix | Client impact | Action |
 |---|---|---|
 | R1/R2 (VMM key `id`) | None — keys are server-side; clients already select `id` | none |
-| R3 (`Claim`→`Claims`; entity keys uniformly `id`, synthesized from humanId where absent) | **Fragment type-conditions and `__typename` logic** must target `Claims` (the prefix-drop of `SPARK_Claims`); with `id` now present, Apollo's default id normalization applies — documents must **select `id`** on `Claims` | PRODUCT-FE-012 (new verification story) |
-| R4 (`ProductDetails` name; `Packaging`/`Watchlist`/`Dieline` synthesized `id`) | Same class of risk: `__typename`-driven code must use `ProductDetails`; select `id` on packaging/watchlist/dieline documents for default cache normalization | PRODUCT-FE-012 |
+| R3 (`Claim`→`Claims`; entity keys uniformly `id`, synthesized from humanId where absent) | **Fragment type-conditions and `__typename` logic** must target `Claims` (the prefix-drop of `SPARK_Claims`); with `id` now present, Apollo's default id normalization applies — documents must **select `id`** on `Claims` | PRODUCT-FE-013 (new verification story) |
+| R4 (`ProductDetails` name; `Packaging`/`Watchlist`/`Dieline` synthesized `id`) | Same class of risk: `__typename`-driven code must use `ProductDetails`; select `id` on packaging/watchlist/dieline documents for default cache normalization | PRODUCT-FE-013 |
 | R5 (claims shareable value types) | None — wire shapes unchanged | none |
 | R6 (CORONA key) | None either way — `itemDetails` stays an embedded selection | none |
 
@@ -62,13 +62,13 @@ businessPartners {                 businessPartners {
 - **Generated TypeScript:** one codegen run per adopted REC; no type removals, so no forced compile breaks.
 - **Apollo cache:** with the program id-key decision (2026-07-17), `Claims`/`Packaging`/`Watchlist`/`Dieline` expose a synthesized `id` and normalize by Apollo's default — no `keyFields` needed, but every cached document must select `id`. Explicit `keyFields` remain only for `SampleMeasurementSet: ["sampleId"]` and `ResourcesCount: ["productId","partnerId"]` (verify against the platform cache-remap done in the completed PLATFORM-FE-003).
 - **UI components / hooks:** only on REC adoption (listed above); none for R-fixes.
-- **Fragments:** sweep for type-conditions on `Claim`/`ProductDetail` legacy names (PRODUCT-FE-012); the completed platform fragment sweep predates R3/R4 and must be re-verified for these two names.
-- **Testing:** federated-vs-legacy JSON parity diffs (existing per-story pattern) remain the acceptance mechanism; PRODUCT-FE-012 adds a `__typename` assertion pass.
+- **Fragments:** sweep for type-conditions on `Claim`/`ProductDetail` legacy names (PRODUCT-FE-013); the completed platform fragment sweep predates R3/R4 and must be re-verified for these two names.
+- **Testing:** federated-vs-legacy JSON parity diffs (existing per-story pattern) remain the acceptance mechanism; PRODUCT-FE-013 adds a `__typename` assertion pass.
 
 ## 4. New / updated FE stories
 
 | Story | Type | Status |
 |---|---|---|
-| PRODUCT-FE-012 · Verify fragment type-conditions, `__typename` logic and cache `keyFields` against federated type names/keys | Required verification | added to fe-08 |
+| PRODUCT-FE-013 · Verify fragment type-conditions, `__typename` logic and cache `keyFields` against federated type names/keys | Required verification | added to fe-08 |
 | BOM-FE-007 · Adopt BOM `supplier` entity references (REC-1) | Optional, PO-gated | added to fe-08 |
 | Other REC adoptions | Optional | documented here; stories to be cut per screen only after PO approval (avoid inventory noise) |

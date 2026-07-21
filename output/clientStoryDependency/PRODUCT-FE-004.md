@@ -1,4 +1,4 @@
-## PRODUCT-FE-004 — Migrate product status and workspace-context reads
+## PRODUCT-FE-004 — Migrate `getProductStatus` documents
 Queries in scope: getProductStatus · Mutations excluded: 0
 
 **Must complete first:** BE — PRODUCT-BE-B-01, PRODUCT-BE-B-02, PRODUCT-BE-B-03, PRODUCT-BE-F-10, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-09, PRODUCT-BE-G-13, PRODUCT-BE-S-01 · Spikes — SPIKE-04 · New — NEW-PRODUCT-BE-G-??

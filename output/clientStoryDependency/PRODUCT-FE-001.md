@@ -1,4 +1,4 @@
-## PRODUCT-FE-001 — Migrate `getProduct` documents in product-queries
+## PRODUCT-FE-001 — Migrate all `getProduct` documents (single root query, 17 flavors)
 Queries in scope: getProduct · Mutations excluded: 0
 
 **Must complete first:** BE — PRODUCT-BE-B-01, PRODUCT-BE-F-10, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-G-14, PRODUCT-BE-S-01 · Spikes — SPIKE-04, SPIKE-05 · New — NEW-PRODUCT-BE-G-??

@@ -204,6 +204,7 @@ Story,WATCHLIST-BE-F-01,(Watchlist) Product.watchlists (internal) [WATCHLIST-BE-
 
 *Acceptance Criteria:*
 1. resolves in-process; no gateway hop
+2. Field resolver uses a `MappedBatchLoader<String, List<SPARK_Watchlist>>` (`watchlistByProductIdLoader`) — when the parent query returns N products, watchlists are resolved in 1 batched call (not N)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)

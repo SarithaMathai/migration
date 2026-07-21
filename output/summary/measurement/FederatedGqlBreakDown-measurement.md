@@ -9,7 +9,7 @@
 | **Total Stories** | 30 |
 | **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 5 Medium · 🟢 24 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -37,7 +37,7 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | Field-resolver type blocks | 2 | `Measurement` (13), `SampleMeasurementSet` (2) |
 | External dependencies | 11 keys (2 🔴 · 6 🟡 · 3 🔵) | relationship/search 🔴; templates 🟡 |
 | Federation contributions | 2 (Product, SampleV2) | BLOCKED-BY product/sample |
-| **Total stories** | **20** | green-field |
+| **Total stories** | **30** | green-field (20 core + 10 sub-domain: measurement-template, size-template, tight-fit) |
 
 ---
 
@@ -210,7 +210,7 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `MST-BE-F-01`<br>Implement `Product.measurementSets` (internal) | 🟡 Medium `M` | Field Resolver<br>Calls: `relationship` | B-01 | **Intent —** Expose a product's measurement sets on the Product type.<br>**Today —** product navigates to measurement sets via the relationship + getMeasurements flow<br>**Done when:**<br>• `Product.measurementSets` resolves internally via `measurementService`<br>• no gateway hop<br>• Parity vs current product resolver |
+| 🔸 `MST-BE-F-01`<br>Implement `Product.measurementSets` (internal) | 🟡 Medium `M` | Field Resolver<br>Calls: `relationship` | B-01 | **Intent —** Expose a product's measurement sets on the Product type.<br>**Today —** product navigates to measurement sets via the relationship + getMeasurements flow<br>**Done when:**<br>• `Product.measurementSets` resolves internally via `measurementService`<br>• no gateway hop<br>• Parity vs current product resolver<br>• Field resolver uses a `MappedBatchLoader<String, List<SPARK_MeasurementSet>>` (`measurementSetsByProductIdLoader`) — when the parent query returns N products, measurement sets are resolved in 1 batched call (not N) |
 
 
 ##### 🧪 Phase G — Field Resolvers & Tests (5 stories)
@@ -247,7 +247,7 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | **Impact** | 🔴 0 High · 🟡 3 Medium · 🟢 1 Low |
 | **Estimated effort** | 12–19 days (single-engineer) |
 | **Phase-1 surface** | 16 operation-to-root-field rows · 5 client files · 8 components |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

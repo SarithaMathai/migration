@@ -9,7 +9,7 @@
 
 - **In plain terms:** Lets `plm-product`'s own queries — and any other subgraph referencing a `IG_Clazz_Filter` — resolve the field `IG_Clazz_Filter`, which selects this externally-owned entity's full shape.
 
-- **Context (identified via `output/clientStoryDependency/` field-by-field drill-down):** Identified via `output/clientStoryDependency/` field-by-field drill-down: `IG_Clazz_Filter` (domain `product`) selects `IG_Clazz_Filter` — an external-platform entity (`IG_Clazz_Filter` is `@extends`-stubbed in the federated target schema, `product/be-03-schema.graphql`) — but no story anywhere resolves its full shape; today it silently resolves to a bare `{id}` key stub. Blocks: PRODUCT-FE-005.
+- **Context (identified via `output/clientStoryDependency/` field-by-field drill-down):** Identified via `output/clientStoryDependency/` field-by-field drill-down: `IG_Clazz_Filter` (domain `product`) selects `IG_Clazz_Filter` — an external-platform entity (`IG_Clazz_Filter` is `@extends`-stubbed in the federated target schema, `product/be-03-schema.graphql`) — but no story anywhere resolves its full shape; today it silently resolves to a bare `{id}` key stub. Blocks: PRODUCT-FE-006.
 - **Target DGS Implementation:** `@DgsEntityFetcher(name = "IG_Clazz_Filter")` -> the owning service's client, behind a `DataLoader` (batched, one call per request not per representation); null-tolerant per federation spec.
 - **Files / Dependencies:** `IG_Clazz_FilterEntityFetcher.kt`.
 
@@ -26,7 +26,7 @@
 
 - **In plain terms:** Lets `plm-product`'s own queries — and any other subgraph referencing a `IG_Clazz` — resolve the field `insightsClassExclusion`, which selects this externally-owned entity's full shape.
 
-- **Context (identified via `output/clientStoryDependency/` field-by-field drill-down):** Identified via `output/clientStoryDependency/` field-by-field drill-down: `insightsClassExclusion` (domain `product`) selects `IG_Clazz` — an external-platform entity (`IG_Clazz` is `@extends`-stubbed in the federated target schema, `product/be-03-schema.graphql`) — but no story anywhere resolves its full shape; today it silently resolves to a bare `{id}` key stub. Blocks: PRODUCT-FE-006.
+- **Context (identified via `output/clientStoryDependency/` field-by-field drill-down):** Identified via `output/clientStoryDependency/` field-by-field drill-down: `insightsClassExclusion` (domain `product`) selects `IG_Clazz` — an external-platform entity (`IG_Clazz` is `@extends`-stubbed in the federated target schema, `product/be-03-schema.graphql`) — but no story anywhere resolves its full shape; today it silently resolves to a bare `{id}` key stub. Blocks: PRODUCT-FE-007.
 - **Target DGS Implementation:** `@DgsEntityFetcher(name = "IG_Clazz")` -> the owning service's client, behind a `DataLoader` (batched, one call per request not per representation); null-tolerant per federation spec.
 - **Files / Dependencies:** `IG_ClazzEntityFetcher.kt`.
 

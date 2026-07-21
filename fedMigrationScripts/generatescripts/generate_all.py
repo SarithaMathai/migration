@@ -283,7 +283,7 @@ def build_program_overview() -> str:
         "- **Federation schema review:** `analysis/federation-review/` (hand-authored) — schema validation, "
         "cross-domain identifier inventory, required contract fixes (R1–R6), recommended entity references, "
         "entity-resolver analysis, and the risks/open-questions register. Required-fix stories: "
-        "`PRODUCT-BE-F-13/F-14`, `CLAIM-BE-G-06`, `PRODUCT-FE-012`.",
+        "`PRODUCT-BE-F-13/F-14`, `CLAIM-BE-G-06`, `PRODUCT-FE-013`.",
         "- **Cross-domain field analysis:** `analysis/schemaAnalysis/00-cross-domain-field-inventory.md` "
         "(program roll-up of each domain's `be-06-cross-domain-field-analysis.md`) — which fields hydrate "
         "another domain, real client usage, complexity, federation recommendation.",

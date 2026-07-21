@@ -9,7 +9,7 @@
 | **Total Stories** | 23 |
 | **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 8 Medium · 🟢 13 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -40,7 +40,7 @@ pricing service).
 | Field-resolver type blocks | 4 | `Packaging` (12), `Dieline` (3), `PrinterDieline` (1), `PackagingElement` (1) |
 | External dependencies | 7 keys (2 🔴 · 3 🟡 · 2 🔵) | search/attachment 🔴; relationship/user-profile/tag 🟡 |
 | Federation contributions | 1 (Product) | **internal** (co-located) |
-| **Total stories** | **24** | green-field |
+| **Total stories** | **23** | green-field (G-06 test coverage tracked outside Jira pipeline) |
 
 ---
 
@@ -200,7 +200,7 @@ pricing service).
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `PKG-BE-F-01`<br>Product packaging links (internal, same subgraph) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose a product's packagings on the Product type (same subgraph).<br>**Today —** Product references packaging (e.g. components(...packaging), packaging attributes) from the co-located packaging service<br>**Done when:**<br>• resolves in-process; no gateway hop |
+| 🔸 `PKG-BE-F-01`<br>Product packaging links (internal, same subgraph) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose a product's packagings on the Product type (same subgraph).<br>**Today —** Product references packaging (e.g. components(...packaging), packaging attributes) from the co-located packaging service<br>**Done when:**<br>• resolves in-process; no gateway hop<br>• Field resolver uses a `MappedBatchLoader<String, List<SPARK_Packaging>>` (`packagingByProductIdLoader`) — when the parent query returns N products, packaging is resolved in 1 batched call (not N) |
 
 
 ##### 🧪 Phase G — Field Resolvers & Tests (5 stories)
@@ -229,7 +229,7 @@ pricing service).
 | **Impact** | 🔴 1 High · 🟡 3 Medium · 🟢 1 Low |
 | **Estimated effort** | 21–33 days (single-engineer) |
 | **Phase-1 surface** | 21 operation-to-root-field rows · 5 client files · 8 components |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

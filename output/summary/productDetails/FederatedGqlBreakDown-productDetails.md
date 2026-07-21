@@ -9,7 +9,7 @@
 | **Total Stories** | 12 |
 | **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 6 Medium · 🟢 5 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -39,7 +39,7 @@ associations, then bulk-archive removed attachments, then the body — with no r
 | Field-resolver type blocks | 3 | `ProductDetails` (10), item (2), category (1) |
 | External dependencies | 6 keys (2 🔴 · 2 🟡 · 2 🔵) | search/attachment 🔴 |
 | Federation contributions | 1 (Product) | **internal** (co-located) |
-| **Total stories** | **13** | green-field |
+| **Total stories** | **12** | green-field (G-04 test coverage tracked outside Jira pipeline) |
 
 ---
 
@@ -176,7 +176,7 @@ associations, then bulk-archive removed attachments, then the body — with no r
 
 | Story | Complexity | Type | Depends On | Acceptance Criteria |
 |---|---|---|---|---|
-| 🔸 `PDTL-BE-F-01`<br>`Product.productDetails` (internal, same subgraph) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose a product's product-details on the Product type (same subgraph).<br>**Today —** Product exposes productDetails resolved from the co-located ProductDetails service<br>**Done when:**<br>• `Product.productDetails` resolves in-process; no gateway hop |
+| 🔸 `PDTL-BE-F-01`<br>`Product.productDetails` (internal, same subgraph) | 🟢 Low `XS` | Field Resolver | B-01 | **Intent —** Expose a product's product-details on the Product type (same subgraph).<br>**Today —** Product exposes productDetails resolved from the co-located ProductDetails service<br>**Done when:**<br>• `Product.productDetails` resolves in-process; no gateway hop<br>• Field resolver uses a `MappedBatchLoader<String, List<SPARK_ProductDetails>>` (`productDetailsByProductIdLoader`) — when the parent query returns N products, product details are resolved in 1 batched call (not N) |
 
 
 ##### 🧪 Phase G — Field Resolvers & Tests (3 stories)
@@ -203,7 +203,7 @@ associations, then bulk-archive removed attachments, then the body — with no r
 | **Impact** | 🔴 0 High · 🟡 2 Medium · 🟢 1 Low |
 | **Estimated effort** | 8–12 days (single-engineer) |
 | **Phase-1 surface** | 7 operation-to-root-field rows · 2 client files · 4 components |
-| **Generated** | 2026-07-19 |
+| **Generated** | 2026-07-21 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

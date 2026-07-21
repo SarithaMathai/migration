@@ -446,8 +446,10 @@ strategy **so that** workspace and body updates stay consistent.
 - **In plain terms:** Expose a product's measurement sets on the Product type.
 
 - **Current Behaviour:** product navigates to measurement sets via the relationship + getMeasurements flow.
-- **Target DGS Implementation:** plain `@DgsData measurementSets(...)` on the internal `Product` type (same
-subgraph) reusing the C-01 relationship+listing logic. **No** `@DgsEntityFetcher`/`@extends @external`.
+- **Target DGS Implementation:** `@DgsData measurementSets(...)` on the internal `Product` type (same
+subgraph) reusing the C-01 relationship+listing logic, fronted by a `MappedBatchLoader<String, List<SPARK_MeasurementSet>>`
+(`measurementSetsByProductIdLoader`) keyed on `product.id` — matches the pattern used by
+`PKG-BE-F-01`/`PDTL-BE-F-01`/`WATCHLIST-BE-F-01`/`IMPRESSION-BE-F-01`. **No** `@DgsEntityFetcher`/`@extends @external`.
 Depends on `Product` existing (product A-02), not on a separate deployment.
 
 #### Acceptance Criteria
@@ -455,6 +457,7 @@ Depends on `Product` existing (product A-02), not on a separate deployment.
 1. `Product.measurementSets` resolves internally via `measurementService`.
 2. no gateway hop.
 3. Parity vs current product resolver.
+4. Field resolver uses a `MappedBatchLoader<String, List<SPARK_MeasurementSet>>` (`measurementSetsByProductIdLoader`) — when the parent query returns N products, measurement sets are resolved in 1 batched call (not N).
 
 ---
 

@@ -57,6 +57,7 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | `getMeasurements` needs the relationship service | 🟡 Medium | Sequence relationship federation, or call its service directly |
 | Template/size/tight-fit are separate domains | 🟢 Low | Field resolvers return stubs until those subgraphs federate |
 | Federation contributions wait on product/sample | 🟢 Low | Not on critical path |
+| DataLoader missing on F-01 field resolver | 🟡 Medium | N+1 risk when parent returns list; add `measurementSetsByProductIdLoader` to F-01 AC |
 
 ## Decisions Required
 | # | Decision | Blocks | Owner |

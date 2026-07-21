@@ -63,7 +63,7 @@ FE_TOKEN_DOMAIN = {v: k for k, v in DOMAIN_FE_TOKEN.items()}
 # on their fe-08 Operations line that frontend-inventory.json marks kind == "query".
 IN_SCOPE_STORIES = [
     "PRODUCT-FE-001", "PRODUCT-FE-002", "PRODUCT-FE-003", "PRODUCT-FE-004",
-    "PRODUCT-FE-005", "PRODUCT-FE-006", "PRODUCT-FE-010", "PRODUCT-FE-011",
+    "PRODUCT-FE-005", "PRODUCT-FE-006", "PRODUCT-FE-007", "PRODUCT-FE-011",
     "BOM-FE-002", "BOM-FE-003", "BOM-FE-004", "BOM-FE-005", "BOM-FE-007",
     "MST-FE-001", "MST-FE-002", "MST-FE-003",
     "PDTL-FE-001",
@@ -73,12 +73,14 @@ IN_SCOPE_STORIES = [
     "CLAIM-FE-002",
 ]
 
-# Explicit query-op allowlist for the 3 mixed stories (per the program brief) —
+# Explicit query-op allowlist for the 2 mixed stories (per the program brief) —
 # the rest of their fe-08 Operations line is mutations, excluded from the table.
+# (PRODUCT-FE-007 replaces the former PRODUCT-FE-006 "rules admin" story after the
+# 2026-07-21 FE regrouping — same 9 rules operations, new id. getProduct's own
+# consuming story is now PRODUCT-FE-001, which is query-only and needs no entry here.)
 MIXED_STORY_QUERY_OPS = {
-    "PRODUCT-FE-006": {"getProductRules", "getProductRulesById", "getAllAvailableRules",
+    "PRODUCT-FE-007": {"getProductRules", "getProductRulesById", "getAllAvailableRules",
                         "getProductDeptRules", "getProductBPRules", "searchProductRules"},
-    "PRODUCT-FE-011": {"getProduct"},
     "PKG-FE-003": {"getDielines", "getDielineEvaluationStatuses"},
 }
 

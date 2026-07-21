@@ -1,7 +1,7 @@
-## PRODUCT-FE-006 — Migrate product rules administration
-Queries in scope: getProductRules, getProductRulesById, getAllAvailableRules, getProductDeptRules, getProductBPRules, searchProductRules · Mutations excluded: 3
+## PRODUCT-FE-006 — Migrate `getCategories` documents
+Queries in scope: getCategories · Mutations excluded: 0
 
-**Must complete first:** BE — PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-G-07, PRODUCT-BE-G-13, PRODUCT-BE-H-08 · Spikes — SPIKE-04
+**Must complete first:** BE — PRODUCT-BE-C-03, PRODUCT-BE-G-04, PRODUCT-BE-H-07, PRODUCT-BE-S-02
 
 ### Queries
 
@@ -9,12 +9,7 @@ Queries in scope: getProductRules, getProductRulesById, getAllAvailableRules, ge
 
 | Query | Story | External Dep | Ext-Story | New? | Impacts (queries) | Notes |
 |---|---|---|---|---|---|---|
-| getAllAvailableRules | PRODUCT-BE-B-09 | — | — | No | getAllAvailableRules |  |
-| getProductBPRules | PRODUCT-BE-B-11 | — | — | No | getProductBPRules |  |
-| getProductDeptRules | PRODUCT-BE-B-10 | — | — | No | getProductDeptRules |  |
-| getProductRules | PRODUCT-BE-B-07 | — | — | No | getProductRules |  |
-| getProductRulesById | PRODUCT-BE-B-08 | — | — | No | getProductRulesById |  |
-| searchProductRules | PRODUCT-BE-C-05 | — | — | No | searchProductRules |  |
+| getCategories | PRODUCT-BE-C-03 | — | — | No | getCategories |  |
 
 ### Fields
 
@@ -22,9 +17,8 @@ Queries in scope: getProductRules, getProductRulesById, getAllAvailableRules, ge
 
 | Field/Entity | Story | External Dep | Ext-Story | New? | Impacts (queries) | Notes |
 |---|---|---|---|---|---|---|
-| businessPartners | PRODUCT-BE-G-07 | vmm | PRODUCT-BE-F-11 | No | getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules | 🔬 SPIKE-04 (gated); via `...ProductRules` |
-| departments | PRODUCT-BE-G-13 | ig | — | No | getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules | via `...ProductRules` |
-| insightsClassExclusion | PRODUCT-BE-H-08 | ig | PRODUCT-BE-H-08 | No | getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules | newly authored — PRODUCT-BE-H-08; via `...ProductRules` |
+| categories | PRODUCT-BE-G-04 | IG | — | No | getCategories |  |
+| IG_Clazz_Filter | PRODUCT-BE-H-07 | ig | PRODUCT-BE-H-07 | No | getCategories | newly authored — PRODUCT-BE-H-07 |
 
 ## PRODUCT-FE-006 — Readiness
-9 of 9 distinct fields/entities resolve to existing backend stories. 1 field(s) sit behind an unresolved spike (SPIKE-04) and cannot be built past the spike's decision.
+All 4 distinct fields/entities this story's queries touch resolve to existing, real backend stories — no gaps, no spike gates. This story is ready to sequence as soon as its listed BE stories are delivered.

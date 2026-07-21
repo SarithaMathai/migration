@@ -1,78 +1,78 @@
 # Traceability Matrix — Domain → Schema → Resolver → Client → Impact → Stories
 
-> Generated: 2026-07-19 · One row per phase-1 frontend operation × backend root field.
+> Generated: 2026-07-21 · One row per phase-1 frontend operation × backend root field.
 > Chain: Business Domain → Backend Schema → Resolver → Frontend Query → Client Component → FE story → BE story.
 
 ## Product
 
 | Backend schema | Resolver | Frontend operation | Client constant | Components / hooks | FE story | BE story |
 |---|---|---|---|---|---|---|
-| `schemas/SPARK_Product.graphqls` | `addBusinessPartnersToProductWithType` | `addBusinessPartnersToProductWithType` | `ADD_PARTNERS_PRODUCT_WITH_TYPE` | — | PRODUCT-FE-008 | PRODUCT-BE-D-07 |
-| `schemas/SPARK_Product.graphqls` | `addProduct` | `addProduct` | `ADD_PRODUCT` | `ProductNew.tsx`<br>`ProductTemplateNew.tsx` | PRODUCT-FE-007 | PRODUCT-BE-D-01 |
-| `schemas/SPARK_Product.graphqls` | `addProductRule` | `addProductRule` | `ADD_PRODUCT_RULE` | — | PRODUCT-FE-006 | PRODUCT-BE-D-15 |
-| `schemas/SPARK_Product.graphqls` | `addProducts` | `addProducts` | `PRODUCT_BULK` | `ProductBulkCreate.tsx` | PRODUCT-FE-007 | PRODUCT-BE-D-02 |
-| `schemas/SPARK_Product.graphqls` | `addTeamsToProduct` | `addTeams` | `ADD_TEAMS_PRODUCT` | `BPSelector.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-06 |
-| `schemas/SPARK_Product.graphqls` | `bulkUpdateProducts` | `bulkUpdateProducts` | `PRODUCT_BULK_UPDATE` | `ProductBulkUpdate.tsx` | PRODUCT-FE-007 | PRODUCT-BE-D-03 |
-| `schemas/SPARK_Product.graphqls` | `carryForwardProduct` | `carryForwardProduct` | `CARRY_FORWARD_PRODUCT` | `ProductCarryForwardModal.tsx`<br>`WorkspacePlanGrid.tsx` | PRODUCT-FE-007 | PRODUCT-BE-D-05 |
-| `schemas/SPARK_Product.graphqls` | `deleteProductRule` | `deleteProductRule` | `DELETE_PRODUCT_RULE` | — | PRODUCT-FE-006 | PRODUCT-BE-D-17 |
-| `schemas/SPARK_Product.graphqls` | `getAllAvailableRules` | `getAllAvailableRules` | `GET_ALL_AVAILABLE_RULES` | — | PRODUCT-FE-006 | PRODUCT-BE-B-09 |
-| `schemas/SPARK_Product.graphqls` | `getCategories` | `getCategories` | `GET_PRODUCT_TEMPLATE_CATEGORY` | `ProductTemplateSideFilterForm.tsx` | PRODUCT-FE-005 | PRODUCT-BE-C-03 |
-| `schemas/SPARK_Product.graphqls` | `getCategories` | `getCategories` | `GET_WORKSPACE_CATEGORY` | `ProductListSideFilterForm.tsx`<br>`UserListSideFilterForm.tsx` | PRODUCT-FE-005 | PRODUCT-BE-C-03 |
-| `schemas/SPARK_Product.graphqls` | `getCategories` | `getCategories` | `GET_WORKSPACE_CATEGORY_CLAZZ` | `ProductListSideFilterForm.tsx` | PRODUCT-FE-005 | PRODUCT-BE-C-03 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getCarryForwardFormData` | `GET_CARRY_FORWARD_FORM_DATA` | `ProductQueries.testHelper.tsx`<br>`ProductCarryForwardModal.tsx`<br>`WorkspaceCarryForwardSpecsForm.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_PRODUCT` | `ImportProductDetailsModal.tsx`<br>`ProductEdit.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductWorkspaces` | `GET_PRODUCT_AND_WORKSPACES` | `ReleaseProductPacket.tsx`<br>`WatchlistForm.tsx`<br>`WatchlistViewTemplate.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductWorkspaces` | `GET_PRODUCT_AND_WORKSPACES_WITH_STATUS` | `ReleaseTechPackModal.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductById` | `GET_PRODUCT_BY_ID` | — | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductComponentStatusCounts` | `GET_PRODUCT_COMPONENT_STATUS_COUNTS` | `BomViewTemplate.tsx`<br>`ProductFilesQueries.testHelper.tsx`<br>`SpecsContainer.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `breadcrumbProduct` | `GET_PRODUCT_CRUMB` | `BreadcrumbProduct.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductStatusUpdateInfo` | `GET_PRODUCT_FOR_STATUS_UPDATE` | `ProductQueries.testHelper.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_PRODUCT_MINIMAL` | — | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getTeams` | `GET_PRODUCT_TEAMS` | — | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getTeams` | `GET_PRODUCT_TEAMS` | — | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductWithAttachmentsAndComponents` | `GET_PRODUCT_WITH_ATTACHMENTS_AND_COMPONENTS` | — | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_PRODUCT_WITH_META_DATA` | — | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductWithTeams` | `GET_PRODUCT_WITH_TEAMS` | `BPSelector.tsx`<br>`Teams.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_SPARK_PRODUCT_BP` | `ImportProductDetailsSection.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_SPARK_PRODUCT_BP` | `ImportProductDetailsSection.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductScaffolding` | `GET_SPARK_PRODUCT_SCAFFOLDING` | — | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_SPARK_PRODUCT_V2` | `ProductsListItem.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_SPARK_PRODUCT_V2` | `ProductsListItem.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProduct` | `getDpciInfo` | `USE_DPCI_INFO` | `useDpciInformation.tsx` | PRODUCT-FE-011 | PRODUCT-BE-B-01 |
-| `schemas/SPARK_Product.graphqls` | `getProductBPRules` | `getProductBPRules` | `GET_PRODUCT_BUSINESS_PARTNER_RULES` | — | PRODUCT-FE-006 | PRODUCT-BE-B-11 |
-| `schemas/SPARK_Product.graphqls` | `getProductDeptRules` | `getProductDeptRules` | `GET_PRODUCT_DEPARTMENT_RULES` | — | PRODUCT-FE-006 | PRODUCT-BE-B-10 |
-| `schemas/SPARK_Product.graphqls` | `getProductRules` | `getProductRules` | `GET_RULES` | — | PRODUCT-FE-006 | PRODUCT-BE-B-07 |
-| `schemas/SPARK_Product.graphqls` | `getProductRulesById` | `getProductRule` | `GET_RULE` | — | PRODUCT-FE-006 | PRODUCT-BE-B-08 |
+| `schemas/SPARK_Product.graphqls` | `addBusinessPartnersToProductWithType` | `addBusinessPartnersToProductWithType` | `ADD_PARTNERS_PRODUCT_WITH_TYPE` | — | PRODUCT-FE-009 | PRODUCT-BE-D-07 |
+| `schemas/SPARK_Product.graphqls` | `addProduct` | `addProduct` | `ADD_PRODUCT` | `ProductNew.tsx`<br>`ProductTemplateNew.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-01 |
+| `schemas/SPARK_Product.graphqls` | `addProductRule` | `addProductRule` | `ADD_PRODUCT_RULE` | — | PRODUCT-FE-007 | PRODUCT-BE-D-15 |
+| `schemas/SPARK_Product.graphqls` | `addProducts` | `addProducts` | `PRODUCT_BULK` | `ProductBulkCreate.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-02 |
+| `schemas/SPARK_Product.graphqls` | `addTeamsToProduct` | `addTeams` | `ADD_TEAMS_PRODUCT` | `BPSelector.tsx` | PRODUCT-FE-009 | PRODUCT-BE-D-06 |
+| `schemas/SPARK_Product.graphqls` | `bulkUpdateProducts` | `bulkUpdateProducts` | `PRODUCT_BULK_UPDATE` | `ProductBulkUpdate.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-03 |
+| `schemas/SPARK_Product.graphqls` | `carryForwardProduct` | `carryForwardProduct` | `CARRY_FORWARD_PRODUCT` | `ProductCarryForwardModal.tsx`<br>`WorkspacePlanGrid.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-05 |
+| `schemas/SPARK_Product.graphqls` | `deleteProductRule` | `deleteProductRule` | `DELETE_PRODUCT_RULE` | — | PRODUCT-FE-007 | PRODUCT-BE-D-17 |
+| `schemas/SPARK_Product.graphqls` | `getAllAvailableRules` | `getAllAvailableRules` | `GET_ALL_AVAILABLE_RULES` | — | PRODUCT-FE-007 | PRODUCT-BE-B-09 |
+| `schemas/SPARK_Product.graphqls` | `getCategories` | `getCategories` | `GET_PRODUCT_TEMPLATE_CATEGORY` | `ProductTemplateSideFilterForm.tsx` | PRODUCT-FE-006 | PRODUCT-BE-C-03 |
+| `schemas/SPARK_Product.graphqls` | `getCategories` | `getCategories` | `GET_WORKSPACE_CATEGORY` | `ProductListSideFilterForm.tsx`<br>`UserListSideFilterForm.tsx` | PRODUCT-FE-006 | PRODUCT-BE-C-03 |
+| `schemas/SPARK_Product.graphqls` | `getCategories` | `getCategories` | `GET_WORKSPACE_CATEGORY_CLAZZ` | `ProductListSideFilterForm.tsx` | PRODUCT-FE-006 | PRODUCT-BE-C-03 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getCarryForwardFormData` | `GET_CARRY_FORWARD_FORM_DATA` | `ProductQueries.testHelper.tsx`<br>`ProductCarryForwardModal.tsx`<br>`WorkspaceCarryForwardSpecsForm.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_PRODUCT` | `ImportProductDetailsModal.tsx`<br>`ProductEdit.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductWorkspaces` | `GET_PRODUCT_AND_WORKSPACES` | `ReleaseProductPacket.tsx`<br>`WatchlistForm.tsx`<br>`WatchlistViewTemplate.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductWorkspaces` | `GET_PRODUCT_AND_WORKSPACES_WITH_STATUS` | `ReleaseTechPackModal.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductById` | `GET_PRODUCT_BY_ID` | — | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductComponentStatusCounts` | `GET_PRODUCT_COMPONENT_STATUS_COUNTS` | `BomViewTemplate.tsx`<br>`ProductFilesQueries.testHelper.tsx`<br>`SpecsContainer.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `breadcrumbProduct` | `GET_PRODUCT_CRUMB` | `BreadcrumbProduct.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductStatusUpdateInfo` | `GET_PRODUCT_FOR_STATUS_UPDATE` | `ProductQueries.testHelper.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_PRODUCT_MINIMAL` | — | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getTeams` | `GET_PRODUCT_TEAMS` | — | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getTeams` | `GET_PRODUCT_TEAMS` | — | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductWithAttachmentsAndComponents` | `GET_PRODUCT_WITH_ATTACHMENTS_AND_COMPONENTS` | — | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_PRODUCT_WITH_META_DATA` | — | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductWithTeams` | `GET_PRODUCT_WITH_TEAMS` | `BPSelector.tsx`<br>`Teams.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_SPARK_PRODUCT_BP` | `ImportProductDetailsSection.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_SPARK_PRODUCT_BP` | `ImportProductDetailsSection.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProductScaffolding` | `GET_SPARK_PRODUCT_SCAFFOLDING` | — | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_SPARK_PRODUCT_V2` | `ProductsListItem.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getProduct` | `GET_SPARK_PRODUCT_V2` | `ProductsListItem.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProduct` | `getDpciInfo` | `USE_DPCI_INFO` | `useDpciInformation.tsx` | PRODUCT-FE-001 | PRODUCT-BE-B-01 |
+| `schemas/SPARK_Product.graphqls` | `getProductBPRules` | `getProductBPRules` | `GET_PRODUCT_BUSINESS_PARTNER_RULES` | — | PRODUCT-FE-007 | PRODUCT-BE-B-11 |
+| `schemas/SPARK_Product.graphqls` | `getProductDeptRules` | `getProductDeptRules` | `GET_PRODUCT_DEPARTMENT_RULES` | — | PRODUCT-FE-007 | PRODUCT-BE-B-10 |
+| `schemas/SPARK_Product.graphqls` | `getProductRules` | `getProductRules` | `GET_RULES` | — | PRODUCT-FE-007 | PRODUCT-BE-B-07 |
+| `schemas/SPARK_Product.graphqls` | `getProductRulesById` | `getProductRule` | `GET_RULE` | — | PRODUCT-FE-007 | PRODUCT-BE-B-08 |
 | `schemas/SPARK_Product.graphqls` | `getProductStatus` | `getFormData` | `GET_PRODUCTS_BY_ID_LIST` | `ProductBulkUpdate.tsx` | PRODUCT-FE-004 | PRODUCT-BE-B-03 |
 | `schemas/SPARK_Product.graphqls` | `getProductStatus` | `getProductStatusUpdateInfo` | `GET_PRODUCT_FOR_STATUS_UPDATE` | `ProductQueries.testHelper.tsx` | PRODUCT-FE-004 | PRODUCT-BE-B-03 |
 | `schemas/SPARK_Product.graphqls` | `getProductStatus` | `getStatus` | `GET_PRODUCT_STATUS` | — | PRODUCT-FE-004 | PRODUCT-BE-B-03 |
 | `schemas/SPARK_Product.graphqls` | `getProductStatus` | `getProductWorkspaceMetricsReportCount` | `GET_PRODUCT_WORKSPACES_METRICS_REPORT_COUNT` | `WorkspaceOverview.tsx` | PRODUCT-FE-004 | PRODUCT-BE-B-03 |
-| `schemas/SPARK_Product.graphqls` | `getProductTechPackBulkCountV1` | `getTechPackBulkCount` | `BULK_TECHPACK_COUNTS` | `BulkGenerateProductPacketModal.tsx`<br>`BulkGenerateReleasePacketModal.tsx` | PRODUCT-FE-010 | PRODUCT-BE-E-04 |
-| `schemas/SPARK_Product.graphqls` | `getProductTechPackCountV1` | `getTechPackCountV1` | `GET_COUNT_V1` | `GenerateTechPackModal.tsx`<br>`ReleaseTechPackModal.tsx` | PRODUCT-FE-010 | PRODUCT-BE-E-03 |
+| `schemas/SPARK_Product.graphqls` | `getProductTechPackBulkCountV1` | `getTechPackBulkCount` | `BULK_TECHPACK_COUNTS` | `BulkGenerateProductPacketModal.tsx`<br>`BulkGenerateReleasePacketModal.tsx` | PRODUCT-FE-011 | PRODUCT-BE-E-04 |
+| `schemas/SPARK_Product.graphqls` | `getProductTechPackCountV1` | `getTechPackCountV1` | `GET_COUNT_V1` | `GenerateTechPackModal.tsx`<br>`ReleaseTechPackModal.tsx` | PRODUCT-FE-011 | PRODUCT-BE-E-03 |
 | `schemas/SPARK_Product.graphqls` | `getProductTemplates` | `getProductTemplates` | `GET_ALL_PRODUCTS_TEMPLATES` | `ProductTemplateQueries.testHelper.tsx`<br>`TemplateLibraryContainer.tsx` | PRODUCT-FE-005 | PRODUCT-BE-C-02 |
 | `schemas/SPARK_Product.graphqls` | `getProductTemplates` | `getProductTemplates` | `GET_PRODUCTS_WITH_IDS` | `ClaimBulkUpdate.tsx` | PRODUCT-FE-005 | PRODUCT-BE-C-02 |
 | `schemas/SPARK_Product.graphqls` | `getProductTemplates` | `getProductTemplates` | `GET_PRODUCT_TEMPLATE` | `ProductTemplatePDTLExpandedView.tsx`<br>`ProductTemplateEdit.tsx`<br>`ProductTemplateOverviewContainer.tsx` | PRODUCT-FE-005 | PRODUCT-BE-C-02 |
-| `schemas/SPARK_Product.graphqls` | `getProductVersions` | `getProductVersions` | `GET_PRODUCT_VERSIONS` | — | PRODUCT-FE-002 | PRODUCT-BE-B-04 |
-| `schemas/SPARK_Product.graphqls` | `getProducts` | `getProducts` | `GET_ALL_PRODUCTS` | — | PRODUCT-FE-003 | PRODUCT-BE-S-02 |
-| `schemas/SPARK_Product.graphqls` | `getProducts` | `getProducts` | `GET_PRODUCTS_WITH_SAMPLE_DETAILS` | `SampleCompare.tsx` | PRODUCT-FE-003 | PRODUCT-BE-S-02 |
-| `schemas/SPARK_Product.graphqls` | `getProducts` | `getProducts` | `PID_AND_WRK_ID_SEARCH` | `PIDOrWRKIDSelectAutoComplete.tsx` | PRODUCT-FE-003 | PRODUCT-BE-S-02 |
+| `schemas/SPARK_Product.graphqls` | `getProductVersions` | `getProductVersions` | `GET_PRODUCT_VERSIONS` | — | — | PRODUCT-BE-B-04 |
+| `schemas/SPARK_Product.graphqls` | `getProducts` | `getProducts` | `GET_ALL_PRODUCTS` | — | PRODUCT-FE-002 | PRODUCT-BE-S-02 |
+| `schemas/SPARK_Product.graphqls` | `getProducts` | `getProducts` | `GET_PRODUCTS_WITH_SAMPLE_DETAILS` | `SampleCompare.tsx` | PRODUCT-FE-002 | PRODUCT-BE-S-02 |
+| `schemas/SPARK_Product.graphqls` | `getProducts` | `getProducts` | `PID_AND_WRK_ID_SEARCH` | `PIDOrWRKIDSelectAutoComplete.tsx` | PRODUCT-FE-002 | PRODUCT-BE-S-02 |
 | `schemas/SPARK_Product.graphqls` | `getProductsByIds` | `getBulkDiscussionData` | `GET_BULK_DISCUSSION_DATA` | `DiscussionBulkCreate.tsx` | PRODUCT-FE-003 | PRODUCT-BE-B-02 |
 | `schemas/SPARK_Product.graphqls` | `getProductsByIds` | `getFilesWithMetaData` | `GET_FILES_WITH_METADATA` | — | PRODUCT-FE-003 | PRODUCT-BE-B-02 |
 | `schemas/SPARK_Product.graphqls` | `getProductsByIds` | `getFormData` | `GET_PRODUCTS_BY_ID_LIST` | `ProductBulkUpdate.tsx` | PRODUCT-FE-003 | PRODUCT-BE-B-02 |
 | `schemas/SPARK_Product.graphqls` | `getProductsByIds` | `getTeamsProductAndWorkspace` | `GET_TEAMS_PRODUCT_AND_WORKSPACE` | `ProductQueries.testHelper.tsx`<br>`ReplaceWorkspaceFieldset.tsx` | PRODUCT-FE-003 | PRODUCT-BE-B-02 |
-| `schemas/SPARK_Product.graphqls` | `linkProduct` | `linkProduct` | `LINK_PRODUCT` | `ProductActionsDropDown.tsx` | PRODUCT-FE-007 | PRODUCT-BE-D-13 |
-| `schemas/SPARK_Product.graphqls` | `productBusinessPartnerActions` | `productBusinessPartnerActions` | `BUSINESS_PARTNER_ACTIONS_PRODUCT` | `Teams.tsx` | PRODUCT-FE-009 | PRODUCT-BE-S-03 |
-| `schemas/SPARK_Product.graphqls` | `searchProductRules` | `searchProductRules` | `GET_SEARCH_PRODUCT_DEPARTMENT_RULES` | `useSearchProductRules.tsx` | PRODUCT-FE-006 | PRODUCT-BE-C-05 |
-| `schemas/SPARK_Product.graphqls` | `unlinkProduct` | `unlinkProduct` | `UNLINK_PRODUCT` | `Links.tsx`<br>`ProductLinkRailListItem.tsx` | PRODUCT-FE-007 | PRODUCT-BE-D-14 |
-| `schemas/SPARK_Product.graphqls` | `updateBusinessPartnerStatuses` | `updateBusinessPartnerStatuses` | `UPDATE_PRODUCT_STATUSES` | `BPSelector.tsx`<br>`ProductsGridItem.tsx`<br>`ProductsListItemHeader.tsx` | PRODUCT-FE-009 | PRODUCT-BE-D-09 |
-| `schemas/SPARK_Product.graphqls` | `updateComponentStatus` | `updateComponentStatus` | `UPDATE_COMPONENT_STATUS` | `ComponentStatusDropdown.tsx` | PRODUCT-FE-011 | PRODUCT-BE-D-18 |
-| `schemas/SPARK_Product.graphqls` | `updateComponentStatuses` | `updateComponentStatuses` | `UPDATE_COMPONENT_STATUSES` | `ProductComponentSetStatusesDropdown.tsx` | PRODUCT-FE-011 | PRODUCT-BE-E-02 |
-| `schemas/SPARK_Product.graphqls` | `updateProduct` | `updateProduct` | `UPDATE_PRODUCT` | — | PRODUCT-FE-007 | PRODUCT-BE-D-04 |
-| `schemas/SPARK_Product.graphqls` | `updateProduct` | `updateProduct` | `UPDATE_PRODUCT` | — | PRODUCT-FE-007 | PRODUCT-BE-D-04 |
-| `schemas/SPARK_Product.graphqls` | `updateProduct` | `updateProduct` | `UPDATE_PRODUCT_TEMPLATE` | `ProductTemplateEdit.tsx` | PRODUCT-FE-007 | PRODUCT-BE-D-04 |
-| `schemas/SPARK_Product.graphqls` | `updateProductRule` | `updateProductRule` | `UPDATE_PRODUCT_RULE` | — | PRODUCT-FE-006 | PRODUCT-BE-D-16 |
-| `schemas/SPARK_Product.graphqls` | `updateProductTeamsWorkspaceContext` | `updateProductTeamsWorkspaceContext` | `MANAGE_TEAMS_WORKSPACES` | `ManageTeamWorkspacesModal.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-12 |
-| `schemas/SPARK_Product.graphqls` | `updateViewToggle` | `updateViewToggle` | `TOGGLE_VIEW_SWITCH` | `ToggleViewFilter.tsx` | PRODUCT-FE-007 | PRODUCT-BE-D-10 |
+| `schemas/SPARK_Product.graphqls` | `linkProduct` | `linkProduct` | `LINK_PRODUCT` | `ProductActionsDropDown.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-13 |
+| `schemas/SPARK_Product.graphqls` | `productBusinessPartnerActions` | `productBusinessPartnerActions` | `BUSINESS_PARTNER_ACTIONS_PRODUCT` | `Teams.tsx` | PRODUCT-FE-010 | PRODUCT-BE-S-03 |
+| `schemas/SPARK_Product.graphqls` | `searchProductRules` | `searchProductRules` | `GET_SEARCH_PRODUCT_DEPARTMENT_RULES` | `useSearchProductRules.tsx` | PRODUCT-FE-007 | PRODUCT-BE-C-05 |
+| `schemas/SPARK_Product.graphqls` | `unlinkProduct` | `unlinkProduct` | `UNLINK_PRODUCT` | `Links.tsx`<br>`ProductLinkRailListItem.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-14 |
+| `schemas/SPARK_Product.graphqls` | `updateBusinessPartnerStatuses` | `updateBusinessPartnerStatuses` | `UPDATE_PRODUCT_STATUSES` | `BPSelector.tsx`<br>`ProductsGridItem.tsx`<br>`ProductsListItemHeader.tsx` | PRODUCT-FE-010 | PRODUCT-BE-D-09 |
+| `schemas/SPARK_Product.graphqls` | `updateComponentStatus` | `updateComponentStatus` | `UPDATE_COMPONENT_STATUS` | `ComponentStatusDropdown.tsx` | PRODUCT-FE-012 | PRODUCT-BE-D-18 |
+| `schemas/SPARK_Product.graphqls` | `updateComponentStatuses` | `updateComponentStatuses` | `UPDATE_COMPONENT_STATUSES` | `ProductComponentSetStatusesDropdown.tsx` | PRODUCT-FE-012 | PRODUCT-BE-E-02 |
+| `schemas/SPARK_Product.graphqls` | `updateProduct` | `updateProduct` | `UPDATE_PRODUCT` | — | PRODUCT-FE-008 | PRODUCT-BE-D-04 |
+| `schemas/SPARK_Product.graphqls` | `updateProduct` | `updateProduct` | `UPDATE_PRODUCT` | — | PRODUCT-FE-008 | PRODUCT-BE-D-04 |
+| `schemas/SPARK_Product.graphqls` | `updateProduct` | `updateProduct` | `UPDATE_PRODUCT_TEMPLATE` | `ProductTemplateEdit.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-04 |
+| `schemas/SPARK_Product.graphqls` | `updateProductRule` | `updateProductRule` | `UPDATE_PRODUCT_RULE` | — | PRODUCT-FE-007 | PRODUCT-BE-D-16 |
+| `schemas/SPARK_Product.graphqls` | `updateProductTeamsWorkspaceContext` | `updateProductTeamsWorkspaceContext` | `MANAGE_TEAMS_WORKSPACES` | `ManageTeamWorkspacesModal.tsx` | PRODUCT-FE-009 | PRODUCT-BE-D-12 |
+| `schemas/SPARK_Product.graphqls` | `updateViewToggle` | `updateViewToggle` | `TOGGLE_VIEW_SWITCH` | `ToggleViewFilter.tsx` | PRODUCT-FE-008 | PRODUCT-BE-D-10 |
 
 ## BOM
 

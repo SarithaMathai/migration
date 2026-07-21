@@ -591,12 +591,13 @@ Story,MST-BE-F-01,(Measurement) Implement Product.measurementSets (internal) [MS
 * product navigates to measurement sets via the relationship + getMeasurements flow.
 
 *Target:*
-* plain `@DgsData measurementSets(...)` on the internal `Product` type (same subgraph) reusing the C-01 relationship+listing logic. **No** `@DgsEntityFetcher`/`@extends @external`. Depends on `Product` existing (product A-02), not on a separate deployment.
+* `@DgsData measurementSets(...)` on the internal `Product` type (same subgraph) reusing the C-01 relationship+listing logic, fronted by a `MappedBatchLoader<String, List<SPARK_MeasurementSet>>` (`measurementSetsByProductIdLoader`) keyed on `product.id` — matches the pattern used by `PKG-BE-F-01`/`PDTL-BE-F-01`/`WATCHLIST-BE-F-01`/`IMPRESSION-BE-F-01`. **No** `@DgsEntityFetcher`/`@extends @external`. Depends on `Product` existing (product A-02), not on a separate deployment.
 
 *Acceptance Criteria:*
 1. `Product.measurementSets` resolves internally via `measurementService`
 2. no gateway hop
 3. Parity vs current product resolver
+4. Field resolver uses a `MappedBatchLoader<String, List<SPARK_MeasurementSet>>` (`measurementSetsByProductIdLoader`) — when the parent query returns N products, measurement sets are resolved in 1 batched call (not N)
 
 *Definition of Done:*
 * PR merged on green (unit + parity tests pass)
