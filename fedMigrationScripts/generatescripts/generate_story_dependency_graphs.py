@@ -7,16 +7,18 @@ DAG, fe-08's Depends-on lines) — nothing here invents new dependency facts, it
 be-04-stories.md / fe-08-frontend-stories.md already declare. Regenerate whenever those change.
 
   Graph A — BE Story Dependency (intra-domain build order)
-    Nodes: this domain's BE-* stories only. Edges: Depends-on, same DAG generate_breakdown.py's
-    compute_implementation_order() builds for 02-project-plan.md's step tables. Grouped into
-    swimlanes by implementation step so the read order matches the build order.
+    Nodes: this domain's BE-* stories only, swimlaned by PHASE (B/C/D/E/F/G/H) — not by raw DAG
+    depth, which collapses to "step 1 = the module-init scaffold, step 2 = almost every other
+    story" for any domain where most stories only depend on that one scaffold, rendering as an
+    unreadable wall of 40+ nodes in one box. Edges: direct `Depends on:` only.
     Audience: the backend engineer sequencing their own PRs.
 
   Graph B — FE Readiness (client story dependency)
-    Nodes: this domain's FE-* stories + every BE story any of them depends on (which may pull in
-    upstream BE stories transitively, via Graph A's own edges, even ones an FE story doesn't name
-    directly). Edges: BE -> FE ("must ship before this FE story can start") plus the BE -> BE chain
-    behind each gate. Audience: FE engineer or PO checking "is backend far enough along to start."
+    One small diagram PER FE story, not one combined diagram for the whole domain — showing only
+    that FE story's directly-named BE dependencies, no transitive BE->BE upstream walk (that
+    chain is Graph A's job; repeating it here made the shared module-init story fan out to nearly
+    every node, producing an illegible crisscross). Audience: FE engineer or PO checking "is
+    backend far enough along to start this specific FE story."
 
 Output: finalArtifacts/summary/{domain}/story-dependency-graph-{domain}.md
 
@@ -69,22 +71,33 @@ def _label(short_id: str, title: str, max_len: int = 34) -> str:
 
 
 def build_be_graph(domain: str, stories: list[dict]) -> str:
-    """Graph A — BE Story Dependency. Swimlaned by implementation step (Graph = subgraph per step)."""
-    waves, gates, _crit = compute_implementation_order(stories)
+    """Graph A — BE Story Dependency. Swimlaned by PHASE (B/C/D/E/F/G/H), not raw DAG depth —
+    a depth-based grouping collapses to 'step 1 = the module-init scaffold, step 2 = nearly
+    every other story' for any domain where most stories only depend on that one scaffold
+    story, which renders as one unreadable wall of 40+ nodes. Phase is already meaningful
+    (reads vs mutations vs field resolvers) and keeps each swimlane to the size of one phase."""
+    _waves, gates, _crit = compute_implementation_order(stories)
     by_short = {_short_id(s["id"]): s for s in stories}
+    by_phase: dict[str, list] = {}
+    for s in stories:
+        by_phase.setdefault(s["phase"], []).append(s)
 
     lines = ["```mermaid", "flowchart TD"]
-    seen_edges = set()
-    for step_no, wave in enumerate(waves, 1):
-        phases = sorted({s["phase"] for s in wave if s["phase"] in PHASE_SEQ}, key=PHASE_SEQ.find)
-        focus = " · ".join(f"{PHASE_ICONS[p]} {PHASE_NAMES[p]}" for p in phases) or "—"
-        lines.append(f'  subgraph STEP{step_no}["Step {step_no} — {focus}"]')
-        for s in wave:
+    for phase in PHASE_SEQ:
+        group = by_phase.get(phase)
+        if not group:
+            continue
+        icon = PHASE_ICONS.get(phase, "")
+        name = PHASE_NAMES.get(phase, phase)
+        lines.append(f'  subgraph PH{phase}["{icon} Phase {phase} — {name}"]')
+        for s in sorted(group, key=lambda s: _short_id(s["id"])):
             sid = _short_id(s["id"])
             lines.append(f"    {_mid(sid)}{_label(sid, s['title'])}")
         lines.append("  end")
 
-    # Edges — recompute from the same source the DAG used, so arrows match the steps exactly.
+    # Edges — direct Depends-on only (no transitive walk); this is what actually shows a reader
+    # which specific story unlocks which, without an upstream-chain fan-out from the scaffold story.
+    seen_edges = set()
     for s in stories:
         sid = _short_id(s["id"])
         if sid not in by_short:
@@ -116,66 +129,41 @@ def build_be_graph(domain: str, stories: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def build_fe_graph(domain: str, be_stories: list[dict], fe_stories: list[dict]) -> str:
-    """Graph B — FE Readiness. Nodes = this domain's FE stories + every BE story gating one of
-    them (directly or via that BE story's own upstream chain, so a reader can see the full
-    'what must be true' picture without cross-referencing Graph A)."""
+def build_fe_graph_section(domain: str, be_stories: list[dict], fe_stories: list[dict]) -> str:
+    """Graph B — FE Readiness, rendered as one small diagram PER FE story rather than one big
+    diagram for the whole domain. Each diagram shows only that FE story's DIRECTLY named
+    Depends-on BE stories — no transitive BE->BE upstream walk. The upstream chain behind any
+    one of those BE stories is Graph A's job; repeating it here (as the previous version did)
+    made B-01 — which nearly everything in a domain eventually depends on — fan out to almost
+    every node, which is exactly the crisscross this format is meant to avoid.
+    Returns a markdown string: one '### <FE-ID>' heading + one small mermaid diagram each."""
     by_short = {_short_id(s["id"]): s for s in be_stories}
-    _waves, _gates, _crit = compute_implementation_order(be_stories)
-    _by_short2, deps, _gates2, _scaffold = (lambda bs: __import__(
-        "generate_breakdown")._dependency_graph(bs))(be_stories)
-
     dom_fe = [f for f in fe_stories
               if domain_key_from_token(f["id"].rsplit("-FE-", 1)[0]) == domain]
     if not dom_fe:
         return "_No frontend stories recorded for this domain in fe-08-frontend-stories.md._"
 
-    def upstream_chain(short_id: str, acc: set) -> None:
-        if short_id in acc or short_id not in deps:
-            return
-        acc.add(short_id)
-        for d in deps[short_id]:
-            upstream_chain(d, acc)
-
-    needed_be: set = set()
-    fe_edges: list[tuple] = []   # (be_short_id, fe_id)
-    for f in dom_fe:
+    sections = []
+    for f in sorted(dom_fe, key=lambda f: f["id"]):
+        gate_ids = []
         for full_dep in f["depends"]:
             m = re.search(r"-BE-([A-H]-\d+(?:-\d+)?)$", full_dep)
-            if not m:
-                continue
-            sid = m.group(1)
-            if sid in by_short:
-                fe_edges.append((sid, f["id"]))
-                upstream_chain(sid, needed_be)
-
-    lines = ["```mermaid", "flowchart LR"]
-    lines.append('  subgraph BE["Backend — must ship first"]')
-    for sid in sorted(needed_be, key=lambda k: (PHASE_SEQ.find(k[0]) if k[0] in PHASE_SEQ else 99, k)):
-        s = by_short[sid]
-        lines.append(f"    {_mid(sid)}{_label(sid, s['title'])}")
-    lines.append("  end")
-
-    lines.append('  subgraph FE["Frontend — this domain\'s cutover stories"]')
-    for f in dom_fe:
-        lines.append(f'    {_mid(f["id"])}["{f["id"]}<br/>{f["title"][:34].replace(chr(34), chr(39))}"]')
-    lines.append("  end")
-
-    # BE -> BE edges within the needed set (the upstream chain a reader would otherwise have
-    # to look up in Graph A).
-    seen = set()
-    for sid in needed_be:
-        for d in deps.get(sid, set()):
-            if d in needed_be and (d, sid) not in seen:
-                seen.add((d, sid))
-                lines.append(f"  {_mid(d)} --> {_mid(sid)}")
-
-    # BE -> FE gate edges (the direct "must be done before this FE story can start" edges).
-    for sid, fe_id in sorted(set(fe_edges), key=lambda e: (e[1], e[0])):
-        lines.append(f"  {_mid(sid)} ==>|gates| {_mid(fe_id)}")
-
-    lines.append("```")
-    return "\n".join(lines)
+            if m and m.group(1) in by_short and m.group(1) not in gate_ids:
+                gate_ids.append(m.group(1))
+        title = f["title"].replace('"', "'")
+        lines = [f"### {f['id']} · {title}", "", "```mermaid", "flowchart LR"]
+        if not gate_ids:
+            lines.append(f'  {_mid(f["id"])}["{f["id"]}<br/>no backend gate — ready to start"]')
+        else:
+            for sid in sorted(gate_ids, key=lambda k: (PHASE_SEQ.find(k[0]) if k[0] in PHASE_SEQ else 99, k)):
+                s = by_short[sid]
+                lines.append(f"  {_mid(sid)}{_label(sid, s['title'], max_len=28)}")
+            lines.append(f'  {_mid(f["id"])}(["{f["id"]}"])')
+            for sid in gate_ids:
+                lines.append(f"  {_mid(sid)} ==> {_mid(f['id'])}")
+        lines.append("```")
+        sections.append("\n".join(lines))
+    return "\n\n".join(sections)
 
 
 def generate_domain(domain: str) -> None:
@@ -201,9 +189,10 @@ def generate_domain(domain: str) -> None:
         "## Graph A — Backend Story Dependency (build order)",
         "",
         "For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped "
-        "into swimlanes by implementation step — everything in one step can be built in parallel once every "
-        "step before it is done. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a "
-        "cross-subgraph block) — read-only context, not something the scheduler enforces.",
+        "into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-"
+        "resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is "
+        "a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the "
+        "scheduler enforces.",
         "",
         build_be_graph(domain, stories),
         "",
@@ -211,11 +200,13 @@ def generate_domain(domain: str) -> None:
         "",
         "## Graph B — Frontend Readiness (what must ship before FE can start)",
         "",
-        "For the frontend engineer or PO checking whether backend is far enough along: the **bold arrows** "
-        "are the actual gate — a frontend story cannot start until every backend story pointing at it (and, "
-        "transitively, everything upstream of those) has shipped.",
+        "For the frontend engineer or PO checking whether backend is far enough along: **one small diagram "
+        "per frontend story**, showing only the backend stories it directly depends on. (Any dependency "
+        "*those* backend stories have on each other is Graph A's job, not repeated here — that's what kept "
+        "the old single combined diagram unreadable.) A frontend story cannot start until every backend "
+        "story pointing at it has shipped.",
         "",
-        build_fe_graph(domain, stories, fe_stories),
+        build_fe_graph_section(domain, stories, fe_stories),
         "",
         "---",
         f"*Story dependency graphs · {domain} · generated {TODAY}.*",

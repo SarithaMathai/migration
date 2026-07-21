@@ -6,17 +6,21 @@
 
 ## Graph A — Backend Story Dependency (build order)
 
-For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped into swimlanes by implementation step — everything in one step can be built in parallel once every step before it is done. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the scheduler enforces.
+For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the scheduler enforces.
 
 ```mermaid
 flowchart TD
-  subgraph STEP1["Step 1 — 📖 Core Reads"]
+  subgraph PHB["📖 Phase B — Core Reads"]
     NB_01["B-01<br/>searchImpressionsByProductId data…"]
-  end
-  subgraph STEP2["Step 2 — 📖 Core Reads · ✏️ Mutations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests"]
     NB_02["B-02<br/>getImpressionCountsByProductId da…"]
+  end
+  subgraph PHD["✏️ Phase D — Mutations"]
     ND_01["D-01<br/>updateImpressions mutation"]
+  end
+  subgraph PHF["🔗 Phase F — Federation & Stitching"]
     NF_01["F-01<br/>Product.impressions / impressionC…"]
+  end
+  subgraph PHG["🧪 Phase G — Field Resolvers & Tests"]
     NG_01["G-01<br/>Impression field resolvers (5 fie…"]
     NG_02["G-02<br/>ImpressionCount.counts aggregation"]
     NG_04["G-04<br/>attachment entity reference (reco…"]
@@ -35,26 +39,30 @@ flowchart TD
 
 ## Graph B — Frontend Readiness (what must ship before FE can start)
 
-For the frontend engineer or PO checking whether backend is far enough along: the **bold arrows** are the actual gate — a frontend story cannot start until every backend story pointing at it (and, transitively, everything upstream of those) has shipped.
+For the frontend engineer or PO checking whether backend is far enough along: **one small diagram per frontend story**, showing only the backend stories it directly depends on. (Any dependency *those* backend stories have on each other is Graph A's job, not repeated here — that's what kept the old single combined diagram unreadable.) A frontend story cannot start until every backend story pointing at it has shipped.
+
+### IMPRESSION-FE-001 · Migrate `getBomDataAndImpressions` (with BOM wave)
 
 ```mermaid
 flowchart LR
-  subgraph BE["Backend — must ship first"]
-    NB_01["B-01<br/>searchImpressionsByProductId data…"]
-    NG_01["G-01<br/>Impression field resolvers (5 fie…"]
-    NG_02["G-02<br/>ImpressionCount.counts aggregation"]
-  end
-  subgraph FE["Frontend — this domain's cutover stories"]
-    NIMPRESSION_FE_001["IMPRESSION-FE-001<br/>Migrate `getBomDataAndImpressions`"]
-    NIMPRESSION_FE_002["IMPRESSION-FE-002<br/>Migrate `getCarryForwardFormData` "]
-  end
-  NB_01 --> NG_02
-  NB_01 --> NG_01
-  NB_01 ==>|gates| NIMPRESSION_FE_001
-  NG_01 ==>|gates| NIMPRESSION_FE_001
-  NB_01 ==>|gates| NIMPRESSION_FE_002
-  NG_01 ==>|gates| NIMPRESSION_FE_002
-  NG_02 ==>|gates| NIMPRESSION_FE_002
+  NB_01["B-01<br/>searchImpressionsByProductI…"]
+  NG_01["G-01<br/>Impression field resolvers…"]
+  NIMPRESSION_FE_001(["IMPRESSION-FE-001"])
+  NB_01 ==> NIMPRESSION_FE_001
+  NG_01 ==> NIMPRESSION_FE_001
+```
+
+### IMPRESSION-FE-002 · Migrate `getCarryForwardFormData` (with Product wave)
+
+```mermaid
+flowchart LR
+  NB_01["B-01<br/>searchImpressionsByProductI…"]
+  NG_01["G-01<br/>Impression field resolvers…"]
+  NG_02["G-02<br/>ImpressionCount.counts aggr…"]
+  NIMPRESSION_FE_002(["IMPRESSION-FE-002"])
+  NB_01 ==> NIMPRESSION_FE_002
+  NG_01 ==> NIMPRESSION_FE_002
+  NG_02 ==> NIMPRESSION_FE_002
 ```
 
 ---
