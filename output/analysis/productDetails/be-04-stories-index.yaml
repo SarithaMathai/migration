@@ -1,31 +1,169 @@
-# Machine-readable story index for ProductDetails — feed to Jira (bulk create) / Confluence rollup.
-# One entry per story in be-04-stories.md. complexity = Low|Medium|High|Very High (no day-ranges).
+# Phase A dissolved into B-01 (2026-06-27). Schema skeleton, service wiring, stubs folded into B-01.
 domain: productDetails
 target_dgs: plm-product
-epic: "ProductDetails → plm-product DGS migration"
-labels_common: [dgs-migration, productDetails]
+epic: ProductDetails → plm-product DGS migration
+labels_common:
+- dgs-migration
+- productDetails
 generated: 2026-06-27
-pipeline_version: "2.0"
-acl_policy: "ACL ignored in implementation; current-impl ACL usage noted as context only"
+pipeline_version: '2.0'
+acl_policy: ACL ignored in implementation; current-impl ACL usage noted as context
+  only
 stories:
-  - { id: PDTL-BE-A-01, summary: "Schema skeleton + DateTime scalar", phase: A, category: CAT-1, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-A-02, summary: "Owned types + inputs", phase: A, category: CAT-1, complexity: Medium, depends_on: [PDTL-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-A-03, summary: "External stubs (platform + sibling DGS)", phase: A, category: CAT-1, complexity: Low, depends_on: [PDTL-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-A-04, summary: "ProductDetailsService port (construction/v1)", phase: A, category: CAT-3, complexity: Medium, depends_on: [PDTL-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-B-01, summary: "getProductDetailsById", phase: B, category: CAT-2, complexity: Low, depends_on: [PDTL-BE-A-02, PDTL-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-C-01, summary: "getProductDetailsElastic", phase: C, category: CAT-2, complexity: Medium, depends_on: [PDTL-BE-A-04], ext_services: [{key: search, severity: RED}], blocked_by: none }
-  - { id: PDTL-BE-D-01, summary: "createProductDetailsSet (throws on validationErrors)", phase: D, category: CAT-2, complexity: Medium, depends_on: [PDTL-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-D-02, summary: "updateProductDetailAccess", phase: D, category: CAT-2, complexity: Low, depends_on: [PDTL-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-D-03, summary: "productDetailLockUnlock", phase: D, category: CAT-2, complexity: Low, depends_on: [PDTL-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-D-04, summary: "cloneFilesForProductDetails", phase: D, category: CAT-2, complexity: Medium, depends_on: [PDTL-BE-A-04], ext_services: [{key: attachment, severity: RED}], blocked_by: none }
-  - { id: PDTL-BE-D-05, summary: "updateProductDetailComponentStatus (no JWT — confirm)", phase: D, category: CAT-2, complexity: Low, depends_on: [PDTL-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-E-01, summary: "updateProductDetailsSet (multi-step, non-atomic)", phase: E, category: CAT-2, complexity: High, depends_on: [PDTL-BE-A-04], ext_services: [{key: attachment, severity: RED}, {key: workspaceV2, severity: YELLOW}], blocked_by: none }
-  - { id: PDTL-BE-F-01, summary: "Product.productDetails (INTERNAL, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [PDTL-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: PDTL-BE-G-01, summary: "access + currentUserPermissions + participantDetails", phase: G, category: CAT-2, complexity: Medium, depends_on: [PDTL-BE-A-02, PDTL-BE-A-04], ext_services: [{key: userGroup, severity: BLUE}], blocked_by: none }
-  - { id: PDTL-BE-G-02, summary: "product + createdBy + updatedBy + businessPartners + workspaces", phase: G, category: CAT-2, complexity: Medium, depends_on: [PDTL-BE-A-04], ext_services: [{key: userAttributes, severity: YELLOW}, {key: workspaceV2, severity: YELLOW}, {key: vmm, severity: BLUE}], blocked_by: none }
-  - { id: PDTL-BE-G-03, summary: "attachment + item attachments + category subCategories", phase: G, category: CAT-2, complexity: Medium, depends_on: [PDTL-BE-A-04], ext_services: [{key: search, severity: RED}], blocked_by: none }
-  - { id: PDTL-BE-G-04, summary: "Tests, parity harness", phase: G, category: CAT-5, complexity: Medium, depends_on: [PDTL-BE-B-01, PDTL-BE-E-01, PDTL-BE-G-01], ext_services: [], blocked_by: none }
+- id: PDTL-BE-B-01
+  summary: getProductDetailsById (+ one-time DGS module scaffold)
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on: []
+  ext_services: []
+  blocked_by: none
+- id: PDTL-BE-C-01
+  summary: getProductDetailsElastic
+  phase: C
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: PDTL-BE-D-01
+  summary: createProductDetailsSet (throws on validationErrors)
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services: []
+  blocked_by: none
+- id: PDTL-BE-D-02
+  summary: updateProductDetailAccess
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services: []
+  blocked_by: none
+- id: PDTL-BE-D-03
+  summary: productDetailLockUnlock
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services: []
+  blocked_by: none
+- id: PDTL-BE-D-04
+  summary: cloneFilesForProductDetails
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services:
+  - key: attachment
+    severity: RED
+  blocked_by: none
+- id: PDTL-BE-D-05
+  summary: updateProductDetailComponentStatus (no JWT — confirm)
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services: []
+  blocked_by: none
+- id: PDTL-BE-E-01
+  summary: updateProductDetailsSet (multi-step, non-atomic)
+  phase: E
+  category: CAT-2
+  complexity: High
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services:
+  - key: attachment
+    severity: RED
+  - key: workspaceV2
+    severity: YELLOW
+  blocked_by: PRODUCT-BE-E-00
+- id: PDTL-BE-F-01
+  summary: Product.productDetails (INTERNAL, same subgraph)
+  phase: F
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services: []
+  blocked_by: none
+  dataloader_required: true
+  dataloader_note: "MappedBatchLoader<String, List<SPARK_ProductDetails>> — productDetailsByProductIdLoader"
+- id: PDTL-BE-G-01
+  summary: access + currentUserPermissions + participantDetails
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services:
+  - key: userGroup
+    severity: BLUE
+  blocked_by: none
+- id: PDTL-BE-G-02
+  summary: product + createdBy + updatedBy + businessPartners + workspaces
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services:
+  - key: userAttributes
+    severity: YELLOW
+  - key: workspaceV2
+    severity: YELLOW
+  - key: vmm
+    severity: BLUE
+  blocked_by: none
+- id: PDTL-BE-G-03
+  summary: attachment + item attachments + category subCategories
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - PDTL-BE-B-01
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: PDTL-BE-G-04
+  summary: Tests, parity harness
+  phase: G
+  category: CAT-5
+  complexity: Medium
+  depends_on:
+  - PDTL-BE-B-01
+  - PDTL-BE-E-01
+  - PDTL-BE-G-01
+  ext_services: []
+  blocked_by: none
+  tracked_outside_jira: true
 totals:
-  story_count: 17
-  by_complexity: { Low: 7, Medium: 9, High: 1, "Very High": 0 }
-  by_phase: { A: 4, B: 1, C: 1, D: 5, E: 1, F: 1, G: 4 }
+  story_count: 12
+  by_complexity:
+    Low: 5
+    Medium: 6
+    High: 1
+    Very High: 0
+  by_phase:
+    B: 1
+    C: 1
+    D: 5
+    E: 1
+    F: 1
+    G: 3
+  notes:
+  - Phase A dissolved into B-01 (2026-06-27)
+  - G-04 tracked outside Jira pipeline
+  - E-01 blocked by PRODUCT-BE-E-00 (WriteSaga shared module)

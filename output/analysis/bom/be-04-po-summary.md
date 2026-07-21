@@ -54,24 +54,24 @@ rest of the phase to finish.
 | Impression polymorphism | 5 types + interface | B-01 |
 | External dependencies | 12 loader keys (2 🔴 · 6 🟡 · 4 🔵) | sibling DGS + VMM platform |
 | Federation contributions | 2 (Product extension, ResourcesCount.bomsCount) | BLOCKED-BY product |
-| **Total stories** | **36** | green-field build stories. The 3 Phase-0 spike stubs are tracked as **program spikes** in the global breakdown and Jira, not as rows here (see global Phase 0) |
+| **Total stories** | **37** | green-field build stories. The 3 Phase-0 spike stubs are tracked as **program spikes** in the global breakdown and Jira, not as rows here (see global Phase 0) |
 
 ## Story Summary by Phase (AI-estimated)
 
 | Phase | Name | Stories | Effort (est., +20% buffer) | Ready when |
 |-------|------|---------|----------------------------|-----------|
-| A | BOM material `@DgsTypeResolver` (1) | 1 | 2–3d |
+| A | BOM material `@DgsTypeResolver` + CI conformance gate | 2 | 3–5d | |
 | B | Core Reads | 7 | 7–12d | after B-01. (`B-02` removed) |
 | C | Search & Listing | 5 | 9–15d | after B-01 |
 | D | Mutations (simple) | 5 | 5–10d | after B-01 |
-| E | Complex (`updateBom`) | 1 | 6–10d | after B-01, D-02 · gated on `SPIKE-01` |
+| E | Complex (`updateBom`) | 1 | 6–10d | after B-01, D-02 · gated on `SPIKE-01` + `PRODUCT-BE-E-00` |
 | F | Federation Contributions | 2 | 4–7d | BLOCKED-BY product |
 | G | Field Resolvers & Tests | 15 | 32–52d | after B-01. (`G-02` removed, `G-10` rescoped) |
-| **Total** | | **36** | **68–113d** (buffered) | |
+| **Total** | | **37** | **69–115d** (buffered) | |
 
 > One engineer ≈ **14–23 sprints** (5d). Phases B/C/D/G parallelize heavily after B-01.
 
-> **Phase A is one story** — `BOM-BE-A-04`, the material/impression `@DgsTypeResolver`. All *other* former Phase-A scaffolding (schema skeleton, service wiring, external stubs) is folded into the **B-01** checklist, done in the same PR.
+> **Phase A is two stories** — `BOM-BE-A-04` (material/impression `@DgsTypeResolver`) and `BOM-BE-A-05` (shared CI conformance gate, depends on A-04). All *other* former Phase-A scaffolding (schema skeleton, service wiring, external stubs) is folded into the **B-01** checklist, done in the same PR.
 
 > **Self-contained story model.** The DGS-on-REST framework already exists; every operation story is **end-to-end in one PR** — schema (query/mutation + the GraphQL types it returns) + DGS data fetcher + Kotlin REST service method (read/write) + push the schema change to **Hive**. The standalone `*Service` Kotlin-port story has been dissolved into the operation stories; the BOM material `@DgsTypeResolver` remains a dedicated story.
 
@@ -111,6 +111,8 @@ plm-product (BOM subgraph) depends on:
  spark-product backend REST .../bom/v1 + /masterData ; elastic bom/material search
  sibling DGS (federation): material-hub, trim, wash, fabric, combination, workspace, tag, user-profile
  Hive Gateway → VMM platform (business partners, supplier roles, facility location)
+ cross-domain blockers:
+   E-01 (updateBom) depends on PRODUCT-BE-E-00 (WriteSaga shared module)
  product domain F-01 Product entity extension ; F-02 TechPack ResourcesCount.bomsCount
 ```
 
@@ -119,7 +121,7 @@ plm-product (BOM subgraph) depends on:
 | Sprint | Stories | Focus |
 |--------|---------|-------|
 | 0 | Program spikes | run in Sprint 0 (see global Phase 0 — Program Spikes) so E-01/rollout-order aren't waiting |
-| 1 | B-01 (DGS module init + service wiring + first resolver), A-05 (shared CI conformance gate) | schema, stubs, type resolvers, service port, drift guard |
+| 1 | A-04 (TypeResolver), A-05 (CI gate), B-01 (DGS module init + service wiring + first resolver) | schema, stubs, type resolvers, service port, drift guard |
 | 2 | B-01, B-03–B-08 + D-03/D-04 | reads (incl. 4 cacheable) + lock/unlock |
 | 3 | C-01–C-05 + D-01/D-02/D-05 | search/supplier + simple mutations |
 | 4 | E-01 | `updateBom` 3-step write (focused; needs `SPIKE-01` concluded) |

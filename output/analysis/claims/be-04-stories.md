@@ -258,6 +258,8 @@ ACL is **context-only** (note it; build nothing).
 
 1. `Product.claims` resolves via federation.
 2. parity vs the current in-gateway resolver.
+3. Entity fetcher uses a `MappedBatchLoader<String, Claims>` (`claimByIdLoader`) — batches all `Product.claims` resolutions within a single gateway request into one REST call. Returns `null` for unknown IDs (federation spec).
+4. Under a `getProducts(ids: [50 ids]) { claims { ... } }` query, exactly **1** batched call to the claims backend (not 50).
 
 ---
 

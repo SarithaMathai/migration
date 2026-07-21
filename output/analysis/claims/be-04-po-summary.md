@@ -28,7 +28,7 @@ Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permiss
 | Field-resolver type blocks | 4 | `Claims` (11), `ParentDetails` (3), substantiate (1), claimDetails (1) |
 | External dependencies | 6 keys (1 🔴 · 3 🟡 · 2 🔵) | search 🔴; product/user-profile/workspace 🟡 |
 | Federation contributions | 2 (Product.claims, ResourcesCount.claims) | BLOCKED-BY product |
-| **Total stories** | **20** | green-field; separate subgraph |
+| **Total stories** | **21** | green-field; separate subgraph (G-06 added by federation review) |
 
 ## Story Summary by Phase (AI-estimated)
 | Phase | Name | Stories | Effort (est., +20%) |
@@ -37,9 +37,13 @@ Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permiss
 | C | Search & Listing | 2 | 4–7d |
 | D | Mutations (simple) | 5 | 7–12d |
 | E | Complex (`updateClaim`) | 1 | 4–7d |
-| F | Federation Contributions | 2 | 4–7d (BLOCKED-BY product) |
-| G | Field Resolvers & Tests | 5 | 12–20d |
-| **Total** | | **20** | **36–62d** (buffered) |
+| G | Field Resolvers & Tests | 6 | 14–23d |
+| H | Entity Resolution (cross-subgraph) | 2 | 4–7d (BLOCKED-BY `PRODUCT-BE-F-14` + product deploy) |
+| **Total** | | **21** | **38–65d** (buffered) |
+
+> **Phase H note.** H-01 (`Product.claims`) and H-02 (`ResourcesCount.claims`) are cross-subgraph
+> contributions — they cannot ship until `plm-product` is deployed and `PRODUCT-BE-F-14` (contract
+> alignment) has landed. They are sequenced post-launch.
 
 > One engineer ≈ **8–13 sprints**.
 
@@ -55,6 +59,7 @@ Per **ADR-019** (`complexStories/acl/01-adr-acl-mid-request-update.md`), permiss
 | `businessPartner` 3-way fallback (incl. a "Target" id-0 case) | 🟢 Low | Preserve exactly; unit-test each branch |
 | `ParentDetails` elastic team/BP lookups | 🟢 Low | Preserve empty handling; paginate |
 | Federation contributions wait on product | 🟢 Low | H-01/H-02 post-launch; not on the critical path |
+| DataLoader missing on H-01 entity fetcher | 🟡 Medium | N+1 at gateway level; add `claimByIdLoader` MappedBatchLoader to H-01 AC |
 
 ## Decisions Required
 | # | Decision | Blocks | Owner |
@@ -69,6 +74,9 @@ claims subgraph (spark-claims) depends on:
  spark-claims backend REST claim base (create/search/export/lock/...)
  cross-subgraph (federation): product, search 🔴, workspace, user-profile, team
  Hive Gateway → VMM (business/design partners)
+ cross-domain blockers:
+   E-01 (updateClaim) depends on PRODUCT-BE-E-00 (WriteSaga shared module)
+   H-01/H-02 BLOCKED-BY PRODUCT-BE-F-14 (contract alignment) + plm-product deploy
  contributes → plm-product: Product.claims (H-01) ; ResourcesCount.claims (H-02, TechPack PRODUCT-BE-H-04)
 ```
 

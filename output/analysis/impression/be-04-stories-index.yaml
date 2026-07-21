@@ -1,24 +1,113 @@
-# Machine-readable story index for Impression — feed to Jira MCP / Confluence rollup.
+# Phase A dissolved into B-01 (2026-06-27). Schema skeleton, service wiring, stubs folded into B-01.
 domain: impression
 target_dgs: plm-product
-epic: "Impression → plm-product DGS migration"
-labels_common: [dgs-migration, impression]
+epic: Impression → plm-product DGS migration
+labels_common:
+- dgs-migration
+- impression
 generated: 2026-06-26
-pipeline_version: "2.0"
-acl_policy: "ACL ignored in implementation; current-impl ACL usage noted as context only"
+pipeline_version: '2.0'
+acl_policy: ACL ignored in implementation; current-impl ACL usage noted as context
+  only
 stories:
-  - { id: IMPRESSION-BE-A-01, summary: "Schema skeleton + DateTime scalar", phase: A, category: CAT-1, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-A-02, summary: "Owned types + inputs", phase: A, category: CAT-1, complexity: Low, depends_on: [IMPRESSION-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-A-03, summary: "External stubs", phase: A, category: CAT-1, complexity: Low, depends_on: [IMPRESSION-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-A-04, summary: "ImpressionService Kotlin port (2 methods)", phase: A, category: CAT-3, complexity: Low, depends_on: [IMPRESSION-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-B-01, summary: "searchImpressionsByProductId data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [IMPRESSION-BE-A-02, IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-B-02, summary: "getImpressionCountsByProductId data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [IMPRESSION-BE-A-02, IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-D-01, summary: "updateImpressions mutation", phase: D, category: CAT-2, complexity: Medium, depends_on: [IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-F-01, summary: "Implement Product.impressions/impressionCounts (internal, same subgraph)", phase: F, category: CAT-2, complexity: Low, depends_on: [IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-G-01, summary: "Impression field resolvers (5)", phase: G, category: CAT-2, complexity: Low, depends_on: [IMPRESSION-BE-A-02, IMPRESSION-BE-A-04], ext_services: [{key: workspaceV2, severity: YELLOW}, {key: vmm, severity: BLUE}, {key: userAttributes, severity: BLUE}], blocked_by: none }
-  - { id: IMPRESSION-BE-G-02, summary: "ImpressionCount.counts aggregation", phase: G, category: CAT-2, complexity: Medium, depends_on: [IMPRESSION-BE-A-02, IMPRESSION-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: IMPRESSION-BE-G-03, summary: "Test coverage & parity", phase: G, category: CAT-5, complexity: Low, depends_on: [IMPRESSION-BE-B-01, IMPRESSION-BE-B-02, IMPRESSION-BE-D-01, IMPRESSION-BE-G-02], ext_services: [], blocked_by: none }
+- id: IMPRESSION-BE-B-01
+  summary: searchImpressionsByProductId data fetcher (+ one-time DGS module scaffold)
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on: []
+  ext_services: []
+  blocked_by: none
+- id: IMPRESSION-BE-B-02
+  summary: getImpressionCountsByProductId data fetcher
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - IMPRESSION-BE-B-01
+  ext_services: []
+  blocked_by: none
+- id: IMPRESSION-BE-D-01
+  summary: updateImpressions mutation
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - IMPRESSION-BE-B-01
+  ext_services: []
+  blocked_by: none
+- id: IMPRESSION-BE-F-01
+  summary: Implement Product.impressions/impressionCounts (internal, same subgraph)
+  phase: F
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - IMPRESSION-BE-B-01
+  ext_services: []
+  blocked_by: none
+  dataloader_required: true
+  dataloader_note: "MappedBatchLoader<String, List<SPARK_Impression>> — impressionByProductIdLoader"
+- id: IMPRESSION-BE-G-01
+  summary: Impression field resolvers (5)
+  phase: G
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - IMPRESSION-BE-B-01
+  ext_services:
+  - key: workspaceV2
+    severity: YELLOW
+  - key: vmm
+    severity: BLUE
+  - key: userAttributes
+    severity: BLUE
+  blocked_by: none
+- id: IMPRESSION-BE-G-02
+  summary: ImpressionCount.counts aggregation
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - IMPRESSION-BE-B-01
+  ext_services: []
+  blocked_by: none
+- id: IMPRESSION-BE-G-03
+  summary: Test coverage & parity
+  phase: G
+  category: CAT-5
+  complexity: Low
+  depends_on:
+  - IMPRESSION-BE-B-01
+  - IMPRESSION-BE-B-02
+  - IMPRESSION-BE-D-01
+  - IMPRESSION-BE-G-02
+  ext_services: []
+  blocked_by: none
+  tracked_outside_jira: true
+- id: IMPRESSION-BE-G-04
+  summary: attachment entity reference (recommended, PO-gated)
+  phase: G
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - IMPRESSION-BE-B-01
+  ext_services:
+  - key: attachment
+    severity: RED
+  blocked_by: none
 totals:
-  story_count: 11
-  by_complexity: { Low: 9, Medium: 2, High: 0, "Very High": 0 }
-  by_phase: { A: 4, B: 2, D: 1, F: 1, G: 3 }
+  story_count: 7
+  by_complexity:
+    Low: 5
+    Medium: 2
+    High: 0
+    Very High: 0
+  by_phase:
+    B: 2
+    D: 1
+    F: 1
+    G: 3
+  notes:
+  - Phase A dissolved into B-01 (2026-06-27)
+  - G-03 tracked outside Jira pipeline
+  - G-04 added by federation review (2026-07-17), PO-gated

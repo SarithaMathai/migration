@@ -1,3 +1,4 @@
+# Phase A dissolved into B-01 (2026-06-27). Schema skeleton, service wiring, stubs folded into B-01.
 domain: packaging
 target_dgs: plm-product
 epic: Packaging → plm-product DGS migration
@@ -9,49 +10,12 @@ pipeline_version: '2.0'
 acl_policy: ACL ignored in implementation; current-impl ACL usage noted as context
   only
 stories:
-- id: PKG-BE-A-01
-  summary: Schema skeleton + DateTime scalar
-  phase: A
-  category: CAT-1
-  complexity: Low
-  depends_on: []
-  ext_services: []
-  blocked_by: none
-- id: PKG-BE-A-02
-  summary: Owned types + inputs (~24 types, ~20 inputs)
-  phase: A
-  category: CAT-1
-  complexity: Medium
-  depends_on:
-  - PKG-BE-A-01
-  ext_services: []
-  blocked_by: none
-- id: PKG-BE-A-03
-  summary: External stubs (platform + sibling DGS)
-  phase: A
-  category: CAT-1
-  complexity: Low
-  depends_on:
-  - PKG-BE-A-01
-  ext_services: []
-  blocked_by: none
-- id: PKG-BE-A-04
-  summary: PackagingService port (packaging/v1)
-  phase: A
-  category: CAT-3
-  complexity: Medium
-  depends_on:
-  - PKG-BE-A-01
-  ext_services: []
-  blocked_by: none
 - id: PKG-BE-B-01
-  summary: getPackagings
+  summary: getPackagings (+ one-time DGS module scaffold)
   phase: B
   category: CAT-2
   complexity: Low
-  depends_on:
-  - PKG-BE-A-02
-  - PKG-BE-A-04
+  depends_on: []
   ext_services: []
   blocked_by: none
 - id: PKG-BE-B-02
@@ -60,8 +24,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-02
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-B-03
@@ -70,8 +33,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-02
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-B-04
@@ -80,7 +42,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-B-05
@@ -89,7 +51,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-B-06
@@ -98,7 +60,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-C-01
@@ -107,7 +69,7 @@ stories:
   category: CAT-2
   complexity: Medium
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services:
   - key: search
     severity: RED
@@ -118,7 +80,7 @@ stories:
   category: CAT-2
   complexity: Medium
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-D-02
@@ -127,7 +89,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-D-03
@@ -136,7 +98,7 @@ stories:
   category: CAT-2
   complexity: Medium
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-D-04
@@ -145,7 +107,7 @@ stories:
   category: CAT-2
   complexity: Medium
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-D-05
@@ -154,7 +116,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-D-06
@@ -163,7 +125,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-D-07
@@ -172,7 +134,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-D-08
@@ -181,7 +143,7 @@ stories:
   category: CAT-2
   complexity: Medium
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services:
   - key: attachment
     severity: RED
@@ -192,67 +154,40 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
 - id: PKG-BE-E-01
   summary: 'updatePackaging (multi-step: body + attachment add/remove, non-atomic)'
   phase: E
   category: CAT-2
-  complexity: Medium
+  complexity: High
   depends_on:
-  - PKG-BE-A-04
-  ext_services: &id001
+  - PKG-BE-B-01
+  ext_services:
   - key: attachment
     severity: RED
   - key: relationship
     severity: YELLOW
-  blocked_by: none
-  parent: null
-  substories:
-  - PKG-BE-E-01-1
-  - PKG-BE-E-01-2
-- id: PKG-BE-E-01-1
-  summary: body + attachment add
-  phase: E
-  category: CAT-2
-  complexity: Medium
-  parent: PKG-BE-E-01
-  substories: []
-  depends_on:
-  - PKG-BE-E-01
-  - PKG-BE-A-04
-  blocked_by: none
-  ext_services: *id001
-- id: PKG-BE-E-01-2
-  summary: attachment remove + pricing
-  phase: E
-  category: CAT-2
-  complexity: Medium
-  parent: PKG-BE-E-01
-  substories: []
-  depends_on:
-  - PKG-BE-E-01
-  - PKG-BE-A-04
-  blocked_by: none
-  ext_services: *id001
+  blocked_by: PRODUCT-BE-E-00
 - id: PKG-BE-F-01
   summary: Product packaging links (INTERNAL, same subgraph)
   phase: F
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services: []
   blocked_by: none
+  dataloader_required: true
+  dataloader_note: "MappedBatchLoader<String, List<SPARK_Packaging>> — packagingByProductIdLoader"
 - id: PKG-BE-G-01
   summary: access + businessPartner + participantDetails
   phase: G
   category: CAT-2
   complexity: Medium
   depends_on:
-  - PKG-BE-A-02
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services:
   - key: vmm
     severity: BLUE
@@ -265,7 +200,7 @@ stories:
   category: CAT-2
   complexity: Low
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services:
   - key: userAttributes
     severity: YELLOW
@@ -276,7 +211,7 @@ stories:
   category: CAT-2
   complexity: Medium
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services:
   - key: search
     severity: RED
@@ -287,7 +222,7 @@ stories:
   category: CAT-2
   complexity: High
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services:
   - key: tag
     severity: YELLOW
@@ -300,7 +235,7 @@ stories:
   category: CAT-2
   complexity: Medium
   depends_on:
-  - PKG-BE-A-04
+  - PKG-BE-B-01
   ext_services:
   - key: attachment
     severity: RED
@@ -321,18 +256,22 @@ stories:
   - PKG-BE-G-04
   ext_services: []
   blocked_by: none
+  tracked_outside_jira: true
 totals:
-  story_count: 28
+  story_count: 23
   by_complexity:
-    Low: 15
-    Medium: 11
+    Low: 13
+    Medium: 8
     High: 2
     Very High: 0
   by_phase:
-    A: 4
     B: 6
     C: 1
     D: 9
     E: 1
     F: 1
-    G: 6
+    G: 5
+  notes:
+  - Phase A dissolved into B-01 (2026-06-27)
+  - G-06 tracked outside Jira pipeline
+  - E-01 blocked by PRODUCT-BE-E-00 (WriteSaga shared module)

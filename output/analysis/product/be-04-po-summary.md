@@ -50,11 +50,18 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | C | Search & Listing | 5 | 17–29d | after B-01; C-01 gated on `SPIKE-06a` (Hydration, via `PRODUCT-BE-S-02`) |
 | D | Mutations (simple) | 18 | 25–40d | after B-01; D-01/D-02/D-04 gated on `SPIKE-06b` (Association, via `PRODUCT-BE-S-01`); D-03/D-06/D-07/D-11 unblocked (single-backend, per ADR-011 scope) |
 | E | Complex (partner/components/TechPack) | 4 | 33–56d | E-01 gated on `SPIKE-03` |
-| F | Federation & Stitching | 12 | 22–40d (most BLOCKED-BY siblings) | after E-03 / siblings |
+| F | Federation & Stitching (ships on green) | 8 | 14–24d | after E-03; F-04/F-06/F-08 internal (co-located); F-09 waits for all H |
+| H | Entity Resolution (cross-subgraph, BLOCKED) | 6 | 10–18d | BLOCKED-BY sibling subgraph deploys (attachment/discussion/sample/claim/construction) |
 | G | Field Resolvers, Bug-fixes, Utils, Tests | 17 | 86–143d | after B-01. `G-11` split into `G-11-1`/`G-11-2` (16 → 17) |
-| **Total** | | **67** | **194–326d** (buffered; sum of phase rows) | |
+| **Total** | | **69** | **196–328d** (buffered; sum of phase rows) | |
 
 > One engineer ≈ **39–66 sprints**. Heavily parallelizable after B-01; 2–3 engineers strongly recommended.
+
+> **Phase F vs H clarification.** Phase F stories resolve **internally** (co-located domains in the same DGS
+> process) or handle schema/composition infrastructure — they **ship on green**. Phase H stories require a
+> **separate subgraph's deployment** at runtime (`@DgsEntityFetcher` cross-subgraph resolution) — they are
+> **BLOCKED-BY** that subgraph and sequenced post-launch. See
+> [federation-review/04-entity-analysis.md](../federation-review/04-entity-analysis.md) for the full distinction.
 
 > **Phase A dissolved.** Schema skeleton, service wiring, and external stubs are a one-time checklist in **B-01** (completed in the same PR). No separate Phase A stories.
 
@@ -70,6 +77,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | `getProducts` two-stage hydration (C-01) | 🟡 Medium-High | `S-02` spike (program id `SPIKE-06a`) resolves workspace-filter placement + elastic/canonical staleness before `C-01` starts |
 | Cross-domain association pattern (D-01/D-02/D-04) | 🟡 Medium | `S-01` spike (program id `SPIKE-06b`, draft ADR-011) picks one pattern for the 3 cross-subgraph mutations; D-03/D-06/D-07/D-11 descoped (single-backend) |
 | `components` / `attachmentsWithMetaData` (G-01/G-02) | 🟡 Medium-High | Large, performance-sensitive; budget X-Large |
+| `G-13` FE chokepoint (IG/tag/tcin/spg + template fields) | 🟡 Medium | Blocks **8 FE stories** — prioritize early in G phase |
 | `division` latent bug (`Product.division`/`DopplerDepartment.division` wrong-loader bug, tracked outside this Jira pipeline) | 🟡 Medium | Fixing it changes the response shape — client survey before rollout |
 | 8 TechPack placeholders block on 8 domains | 🟡 Medium | Facade keeps it working; retire only when all siblings are live |
 | Rules feature-flag + external rating secret | 🟢 Low | Verify flag everywhere; move the rating key to Vault |

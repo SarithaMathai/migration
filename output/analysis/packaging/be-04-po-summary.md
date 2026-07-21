@@ -26,7 +26,7 @@ pricing service).
 | Field-resolver type blocks | 4 | `Packaging` (12), `Dieline` (3), `PrinterDieline` (1), `PackagingElement` (1) |
 | External dependencies | 7 keys (2 🔴 · 3 🟡 · 2 🔵) | search/attachment 🔴; relationship/user-profile/tag 🟡 |
 | Federation contributions | 1 (Product) | **internal** (co-located) |
-| **Total stories** | **24** | green-field |
+| **Total stories** | **23** | green-field (G-06 test coverage tracked outside Jira pipeline) |
 
 ## Story Summary by Phase (AI-estimated)
 | Phase | Name | Stories | Effort (est., +20%) |
@@ -36,8 +36,10 @@ pricing service).
 | D | Mutations (simple) | 9 | 13–22d |
 | E | Complex (`updatePackaging`) | 1 | 5–8d |
 | F | Federation (Product, internal) | 1 | 1–2d |
-| G | Field Resolvers & Tests | 6 | 15–25d |
-| **Total** | | **24** | **42–72d** (buffered) |
+| G | Field Resolvers & Tests | 5 | 13–22d |
+| **Total** | | **23** | **40–69d** (buffered) |
+
+> G-06 (test coverage/parity) is tracked outside this Jira pipeline, created manually.
 
 > One engineer ≈ **9–15 sprints**.
 
@@ -53,6 +55,7 @@ pricing service).
 | `updatePackagingComponentStatus` has no auth token | 🟢 Low | Confirm the backend enforces it |
 | Attachment-by-search field resolvers | 🟢 Low | Shared search helper; batch |
 | Claims pass-through fields on `PackagingInput` | 🟢 Low | Confirm ownership (packaging vs claims subgraph) |
+| DataLoader missing on F-01 field resolver | 🟡 Medium | N+1 risk when parent returns list; add `packagingByProductIdLoader` to F-01 AC |
 
 ## Decisions Required
 | # | Decision | Blocks | Owner |
@@ -69,6 +72,8 @@ plm-product (Packaging subgraph) depends on:
  sibling DGS (federation): attachment, search 🔴, workspace, user-profile, relationship, tag
  Hive Gateway → VMM (business partners), apex/pricing (suggested retail price)
  internal (same DGS): product, fileLibrary
+ cross-domain blockers:
+   E-01 (updatePackaging) depends on PRODUCT-BE-E-00 (WriteSaga shared module)
  product domain F-01 Product packaging links (internal field resolvers)
 ```
 

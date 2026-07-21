@@ -50,6 +50,7 @@ to fix on the port.
 | `getWatchlistByFilter` 4-step chain | 🟡 Medium | Performance-sensitive; cache the product lookup |
 | Product `PRODUCT-BE-F-08` mislabelled watchlist as a separate subgraph | 🟢 Low | Corrected — it's an **internal** contribution (like bom/measurement) |
 | Attachment/search field resolvers | 🟢 Low | Shared search helper |
+| DataLoader missing on F-01 field resolver | 🟡 Medium | N+1 risk when parent returns list; add `watchlistByProductIdLoader` to F-01 AC |
 
 ## Decisions Required
 | # | Decision | Blocks | Owner |
@@ -64,6 +65,8 @@ plm-product (Watchlist subgraph) depends on:
  sibling DGS (federation): attachment, search 🔴, workspace, user-profile, user-group
  Hive Gateway → VMM (partner names)
  internal (same DGS): product
+ cross-domain blockers:
+   E-01 (updateWatchlistEntries) depends on PRODUCT-BE-E-00 (WriteSaga shared module)
  product domain F-01 Product.watchlists ; F-02 ResourcesCount.watchlists (both internal)
 ```
 

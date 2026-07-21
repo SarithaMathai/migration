@@ -312,6 +312,7 @@ in-process (not gateway federation; depends only on the `Product`/`Component` ty
 #### Acceptance Criteria
 
 1. resolves in-process; no gateway hop.
+2. Field resolver uses a `MappedBatchLoader<String, List<SPARK_Packaging>>` (`packagingByProductIdLoader`) — when the parent query returns N products, packaging is resolved in 1 batched call (not N).
 
 ---
 

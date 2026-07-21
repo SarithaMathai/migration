@@ -16,12 +16,13 @@ resolver. **ACL note:** where a story says the current code obtains a capability
 | Phase | Name | Stories | Notes |
 |-------|------|---------|-------|
 | 0 | Spikes | S-01–S-03 | time-boxed research; must conclude before the stories they block start |
+| A | Foundation & Schema | A-04–A-05 | `@DgsTypeResolver` for polymorphic BOM materials + shared CI conformance gate |
 | B | Core Reads | B-01, B-03–B-08 | one query per story; 4 are cacheable master data. **`B-02` removed** — see Bom_Unified deprecation below |
 | C | Search & Listing | C-01–C-05 | elastic + supplier lookups |
 | D | Mutations (simple) | D-01–D-05 | add / workspaces / lock / unlock / component-status |
-| E | Complex Operations | E-01 | `updateBom` 3-step non-atomic write — blocked by `S-01` |
+| E | Complex Operations | E-01 | `updateBom` 3-step non-atomic write — blocked by `S-01` + `PRODUCT-BE-E-00` |
 | F | Federation Contributions | F-01–F-02 | internal, same `plm-product` subgraph as product — ships on green, no gateway block |
-| G | Field Resolvers & Tests | G-01, G-03–G-17 | one story per type block + parity harness. **`G-02` removed**, `G-10` repurposed — see Bom_Unified deprecation below. `G-17` (supplier entity ref) added by the federation review — recommended/PO-gated |
+| G | Field Resolvers & Tests | G-01, G-03–G-15, G-17 | one story per type block + parity harness. **`G-02` removed**, `G-10` repurposed — see Bom_Unified deprecation below. `G-17` (supplier entity ref) added by the federation review — recommended/PO-gated. `G-16` tracked outside Jira pipeline |
 
 > **`Bom_Unified` deprecated.** The reviewer decision (formerly Decision #3) was: drop `Bom_Unified` as a
 > parallel type and use field selection on `Bom` instead. That removes `getBomDataV2` (`B-02`) and
@@ -49,9 +50,12 @@ Effort/day-ranges are intentionally **not** in stories (complexity tier only). S
 
 ```mermaid
 graph TD
+  A04[A-04 BomMaterial @DgsTypeResolver] --> A05[A-05 shared CI conformance gate]
+  A05 --> G
+  S02[S-02 federation rollout-order spike] --> B01
   B01["B-01 getBomByIds + one-time DGS module scaffold\n(bom.graphqls, scalars, service + Feign wiring)"] --> B[B-03-B-08 Reads] & C[C-01-C-05 Search] & D[D-01-D-05 Mutations] & E01[E-01 updateBom]
   S01[S-01 updateBom failure-strategy spike] --> E01
-  S02[S-02 federation rollout-order spike] -.informs.-> G
+  E00[PRODUCT-BE-E-00 WriteSaga shared module] -.blocked.-> E01
   S03[S-03 searchMaterialsBom DTO spike] --> C02[C-02 searchMaterialsBom]
   B01 --> G
   PROD[product Phase 3] -.blocked.-> F01[F-01 Product extension]

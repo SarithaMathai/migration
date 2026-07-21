@@ -23,18 +23,26 @@ template/size/tight-fit references are **separate sibling domains** we only refe
 | Field-resolver type blocks | 2 | `Measurement` (13), `SampleMeasurementSet` (2) |
 | External dependencies | 11 keys (2 🔴 · 6 🟡 · 3 🔵) | relationship/search 🔴; templates 🟡 |
 | Federation contributions | 2 (Product, SampleV2) | BLOCKED-BY product/sample |
-| **Total stories** | **20** | green-field |
+| **Total stories** | **30** | green-field (20 core + 10 sub-domain: measurement-template, size-template, tight-fit) |
 
 ## Story Summary by Phase (AI-estimated)
 | Phase | Name | Stories | Effort (est., +20%) |
 |---|---|---|---|
-| B | Core Reads | 5 | 5–9d |
+| B | Core Reads | 9 | 9–16d |
 | C | Listing | 2 | 4–7d |
-| D | Mutations (simple) | 7 | 8–14d |
+| D | Mutations (simple) | 10 | 12–20d |
 | E | Complex (`updateMeasurement`) | 1 | 4–7d |
-| F | Federation | 2 | 3–5d (BLOCKED-BY product/sample) |
-| G | Field Resolvers & Tests | 3 | 8–13d |
-| **Total** | | **20** | **32–55d** (buffered) |
+| F | Federation (internal) | 1 | 1–2d |
+| G | Field Resolvers & Tests | 5 | 10–17d |
+| H | Entity Resolution (cross-subgraph) | 2 | 2–4d (BLOCKED-BY product/sample deploy) |
+| **Total** | | **30** | **42–73d** (buffered) |
+
+> **Sub-domain note (2026-07-19).** B-06–B-09 (measurement-template, size-template, tight-fit reads),
+> D-08–D-10 (their mutations), and G-05–G-07 (their field resolvers) are included above. Original
+> core-measurement stories: 20; sub-domain additions: 10; total: 30.
+
+> **Phase H note.** H-01 (`SampleV2.sampleMeasurement`) and H-02 (`SampleMeasurementSet.sample`) are
+> cross-subgraph contributions — they cannot ship until the sample subgraph is deployed. Sequenced post-launch.
 
 > One engineer ≈ **7–11 sprints**.
 
@@ -66,6 +74,9 @@ plm-product (Measurement subgraph) depends on:
  relationship service (getMeasurements id resolution) 🔴
  sibling DGS (federation): workspace, sample, measurement-template, size-template, tight-fit, user-profile
  Hive Gateway → VMM (business partners)
+ cross-domain blockers:
+   E-01 (updateMeasurement) depends on PRODUCT-BE-E-00 (WriteSaga shared module)
+   H-01/H-02 BLOCKED-BY sample subgraph deploy
  product domain F-01 Product.measurementSets (internal) ; sample domain H-01 SampleV2.sampleMeasurement
 ```
 

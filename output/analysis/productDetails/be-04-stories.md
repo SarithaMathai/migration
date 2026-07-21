@@ -196,6 +196,7 @@ workspace, attachment, and body changes stay consistent.
 #### Acceptance Criteria
 
 1. `Product.productDetails` resolves in-process; no gateway hop.
+2. Field resolver uses a `MappedBatchLoader<String, List<SPARK_ProductDetails>>` (`productDetailsByProductIdLoader`) — when the parent query returns N products, product details are resolved in 1 batched call (not N).
 
 ---
 

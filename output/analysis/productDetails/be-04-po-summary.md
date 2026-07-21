@@ -25,7 +25,7 @@ associations, then bulk-archive removed attachments, then the body — with no r
 | Field-resolver type blocks | 3 | `ProductDetails` (10), item (2), category (1) |
 | External dependencies | 6 keys (2 🔴 · 2 🟡 · 2 🔵) | search/attachment 🔴 |
 | Federation contributions | 1 (Product) | **internal** (co-located) |
-| **Total stories** | **13** | green-field |
+| **Total stories** | **12** | green-field (G-04 test coverage tracked outside Jira pipeline) |
 
 ## Story Summary by Phase (AI-estimated)
 | Phase | Name | Stories | Effort (est., +20%) |
@@ -35,8 +35,10 @@ associations, then bulk-archive removed attachments, then the body — with no r
 | D | Mutations (simple) | 5 | 7–12d |
 | E | Complex (`updateProductDetailsSet`) | 1 | 4–7d |
 | F | Federation (Product, internal) | 1 | 1–2d |
-| G | Field Resolvers & Tests | 4 | 9–15d |
-| **Total** | | **13** | **24–42d** (buffered) |
+| G | Field Resolvers & Tests | 3 | 7–12d |
+| **Total** | | **12** | **22–39d** (buffered) |
+
+> G-04 (test coverage/parity) is tracked outside this Jira pipeline, created manually.
 
 > One engineer ≈ **5–9 sprints**.
 
@@ -51,6 +53,7 @@ associations, then bulk-archive removed attachments, then the body — with no r
 | `updateProductDetailComponentStatus` has no auth token | 🟢 Low | Confirm the backend enforces it |
 | Attachment-by-search field resolvers | 🟢 Low | Shared search helper; batch where possible |
 | `getProductDetailsElastic.types` arg not in schema | 🟢 Low | Drop or add to the schema |
+| DataLoader missing on F-01 field resolver | 🟡 Medium | N+1 risk when parent returns list; add `productDetailsByProductIdLoader` to F-01 AC |
 
 ## Decisions Required
 | # | Decision | Blocks | Owner |
@@ -67,6 +70,8 @@ plm-product (ProductDetails subgraph) depends on:
  sibling DGS (federation): attachment, workspace, user-profile, access-control, search 🔴
  Hive Gateway → VMM (business partners)
  internal (same DGS): product, specificationsTemplate
+ cross-domain blockers:
+   E-01 (updateProductDetailsSet) depends on PRODUCT-BE-E-00 (WriteSaga shared module)
  product domain F-01 Product.productDetails (internal field resolver)
 ```
 

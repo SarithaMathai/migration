@@ -7,42 +7,47 @@ generated: 2026-06-26
 sub_domains_folded_in: 2026-07-19   # measurementTemplate, sizeTemplate, tightFit, sizes — co-located, not EXT
 pipeline_version: "2.0"
 acl_policy: "ACL ignored in implementation; current-impl ACL usage noted as context only"
+# Phase A dissolved into B-01 (2026-06-27). Schema skeleton, service wiring, stubs folded into B-01.
 stories:
-  - { id: MST-BE-A-01, summary: "Schema skeleton + DateTime scalar", phase: A, category: CAT-1, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
-  - { id: MST-BE-A-02, summary: "Owned types + inputs", phase: A, category: CAT-1, complexity: Medium, depends_on: [MST-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: MST-BE-A-03, summary: "External stubs", phase: A, category: CAT-1, complexity: Low, depends_on: [MST-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: MST-BE-A-04, summary: "MeasurementService Kotlin port (18 methods)", phase: A, category: CAT-3, complexity: Medium, depends_on: [MST-BE-A-01], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-01, summary: "getMeasurementByIds data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-02, MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-02, summary: "getUnitsOfMeasure (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-03, summary: "getThicknessUnitsOfMeasure (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-04, summary: "getMeasurementSetStatus (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-05, summary: "getSampleMeasurement data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-02, MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-06, summary: "getMeasurementTemplates + getMeasurementTemplatesByIds data fetchers", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-07, summary: "getSizeTemplates + getSizeCategories + getMaterialTypes data fetchers", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-08, summary: "getTightFits + getTightFitByIdAndVersion data fetchers", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-B-09, summary: "searchSparkSizes data fetcher (NEXUS + Tag fan-out)", phase: B, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [{key: NEXUS_Attributes, severity: BLUE}], blocked_by: none }
-  - { id: MST-BE-C-01, summary: "getMeasurements (relationship + listing)", phase: C, category: CAT-2, complexity: Medium, depends_on: [MST-BE-A-04], ext_services: [{key: relationship, severity: RED}], blocked_by: none }
-  - { id: MST-BE-C-02, summary: "getMeasurementsElastic data fetcher", phase: C, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [{key: search, severity: RED}], blocked_by: none }
-  - { id: MST-BE-D-01, summary: "addMeasurement mutation", phase: D, category: CAT-2, complexity: Medium, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-D-02, summary: "updateMeasurementAccess mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-D-03, summary: "lockMeasurementSet mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-D-04, summary: "unlockMeasurementSet mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-D-05, summary: "updateMeasurementComponentStatus mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-D-06, summary: "putSampleMeasurementSet mutation", phase: D, category: CAT-2, complexity: Medium, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
-  - { id: MST-BE-D-07, summary: "deleteSampleMeasurementSet mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-01, summary: "getMeasurementByIds data fetcher (+ one-time DGS module scaffold)", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-02, summary: "getUnitsOfMeasure (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-03, summary: "getThicknessUnitsOfMeasure (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-04, summary: "getMeasurementSetStatus (cacheable)", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-05, summary: "getSampleMeasurement data fetcher", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-06, summary: "getMeasurementTemplates + getMeasurementTemplatesByIds data fetchers", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-07, summary: "getSizeTemplates + getSizeCategories + getMaterialTypes data fetchers", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-08, summary: "getTightFits + getTightFitByIdAndVersion data fetchers", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-B-09, summary: "searchSparkSizes data fetcher (NEXUS + Tag fan-out)", phase: B, category: CAT-2, complexity: Low, depends_on: [], ext_services: [{key: NEXUS_Attributes, severity: BLUE}], blocked_by: none }
+  - { id: MST-BE-C-01, summary: "getMeasurements (relationship + listing)", phase: C, category: CAT-2, complexity: Medium, depends_on: [], ext_services: [{key: relationship, severity: RED}], blocked_by: none }
+  - { id: MST-BE-C-02, summary: "getMeasurementsElastic data fetcher", phase: C, category: CAT-2, complexity: Low, depends_on: [], ext_services: [{key: search, severity: RED}], blocked_by: none }
+  - { id: MST-BE-D-01, summary: "addMeasurement mutation", phase: D, category: CAT-2, complexity: Medium, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-D-02, summary: "updateMeasurementAccess mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-D-03, summary: "lockMeasurementSet mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-D-04, summary: "unlockMeasurementSet mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-D-05, summary: "updateMeasurementComponentStatus mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-D-06, summary: "putSampleMeasurementSet mutation", phase: D, category: CAT-2, complexity: Medium, depends_on: [], ext_services: [], blocked_by: none }
+  - { id: MST-BE-D-07, summary: "deleteSampleMeasurementSet mutation", phase: D, category: CAT-2, complexity: Low, depends_on: [], ext_services: [], blocked_by: none }
   - { id: MST-BE-D-08, summary: "addMeasurementTemplate + updateMeasurementTemplate + deleteMeasurementTemplate mutations", phase: D, category: CAT-2, complexity: Low, depends_on: [MST-BE-B-06], ext_services: [], blocked_by: none }
   - { id: MST-BE-D-09, summary: "addSizeTemplate + updateSizeTemplate mutations", phase: D, category: CAT-2, complexity: Low, depends_on: [MST-BE-B-07], ext_services: [], blocked_by: none }
   - { id: MST-BE-D-10, summary: "addTightFit + updateTightFit mutations", phase: D, category: CAT-2, complexity: Low, depends_on: [MST-BE-B-08], ext_services: [], blocked_by: none }
-  - { id: MST-BE-E-01, summary: "updateMeasurement — 2-step orchestrated write", phase: E, category: CAT-2, complexity: High, depends_on: [MST-BE-A-04], ext_services: [{key: workspaceV2, severity: YELLOW}], blocked_by: none }
-  - { id: MST-BE-F-01, summary: "Implement Product.measurementSets (internal, same subgraph)", phase: F, category: CAT-2, complexity: Medium, depends_on: [MST-BE-A-04], ext_services: [{key: relationship, severity: RED}], blocked_by: none }
-  - { id: MST-BE-H-01, summary: "Contribute sampleMeasurement to SampleV2 entity", phase: H, category: CAT-4, complexity: Low, depends_on: [MST-BE-A-04], ext_services: [], blocked_by: sample }
-  - { id: MST-BE-G-01, summary: "Measurement field resolvers (13)", phase: G, category: CAT-2, complexity: Medium, depends_on: [MST-BE-A-02, MST-BE-A-04, MST-BE-B-06, MST-BE-B-07, MST-BE-B-08], ext_services: [{key: workspaceV2, severity: YELLOW}, {key: sampleV2, severity: YELLOW}, {key: vmm, severity: BLUE}, {key: userAttributes, severity: BLUE}], blocked_by: none }
-  - { id: MST-BE-G-02, summary: "SampleMeasurementSet field resolvers (2)", phase: G, category: CAT-2, complexity: Low, depends_on: [MST-BE-A-02, MST-BE-A-04], ext_services: [{key: userAttributes, severity: BLUE}], blocked_by: none }
-  - { id: MST-BE-G-03, summary: "Test coverage & parity", phase: G, category: CAT-5, complexity: Medium, depends_on: [MST-BE-B-01, MST-BE-C-01, MST-BE-E-01, MST-BE-G-01], ext_services: [], blocked_by: none }
+  - { id: MST-BE-E-01, summary: "updateMeasurement — 2-step orchestrated write", phase: E, category: CAT-2, complexity: High, depends_on: [], ext_services: [{key: workspaceV2, severity: YELLOW}], blocked_by: PRODUCT-BE-E-00 }
+  - { id: MST-BE-F-01, summary: "Implement Product.measurementSets (internal, same subgraph)", phase: F, category: CAT-2, complexity: Medium, depends_on: [MST-BE-B-01], ext_services: [{key: relationship, severity: RED}], blocked_by: none }
+  - { id: MST-BE-H-01, summary: "Contribute sampleMeasurement to SampleV2 entity", phase: H, category: CAT-4, complexity: Low, depends_on: [MST-BE-B-01], ext_services: [], blocked_by: sample }
+  - { id: MST-BE-H-02, summary: "SampleMeasurementSet.sample forward reference (recommended, PO-gated)", phase: H, category: CAT-4, complexity: Low, depends_on: [MST-BE-B-05], ext_services: [], blocked_by: sample }
+  - { id: MST-BE-G-01, summary: "Measurement field resolvers (13)", phase: G, category: CAT-2, complexity: Medium, depends_on: [MST-BE-B-01, MST-BE-B-06, MST-BE-B-07, MST-BE-B-08], ext_services: [{key: workspaceV2, severity: YELLOW}, {key: sampleV2, severity: YELLOW}, {key: vmm, severity: BLUE}, {key: userAttributes, severity: BLUE}], blocked_by: none }
+  - { id: MST-BE-G-02, summary: "SampleMeasurementSet field resolvers (2)", phase: G, category: CAT-2, complexity: Low, depends_on: [MST-BE-B-01], ext_services: [{key: userAttributes, severity: BLUE}], blocked_by: none }
+  - { id: MST-BE-G-03, summary: "Test coverage & parity (tracked outside Jira pipeline)", phase: G, category: CAT-5, complexity: Medium, depends_on: [MST-BE-B-01, MST-BE-C-01, MST-BE-E-01, MST-BE-G-01], ext_services: [], blocked_by: none, tracked_outside_jira: true }
   - { id: MST-BE-G-05, summary: "MeasurementTemplate field resolvers (5)", phase: G, category: CAT-2, complexity: Low, depends_on: [MST-BE-B-06], ext_services: [{key: ig, severity: BLUE}, {key: vmm, severity: BLUE}, {key: userAttributes, severity: BLUE}], blocked_by: none }
   - { id: MST-BE-G-06, summary: "SizeTemplate field resolvers (3)", phase: G, category: CAT-2, complexity: Low, depends_on: [MST-BE-B-07], ext_services: [{key: userAttributes, severity: BLUE}], blocked_by: none }
   - { id: MST-BE-G-07, summary: "TightFit field resolvers (5)", phase: G, category: CAT-2, complexity: Low, depends_on: [MST-BE-B-08], ext_services: [{key: ig, severity: BLUE}, {key: vmm, severity: BLUE}, {key: userAttributes, severity: BLUE}], blocked_by: none }
 totals:
-  story_count: 34
-  by_complexity: { Low: 24, Medium: 8, High: 1, "Very High": 0 }
-  by_phase: { A: 4, B: 9, C: 2, D: 10, E: 1, F: 2, G: 6 }
+  story_count: 30
+  by_complexity: { Low: 21, Medium: 7, High: 1, "Very High": 0 }
+  by_phase: { B: 9, C: 2, D: 10, E: 1, F: 1, G: 5, H: 2 }
+  notes:
+    - Phase A dissolved into B-01 (2026-06-27)
+    - Sub-domains folded in 2026-07-19 (B-06–B-09, D-08–D-10, G-05–G-07)
+    - G-03 tracked outside Jira pipeline
+    - H-02 added by federation review (2026-07-17), PO-gated
+    - E-01 blocked by PRODUCT-BE-E-00 (WriteSaga shared module)
+    - H-01/H-02 blocked by sample subgraph deploy

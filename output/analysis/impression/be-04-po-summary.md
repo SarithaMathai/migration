@@ -44,6 +44,7 @@ that proves the pipeline end-to-end.
 | Awkward counts contract | 🟢 Low | Optional cleanup to a typed result; safe to defer |
 | `enableWorkspaceContextFiltering` not forwarded today | 🟢 Low | Confirm whether it should filter |
 | Federation contribution waits on product | 🟢 Low | Not on critical path |
+| DataLoader missing on F-01 field resolver | 🟢 Low | N+1 risk minimal (low cardinality); add `impressionByProductIdLoader` to F-01 AC if needed |
 
 ## Decisions Required
 | # | Decision | Blocks | Owner |

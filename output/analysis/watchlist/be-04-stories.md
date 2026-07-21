@@ -180,6 +180,7 @@ before/with the body update; chosen failure strategy (**PO decision**).
 #### Acceptance Criteria
 
 1. resolves in-process; no gateway hop.
+2. Field resolver uses a `MappedBatchLoader<String, List<SPARK_Watchlist>>` (`watchlistByProductIdLoader`) — when the parent query returns N products, watchlists are resolved in 1 batched call (not N).
 
 ---
 
