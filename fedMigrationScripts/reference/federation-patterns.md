@@ -3,6 +3,9 @@
 Patterns for entity federation, @key directives, entity fetchers, and cross-domain type composition.
 Used by `skills/federation-candidate-detection` and `skills/federation-schema-derivation`.
 
+> See also [`federation-patterns-condensed.md`](./federation-patterns-condensed.md) — a shorter version
+> scoped to writing CAT-4 (Phase F) stories, linked from each domain's `be-03`/`be-04` analysis docs.
+
 ---
 
 ## 1. Type Classification Categories
@@ -306,11 +309,11 @@ One `getProductTechPackCountV1`-style query generates stories in **two groups**:
 
 | Group | Type | Phase | Scope | Where Tracked |
 |-------|------|-------|-------|--------------|
-| ResourcesCount schema + `@key` | CAT-1 | Phase A | Product subgraph | Product `04-stories.md` |
-| Product stub resolver | CAT-2 | Phase E | Product subgraph only | Product `04-stories.md` |
-| Aggregation facade | CAT-3 | Phase E | Temp service (Option D Phase 1) | Product `04-stories.md` |
-| Per-subgraph extension × N | CAT-4 | Phase F | One per owning subgraph | **Each owning domain's** `04-stories.md` |
-| Facade retirement | CAT-4 | Phase F | After all subgraphs live | Product `04-stories.md` |
+| ResourcesCount schema + `@key` | CAT-1 | Phase A | Product subgraph | Product `be-04-stories.md` |
+| Product stub resolver | CAT-2 | Phase E | Product subgraph only | Product `be-04-stories.md` |
+| Aggregation facade | CAT-3 | Phase E | Temp service (Option D Phase 1) | Product `be-04-stories.md` |
+| Per-subgraph extension × N | CAT-4 | Phase F | One per owning subgraph | **Each owning domain's** `be-04-stories.md` |
+| Facade retirement | CAT-4 | Phase F | After all subgraphs live | Product `be-04-stories.md` |
 
 **N = number of owning subgraphs** (for `ResourcesCount`: N = 8 — Attachment, Discussion, Sample, Measurement, Claims, BOM, Construction, Watchlist).
 
@@ -327,11 +330,11 @@ Phase 2 (Gradual, as each domain subgraph comes online):
   Each domain subgraph adds:
     extend type ResourcesCount + @DgsEntityFetcher + @DgsData resolvers
   Aggregation service shrinks field-by-field.
-  Stories: 1 CAT-4 per owning subgraph, tracked in THAT domain's 04-stories.md
+  Stories: 1 CAT-4 per owning subgraph, tracked in THAT domain's be-04-stories.md
 
 Phase 3 (Retirement):
   Aggregation service retired; ResourcesCount fully federated.
-  Story: 1 CAT-4 cleanup tracked in Product 04-stories.md
+  Story: 1 CAT-4 cleanup tracked in Product be-04-stories.md
 ```
 
 See `reference/techpack-migration-options.md` for full Option A/B/C/D analysis.

@@ -92,12 +92,12 @@ Running the full pipeline produces **six analysis artifacts** plus **two publica
 
 | File | Purpose | Audience |
 |------|---------|---------|
-| `01-schema-inventory.md` | Every source file, line counts, cross-domain refs | Tech Lead |
-| `02-resolver-analysis.md` | Plain-English pseudo-logic for every operation | Engineers |
-| `03-schema.graphql` | Target DGS GraphQL schema (green-field) | Architects |
-| `03-schema-analysis.md` | Type classification, federation boundaries, gap analysis | Architects |
-| `04-stories.md` | Jira-ready engineering tickets | Engineering Team |
-| `04-po-summary.md` | Sprint planning table with effort estimates | Product Owner |
+| `be-01-schema-inventory.md` | Every source file, line counts, cross-domain refs | Tech Lead |
+| `be-02-resolver-analysis.md` | Plain-English pseudo-logic for every operation | Engineers |
+| `be-03-schema.graphql` | Target DGS GraphQL schema (green-field) | Architects |
+| `be-03-schema-analysis.md` | Type classification, federation boundaries, gap analysis | Architects |
+| `be-04-stories.md` | Jira-ready engineering tickets | Engineering Team |
+| `be-04-po-summary.md` | Sprint planning table with effort estimates | Product Owner |
 
 ### Publication artifacts (generated — in `finalOutput/oneStopDoc/`)
 
@@ -106,8 +106,8 @@ Each domain's artifacts are in their own subfolder: `finalOutput/oneStopDoc/{dom
 
 | File | Purpose | Audience |
 |------|---------|---------|
-| `{domain}/FederatedGqlBrakDown-{domain}.docx` | **Primary — Word doc with full formatting**: navy blue headers, metrics banner, colored story tables, icons (🔷🔶🔸 🔴🟠🟡🟢) | PO + Engineers (open in Word or paste into Confluence) |
-| `{domain}/FederatedGqlBrakDown-{domain}.md` | Markdown fallback — same content and table format as the Word doc | PO + Engineers (paste raw Markdown into Confluence) |
+| `FederatedGqlBreakDown-{domain}.docx` | **Primary — Word doc with full formatting**: navy blue headers, metrics banner, colored story tables, icons (🔷🔶🔸 🔴🟠🟡🟢); one merged Backend + Frontend page | PO + Engineers (open in Word or paste into Confluence) |
+| `FederatedGqlBreakDown-{domain}.md` | Markdown fallback — same content and table format as the Word doc | PO + Engineers (paste raw Markdown into Confluence) |
 | `{domain}/{domain}-comprehensive.md` | Full engineering doc — all stories, AC, test cases (High/VH only), complex story callouts | Engineers + Tech Leads |
 | `{domain}/{domain}-po-review.md` | Executive PO review — scope, risks, decisions, sprint capacity, Phase 2 breakdowns | Product Owner + Stakeholders |
 | `{domain}/{domain}.csv` | Jira import CSV — Epic + stories; schema init excluded; tests for High/VH only | Jira admin |
@@ -115,7 +115,7 @@ Each domain's artifacts are in their own subfolder: `finalOutput/oneStopDoc/{dom
 Plus program-level docs at the `oneStopDoc/` root:
 - `Federated+Graphql+Stories+-+BreakDown.docx` — All 325 stories in one Word doc: domain index table + per-domain story tables (primary)
 - `Federated+Graphql+Stories+-+BreakDown.md` — Same content as Markdown (Confluence paste fallback)
-- `00-executive-summary.md` — Cross-domain scope, risks, migration sequence, per-domain quick reference
+- `fe-00-executive-summary.md` — Cross-domain scope, risks, migration sequence, per-domain quick reference
 - `00-portfolio.md` — Program portfolio table for Confluence space home
 - `jira/all-stories.csv` — All 325 stories in one Jira import file
 

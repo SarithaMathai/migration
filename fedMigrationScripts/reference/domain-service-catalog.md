@@ -15,7 +15,7 @@ from **service constructors**, not `context.js`.
 > **`plm-product` is a monorepo / single subgraph.** Every product-family domain below compiles into the
 > **same** DGS subgraph. Their cross-references are **internal GraphQL types** (no federation). Only the
 > EXT keys further down (separate DGSs + platforms) use `@extends @external` / gateway stitch. See
-> [reference-federation-patterns.md §0](./reference-federation-patterns.md).
+> [federation-patterns-condensed.md §0](./federation-patterns-condensed.md).
 
 ## Product-family domains (co-located on `plm-product`)
 
@@ -25,8 +25,20 @@ from **service constructors**, not `context.js`.
 | `bom` | `BomService` | `SPARK_Bom.txt` | `resolvers/product/SPARK_Bom.txt` | `services/product/Bom.txt` |
 | `impression` | `ImpressionService` | `SPARK_Impression.txt` | `resolvers/product/SPARK_Impression.txt` | `services/product/Impression.txt` |
 | `measurement` | `MeasurementService` | `SPARK_Measurement.txt` | `resolvers/product/SPARK_Measurement.txt` | `services/product/Measurement.txt` |
+| `measurementTemplate` | `MeasurementTemplateService` | `SPARK_MeasurementTemplate.txt` | `resolvers/SPARK_MeasurementTemplate.txt` | `services/MeasurementTemplate.txt` |
+| `sizeTemplate` | `SizeTemplateService` | `SPARK_SizeTemplate.txt` | `resolvers/product/SPARK_SizeTemplate.txt` | `services/product/SizeTemplate.txt` |
+| `tightFit` | `TightFitService` | `SPARK_TightFit.txt` | `resolvers/product/SPARK_TightFit.txt` | `services/product/TightFit.txt` |
+| `sizes` (no own loader key — `SPARK_Sizes.txt` fans out to NEXUS + Tag) | — | `SPARK_Sizes.txt` | `resolvers/product/SPARK_Sizes.txt` | — (no service class) |
 | `packaging` | `PackagingService` | `SPARK_Packaging.txt` | `resolvers/product/SPARK_Packaging.txt` | `services/product/Packaging.txt` |
 | `productDetails` | `ProductDetailsService` | `SPARK_ProductDetail.txt` | `resolvers/product/SPARK_ProductDetail.txt` | `services/product/ProductDetails.txt` |
+
+> **2026-07-19 correction:** `measurementTemplate`/`sizeTemplate`/`tightFit` moved here from the "EXT loader
+> keys" table below — all three services build their endpoint from the SAME
+> `enterprise_product_development_products` base as `MeasurementService` (`measurement/templates/v1`,
+> `size_templates/v1`, `tightfit/v1` respectively), confirmed against their service-class source. They are
+> co-located `measurement` sub-domains with their own operations (see `output/analysis/measurement/`
+> be-01/be-04), not external services. `sizes` (`searchSparkSizes`) has no own loader key/service class —
+> it fans out directly to `NEXUS_Attributes` (platform) and `SPARK_Tag` (co-located `tag` domain).
 
 ## EXT loader keys seen in the product family (tag with severity)
 
@@ -43,8 +55,23 @@ from **service constructors**, not `context.js`.
 | `product` | ProductService | same DGS (internal call) | — internal |
 | `workspaceV2` | WorkspaceService | Yes (sibling) | 🟡 |
 | `vmm` / `location` / `brand` | VMM platform | **No — Gateway stitch** | 🔵 |
-| `clazz`/`department`/`division` | Item Groups (IG) | **No — Gateway stitch** | 🔵 |
-| `doppler`/`apex`/`nexusAttributes`/`ldap`/`corona` | External platforms | **No — Gateway stitch** | 🔵 |
+| `clazz`/`department`/`division` / `ig` | Item Groups (IG) | **No — Gateway stitch** | 🔵 |
+| `doppler`/`apex`/`nexusAttributes`/`ldap`/`corona`/`coronaItems` | External platforms | **No — Gateway stitch** | 🔵 |
+| `relationship` | RelationshipService | Yes (sibling) | 🟡 |
+| `userAttributes` | UserProfileService | Yes (sibling) | 🟡 |
+| `teamV2` | TeamService | Yes (sibling — later-phase `team` subgraph) | 🟡 |
+| `sampleV2` | SampleService | Yes (sibling — separate DGS `plm-sample`) | 🟡 |
+| `recentlyViewed` / `todo` / `favorite` | Dashboard services | Yes (sibling) | 🔵 |
+| `ruleLibrary` | RuleLibraryService | Yes (sibling) | 🔵 |
+| `fileLibrary` | FileLibraryService | Yes (sibling) | 🔵 |
+| `productAsk` | ProductAskService | Yes (sibling — co-located, product-family) | 🔵 |
+| `productVariation` | ProductVariationService | Yes (sibling — co-located, product-family) | 🔵 |
+| `userGroup` | UserGroupService | Yes (sibling) | 🔵 |
+| `specificationsTemplate` | SpecificationsTemplateService | Yes (sibling) | 🟡 |
+| `NEXUS_Attributes` | Nexus platform | **No — Gateway stitch** | 🔵 |
+
+~~`measurementTemplate` / `sizeTemplate` / `tightFit` | Measurement (templates) services | Yes (sibling) | 🟡~~
+**(superseded 2026-07-19 — moved to the co-located product-family table above; these are NOT external.)**
 
 ## Core utils → DGS equivalents
 

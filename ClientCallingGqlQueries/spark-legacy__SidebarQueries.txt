@@ -1,0 +1,272 @@
+import { gql } from '@apollo/client'
+
+export const GET_FAVORITES_TEAMS = gql`
+  query getFavoriteTeams($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        team {
+          name
+        }
+      }
+    }
+  }
+`
+export const GET_FAVORITES_PRODUCTS = gql`
+  query getFavoriteProducts($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        product {
+          thumbnailId
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_WORKSPACES = gql`
+  query getFavoriteWorkspaces($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        workspace {
+          workspaceType {
+            code
+            description
+          }
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_COLORS = gql`
+  query getFavoriteColors($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: color {
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_COLORS_ARCHROMA = gql`
+  query getFavoriteColorsArchroma($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: color_archroma {
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_COLORS_PANTONE = gql`
+  query getFavoriteColorsPantone($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: color {
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_COLORS_COLORO = gql`
+  query getFavoriteColorsColoro($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: color {
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_FABRICS = gql`
+  query getFavoriteFabrics($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: fabric {
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_FABRIC_SPECIFICATIONS = gql`
+  query getFavoriteFabricSpecifications($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: fabricSpecification {
+          name
+          parentHumanId
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_ARTWORKS = gql`
+  query getFavoriteArtworks($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: artwork {
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_TRIMS = gql`
+  query getFavoriteTrims($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: trim {
+          name: description
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_COMBINATIONS = gql`
+  query getFavoriteCombinations($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        combination {
+          description
+        }
+      }
+    }
+  }
+`
+
+export const UPDATE_FAVORITES_ORDER = gql`
+  mutation updateFavoritesOrder($favoriteIds: [String]) {
+    updateFavoritesOrder(favoriteIds: $favoriteIds)
+  }
+`
+
+export const GET_FAVORITES_WASH = gql`
+  query getFavoriteWash($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: wash {
+          name: washDescription
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_PALETTE = gql`
+  query getFavoritePalette($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        palette {
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_MATERIAL = gql`
+  query getFavoriteMaterial($type: String!) {
+    getFavorites(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        material: hubMaterial {
+          __typename
+          humanId
+          type
+          baseMaterial {
+            description
+          }
+        }
+      }
+    }
+  }
+`

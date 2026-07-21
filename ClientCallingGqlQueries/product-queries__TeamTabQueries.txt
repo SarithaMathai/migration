@@ -1,0 +1,195 @@
+import { gql } from '@apollo/client'
+import { PRODUCT_FULL_TEAM_FRAGMENT, VMM_BUSINESS_PARTNER_ON_PRODUCT } from './ProductFragments'
+import { ATTACHMENTS_WITH_META_DATA_FRAGMENT } from './WorkspaceFilesQueries'
+
+export const GET_WORKSPACE_WITH_TEAMS = gql`
+  query getWorkspaceWithTeams($id: ID!, $isDesignPartner: Boolean) {
+    getWorkspaceV2(id: $id) {
+      id
+      attachmentsWithMetaData {
+        ...AttachmentsWithMetaData
+      }
+      createdBy {
+        id
+        businessPartner {
+          id
+        }
+      }
+      teams(includeSystemTeams: true) {
+        content {
+          id
+          name
+          partner_name
+          partner_id
+          business_partner {
+            id
+            name
+            role {
+              bpRoleId
+              bpRoleName
+              roleCategory
+            }
+          }
+          accessControlGroupIds
+          teamType
+          members {
+            user_profile_id
+            roles
+          }
+          status_name
+          partnerType {
+            code
+            description
+          }
+        }
+      }
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+        role {
+          bpRoleName
+          bpRoleId
+          status {
+            id
+          }
+        }
+      }
+      droppedPartnerIds
+      droppedPartners {
+        id
+        name
+        associatedPartnerType
+        role {
+          bpRoleName
+          bpRoleId
+          status {
+            id
+          }
+        }
+      }
+      notRemovablePartnerIds
+      resources {
+        mappings {
+          team
+        }
+      }
+      discussionsV2 {
+        content {
+          discussionDto {
+            id
+            partnerId
+          }
+        }
+      }
+      workspaceType {
+        code
+        description
+      }
+      unDroppablePartners(isDesignPartner: $isDesignPartner)
+    }
+  }
+  ${ATTACHMENTS_WITH_META_DATA_FRAGMENT}
+`
+
+export const GET_PRODUCT_WITH_TEAMS = gql`
+  query getProductWithTeams($id: ID!, $partnerId: String, $workspaceId: String, $isDesignPartner: Boolean) {
+    getProduct(id: $id) {
+      id
+      attachmentsV3 {
+        content {
+          id
+        }
+      }
+      createdBy {
+        id
+        currentVMMRole
+        businessPartner {
+          ...VmmBusinessPartnerOnProduct
+        }
+      }
+      teams(partnerId: $partnerId, workspaceId: $workspaceId) {
+        content {
+          ...ProductFullTeamFragment
+        }
+        paging {
+          totalElements
+        }
+      }
+      unfilteredTeams: teams {
+        paging {
+          totalElements
+        }
+      }
+      businessPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+      notRemovablePartnerIds
+      droppedPartnerIds
+      unDroppablePartners(isDesignPartner: $isDesignPartner)
+      droppedPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+      resources {
+        mappings {
+          team
+        }
+      }
+      productWorkspaceInfo {
+        workspaceId
+        teams
+        designCycle {
+          id
+          name
+        }
+        humanId
+        setDates
+        protoApprovalDueDate
+        carryForwardReason
+        linkedAttributes
+      }
+    }
+  }
+  ${VMM_BUSINESS_PARTNER_ON_PRODUCT}
+  ${PRODUCT_FULL_TEAM_FRAGMENT}
+`
+
+export const ADD_TEAMS_PRODUCT = gql`
+  mutation addTeams($productId: String!, $teamIds: [String], $workspaceIds: [String], $newPartners: [SPARK_ProductPartnerInput]) {
+    addTeamsToProduct(productId: $productId, teamIds: $teamIds, workspaceIds: $workspaceIds, newPartners: $newPartners) {
+      id
+    }
+  }
+`
+
+export const ADD_TEAMS_WORKSPACE = gql`
+  mutation addTeams($workspaceId: ID!, $teamInput: [SPARK_WorkspaceTeamInput]) {
+    addTeamsToWorkspaceV3(workspaceId: $workspaceId, teamInput: $teamInput) {
+      id
+    }
+  }
+`
+
+export const BUSINESS_PARTNER_ACTIONS_PRODUCT = gql`
+  mutation productBusinessPartnerActions($actionType: String!, $values: SPARK_ProductPartnerActionInput) {
+    productBusinessPartnerActions(actionType: $actionType, values: $values) {
+      id
+    }
+  }
+`
+
+export const BUSINESS_PARTNER_ACTIONS_WORKSPACE = gql`
+  mutation workspaceBusinessPartnerActionsV2($actionType: String!, $values: SPARK_WorkspacePartnerActionInputV2) {
+    workspaceBusinessPartnerActionsV2(actionType: $actionType, values: $values) {
+      id
+    }
+  }
+`
+
+export const ADD_PARTNERS_PRODUCT_WITH_TYPE = gql`
+  mutation addBusinessPartnersToProductWithType($productId: ID!, $partners: [SPARK_ProductPartnerInput]) {
+    addBusinessPartnersToProductWithType(productId: $productId, partners: $partners) {
+      id
+    }
+  }
+`

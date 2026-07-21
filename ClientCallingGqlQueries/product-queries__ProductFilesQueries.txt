@@ -1,0 +1,375 @@
+import { gql } from '@apollo/client'
+import { PRODUCT_BASE_INFO_FRAGMENT } from './ProductFragments'
+
+export const ATTACHMENT_V3_FRAGMENT = gql`
+  fragment AttachmentV3Fragment on SPARK_SearchAttachment {
+    id
+    name
+    previewable
+    documentName: name
+    documentId
+    humanId
+    documentSize
+    documentType
+    mediaType
+    sharedWithGallery
+    canShareWithGallery
+    attachmentCanShowdog
+    createdAt
+    updatedAt
+    createdBy {
+      id
+      companyName
+      internal: isInternal
+      firstName
+      lastName
+      partnerId
+    }
+    updatedBy {
+      id
+      companyName
+      internal: isInternal
+      firstName
+      lastName
+    }
+    parentResource
+    relatedResources
+    access {
+      bps
+    }
+    relatedMainDiscussion {
+      id
+      subject
+      isSampleDiscussion
+      critical
+      resources {
+        mappings {
+          sample
+          bill_of_materials
+          packaging_bom
+          measurement_set
+          claim
+          construction_set
+        }
+      }
+    }
+    tags {
+      id
+      name
+    }
+    productPacketProps {
+      partnerId
+      critical
+    }
+    isResourceCritical
+    modelFile {
+      fileId
+      fileName
+    }
+    canOpenInShowDog
+    galleryFiles {
+      attachmentId
+      renders {
+        fileId
+        fileName
+        primary
+        renderType
+      }
+    }
+    galleryDetails {
+      assetId
+      published
+      publishedAt
+      fileValid
+      transcoded
+      validations {
+        name
+        description
+        message
+        classification
+      }
+    }
+    finalVirtualFile
+  }
+`
+
+export const PRODUCT_COMPONENT_FRAGMENT = gql`
+  fragment productComponentFragment on SPARK_SearchComponent {
+    id
+    type
+    name
+    additionalDescription
+    statuses {
+      workspaceId
+      type
+      overallStatus {
+        code
+        description
+      }
+      status {
+        code
+        description
+      }
+    }
+    createdAt
+    createdBy {
+      id
+      companyName
+      internal: isInternal
+      firstName
+      lastName
+    }
+    updatedAt
+    updatedBy {
+      id
+      companyName
+      internal: isInternal
+      firstName
+      lastName
+    }
+    access {
+      bps
+    }
+    parentResource
+    relatedResources
+    archived
+    workspaceContext
+    workspaces {
+      id
+      description
+    }
+    libraryLinked
+    materials {
+      ... on SPARK_BomTrimMaterial {
+        rowId
+        libraryResource {
+          trimId: humanId
+          id: humanId
+          description
+          status {
+            code
+            description
+          }
+          businessPartners {
+            name
+            id
+            associatedPartnerType
+          }
+        }
+      }
+      ... on SPARK_BomFabricMaterial {
+        rowId
+        libraryResource {
+          id
+          parentComboId
+          description: parentComboDescription
+          statusString: status
+          merchVendors {
+            name
+            id
+            associatedPartnerType
+          }
+        }
+      }
+      ... on SPARK_BomCombinationMaterial {
+        rowId
+        libraryResource {
+          id: humanId
+          description
+          statusString: status
+        }
+      }
+      ... on SPARK_BomWashMaterial {
+        rowId
+        libraryResource {
+          id: humanId
+          washId: humanId
+          description: washDescription
+          status {
+            code
+            description
+          }
+          businessPartners {
+            name
+            id
+            associatedPartnerType
+          }
+        }
+      }
+      ... on SPARK_BomFabricSpecMaterial {
+        rowId
+        libraryResource {
+          id: humanId
+          description: name
+          status {
+            code
+            description
+          }
+        }
+      }
+      ... on SPARK_BomMaterial {
+        rowId
+        libraryResource {
+          id: humanId
+          baseMaterial {
+            description
+            status {
+              code
+              description
+            }
+            businessPartners {
+              name
+              id
+              associatedPartnerType
+            }
+          }
+        }
+      }
+      ... on SPARK_BomPackagingMaterial {
+        rowId
+      }
+    }
+  }
+`
+export const GET_PRODUCT_WITH_ATTACHMENTS_AND_COMPONENTS = gql`
+  query getProductWithAttachmentsAndComponents(
+    $id: ID!
+    $partnerId: ID
+    $type: String
+    $tags: [String]
+    $archived: Boolean = false
+    $workspaceId: String
+    $includeUnfilteredData: Boolean = false
+    $onlyProductPacketFiles: Boolean = false
+    $types: [Int] = [100]
+  ) {
+    getProduct(id: $id) {
+      id
+      ...ProductBaseInfoFragment
+      claims {
+        humanId
+        workspaceContext
+        claimName
+        claimDetails {
+          id
+          vendorSubstantiate {
+            substantiated
+            substantiatedAt
+            substantiatedBy {
+              id
+              firstName
+              lastName
+              internal: isInternal
+            }
+          }
+        }
+        statuses {
+          workspaceId
+          type
+          overallStatus {
+            code
+            description
+          }
+          status {
+            code
+            description
+          }
+        }
+      }
+      attachmentsV3(partnerId: $partnerId, type: $type, tags: $tags, onlyProductPacketFiles: $onlyProductPacketFiles) {
+        counts {
+          attachmentCount(skipQuery: true) {
+            bpType
+            counts
+          }
+        }
+        content {
+          ...AttachmentV3Fragment
+        }
+      }
+      components(workspaceId: $workspaceId, partnerId: $partnerId, type: $type, tags: $tags, archived: $archived, types: $types) {
+        countByComponents {
+          type
+          counts
+          countByStatus {
+            code
+            counts
+            workspaceContext
+          }
+        }
+        counts {
+          bpType
+          counts
+        }
+        archivedCount
+        content {
+          ...productComponentFragment
+          rows {
+            id
+            templateId
+          }
+          currentUserClaimPermissions
+        }
+      }
+      unfilteredAttachments: attachmentsV3(onlyProductPacketFiles: $onlyProductPacketFiles) @include(if: $includeUnfilteredData) {
+        content {
+          ...AttachmentV3Fragment
+        }
+      }
+      unfilteredComponents: components @include(if: $includeUnfilteredData) {
+        content {
+          ...productComponentFragment
+        }
+      }
+    }
+  }
+  ${PRODUCT_BASE_INFO_FRAGMENT}
+  ${PRODUCT_COMPONENT_FRAGMENT}
+  ${ATTACHMENT_V3_FRAGMENT}
+`
+
+export const GET_RENDERS_FOR_ATTACHMENT_IDS = gql`
+  query getRendersForAttachmentIdsByPost($ids: [String], $betaMode: Boolean = false) {
+    getRendersForAttachmentIdsByPost(ids: $ids, betaMode: $betaMode) {
+      attachmentId
+      renders {
+        fileId
+        fileName
+        renderType
+        primary
+      }
+    }
+  }
+`
+export const GET_RENDERS_FOR_ATTACHMENT_V3_IDS = gql`
+  query getRendersForAttachmentV3Ids($ids: [String], $betaMode: Boolean = false) {
+    getRendersForAttachmentV3Ids(ids: $ids, betaMode: $betaMode) {
+      attachmentId
+      renders {
+        fileId
+        fileName
+        renderType
+        primary
+      }
+    }
+  }
+`
+
+export const GET_PRODUCT_COMPONENT_STATUS_COUNTS = gql`
+  query getProductComponentStatusCounts($id: ID!, $partnerId: ID, $type: String, $tags: [String], $archived: Boolean = false, $workspaceId: String, $types: [Int] = [100]) {
+    getProduct(id: $id) {
+      id
+      components(workspaceId: $workspaceId, partnerId: $partnerId, type: $type, tags: $tags, archived: $archived, types: $types) {
+        countByComponents {
+          type
+          counts
+          countByStatus {
+            code
+            counts
+            workspaceContext
+          }
+        }
+      }
+    }
+  }
+`

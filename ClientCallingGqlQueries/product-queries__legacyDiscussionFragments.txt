@@ -1,0 +1,82 @@
+import { gql } from '@apollo/client'
+
+export const LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT = gql`
+  fragment LegacyComponentDiscussionParticipantsFragment on SPARK_UserGroup_Participants {
+    teams {
+      teamName
+      businessPartner {
+        id
+        name
+      }
+      teamId
+      edited
+      usersInfo {
+        userId
+        userDetails {
+          accreditations {
+            code
+            description
+            status
+          }
+          id
+          active
+          userProfileId
+          firstName
+          lastName
+          isInternal
+          companyName
+          partnerId
+          outOfOfficeAttributes {
+            userOutOfOffice
+          }
+        }
+      }
+    }
+    users {
+      userDetails {
+        accreditations {
+          code
+          description
+          status
+        }
+        id
+        userProfileId
+        firstName
+        lastName
+        companyName
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+        roles {
+          id
+          value
+        }
+        primaryRole
+      }
+    }
+  }
+`
+export const LEGACY_PRODUCT_TEAMS_FOR_COMPONENT_DISCUSSION_FRAGMENT = gql`
+  fragment LegacyProductTeamsForComponentDiscussionFragment on SPARK_TeamPaged {
+    content {
+      id
+      name
+      partnerId: partner_id
+      purpose
+      accessControlGroupIds
+      partnerType {
+        code
+        description
+      }
+      members {
+        roles
+        memberDetails {
+          userProfileId
+          partnerId
+          firstName
+          lastName
+        }
+      }
+    }
+  }
+`

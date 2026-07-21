@@ -1,62 +1,199 @@
-Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
-Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,SPARK-PKG-B01,(Packaging) getPackagings(...) [SPARK-PKG-B01],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,,To Do,"*Current Behaviour:*
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,External Dependency,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,PKG-BE-B-01,(Packaging) getPackagings(...) [PKG-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,,,To Do,"*Implementation Order:* 1 of 23 (Packaging backend, step 1)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* None
+
+*Blocks:*
+* PKG-BE-B-02 — getPackagingById
+* PKG-BE-B-03 — getDielines
+* PKG-BE-B-04 — getPackagingFieldValuesByType
+* PKG-BE-B-05 — getDielineEvaluationStatuses
+* PKG-BE-B-06 — getCountries
+* PKG-BE-C-01 — getPackagingElastic
+* PKG-BE-D-01 — addPackaging
+* PKG-BE-D-02 — evaluateDieline
+* PKG-BE-D-03 — bulkAddPackagings
+* PKG-BE-D-04 — bulkUpdatePackagings
+* PKG-BE-D-05 — exportPackaging
+* PKG-BE-D-06 — lockPackaging
+* PKG-BE-D-07 — unlockPackaging
+* PKG-BE-D-08 — cloneFilesForDielines
+* PKG-BE-D-09 — updatePackagingComponentStatus
+* PKG-BE-E-01 — updatePackaging
+* PKG-BE-F-01 — Product packaging links
+* PKG-BE-G-01 — access + businessPartner + participantDetails
+* PKG-BE-G-02 — createdBy + updatedBy + dielineEvaluators
+* PKG-BE-G-03 — product + workspaces + attachments
+* PKG-BE-G-04 — suggestedRetailPriceByDPCI + waveDescription + retailPrice
+* PKG-BE-G-05 — Dieline + PrinterDieline + PackagingElement field resolvers
+* PKG-FE-001
+
+*Current Behaviour:*
 * (own) `getPackagings().load({page,size,packagingIds,parentIds,workspaceIds,partnerIds,statusIds})` → paged.
 
 *Target:*
 * `@DgsQuery → PackagingPaged`.
 
 *Acceptance Criteria:*
-1. all 7 filter args forwarded; defaults page=0/size=10000"
-Story,SPARK-PKG-B02,(Packaging) getPackagingById(packagingId) [SPARK-PKG-B02],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+1. all 7 filter args forwarded; defaults page=0/size=10000
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-B-02,(Packaging) getPackagingById(packagingId) [PKG-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,,To Do,"*Implementation Order:* 2 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-001
+
+*Current Behaviour:*
 * (ACL context) token → (own) `getPackagingById.load(packagingId)`.
 
 *Target:*
 * `@DgsQuery → Packaging`.
 
 *Acceptance Criteria:*
-1. returns packaging; miss→null"
-Story,SPARK-PKG-B03,(Packaging) getDielines(...) [SPARK-PKG-B03],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+1. returns packaging; miss→null
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-B-03,(Packaging) getDielines(...) [PKG-BE-B-03],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,,To Do,"*Implementation Order:* 3 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-003
+
+*Current Behaviour:*
 * (own) `getDielines.load({...})` → `.dielines`.
 
 *Target:*
 * `@DgsQuery → [Dieline]`.
 
 *Acceptance Criteria:*
-1. filters forwarded; returns the `dielines` array"
-Story,SPARK-PKG-B04,"(Packaging) getPackagingFieldValuesByType(type, ids) [SPARK-PKG-B04]",,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+1. filters forwarded; returns the `dielines` array
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-B-04,"(Packaging) getPackagingFieldValuesByType(type, ids) [PKG-BE-B-04]",,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,,To Do,"*Implementation Order:* 4 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-002
+
+*Current Behaviour:*
 * (own) `getPackagingFieldValuesByType(type, ids)`.
 
 *Target:*
 * `@DgsQuery → [PackagingFieldValues]`.
 
 *Acceptance Criteria:*
-1. by type (+optional ids)"
-Story,SPARK-PKG-B05,(Packaging) getDielineEvaluationStatuses (cacheable) [SPARK-PKG-B05],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+1. by type (+optional ids)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-B-05,(Packaging) getDielineEvaluationStatuses (cacheable) [PKG-BE-B-05],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,,To Do,"*Implementation Order:* 5 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-003
+
+*Current Behaviour:*
 * (own) `getDielineEvaluationStatuses()`.
 
 *Target:*
 * `@DgsQuery` → `@Cacheable` → `[CodeDescription]`.
 
 *Acceptance Criteria:*
-1. returns statuses; cached"
-Story,SPARK-PKG-B06,(Packaging) getCountries(codes) (cacheable) [SPARK-PKG-B06],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B01,To Do,"*Current Behaviour:*
+1. returns statuses; cached
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-B-06,(Packaging) getCountries(codes) (cacheable) [PKG-BE-B-06],,Federate BreakDown Product,B,XS,dgs-migration,packaging,query,,B-01,,To Do,"*Implementation Order:* 6 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-002
+
+*Current Behaviour:*
 * (own) `getCountries(codes)`.
 
 *Target:*
 * `@DgsQuery` → `@Cacheable` → `[Countries]`.
 
 *Acceptance Criteria:*
-1. returns countries (optionally filtered by codes)"
-Story,SPARK-PKG-C01,(Packaging) getPackagingElastic(parentHumanId) [SPARK-PKG-C01],,Federate BreakDown Product,C,M,dgs-migration,packaging,search,,B01,To Do,"*Current Behaviour:*
+1. returns countries (optionally filtered by codes)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-C-01,(Packaging) getPackagingElastic(parentHumanId) [PKG-BE-C-01],,Federate BreakDown Product,C,M,dgs-migration,packaging,search,,B-01,,To Do,"*Implementation Order:* 7 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * (🔴 search) `search.getPackagingElastic.load({ q:""parentId: {parentHumanId}"" })` → `.content`. **EXT:** 🔴 search.
 
 *Target:*
 * `@DgsQuery → [Packaging]`.
 
 *Acceptance Criteria:*
-1. `parentId:` elastic query built; returns content"
-Story,SPARK-PKG-D01,(Packaging) addPackaging [SPARK-PKG-D01],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+1. `parentId:` elastic query built; returns content
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-01,(Packaging) addPackaging [PKG-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 8 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-004
+
+*Current Behaviour:*
 * (own) `POST packaging/v1`. **Throw on `validationErrors`/`message`.**
 
 *Target:*
@@ -64,16 +201,46 @@ Story,SPARK-PKG-D01,(Packaging) addPackaging [SPARK-PKG-D01],,Federate BreakDown
 
 *Acceptance Criteria:*
 1. creates
-2. validation error → exception"
-Story,SPARK-PKG-D02,(Packaging) evaluateDieline [SPARK-PKG-D02],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+2. validation error → exception
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-02,(Packaging) evaluateDieline [PKG-BE-D-02],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 9 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-003
+
+*Current Behaviour:*
 * (own) `PUT packaging/v1/dielines/{dielineId}/evaluate`.
 
 *Target:*
 * `@DgsMutation → Dieline`.
 
 *Acceptance Criteria:*
-1. evaluates the dieline"
-Story,SPARK-PKG-D03,(Packaging) bulkAddPackagings [SPARK-PKG-D03],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+1. evaluates the dieline
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-03,(Packaging) bulkAddPackagings [PKG-BE-D-03],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 10 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-004
+
+*Current Behaviour:*
 * (own) `bulkAddPackagings`. **Throw on `validationErrors`/`message`.**
 
 *Target:*
@@ -81,8 +248,23 @@ Story,SPARK-PKG-D03,(Packaging) bulkAddPackagings [SPARK-PKG-D03],,Federate Brea
 
 *Acceptance Criteria:*
 1. bulk creates
-2. error → throw"
-Story,SPARK-PKG-D04,(Packaging) bulkUpdatePackagings [SPARK-PKG-D04],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+2. error → throw
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-04,(Packaging) bulkUpdatePackagings [PKG-BE-D-04],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 11 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-004
+
+*Current Behaviour:*
 * token for `packaging[].humanId` → (own) `bulkUpdatePackagings`. **Throw on error.**
 
 *Target:*
@@ -90,40 +272,115 @@ Story,SPARK-PKG-D04,(Packaging) bulkUpdatePackagings [SPARK-PKG-D04],,Federate B
 
 *Acceptance Criteria:*
 1. bulk updates
-2. error → throw"
-Story,SPARK-PKG-D05,(Packaging) exportPackaging [SPARK-PKG-D05],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+2. error → throw
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-05,(Packaging) exportPackaging [PKG-BE-D-05],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 12 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-004
+
+*Current Behaviour:*
 * token → (own) `requestPackagingExport({workspace_id, workspace_description, product_ids})` → request id.
 
 *Target:*
 * `@DgsMutation → String`.
 
 *Acceptance Criteria:*
-1. returns the export request id"
-Story,SPARK-PKG-D06,(Packaging) lockPackaging [SPARK-PKG-D06],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+1. returns the export request id
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-06,(Packaging) lockPackaging [PKG-BE-D-06],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 13 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-004
+
+*Current Behaviour:*
 * token → `PUT packaging/v1/{id}/lock`.
 
 *Target:*
 * `@DgsMutation → Packaging`.
 
 *Acceptance Criteria:*
-1. locks"
-Story,SPARK-PKG-D07,(Packaging) unlockPackaging [SPARK-PKG-D07],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+1. locks
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-07,(Packaging) unlockPackaging [PKG-BE-D-07],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 14 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-004
+
+*Current Behaviour:*
 * token → `PUT packaging/v1/{id}/unlock`.
 
 *Target:*
 * `@DgsMutation → Packaging`.
 
 *Acceptance Criteria:*
-1. unlocks"
-Story,SPARK-PKG-D08,(Packaging) cloneFilesForDielines [SPARK-PKG-D08],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+1. unlocks
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-08,(Packaging) cloneFilesForDielines [PKG-BE-D-08],,Federate BreakDown Product,D,M,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 15 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * token → `Promise.all(attachmentIds.map(id => (🔴 attachment) cloneAttachmentV3({cloneReferences}, id)))`, flatten. **EXT:** 🔴 attachment.
 
 *Target:*
 * structured-concurrency fan-out.
 
 *Acceptance Criteria:*
-1. clones each id with the shared `cloneReferences`"
-Story,SPARK-PKG-D09,(Packaging) updatePackagingComponentStatus [SPARK-PKG-D09],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B01,To Do,"*Current Behaviour:*
+1. clones each id with the shared `cloneReferences`
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-D-09,(Packaging) updatePackagingComponentStatus [PKG-BE-D-09],,Federate BreakDown Product,D,XS,dgs-migration,packaging,mutation,,B-01,,To Do,"*Implementation Order:* 16 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-004
+
+*Current Behaviour:*
 * (own) `updatePackagingComponentStatus({productId, ids, status})`. **No JWT — confirm backend-enforced.**
 
 *Target:*
@@ -131,8 +388,23 @@ Story,SPARK-PKG-D09,(Packaging) updatePackagingComponentStatus [SPARK-PKG-D09],,
 
 *Acceptance Criteria:*
 1. updates statuses
-2. no-token behaviour documented"
-Story,SPARK-PKG-E01,(Packaging) updatePackaging (multi-step write) [SPARK-PKG-E01],,Federate BreakDown Product,E,L,dgs-migration,packaging,complex,,"SPARK-SPIKE-01, B01",To Do,"*Requires spike:* SPARK-SPIKE-01 (Non-Atomic Write Saga) — see program spike
+2. no-token behaviour documented
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-E-01,(Packaging) updatePackaging (multi-step write) [PKG-BE-E-01],,Federate BreakDown Product,E,L,dgs-migration,packaging,complex,,"SPIKE-01, B-01, product (`PRODUCT-BE-E-00`, the shared `WriteSaga` module)",,To Do,"*Implementation Order:* 17 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-005
+
+*Requires spike:* SPIKE-01 (Non-Atomic Write Saga) — see program spike
 
 *Current Behaviour:*
 * 1) token; set `humanId=packagingId`; `PUT packaging/v1` (body); 2) if `attachmentsToRemove` → (🔴 attachment) `archiveAttachmentBulkV2` + (🟡 relationship) `removeRelationship`; 3) if `attachmentsToAdd` → (🟡 relationship) `addBulkRelationShip` (**reject on status≥400**) then (🔴 attachment) `bulkUpdateAttributes`; 4) **throw on `validationErrors`/`message`**. No rollback. - **EXT:** 🔴 attachment · 🟡 relationship.
@@ -153,32 +425,107 @@ Story,SPARK-PKG-E01,(Packaging) updatePackaging (multi-step write) [SPARK-PKG-E0
 * [ ] partial-failure
 * [ ] Parity: DGS response matches spark-internal-graphql baseline
 
-*Complex — broken into sub-tasks:* E01-1 body + attachment add · E01-2 attachment remove + pricing"
-Story,SPARK-PKG-F01,"(Packaging) Product packaging links (internal, same subgraph) [SPARK-PKG-F01]",,Federate BreakDown Product,F,XS,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+*Complex — broken into sub-tasks:* E-01-1 body + attachment add · E-01-2 attachment remove + pricing
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-F-01,"(Packaging) Product packaging links (internal, same subgraph) [PKG-BE-F-01]",,Federate BreakDown Product,F,XS,dgs-migration,packaging,field-resolver,,B-01,,To Do,"*Implementation Order:* 18 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * Product references packaging (e.g. `components(...packaging)`, packaging attributes) from the co-located packaging service.
 
 *Target:*
 * **internal** `@DgsData` calling `PackagingService` in-process (not gateway federation; depends only on the `Product`/`Component` types existing).
 
 *Acceptance Criteria:*
-1. resolves in-process; no gateway hop"
-Story,SPARK-PKG-G01,(Packaging) access + businessPartner + participantDetails [SPARK-PKG-G01],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+1. resolves in-process; no gateway hop
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-G-01,(Packaging) access + businessPartner + participantDetails [PKG-BE-G-01],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,"user-profile, vmm",To Do,"*Implementation Order:* 19 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-001
+
+*Current Behaviour:*
 * `access` → `accessControl.getPermissions([humanId])[0]` (context); `businessPartner` → (🔵 vmm) `loadBpsWithType([businessPartner])[0]`; `participantDetails` → `getUserGroup(humanId||id)`.
 
 *Acceptance Criteria:*
-1. each resolves; null-safe"
-Story,SPARK-PKG-G02,(Packaging) createdBy + updatedBy + dielineEvaluators [SPARK-PKG-G02],,Federate BreakDown Product,G,XS,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+1. each resolves; null-safe
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-G-02,(Packaging) createdBy + updatedBy + dielineEvaluators [PKG-BE-G-02],,Federate BreakDown Product,G,XS,dgs-migration,packaging,field-resolver,,B-01,user-profile,To Do,"*Implementation Order:* 20 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-001
+
+*Current Behaviour:*
 * `createdBy`/`updatedBy` (🟡 user-profile `getUser`); `dielineEvaluators` → map `userAttributes.getUserByID`, default `[]`.
 
 *Acceptance Criteria:*
-1. each resolves; null id → null"
-Story,SPARK-PKG-G03,(Packaging) product + workspaces + attachments [SPARK-PKG-G03],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+1. each resolves; null id → null
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-G-03,(Packaging) product + workspaces + attachments [PKG-BE-G-03],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,search,To Do,"*Implementation Order:* 21 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * `product` (internal, only if `parentId` starts `'PID'`); `workspaces` → (🔴 search) `getWorkspacesPagedV3({q:""id:(...)""})`.content; `attachments` → (🔴 search) `searchAttachmentsByRelatedResource(humanId)`.
 
 *Acceptance Criteria:*
 1. `product` null when not `PID*`
-2. workspaces/attachments via elastic"
-Story,SPARK-PKG-G04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + retailPrice [SPARK-PKG-G04],,Federate BreakDown Product,G,L,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+2. workspaces/attachments via elastic
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-G-04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + retailPrice [PKG-BE-G-04],,Federate BreakDown Product,G,L,dgs-migration,packaging,field-resolver,,B-01,"apex, pricing, tag",To Do,"*Implementation Order:* 22 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-001
+
+*Current Behaviour:*
 * `suggestedRetailPriceByDPCI` — gated on `requiresSuggestedRetailPrice` + a BP id: - collect printer ids from `packagingElements` → (own) `getDielines(printerIds)` → unique dpcis → (🔵 apex/pricing) `getRetailPriceByDpci({dpcis, bpId, productId})`; else `[]`. - `waveDescription` → (🟡 tag) `getTag(wave).name` if `wave`, else `waveDescription`. - `retailPrice` → `0` (deprecated).
 
 *Target:*
@@ -193,16 +540,232 @@ Story,SPARK-PKG-G04,(Packaging) suggestedRetailPriceByDPCI + waveDescription + r
 * [ ] price chain
 * [ ] gate
 * [ ] wave
-* [ ] retailPrice"
-Story,SPARK-PKG-G05,(Packaging) Dieline + PrinterDieline + PackagingElement field resolvers [SPARK-PKG-G05],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B01,To Do,"*Current Behaviour:*
+* [ ] retailPrice
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,PKG-BE-G-05,(Packaging) Dieline + PrinterDieline + PackagingElement field resolvers [PKG-BE-G-05],,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,B-01,"attachment, fileLibrary, packaging, search, user-profile",To Do,"*Implementation Order:* 23 of 23 (Packaging backend, step 2)
+*Domain:* Packaging — *Team:* Backend — *Owner:* BE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+
+*Blocks:*
+* PKG-FE-003
+
+*Current Behaviour:*
 * `Dieline.evaluatedBy` (🟡 user-profile), `Dieline.attachments` (🔴 search), `Dieline.attachment` (🔴 attachment `getAttachmentsV3([attachmentId])[0]`); `PrinterDieline.dielines` (own `getDielines({printerIds, statusIds})`); `PackagingElement.packagingLibrary` (internal fileLibrary).
 
 *Acceptance Criteria:*
-1. each field resolves to the right source"
-Story,SPARK-PKG-G06,"(Packaging) Tests, parity harness [SPARK-PKG-G06]",,Federate BreakDown Product,G,M,dgs-migration,packaging,field-resolver,,"B01, E01, G03, G04",To Do,"*Target:*
-* ≥80% unit coverage; parity fixtures (incl. the multi-step `updatePackaging`, the pricing chain, attachment-by-search fields, create/bulk error contracts); contract test (schema diff intentional-only, incl. `@deprecated`).
+1. each field resolves to the right source
 
-*Acceptance Criteria:*
-1. unit ≥80%
-2. parity green
-3. schema-diff intentional"
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
+Story,PKG-FE-001,[Packaging FE] Migrate packaging reads [PKG-FE-001],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-01 PKG-BE-B-02 PKG-BE-G-01 PKG-BE-G-02 PKG-BE-G-04,"apex, pricing, tag, user-profile, vmm",To Do,"*Implementation Order:* 26 of 28 (Packaging combined — frontend #3, cutover step 4)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-01 — getPackagings
+* PKG-BE-B-02 — getPackagingById
+* PKG-BE-G-01 — access + businessPartner + participantDetails
+* PKG-BE-G-02 — createdBy + updatedBy + dielineEvaluators
+* PKG-BE-G-04 — suggestedRetailPriceByDPCI + waveDescription + retailPrice
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Medium · *Domain:* packaging
+* *Depends on:* PKG-BE-B-01, PKG-BE-B-02, PKG-BE-G-01, PKG-BE-G-02, PKG-BE-G-04
+* *Operations:* {{getPackagings}}, {{getPackagingById}}, {{getPackagingComponentStatus}}
+
+* *Business objective:*
+** Packaging detail and listing screens read from the federated graph unchanged.
+* *Technical objective:*
+** Migrate the 3 {{getPackagings}} variants and 2 {{getPackagingById}} documents across {{product-packaging}} and {{spark-packaging-base}} (fragment factories {{GET_PACKAGING_DETAIL_FRAGMENT(...)}} become static per the delivered platform dynamic-gql expansion pattern).
+* *Background / current implementation:*
+** Duplicate {{PackagingDetailsQueries}} files exist in {{product-packaging}} and {{spark-packaging-base}} — consolidation candidate.
+* *Required changes:*
+** Static fragment expansion; document re-point; consolidate duplicate documents where selections match.
+
+*Acceptance Criteria*
+
+1. Packaging screens render identically under the flag.
+2. Duplicate documents consolidated or explicitly justified.
+
+*Testing*
+
+* Response JSON diffs; packaging screen integration suite.
+
+* *Risk:* Medium.
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-002,[Packaging FE] Migrate packaging master-data reads and retire deprecated fields [PKG-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,packaging,query-migration,,PKG-BE-B-04 PKG-BE-B-06,,To Do,"*Implementation Order:* 24 of 28 (Packaging combined — frontend #1, cutover step 1)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* PKG-BE-B-04 — getPackagingFieldValuesByType
+* PKG-BE-B-06 — getCountries
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* packaging
+* *Depends on:* PKG-BE-B-04, PKG-BE-B-06
+* *Operations:* {{getCountries}}, {{getPackagingFieldValuesByType}}
+
+* *Business objective:*
+** Packaging editors keep their reference data; deprecated selections are gone before cutover.
+* *Technical objective:*
+** Re-point the 2 master-data queries; drop the deprecated {{SPARK_PackagingFieldValues.resourceType}} selection.
+* *Required changes:*
+** Endpoint + types; remove {{resourceType}} from selections and models.
+
+*Acceptance Criteria*
+
+1. Reference data identical; no {{resourceType}} selection remains.
+
+*Testing*
+
+* Fixture equality tests; selection lint.
+
+* *Risk:* Low.
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-003,[Packaging FE] Migrate dieline flows [PKG-FE-003],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,query-+-mutation-migration,,PKG-BE-B-03 PKG-BE-B-05 PKG-BE-D-02 PKG-BE-G-05,"attachment, fileLibrary, packaging, search, user-profile",To Do,"*Implementation Order:* 27 of 28 (Packaging combined — frontend #4, cutover step 4)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-B-03 — getDielines
+* PKG-BE-B-05 — getDielineEvaluationStatuses
+* PKG-BE-D-02 — evaluateDieline
+* PKG-BE-G-05 — Dieline + PrinterDieline + PackagingElement field resolvers
+
+*Blocks:*
+* None
+
+* *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* packaging
+* *Depends on:* PKG-BE-B-03, PKG-BE-B-05, PKG-BE-D-02, PKG-BE-G-05
+* *Operations:* {{getDielines}}, {{getDielineEvaluationStatuses}}, {{evaluateDieline}}
+
+* *Business objective:*
+** Dieline browsing and evaluation keep working end-to-end.
+* *Technical objective:*
+** Migrate the 2 dieline reads and the evaluation mutation; replace the deprecated {{SPARK_Dieline.attachments}} selection with attachment entity selections.
+* *Required changes:*
+** Attachment selections move to the stitched entity shape; evaluation status polling unchanged.
+
+*Acceptance Criteria*
+
+1. Dieline list, preview and evaluation statuses match legacy.
+2. No {{attachments}} selection remains on the dieline type.
+
+*Testing*
+
+* Dieline flow integration tests; evaluation E2E.
+
+* *Risk:* Medium.
+* *Estimated effort:* 4–6 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-004,[Packaging FE] Migrate packaging simple mutations and export [PKG-FE-004],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,packaging,mutation-migration,,PKG-BE-D-01 PKG-BE-D-03 PKG-BE-D-04 PKG-BE-D-05 PKG-BE-D-06 PKG-BE-D-07 PKG-BE-D-09,,To Do,"*Implementation Order:* 25 of 28 (Packaging combined — frontend #2, cutover step 3)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Medium — *Parallelizable:* No
+
+*Depends On:*
+* PKG-BE-D-01 — addPackaging
+* PKG-BE-D-03 — bulkAddPackagings
+* PKG-BE-D-04 — bulkUpdatePackagings
+* PKG-BE-D-05 — exportPackaging
+* PKG-BE-D-06 — lockPackaging
+* PKG-BE-D-07 — unlockPackaging
+* PKG-BE-D-09 — updatePackagingComponentStatus
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration · *Impact:* Medium · *Domain:* packaging
+* *Depends on:* PKG-BE-D-01, PKG-BE-D-03, PKG-BE-D-04, PKG-BE-D-05, PKG-BE-D-06, PKG-BE-D-07, PKG-BE-D-09
+* *Operations:* {{addPackaging}}, {{bulkAddPackagings}}, {{bulkUpdatePackagings}}, {{exportPackaging}}, {{lockPackaging}}, {{unlockPackaging}}, {{updatePackagingComponentStatus}}
+
+* *Business objective:*
+** Packaging create, bulk, lock and export flows write through the federated graph.
+* *Technical objective:*
+** Migrate the 7 single-step mutations with response-driven cache updates.
+* *Required changes:*
+** Input renames; per-item results rendered on bulk paths; export request/ack flow unchanged.
+
+*Acceptance Criteria*
+
+1. Each flow completes with UI reflecting the write; bulk flows show per-item outcomes.
+
+*Testing*
+
+* Mutation unit tests; bulk-path fixtures; export smoke test.
+
+* *Risk:* Medium — bulk surface.
+* *Estimated effort:* 5–8 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,PKG-FE-005,[Packaging FE] Migrate `updatePackaging` saga handling and packet information [PKG-FE-005],,Federate BreakDown Product — Frontend,FE,L,fed-graphql-fe,packaging,mutation-migration-(complex),,PKG-BE-E-01,,To Do,"*Implementation Order:* 28 of 28 (Packaging combined — frontend #5, cutover step 4)
+*Domain:* Packaging — *Team:* Frontend — *Owner:* FE-2
+*Priority:* High — *Parallelizable:* Yes
+
+*Depends On:*
+* PKG-BE-E-01 — updatePackaging
+
+*Blocks:*
+* None
+
+* *Type:* Mutation migration (complex) · *Impact:* High · *Domain:* packaging
+* *Depends on:* PKG-BE-E-01
+* *Operations:* {{updatePackaging}}, {{getPackagingPacketsInformation}}, {{getPackagingPacketInformation}}
+
+* *Business objective:*
+** Packaging saves surface partial failures explicitly; packet information stays consistent after saves.
+* *Technical objective:*
+** Adopt the multi-step write contract for {{updatePackaging}} (elastic step included — ADR-013 scope, 🟠 draft); migrate the packet-information reads that render post-save state.
+* *Required changes:*
+** Saga-status rendering; packet reads re-pointed with the save flow to avoid mixed-endpoint reads of just-written data.
+
+*Acceptance Criteria*
+
+1. Partial failure visible and actionable; packet info reflects the save without endpoint mixing.
+
+*Testing*
+
+* Induced step-failure tests; save-then-read consistency test.
+
+* *Risk:* High — write-then-read consistency across the cutover boundary.
+* *Estimated effort:* 5–8 days
+
+---
+
+## Watchlist
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"

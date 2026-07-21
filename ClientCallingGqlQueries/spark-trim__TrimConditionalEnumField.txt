@@ -1,0 +1,80 @@
+import { Form, Grid, Spinner } from '@design-systems/canvas-ui'
+import React from 'react'
+import { gql, useQuery } from '@apollo/client'
+import { ERROR_MESSAGE } from '@spark/static'
+import Message from '@spark/legacy/components/Message'
+import { codeValuesToOptions } from '@spark/legacy/services/convertFunctions'
+import { checkTrimFieldForType, checkTrimFieldForSubtype, checkTrimFieldVisibility } from '../../utils/TrimHelperFunctions'
+import _ from 'lodash'
+
+export const TrimEnumField = (props) => {
+  const {
+    gridProps = {
+      size: {
+        xs: 12,
+      },
+    },
+    fieldProps = {},
+    queryProps = {},
+    enumProps,
+  } = props
+
+  const { data, loading, error } = useQuery(queryProps?.query, {
+    variables: queryProps?.queryVars,
+  })
+
+  const Field = <Form.Field {...fieldProps} options={codeValuesToOptions(data?.[enumProps?.enumName])} />
+
+  return (
+    <Grid.Item {...gridProps}>
+      {loading && (
+        <Grid.Container align="center" justify="center">
+          <Grid.Item>
+            <Spinner size="lg" />
+          </Grid.Item>
+        </Grid.Container>
+      )}
+      {error && (
+        <Grid.Container align="center" justify="center">
+          <Grid.Item>
+            <Message>{ERROR_MESSAGE.MESSAGE_OTHER}</Message>
+          </Grid.Item>
+        </Grid.Container>
+      )}
+      {data && !loading && !error && Field}
+    </Grid.Item>
+  )
+}
+
+export const TrimConditionalEnumField = (props) => {
+  const { type, subType, trim, field, enumProps = {} } = props
+
+  const queryLineOne = _.toPairs(enumProps?.queryVars)
+    ?.map((val) => `$${val[0]}: Int`)
+    .join(', ')
+  const queryLineTwo = _.toPairs(enumProps?.queryVars)
+    ?.map((val) => `${val[0]}: $${val[0]}`)
+    .join(', ')
+
+  const query = gql`
+    query ${enumProps?.enumName}${enumProps?.queryVars ? `(${queryLineOne})` : ''} {
+      ${enumProps?.enumName}${enumProps?.queryVars ? `(${queryLineTwo})` : ''} {
+        code
+        description
+      }
+    }
+  `
+  return (
+    <React.Fragment>
+      {(checkTrimFieldForType(field, type) || checkTrimFieldForSubtype(field, subType) || checkTrimFieldVisibility(field, trim)) && (
+        <TrimEnumField
+          queryProps={{
+            query: query,
+            queryVars: enumProps?.queryVars,
+          }}
+          {...props}
+        />
+      )}
+    </React.Fragment>
+  )
+}

@@ -18,14 +18,14 @@ Also provides the concrete implementation patterns for each strategy — Kotlin 
 ## When to Use
 
 - **Standalone:** When an architect needs stitching strategy decisions without running the full pipeline
-- **Loaded by `federation-schema-derivation`:** Drives CAT-4 story classification in `03-schema-analysis.md`
-- **Loaded by `migration-story-generation`:** Drives CAT-4 story content in `04-stories.md`
+- **Loaded by `federation-schema-derivation`:** Drives CAT-4 story classification in `be-03-schema-analysis.md`
+- **Loaded by `migration-story-generation`:** Drives CAT-4 story content in `be-04-stories.md`
 
 ## Cannot Run Without
 
 - Cross-domain reference data — either from:
-  - `output/{domain}/01-schema-inventory.md` Cross-Domain Reference table
-  - `output/{domain}/02-resolver-analysis.md` EXT Service Call Inventory (preferred)
+  - `output/{domain}/be-01-schema-inventory.md` Cross-Domain Reference table
+  - `output/{domain}/be-02-resolver-analysis.md` EXT Service Call Inventory (preferred)
   - Or the engineer describes the specific field/type relationship directly
 
 ## Reference Files to Read First
@@ -198,10 +198,10 @@ When invoked **standalone:**
 Produces Stitching Strategy table and implementation templates in chat. No file written.
 
 When loaded by **`federation-schema-derivation`:**
-Type classification and external stubs are fed into `03-schema.graphql` and `03-schema-analysis.md`.
+Type classification and external stubs are fed into `be-03-schema.graphql` and `be-03-schema-analysis.md`.
 
 When loaded by **`migration-story-generation`:**
-CAT-4 story content (Gateway config, entity fetcher implementation) is embedded in `04-stories.md`.
+CAT-4 story content (Gateway config, entity fetcher implementation) is embedded in `be-04-stories.md`.
 
 ---
 

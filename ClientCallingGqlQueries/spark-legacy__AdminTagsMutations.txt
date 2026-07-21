@@ -1,0 +1,17 @@
+import { gql } from '@apollo/client'
+
+export const UPDATE_TAG = gql`
+  mutation updateTag($tag: SPARK_TagUpdateInput!) {
+    updateTag(tag: $tag) {
+      id
+    }
+  }
+`
+
+export const CREATE_TAG = gql`
+  mutation addTag($tag: SPARK_TagInput!) {
+    addTag(tag: $tag) {
+      id
+    }
+  }
+`

@@ -1,0 +1,19 @@
+import { gql } from '@apollo/client'
+
+export const UPDATE_WORKSPACE = gql`
+  mutation updateWorkspaceV2($workspace: SPARK_UpdateWorkspaceInputV2!, $validateUnique: Boolean) {
+    updateWorkspaceV2(workspace: $workspace, validateUnique: $validateUnique) {
+      id
+      description
+    }
+  }
+`
+
+export const CREATE_WORKSPACE = gql`
+  mutation createWorkspaceV2($workspace: SPARK_CreateWorkspaceInputV2!, $validateUnique: Boolean) {
+    createWorkspaceV2(workspace: $workspace, validateUnique: $validateUnique) {
+      id
+      description
+    }
+  }
+`

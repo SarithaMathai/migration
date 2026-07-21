@@ -1,0 +1,293 @@
+domain: claims
+target_dgs: spark-claims
+epic: Claims → claims DGS migration
+labels_common:
+- dgs-migration
+- claims
+generated: 2026-06-27
+pipeline_version: '2.0'
+acl_policy: ACL ignored in implementation; current-impl ACL usage noted as context
+  only
+stories:
+- id: CLAIM-BE-A-01
+  summary: Schema skeleton + DateTime scalar
+  phase: A
+  category: CAT-1
+  complexity: Low
+  depends_on: []
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-A-02
+  summary: Owned types + inputs
+  phase: A
+  category: CAT-1
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-01
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-A-03
+  summary: External stubs (Product + platform + sibling DGS)
+  phase: A
+  category: CAT-1
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-01
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-A-04
+  summary: ClaimService Kotlin port
+  phase: A
+  category: CAT-3
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-01
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-B-01
+  summary: getClaims
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-02
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-B-02
+  summary: getClaimByIds
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-02
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-B-03
+  summary: getCommunicationChannels (cacheable)
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-B-04
+  summary: getAllClaimsAbout (cacheable)
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-B-05
+  summary: getClaimExports
+  phase: B
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-C-01
+  summary: searchGuestFacing
+  phase: C
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-C-02
+  summary: getClaimsElastic
+  phase: C
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services:
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: CLAIM-BE-D-01
+  summary: createClaim (throws on validationErrors)
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-D-02
+  summary: bulkUpdateClaim (status_code contract; fix snake-case response)
+  phase: D
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-D-03
+  summary: requestClaimExport
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-D-04
+  summary: lockClaim
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-D-05
+  summary: unlockClaim
+  phase: D
+  category: CAT-2
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: none
+- id: CLAIM-BE-E-01
+  summary: updateClaim (proxy ACL + workspace + body, non-atomic)
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: &id001
+  - key: workspaceV2
+    severity: YELLOW
+  blocked_by: none
+  parent: null
+  substories:
+  - CLAIM-BE-E-01-1
+  - CLAIM-BE-E-01-2
+- id: CLAIM-BE-E-01-1
+  summary: body PUT + workspace call
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  parent: CLAIM-BE-E-01
+  substories: []
+  depends_on:
+  - CLAIM-BE-E-01
+  - CLAIM-BE-A-04
+  blocked_by: none
+  ext_services: *id001
+- id: CLAIM-BE-E-01-2
+  summary: ACL proxy + orchestration
+  phase: E
+  category: CAT-2
+  complexity: Medium
+  parent: CLAIM-BE-E-01
+  substories: []
+  depends_on:
+  - CLAIM-BE-E-01
+  - CLAIM-BE-A-04
+  blocked_by: none
+  ext_services: *id001
+- id: CLAIM-BE-H-01
+  summary: Product.claims (federation contribution)
+  phase: H
+  category: CAT-4
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: product
+- id: CLAIM-BE-H-02
+  summary: ResourcesCount.claims (TechPack — see PRODUCT-BE-H-04)
+  phase: H
+  category: CAT-4
+  complexity: Low
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services: []
+  blocked_by: product
+- id: CLAIM-BE-G-01
+  summary: access + currentUserPermissions + participantDetails
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-02
+  - CLAIM-BE-A-04
+  ext_services:
+  - key: userGroup
+    severity: BLUE
+  blocked_by: none
+- id: CLAIM-BE-G-02
+  summary: createdBy + updatedBy + businessPartner + designPartner (3-way fallback)
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services:
+  - key: userAttributes
+    severity: YELLOW
+  - key: vmm
+    severity: BLUE
+  blocked_by: none
+- id: CLAIM-BE-G-03
+  summary: product + parentDetails (otherClaimBps/systemTeams/droppedPartnerIds)
+  phase: G
+  category: CAT-2
+  complexity: High
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services:
+  - key: product
+    severity: YELLOW
+  - key: search
+    severity: RED
+  blocked_by: none
+- id: CLAIM-BE-G-04
+  summary: workspaces + substantiatedBy + claimDetails.claimName
+  phase: G
+  category: CAT-2
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-A-04
+  ext_services:
+  - key: workspaceV2
+    severity: YELLOW
+  - key: userAttributes
+    severity: YELLOW
+  blocked_by: none
+- id: CLAIM-BE-G-05
+  summary: Tests, parity harness
+  phase: G
+  category: CAT-5
+  complexity: Medium
+  depends_on:
+  - CLAIM-BE-B-01
+  - CLAIM-BE-E-01
+  - CLAIM-BE-G-02
+  - CLAIM-BE-G-03
+  ext_services: []
+  blocked_by: none
+totals:
+  story_count: 24
+  by_complexity:
+    Low: 11
+    Medium: 11
+    High: 2
+    Very High: 0
+  by_phase:
+    A: 4
+    B: 5
+    C: 2
+    D: 5
+    E: 1
+    F: 2
+    G: 5

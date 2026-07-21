@@ -1,0 +1,328 @@
+import { gql } from '@apollo/client'
+
+export const UNION_FRAGMENT = gql`
+  fragment UnionFrag on SPARK_Notification_Resource {
+    ... on SPARK_Discussion {
+      id
+      announcement
+      businessPartner {
+        id
+        name
+      }
+      comment
+      createdAt: createdTS
+      createdUser {
+        companyName
+        id
+        userProfileId
+        firstName
+        lastName
+      }
+      tags {
+        id
+        name
+      }
+      subject
+      updatedAt: updateTS
+      resource {
+        ... on SPARK_Product {
+          productId: id
+          description
+        }
+        ... on SPARK_WorkspaceV2 {
+          workspaceId: id
+          description
+        }
+        ... on SPARK_SampleV2 {
+          sampleId: id
+          description
+          parentId
+          product {
+            id
+            description
+          }
+          fabricSpecCombo {
+            humanId
+            parentComboId
+          }
+          fabricSpec {
+            humanId
+            parentHumanId
+          }
+        }
+        ... on SPARK_Palette {
+          paletteId: humanId
+          description
+        }
+        ... on SPARK_Artwork {
+          artworkId: humanId
+          description: name
+        }
+        ... on SPARK_Trim {
+          trimId: humanId
+          description
+        }
+        ... on SPARK_Wash {
+          washId: humanId
+          description: washDescription
+        }
+        ... on SPARK_Fabric {
+          fabricId: humanId
+          description: name
+        }
+        ... on SPARK_Color {
+          colorId: humanId
+          description: name
+        }
+        ... on SPARK_ColorArchroma {
+          colorArchromaId: humanId
+          description: name
+        }
+        ... on SPARK_Combination {
+          combinationId: humanId
+          description
+        }
+        ... on SPARK_FabricSpecification {
+          fabricSpecId: humanId
+          description: name
+        }
+        ... on SPARK_HubMaterial {
+          humanId
+          type
+          baseMaterial {
+            description
+          }
+        }
+        ... on SPARK_Packaging {
+          packagingId: humanId
+          parentId
+          description
+        }
+      }
+    }
+    ... on SPARK_DiscussionReply {
+      id
+      comment
+      createdAt: createdTS
+      createdUser {
+        id
+        companyName
+        userProfileId
+        firstName
+        lastName
+      }
+      subject: discussionTitle
+      updatedAt: updateTS
+      discussionHead {
+        id
+        businessPartner {
+          id
+          name
+        }
+        comment
+        createdAt: createdTS
+        createdUser {
+          id
+          companyName
+          userProfileId
+          firstName
+          lastName
+        }
+        subject
+        updatedAt: updateTS
+        resource {
+          ... on SPARK_Product {
+            productId: id
+            description
+          }
+          ... on SPARK_WorkspaceV2 {
+            workspaceId: id
+            description
+          }
+          ... on SPARK_SampleV2 {
+            sampleId: id
+            description
+            parentId
+            product {
+              id
+              description
+            }
+            fabricSpecCombo {
+              humanId
+              parentComboId
+            }
+            fabricSpec {
+              humanId
+              parentHumanId
+            }
+          }
+          ... on SPARK_Palette {
+            paletteId: humanId
+            description
+          }
+          ... on SPARK_Artwork {
+            artworkId: humanId
+            description: name
+          }
+          ... on SPARK_Trim {
+            trimId: humanId
+            description
+          }
+          ... on SPARK_Wash {
+            washId: humanId
+            description: washDescription
+          }
+          ... on SPARK_Fabric {
+            fabricId: humanId
+            description: name
+          }
+          ... on SPARK_Color {
+            colorId: humanId
+            description: name
+          }
+          ... on SPARK_ColorArchroma {
+            colorArchromaId: humanId
+            description: name
+          }
+          ... on SPARK_Combination {
+            combinationId: humanId
+            description
+          }
+          ... on SPARK_FabricSpecification {
+            fabricSpecId: humanId
+            description: name
+          }
+          ... on SPARK_HubMaterial {
+            humanId
+            type
+            baseMaterial {
+              description
+            }
+          }
+          ... on SPARK_Bom {
+            humanId
+            description: name
+            parentId
+          }
+          ... on SPARK_ProductDetails {
+            humanId
+            description: name
+            parentId
+          }
+          ... on SPARK_Measurements {
+            humanId
+            description: name
+            parentId
+          }
+          ... on SPARK_Claims {
+            humanId
+            description: claimName
+            parentId
+          }
+          ... on SPARK_Packaging {
+            humanId
+            parentId
+            promoDescription
+            description
+          }
+        }
+      }
+    }
+    ... on SPARK_SampleV2 {
+      id
+      createdAt
+      description
+      notes
+      dueDate
+      address
+      deliverTo
+      quantity
+      parentId
+      sampleBusinessPartner: businessPartner {
+        id
+        name
+      }
+      sampleType {
+        code
+        description
+      }
+      tracking {
+        number
+        etaDate
+        receivedDate
+        status {
+          code
+          description
+        }
+        lateReason {
+          code
+          description
+        }
+        lateReasonText
+      }
+      evaluationStatus {
+        code
+        description
+      }
+      evaluatedBy {
+        id
+        firstName
+        lastName
+      }
+      evaluatedDate
+      createdAt
+      updatedAt
+      createdUser: createdBy {
+        id
+        companyName
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedBy {
+        id
+        firstName
+        lastName
+      }
+      product {
+        id
+        description
+      }
+      fabricSpecCombo {
+        humanId
+        parentComboId
+      }
+      fabricSpec {
+        humanId
+        parentHumanId
+      }
+      sampleRound {
+        parent
+        originSampleId
+        roundNumber
+      }
+      sampleFormat {
+        description
+      }
+    }
+    ... on SPARK_Packaging {
+      humanId
+      parentId
+      description
+      promoDescription
+      product {
+        id
+        description
+      }
+      workspaces {
+        id
+        description
+      }
+      packagingBP: businessPartner {
+        id
+        name
+        associatedPartnerType
+      }
+    }
+  }
+`

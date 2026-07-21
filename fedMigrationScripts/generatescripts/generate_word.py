@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate FederatedGqlBrakDown-{domain}.docx — Microsoft Word format.
+Generate FederatedGqlBreakDown-{domain}.docx — Microsoft Word format.
 
 Styles match the reference docs in 'final PO BreakDown Doc/':
   - Title: bold 20pt blue
@@ -9,8 +9,12 @@ Styles match the reference docs in 'final PO BreakDown Doc/':
   - Story tables with colored headers and complexity-coded text
   - Emoji icons throughout (paste into Confluence cleanly)
 
-Output:  oneStopDoc/{domain}/FederatedGqlBrakDown-{domain}.docx
-         oneStopDoc/Federated+Graphql+Stories+-+BreakDown.docx  (global)
+The per-domain doc is ONE merged Backend + Frontend page (mirrors generate_breakdown.py's
+.md merge): '## Backend' (build_word_doc's existing content) then '## Frontend'
+(generate_frontend.py's build_fe_section(), rendered via render_md_block).
+
+Output:  output/summary/{domain}/FederatedGqlBreakDown-{domain}.docx  (per-domain subfolder)
+         output/summary/Federated+Graphql+Stories+-+BreakDown.docx    (global, summary/ root)
 
 Run:
     python generate_word.py              # all phase-1 domains + global
@@ -445,7 +449,8 @@ def add_story_table(doc: Document, phase_key: str, stories: list) -> None:
     ph_p = doc.add_paragraph()
     ph_p.paragraph_format.space_before = Pt(10)
     ph_p.paragraph_format.space_after  = Pt(3)
-    add_run(ph_p, f"{phase_icon} Phase {phase_key} — {phase_name}  ({len(stories)} stories)",
+    story_word = "story" if len(stories) == 1 else "stories"
+    add_run(ph_p, f"{phase_icon} Phase {phase_key} — {phase_name}  ({len(stories)} {story_word})",
             bold=True, size_pt=11, color_hex=fg)
     pPr = _get_or_add(ph_p._p, "w:pPr")
     shd = OxmlElement("w:shd")
@@ -498,7 +503,7 @@ def add_story_table(doc: Document, phase_key: str, stories: list) -> None:
         if spk:
             cp = cells[0].add_paragraph()
             cp.paragraph_format.space_after = Pt(1)
-            add_run(cp, f"🔴🔬 Spike-gated on SPARK-SPIKE-{spk} ({bd.SPIKE_TITLES.get(spk, '')})",
+            add_run(cp, f"🔴🔬 Spike-gated on SPIKE-{spk} ({bd.SPIKE_TITLES.get(spk, '')})",
                     italic=True, size_pt=8, color_hex=CL_COLOR["very high"])
 
         # Complexity
@@ -516,7 +521,7 @@ def add_story_table(doc: Document, phase_key: str, stories: list) -> None:
         # Depends On
         dep = s["depends"] or "—"
         if spk:
-            sref = f"SPARK-SPIKE-{spk}"
+            sref = f"SPIKE-{spk}"
             dep  = sref if dep in ("—", "") else f"{sref}, {dep}"
         add_run(_first_para(cells[3]), dep, size_pt=8.5, color_hex=C_SUBTLE)
 
@@ -533,7 +538,7 @@ def add_story_table(doc: Document, phase_key: str, stories: list) -> None:
         set_col_widths(table, [1.7, 0.8, 1.3, 0.95, 4.15])
     doc.add_paragraph()
 
-    # DGS init notes (B01-type) — callouts beneath the table.
+    # DGS init notes (B-01-type) — callouts beneath the table.
     note_items = [s for s in stories if s["note"] and bd.strip_noise(s["note"]).strip()]
     for s in note_items:
         nc = bd.strip_noise(s["note"]).lstrip("> ").strip()
@@ -561,14 +566,14 @@ def add_domain_spike_map(doc: Document, stories: list) -> None:
             "breakdown — see 'Phase 0 — Program Spikes' and 'Spike Detail' (the brief, the decision, "
             "intended cross-domain steps, and every affected resolver's external deps + current logic) in "
             "Federated+Graphql+Stories+-+BreakDown. Nothing from there is repeated here; the stories below just "
-            "link to it. Follow a story's SPARK-SPIKE-0x id to the global Spike Detail for the target flow + the "
+            "link to it. Follow a story's SPIKE-0x id to the global Spike Detail for the target flow + the "
             "external services each resolver calls (see 'How to read the spikes & related stories' in the global doc).",
             size_pt=9, color_hex=C_SUBTLE, italic=True)
 
     if gated:
         add_plain_table(
             doc, ["Story", "Program spike", "Bucket"],
-            [[f"🔴🔬 {s['id']} — {re.sub('`', '', s['title'])}", f"SPARK-SPIKE-{b}", bd.SPIKE_TITLES[b]]
+            [[f"🔴🔬 {s['id']} — {re.sub('`', '', s['title'])}", f"SPIKE-{b}", bd.SPIKE_TITLES[b]]
              for s, b in gated],
             col_widths=[4.6, 1.5, 2.4],
         )
@@ -589,8 +594,8 @@ def build_word_doc(domain: str) -> Document:
     label   = DOMAIN_LABELS[domain]
     src_dir = bd.get_domain_dir(domain)
     # Drop Phase-S spikes — centralized as program spikes (see global doc).
-    stories = [s for s in bd.parse_stories(src_dir / "04-stories.md") if s["phase"] != "S"]
-    po      = bd.read_po_sections(src_dir / "04-po-summary.md")
+    stories = [s for s in bd.parse_stories(src_dir / "be-04-stories.md") if s["phase"] != "S"]
+    po      = bd.read_po_sections(src_dir / "be-04-po-summary.md")
     by_phase = bd.group_by_phase(stories)
 
     doc = Document()
@@ -623,6 +628,9 @@ def build_word_doc(domain: str) -> Document:
     # ── Metrics banner ─────────────────────────────────────────────────────
     add_metrics_banner(doc, domain, stories)
 
+    # ── Backend section marker (mirrors the '## Backend' heading in the merged .md) ──
+    section_heading(doc, "Backend", level=1)
+
     # ── §1 What Are We Building? ───────────────────────────────────────────
     if po.get("what"):
         section_heading(doc, "What Are We Building?")
@@ -644,17 +652,19 @@ def build_word_doc(domain: str) -> Document:
     add_domain_spike_map(doc, stories)
 
     # ── §3 Effort Snapshot ─────────────────────────────────────────────────
-    if po.get("phases") or po.get("capacity"):
+    # Computed live from be-04-stories.md (bd.live_phase_summary_md) rather than the
+    # hand-authored be-04-po-summary.md table, which drifted out of sync in 4/8 domains
+    # (missing Phase H for product, phantom rows — caught 2026-07-19 full-output audit).
+    live_phases_md = bd.live_phase_summary_md(stories)
+    if live_phases_md or po.get("capacity"):
         section_heading(doc, "Effort Snapshot by Phase")
-        if po.get("phases"):
-            hdrs, rows = parse_md_table(po["phases"])
-            if hdrs:
-                add_plain_table(doc, hdrs, rows, col_widths=[0.6, 3.0, 0.7, 2.5])
+        hdrs, rows = parse_md_table(live_phases_md)
+        if hdrs:
+            add_plain_table(doc, hdrs, rows, col_widths=[0.6, 3.0, 0.7, 2.5])
 
-        # Capacity planning
-        for line in (po.get("phases") or "").split("\n"):
+        for line in live_phases_md.split("\n"):
             line = line.strip()
-            if line.startswith(">") and "sprint" in line.lower():
+            if line.startswith(">"):
                 note_text = re.sub(r"^>\s*", "", line)
                 np = doc.add_paragraph()
                 add_run(np, "ℹ️  ", size_pt=9)
@@ -670,6 +680,12 @@ def build_word_doc(domain: str) -> Document:
     if po.get("sprints"):
         add_md_section(doc, "Recommended Sprint Sequencing", po["sprints"],
                        col_widths=[0.9, 1.5, 5.5])
+
+    # ── §4b Recommended Implementation Order (same builder as the .md) ─────
+    render_md_block(doc, bd.implementation_order_md(stories))
+
+    # ── §4c Recommended Story Graph — 2 Backend Engineers (same builder) ───
+    render_md_block(doc, bd.team_plan_md(stories))
 
     # ── §5 Stories by Phase ────────────────────────────────────────────────
     section_heading(doc, "Jira Stories by Phase")
@@ -727,7 +743,7 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
     _g = [0, 0, 0, 0, 0]
     for _d in domains:
         try:
-            _st = [s for s in bd.parse_stories(bd.get_domain_dir(_d) / "04-stories.md") if s["phase"] != "S"]
+            _st = [s for s in bd.parse_stories(bd.get_domain_dir(_d) / "be-04-stories.md") if s["phase"] != "S"]
         except Exception:
             _st = []
         _g[0] += len(_st)
@@ -735,11 +751,16 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         _g[2] += sum(1 for s in _st if s["complexity"] == "high")
         _g[3] += sum(1 for s in _st if s["complexity"] == "medium")
         _g[4] += sum(1 for s in _st if s["complexity"] == "low")
+    _fe = bd.fe_story_stats()
+    _fe_n  = sum(_fe.get(d, (0, 0, 0))[0] for d in domains)
+    _fe_lo = sum(_fe.get(d, (0, 0, 0))[1] for d in domains)
+    _fe_hi = sum(_fe.get(d, (0, 0, 0))[2] for d in domains)
     add_plain_table(doc, ["Program", "spark-internal-graphql → Netflix DGS Federation (Hive Registry)"], [
         ["Domains", str(len(domains))],
         ["Target DGS services", str(_n_dgs)],
-        ["Total Stories", str(_g[0])],
-        ["Complexity", f"🔴 {_g[1]} Very High · 🟠 {_g[2]} High · 🟡 {_g[3]} Medium · 🟢 {_g[4]} Low"],
+        ["Total Backend Stories", str(_g[0])],
+        ["Total Frontend Stories", f"{_fe_n} · {_fe_lo}–{_fe_hi}d single-engineer (Frontend section of each per-domain FederatedGqlBreakDown-<domain> page)"],
+        ["Complexity (backend)", f"🔴 {_g[1]} Very High · 🟠 {_g[2]} High · 🟡 {_g[3]} Medium · 🟢 {_g[4]} Low"],
         ["Generated", today],
     ], col_widths=[2.2, 5.5])
     doc.add_paragraph().paragraph_format.space_after = Pt(8)
@@ -750,7 +771,8 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
     # Domain index table
     section_heading(doc, "Domain Index")
 
-    idx_headers = ["#", "Domain", "Target DGS", "T-Shirt", "Stories", "🔴 VH", "🟠 H", "🟡 M", "🟢 L", "Breakdown page"]
+    idx_headers = ["#", "Domain", "Target DGS", "T-Shirt", "BE Stories", "🔴 VH", "🟠 H", "🟡 M", "🟢 L",
+                   "FE Stories", "FE effort", "Breakdown pages"]
     idx_rows: list[list[str]] = []
     domain_story_map: dict[str, list] = {}
     grand = [0, 0, 0, 0, 0]  # total, vh, hi, me, lo
@@ -760,7 +782,7 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         ts    = bd.tshirt(domain)
         try:
             src_dir = bd.get_domain_dir(domain)
-            stories = [s for s in bd.parse_stories(src_dir / "04-stories.md") if s["phase"] != "S"]
+            stories = [s for s in bd.parse_stories(src_dir / "be-04-stories.md") if s["phase"] != "S"]
         except FileNotFoundError:
             stories = []
         domain_story_map[domain] = stories
@@ -770,14 +792,17 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
         me    = sum(1 for s in stories if s["complexity"] == "medium")
         lo    = sum(1 for s in stories if s["complexity"] == "low")
         grand[0] += total; grand[1] += vh; grand[2] += hi; grand[3] += me; grand[4] += lo
+        fc, flo, fhi = _fe.get(domain, (0, 0, 0))
         idx_rows.append([str(i), label, DGS_MAP[domain], ts,
                          str(total), str(vh), str(hi), str(me), str(lo),
-                         f"FederatedGqlBrakDown-{domain}"])
+                         str(fc), f"{flo}–{fhi}d",
+                         f"FederatedGqlBreakDown-{domain}"])
     idx_rows.append(["", "TOTAL", "—", "—",
-                     str(grand[0]), str(grand[1]), str(grand[2]), str(grand[3]), str(grand[4]), "—"])
+                     str(grand[0]), str(grand[1]), str(grand[2]), str(grand[3]), str(grand[4]),
+                     str(_fe_n), f"{_fe_lo}–{_fe_hi}d", "—"])
 
     add_plain_table(doc, idx_headers, idx_rows,
-                    col_widths=[0.3, 1.3, 1.7, 0.6, 0.6, 0.45, 0.45, 0.45, 0.45, 1.8])
+                    col_widths=[0.3, 1.2, 1.5, 0.55, 0.6, 0.4, 0.4, 0.4, 0.4, 0.6, 0.7, 2.0])
 
     # Icon legend
     leg_p = doc.add_paragraph()
@@ -794,19 +819,61 @@ def build_global_word(domains: "list[str] | None" = None, scope_label: str = "Al
     render_md_block(doc, bd.build_spike_detail(dd))
 
     # Per-domain story detail intentionally NOT included — this is an overview.
-    # Each domain's phase tables are in its own FederatedGqlBrakDown-<domain> breakdown.
+    # Each domain's phase tables are in its own FederatedGqlBreakDown-<domain> breakdown.
 
     return doc
 
 
+# ─── Frontend section (merged into the same per-domain .docx) ─────────────────
+def _fe_section_lines_for(domain: str) -> "list[str] | None":
+    """Load generate_frontend.py and build this domain's Frontend section markdown lines
+    (same data as generate_breakdown.py's build_fe_section_for(), used for the .md merge),
+    or None if fe-08-frontend-stories.md has no stories for this domain / doesn't exist."""
+    try:
+        fe_mod = _load("generate_frontend")
+        stories = fe_mod.parse_fe_stories()
+    except Exception:
+        return None
+    if not stories:
+        return None
+    from collections import defaultdict as _dd
+    by_dom = _dd(list)
+    for s in stories:
+        by_dom[fe_mod.domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])].append(s)
+    group = sorted(by_dom.get(domain, []), key=lambda s: s["id"])
+    if not group:
+        return None
+    ops = []
+    try:
+        client_defs = fe_mod.load_client_defs()
+        usage_idx = fe_mod.load_usage_index()
+        registry = fe_mod.build_schema_registry()
+        be_stories = fe_mod.load_be_stories()
+        ops, _frags, _coverage, _fragments = fe_mod.cross_reference(
+            client_defs, registry, usage_idx, be_stories)
+    except Exception:
+        ops = []
+    return fe_mod.build_fe_section(domain, group, ops)
+
+
 # ─── Runner ────────────────────────────────────────────────────────────────────
 def generate_word_for(domain: str) -> None:
-    out_dir  = OUTPUT / domain
-    out_dir.mkdir(parents=True, exist_ok=True)
-    doc      = build_word_doc(domain)
-    out_file = out_dir / f"FederatedGqlBrakDown-{domain}.docx"
+    # Per-domain artifact lives in output/summary/{domain}/ — ONE merged .docx:
+    # '## Backend' (build_word_doc) + '## Frontend' (generate_frontend.py's build_fe_section),
+    # same merge convention as generate_breakdown.py's .md.
+    domain_dir = OUTPUT / domain
+    domain_dir.mkdir(parents=True, exist_ok=True)
+    doc = build_word_doc(domain)
+
+    fe_lines = _fe_section_lines_for(domain)
+    if fe_lines:
+        doc.add_page_break()
+        section_heading(doc, "Frontend", level=1)
+        render_md_block(doc, fe_lines)
+
+    out_file = domain_dir / f"FederatedGqlBreakDown-{domain}.docx"
     doc.save(str(out_file))
-    print(f"  OK {domain}/FederatedGqlBrakDown-{domain}.docx")
+    print(f"  OK {domain}/FederatedGqlBreakDown-{domain}.docx")
 
 
 def generate_global_word() -> None:

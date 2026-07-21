@@ -1,0 +1,275 @@
+import { TRIM_TYPES } from '@spark/trim-base'
+import { gql } from '@apollo/client'
+
+export const getTrimEnumQuery = (typeCode) => {
+  switch (typeCode) {
+    case TRIM_TYPES.BUCKLE:
+      return GET_TRIM_BUCKLE_ENUMS
+    case TRIM_TYPES.ELASTIC:
+      return GET_TRIM_ELASTIC_ENUMS
+    case TRIM_TYPES.ZIPPER:
+      return GET_TRIM_ZIPPER_ENUMS
+    case TRIM_TYPES.BUTTON:
+      return GET_TRIM_BUTTON_ENUMS
+    case TRIM_TYPES.CLOSURE:
+      return GET_TRIM_CLOSURE_ENUMS
+    case TRIM_TYPES.CONSTRUCTION_COMPONENT:
+      return GET_TRIM_CONSTRUCTION_COMPONENTS_ENUMS
+    case TRIM_TYPES.CORD_PARTS:
+      return GET_TRIM_CORD_PARTS_ENUMS
+    case TRIM_TYPES.EMBELLISHMENT:
+      return GET_TRIM_EMBELLISHMENT_PARTS_ENUMS
+    case TRIM_TYPES.HARDWARE:
+      return GET_TRIM_HARDWARE_ENUMS
+    case TRIM_TYPES.INTERLINING:
+      return GET_TRIM_INTERLINING_ENUMS
+    case TRIM_TYPES.LACE_NARROW:
+      return GET_TRIM_LACE_NARROW_ENUMS
+    case TRIM_TYPES.TAPE_RIBBON_CORDING:
+      return GET_TRIM_TAPE_RIBBON_CORDING_ENUMS
+    case TRIM_TYPES.THREAD:
+      return GET_TRIM_THREAD_ENUMS
+    case TRIM_TYPES.PATCH:
+      return GET_TRIM_PATCH_ENUMS
+    case TRIM_TYPES.ZIPPER_PULLER:
+      return GET_TRIM_ZIPPER_PULLER_ENUMS
+    case TRIM_TYPES.LABEL:
+      return GET_TRIM_LABEL_ENUMS
+  }
+}
+
+export const GET_TRIM_BUCKLE_ENUMS = gql`
+query getBuckleEnums {
+  getTrimSubTypesByType(typeCode: ${TRIM_TYPES.BUCKLE}) {
+    code
+    description
+  }
+  getFiberContentsByType(typeCode: ${TRIM_TYPES.BUCKLE}) {
+    code
+    description
+  }
+}
+`
+
+export const GET_TRIM_ELASTIC_ENUMS = gql`
+  query getElasticEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.ELASTIC}) {
+      code
+      description
+    }
+    getTrimUsagesByType(typeCode: ${TRIM_TYPES.ELASTIC}) {
+      code
+      description
+    }
+    getTrimFurtherSubTypesFiltered(typeCode: ${TRIM_TYPES.ELASTIC}) {
+      code
+      description
+    }
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.ELASTIC}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_ZIPPER_ENUMS = gql`
+  query getZipperEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.ZIPPER}) {
+      code
+      description
+    }
+    getTrimConstructionsByType(typeCode: ${TRIM_TYPES.ZIPPER}) {
+      code
+      description
+    }
+    getSliderTypesByType(typeCode: ${TRIM_TYPES.ZIPPER}) {
+      code
+      description
+    }
+    getSliderMaterialsByType(typeCode: ${TRIM_TYPES.ZIPPER}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_BUTTON_ENUMS = gql`
+  query getButtonEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.BUTTON}) {
+      code
+      description
+    }
+    getTrimShapesByType(typeCode: ${TRIM_TYPES.BUTTON}) {
+      code
+      description
+    }
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.BUTTON}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_CLOSURE_ENUMS = gql`
+  query getClosureEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.CLOSURE}) {
+      code
+      description
+    }
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.CLOSURE}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_CONSTRUCTION_COMPONENTS_ENUMS = gql`
+  query getConstructionComponentsEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.CONSTRUCTION_COMPONENT}) {
+      code
+      description
+    }
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.CONSTRUCTION_COMPONENT}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_CORD_PARTS_ENUMS = gql`
+  query getCordPartsEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.CORD_PARTS}) {
+      code
+      description
+    }
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.CORD_PARTS}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_EMBELLISHMENT_PARTS_ENUMS = gql`
+  query getEmbellishmentPartsEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.EMBELLISHMENT}) {
+      code
+      description
+    }
+    getTrimFurtherSubTypesFiltered(typeCode: ${TRIM_TYPES.EMBELLISHMENT}) {
+      code
+      description
+    }
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.EMBELLISHMENT}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_HARDWARE_ENUMS = gql`
+  query getHardwareEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.HARDWARE}) {
+      code
+      description
+    }
+    getTrimShapesByType(typeCode: ${TRIM_TYPES.HARDWARE}) {
+      code
+      description
+    }
+    getTrimFurtherSubTypesFiltered(typeCode: ${TRIM_TYPES.HARDWARE}) {
+      code
+      description
+    }
+    getTrimUnderpartsSpecifications {
+      code
+      description
+    }
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.HARDWARE}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_INTERLINING_ENUMS = gql`
+  query getInterliningEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.INTERLINING}) {
+      code
+      description
+    }
+    getTrimUsagesByType(typeCode: ${TRIM_TYPES.INTERLINING}) {
+      code
+      description
+    }
+    getTrimWeights {
+      code
+      description
+    }
+    getHandFeels {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_LACE_NARROW_ENUMS = gql`
+  query getLaceNarrowEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.LACE_NARROW}) {
+      code
+      description
+    }
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.LACE_NARROW}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_TAPE_RIBBON_CORDING_ENUMS = gql`
+  query getTapeRibbonCordingEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.TAPE_RIBBON_CORDING}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_THREAD_ENUMS = gql`
+  query getThreadEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.THREAD}) {
+      code
+      description
+    }
+    getTrimFixedSizes {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_PATCH_ENUMS = gql`
+  query getPatchEnums {
+    getFiberContentsByType(typeCode: ${TRIM_TYPES.PATCH}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_ZIPPER_PULLER_ENUMS = gql`
+  query getZipperPullerEnums {
+    getPullerAttachmentMaterialByType(typeCode: ${TRIM_TYPES.ZIPPER_PULLER}) {
+      code
+      description
+    }
+  }
+`
+
+export const GET_TRIM_LABEL_ENUMS = gql`
+  query getLabelEnums {
+    getTrimSubTypesByType(typeCode: ${TRIM_TYPES.LABEL}) {
+      code
+      description
+    }
+  }
+`

@@ -1,0 +1,71 @@
+import { gql } from '@apollo/client'
+
+export const GET_ACTIVITY_LOG = gql`
+  query searchActivities(
+    $streamResourceId: String!
+    $streamResourceType: SPARK_ResourceType!
+    $resourceType: [SPARK_ResourceType]
+    $eventType: [SPARK_ActivityEventType]
+    $groupBy: String!
+    $linkedStreams: [String]
+    $page: Int
+    $size: Int
+  ) {
+    searchActivityEvents(
+      streamResourceId: $streamResourceId
+      streamResourceType: $streamResourceType
+      resourceType: $resourceType
+      eventType: $eventType
+      linkedStreams: $linkedStreams
+      size: $size
+      page: $page
+    ) {
+      content {
+        id
+        resourceId
+        resourceType
+        eventDate
+        eventSummary
+        activityModifiedData(streamResourceId: $streamResourceId) {
+          attributeUpdateText
+          resourceUpdated {
+            text
+            resourceId
+            resourceType
+            resourceDescription
+            parentResourceInfo {
+              linkGenartionPath
+              linkGenerationVariables
+              linkPath
+            }
+          }
+          resourceChangeTypeText
+          oldValues
+          newValues
+          attributeName
+          eventType
+          isSingleValueUpdate
+        }
+        userInfo {
+          linkText
+          userId
+        }
+      }
+    }
+    countActivityEvents(streamResourceId: $streamResourceId, streamResourceType: $streamResourceType, eventType: $eventType, groupBy: $groupBy, resourceType: $resourceType) {
+      totalCounts
+    }
+  }
+`
+
+export const GET_ACTIVITY_FILTERS_COUNT = gql`
+  query countActivityEvents($streamResourceId: String!, $streamResourceType: SPARK_ResourceType!, $eventType: [SPARK_ActivityEventType], $groupBy: String!) {
+    countActivityEvents(streamResourceId: $streamResourceId, streamResourceType: $streamResourceType, eventType: $eventType, groupBy: $groupBy) {
+      counts {
+        count
+        group
+      }
+      totalCounts
+    }
+  }
+`

@@ -1,0 +1,92 @@
+import { gql } from '@apollo/client'
+
+export const ADD_FAVORITE_MATERIAL_TYPES = gql`
+  mutation addUserSettings($userSettings: SPARK_User_Settings_Input!) {
+    addUserSettings(userSettings: $userSettings) {
+      favoriteMaterialTypes
+    }
+  }
+`
+
+export const ADD_RELATIONSHIP = gql`
+  mutation addRelationship($sparkRelationship: SPARK_RelationshipInput!) {
+    addRelationship(sparkRelationship: $sparkRelationship) {
+      root {
+        id
+        relationshipId
+      }
+      node {
+        id
+        relationshipId
+        associations
+      }
+    }
+  }
+`
+
+export const CHANGE_MATERIAL_VIEW_SETTING = gql`
+  mutation addUserSettings($typeView: MaterialTypeView!) {
+    addUserSettings(userSettings: { materialListView: $typeView }) {
+      materialListView
+    }
+  }
+`
+
+export const UPDATE_TEAMS = gql`
+  mutation updateTeams($id: ID!, $teamsToUpdate: SPARK_TeamsToUpdateInput) {
+    updateMaterialTeamsByIdFromService(id: $id, teamsToUpdate: $teamsToUpdate)
+  }
+`
+export const UPDATE_BUSINESS_PARTNERS = UPDATE_TEAMS
+
+export const COPY_ATTACHMENT_V3 = gql`
+  mutation copyAttachmentsV3($copyAttachmentsInput: SPARK_CopyAttachmentInputV3) {
+    copyAttachmentsV3(attachmentInput: $copyAttachmentsInput) {
+      thumbnailId
+      attachments {
+        id
+        humanId
+        resource {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const PARTIAL_UPDATE_HUB_MATERIAL = gql`
+  mutation partialUpdateHubMaterial($id: ID!, $partialMaterial: SPARK_HubMaterialPartialInput!) {
+    partialUpdateHubMaterial(id: $id, partialMaterial: $partialMaterial) {
+      humanId
+      type
+      baseMaterial {
+        thumbnailId
+        designThumbnailId
+        suppliers {
+          id
+          materialId
+          supplier {
+            id
+            name
+          }
+          facilities {
+            facilityId
+            facility {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const BULK_MATERIAL_VALIDATE_UNIQUENESS = gql`
+  mutation bulkValidateMaterialUniqueness($bulkValidateUniqueRequest: [SPARK_BulkValidateUniqueInput]!) {
+    bulkValidateMaterialUniqueness(bulkValidateUniqueRequest: $bulkValidateUniqueRequest) {
+      requestId
+      duplicatedIds
+    }
+  }
+`

@@ -1,0 +1,653 @@
+import { gql } from '@apollo/client'
+
+export const GET_ACL_TOKEN = gql`
+  query getUserAccess($resourceIds: [String]) {
+    getUserAccess(resourceIds: $resourceIds)
+  }
+`
+
+export const GET_ACL_PROXY_TOKEN = gql`
+  query getUserAccessByProxy($resourceId: String!, $proxyId: String!) {
+    getUserAccess: getUserAccessByProxy(resourceId: $resourceId, proxyId: $proxyId)
+  }
+`
+
+export const GET_BP_BY_ID = gql`
+  query getBusinessPartner($id: String!) {
+    getBusinessPartner(id: $id) {
+      id
+      name
+      role {
+        bpRoleName
+      }
+    }
+  }
+`
+export const GET_SYSTEM_TEAMS = gql`
+  query searchTeamsElastic($q: String) {
+    searchTeamsElastic(q: $q) {
+      content {
+        id
+        name
+        partner_name
+        purpose
+        teamType
+        accessControlGroupIds
+      }
+    }
+  }
+`
+
+export const SEARCH_USERS_BY_BP = gql`
+  query getUsersElasticSearch($page: Int, $size: Int, $q: String, $accreditation: [String], $dpSecurity: Boolean) {
+    getUsersElasticSearch(page: $page, size: $size, q: $q, accreditation: $accreditation, dpSecurity: $dpSecurity) {
+      content {
+        userProfileId
+        firstName
+        lastName
+        email
+      }
+    }
+  }
+`
+
+export const SEARCH_RELATIONSHIPS_BY_IDS = gql`
+  query searchRelationshipsByIds($id: String, $type: String, $maxDepth: Int, $excludeTypeList: [String], $includeBranches: [String], $includeNodeTypes: [String]) {
+    searchRelationshipsByIds(id: $id, type: $type, maxDepth: $maxDepth, excludeTypeList: $excludeTypeList, includeBranches: $includeBranches, includeNodeTypes: $includeNodeTypes) {
+      id
+      nodes {
+        id
+        type
+        depth
+        metadata
+      }
+    }
+  }
+`
+
+export const GET_RELATIONSHIPS_BY_ID = gql`
+  query getRelationshipsByIds($id: String) {
+    searchRelationshipsByIds(id: $id, maxDepth: 0) {
+      id
+      nodes {
+        id
+        type
+        depth
+        metadata
+      }
+    }
+  }
+`
+
+export const GET_SAMPLE_LOCATIONS = gql`
+  query getAllRFIDDevices {
+    getAllRFIDDevices {
+      description
+      antennas {
+        antennaDescription
+      }
+    }
+  }
+`
+
+export const GET_USER_BY_ID = gql`
+  query getUsers($userProfileId: String!) {
+    getUsers(userProfileId: $userProfileId) {
+      content {
+        userProfileId
+        firstName
+        lastName
+        isInternal
+        companyName
+        defaultPartnerType: currentVMMRole
+        businessPartner {
+          id
+          name
+        }
+        email
+        accreditation {
+          code
+          description
+        }
+        mailingAddress
+        primaryRole
+        outOfOfficeAttributes {
+          fromDate
+          message
+          toDate
+          userOutOfOffice
+        }
+      }
+    }
+  }
+`
+
+export const DIFF_QUERY_FRAGMENT = gql`
+  fragment countFragment on DiffResponse {
+    missingCount
+    totalFetched
+    refreshDetails @include(if: $isRefreshNeeded) {
+      hostname
+      requestId
+    }
+    missingIds @include(if: $isIncludeMissingIds)
+  }
+`
+
+export const QUERY_TEAM_DIFF = gql`
+  query getTeamsESDiffs($isRefreshNeeded: Boolean!, $isIncludeMissingIds: Boolean!) {
+    getTeamsESDiffs(refreshNeeded: $isRefreshNeeded) {
+      ...countFragment
+    }
+  }
+  ${DIFF_QUERY_FRAGMENT}
+`
+
+export const QUERY_PRODUCT_DIFF = gql`
+  query getProductESDiffs($isRefreshNeeded: Boolean!, $isIncludeMissingIds: Boolean!) {
+    getProductSummary(refreshNeeded: $isRefreshNeeded) {
+      ...countFragment
+    }
+  }
+  ${DIFF_QUERY_FRAGMENT}
+`
+
+export const QUERY_WORKSPACE_DIFF = gql`
+  query getWorkspaceSummary($isRefreshNeeded: Boolean!, $isIncludeMissingIds: Boolean!) {
+    getWorkspaceSummary(refreshNeeded: $isRefreshNeeded) {
+      ...countFragment
+    }
+  }
+  ${DIFF_QUERY_FRAGMENT}
+`
+export const QUERY_SAMPLE_DIFF = gql`
+  query getSampleSummary($isRefreshNeeded: Boolean!, $isIncludeMissingIds: Boolean!) {
+    getSampleSummary(refreshNeeded: $isRefreshNeeded) {
+      ...countFragment
+    }
+  }
+  ${DIFF_QUERY_FRAGMENT}
+`
+
+export const GET_WHERE_USED = gql`
+  query getWhereUsed($id: String!) {
+    whereUsedSearch(id: $id) {
+      id
+      nodes {
+        id
+        type
+        depth
+      }
+    }
+  }
+`
+export const GET_ATTACHMENTS = gql`
+  query getAttachmentsV3($ids: [ID!]) {
+    getAttachmentsV3(ids: $ids) {
+      id
+      humanId
+      documentName
+      documentType
+      documentSize
+      relatedResources
+      createdAt
+      createdBy {
+        firstName
+        lastName
+      }
+      galleryDetails {
+        published
+        publishedAt
+        transcoded
+        assetId
+      }
+      mediaType
+    }
+  }
+`
+export const GET_BOM_BY_ID = gql`
+  query getBomByIds($ids: [String!]) {
+    getBomByIds(ids: $ids) {
+      humanId
+      name
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+      parentId
+    }
+  }
+`
+export const GET_COMBO_BY_ID = gql`
+  query getFabricSpecComboById($id: ID!) {
+    getCombination(id: $id) {
+      description
+      fabricRecordHumanId
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+    }
+  }
+`
+export const GET_DISCUSSIONS_BY_ID = gql`
+  query getDiscussionV2($id: ID!) {
+    getDiscussionV2(id: $id) {
+      discussions {
+        id
+        discussionTitle
+        createdTS
+        createdUser {
+          firstName
+          lastName
+          id
+        }
+        notificationStatus {
+          sent
+          sentTime
+          recipients
+        }
+        resource {
+          __typename
+          ... on SPARK_Product {
+            productId: id
+            description
+          }
+          ... on SPARK_WorkspaceV2 {
+            workspaceId: id
+            description
+          }
+          ... on SPARK_SampleV2 {
+            sampleId: id
+            description
+            product {
+              id
+              description
+            }
+          }
+        }
+        repliesV2 {
+          comment
+          createdTS
+          createdUser {
+            firstName
+            lastName
+            id
+          }
+          notificationStatus {
+            sent
+            sentTime
+            recipients
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_FABRIC_BY_ID = gql`
+  query getFabricById($id: ID!) {
+    getFabricById(id: $id) {
+      fabricSpecId
+      name
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+    }
+  }
+`
+export const GET_FSC_BY_ID = gql`
+  query getFabricSpecComboById($id: ID!) {
+    getFabricSpecComboById(id: $id) {
+      fabricSpecId
+      fabricSpec {
+        fabricRecordId: parentHumanId
+      }
+      parentComboId
+      parentCombo {
+        description
+      }
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+    }
+  }
+`
+export const GET_MEASUREMENT_SET_BY_ID = gql`
+  query getMeasurementByIds($ids: [String!]) {
+    getMeasurementByIds(ids: $ids) {
+      content {
+        resourceId
+        parentId
+        name
+        status {
+          code
+          description
+        }
+        createdAt
+        createdBy {
+          userProfileId
+          firstName
+          lastName
+        }
+        updatedAt
+        updatedBy {
+          userProfileId
+          firstName
+          lastName
+        }
+      }
+    }
+  }
+`
+export const GET_PERMISSIONS = gql`
+  query getPermissions($ids: [String]) {
+    getPermissions(resourceIds: $ids) {
+      resourceId
+      proxyPermissions {
+        proxyResourceId
+        permission
+      }
+      permissions {
+        permission
+        droppedIds
+        abstractAccessGroup {
+          id
+          type
+          adGroup
+          grantees
+        }
+      }
+    }
+  }
+`
+
+export const GET_PRODUCT_BY_ID = gql`
+  query getProductById($id: ID!) {
+    getProduct(id: $id) {
+      id
+      description
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+      status {
+        id
+        name
+      }
+      version
+    }
+  }
+`
+
+export const GET_PRODUCT_VERSIONS = gql`
+  query getProductVersions($id: ID!) {
+    getProductVersions(id: $id) {
+      content {
+        description
+        version
+        updatedAt
+        updatedBy {
+          firstName
+          lastName
+          userProfileId
+        }
+        tags {
+          id
+          name
+        }
+        brand {
+          id
+          name
+        }
+        department {
+          id
+          name
+        }
+        primaryMaterial
+        secondaryMaterial
+        resources {
+          mappings {
+            team
+          }
+        }
+        productWorkspaceInfo {
+          workspaceId
+          designCycle {
+            id
+            name
+          }
+        }
+        businessPartners {
+          id
+          name
+        }
+        vendorAttributes {
+          partnerId
+          status {
+            id
+            name
+            workspaceId
+          }
+        }
+      }
+    }
+  }
+`
+export const GET_SAMPLE_BY_ID = gql`
+  query getSamplesByIdsV2($ids: [ID!]) {
+    getSamplesByIdsV2(ids: $ids) {
+      id
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+      parentId
+    }
+  }
+`
+
+export const GET_TEAM_BY_ID = gql`
+  query getTeamV2($id: ID!) {
+    getTeamV2(id: $id) {
+      id
+      teamName
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+      teamType
+      purpose
+      businessPartner {
+        partnerId
+        partnerName
+      }
+    }
+  }
+`
+export const GET_TRIM_BY_ID = gql`
+  query getTrim($id: ID!) {
+    getTrim(id: $id) {
+      description
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+    }
+  }
+`
+export const GET_WORKSPACE_BY_ID = gql`
+  query getWorkspaceV2($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      id
+      description
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      createdAt
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+      }
+      updatedAt
+      status {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const SEARCH_BUSINESS_PARTNERS = gql`
+  query getBusinessPartners($query: String!) {
+    getBusinessPartners(query: $query) {
+      id
+      name
+      role {
+        bpRoleName
+      }
+    }
+  }
+`
+
+export const GET_UNSENT_DISCUSSIONS = gql`
+  query getUnsentDiscussions {
+    getUnsentDiscussions {
+      discussions {
+        id
+        authorName
+        resources {
+          mappings {
+            product
+            sample
+            workspace
+            combination
+          }
+        }
+      }
+      discussionThreads {
+        id
+        discussionId
+        discussionHead {
+          resources {
+            mappings {
+              workspace
+              sample
+              product
+              combination
+            }
+          }
+        }
+        createdUser {
+          firstName
+          lastName
+        }
+      }
+    }
+  }
+`
+export const GET_PRODUCT_PACKET_REPORTS = gql`
+  query getProductPacketReports {
+    getProductPacketReports {
+      id
+      resourceId
+      workspaceId
+      productId
+      releasedPacket
+      status
+      ownerName {
+        id
+        firstName
+        lastName
+      }
+      createdAt
+      progressPercentage
+    }
+  }
+`
+export const GET_KEY = gql`
+  query getRedisCacheKey($key: String) {
+    getRedisCacheKey(key: $key)
+  }
+`
+export const SEARCH_USERS = gql`
+  query getUsersElasticSearch($page: Int, $size: Int, $q: String, $accreditation: [String], $dpSecurity: Boolean) {
+    getUsersElasticSearch(page: $page, size: $size, q: $q, accreditation: $accreditation, dpSecurity: $dpSecurity) {
+      content {
+        userProfileId
+        firstName
+        lastName
+        email
+      }
+    }
+  }
+`

@@ -1,13 +1,13 @@
 # Skill 03 — Federation Target-Schema Derivation (Pipeline 2.0)
 
-> **Outputs:** `output/{domain}/03-schema.graphql` + `output/{domain}/03-schema-analysis.md`
+> **Outputs:** `output/{domain}/be-03-schema.graphql` + `output/{domain}/be-03-schema-analysis.md`
 > **Audience:** Architects (schema), plus the **Confluence "approach" page** (analysis).
 > **Source of truth:** the **source SDL** at `code/schemas/SPARK_{Domain}.txt` (now present in the
-> snapshot). The `03-schema.graphql` is the **federated target** schema you *translate* from that SDL —
+> snapshot). The `be-03-schema.graphql` is the **federated target** schema you *translate* from that SDL —
 > renamed/restructured for Netflix DGS — verified against the resolver for behaviour. (It is still
 > "derived" in the sense that it is a transform of the source; it is no longer guessed from resolver shapes.)
 
-## 03-schema.graphql — translate the source SDL into the federated target
+## be-03-schema.graphql — translate the source SDL into the federated target
 
 Start from `code/schemas/SPARK_{Domain}.txt` (the real SDL: it already gives you operations, args,
 nullability, types, inputs, `union`/`interface`, and `@deprecated`). Then transform for federation:
@@ -22,11 +22,11 @@ nullability, types, inputs, `union`/`interface`, and `@deprecated`). Then transf
 4. **External stubs:** every type owned elsewhere (VMM_*, sibling DGS types) → `@extends @external` stub.
 5. **Shared types** (`Paging`, `CodeDescription`, `UnitsOfMeasure`, …) → `@shareable`.
 6. Header comment block + status legend (🔜 default green-field). Every field/op preceded by a `#`
-   comment with status + one-line purpose. Body order per `reference-output-conventions` §8.
+   comment with status + one-line purpose. Body order per `output-conventions-condensed` §8.
 7. Header note: `# TARGET schema translated from code/schemas/SPARK_{Domain}.txt — nullability from SDL`.
    Where the SDL and resolver disagree on behaviour, the resolver wins; note the discrepancy.
 
-## 03-schema-analysis.md — sections (mandatory)
+## be-03-schema-analysis.md — sections (mandatory)
 
 1. Header block.
 2. **Type Classification** table — every type → Owned / Embedded / External-stub / Shared / Input / Enum.
@@ -35,7 +35,7 @@ nullability, types, inputs, `union`/`interface`, and `@deprecated`). Then transf
 5. **Client Contract Verification** — every query+mutation confirmed preserved (`{n} ✅ | {n} 🔜 | {n} ⏭`).
 6. **Migration Approach** *(this section is the Confluence approach page)* — recommended sequencing,
    the chosen federation pattern per cross-domain boundary, and any Option A/B/C/D facade decisions.
-7. **Risks & Recommendations** (table per `reference-output-conventions` §6).
+7. **Risks & Recommendations** (table per `output-conventions-condensed` §6).
 
 ## Completion criteria
 - [ ] Every operation and type from the source SDL appears in the target schema (nullability preserved).

@@ -1,0 +1,17 @@
+import { gql } from '@apollo/client'
+
+export const ADD_ACCESS_CONTROL_PERMISSION = gql`
+  mutation addAccessControlPermission($addAccessControl: SPARK_AddAccessControl, $resourceId: String) {
+    addAccessControlPermission(addAccessControl: $addAccessControl, resourceId: $resourceId) {
+      resourceId
+    }
+  }
+`
+
+export const DELETE_ACCESS_CONTROL_PERMISSION = gql`
+  mutation deleteAccessControlPermission($deleteAccessControl: SPARK_DeleteAccessControl, $resourceId: String) {
+    deleteAccessControlPermission(deleteAccessControl: $deleteAccessControl, resourceId: $resourceId) {
+      resourceId
+    }
+  }
+`

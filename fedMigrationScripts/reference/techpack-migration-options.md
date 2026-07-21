@@ -8,7 +8,8 @@
 
 A user opens a product's tech pack and asks: **"How many attachments, samples, BOMs, claims, measurement sets, constructions, and watchlists does this partner have access to for this product?"**
 
-The current Node.js implementation does this in roughly 17 steps:
+The current Node.js implementation does this in 14 steps (authoritative step-by-step breakdown:
+`output/complexStories/techpack/01-adr-techpack.md` §1; the summary below groups them into 8 stages):
 
 ```
 Input: productId, partnerId, workspaceContext, parentProductId
@@ -23,7 +24,8 @@ Step 3:  Call Attachment service → hydrate all attachment objects
 Step 4:  Check each attachment for product_packet_props
          (is this attachment marked "critical" for this partner?)
 
-Step 5:  Fire 7 Elasticsearch queries IN PARALLEL:
+Step 5:  Fire 7 Elasticsearch queries (independent, but awaited SEQUENTIALLY in the
+         legacy code — a named perf defect, ADR-015 pin-down 2):
          ├── samples        (filter by workspaceContext, evaluationStatus 101/102)
          ├── criticalDiscussions (filter by partner security, critical=true)
          ├── measurementSets     (filter by partner, workspace, statusId=200)

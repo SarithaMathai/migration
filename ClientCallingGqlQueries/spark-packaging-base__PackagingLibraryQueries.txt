@@ -1,0 +1,107 @@
+import { gql } from '@apollo/client'
+
+export const SPG_ATTACHMENT_FRAGMENT = gql`
+  fragment SpgAttachmentFragment on SPARK_SearchAttachment {
+    id
+    name
+    createdAt
+    updatedAt
+    documentId
+    humanId: id
+    documentType
+    documentSize
+    previewable
+    versionNumber
+  }
+`
+
+export const SPG_FRAGMENT = gql`
+  fragment SpgFragment on SPARK_SpgFileLibrary {
+    humanId
+    fixedDimensions
+    type
+    name
+    notes
+    existingAttachment
+    status {
+      code
+      description
+    }
+    version
+    attachment {
+      ...SpgAttachmentFragment
+    }
+    attachmentId
+    latestArdFile {
+      ...SpgAttachmentFragment
+    }
+    latestPreviewableFile {
+      ...SpgAttachmentFragment
+    }
+    attachments {
+      content {
+        ...SpgAttachmentFragment
+      }
+    }
+    attachmentIds
+    packagingFormat {
+      code
+      description
+    }
+    brands {
+      name
+      id
+      brandTypes {
+        code
+        name
+      }
+      isTargetOwned
+    }
+    printed {
+      code
+      description
+    }
+    substrateType {
+      code
+      description
+    }
+    passThrough
+    createdAt
+    createdBy {
+      firstName
+      lastName
+    }
+    updatedAt
+    updatedBy {
+      firstName
+      lastName
+    }
+    grainFluteDimension {
+      code
+      description
+    }
+    peg {
+      code
+      description
+    }
+  }
+  ${SPG_ATTACHMENT_FRAGMENT}
+`
+
+export const GET_FILE_LIBRARIES_SEARCH = gql`
+  query getSPGElasticSearch($page: Int = 0, $size: Int = 20, $q: String) {
+    getSPGElasticSearch(page: $page, size: $size, q: $q) {
+      paging {
+        number
+        totalElements
+        totalPages
+        numberOfElements
+        size
+      }
+      content {
+        ...SpgFragment
+      }
+    }
+  }
+  ${SPG_FRAGMENT}
+`

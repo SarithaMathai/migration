@@ -1,6 +1,6 @@
 # Skill 05 — Attribute (Field) Inventory  *(new in Pipeline 2.0)*
 
-> **Output:** `output/{domain}/05-attribute-inventory.md`
+> **Output:** `output/{domain}/be-05-attribute-inventory.md`
 > **Purpose:** a flat, sortable, machine-parseable table of **every field on every type and every
 > input object** in the domain, classified by how it is resolved and how hard it is to migrate.
 > **Audience:** Engineers (find your field fast), Copilot/agents (parse the table), POs
@@ -13,7 +13,7 @@ resolver, which call another service, and how complex is each one?"* — in one 
 
 ## Why this exists
 
-`01-schema-inventory.md` lists files. `03-schema.graphql` lists types. Neither lets a junior or PO see,
+`be-01-schema-inventory.md` lists files. `be-03-schema.graphql` lists types. Neither lets a junior or PO see,
 at a glance, **which individual attributes carry migration risk**. Most fields are free
 (direct pass-through). A minority need a field resolver, and a smaller minority call an external
 service. This table makes that distribution explicit and ties each non-trivial field to its story.
@@ -53,7 +53,7 @@ Columns:
 - **Resolver Loc** — `file.txt:line` or `— (direct from parent)` for Direct.
 - **EXT (sev)** — loader key + glyph, or `—`.
 - **Complexity** — Low/Medium/High/Very High for the *field's* migration, not the whole op.
-- **Story** — the `04-stories.md` ID that delivers this field.
+- **Story** — the `be-04-stories.md` ID that delivers this field.
 
 ### Table 2 — Input-object attributes (mandatory)
 
@@ -85,12 +85,12 @@ Columns:
   rows are at the top of each type group.
 - One row per field. Never collapse multiple fields into one row.
 - Every non-Direct row must have a **Story** value (it is a bug if a field resolver has no story).
-- Keep the same status/severity glyphs as `reference-output-conventions` (🔴/🟡/🔵).
+- Keep the same status/severity glyphs as `output-conventions-condensed` (🔴/🟡/🔵).
 
 ## Completion criteria
 
 - [ ] Every field of every object type is present exactly once.
 - [ ] Every field of every input object is present exactly once.
-- [ ] Each non-Direct field maps to a story ID that exists in `04-stories.md`.
+- [ ] Each non-Direct field maps to a story ID that exists in `be-04-stories.md`.
 - [ ] Summary roll-up percentages sum to 100%.
 - [ ] Polymorphic interface fields and all their concrete-variant fields are represented.

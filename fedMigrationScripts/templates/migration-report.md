@@ -1,4 +1,4 @@
-# Template: Schema Inventory (`01-schema-inventory.md`)
+# Template: Schema Inventory (`be-01-schema-inventory.md`)
 
 This template defines the format for Phase 1 schema inventory output.
 
@@ -217,7 +217,7 @@ If you have DGS files to compare against, provide them when running Phase 3.
 **Target Service:** `{ServiceClassName}` ({repo})
 **EXT Service Calls (estimated):** {n}
 **Output Files Written:**
-- `output/{domain}/01-schema-inventory.md` ({n} lines)
+- `output/{domain}/be-01-schema-inventory.md` ({n} lines)
 **Next Phase:** Phase 2 — Resolver Dependency Analysis
 **Open Questions:** {list or "None"}
 **Large File Warning:** {None | ⚠️ {file} is {n} lines — Phase 2 will use 500-line chunks}

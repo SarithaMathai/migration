@@ -12,10 +12,11 @@
      **ship-on-green** model. **No code.** This is your 1–2 page page (paste-ready for Confluence).
 
 2. **Zoom out — the whole program:** `summary/00-program-overview.md`
-   - All 13 domains: totals, per-domain table, target DGS groupings, top risks, open decisions, recommended
-     sequencing, and cross-domain blockers.
+   - All 8 phase-1 domains: totals, per-domain table, target DGS groupings, top risks, open decisions,
+     recommended sequencing, and cross-domain blockers. (5 more domains — attachment, discussion, sample,
+     search, workspace — join in a later phase.)
 
-3. **Approve the plan — the breakdown:** `summary/{domain}/FederatedGqlBrakDown-{domain}.md`
+3. **Approve the plan — the breakdown:** `summary/{domain}/FederatedGqlBreakDown-{domain}.md`
    - Every story in one table (ID, summary, size, dependencies, status), the **Phase-0 spikes**, the
      **§5b complex-story breakdowns**, risks, decisions, and the dependency map. This is the page you sign off.
 
@@ -35,10 +36,10 @@
 ## How to read a story row (scan, don't implement)
 
 ```
-SPARK-BOM-B04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
+BOM-BE-B-04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
 ```
 - **Size:** 🟢 XS · 🟡 M · 🟠 L · 🔴 XL — drives sprint load.
-- **Depends On:** only real story-to-story blockers (the one-time `B01` scaffold is assumed, not shown).
+- **Depends On:** only real story-to-story blockers (the one-time `B-01` scaffold is assumed, not shown).
 - **Status:** ⬜ Not Started → update as work proceeds.
 
 > Each story = **one `spark-internal-graphql` operation being migrated** (the title is that operation).

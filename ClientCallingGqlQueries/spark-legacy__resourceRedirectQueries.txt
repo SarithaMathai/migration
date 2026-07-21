@@ -1,0 +1,90 @@
+import { gql } from '@apollo/client'
+
+export const RESOURCE_REDIRECT_SLIM_GET_DISCUSSION_BY_ID = gql`
+  query resourceRedirectSlimGetDiscussionById($id: ID!) {
+    getDiscussionsByThread(id: $id) {
+      id
+      threadId
+    }
+    coreGetDiscussionV2(id: $id) {
+      discussions {
+        discussionId: id
+        resource {
+          ... on SPARK_Product {
+            productId: id
+            description
+          }
+          ... on SPARK_WorkspaceV2 {
+            workspaceId: id
+            description
+          }
+          ... on SPARK_SampleV2 {
+            sampleId: id
+            description
+            parentId
+            product {
+              id
+              description
+            }
+            fabricSpecCombo {
+              humanId
+              parentComboId
+            }
+            fabricSpec {
+              humanId
+              parentHumanId
+            }
+          }
+          ... on SPARK_Palette {
+            paletteId: humanId
+            description
+          }
+          ... on SPARK_Artwork {
+            artworkId: humanId
+            description: name
+          }
+          ... on SPARK_Trim {
+            trimId: humanId
+            description
+          }
+          ... on SPARK_Wash {
+            washId: humanId
+            description: washDescription
+          }
+          ... on SPARK_Fabric {
+            fabricId: humanId
+            description: name
+          }
+          ... on SPARK_Color {
+            colorId: humanId
+            description: name
+          }
+          ... on SPARK_ColorArchroma {
+            colorArchromaId: humanId
+            description: name
+          }
+          ... on SPARK_Combination {
+            combinationId: humanId
+            description
+          }
+          ... on SPARK_FabricSpecification {
+            fabricSpecId: humanId
+            description: name
+          }
+          ... on SPARK_HubMaterial {
+            materialId: humanId
+            type
+            baseMaterial {
+              description
+            }
+          }
+          ... on SPARK_Packaging {
+            packagingId: humanId
+            parentId
+            description
+          }
+        }
+      }
+    }
+  }
+`

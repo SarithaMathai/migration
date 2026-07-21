@@ -1,0 +1,28 @@
+import { gql } from '@apollo/client'
+
+// TODO: This is a temporary location for this query, to help prevent circular dependencies.
+export const GET_BACKGROUND_ACTIVITY_NOTIFICATIONS_TEMP = gql`
+  query getBackgroundActivityNotifications {
+    getBackgroundActivityNotifications {
+      content {
+        id
+        description
+        progressPercentage
+        category
+        action
+        status
+        type
+        archived
+        visited
+        createdAt
+        originatorId
+        notificationMessageList {
+          notificationStatus
+          title
+          comment
+          url
+        }
+      }
+    }
+  }
+`

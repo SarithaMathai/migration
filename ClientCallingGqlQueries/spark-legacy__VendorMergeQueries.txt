@@ -1,0 +1,109 @@
+import { gql } from '@apollo/client'
+
+export const VENDOR_MERGE = gql`
+  mutation vendorMerge($vendorMergeData: [SPARK_VendorMergeInput]) {
+    vendorMerge(vendorMergeData: $vendorMergeData) {
+      vendorMergeId
+      resourceId
+      resourceDescription
+    }
+  }
+`
+
+export const SEARCH_BUSINESS_PARTNERS = gql`
+  query getBusinessPartners($query: String!) {
+    getBusinessPartners(query: $query) {
+      id
+      name
+      role {
+        bpRoleName
+      }
+    }
+  }
+`
+
+export const VENDOR_MERGE_TEAMS_INFO = gql`
+  fragment VendorMergeAddTeamDetailsFragment on SPARK_TeamPaged {
+    content {
+      id
+      name
+      accessControlGroupIds
+    }
+  }
+`
+
+export const SEARCH_TEAMS = gql`
+  query searchTeamsElastic($q: String) {
+    searchTeamsElastic(q: $q, page: 0, size: 100) {
+      ...VendorMergeAddTeamDetailsFragment
+    }
+  }
+  ${VENDOR_MERGE_TEAMS_INFO}
+`
+
+export const PID_AND_WRK_ID_SEARCH = gql`
+  query getProducts($q: String) {
+    getProducts(q: $q, page: 0, size: 10) {
+      content {
+        id
+        description
+      }
+    }
+    getWorkspacesPagedV3(q: $q, page: 0, size: 10) {
+      content {
+        id
+        description
+      }
+    }
+  }
+`
+export const GET_VENDOR_MERGE_STATUS_LIST = gql`
+  query getVendorMergeStatus($requestId: String, $size: Int, $page: Int) {
+    getVendorMergeStatus(requestId: $requestId, size: $size, page: $page) {
+      content {
+        requestId
+        status
+        vendorMergeBpInfo {
+          oldName
+          newName
+        }
+      }
+      totalCount
+    }
+  }
+`
+
+export const GET_VENDOR_MERGE_STATUS_DATA = gql`
+  query getVendorMergeStatus($requestId: String, $size: Int, $page: Int) {
+    getVendorMergeStatus(requestId: $requestId, size: $size, page: $page) {
+      content {
+        requestId
+        status
+        vendorMergeBpInfo {
+          oldName
+          newName
+        }
+        resourceInfo {
+          resourceId
+          resourceDescription
+        }
+        vendorMergeTeamInfo {
+          oldName
+          newName
+        }
+        createdBy
+        resourcesStatus {
+          resourceType
+          resourceIds
+          sourceId
+          sourceCount
+          targetId
+          targetCount
+          status
+          replaceType
+        }
+      }
+      totalCount
+    }
+  }
+`

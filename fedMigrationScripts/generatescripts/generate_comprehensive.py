@@ -8,7 +8,7 @@ breakdowns (§8b), all stories with AC + test cases (High/VH only), and a
 story reference table.
 
 Source priority:
-  1. output/initial-analysis/{domain}/  (updated, Phase A dissolved where applicable)
+  1. output/analysis/{domain}/  (updated, Phase A dissolved where applicable)
   2. migration/finalOutput/{domain}/         (fallback; used for search)
 
 Output → migration/finalOutput/oneStopDoc/{domain}-comprehensive.md
@@ -27,8 +27,8 @@ from datetime import date
 # ─── Path setup ──────────────────────────────────────────────────────────────
 HERE = Path(__file__).resolve().parent                   # .../finalOutput/oneStopDoc/
 REPO_ROOT = HERE.parent.parent                    # c:\Saritha\jun30\
-UPDATED_SOURCE = HERE.parent.parent / "output" / "initial-analysis"
-FALLBACK_SOURCE = HERE.parent.parent / "output" / "initial-analysis"       # .../finalOutput/initial-analysis/
+UPDATED_SOURCE = HERE.parent.parent / "output" / "analysis"
+FALLBACK_SOURCE = HERE.parent.parent / "output" / "analysis"       # .../finalOutput/analysis/
 OUT_DIR = HERE.parent.parent / "output" / "summary"
 
 # ─── Domain catalogue ─────────────────────────────────────────────────────────
@@ -78,82 +78,138 @@ DGS_MAP = {
 COMPLEX_STORIES: dict[str, dict] = {
     "product": {
         "intro": (
-            "Four stories in this domain (2 Very High + 2 High) were broken into "
-            "**M-size (≤5 day) sub-tasks** in Jira. Two Very High stories are also "
-            "covered by dedicated complex-case breakdowns."
+            "Several stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira. "
+            "A number of them are also covered by dedicated complex-case breakdowns — see "
+            "each case's `01-stories.md` for the full cross-domain story set."
         ),
         "very_high": [
             {
-                "id": "SPARK-PROD-E01",
+                "id": "PRODUCT-BE-E-00",
+                "name": "WriteSaga shared module (Sprint 0, critical path)",
+                "subtasks": "E-00-1 ordered-steps + policy engine · E-00-2 default policy table + compensation inventory",
+                "complex_case": "non-atomic-write-saga",
+            },
+            {
+                "id": "PRODUCT-BE-E-01",
                 "name": "productBusinessPartnerActions (drop/undrop)",
-                "subtasks": "E01-1 orchestrator + fan-out · E01-2 ACL drop + user-profile · E01-3 saga + parity harness",
+                "subtasks": "E-01-1 orchestrator + fan-out · E-01-2 ACL drop + user-profile · E-01-3 saga + parity harness",
                 "complex_case": "partner-drop-undrop-write",
             },
             {
-                "id": "SPARK-PROD-G01",
+                "id": "PRODUCT-BE-E-03",
+                "name": "TechPack stub + facade (facade-then-federate, draft ADR-015 Option B)",
+                "subtasks": "E-03 thin stub + aggregation facade",
+                "complex_case": "techpack",
+            },
+            {
+                "id": "PRODUCT-BE-E-04",
+                "name": "TechPack bulk wrapper (ordering fix)",
+                "subtasks": "E-04 bulk wrapper (input-ordered)",
+                "complex_case": "techpack",
+            },
+            {
+                "id": "PRODUCT-BE-G-01",
                 "name": "Product.attachmentsWithMetaData",
-                "subtasks": "G01-1 per-domain service call + merge · G01-2 metadata hydration + counts",
+                "subtasks": "G-01-1 per-domain service call + merge · G-01-2 metadata hydration + counts",
                 "complex_case": "attachments-enrichment",
+            },
+            {
+                "id": "PRODUCT-BE-G-02",
+                "name": "Product.components (fan-out + rollups)",
+                "subtasks": "G-02-1 batched-ACL fan-out · G-02-2 count rollups + type tagging",
+                "complex_case": "components-and-counts-rollups",
+            },
+            {
+                "id": "PRODUCT-BE-G-11-1",
+                "name": "Product.notRemovablePartnerIds + notRemovableWorkspaceIds",
+                "subtasks": "G-11-1-1 lane clients (discussion/attachment/sample/watchlist) · G-11-1-2 union + parallelization",
+                "complex_case": "notRemovable-undroppable-partners",
             },
         ],
         "high": [
-            {"id": "SPARK-PROD-E02", "name": "updateComponentStatuses (5-loader fan-out)", "subtasks": "E02-1 loader scaffold + status updates · E02-2 parity + count validation"},
-            {"id": "SPARK-PROD-G03", "name": "Product.attachments / attachmentsV3 / attachmentSummary", "subtasks": "G03-1 attachments + attachmentsV3 · G03-2 attachmentSummary + draft filtering"},
-        ],
-        "delegated": [
-            {"id": "SPARK-PROD-E03/E04", "name": "TechPack stub + facade (Option D)", "case": "complexStories/techpack/"},
-            {"id": "SPARK-PROD-G02",    "name": "components (fan-out + rollups)", "case": "complexStories/components-and-counts-rollups/"},
+            {"id": "PRODUCT-BE-E-02", "name": "updateComponentStatuses (5-loader fan-out)", "subtasks": "E-02-1 loader scaffold + status updates · E-02-2 parity + count validation"},
+            {"id": "PRODUCT-BE-G-03", "name": "Product.attachments / attachmentsV3 / attachmentSummary", "subtasks": "G-03-1 attachments + attachmentsV3 · G-03-2 attachmentSummary + draft filtering"},
+            {
+                "id": "PRODUCT-BE-G-07",
+                "name": "unDroppablePartners semantics",
+                "subtasks": "G-07-1 design-partner gate + dps exclusion · G-07-2 numeric-grantee filter",
+                "complex_case": "notRemovable-undroppable-partners",
+            },
+            {
+                "id": "PRODUCT-BE-D-01",
+                "name": "addProduct (shared association component)",
+                "subtasks": "D-01-1 workspace link via component",
+                "complex_case": "cross-domain-association",
+            },
+            {
+                "id": "PRODUCT-BE-D-02",
+                "name": "addProducts bulk (shared association component)",
+                "subtasks": "D-02-1 workspace link · D-02-2 attachment-metadata client call (replaces cross-resolver import)",
+                "complex_case": "cross-domain-association",
+            },
+            {
+                "id": "PRODUCT-BE-D-04",
+                "name": "updateProduct (shared association component)",
+                "subtasks": "D-04-1 template-attachment archiving via component",
+                "complex_case": "cross-domain-association",
+            },
         ],
     },
     "bom": {
-        "intro": "Two stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
+        "intro": "Several stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "very_high": [
-            {"id": "SPARK-BOM-E01", "name": "updateBom — 3-step orchestrated write", "subtasks": "E01-1 workspace-assoc + body PUT · E01-2 permissions PUT + rollback framework", "complex_case": "non-atomic-write-saga"},
+            {"id": "BOM-BE-E-01", "name": "updateBom — 3-step orchestrated write", "subtasks": "E-01-1 workspace-assoc + body PUT · E-01-2 permissions PUT + rollback framework", "complex_case": "non-atomic-write-saga"},
         ],
         "high": [
-            {"id": "SPARK-BOM-G08", "name": "BomTrimMaterial field resolvers (7 types + dispatcher)", "subtasks": "G08-1 dispatcher scaffold + type resolution · G08-2 7 TrimMaterial field resolvers"},
+            {"id": "BOM-BE-G-08", "name": "BomTrimMaterial field resolvers (7 types + dispatcher)", "subtasks": "G-08-1 dispatcher scaffold + type resolution · G-08-2 7 TrimMaterial field resolvers"},
+            {
+                "id": "BOM-BE-A-05",
+                "name": "Shared CI conformance gate + code→type registry",
+                "subtasks": "A-05-1 SDL↔enum↔fixture conformance library · A-05-2 code→type registry seeding",
+                "complex_case": "polymorphic-type-resolution",
+            },
         ],
     },
     "workspace": {
         "intro": "Three stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "very_high": [
-            {"id": "SPARK-WS-E01", "name": "workspaceBusinessPartnerActionsV2 (5-case dispatcher)", "subtasks": "E01-1 dispatcher scaffold + sample/discussion/claims cases · E01-2 engagement/team/ACL removal + saga", "complex_case": "partner-drop-undrop-write"},
-            {"id": "SPARK-WS-G01", "name": "WorkspaceV2.attachmentsWithMetaData (hub rollup)", "subtasks": "G01-1 per-domain services + merge · G01-2 metadata + draft filtering + counts", "complex_case": "attachments-enrichment"},
+            {"id": "WORKSPACE-BE-E-01", "name": "workspaceBusinessPartnerActionsV2 (5-case dispatcher)", "subtasks": "E-01-1 dispatcher scaffold + sample/discussion/claims cases · E-01-2 engagement/team/ACL removal + saga", "complex_case": "partner-drop-undrop-write"},
+            {"id": "WORKSPACE-BE-G-01", "name": "WorkspaceV2.attachmentsWithMetaData (hub rollup)", "subtasks": "G-01-1 per-domain services + merge · G-01-2 metadata + draft filtering + counts", "complex_case": "attachments-enrichment"},
         ],
         "delegated": [
-            {"id": "SPARK-WS-G02", "name": "counts (dashboard rollup + increment)", "case": "complexStories/components-and-counts-rollups/"},
+            {"id": "WORKSPACE-BE-G-02", "name": "counts (dashboard rollup + increment)", "case": "complexStories/components-and-counts-rollups/"},
         ],
     },
     "attachment": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "high": [
-            {"id": "SPARK-ATCH-G01", "name": "Attachment field resolvers (cross-domain)", "subtasks": "G01-1 access/users · G01-2 businessPartnersFull + snake/camel"},
+            {"id": "ATTACHMENT-BE-G-01", "name": "Attachment field resolvers (cross-domain)", "subtasks": "G-01-1 access/users · G-01-2 businessPartnersFull + snake/camel"},
         ],
     },
     "claims": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "high": [
-            {"id": "SPARK-CLM-E01", "name": "updateClaim (proxy ACL + workspace + body)", "subtasks": "E01-1 body PUT + workspace call · E01-2 ACL proxy + orchestration"},
+            {"id": "CLAIM-BE-E-01", "name": "updateClaim (proxy ACL + workspace + body)", "subtasks": "E-01-1 body PUT + workspace call · E-01-2 ACL proxy + orchestration"},
         ],
     },
     "discussion": {
         "intro": "Two stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "high": [
-            {"id": "SPARK-DISC-E02", "name": "Participants V3 (4 bundled mutations)", "subtasks": "E02-1 updateParticipantsV3 + coreUpdate · E02-2 coreDelete + deleteParticipantV3"},
-            {"id": "SPARK-DISC-G01", "name": "Discussion field resolvers (3 main types)", "subtasks": "G01-1 Discussion + Content · G01-2 FullDiscussion + participants"},
+            {"id": "DISCUSSION-BE-E-02", "name": "Participants V3 (4 bundled mutations)", "subtasks": "E-02-1 updateParticipantsV3 + coreUpdate · E-02-2 coreDelete + deleteParticipantV3"},
+            {"id": "DISCUSSION-BE-G-01", "name": "Discussion field resolvers (3 main types)", "subtasks": "G-01-1 Discussion + Content · G-01-2 FullDiscussion + participants"},
         ],
     },
     "packaging": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "high": [
-            {"id": "SPARK-PKG-E01", "name": "updatePackaging (body + attachment add/remove, branching)", "subtasks": "E01-1 body + attachment add · E01-2 attachment remove + pricing"},
+            {"id": "PKG-BE-E-01", "name": "updatePackaging (body + attachment add/remove, branching)", "subtasks": "E-01-1 body + attachment add · E-01-2 attachment remove + pricing"},
         ],
     },
     "sample": {
         "intro": "Three stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "high": [
-            {"id": "SPARK-SMPL-E02", "name": "bulkEvaluateSamples (evaluation + new-rounds utility)", "subtasks": "E02-1 evaluation orchestrator · E02-2 new-rounds utility"},
-            {"id": "SPARK-SMPL-G02", "name": "Prefix-gated parents (5 prefixes + union)", "subtasks": "G02-1 prefix→loader table + DataLoader · G02-2 parent field resolvers + union"},
+            {"id": "SAMPLE-BE-E-02", "name": "bulkEvaluateSamples (evaluation + new-rounds utility)", "subtasks": "E-02-1 evaluation orchestrator · E-02-2 new-rounds utility"},
+            {"id": "SAMPLE-BE-G-02", "name": "Prefix-gated parents (5 prefixes + union)", "subtasks": "G-02-1 prefix→loader table + DataLoader · G-02-2 parent field resolvers + union"},
         ],
     },
 }
@@ -185,14 +241,14 @@ def complexity_badge(c: str) -> str:
 # ─── Source file resolution ───────────────────────────────────────────────────
 def get_domain_dir(domain: str) -> Path:
     for src in [FALLBACK_SOURCE / domain]:
-        if (src / "04-po-summary.md").exists():
+        if (src / "be-04-po-summary.md").exists():
             return src
     raise FileNotFoundError(f"No source found for domain '{domain}'. Checked: {UPDATED_SOURCE / domain}, {FALLBACK_SOURCE / domain}")
 
 
 # ─── Story parser ─────────────────────────────────────────────────────────────
 STORY_HEADER_RE = re.compile(
-    r"^### (SPARK-[A-Z]+-[A-Za-z0-9]+(?:-\d+)?) · (.+)$", re.MULTILINE
+    r"^### ([A-Z]+-BE-[A-Za-z]-\d+(?:-\d+)?) · (.+)$", re.MULTILINE
 )
 METADATA_INLINE_RE = re.compile(
     r"\*\*Type:\*\*\s*([^·\n]+).*?\*\*Complexity:\*\*\s*([^·\n]+)", re.DOTALL
@@ -230,7 +286,7 @@ def clean_ac_text(t: str) -> str:
 
 def strip_phase_a(text: str) -> str:
     """Remove only genuine noise: 'Phase A dissolved' blockquote notes and pipeline footers.
-    Does NOT delete legit Phase-A story rows/refs — BOM's `A04` type-resolver is a real story."""
+    Does NOT delete legit Phase-A story rows/refs — BOM's `A-04` type-resolver is a real story."""
     text = re.sub(r"^>.*[Pp]hase A dissolved[^\n]*\n?", "", text, flags=re.MULTILINE)
     text = re.sub(r"^>.*No separate Phase A[^\n]*\n?", "", text, flags=re.MULTILINE)
     text = re.sub(r"^\*Pipeline 2\.0[^\n]*\n?", "", text, flags=re.MULTILINE)
@@ -273,11 +329,11 @@ def parse_stories(stories_path: Path) -> list[dict]:
         if phase_m:
             phase = phase_m.group(1)
         else:
-            yaml_p = re.search(r"\bphase:\s*([A-G])\b", body, re.IGNORECASE)
+            yaml_p = re.search(r"\bphase:\s*([A-H])\b", body, re.IGNORECASE)
             if yaml_p:
                 phase = yaml_p.group(1).upper()
             else:
-                id_p = re.search(r"SPARK-[A-Z]+-([A-G])\d", sid)
+                id_p = re.search(r"-BE-([A-H])-\d", sid)
                 phase = id_p.group(1) if id_p else "?"
         dep_m     = DEPENDS_RE.search(body)
         depends   = dep_m.group(1).strip() if dep_m else "—"
@@ -378,8 +434,8 @@ def build_comprehensive(domain: str) -> str:
     src_dir = get_domain_dir(domain)
     today   = date.today().isoformat()
 
-    po_text     = (src_dir / "04-po-summary.md").read_text(encoding="utf-8")
-    stories_path = src_dir / "04-stories.md"
+    po_text     = (src_dir / "be-04-po-summary.md").read_text(encoding="utf-8")
+    stories_path = src_dir / "be-04-stories.md"
     stories      = parse_stories(stories_path)
     phases       = group_by_phase(stories)
 

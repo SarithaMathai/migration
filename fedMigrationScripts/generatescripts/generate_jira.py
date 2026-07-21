@@ -3,9 +3,9 @@
 Generate clean Jira-import CSVs for every domain.
 
 Rules applied:
-- Source: output/initial-analysis/{domain}/ (updated, Phase A dissolved)
+- Source: output/analysis/{domain}/ (updated, Phase A dissolved)
   Fallback: migration/finalOutput/{domain}/ (search only)
-- Phase A stories are excluded (they are a one-time B01 checklist, not Jira tickets)
+- Phase A stories are excluded (they are a one-time B-01 checklist, not Jira tickets)
 - Test cases included in Description only for High / Very High complexity stories
 - AC and test text preserves inline code (backticks) and bold
 - Output: migration/finalOutput/jira/{domain}.csv  + jira/all-stories.csv
@@ -25,8 +25,8 @@ from pathlib import Path
 # ─── Path setup ──────────────────────────────────────────────────────────────
 HERE          = Path(__file__).resolve().parent
 REPO_ROOT     = HERE.parent.parent
-UPDATED_SRC   = HERE.parent.parent / "output" / "initial-analysis"
-FALLBACK_SRC  = HERE.parent.parent / "output" / "initial-analysis"
+UPDATED_SRC   = HERE.parent.parent / "output" / "analysis"
+FALLBACK_SRC  = HERE.parent.parent / "output" / "analysis"
 JIRA_OUT      = HERE.parent.parent / "output" / "jira"
 
 # ─── Domain catalogue ─────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ DOMAIN_LABELS = {
 }
 
 # Short, readable tag prefixed to every story Summary so a domain is identifiable
-# under the single shared epic (e.g. "[BOM] SPARK-BOM-S01 · ...").
+# under the single shared epic (e.g. "[BOM] BOM-BE-S-01 · ...").
 DOMAIN_TAG = {
     "attachment":     "Attachment",
     "bom":            "BOM",
@@ -113,12 +113,40 @@ PHASE_LABEL = {
     "E": "complex",
     "F": "field-resolver",
     "G": "field-resolver",
+    "H": "entity-resolver",
 }
 DEFAULT_STATUS = "To Do"
 
+# ─── External Dependency column (from be-05's structured EXT (sev) column — never
+# scraped from free-text prose, which is incidental and inconsistent story-to-story) ──
+_csd_module = None
+_ext_by_story_cache: dict[str, dict[str, list[str]]] = {}
+
+
+def _ext_services_for_story(domain: str, story_id: str) -> str:
+    """Comma-joined, sorted external services (e.g. 'user-profile, vmm') that `story_id`
+    depends on, per that domain's be-05-attribute-inventory.md EXT (sev) column —
+    aggregated across every field row be-05 attributes to this story. Empty string if
+    the story has no EXT-tagged fields (internal-only) or be-05 has no data for it."""
+    global _csd_module
+    if domain not in _ext_by_story_cache:
+        if _csd_module is None:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location(
+                "generate_client_story_dependency", HERE / "generate_client_story_dependency.py")
+            _csd_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(_csd_module)
+        be05 = _csd_module.load_be05(domain)
+        per_story: dict[str, set] = {}
+        for entry in be05["fields"].values():
+            if entry["ext"]:
+                per_story.setdefault(entry["story"], set()).update(entry["ext"])
+        _ext_by_story_cache[domain] = {sid: sorted(exts) for sid, exts in per_story.items()}
+    return ", ".join(_ext_by_story_cache[domain].get(story_id, []))
+
 # ─── Story parser ─────────────────────────────────────────────────────────────
 STORY_HEADER_RE = re.compile(
-    r"^### (SPARK-[A-Z]+-([A-Za-z])(\d+)(?:-\d+)?) · (.+)$", re.MULTILINE
+    r"^### ([A-Z]+-BE-([A-Za-z])-(\d+)(?:-\d+)?) · (.+)$", re.MULTILINE
 )
 METADATA_INLINE_RE = re.compile(
     r"\*\*Type:\*\*\s*([^·\n]+).*?\*\*Complexity:\*\*\s*([^·\n]+)", re.DOTALL
@@ -143,9 +171,9 @@ def dedupe_ids(raw: str) -> str:
 
 def get_domain_dir(domain: str) -> Path:
     for src in (FALLBACK_SRC / domain,):
-        if (src / "04-stories.md").exists():
+        if (src / "be-04-stories.md").exists():
             return src
-    raise FileNotFoundError(f"No 04-stories.md found for domain '{domain}'")
+    raise FileNotFoundError(f"No be-04-stories.md found for domain '{domain}'")
 
 
 def extract_named_section(body: str, header: str) -> str:
@@ -178,7 +206,7 @@ def parse_stories(stories_path: Path) -> list[dict]:
         phase = m.group(2).upper()
         title = m.group(4).strip()
 
-        # Phase A is a real story now (e.g. BOM A04 type-resolver) — no longer skipped.
+        # Phase A is a real story now (e.g. BOM A-04 type-resolver) — no longer skipped.
 
         start = m.end()
         end   = matches[i + 1].start() if i + 1 < len(matches) else len(text)
@@ -199,7 +227,7 @@ def parse_stories(stories_path: Path) -> list[dict]:
         status_m = STATUS_RE.search(body)
         status   = status_m.group(1).strip() if status_m else DEFAULT_STATUS
 
-        # Build depends list (may include blocked-by), deduped — fixes the 'B01, B01' class of bug
+        # Build depends list (may include blocked-by), deduped — fixes the 'B-01, B-01' class of bug
         dep_parts = [d.strip() for d in re.split(r"[,;]", depends) if d.strip() and d.strip() != "—"]
         if blocked:
             dep_parts += [b.strip() for b in re.split(r"[,;]", blocked) if b.strip()]
@@ -310,7 +338,10 @@ except Exception:
 try:
     from generate_breakdown import (
         spike_for as _spike_for, SPIKE_TITLES, SPIKE_LAYMAN, SPIKE_DECISION,
-        SPIKE_STEPS, SPIKE_CASE_FOLDER,
+        SPIKE_STEPS, SPIKE_CASE_FOLDER, xs_merge_map as _xs_merge_map,
+        parse_stories as _bd_parse_stories, compute_implementation_order as _bd_order,
+        DOMAIN_OWNERS as _DOMAIN_OWNERS, PRIORITY_MAP as _PRIORITY_MAP,
+        PHASE_SEQ as _BD_PHASE_SEQ,
     )
 except Exception:                                    # pragma: no cover — fallback keeps CSVs generating
     _spike_for       = lambda s: None
@@ -319,8 +350,37 @@ except Exception:                                    # pragma: no cover — fall
     SPIKE_DECISION   = {}
     SPIKE_STEPS      = {}
     SPIKE_CASE_FOLDER = {}
+    _xs_merge_map    = lambda domain: {}
+    _bd_parse_stories = lambda p: []
+    _bd_order        = lambda st: ([], {}, [])
+    _DOMAIN_OWNERS   = {}
+    _PRIORITY_MAP    = {}
+    _BD_PHASE_SEQ    = "ABCDEFG"
 
-_SPIKE_REF_RE = re.compile(r"\b(?:SPARK-[A-Z]+-)?S\d+\b")
+
+_FE_STORIES_CACHE = None
+
+
+def _fe_stories() -> list[dict]:
+    """FE stories (dep-remapped) — used to list which FE stories a BE story Blocks."""
+    global _FE_STORIES_CACHE
+    if _FE_STORIES_CACHE is None:
+        try:
+            import importlib.util as _ilu
+            spec = _ilu.spec_from_file_location(
+                "generate_frontend", Path(__file__).resolve().parent / "generate_frontend.py")
+            gf = _ilu.module_from_spec(spec)
+            spec.loader.exec_module(gf)
+            _FE_STORIES_CACHE = gf.parse_fe_stories()
+        except Exception:
+            _FE_STORIES_CACHE = []
+    return _FE_STORIES_CACHE
+
+
+def _op_name(title: str) -> str:
+    return re.sub(r"\(.*?\)", "", title).replace("`", "").strip()
+
+_SPIKE_REF_RE = re.compile(r"\b(?:[A-Z]+-BE-)?S-?\d+\b")
 
 
 def _strip_domain_spike_refs(dep: str) -> str:
@@ -347,11 +407,11 @@ def program_spike_rows() -> list[list]:
         desc = "\n\n".join(desc_sections)
         rows.append([
             "Spike",
-            f"SPARK-SPIKE-{b}",
-            f"(Program) {SPIKE_TITLES[b]} [SPARK-SPIKE-{b}]",
+            f"SPIKE-{b}",
+            f"(Program) {SPIKE_TITLES[b]} [SPIKE-{b}]",
             "", GLOBAL_EPIC_NAME, "S", "M",
             "dgs-migration", "all-domains", "spike",
-            "", "", DEFAULT_STATUS, desc,
+            "", "", "", DEFAULT_STATUS, desc,
         ])
     return rows
 
@@ -381,44 +441,164 @@ def epic_row() -> list:
     """The single shared epic row that every story/spike links to."""
     return [
         "Epic", "", GLOBAL_EPIC_NAME, GLOBAL_EPIC_NAME, "", "", "",
-        "dgs-migration", "all-domains", "epic", "", "", "",
+        "dgs-migration", "all-domains", "epic", "", "", "", "",
         GLOBAL_EPIC_DESC,
     ]
+
+
+_SHORT_BE_RE = re.compile(r"-BE-([A-H]-\d+(?:-\d+)?)$")
+_DEP_ID_RE   = re.compile(r"\b((?:[A-Z]+-BE-)?)([A-H]-\d+(?:-\d+)?)\b")
+
+
+def _short_be(full_id: str) -> str:
+    m = _SHORT_BE_RE.search(full_id)
+    return m.group(1) if m else full_id
 
 
 def build_story_rows(domain: str) -> list[list]:
     """Story/spike rows for one domain — summary tagged with the domain, linked to the shared epic."""
     tag     = DOMAIN_TAG.get(domain, domain)
     src_dir = get_domain_dir(domain)
-    stories = parse_stories(src_dir / "04-stories.md")
+    stories = parse_stories(src_dir / "be-04-stories.md")
     cref    = complex_ref_map(domain)
+
+    # Grouped-XS merge (same grouping as the breakdown pages): merged-away stories drop
+    # out as rows; the surviving story absorbs their ops, and dep references are remapped.
+    merge_map  = {}
+    try:
+        merge_map = _xs_merge_map(domain)              # {gone FULL id: kept FULL id}
+    except Exception:
+        pass
+    gone_short = {_short_be(k): _short_be(v) for k, v in merge_map.items()}
+    by_id      = {s["id"]: s for s in stories}
+
+    # Story-sequencing metadata (Implementation Order / Blocks / Parallelizable) — same
+    # dependency engine as the breakdown pages and 02-project-plan.md.
+    order_no: dict[str, int] = {}
+    level: dict[str, int] = {}
+    step_pop: dict[int, int] = {}
+    blocks: dict[str, list] = {}
+    bd_title: dict[str, str] = {}
+    total_ordered = 0
+    try:
+        bstories = [s for s in _bd_parse_stories(src_dir / "be-04-stories.md")
+                    if s.get("phase") != "S"]
+        waves, _g, _c = _bd_order(bstories)
+        level = {s["id"]: i for i, w in enumerate(waves, 1) for s in w}
+        for lv in level.values():
+            step_pop[lv] = step_pop.get(lv, 0) + 1
+        seq = sorted(bstories, key=lambda s: (
+            level.get(s["id"], 99),
+            _BD_PHASE_SEQ.find(s["phase"]) if s["phase"] in _BD_PHASE_SEQ else 99, s["id"]))
+        order_no = {s["id"]: n for n, s in enumerate(seq, 1)}
+        total_ordered = len(seq)
+        bd_title = {s["id"]: _op_name(s["title"]) for s in bstories}
+        short2full = {_short_be(s["id"]): s["id"] for s in bstories}
+        blocks = {s["id"]: [] for s in bstories}
+        for s in bstories:
+            for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s["depends"] or ""):
+                dep_full = short2full.get(m.group(1))
+                if dep_full and dep_full != s["id"]:
+                    blocks[dep_full].append(s["id"])
+        for fs in _fe_stories():
+            for d in fs["depends"]:
+                if d in blocks and fs["id"] not in blocks[d]:
+                    blocks[d].append(fs["id"])
+    except Exception:
+        pass
+    owner_be = _DOMAIN_OWNERS.get(domain, {}).get("be", "Backend")
+
+    def _named(full_id: str) -> str:
+        t = bd_title.get(full_id, "")
+        return f"{full_id} — {t}" if t else full_id
+
+    def meta_block(s: dict) -> str:
+        if s["id"] not in order_no:
+            return ""
+        lv = level.get(s["id"], 0)
+        dep_fulls = []
+        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b",
+                             remap_deps(_strip_domain_spike_refs(s["depends"])) or ""):
+            full = next((f for f in bd_title if _short_be(f) == m.group(1)), None)
+            if full and full != s["id"] and full not in dep_fulls:
+                dep_fulls.append(full)
+        blk = blocks.get(s["id"], [])
+        lines = [
+            f"*Implementation Order:* {order_no[s['id']]} of {total_ordered} "
+            f"({tag} backend, step {lv})",
+            f"*Domain:* {tag} — *Team:* Backend — *Owner:* {owner_be}",
+            f"*Priority:* {_PRIORITY_MAP.get(s['complexity'], 'Medium')} — "
+            f"*Parallelizable:* {'Yes' if step_pop.get(lv, 0) > 1 else 'No'}",
+            "",
+            "*Depends On:*",
+        ]
+        lines += [f"* {_named(f)}" for f in dep_fulls] or ["* None"]
+        lines += ["", "*Blocks:*"]
+        lines += [f"* {_named(b) if b in bd_title else b}" for b in blk] or ["* None"]
+        return "\n".join(lines)
+
+    BE_DOD = ("*Definition of Done:*\n"
+              "* PR merged on green (unit + parity tests pass)\n"
+              "* Schema change pushed to Hive; operation(s) resolvable through the federated router\n"
+              "* Response shape parity with the legacy gateway (no client-visible change)")
+
+    def remap_deps(dep: str) -> str:
+        if not dep or not gone_short:
+            return dep
+        return dedupe_ids(_DEP_ID_RE.sub(
+            lambda m: m.group(1) + gone_short.get(m.group(2), m.group(2)), dep))
 
     rows = []
     for s in stories:
         # Per-domain spikes are centralized as program spikes (all-stories.csv) — skip them here.
         if s["phase"] == "S":
             continue
+        if s["id"] in merge_map:                  # merged into a grouped-XS story — no own row
+            continue
 
-        size = SIZE_MAP.get(s["complexity"], "M")
-        cat  = PHASE_LABEL.get(s["phase"], "story")
-        desc = s["description"]
+        size  = SIZE_MAP.get(s["complexity"], "M")
+        cat   = PHASE_LABEL.get(s["phase"], "story")
+        desc  = s["description"]
+        title = s["title"]
+
+        gones = [g for g, kept in merge_map.items() if kept == s["id"]]
+        if gones:
+            extra_ops = [re.sub(r"\(.*?\)", "", by_id[g]["title"]).strip()
+                         for g in sorted(gones) if g in by_id]
+            title = " · ".join([re.sub(r"\(.*?\)", "", title).strip()] + extra_ops)
+            if len(gones) + 1 >= 3:               # ≥3 grouped XS ≈ a Medium ticket
+                size = "M"
+            note = ("*Grouped XS story — combines:* "
+                    + ", ".join(sorted(_short_be(g) for g in gones))
+                    + " (one PR train; ACs of all grouped ops apply)")
+            grouped_acs = "\n\n".join(
+                f"*From {_short_be(g)} ({re.sub(r'[(].*?[)]', '', by_id[g]['title']).strip()}):*\n"
+                + by_id[g]["description"] for g in sorted(gones)
+                if g in by_id and by_id[g]["description"])
+            desc = "\n\n".join(x for x in (note, desc, grouped_acs) if x)
+
         if s["id"] in cref:                       # append complex-case breakdown reference
             desc = (desc + "\n\n" + cref[s["id"]]) if desc else cref[s["id"]]
 
         # Depends On — drop dangling per-domain spike refs; if the story is spike-gated,
         # link it to the program spike and note the requirement in the description.
-        dep = _strip_domain_spike_refs(s["depends"])
+        dep = remap_deps(_strip_domain_spike_refs(s["depends"]))
         b   = _spike_for(s)
         if b:
-            spike_id = f"SPARK-SPIKE-{b}"
+            spike_id = f"SPIKE-{b}"
             dep      = spike_id if not dep else f"{spike_id}, {dep}"
             note     = f"*Requires spike:* {spike_id} ({SPIKE_TITLES.get(b, '')}) — see program spike"
             desc     = (note + "\n\n" + desc) if desc else note
 
+        # Sequencing metadata first, Definition of Done last (story template convention)
+        desc = "\n\n".join(x for x in (meta_block(s), desc, BE_DOD) if x)
+
+        ext = _ext_services_for_story(domain, s["id"])
+
         rows.append([
             "Story",
             s["id"],
-            f"({tag}) {s['title'].replace('`', '')} [{s['id']}]",   # (Domain) title [Story ID]
+            f"({tag}) {title.replace('`', '')} [{s['id']}]",   # (Domain) title [Story ID]
             "",                      # Epic Name (link by name in Jira)
             GLOBAL_EPIC_NAME,        # Epic Link — the one shared epic
             s["phase"],
@@ -426,6 +606,7 @@ def build_story_rows(domain: str) -> list[list]:
             "dgs-migration", domain, cat,
             "",                      # Parent Link
             dep,
+            ext,
             s["status"],
             desc,
         ])
@@ -442,7 +623,7 @@ HEADERS = [
     "Issue Type", "Story ID", "Summary", "Epic Name", "Epic Link",
     "Phase", "T-shirt size",
     "Labels", "Labels", "Labels",
-    "Parent Link", "Depends On", "Status", "Description",
+    "Parent Link", "Depends On", "External Dependency", "Status", "Description",
 ]
 
 

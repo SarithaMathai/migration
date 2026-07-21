@@ -1,0 +1,208 @@
+import namedRoutes from '@spark/legacy/services/namedRoutes'
+import _ from 'lodash'
+import { SLIM_GET_HUB_MATERIAL_BY_ID } from '@spark/materials-hub-graphql'
+import { RedirectConfig } from './redirects'
+import { gql } from '@apollo/client'
+import { RESOURCE_TYPES_PREFIXES } from '@spark/static'
+import { internalClient } from '@network/library'
+
+const RESOURCE_REDIRECT_SLIM_GET_SAMPLE_BY_ID = gql`
+  query resourceRedirectSlimGetSampleById($id: ID!) {
+    getSamplesByIdsV2(ids: [$id]) {
+      id
+      parentId
+    }
+  }
+`
+
+const RESOURCE_REDIRECT_SLIM_GET_FABRIC_SPECIFICATION_BY_ID = gql`
+  query resourceRedirectSlimGetFabricSpecificationById($id: ID!) {
+    getFabricSpecification(id: $id) {
+      humanId
+      parentHumanId
+      inspiration
+    }
+  }
+`
+
+const RESOURCE_REDIRECT_SLIM_GET_FABRIC_SPEC_COMBO_BY_ID = gql`
+  query resourceRedirectSlimGetFabricSpecComboById($id: ID!) {
+    getFabricSpecComboById(id: $id) {
+      parentComboId
+    }
+  }
+`
+
+const archromaColorRegistryItems = {
+  [RESOURCE_TYPES_PREFIXES.ColorArchroma]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.archroma.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+  [RESOURCE_TYPES_PREFIXES.TargetColorArchroma]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.archroma.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+  [RESOURCE_TYPES_PREFIXES.ReferenceColorArchroma]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.archroma.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+}
+
+const coloroColorRegistryItems = {
+  [RESOURCE_TYPES_PREFIXES.ColorColoro]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.coloro.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+  [RESOURCE_TYPES_PREFIXES.TargetColorColoro]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.coloro.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+  [RESOURCE_TYPES_PREFIXES.ReferenceColorColoro]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.coloro.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+}
+
+const pantoneColorRegistryItems = {
+  [RESOURCE_TYPES_PREFIXES.ColorPantone]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.pantone.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+  [RESOURCE_TYPES_PREFIXES.TargetColorPantone]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.pantone.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+  [RESOURCE_TYPES_PREFIXES.ReferenceColorPantone]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.colors.pantone.samples.show({
+        colorId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+}
+
+const resourceTypeToSampleActionsRegistry = {
+  [RESOURCE_TYPES_PREFIXES.Material]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      internalClient
+        .query({
+          query: SLIM_GET_HUB_MATERIAL_BY_ID,
+          variables: { id: resourceId },
+        })
+        .then(({ data }) => {
+          const materialType = data?.getHubMaterial?.type
+          return namedRoutes.materials.streamlinedMaterial.samples.show({
+            materialType,
+            materialId: resourceId,
+            sampleId,
+          }).pathname
+        }),
+  },
+  [RESOURCE_TYPES_PREFIXES.FabricSpecification]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      internalClient
+        .query({
+          query: RESOURCE_REDIRECT_SLIM_GET_FABRIC_SPECIFICATION_BY_ID,
+          variables: { id: resourceId },
+        })
+        .then(({ data }) => {
+          const fabricId = data?.getFabricSpecification?.parentHumanId
+          const fabricSpecId = data?.getFabricSpecification?.humanId
+
+          return namedRoutes.materials.fabric.samples.show({
+            fabricId,
+            specificationId: fabricSpecId,
+            sampleId,
+          }).pathname
+        }),
+  },
+  [RESOURCE_TYPES_PREFIXES.Trims]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.trim.samples.show({
+        trimId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+  [RESOURCE_TYPES_PREFIXES.Wash]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.materials.wash.samples.show({
+        washId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+  [RESOURCE_TYPES_PREFIXES.FabricSpecCombo]: {
+    handleBuildUrl: ({ sampleId, resourceId }) => {
+      return internalClient
+        .query({
+          query: RESOURCE_REDIRECT_SLIM_GET_FABRIC_SPEC_COMBO_BY_ID,
+          variables: { id: resourceId },
+        })
+        .then(({ data }) => {
+          const parentComboId = data?.getFabricSpecComboById?.parentComboId
+          return namedRoutes.combinations.samples.show({
+            id: parentComboId,
+            sampleId,
+          }).pathname
+        })
+    },
+  },
+  ...archromaColorRegistryItems,
+  ...coloroColorRegistryItems,
+  ...pantoneColorRegistryItems,
+  [RESOURCE_TYPES_PREFIXES.Product]: {
+    handleBuildUrl: ({ sampleId, resourceId }) =>
+      namedRoutes.products.samples.show({
+        productId: resourceId,
+        sampleId,
+      }).pathname,
+  },
+}
+
+const samplesRedirectConfig: RedirectConfig = {
+  path: () => `samples/:resourceId`,
+  queryDetails: {
+    query: RESOURCE_REDIRECT_SLIM_GET_SAMPLE_BY_ID,
+    variables: (resourceId) => ({ id: resourceId }),
+  },
+  routeBuilderCallback: async (data) => {
+    const parentResourceId = _.get(data, 'getSamplesByIdsV2[0].parentId', '')
+    const sampleId = _.get(data, 'getSamplesByIdsV2[0].id', '')
+
+    const resourceTypePrefix = (parentResourceId.includes('-') && parentResourceId.split('-')[0]) || ''
+    const registryItem = resourceTypeToSampleActionsRegistry[resourceTypePrefix]
+
+    if (registryItem) {
+      return await registryItem.handleBuildUrl({ sampleId, resourceId: parentResourceId })
+    }
+  },
+  renderDetails: {
+    loadingMessage: (resourceId) => `Redirecting to sample ${resourceId}...`,
+    errorMessage: (resourceId) => `Sorry, there was some error loading sample ${resourceId}`,
+  },
+}
+
+export default samplesRedirectConfig

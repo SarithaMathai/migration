@@ -1,0 +1,29 @@
+Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
+Sub-task,PRODUCT-BE-G-11-1,(Product) Product.notRemovablePartnerIds + notRemovableWorkspaceIds [PRODUCT-BE-G-11-1],,,G,M,dgs-migration,product,complex-case,PRODUCT-BE-G-11-1,,To Do,"*Complex case:* notRemovable-undroppable-partners — see complexStories/notRemovable-undroppable-partners/00-overview.md and 01-adr-*.md
+
+*Current Behaviour:*
+* to figure out which partners/workspaces *can't* be removed from a product (e.g. because they're the last remaining owner), today's code calls into 4-5 other field resolvers **reflectively** — by resolver name, at runtime — instead of just calling the underlying service methods those - resolvers themselves call. - Reflection here buys nothing (the set of resolvers is fixed, known at compile time) and makes the code harder to trace, test, and refactor safely. source utils call into 4–5 sibling field resolvers **reflectively**.
+
+*Target:*
+* **replace reflective resolver invocation with direct service-method calls** (same logical union). - **Pattern (spike-gated, `SPIKE-04` — draft ADR-016, pending ratification):** the aggregator stays owned by `plm-product` and resolves per-domain **lanes** (discussion/attachment/sample/watchlist partner slices) via direct scoped client calls in phase 1; each lane flips to a federated contribution as its subgraph ships, aggregator unchanged. The `samples` source's `info.variableValues` coupling cannot be ported — the lane contract must be settled with the UI team before cutover (ADR-016 pin-down 2, hard blocker). Sources fetch in parallel (accepted deviation, pin-down 3). - **Example (before → after):** ```kotlin // before: reflectively invoke resolver functions by name val removable = resolverRegistry.invoke(""businessPartners"", product) + resolverRegistry.invoke(""droppedPartners"", product) + /* ... */ // after: call the same underlying services directly, no reflection val removable = vmmService.getBusinessPartners(product.id) + vmmService.getDroppedPartners(product.id) + /* ... */ ```
+
+*Acceptance Criteria:*
+1. `notRemovablePartnerIds`/`notRemovableWorkspaceIds` return the same results as source (same logical union of the underlying sibling data)
+2. No reflective resolver invocation remains — every call is a direct, statically-typed service method call
+3. samples lane's `variableValues` coupling contract-checked against the UI's samples queries BEFORE cutover — this is a blocking pre-condition, not a nice-to-have (ADR-016 pin-down 2)
+4. the 5 sequential source fetches (discussions/attachments/components/samples/watchlists) parallelize — accepted deviation, union output is order-insensitive (ADR-016 pin-down 3)
+5. the serial ACL chunk loop (`getAccessControlBatch`) parallelizes — same fix family as ADR-015 pin-down 3 (ADR-016 pin-down 4)
+6. watchlist lane's `productWorkspaceInfo[0]`-only / first-workspace-only scope preserved exactly as today's semantics (ADR-016 pin-down 8)
+7. the Relationship-Service walk inside `unDroppablePartners`'s owner-enumeration client is a quarantined interim — each lane's future arrival deletes its own share of the walk (ADR-016 pin-down 9)
+8. schema-diff gate proves no lane field (`…PartnerIds` naming + externals until fed-2/`@inaccessible` is usable) is exposed to clients (ADR-016 pin-down 10)"
+Sub-task,PRODUCT-BE-G-07,(Product) Product.vendorAttributes + businessPartners + droppedPartners + unDroppablePartners + status [PRODUCT-BE-G-07],,,G,M,dgs-migration,product,complex-case,PRODUCT-BE-G-11-1,,To Do,"*Complex case:* notRemovable-undroppable-partners — see complexStories/notRemovable-undroppable-partners/00-overview.md and 01-adr-*.md
+
+*Current Behaviour:*
+* business-partner ids sometimes arrive as strings that need to be - parsed to ints before VMM will accept them (`vmmUtils`'s int-parse normalization) — an easy detail to drop silently on a naive port. - `loadBps`/`loadBpsWithType` (VMM); `status` merges partner/workspace statuses.
+
+*Target:*
+* `vmmUtils` Kotlin port; preserve int-parse normalization. - **`unDroppablePartners` (spike-gated, `SPIKE-04`):** implement per draft ADR-016 — owner-computed union over per-domain partner lanes (phase 1: direct scoped client calls, never sibling resolver pipelines); preserve the `isDesignPartner`-only gate, the `dps` whole-resource exclusion, and `.filter(Number)` semantics exactly (ADR-016 pin-downs 5–7), each pinned by fixture. - **Example:** `businessPartners(ids: [""123"", ""456""])` → normalize to `[123, 456]` (Int) before calling `vmmClient.getPartners(ids)` — dropping this normalization would silently break VMM lookups for any caller passing partner ids as strings (which is most callers, since GraphQL doesn't distinguish).
+
+*Acceptance Criteria:*
+1. partners resolve via VMM
+2. `status` merge correct"

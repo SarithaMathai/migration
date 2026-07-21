@@ -1,0 +1,56 @@
+import { gql } from '@apollo/client'
+
+export const GET_USER = gql`
+  query getCurrentUser($id: ID!) {
+    getUserAttributes(id: $id) {
+      firstName
+      lastName
+      userProfileId
+      internal: isInternal
+      companyName
+      mailingAddress
+      email
+      partnerId
+      primaryRole
+      secondaryRoles
+      defaultPartnerType: currentVMMRole
+      defaultRoleStatusDisabled
+      betaTester
+      outOfOfficeAttributes {
+        fromDate
+        message
+        toDate
+        userOutOfOffice
+      }
+    }
+  }
+`
+
+export const GET_USERS = gql`
+  query getUsers($size: Int, $userProfileId: String) {
+    getUsers(page: 0, size: $size, userProfileId: $userProfileId) {
+      content {
+        accreditations {
+          code
+          description
+          status
+        }
+        firstName
+        lastName
+        userProfileId
+        internal: isInternal
+        companyName
+        mailingAddress
+        email
+        partnerId
+        primaryRole
+        outOfOfficeAttributes {
+          fromDate
+          message
+          toDate
+          userOutOfOffice
+        }
+      }
+    }
+  }
+`

@@ -1,0 +1,43 @@
+import { gql } from '@apollo/client'
+
+export const SEARCH_MATERIALS = gql`
+  query searchMaterials($q: String!, $relatedBPIds: [Int]) {
+    searchMaterials(q: $q, relatedBPIds: $relatedBPIds, size: 50) {
+      content {
+        id
+        name
+        type
+        status {
+          code
+          description
+        }
+        externalStatus {
+          code
+          description
+        }
+        applicationTechnique
+        supplierId
+        thumbnailId
+        red
+        green
+        blue
+        solid
+        gvs
+        referenceId
+        layers {
+          fabricType
+          fabType {
+            code
+            description
+          }
+          fabricSubType {
+            code
+            description
+          }
+        }
+      }
+    }
+  }
+`
+
+export default SEARCH_MATERIALS

@@ -1,0 +1,16 @@
+import { gql } from '@apollo/client'
+
+export const EXPORT_COLOR = gql`
+  query exportColor($q: String!, $nestedQueryList: [SPARK_NestedQueryInput], $isColorSampleReport: Boolean) {
+    exportColor(q: $q, nestedQueryList: $nestedQueryList, isColorSampleReport: $isColorSampleReport) {
+      requestId
+    }
+  }
+`
+export const EXPORT_COLOR_ON_PALETTE = gql`
+  query exportColorOnPalette($q: String!, $nestedQueryList: [SPARK_NestedQueryInput], $paletteId: ID!) {
+    exportColorOnPalette(q: $q, nestedQueryList: $nestedQueryList, paletteId: $paletteId) {
+      requestId
+    }
+  }
+`

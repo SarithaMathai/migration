@@ -1,0 +1,142 @@
+import { gql } from '@apollo/client'
+
+export const GET_BANNER_TYPES = gql`
+  query GetBannerTypes {
+    getBannerTypes {
+      code
+      description
+    }
+  }
+`
+
+export const GET_BANNER_SCOPES = gql`
+  query GetBannerScopes {
+    getBannerScopes {
+      code
+      description
+    }
+  }
+`
+
+export const GET_ACTIVE_BANNERS = gql`
+  query GetActiveBanners {
+    getActiveBanners {
+      id
+      order
+      level {
+        code
+        description
+      }
+      scope {
+        code
+        description
+      }
+      metadata {
+        styles {
+          key
+          value
+        }
+      }
+      header
+      message
+      adminNotes
+      startAt
+      endAt
+      platform
+    }
+  }
+`
+
+export const SEARCH_BANNERS = gql`
+  query SearchBanners($ids: [String], $levels: [String], $platforms: [String], $archived: Boolean, $size: Int, $page: Int) {
+    searchBanners(ids: $ids, levels: $levels, platforms: $platforms, archived: $archived, size: $size, page: $page) {
+      content {
+        id
+        order
+        level {
+          code
+          description
+        }
+        scope {
+          code
+          description
+        }
+        metadata {
+          styles {
+            key
+            value
+          }
+        }
+        header
+        message
+        adminNotes
+        startAt
+        endAt
+        platform
+        archived
+      }
+    }
+  }
+`
+
+export const ADD_SPARK_BANNER = gql`
+  mutation AddSparkBanner($bannerInput: SPARK_BannerInput!) {
+    addSparkBanner(bannerInput: $bannerInput) {
+      level {
+        code
+        description
+      }
+      scope {
+        code
+        description
+      }
+      metadata {
+        styles {
+          key
+          value
+        }
+      }
+      order
+      header
+      message
+      adminNotes
+      startAt
+      endAt
+    }
+  }
+`
+
+export const UPDATE_SPARK_BANNER = gql`
+  mutation UpdateSparkBanner($bannerInput: SPARK_BannerInput!) {
+    updateSparkBanner(bannerInput: $bannerInput) {
+      id
+      level {
+        code
+        description
+      }
+      scope {
+        code
+        description
+      }
+      metadata {
+        styles {
+          key
+          value
+        }
+      }
+      header
+      message
+      adminNotes
+      startAt
+      endAt
+    }
+  }
+`
+
+export const ARCHIVE_SPARK_BANNER = gql`
+  mutation archiveSparkBanner($id: ID!) {
+    archiveSparkBanner(id: $id) {
+      id
+    }
+  }
+`

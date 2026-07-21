@@ -1,0 +1,286 @@
+import { gql } from '@apollo/client'
+import { FILE_FIELDS, COMBINATION_TEAM_FIELDS } from '@spark/legacy/components/graphql/ComponentsFragments'
+import { FABRIC_SPECIFICATION_DETAILS_FRAGMENT } from '@spark/fabric-graphql'
+import { isFabricSupplier } from '@spark/legacy/services/getUserProfile'
+import { SAMPLE_CLM_PACKAGE_FRAGMENT } from '@spark/samples'
+import { MATERIAL_DETAILS } from '@spark/materials-graphql'
+
+export const IMPRESSION_INTENT_LINE_DETAILS = gql`
+  fragment ImpressionIntentLineDetails on SPARK_ImpressionIntentLine {
+    humanId
+    merchVendorTeamId
+    merchVendorTeam: ${!isFabricSupplier() ? 'merchVendorTeam' : 'proxyMerchVendorTeam'} {
+      id
+      teamName
+      teamType
+      accessControlGroupIds
+      members {
+        userProfileId
+      }
+      businessPartner {
+        partnerId
+        partnerName
+      }
+    }
+    fabricSupplierTeam {
+      id
+      teamType
+      accessControlGroupIds
+      teamName
+      businessPartner {
+        partnerName
+        partnerId
+      }
+      members {
+        userProfileId
+      }
+    }
+    countryOfProduction {
+      id
+      name
+    }
+    readyToSample {
+      code
+      description
+    }
+    fabricSpecHumanId
+    fabricSpec {
+      ...FabricSpecificationDetailsFragment
+    }
+  }
+${FABRIC_SPECIFICATION_DETAILS_FRAGMENT}
+`
+
+export const FABRIC_SPEC_COMBO_DETAILS_FRAGMENT = (isInternalUser: boolean) => gql`
+  fragment FabricSpecComboDetailsFragment on SPARK_FabricSpecCombo {
+    humanId: id
+    parentComboId
+    fabricSpecId
+    status
+    sentToFpf
+    fabricSpec {
+      ...FabricSpecificationDetailsFragment
+    }
+    intentLineIds
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    updatedBy {
+      id
+      firstName
+      lastName
+    }
+    merchVendorTeams: ${!isFabricSupplier() ? 'merchVendorTeams' : 'proxyMerchVendorTeams'} {
+      id
+      teamName
+      members {
+        userProfileId
+      }
+      businessPartner {
+        partnerId
+        partnerName
+      }
+    }
+    createdAt
+    updatedAt
+    asapColorApprovals{
+      ...SampleClmPackageFragment
+    }
+    relatedMaterials: ${isInternalUser ? 'relatedMaterials' : 'proxyRelatedMaterials'} {
+      ...MaterialDetails
+    }
+  }
+${FABRIC_SPECIFICATION_DETAILS_FRAGMENT}
+${MATERIAL_DETAILS}
+${SAMPLE_CLM_PACKAGE_FRAGMENT}
+`
+
+export const COMBINATION_DETAILS_FRAGMENT = (isInternalUser: boolean) => gql`
+  fragment CombinationDetailsFragment on SPARK_Combination {
+    humanId
+    id:humanId
+    status
+    description
+    notes
+    designCycles {
+      id
+      name
+    }
+    department {
+      id
+      name
+    }
+    division {
+      id
+      name
+    }
+    clazz {
+      id
+      name
+    }
+    merchType
+    brands {
+      id
+      name
+    }
+    files {
+      ...FileDetails
+    }
+    tags {
+      id
+      name
+    }
+    materialCategory {
+      id
+      name
+    }
+    fabricRecordHumanId
+    fabricRecord {
+      layers {
+        ...FabricLayers
+      }
+    }
+    impressionIntentBucketList {
+      humanId
+      relatedMaterialIds
+      relatedMaterials: ${isInternalUser ? 'relatedMaterials' : 'proxyRelatedMaterials'} {
+        ...MaterialDetails
+      }
+      impressionIntent {
+        code
+        description
+      }
+      impressionIntentLines {
+        ...ImpressionIntentLineDetails
+      }
+    }
+    ...CombinationTeamDetailsFragment
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    createdAt
+    updatedBy {
+      id
+      firstName
+      lastName
+    }
+    updatedAt
+    createdByPartnerId
+    businessPartners {
+      associatedPartnerType
+      name
+      id
+    }
+    dpPartnerIds
+    workspaceIds
+    sampleYardage {
+      numSamples
+      fabricSpec {
+        ...FabricSpecificationDetailsFragment
+      }
+      material: ${isInternalUser ? 'material' : 'proxyMaterial'} {
+        ...MaterialDetails
+      }
+      merchVendors {
+        id
+        name
+      }
+      notes
+    }
+  }
+${FILE_FIELDS}
+${COMBINATION_TEAM_FIELDS}
+${FABRIC_SPECIFICATION_DETAILS_FRAGMENT}
+${IMPRESSION_INTENT_LINE_DETAILS}
+${MATERIAL_DETAILS}
+`
+export const SLIM_COMBINATION_DETAILS_FRAGMENT = gql`
+  fragment SlimCombinationDetailsFragment on SPARK_Combination {
+    humanId
+    notes
+    description
+    designCycles {
+      id
+      name
+    }
+    department {
+      id
+      name
+    }
+    division {
+      id
+      name
+    }
+    clazz {
+      id
+      name
+    }
+    merchType
+    brands {
+      id
+      name
+    }
+    tags {
+      id
+      name
+    }
+    materialCategory {
+      id
+      name
+    }
+    fabricRecordHumanId
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    createdAt
+    updatedBy {
+      id
+      firstName
+      lastName
+    }
+    updatedAt
+    createdByPartnerId
+    businessPartners {
+      associatedPartnerType
+      name
+      id
+    }
+    dpPartnerIds
+    workspaceIds
+  }
+`
+
+export const SLIM_FABRIC_SPEC_COMBO_DETAILS_FRAGMENT = gql`
+  fragment SlimFabricSpecComboDetailsFragment on SPARK_FabricSpecCombo {
+    humanId: id
+    parentComboId
+    fabricSpecId
+    status
+    sentToFpf
+    fabricSpec {
+      humanId
+      name
+    }
+    intentLineIds
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    updatedBy {
+      id
+      firstName
+      lastName
+    }
+    createdAt
+    updatedAt
+    id
+    fabricSpecId
+  }
+`

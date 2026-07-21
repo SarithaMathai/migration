@@ -1,0 +1,239 @@
+FE Story,FE Story Title,Dependency Type,Dependency Story/Spike,Description,External Service,Is Externally-Owned Gap?
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-B-01,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-F-10,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-01,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-02,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-03,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-06,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-07,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-08,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-09,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-10,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-G-14,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,BE,PRODUCT-BE-S-01,,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Spikes,SPIKE-05,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: resourcePermissions",,No (internal placeholder)
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-B-01,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-B-04,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-F-10,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-01,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-02,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-03,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-06,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-07,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-08,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-09,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-10,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-G-14,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,BE,PRODUCT-BE-S-01,,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Spikes,SPIKE-05,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: resourcePermissions",,No (internal placeholder)
+PRODUCT-FE-003,Migrate product list and bulk reads,BE,PRODUCT-BE-B-02,,,No
+PRODUCT-FE-003,Migrate product list and bulk reads,BE,PRODUCT-BE-B-03,,,No
+PRODUCT-FE-003,Migrate product list and bulk reads,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-003,Migrate product list and bulk reads,BE,PRODUCT-BE-S-02,,,No
+PRODUCT-FE-003,Migrate product list and bulk reads,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: roles",,No (internal placeholder)
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-B-01,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-B-02,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-B-03,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-F-10,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-G-06,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-G-07,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-G-09,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,BE,PRODUCT-BE-S-01,,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-004,Migrate product status and workspace-context reads,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: productSamplesReceivedBySampleType",,No (internal placeholder)
+PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-B-01,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-G-01,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-G-02,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-G-03,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,CLAIM-BE-G-04,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-C-02,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-C-03,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-03,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-04,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-06,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-08,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-H-07,`IG_Clazz_Filter` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references,ig,Yes
+PRODUCT-FE-005,Migrate template library and categories reads,BE,PRODUCT-BE-S-02,,,No
+PRODUCT-FE-005,Migrate template library and categories reads,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: additionalInfo",,No (internal placeholder)
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-07,,,No
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-08,,,No
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-09,,,No
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-10,,,No
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-B-11,,,No
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-C-05,,,No
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-G-07,,,No
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-006,Migrate product rules administration,BE,PRODUCT-BE-H-08,`IG_Clazz` entity fetcher (`@DgsEntityFetcher`) for cross-subgraph references,ig,Yes
+PRODUCT-FE-006,Migrate product rules administration,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-E-03,,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-E-04,,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-F-06,,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-F-08,,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-G-08,,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-01,,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-02,,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-03,,,No
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),BE,PRODUCT-BE-H-05,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-B-01,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-F-10,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-01,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-02,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-03,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-06,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-07,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-08,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-09,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-10,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-13,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-G-14,,,No
+PRODUCT-FE-011,Migrate component status rollups,BE,PRODUCT-BE-S-01,,,No
+PRODUCT-FE-011,Migrate component status rollups,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-011,Migrate component status rollups,Spikes,SPIKE-05,Unresolved spike - gates dependent field(s) until decided,,No
+PRODUCT-FE-011,Migrate component status rollups,New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: resourcePermissions",,No (internal placeholder)
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-A-04,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-B-01,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-B-03,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-B-04,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-G-01,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-G-03,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-G-08,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-G-12,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-G-13,,,No
+BOM-FE-002,Migrate BOM core reads,BE,BOM-BE-G-17,,,No
+BOM-FE-002,Migrate BOM core reads,BE,PRODUCT-BE-G-07,,,No
+BOM-FE-002,Migrate BOM core reads,BE,PRODUCT-BE-G-10,,,No
+BOM-FE-002,Migrate BOM core reads,BE,PRODUCT-BE-G-13,,,No
+BOM-FE-002,Migrate BOM core reads,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+BOM-FE-002,Migrate BOM core reads,New,NEW-BOM-BE-G-??,"Internal-only gap, no story authored yet: additionalMaterialDetails",,No (internal placeholder)
+BOM-FE-003,Migrate BOM search and elastic reads,BE,BOM-BE-C-01,,,No
+BOM-FE-003,Migrate BOM search and elastic reads,BE,BOM-BE-G-01,,,No
+BOM-FE-003,Migrate BOM search and elastic reads,BE,BOM-BE-G-14,,,No
+BOM-FE-003,Migrate BOM search and elastic reads,BE,BOM-BE-S-03,,,No
+BOM-FE-004,Migrate BOM master-data reads,BE,BOM-BE-B-05,,,No
+BOM-FE-004,Migrate BOM master-data reads,BE,BOM-BE-B-06,,,No
+BOM-FE-004,Migrate BOM master-data reads,BE,BOM-BE-B-07,,,No
+BOM-FE-004,Migrate BOM master-data reads,BE,BOM-BE-B-08,,,No
+BOM-FE-004,Migrate BOM master-data reads,BE,BOM-BE-G-14,,,No
+BOM-FE-004,Migrate BOM master-data reads,New,NEW-BOM-BE-G-??,"Internal-only gap, no story authored yet: shortDescription",,No (internal placeholder)
+BOM-FE-005,Migrate BOM supplier reads,BE,BOM-BE-C-03,,,No
+BOM-FE-005,Migrate BOM supplier reads,BE,BOM-BE-C-04,,,No
+BOM-FE-005,Migrate BOM supplier reads,BE,BOM-BE-C-05,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-A-04,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-B-01,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-B-03,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-B-04,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-G-01,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-G-03,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-G-08,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-G-12,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-G-13,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-G-14,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-G-17,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,BOM-BE-S-03,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,PRODUCT-BE-G-07,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,PRODUCT-BE-G-10,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",BE,PRODUCT-BE-G-13,,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",New,NEW-BOM-BE-G-??,"Internal-only gap, no story authored yet: additionalMaterialDetails",,No (internal placeholder)
+MST-FE-001,Migrate measurement reads and retire `humanId`,BE,MST-BE-B-01,,,No
+MST-FE-001,Migrate measurement reads and retire `humanId`,BE,MST-BE-B-04,,,No
+MST-FE-001,Migrate measurement reads and retire `humanId`,BE,MST-BE-G-01,,,No
+MST-FE-001,Migrate measurement reads and retire `humanId`,BE,MST-BE-G-07,,,No
+MST-FE-001,Migrate measurement reads and retire `humanId`,New,NEW-MST-BE-G-??,"Internal-only gap, no story authored yet: sizeTemplateFragmentWithRows",,No (internal placeholder)
+MST-FE-002,Migrate measurement list/search reads,BE,MST-BE-B-01,,,No
+MST-FE-002,Migrate measurement list/search reads,BE,MST-BE-C-01,,,No
+MST-FE-002,Migrate measurement list/search reads,BE,MST-BE-C-02,,,No
+MST-FE-002,Migrate measurement list/search reads,BE,MST-BE-G-01,,,No
+MST-FE-002,Migrate measurement list/search reads,BE,MST-BE-G-07,,,No
+MST-FE-002,Migrate measurement list/search reads,New,NEW-MST-BE-G-??,"Internal-only gap, no story authored yet: sizeTemplateFragmentWithRows",,No (internal placeholder)
+MST-FE-003,Migrate measurement master-data reads,BE,BOM-BE-G-15,,,No
+MST-FE-003,Migrate measurement master-data reads,BE,MST-BE-B-02,,,No
+MST-FE-003,Migrate measurement master-data reads,BE,MST-BE-B-03,,,No
+MST-FE-003,Migrate measurement master-data reads,BE,MST-BE-B-04,,,No
+MST-FE-003,Migrate measurement master-data reads,New,NEW-MST-BE-G-??,"Internal-only gap, no story authored yet: shortDescription",,No (internal placeholder)
+PDTL-FE-001,Migrate product-details reads,BE,PDTL-BE-B-01,,,No
+PDTL-FE-001,Migrate product-details reads,BE,PDTL-BE-G-01,,,No
+PDTL-FE-001,Migrate product-details reads,BE,PDTL-BE-G-02,,,No
+PDTL-FE-001,Migrate product-details reads,BE,PDTL-BE-G-03,,,No
+PKG-FE-001,Migrate packaging reads,BE,PKG-BE-B-01,,,No
+PKG-FE-001,Migrate packaging reads,BE,PKG-BE-B-02,,,No
+PKG-FE-001,Migrate packaging reads,BE,PKG-BE-G-01,,,No
+PKG-FE-001,Migrate packaging reads,BE,PKG-BE-G-02,,,No
+PKG-FE-001,Migrate packaging reads,BE,PKG-BE-G-04,,,No
+PKG-FE-002,Migrate packaging master-data reads and retire deprecated fields,BE,PKG-BE-B-04,,,No
+PKG-FE-002,Migrate packaging master-data reads and retire deprecated fields,BE,PKG-BE-B-06,,,No
+PKG-FE-003,Migrate dieline flows,BE,PKG-BE-B-03,,,No
+PKG-FE-003,Migrate dieline flows,BE,PKG-BE-B-05,,,No
+PKG-FE-003,Migrate dieline flows,BE,PKG-BE-G-05,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,PRODUCT-BE-G-07,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,PRODUCT-BE-G-09,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,PRODUCT-BE-G-10,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,PRODUCT-BE-G-13,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,WATCHLIST-BE-B-01,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,WATCHLIST-BE-C-01,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,WATCHLIST-BE-G-01,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,WATCHLIST-BE-G-02,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,WATCHLIST-BE-G-03,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,BE,WATCHLIST-BE-G-05,,,No
+WATCHLIST-FE-001,Migrate watchlist reads,Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+WATCHLIST-FE-001,Migrate watchlist reads,New,NEW-WATCHLIST-BE-G-??,"Internal-only gap, no story authored yet: editable",,No (internal placeholder)
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-A-04,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-B-01,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-B-03,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-G-01,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-G-03,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-G-08,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-G-12,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-G-13,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,BOM-BE-G-17,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,IMPRESSION-BE-B-01,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,IMPRESSION-BE-G-01,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,PRODUCT-BE-B-01,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,PRODUCT-BE-G-07,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,PRODUCT-BE-G-10,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),BE,PRODUCT-BE-G-13,,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),New,NEW-BOM-BE-G-??,"Internal-only gap, no story authored yet: additionalMaterialDetails",,No (internal placeholder)
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),New,NEW-IMPRESSION-BE-G-??,"Internal-only gap, no story authored yet: designPartnerId",,No (internal placeholder)
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-A-04,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-B-01,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-B-03,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-G-01,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-G-03,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-G-08,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-G-12,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-G-13,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,BOM-BE-G-17,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,IMPRESSION-BE-B-01,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,IMPRESSION-BE-G-01,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-B-01,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-01,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-02,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-03,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-06,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-07,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-08,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-09,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-10,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-G-13,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),BE,PRODUCT-BE-S-01,,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Spikes,SPIKE-04,Unresolved spike - gates dependent field(s) until decided,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Spikes,SPIKE-05,Unresolved spike - gates dependent field(s) until decided,,No
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),New,NEW-BOM-BE-G-??,"Internal-only gap, no story authored yet: additionalMaterialDetails",,No (internal placeholder)
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),New,NEW-IMPRESSION-BE-G-??,"Internal-only gap, no story authored yet: designPartnerId",,No (internal placeholder)
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),New,NEW-PRODUCT-BE-G-??,"Internal-only gap, no story authored yet: resourcePermissions",,No (internal placeholder)
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),BE,CLAIM-BE-B-01,,,No
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),BE,CLAIM-BE-B-02,,,No
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),BE,CLAIM-BE-B-03,,,No
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),BE,CLAIM-BE-B-04,,,No
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),BE,CLAIM-BE-G-01,,,No
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),BE,CLAIM-BE-G-02,,,No
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),BE,CLAIM-BE-G-03,,,No

@@ -10,16 +10,16 @@ For each of the 13 domains, running this skill produces **five files** inside `f
 
 | Output file | Audience | Contents |
 |---|---|---|
-| `FederatedGqlBrakDown-{domain}.docx` | PO + Engineers · **Open in Word / paste into Confluence** | **Primary artifact** — Microsoft Word with full formatting: navy blue title, light-blue metrics banner, colored table headers, complexity-coded text (🔴🟠🟡🟢), type icons (🔷🔶🔸), phase icons, all 8 sections as Word content. Ready to copy-paste into Confluence or share as a Word doc. |
-| `FederatedGqlBrakDown-{domain}.md` | PO + Engineers · Confluence paste (Markdown) | Markdown fallback — same content and table format as the Word doc; use this when pasting raw Markdown into Confluence. |
+| `FederatedGqlBreakDown-BE-{domain}.docx` | PO + Engineers · **Open in Word / paste into Confluence** | **Primary artifact** — Microsoft Word with full formatting: navy blue title, light-blue metrics banner, colored table headers, complexity-coded text (🔴🟠🟡🟢), type icons (🔷🔶🔸), phase icons, all 8 sections as Word content. Ready to copy-paste into Confluence or share as a Word doc. |
+| `FederatedGqlBreakDown-BE-{domain}.md` | PO + Engineers · Confluence paste (Markdown) | Markdown fallback — same content and table format as the Word doc; use this when pasting raw Markdown into Confluence. |
 | `{domain}-comprehensive.md` | Engineers + Tech Leads | Full engineering doc — executive summary, scope, phase effort table, risks, decisions, dependency map, sprint sequencing, capacity planning, complex story breakdowns (§8b), **all stories** with AC + test cases (High/VH only), and story reference table |
 | `{domain}-po-review.md` | Product Owner + Stakeholders | Concise PO review — what we're building, scope, effort by phase, key risks, decisions required, migration approach summary, sprint capacity, and Phase 2 story breakdowns |
-| `{domain}.csv` | Jira admin | Jira-import CSV — one Epic + per-story rows; schema init excluded (it is a B01 checklist item, not a story); test cases included only for High/VH stories |
+| `{domain}.csv` | Jira admin | Jira-import CSV — one Epic + per-story rows; schema init excluded (it is a B-01 checklist item, not a story); test cases included only for High/VH stories |
 
 Plus program-level files at `finalOutput/oneStopDoc/`:
 - `Federated+Graphql+Stories+-+BreakDown.docx` — All domains in one Word doc: domain index table + per-domain story tables; fully formatted (primary)
 - `Federated+Graphql+Stories+-+BreakDown.md` — Same content as Markdown (Confluence fallback)
-- `00-executive-summary.md` — Cross-domain scope, risk register, sequencing, per-domain quick reference
+- `fe-00-executive-summary.md` — Cross-domain scope, risk register, sequencing, per-domain quick reference
 - `00-portfolio.md` — Program portfolio table for Confluence space home
 - `jira/all-stories.csv` — All 325 stories in a single Jira import file
 
@@ -79,29 +79,29 @@ The generators look for source files in this priority order:
 
 | Priority | Location | Status |
 |---|---|---|
-| 1 (preferred) | `finslDocSomeRevision/domain/{domain}/` | Updated versions — schema/service init is a B01 checklist item (not a story) |
+| 1 (preferred) | `finslDocSomeRevision/domain/{domain}/` | Updated versions — schema/service init is a B-01 checklist item (not a story) |
 | 2 (fallback) | `migration/finalOutput/{domain}/` | Original pipeline output — used only for `search` |
 
 **Key source files per domain:**
-- `04-stories.md` → all stories (comprehensive §9, breakdown story tables, Jira CSV)
-- `04-po-summary.md` → scope, effort, sprint sequencing, risks, decisions (used by all four artifacts)
+- `be-04-stories.md` → all stories (comprehensive §9, breakdown story tables, Jira CSV)
+- `be-04-po-summary.md` → scope, effort, sprint sequencing, risks, decisions (used by all four artifacts)
 
 ---
 
 ## Format rules
 
-### Breakdown doc (`FederatedGqlBrakDown-{domain}.md`)
+### Breakdown doc (`FederatedGqlBreakDown-BE-{domain}.md`)
 - **Table format for stories** — each story is one row: `Story ID | Operation | Type | Complexity | Depends On | AC`; no card-style headers
 - **Phase grouping** — each phase gets its own `###` heading with icon and story count, then a single table for all stories in that phase
 - **Complexity icons** — 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low; size badge (`XS`/`M`/`L`/`XL`) in the complexity cell
 - **Type icons** — 🔷 Query · 🔶 Mutation · 🔸 Field Resolver; inferred from metadata or phase when source says "Story"
-- **DGS init notes** — B01 notes shown as blockquotes beneath the table, not inline
+- **DGS init notes** — B-01 notes shown as blockquotes beneath the table, not inline
 - **Tests** — shown only for High/VH stories, as a checklist beneath the phase table
-- **No Phase A** — schema/service init is a B01 checklist item; no Phase A rows appear anywhere
+- **No Phase A** — schema/service init is a B-01 checklist item; no Phase A rows appear anywhere
 - **Sections** — §1 What We're Building · §2 Scope · §3 Effort + Capacity · §4 Sprint Sequencing · §5 Stories by Phase · §6 Risks · §7 Decisions · §8 Dependency Map
 
 ### Comprehensive doc
-- **Schema/service init** is a one-time checklist inside B01 — no Phase A stories or rows appear in any output
+- **Schema/service init** is a one-time checklist inside B-01 — no Phase A stories or rows appear in any output
 - **Test cases:** shown **only for High and Very High** complexity stories. Low and Medium stories show acceptance criteria only
 - **Complex story callouts:** domains with broken-down stories get a §8b section listing parent milestones → sub-tasks
 - **Story IDs** are linkable: `SPARK-{DOMAIN}-{phase}{nn}` format throughout
@@ -134,11 +134,11 @@ The generators look for source files in this priority order:
 
 | Skill | Feeds into oneStopDoc? |
 |---|---|
-| `migration-story-generation` | Yes — produces `04-stories.md` which is the source for comprehensive §9 |
-| `graphql-schema-inventory` | No — produces `01-schema-inventory.md` (engineer reference, not in oneStopDoc) |
-| `resolver-dependency-analysis` | No — produces `02-resolver-analysis.md` (deep engineering reference, linked but not embedded) |
-| `federation-schema-derivation` | No — produces `03-schema.graphql` (linked in PO review deep-dive links) |
-| `federation-candidate-detection` | No — produces `03-schema-analysis.md` (linked in PO review deep-dive links) |
+| `migration-story-generation` | Yes — produces `be-04-stories.md` which is the source for comprehensive §9 |
+| `graphql-schema-inventory` | No — produces `be-01-schema-inventory.md` (engineer reference, not in oneStopDoc) |
+| `resolver-dependency-analysis` | No — produces `be-02-resolver-analysis.md` (deep engineering reference, linked but not embedded) |
+| `federation-schema-derivation` | No — produces `be-03-schema.graphql` (linked in PO review deep-dive links) |
+| `federation-candidate-detection` | No — produces `be-03-schema-analysis.md` (linked in PO review deep-dive links) |
 
 ---
 

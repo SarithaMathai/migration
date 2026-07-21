@@ -1,0 +1,103 @@
+# =============================================================================
+# Impression Domain — Federated Target DGS Schema (translated from source SDL)
+# Pipeline Version: 2.0 · Generated: 2026-06-26
+# DGS Target: Green-field → plm-product subgraph
+# Source:    code/schemas/SPARK_Impression.txt (the real SDL) + code/resolvers/product/SPARK_Impression.txt (behaviour)
+# Target:    plm-product/apps/app/src/main/resources/schema/impression.graphqls
+# This is the FEDERATED TARGET schema, translated from the source SDL (SPARK_ prefix dropped, @key added).
+# Nullability is taken from the SDL. Where SDL and resolver disagree on behaviour, the resolver wins.
+# Status: 🔜 all need migration.
+# =============================================================================
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@extends", "@external", "@shareable"])
+
+scalar DateTime
+
+# --- Type references ---
+# MONOREPO: Product is CO-LOCATED in the same plm-product subgraph → INTERNAL type (the @extends @external
+# is a standalone-compile placeholder only). True federation stubs are the separate DGS subgraphs (workspace,
+# user-profile) + platform VMM. See 03-schema-analysis.md §3.
+type Product @extends @key(fields: "id") { id: ID! @external }       # INTERNAL (same subgraph) — placeholder only
+# True federation stubs (separate subgraphs + platform):
+type VMM_BusinessPartner @extends @key(fields: "id") { id: ID! @external }
+type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
+type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
+
+# --- Owned types ---
+type Impression @key(fields: "id") {
+  id: ID!                       # SDL has `id: String`; promoted to non-null ID for the federation @key
+  name: String
+  parentId: ID
+  version: Int
+  # NOTE: `partnerIds` is on the INPUT/query-arg only — the SDL `SPARK_Impression` type has no such field.
+  businessPartners: [VMM_BusinessPartner]
+  owningPartnerId: ID
+  owningPartnerType: Int
+  owningBusinessPartner: VMM_BusinessPartner
+  workspaceContext: [ID]
+  workspaces: [WorkspaceV2]
+  deletable: Boolean
+  associatedBomIds: [String]
+  attachmentId: String
+  relatedResources: [ID]
+  sortOrder: Int
+  createdAt: DateTime
+  createdBy: UserProfileAttributes
+  updatedAt: DateTime
+  updatedBy: UserProfileAttributes
+}
+
+# Source-faithful count type: the query returns the impressions list typed as ImpressionCount;
+# the `counts` field aggregates per partner + a 'totalCount' row.
+type ImpressionCount {
+  counts: [CountsByBp]
+}
+type CountsByBp @shareable { bpType: String, counts: Int }
+
+# RECOMMENDED restructure (PO decision — see 03-schema-analysis.md §Migration Approach).
+# Replaces the awkward array-as-parent contract with a typed result:
+# type ImpressionCountResult { productId: ID!, totalCount: Int!, countsByPartner: [PartnerImpressionCount!]! }
+# type PartnerImpressionCount { partnerId: ID!, count: Int! }
+
+# --- Inputs ---
+input ProductImpressionInput {
+  impressionsToDelete: [String]
+  impressionsToUpdate: [ImpressionInput]
+}
+input ImpressionInput {
+  id: String
+  name: String
+  partnerIds: [ID]
+  businessPartners: [ProductPartnerInput]
+  workspacesToAdd: [String]
+  workspacesToRemove: [String]
+  attachmentId: String
+  relatedResources: [ID]
+  sortOrder: Int
+}
+input ProductPartnerInput { partnerId: ID!, partnerType: Int }
+
+# --- Queries ---
+# Arg nullability matches the source SDL (all nullable — do not tighten to `!`).
+extend type Query {
+  searchImpressionsByProductId(
+    id: ID
+    partnerIds: [ID]
+    workspaceIds: [ID]
+    enableWorkspaceContextFiltering: Boolean
+  ): [Impression]                                        # 🔜 B-01
+  getImpressionCountsByProductId(id: ID): ImpressionCount   # 🔜 B-02 (consider ImpressionCountResult)
+}
+
+# --- Mutations ---
+extend type Mutation {
+  updateImpressions(productId: ID, productImpression: ProductImpressionInput): [Impression]   # 🔜 D-01
+}
+
+# --- Federation: Impression contributes to Product (Phase F, BLOCKED-BY product) ---
+# extend type Product @key(fields: "id") {
+#   id: ID! @external
+#   impressions(partnerIds: [ID], workspaceIds: [ID]): [Impression]
+#   impressionCounts: ImpressionCount
+# }

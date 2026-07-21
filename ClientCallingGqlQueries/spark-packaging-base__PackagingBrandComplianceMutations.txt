@@ -1,0 +1,16 @@
+import { gql } from '@apollo/client'
+
+export const BULK_ADD_COMPLIANCE_PRODUCTS = gql`
+  mutation bulkImportBrandComplianceProductsByIds($brandComplianceBulkInput: BrandComplianceBulkInput!) {
+    bulkImportBrandComplianceProductsByIds(brandComplianceBulkInput: $brandComplianceBulkInput) {
+      products {
+        id
+        description
+      }
+      errors {
+        id
+        message
+      }
+    }
+  }
+`

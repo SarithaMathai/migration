@@ -1,0 +1,104 @@
+import { gql } from '@apollo/client'
+
+export const SEARCH_ATTACHMENTS = gql`
+  query searchAttachments($q: String, $parentIds: [String], $relatedIds: [String], $partnerId: ID, $asset3D: Boolean, $proxyIds: [String], $page: Int, $size: Int) {
+    searchAttachments(q: $q, parentIds: $parentIds, relatedIds: $relatedIds, partnerId: $partnerId, asset3D: $asset3D, proxyIds: $proxyIds, page: $page, size: $size) {
+      paging {
+        size
+        numberOfElements
+        totalPages
+        totalElements
+        number
+      }
+      content {
+        id
+        documentId
+        humanId
+        documentSize
+        documentType
+        name
+        parentResource
+        relatedResources
+        previewable
+        galleryOnlyAttachment
+        currentUserFileAccess
+        resource {
+          id
+          type
+        }
+        galleryDetails {
+          assetId
+          fileValid
+          transcoded
+          published
+          publishedAt
+          validations {
+            name
+            message
+            description
+            classification
+          }
+        }
+        galleryFiles {
+          attachmentId
+          renders {
+            fileId
+            fileName
+            primary
+            renderType
+          }
+        }
+        mediaType
+        sharedWithGallery
+        canShareWithGallery
+        attachmentCanShowdog
+        tags {
+          id
+          name
+          type
+        }
+        createdBy {
+          firstName
+          lastName
+          companyName
+          isInternal
+        }
+        updatedBy {
+          firstName
+          lastName
+          companyName
+          isInternal
+        }
+        createdAt
+        access {
+          bps
+          ids
+          merchVendors
+          fabSuppliers
+          designPartners
+          external
+          locked
+          partnerNamesMap {
+            id
+            name
+          }
+        }
+      }
+      counts {
+        attachmentCount(parentIds: $parentIds, relatedIds: $relatedIds) {
+          bpType
+          counts
+        }
+      }
+    }
+  }
+`
+
+export const ARCHIVE_ATTACHMENT = gql`
+  mutation archiveAttachment($id: ID!) {
+    archiveAttachmentV3(id: $id) {
+      id
+      humanId
+    }
+  }
+`

@@ -1,0 +1,165 @@
+import { gql, useMutation, useQuery } from '@apollo/client'
+import { withUserAccreditations } from '@spark/legacy/components/connectedComponents/GetUserAccreditations'
+import _ from 'lodash'
+import React from 'react'
+import { COMBINATION_DETAILS_FRAGMENT, FABRIC_SPEC_COMBO_DETAILS_FRAGMENT } from '@spark/combination-graphql'
+import { loadingOrError } from '@spark/legacy/services/graphqlUtil'
+import { ATTACHMENT_FRAGMENT, MULTI_COLOR_SAMPLE_FRAGMENT, PRODUCT_SAMPLE_FRAGMENT, SAMPLE_DISCUSSION_FRAGMENT, SAMPLE_MEASUREMENT_FRAGMENT } from '@spark/samples'
+import CombinationSamplesBulkEvaluateForm from './CombinationSamplesBulkEvaluateForm'
+import { BULK_EVALUATE_SAMPLES } from '../../../graphql/workspace/SampleBulkEvaluateQueries'
+import namedRoutes from '@spark/legacy/services/namedRoutes'
+import { getUserProfile } from '@spark/legacy/services/getUserProfile'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
+
+export const GET_FABRIC_SPEC_COMBOS_AND_SAMPLES = (isInternalUser: boolean) => gql`
+  query getFabricSpecCombosAndSamplesForBulkEval($combinationIds: [ID!]) {
+    getProductSampleEvaluationTypesV2 {
+      code
+      description
+    }
+    getSampleFormats {
+      code
+      description
+      dueDate
+    }
+    getSampleEvaluationPurposes {
+      code
+      description
+    }
+    getCombinationByIds(ids: $combinationIds) {
+      ...CombinationDetailsFragment
+      fabricSpecCombos {
+        content {
+          ...FabricSpecComboDetailsFragment
+          samples {
+            content {
+              workspaceContext
+              clmPackageIdentifier
+              workspace {
+                id
+                description
+                __typename
+              }
+              participants {
+                ...SampleDiscussionParticipants
+                __typename
+              }
+              attachments {
+                ...AttachmentFragment
+                __typename
+              }
+              ...ProductSampleFragment
+              ...MultiColorSampleFragment
+              sampleMeasurementSetAssociation {
+                sampleMeasurementSetId
+                measurementSetId
+                measurementSizeId
+                __typename
+              }
+              sampleMeasurementSet {
+                ...SampleMeasurementFragment
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+    }
+  }
+  ${COMBINATION_DETAILS_FRAGMENT(isInternalUser)}
+  ${FABRIC_SPEC_COMBO_DETAILS_FRAGMENT(isInternalUser)}
+  ${SAMPLE_DISCUSSION_FRAGMENT}
+  ${ATTACHMENT_FRAGMENT}
+  ${PRODUCT_SAMPLE_FRAGMENT}
+  ${MULTI_COLOR_SAMPLE_FRAGMENT}
+  ${SAMPLE_MEASUREMENT_FRAGMENT}
+`
+
+const formatComboAndSampleData = (data) => {
+  const combinations = _.get(data, 'getCombinationByIds', [])
+  const formattedData = combinations.flatMap((combination) => {
+    const fabricSpecCombos = _.get(combination, 'fabricSpecCombos.content', [])
+    return fabricSpecCombos.map((fabricSpecCombo) => formatFabricSpecComboWithSamples(combination, fabricSpecCombo))
+  })
+  return formattedData
+}
+
+const formatFabricSpecComboWithSamples = (combination, fabricSpecCombo) => ({
+  fabricSpecCombo,
+  id: _.get(fabricSpecCombo, 'humanId'),
+  fabricSpec: _.get(fabricSpecCombo, 'fabricSpec', {}) || {},
+  fabric: _.get(fabricSpecCombo, 'fabricSpec.fabricRecordDetail', {}) || {},
+  merchVendorTeams: _.get(fabricSpecCombo, 'merchVendorTeams', []) || [],
+  samples: _.get(fabricSpecCombo, 'samples.content', []) || [],
+  sampleIds: _.get(fabricSpecCombo, 'samples.content', []).map((sample) => sample.id) || [],
+  businessPartners: _.uniqBy(_.get(combination, 'businessPartners', []), 'id') || [],
+})
+
+const filterOutNonSelectedResourceAndSampleIds = (fabricSpecCombosAndSamples = [], selectedResourceIds = [], selectedSampleIds = []) => {
+  return _.cloneDeep(fabricSpecCombosAndSamples)
+    .filter((it) => selectedResourceIds.includes(it.id))
+    .map((it) => ({
+      ...it,
+      samples: it.samples.filter((sample) => selectedSampleIds.includes(sample.id)),
+      sampleIds: it.samples.filter((sample) => selectedSampleIds.includes(sample.id)).map((sample) => sample.id),
+    }))
+}
+
+export const handleSubmitOrCancelRedirect = ({ location, navigate, workspaceId }) => {
+  const redirectToUrl = _.get(location, 'state.redirectToUrl')
+  const redirectUrl = redirectToUrl || namedRoutes.workspaces.combinations.list({ workspaceId }).pathname
+  navigate(redirectUrl, { state: { poll: true } })
+}
+
+export const CombinationSamplesBulkEvaluate = (props) => {
+  const params = useParams<{ workspaceId: string }>()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const sampleIdsToEvaluate = _.get(location, 'state.sampleIds', [])
+  const selectedResourceIds = _.get(location, 'state.resourceIds', [])
+  const combinationIds = _.get(location, 'state.combinationIds', [])
+  const workspaceId = params.workspaceId
+  const { data, loading, error } = useQuery(GET_FABRIC_SPEC_COMBOS_AND_SAMPLES(getUserProfile()?.internal), {
+    variables: {
+      combinationIds,
+    },
+  })
+
+  const [bulkEvaluateSamples] = useMutation(BULK_EVALUATE_SAMPLES)
+
+  const redirectAfterSubmit = () => handleSubmitOrCancelRedirect({ location, navigate, workspaceId })
+  const redirectAfterCancel = () => handleSubmitOrCancelRedirect({ location, navigate, workspaceId })
+
+  const combosAndSamples = formatComboAndSampleData(data)
+  const selectedResourcesAndSamples = filterOutNonSelectedResourceAndSampleIds(combosAndSamples, selectedResourceIds, sampleIdsToEvaluate)
+
+  const colorApproval = _.get(location, 'state.colorApproval')
+  return (
+    <>
+      {(loading || error) && loadingOrError(loading, error)}
+      {!loading && !error && (
+        <CombinationSamplesBulkEvaluateForm
+          {...props}
+          combosAndSamples={selectedResourcesAndSamples}
+          sampleIdsToEvaluate={sampleIdsToEvaluate}
+          colorApproval={colorApproval}
+          artworkEvaluation
+          sampleEvaluationTypes={_.get(data, 'getProductSampleEvaluationTypesV2', [])}
+          sampleFormat={_.get(data, 'getSampleFormats', [])}
+          sampleEvaluationPurposes={_.get(data, 'getSampleEvaluationPurposes', [])}
+          bulkEvaluateSamples={bulkEvaluateSamples}
+          redirectAfterSubmit={redirectAfterSubmit}
+          redirectAfterCancel={redirectAfterCancel}
+        />
+      )}
+    </>
+  )
+}
+
+CombinationSamplesBulkEvaluate.displayName = 'CombinationSamplesBulkEvaluate'
+export default withUserAccreditations(CombinationSamplesBulkEvaluate)

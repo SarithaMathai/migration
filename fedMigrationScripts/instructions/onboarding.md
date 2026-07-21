@@ -56,12 +56,12 @@ Place this framework folder alongside spark-internal-graphql:
 ├── fedMigrationScripts/               ← this framework
 └── output/                     ← will be auto-created during investigation
     └── {domain}/
-        ├── 01-schema-inventory.md
-        ├── 02-resolver-analysis.md
-        ├── 03-schema.graphql
-        ├── 03-schema-analysis.md
-        ├── 04-stories.md
-        └── 04-po-summary.md
+        ├── be-01-schema-inventory.md
+        ├── be-02-resolver-analysis.md
+        ├── be-03-schema.graphql
+        ├── be-03-schema-analysis.md
+        ├── be-04-stories.md
+        └── be-04-po-summary.md
 ```
 
 ---

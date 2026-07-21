@@ -1,0 +1,38 @@
+import { gql } from '@apollo/client'
+
+export const GET_USERS_LIST = gql`
+  query getUsersElasticSearch($page: Int, $size: Int, $q: String, $accreditation: [String], $dpSecurity: Boolean, $excludeInactive: Boolean) {
+    getUsersElasticSearch(page: $page, size: $size, q: $q, accreditation: $accreditation, dpSecurity: $dpSecurity, excludeInactive: $excludeInactive) {
+      content {
+        accreditations {
+          code
+          description
+          status
+        }
+        userProfileId
+        firstName
+        lastName
+        internal: isInternal
+        businessPartner {
+          id
+          associatedPartnerType
+        }
+        companyName
+        partnerId
+        primaryRole
+        currentVMMRole
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+      }
+    }
+  }
+`
+
+export const SEARCH_USERS_SUGGESTIONS = gql`
+  query searchUsersSuggestions($q: String!) {
+    searchUsersSuggestions(q: $q) {
+      suggestion
+    }
+  }
+`

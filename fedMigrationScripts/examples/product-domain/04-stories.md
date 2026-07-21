@@ -4,7 +4,7 @@
 > **Target DGS:** `ProductService` (repo: `plm-product`, url: `https://spark-product.dev.target.com`)
 > **Pipeline Version:** 1.1
 > **Generated:** 2026-05-01
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema-analysis.md](./03-schema-analysis.md)
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema-analysis.md](./be-03-schema-analysis.md)
 > **DGS Target Status:** Green-field (no existing DGS schema)
 
 ---
@@ -27,7 +27,7 @@
 
 ## Phase A: Foundation & Schema
 
-### SPARK-PROD-A01 · CAT-1 · Small (1–2d)
+### PRODUCT-BE-A-01 · CAT-1 · Small (1–2d)
 
 **Title:** Define core Product schema file and DGS project skeleton
 
@@ -63,7 +63,7 @@
 
 ---
 
-### SPARK-PROD-A02 · CAT-1 · Small (1–2d)
+### PRODUCT-BE-A-02 · CAT-1 · Small (1–2d)
 
 **Title:** Add all owned Product types and input types to schema
 
@@ -83,10 +83,10 @@
 **Files to modify:**
 - `plm-product/apps/app/src/main/resources/schema/product.graphqls`
 
-**Dependencies:** SPARK-PROD-A01
+**Dependencies:** PRODUCT-BE-A-01
 
 **Acceptance criteria:**
-- All 38 owned types defined (see [03-schema-analysis.md](./03-schema-analysis.md) Type Classification table)
+- All 38 owned types defined (see [be-03-schema-analysis.md](./be-03-schema-analysis.md) Type Classification table)
 - All 30 input types defined
 - `@shareable` applied correctly
 - `@key(fields: "id")` on `Product` only; no `@key` on embedded types
@@ -98,7 +98,7 @@
 
 ---
 
-### SPARK-PROD-A03 · CAT-1 · Small (1–2d)
+### PRODUCT-BE-A-03 · CAT-1 · Small (1–2d)
 
 **Title:** Add external stubs and gateway stitch types to schema
 
@@ -117,7 +117,7 @@
 **Files to modify:**
 - `plm-product/apps/app/src/main/resources/schema/product.graphqls`
 
-**Dependencies:** SPARK-PROD-A01
+**Dependencies:** PRODUCT-BE-A-01
 
 **Acceptance criteria:**
 - 11 external stubs added with correct `@key @extends` pattern
@@ -137,7 +137,7 @@
 
 ## Phase B: Core CRUD Queries
 
-### SPARK-PROD-B01 · CAT-2 · Small (1–2d)
+### PRODUCT-BE-B-01 · CAT-2 · Small (1–2d)
 
 **Title:** Implement `getProduct` query data fetcher
 
@@ -162,7 +162,7 @@
 - `ProductClient.kt` (Feign) — `@GetMapping` for the REST endpoint
 - `ProductDto.kt` — REST response DTO
 
-**Dependencies:** SPARK-PROD-A01, SPARK-PROD-A02
+**Dependencies:** PRODUCT-BE-A-01, PRODUCT-BE-A-02
 
 **Acceptance criteria:**
 - `getProduct(id: "123")` returns correct product data from REST API
@@ -184,7 +184,7 @@
 
 > **Note:** Phase E contains all high-complexity orchestration stories. This excerpt shows only the TechPack stories to illustrate the composite key entity sub-story pattern.
 
-### SPARK-PROD-E01 · CAT-1 · Small (1–2d)
+### PRODUCT-BE-E-01 · CAT-1 · Small (1–2d)
 
 **Title:** Define `ResourcesCount` composite key schema in Product subgraph
 
@@ -239,7 +239,7 @@
 
 ---
 
-**Dependencies:** SPARK-PROD-A01
+**Dependencies:** PRODUCT-BE-A-01
 
 ---
 
@@ -248,7 +248,7 @@
 2. `productId` and `partnerId` are `ID!` (non-nullable); `workspaceContext` and `parentProductId` are nullable.
 3. All 10 stub fields present and return `[ID]` (nullable list).
 4. Schema compiles cleanly (`./gradlew generateJava` passes).
-5. Schema reviewed and approved by architect before SPARK-PROD-E02 starts.
+5. Schema reviewed and approved by architect before PRODUCT-BE-E-02 starts.
 
 **Test Cases:**
 - [ ] Unit: schema compiles cleanly
@@ -256,7 +256,7 @@
 
 ---
 
-### SPARK-PROD-E02 · CAT-2 + CAT-3 · Large (5–8d)
+### PRODUCT-BE-E-02 · CAT-2 + CAT-3 · Large (5–8d)
 
 **Title:** Implement `getProductTechPackCountV1` Product stub resolver + aggregation facade (Option D Phase 1)
 
@@ -336,7 +336,7 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 
 ---
 
-**Dependencies:** SPARK-PROD-E01
+**Dependencies:** PRODUCT-BE-E-01
 
 ---
 
@@ -356,7 +356,7 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 
 ---
 
-### SPARK-PROD-E03 · CAT-2 · Medium (3–5d)
+### PRODUCT-BE-E-03 · CAT-2 · Medium (3–5d)
 
 **Title:** Implement `getProductTechPackBulkCountV1` bulk wrapper
 
@@ -366,7 +366,7 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 **Phase:** E
 
 **As a** DGS migration engineer,
-**I want** to implement `getProductTechPackBulkCountV1` using the same aggregation facade pattern as SPARK-PROD-E02,
+**I want** to implement `getProductTechPackBulkCountV1` using the same aggregation facade pattern as PRODUCT-BE-E-02,
 **so that** bulk tech-pack count queries are supported without duplicating the ACL/Elasticsearch orchestration logic.
 
 ---
@@ -379,7 +379,7 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 
 ---
 
-**EXT Service Calls:** Same as SPARK-PROD-E02 (multiplied per item in the bulk input).
+**EXT Service Calls:** Same as PRODUCT-BE-E-02 (multiplied per item in the bulk input).
 
 ---
 
@@ -397,7 +397,7 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 
 ---
 
-**Dependencies:** SPARK-PROD-E01, SPARK-PROD-E02
+**Dependencies:** PRODUCT-BE-E-01, PRODUCT-BE-E-02
 
 ---
 
@@ -416,9 +416,9 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 
 ## Phase F: Federation & Stitching (TechPack Option D Phase 2 — excerpt)
 
-> **Note:** These are the per-subgraph CAT-4 stories for Option D Phase 2. Each one migrates a set of stub fields from the aggregation facade to the owning domain subgraph. Stories SPARK-PROD-F01 through F08 are **placeholder stubs** — they will be fully written when each domain is in migration scope. The full story bodies are written in the OWNING domain's `04-stories.md`.
+> **Note:** These are the per-subgraph CAT-4 stories for Option D Phase 2. Each one migrates a set of stub fields from the aggregation facade to the owning domain subgraph. Stories PRODUCT-BE-F-01 through F-08 are **placeholder stubs** — they will be fully written when each domain is in migration scope. The full story bodies are written in the OWNING domain's `be-04-stories.md`.
 
-### SPARK-PROD-F01 · CAT-4 · Medium (2–4d)
+### PRODUCT-BE-F-01 · CAT-4 · Medium (2–4d)
 **Title:** [PLACEHOLDER] Migrate `productAttachments` + `discussionAttachments` to Attachment subgraph — BLOCKED-BY: attachment migration
 **Phase:** F · **Complexity:** Very High · **Category:** CAT-4
 
@@ -426,55 +426,55 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 - Attachment subgraph adds `extend type ResourcesCount @key(fields: "productId partnerId")` with `@DgsEntityFetcher` + `@DgsData` for `productAttachments` and `discussionAttachments`.
 - Implements ACL tree traversal + `product_packet_props` criticality filter and critical discussion → attachment path.
 - Aggregation facade stops populating these two fields.
-- Full story in: `output/attachment/04-stories.md`.
+- Full story in: `output/attachment/be-04-stories.md`.
 
-**Dependencies:** SPARK-PROD-E02, Attachment domain Phase 3 complete.
+**Dependencies:** PRODUCT-BE-E-02, Attachment domain Phase 3 complete.
 
 ---
 
-### SPARK-PROD-F02 · CAT-4 · Small (1–2d)
+### PRODUCT-BE-F-02 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `discussions` to Discussion subgraph — BLOCKED-BY: discussion migration
-**Phase:** F · Full story in: `output/discussion/04-stories.md`.
+**Phase:** F · Full story in: `output/discussion/be-04-stories.md`.
 
 ---
 
-### SPARK-PROD-F03 · CAT-4 · Small (1–2d)
+### PRODUCT-BE-F-03 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `sample` to Sample subgraph — BLOCKED-BY: sample migration
-**Phase:** F · Full story in: `output/sample/04-stories.md`.
+**Phase:** F · Full story in: `output/sample/be-04-stories.md`.
 
 ---
 
-### SPARK-PROD-F04 · CAT-4 · Small (1–2d)
+### PRODUCT-BE-F-04 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `measurementSets` to Measurement subgraph — BLOCKED-BY: measurement migration
-**Phase:** F · Full story in: `output/measurement/04-stories.md`.
+**Phase:** F · Full story in: `output/measurement/be-04-stories.md`.
 
 ---
 
-### SPARK-PROD-F05 · CAT-4 · Small (1–2d)
+### PRODUCT-BE-F-05 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `claims` to Claims subgraph — BLOCKED-BY: claims migration
-**Phase:** F · Full story in: `output/claims/04-stories.md`.
+**Phase:** F · Full story in: `output/claims/be-04-stories.md`.
 
 ---
 
-### SPARK-PROD-F06 · CAT-4 · Small (1–2d)
+### PRODUCT-BE-F-06 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `productBoms` + `packagingBoms` to BOM subgraph — BLOCKED-BY: bom migration
-**Phase:** F · Full story in: `output/bom/04-stories.md`.
+**Phase:** F · Full story in: `output/bom/be-04-stories.md`.
 
 ---
 
-### SPARK-PROD-F07 · CAT-4 · Small (1–2d)
+### PRODUCT-BE-F-07 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `constructions` to Construction subgraph — BLOCKED-BY: construction migration
-**Phase:** F · Full story in: `output/construction/04-stories.md`.
+**Phase:** F · Full story in: `output/construction/be-04-stories.md`.
 
 ---
 
-### SPARK-PROD-F08 · CAT-4 · Small (1–2d)
+### PRODUCT-BE-F-08 · CAT-4 · Small (1–2d)
 **Title:** [PLACEHOLDER] Migrate `watchlists` to Watchlist subgraph — BLOCKED-BY: watchlist migration
-**Phase:** F · Full story in: `output/watchlist/04-stories.md`.
+**Phase:** F · Full story in: `output/watchlist/be-04-stories.md`.
 
 ---
 
-### SPARK-PROD-F09 · CAT-4 · Small (1–2d)
+### PRODUCT-BE-F-09 · CAT-4 · Small (1–2d)
 
 **Title:** Retire TechPack aggregation facade once all subgraph extensions are live
 
@@ -496,7 +496,7 @@ class TechPackDataFetcher(val aggregatorClient: TechPackAggregatorFeignClient) {
 
 ---
 
-**Dependencies:** SPARK-PROD-F01 through F08 all completed and in production.
+**Dependencies:** PRODUCT-BE-F-01 through F-08 all completed and in production.
 
 ---
 
@@ -533,7 +533,7 @@ This document contains 63 stories across 9 phases (A–I). For the complete brea
 **Target Service:** `ProductService` (plm-product)
 **EXT Service Calls Found:** 29 (from Phase 2)
 **Output Files Written:**
-- `output/product/04-stories.md`
-- `output/product/04-po-summary.md`
+- `output/product/be-04-stories.md`
+- `output/product/be-04-po-summary.md`
 **Next Phase:** Pipeline complete — all 6 artifacts ready.
-**Open Questions:** None — see Decisions Required in `04-po-summary.md` for PO action items.
+**Open Questions:** None — see Decisions Required in `be-04-po-summary.md` for PO action items.

@@ -4,7 +4,7 @@ How a hard problem goes from *"we don't know the approach yet"* to *shipped stor
 
 ## The 6 program spikes
 
-The genuinely complex, cross-cutting problems are **program spikes** `SPARK-SPIKE-01…06` (listed in the
+The genuinely complex, cross-cutting problems are **program spikes** `SPIKE-01…06` (listed in the
 global breakdown, *Phase 0 — Program Spikes*). Each one:
 - **blocks** the domain stories that depend on it (those stories are flagged 🔴🔬),
 - **concludes with an ADR** (a decision),
@@ -16,7 +16,7 @@ The spike ↔ ADR ↔ case ↔ status mapping lives in one machine-readable file
 ## The lifecycle
 
 ```
-SPARK-SPIKE-0x        run the spike        record decision           build it
+SPIKE-0x        run the spike        record decision           build it
 (Proposed)  ─────►   research options  ─────►  ADR + adr-index   ─────►  case folder
                                               status: Accepted          + stories + CSV
                                               chosen: <option>                │
@@ -33,7 +33,7 @@ SPARK-SPIKE-0x        run the spike        record decision           build it
 1. **The write-up** (options + reasoning) → `adrs/<name>.pdf` (or `.md`). This is the human doc.
 2. **The machine-readable entry** → add/update the spike's block in **`adrs/adr-index.yaml`**:
    ```yaml
-   - spike:  SPARK-SPIKE-0x
+   - spike:  SPIKE-0x
      case:   complexStories/<case>
      status: Accepted            # was Proposed
      adr_doc: adrs/<name>.pdf
@@ -56,8 +56,8 @@ Do these in order:
    flip the banner **Status → Decided**, and complete `01-stories.md` + `01-stories-index.yaml` +
    `implementation/` (per-service pseudo-code). *(New spike with no folder yet? copy
    [`_TEMPLATE/`](../complexStories/_TEMPLATE/).)*
-3. **Domain sources** — in each affected `output/initial-analysis/{domain}/04-stories.md`, replace the story's
-   *"per `SPARK-SPIKE-0x`"* placeholder with the concrete choice (e.g. the failure strategy).
+3. **Domain sources** — in each affected `output/analysis/{domain}/be-04-stories.md`, replace the story's
+   *"per `SPIKE-0x`"* placeholder with the concrete choice (e.g. the failure strategy).
 4. **Regenerate**:
    ```bash
    python output/complexStories/generate.py                                  # <case>.csv + <case>-stories.md
@@ -73,8 +73,8 @@ Do these in order:
 |---|---|---|
 | The 6 spikes themselves | `output/jira/all-stories.csv` (rows `Issue Type=Spike`) | Spikes (or Story labelled `spike`) |
 | Domain stories | `output/jira/{domain}.csv` / `all-stories.csv` | Story per row, under the domain Epic |
-| **Complex-case sub-tasks** | `output/complexStories/<case>/<case>.csv` | **imported separately, nested under the case's home stub** (e.g. techpack sub-tasks under `SPARK-PROD-E03`) |
-| Confluence pages | `output/summary/{domain}/FederatedGqlBrakDown-{domain}.md` + `{domain}-po-review.md` | create/update by title |
+| **Complex-case sub-tasks** | `output/complexStories/<case>/<case>.csv` | **imported separately, nested under the case's home stub** (e.g. techpack sub-tasks under `PRODUCT-BE-E-03`) |
+| Confluence pages | `output/summary/{domain}/FederatedGqlBreakDown-BE-{domain}.md` + `{domain}-po-review.md` | create/update by title |
 
 > **Why complex cases import separately:** they are kept **out** of `all-stories.csv` so they aren't
 > double-counted against the 337-story program total — the **home stub** story is what the rollup tracks.

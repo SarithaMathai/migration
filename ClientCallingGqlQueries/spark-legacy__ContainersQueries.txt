@@ -1,0 +1,15 @@
+import { gql } from '@apollo/client'
+
+export const POWER_SEARCH = gql`
+  query megaSearch($q: String) {
+    megaSearch(q: $q) {
+      content {
+        id
+        description
+        resourceType
+        parentId
+        relatedResources
+      }
+    }
+  }
+`

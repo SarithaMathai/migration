@@ -1,4 +1,4 @@
-# Template: Federation Entity Analysis (`03-schema-analysis.md`)
+# Template: Federation Entity Analysis (`be-03-schema-analysis.md`)
 
 This template defines the format for Phase 3 schema analysis output.
 Skills producing this artifact must follow this structure exactly.
@@ -14,7 +14,7 @@ Skills producing this artifact must follow this structure exactly.
 > **Target DGS:** `{ServiceClassName}` (repo: `{repo-name}`)
 > **Pipeline Version:** 1.1
 > **Generated:** {YYYY-MM-DD}
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md)
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > **DGS Target Status:** {Green-field (no existing DGS schema) | Existing schema found at {path}}
 ```
 
@@ -162,7 +162,7 @@ Every query and mutation must be verified. No missing rows.
 
 ---
 
-## Schema File Header (For `03-schema.graphql`)
+## Schema File Header (For `be-03-schema.graphql`)
 
 Every schema file must begin with this comment block:
 
@@ -182,7 +182,7 @@ Every schema file must begin with this comment block:
 
 ---
 
-## Schema File Body Order (For `03-schema.graphql`)
+## Schema File Body Order (For `be-03-schema.graphql`)
 
 ```graphql
 # Federation header (if federation v2)
@@ -255,8 +255,8 @@ extend type Mutation {
 **Breaking Changes:** {0}
 **CAT-4 Stories Required:** {n}
 **Output Files Written:**
-- `output/{domain}/03-schema.graphql` ({n} lines)
-- `output/{domain}/03-schema-analysis.md` ({n} lines)
+- `output/{domain}/be-03-schema.graphql` ({n} lines)
+- `output/{domain}/be-03-schema-analysis.md` ({n} lines)
 **Next Phase:** Phase 4 — Migration Story Generation
 **Open Questions:** {list or "None"}
 ```

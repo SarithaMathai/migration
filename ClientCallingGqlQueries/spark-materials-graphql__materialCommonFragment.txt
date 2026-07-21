@@ -1,0 +1,13 @@
+import { gql } from '@apollo/client'
+
+export const COMMON_MATERIAL_FRAGMENT = gql`
+  fragment CommonMaterialDetails on SPARK_MaterialResource {
+    humanId
+    type
+    baseMaterial {
+      thumbnailId
+      designThumbnailId
+      description
+    }
+  }
+`

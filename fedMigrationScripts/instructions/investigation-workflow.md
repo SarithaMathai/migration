@@ -92,7 +92,7 @@ Analyze the {domain} domain for DGS migration — run all phases.
 |------|------------|------|
 | Get effort estimate before sprint planning | `quick-scope` | ~5 min |
 | Get full sprint plan with priorities | `full-migration-investigation` all phases | 20–60 min |
-| Understand what's in each migration phase | Read `04-po-summary.md` after full pipeline | — |
+| Understand what's in each migration phase | Read `be-04-po-summary.md` after full pipeline | — |
 
 ---
 
@@ -135,7 +135,7 @@ Start
 | What should be @key federated? | `Assess federation readiness for the {domain} domain` |
 | What Hive Gateway config do I need? | `What does the {domain} domain need to stitch in Hive Gateway?` |
 | Re-run one phase | `Re-run Phase {N} for {domain} — {reason for re-run}` |
-| Audit existing output | `Audit output/{domain}/04-stories.md — check against story format, report gaps` |
+| Audit existing output | `Audit output/{domain}/be-04-stories.md — check against story format, report gaps` |
 | Add a missing domain | `Add {loaderKey} to the catalog with URL {url} and target DGS {ServiceName}` |
 
 ---

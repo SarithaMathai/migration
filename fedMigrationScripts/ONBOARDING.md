@@ -36,12 +36,12 @@ Your workspace should look like this:
 ├── fedMigrationScripts/                      ← These investigation assets
 └── output/                            ← Pipeline writes artifacts here (auto-created)
     └── {domain}/
-        ├── 01-schema-inventory.md
-        ├── 02-resolver-analysis.md
-        ├── 03-schema.graphql
-        ├── 03-schema-analysis.md
-        ├── 04-stories.md
-        └── 04-po-summary.md
+        ├── be-01-schema-inventory.md
+        ├── be-02-resolver-analysis.md
+        ├── be-03-schema.graphql
+        ├── be-03-schema-analysis.md
+        ├── be-04-stories.md
+        └── be-04-po-summary.md
 ```
 
 If `spark-internal-graphql` is at a different path, tell the agent at the start:
@@ -110,12 +110,12 @@ Analyze schema ownership for the {domain} domain — inventory and type classifi
 
 | Artifact | Use It To |
 |---------|----------|
-| `01-schema-inventory.md` | Scope the migration, brief the team, identify EXT dependencies |
-| `02-resolver-analysis.md` | Implement DGS without reading JavaScript. Write acceptance criteria. |
-| `03-schema.graphql` | Start building the DGS schema. Define federation contracts. |
-| `03-schema-analysis.md` | Brief the architecture team. Identify type ownership. |
-| `04-stories.md` | Create Jira tickets. Assign to engineers. |
-| `04-po-summary.md` | Sprint planning. Stakeholder communication. Capacity planning. |
+| `be-01-schema-inventory.md` | Scope the migration, brief the team, identify EXT dependencies |
+| `be-02-resolver-analysis.md` | Implement DGS without reading JavaScript. Write acceptance criteria. |
+| `be-03-schema.graphql` | Start building the DGS schema. Define federation contracts. |
+| `be-03-schema-analysis.md` | Brief the architecture team. Identify type ownership. |
+| `be-04-stories.md` | Create Jira tickets. Assign to engineers. |
+| `be-04-po-summary.md` | Sprint planning. Stakeholder communication. Capacity planning. |
 
 ---
 

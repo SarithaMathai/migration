@@ -9,7 +9,7 @@ and complex story breakdowns (where applicable). No per-story engineering detail
 Format mirrors the confluence pages — Confluence-paste ready.
 
 Source priority:
-  1. output/initial-analysis/{domain}/  (updated, Phase A dissolved where applicable)
+  1. output/analysis/{domain}/  (updated, Phase A dissolved where applicable)
   2. migration/finalOutput/{domain}/         (fallback; used for search)
 
 Output → migration/finalOutput/oneStopDoc/{domain}-po-review.md
@@ -28,8 +28,8 @@ from datetime import date
 # ─── Path setup ──────────────────────────────────────────────────────────────
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
-UPDATED_SOURCE = HERE.parent.parent / "output" / "initial-analysis"
-FALLBACK_SOURCE = HERE.parent.parent / "output" / "initial-analysis"
+UPDATED_SOURCE = HERE.parent.parent / "output" / "analysis"
+FALLBACK_SOURCE = HERE.parent.parent / "output" / "analysis"
 OUT_DIR = HERE.parent.parent / "output" / "summary"
 
 # ─── Domain catalogue ─────────────────────────────────────────────────────────
@@ -99,30 +99,30 @@ PHASE2_BREAKDOWNS: dict[str, dict] = {
             "are delegated to dedicated complex cases."
         ),
         "rows": [
-            ("SPARK-PROD-E01", "productBusinessPartnerActions (drop/undrop)", "Very High",
-             "E01-1 orchestrator + fan-out · E01-2 ACL drop + user-profile · E01-3 saga + parity harness"),
-            ("SPARK-PROD-G01", "Product.attachmentsWithMetaData", "Very High",
-             "G01-1 per-domain service call + merge · G01-2 metadata hydration + counts"),
-            ("SPARK-PROD-E02", "updateComponentStatuses (5-loader fan-out)", "High",
-             "E02-1 loader scaffold + status updates · E02-2 parity + count validation"),
-            ("SPARK-PROD-G03", "Product.attachments / attachmentsV3 / attachmentSummary", "High",
-             "G03-1 attachments + attachmentsV3 · G03-2 attachmentSummary + draft filtering"),
+            ("PRODUCT-BE-E-01", "productBusinessPartnerActions (drop/undrop)", "Very High",
+             "E-01-1 orchestrator + fan-out · E-01-2 ACL drop + user-profile · E-01-3 saga + parity harness"),
+            ("PRODUCT-BE-G-01", "Product.attachmentsWithMetaData", "Very High",
+             "G-01-1 per-domain service call + merge · G-01-2 metadata hydration + counts"),
+            ("PRODUCT-BE-E-02", "updateComponentStatuses (5-loader fan-out)", "High",
+             "E-02-1 loader scaffold + status updates · E-02-2 parity + count validation"),
+            ("PRODUCT-BE-G-03", "Product.attachments / attachmentsV3 / attachmentSummary", "High",
+             "G-03-1 attachments + attachmentsV3 · G-03-2 attachmentSummary + draft filtering"),
         ],
         "delegated_note": (
-            "> `SPARK-PROD-E03/E04` (TechPack) and `SPARK-PROD-G02` (components) are delegated to "
+            "> `PRODUCT-BE-E-03/E-04` (TechPack) and `PRODUCT-BE-G-02` (components) are delegated to "
             "complex cases — those provide the full cross-domain breakdown; the Jira stubs point there."
         ),
     },
     "bom": {
         "intro": "Two stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-BOM-E01", "updateBom — 3-step orchestrated write", "Very High",
-             "E01-1 workspace-assoc + body PUT · E01-2 permissions PUT + rollback framework"),
-            ("SPARK-BOM-G08", "BomTrimMaterial field resolvers (dispatcher + 7 types)", "High",
-             "G08-1 dispatcher scaffold + type resolution · G08-2 7 TrimMaterial field resolvers"),
+            ("BOM-BE-E-01", "updateBom — 3-step orchestrated write", "Very High",
+             "E-01-1 workspace-assoc + body PUT · E-01-2 permissions PUT + rollback framework"),
+            ("BOM-BE-G-08", "BomTrimMaterial field resolvers (dispatcher + 7 types)", "High",
+             "G-08-1 dispatcher scaffold + type resolution · G-08-2 7 TrimMaterial field resolvers"),
         ],
         "delegated_note": (
-            "> `SPARK-BOM-E01` is also the home stub for the **non-atomic-write-saga** complex case. "
+            "> `BOM-BE-E-01` is also the home stub for the **non-atomic-write-saga** complex case. "
             "See `complexStories/non-atomic-write-saga/`."
         ),
     },
@@ -132,13 +132,13 @@ PHASE2_BREAKDOWNS: dict[str, dict] = {
             "One additional Very High story is delegated to a complex case."
         ),
         "rows": [
-            ("SPARK-WS-E01", "workspaceBusinessPartnerActionsV2 (5-case dispatcher)", "Very High",
-             "E01-1 dispatcher scaffold + sample/discussion/claims cases · E01-2 engagement/team/ACL removal + saga"),
-            ("SPARK-WS-G01", "WorkspaceV2.attachmentsWithMetaData (hub rollup)", "Very High",
-             "G01-1 per-domain services + merge · G01-2 metadata + draft filtering + counts"),
+            ("WORKSPACE-BE-E-01", "workspaceBusinessPartnerActionsV2 (5-case dispatcher)", "Very High",
+             "E-01-1 dispatcher scaffold + sample/discussion/claims cases · E-01-2 engagement/team/ACL removal + saga"),
+            ("WORKSPACE-BE-G-01", "WorkspaceV2.attachmentsWithMetaData (hub rollup)", "Very High",
+             "G-01-1 per-domain services + merge · G-01-2 metadata + draft filtering + counts"),
         ],
         "delegated_note": (
-            "> `SPARK-WS-G02` (counts — dashboard rollup + increment) is delegated to "
+            "> `WORKSPACE-BE-G-02` (counts — dashboard rollup + increment) is delegated to "
             "`complexStories/components-and-counts-rollups/`. "
             "In Jira, sub-tasks appear nested under their parent story."
         ),
@@ -146,40 +146,40 @@ PHASE2_BREAKDOWNS: dict[str, dict] = {
     "attachment": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-ATCH-G01", "Attachment field resolvers (cross-domain)", "High",
-             "G01-1 access/users · G01-2 businessPartnersFull + snake/camel"),
+            ("ATTACHMENT-BE-G-01", "Attachment field resolvers (cross-domain)", "High",
+             "G-01-1 access/users · G-01-2 businessPartnersFull + snake/camel"),
         ],
     },
     "claims": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-CLM-E01", "updateClaim (proxy ACL + workspace + body)", "High",
-             "E01-1 body PUT + workspace call · E01-2 ACL proxy + orchestration"),
+            ("CLAIM-BE-E-01", "updateClaim (proxy ACL + workspace + body)", "High",
+             "E-01-1 body PUT + workspace call · E-01-2 ACL proxy + orchestration"),
         ],
     },
     "discussion": {
         "intro": "Two stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-DISC-E02", "Participants V3 (4 bundled mutations)", "High",
-             "E02-1 updateParticipantsV3 + coreUpdate · E02-2 coreDelete + deleteParticipantV3"),
-            ("SPARK-DISC-G01", "Discussion field resolvers (3 main types)", "High",
-             "G01-1 Discussion + Content · G01-2 FullDiscussion + participants"),
+            ("DISCUSSION-BE-E-02", "Participants V3 (4 bundled mutations)", "High",
+             "E-02-1 updateParticipantsV3 + coreUpdate · E-02-2 coreDelete + deleteParticipantV3"),
+            ("DISCUSSION-BE-G-01", "Discussion field resolvers (3 main types)", "High",
+             "G-01-1 Discussion + Content · G-01-2 FullDiscussion + participants"),
         ],
     },
     "packaging": {
         "intro": "One story in this domain was broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-PKG-E01", "updatePackaging (body + attachment add/remove, branching)", "High",
-             "E01-1 body + attachment add · E01-2 attachment remove + pricing"),
+            ("PKG-BE-E-01", "updatePackaging (body + attachment add/remove, branching)", "High",
+             "E-01-1 body + attachment add · E-01-2 attachment remove + pricing"),
         ],
     },
     "sample": {
         "intro": "Three stories in this domain were broken into **M-size (≤5 day) sub-tasks** in Jira.",
         "rows": [
-            ("SPARK-SMPL-E02", "bulkEvaluateSamples (evaluation + new-rounds utility)", "High",
-             "E02-1 evaluation orchestrator · E02-2 new-rounds utility"),
-            ("SPARK-SMPL-G02", "Prefix-gated parents (5 prefixes + union)", "High",
-             "G02-1 prefix→loader table + DataLoader · G02-2 parent field resolvers + union"),
+            ("SAMPLE-BE-E-02", "bulkEvaluateSamples (evaluation + new-rounds utility)", "High",
+             "E-02-1 evaluation orchestrator · E-02-2 new-rounds utility"),
+            ("SAMPLE-BE-G-02", "Prefix-gated parents (5 prefixes + union)", "High",
+             "G-02-1 prefix→loader table + DataLoader · G-02-2 parent field resolvers + union"),
         ],
     },
 }
@@ -187,7 +187,7 @@ PHASE2_BREAKDOWNS: dict[str, dict] = {
 # ─── Source file resolution ───────────────────────────────────────────────────
 def get_domain_dir(domain: str) -> Path:
     for src in [FALLBACK_SOURCE / domain]:
-        if (src / "04-po-summary.md").exists():
+        if (src / "be-04-po-summary.md").exists():
             return src
     raise FileNotFoundError(
         f"No source found for '{domain}'. Checked: "
@@ -223,7 +223,7 @@ def build_migration_approach(po_text: str, domain: str) -> str:
 
     # Build from phase table rows (columns: Phase | Name | Stories | Effort | ...)
     phase_rows = re.findall(
-        r"^\|\s*([A-G])\s*\|\s*([^|*\n]+?)\s*\|",
+        r"^\|\s*([A-H])\s*\|\s*([^|*\n]+?)\s*\|",
         po_text, re.MULTILINE
     )
     # Filter out header rows, total rows, and Phase A (dissolved)
@@ -233,13 +233,13 @@ def build_migration_approach(po_text: str, domain: str) -> str:
         if p.strip() in "BCDEFG" and "Phase" not in n and "Name" not in n
     ]
     if not filtered:
-        return f"See [`03-schema-analysis.md §Migration Approach`](../finalOutput/{domain}/03-schema-analysis.md)."
+        return f"See [`be-03-schema-analysis.md §Migration Approach`](../finalOutput/{domain}/be-03-schema-analysis.md)."
 
     parts = [f"**{p}** {n.rstrip(';')}" for p, n in filtered]
     return (
         "; ".join(parts) + ". "
-        f"Full detail: [`03-schema-analysis.md §Migration Approach`]"
-        f"(../finalOutput/{domain}/03-schema-analysis.md)."
+        f"Full detail: [`be-03-schema-analysis.md §Migration Approach`]"
+        f"(../finalOutput/{domain}/be-03-schema-analysis.md)."
     )
 
 
@@ -280,7 +280,7 @@ def build_po_review(domain: str) -> str:
     src_dir = get_domain_dir(domain)
     today   = date.today().isoformat()
 
-    po_text = (src_dir / "04-po-summary.md").read_text(encoding="utf-8")
+    po_text = (src_dir / "be-04-po-summary.md").read_text(encoding="utf-8")
     # Strip the trailing "*Pipeline 2.0 ...*" colophon and any stray "Pipeline Version:" line —
     # these are internal pipeline bookkeeping, not PO-facing content, and used to leak through
     # into whichever section happened to be last in the source file (Capacity Planning).
@@ -297,9 +297,9 @@ def build_po_review(domain: str) -> str:
         f"**Confluence location:** *Federation Graph Migration ▸ Domains ▸ {domain}*",
         "",
         f"> **Paste this page into Confluence.** Audience: Product Owner / stakeholders.  ",
-        f"> Deep dives: [migration approach & schema](../finalOutput/{domain}/03-schema-analysis.md) · "
-        f"[field inventory](../finalOutput/{domain}/05-attribute-inventory.md) · "
-        f"[engineering stories](../finalOutput/{domain}/04-stories.md).  ",
+        f"> Deep dives: [migration approach & schema](../finalOutput/{domain}/be-03-schema-analysis.md) · "
+        f"[field inventory](../finalOutput/{domain}/be-05-attribute-inventory.md) · "
+        f"[engineering stories](../finalOutput/{domain}/be-04-stories.md).  ",
         f"> Create tickets from [`../finalOutput/jira/{domain}.csv`](../finalOutput/jira/{domain}.csv). "
         f"Effort is **AI-estimated — confirm in refinement.**",
         "",
@@ -328,7 +328,7 @@ def build_po_review(domain: str) -> str:
     phase_block = extract_section(po_text, "Story Summary by Phase")
     if phase_block:
         phase_block = re.sub(r"^Story Summary by Phase.*\n", "", phase_block).strip()
-        # Keep the legit Phase-A (A04) row; strip only dissolved-note + pipeline noise
+        # Keep the legit Phase-A (A-04) row; strip only dissolved-note + pipeline noise
         phase_block = re.sub(r"^>.*[Pp]hase A dissolved[^\n]*\n?", "", phase_block, flags=re.MULTILINE)
         phase_block = re.sub(r"^>.*No separate Phase A[^\n]*\n?", "", phase_block, flags=re.MULTILINE)
         phase_block = re.sub(r"^\*Pipeline 2\.0[^\n]*\n?", "", phase_block, flags=re.MULTILINE)
@@ -344,8 +344,8 @@ def build_po_review(domain: str) -> str:
     if "Phase 0" in decisions or "SPIKE" in decisions:
         lines += [
             f"> 🔬 Open decisions marked **Spike** are tracked as real, estimable Phase 0 stories — "
-            f"see *Phase 0 — Spikes* in [`../finalOutput/{domain}/04-stories.md`](../finalOutput/{domain}/04-stories.md) "
-            f"and [`{domain}/FederatedGqlBrakDown-{domain}.md`](./{domain}/FederatedGqlBrakDown-{domain}.md) "
+            f"see *Phase 0 — Spikes* in [`../finalOutput/{domain}/be-04-stories.md`](../finalOutput/{domain}/be-04-stories.md) "
+            f"and [`FederatedGqlBreakDown-{domain}.md`](./FederatedGqlBreakDown-{domain}.md) "
             f"for the full write-up (unknowns, candidate patterns, examples).",
             "",
         ]

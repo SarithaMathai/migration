@@ -11,9 +11,9 @@ Instructions for the GitHub Copilot coding agent (and any other AGENTS.md-readin
 ## Before making a change
 
 1. Read `.github/copilot-instructions.md` for the migration model and hard rules.
-2. Identify the story id in the assigned issue (`SPARK-{PROD|BOM|MEAS|PKG|IMP|PDTL|WL}-{phase}{n}`, e.g. `SPARK-PROD-B02`).
-3. Check spike gating: if the story is Phase E or names a `SPARK-SPIKE-0x`, stop and comment on the issue with the open decision instead of coding — do not guess at a rollback/orchestration strategy yourself.
-4. Read the story's *Current Behaviour → Target → Files → Acceptance Criteria → Test Cases* and the operation's pseudo-logic in `output/initial-analysis/{domain}/02-resolver-analysis.md` (companion analysis repo, linked from the issue).
+2. Identify the story id in the assigned issue (`SPARK-{PROD|BOM|MEAS|PKG|IMP|PDTL|WL}-{phase}{n}`, e.g. `PRODUCT-BE-B-02`).
+3. Check spike gating: if the story is Phase E or names a `SPIKE-0x`, stop and comment on the issue with the open decision instead of coding — do not guess at a rollback/orchestration strategy yourself.
+4. Read the story's *Current Behaviour → Target → Files → Acceptance Criteria → Test Cases* and the operation's pseudo-logic in `output/analysis/{domain}/be-02-resolver-analysis.md` (companion analysis repo, linked from the issue).
 
 ## How to implement
 

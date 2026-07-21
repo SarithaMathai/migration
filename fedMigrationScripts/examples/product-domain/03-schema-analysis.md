@@ -4,7 +4,7 @@
 > **Target DGS:** `ProductService` (repo: `plm-product`, url: `https://spark-product.dev.target.com`)
 > **Pipeline Version:** 1.1
 > **Generated:** 2026-05-01
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md), [02-resolver-analysis.md](./02-resolver-analysis.md)
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md), [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > **DGS Target Status:** Green-field (no existing DGS schema)
 
 ---
@@ -201,8 +201,8 @@ These types are never migrated to DGS — Hive Gateway resolves them via stitchi
 **Target Service:** `ProductService` (plm-product)
 **EXT Service Calls Found:** 29 (from Phase 2)
 **Output Files Written:**
-- `output/product/03-schema.graphql`
-- `output/product/03-schema-analysis.md`
+- `output/product/be-03-schema.graphql`
+- `output/product/be-03-schema-analysis.md`
 **Next Phase:** Phase 4 — Migration Story Generation: `Generate migration stories for product — Phases 1, 2, and 3 are done.`
 **Open Questions:**
 - Confirm TechPack migration option (B/C/D) before Phase E story generation. `ResourcesCount` @key and sub-story decomposition are documented in `reference/federation-patterns.md` §9.

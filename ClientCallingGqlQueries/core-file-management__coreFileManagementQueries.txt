@@ -1,0 +1,56 @@
+import { gql } from '@apollo/client'
+
+export const ARCHIVE_ATTACHMENT = gql`
+  mutation archiveAttachment($id: ID!) {
+    archiveAttachmentV3(id: $id) {
+      id
+    }
+  }
+`
+
+export const ARCHIVE_ATTACHMENT_V2 = gql`
+  mutation archiveAttachment($id: ID!) {
+    archiveAttachmentV3(id: $id) {
+      id
+    }
+  }
+`
+
+export const UPDATE_TAGS = gql`
+  mutation updateAttachmentTags($attachmentId: ID, $tags: [ID]) {
+    updateAttachmentTags(attachmentId: $attachmentId, tags: $tags) {
+      documentId
+      humanId
+      documentName
+    }
+  }
+`
+
+export const UPDATE_TAGS_V3 = gql`
+  mutation updateAttachmentTagsV3($attachmentId: ID, $tags: [ID]) {
+    updateAttachmentTagsV3(attachmentId: $attachmentId, tags: $tags) {
+      documentId
+      humanId
+      documentName
+    }
+  }
+`
+
+export const FILES_BULK_UPDATE = gql`
+  mutation bulkUpdateAttachmentsV2($attachments: [SPARK_UpdateAttachmentV2]) {
+    bulkUpdateAttachmentsV2(attachments: $attachments) {
+      documentId
+      humanId
+    }
+  }
+`
+
+export const UPDATE_ATTACHMENT_MARK_3D_FINAL = gql`
+  mutation updateAttributes($attachment: SPARK_AttachmentAttributesUpdateInput) {
+    updateAttributes(attachment: $attachment) {
+      documentId
+      humanId
+      finalVirtualFile
+    }
+  }
+`

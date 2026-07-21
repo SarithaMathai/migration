@@ -1,0 +1,334 @@
+import { gql } from '@apollo/client'
+import { LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT } from '@spark/product-queries'
+
+const GET_PACKAGING_DETAIL_BASE_FRAGMENT = (includeInternalData = false) => {
+  return gql`
+  fragment PackagingDetailsBaseFragment on SPARK_Packaging {
+    humanId
+    archived
+    parentId
+    description
+    promoDescription
+    projectType
+    projectTypeName
+    projectItemType
+    projectItemTypeName
+    projectLevel
+    projectLevelName
+    creativePath
+    creativePathName
+    requiresSuggestedRetailPrice
+    suggestedRetailPriceByDPCI {
+      dpci
+      suggestedRetailPrice
+    }
+    group
+    groupName
+    wave
+    waveDescription
+    fulfillmentTypeId
+    orderCode
+    manualLock
+    dielineEvaluators {
+      id
+      firstName
+      lastName
+    }
+    dielineDueDate
+    handoffDueDate
+    workspaceIds
+    photoRequired
+    illustrationRequired
+    notes
+    status {
+      code
+      description
+    }
+    businessPartner {
+      id
+      name
+      associatedPartnerType
+    }
+    version
+    createdAt
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    updatedAt
+    updatedBy {
+      id
+      firstName
+      lastName
+    }
+    contactInformation {
+      companyName
+      email
+      address
+      phone
+      softproofing {
+        name
+        email
+      }
+    }
+    copyWriterEditAndApproved
+    warningsAndCautions {
+      countryOfOrigin
+      countryOfOriginName
+      front
+      back
+      sizing
+      netQuantity
+      comparedToCopy
+      additionalMiscCopy
+      copywriterNotes
+    }
+    warningsAndCautionsList {
+      countryOfOrigin
+      countryOfOriginName
+      front
+      back
+      sizing
+      netQuantity
+      comparedToCopy
+      additionalMiscCopy
+      copywriterNotes
+      reservedDpcis {
+        dpci
+      }
+      descriptor
+      warningCaution
+    }
+  ${
+    includeInternalData
+      ? `packagingInternalData {
+      internalNotes
+  attachmentIds
+}`
+      : ''
+  }
+    packagingElements {
+      id
+      selectedComponentId
+      selectedComponentName
+      packagingLibrary {
+        humanId
+        description
+        name
+        passThrough
+        printed {
+          description
+          code
+        }
+        attachment{
+          id
+          name
+          documentId
+          humanId
+          previewable
+        }
+        status {
+          code
+        }
+        packagingFormat {
+          code
+          description
+        }
+      }
+      printers {
+        printerId
+        dielineContactName
+        dielineEmail
+        printerCompanyName
+        printerContactEmail
+        printerPhoneNumber
+        printerCode
+        printerAddress
+        printerCountry
+        printerCountryName
+        printerCity
+        printerState
+        printerZipcode
+        printerLocationId
+        reservedDpcis {
+          dpci
+        }
+        dielines {
+          humanId
+          printerId
+          reservedDpcis {
+            dpci
+          }
+          attachmentId
+          statusId
+          statusName
+          round {
+            originDielineId
+            roundNumber
+          }
+        }
+        printingProcess {
+          substrate {
+            freeText
+            substrateId
+            substrateName
+            substrateShortName
+          }
+          substrateColorId
+          substrateColorName
+          printProcessId
+          printProcessName
+          printOrientationId
+          ${includeInternalData ? 'internalPrintingProcessNotes' : ''}
+          printOrientationName
+          quotedInkStation
+          iccProfile
+        }
+        printerSoftproofing {
+          name
+          email
+        }
+        fileDeliveryEmailList
+        shippingDestination {
+          shippingCompanyName
+          shippingContactName
+          shippingEmail
+          streetAddress
+          phoneNumber
+          fileDeliveryEmail
+        }
+        shippingAddressSameAsPrinterAddress
+      ${
+        includeInternalData
+          ? `isPrintInformationReviewed
+          attachmentIds
+        `
+          : ''
+      }
+
+      }
+    }
+    product {
+      id
+      description
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      workspaces {
+        content {
+          id
+          description
+        }
+      }
+      tcins {
+        partnerId
+        tcin {
+          dpci
+          tcinId
+          createdAt
+          itemDetails {
+            primaryImage
+            description
+            launchDateTime
+            onlineUrl
+            color
+            size
+          }
+        }
+      }
+      reservedDpcis {
+        partnerId
+        reservedDpcis {
+          apexId
+          apexDescription
+          dpci
+          dpciStatus
+          dept
+          clazz
+          subClass
+          tcin
+        }
+      }
+    }
+    workspaces {
+      id
+      description
+    }
+    attachments {
+      access {
+        ids
+        bps
+        merchVendors
+        fabSuppliers
+        designPartners
+        internal
+        external
+        locked
+      }
+      createdAt
+      createdBy {
+        firstName
+        lastName
+      }
+      documentId
+      humanId
+      documentType
+      documentSize
+      id
+      isResourceCritical
+      mediaType
+      name
+      parentResource
+      previewable
+      relatedResources
+      tags{
+        id
+        name
+      }
+      updatedAt
+      updatedBy{
+        firstName
+        lastName
+      }
+    }
+    participantDetails {
+      ...LegacyComponentDiscussionParticipantsFragment
+    }
+    access {
+      permissions {
+        abstractAccessGroup {
+          id
+          grantees
+          type
+        }
+      }
+    }
+  }
+  ${LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT}
+`
+}
+
+export const GET_PACKAGING_DETAILS_BY_PARENTS_INTERNAL = gql`
+  query getPackagings($parentIds: [String]!, $workspaceIds: [String]) {
+    getPackagings(parentIds: $parentIds, workspaceIds: $workspaceIds) {
+      content {
+        ...PackagingDetailsBaseFragment
+      }
+    }
+  }
+  ${GET_PACKAGING_DETAIL_BASE_FRAGMENT(true)}
+`
+
+export const GET_PACKAGING_FIELD_VALUES_BY_TYPE = gql`
+  query getPackagingFieldValuesByType($type: String!) {
+    getPackagingFieldValuesByType(type: $type) {
+      code
+      description
+      resourceType
+      shortDescription
+    }
+  }
+`

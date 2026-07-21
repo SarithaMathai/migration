@@ -1,6 +1,6 @@
 ---
 name: migration-story-generation
-description: "Final phase of the migration pipeline. Breaks the migration into fine-grained Jira-ready stories with full acceptance criteria, embedding Phase 2 pseudo-logic. Produces a dependency graph (Mermaid), risk register, story list grouped by functional phase A-Z, and a separate PO-facing sprint plan with capacity planning. Output: output/{domain}/04-stories.md + output/{domain}/04-po-summary.md"
+description: "Final phase of the migration pipeline. Breaks the migration into fine-grained Jira-ready stories with full acceptance criteria, embedding Phase 2 pseudo-logic. Produces a dependency graph (Mermaid), risk register, story list grouped by functional phase A-Z, and a separate PO-facing sprint plan with capacity planning. Output: output/{domain}/be-04-stories.md + output/{domain}/be-04-po-summary.md"
 argument-hint: "Provide the domain whose Phases 1, 2, and 3 are complete. Example: 'Generate migration stories for bom' or 'Run Phase 4 for measurement'."
 ---
 
@@ -20,9 +20,9 @@ Also produces a PO-facing sprint planning summary with effort estimates, sprint 
 
 ## Cannot Run Without
 
-- `output/{domain}/02-resolver-analysis.md` — pseudo-logic populates Current Behavior in every story
-- `output/{domain}/03-schema.graphql` — schema referenced by CAT-1 stories
-- `output/{domain}/03-schema-analysis.md` — type classification drives CAT-4 stories
+- `output/{domain}/be-02-resolver-analysis.md` — pseudo-logic populates Current Behavior in every story
+- `output/{domain}/be-03-schema.graphql` — schema referenced by CAT-1 stories
+- `output/{domain}/be-03-schema-analysis.md` — type classification drives CAT-4 stories
 
 **Do not proceed without these files.** Improvising stories without upstream artifacts produces inconsistent acceptance criteria and engineers lose traceability.
 
@@ -57,7 +57,7 @@ Also produces a PO-facing sprint planning summary with effort estimates, sprint 
 | Service before resolver | CAT-3 service stories before CAT-2 fetcher stories | n/a |
 | Schema first | CAT-1 blocks all CAT-2 / CAT-3 | n/a |
 | Test stories | One CAT-5 per functional phase | Add a parity-test story per High/Very-High complexity operation |
-| **Composite key entity stubs** | **One Phase E story for the stub resolver + one CAT-4 Phase F story per owning subgraph** | **Owning-subgraph CAT-4 stories go in that domain's `04-stories.md`, not the defining domain's. Add `BLOCKED-BY: {domain} migration` placeholders in the defining domain file until those domains are in scope. See `reference/federation-patterns.md` §9.** |
+| **Composite key entity stubs** | **One Phase E story for the stub resolver + one CAT-4 Phase F story per owning subgraph** | **Owning-subgraph CAT-4 stories go in that domain's `be-04-stories.md`, not the defining domain's. Add `BLOCKED-BY: {domain} migration` placeholders in the defining domain file until those domains are in scope. See `reference/federation-patterns.md` §9.** |
 
 ---
 
@@ -100,7 +100,7 @@ Every criterion must be **objectively verifiable** by a reviewer who hasn't seen
 
 ### Step 1: Generate CAT-1 Schema Stories
 
-One or two stories to add the DGS schema file. Reference `output/{domain}/03-schema.graphql`.
+One or two stories to add the DGS schema file. Reference `output/{domain}/be-03-schema.graphql`.
 
 Typically: one story per domain schema file (types + queries + mutations), plus optionally a separate federation config story if `@key` setup is complex.
 
@@ -125,11 +125,11 @@ One story per query, mutation, or complex field resolver. Each creates:
 
 One story per cross-domain boundary requiring Hive Gateway configuration. Load `stitching-pattern-analysis` skill for implementation patterns.
 
-Source: EXT Service Call Inventory from `02-resolver-analysis.md` and External Type Stubs from `03-schema-analysis.md`.
+Source: EXT Service Call Inventory from `be-02-resolver-analysis.md` and External Type Stubs from `be-03-schema-analysis.md`.
 
 **Composite Key Entity Sub-Stories (Multi-Subgraph Pattern):**
 
-When a query returns a type classified with `@key(fields: "X Y")` composite key and the `03-schema-analysis.md` shows stub fields annotated `# → {domain} subgraph`, generate sub-stories as follows:
+When a query returns a type classified with `@key(fields: "X Y")` composite key and the `be-03-schema-analysis.md` shows stub fields annotated `# → {domain} subgraph`, generate sub-stories as follows:
 
 1. One Phase E story (CAT-2 + CAT-3): Defining subgraph stub resolver + aggregation facade (Option D Phase 1).
 2. For each owning subgraph listed in the stubs (N subgraphs): one CAT-4 Phase F story in **that domain's story file**. In the current domain's file, add a placeholder story: `SPARK-{DOM}-F{N}: [PLACEHOLDER] Migrate {field(s)} to {Domain} subgraph — BLOCKED-BY: {domain} migration`. Set effort = 1–2d per subgraph.
@@ -195,7 +195,7 @@ Only phases with no shared dependencies can truly parallelize. CAT-1 schema (Pha
 
 Write TWO files following `templates/story-format.md`:
 
-### `output/{domain}/04-stories.md` (Engineer-facing)
+### `output/{domain}/be-04-stories.md` (Engineer-facing)
 ```
 # {Domain} — Migration Plan & Stories
 ## 1. Migration Phases Overview (table)
@@ -205,7 +205,7 @@ Write TWO files following `templates/story-format.md`:
 ## Summary (effort totals, critical path)
 ```
 
-### `output/{domain}/04-po-summary.md` (PO-facing)
+### `output/{domain}/be-04-po-summary.md` (PO-facing)
 ```
 # {Domain} — PO Sprint Planning Summary
 ## What Are We Building?
@@ -220,7 +220,7 @@ Write TWO files following `templates/story-format.md`:
 
 PO summary rules:
 - No pseudo-logic — plain English only
-- Every story from `04-stories.md` appears in the Story Summary table
+- Every story from `be-04-stories.md` appears in the Story Summary table
 - Effort uses human labels: Small (1–2d), Medium (3–5d), Large (5–8d), X-Large (8–13d)
 - Sprint recommendations assume ~2–3 stories per sprint unless parallelism allows more
 
@@ -231,7 +231,7 @@ PO summary rules:
 - [ ] Every query has at least one CAT-2 + one CAT-3 story (or grouped per granularity rules)
 - [ ] Every mutation has at least one CAT-2 + one CAT-3 story
 - [ ] Every complex field resolver has its own story
-- [ ] At least one CAT-1 story references `03-schema.graphql`
+- [ ] At least one CAT-1 story references `be-03-schema.graphql`
 - [ ] At least one CAT-4 story per cross-domain boundary in the EXT inventory
 - [ ] Every story embeds relevant Phase 2 pseudo-logic in Current Behavior
 - [ ] For operations returning a composite key entity: stub resolver story + per-subgraph CAT-4 placeholder stories are present (see granularity rule)
@@ -242,16 +242,16 @@ PO summary rules:
 - [ ] Risk Register has at least one entry per High/Very-High complexity story with owner
 - [ ] Stories are grouped by functional phase A–Z
 - [ ] Effort totals include the +20% buffer
-- [ ] `04-stories.md` AND `04-po-summary.md` are both written
-- [ ] Every story in `04-stories.md` appears in the PO summary Story table
+- [ ] `be-04-stories.md` AND `be-04-po-summary.md` are both written
+- [ ] Every story in `be-04-stories.md` appears in the PO summary Story table
 - [ ] PO summary includes Decisions Required table and sprint sequencing
 - [ ] Response footer included
 
 ## Pipeline Complete
 
 After this skill, the domain has all 6 artifacts:
-1. `01-schema-inventory.md` — what files exist and how they relate
-2. `02-resolver-analysis.md` — what the code does (pseudo-logic)
-3. `03-schema.graphql` + `03-schema-analysis.md` — the DGS schema contract
-4. `04-stories.md` — how to build it (engineer-facing)
-5. `04-po-summary.md` — what to build and when (PO-facing sprint plan)
+1. `be-01-schema-inventory.md` — what files exist and how they relate
+2. `be-02-resolver-analysis.md` — what the code does (pseudo-logic)
+3. `be-03-schema.graphql` + `be-03-schema-analysis.md` — the DGS schema contract
+4. `be-04-stories.md` — how to build it (engineer-facing)
+5. `be-04-po-summary.md` — what to build and when (PO-facing sprint plan)

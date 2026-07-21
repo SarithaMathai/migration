@@ -1,0 +1,135 @@
+import { gql } from '@apollo/client'
+
+export const GET_COLOR_ARCHROMA_CRUMB = gql`
+  query getColorArchroma($id: ID!) {
+    getColorArchroma(id: $id) {
+      humanId
+      name
+    }
+  }
+`
+
+export const GET_ARTWORK_CRUMB = gql`
+  query breadcrumbArtwork($id: ID!) {
+    getArtwork(id: $id) {
+      humanId
+      name
+      colorways {
+        name
+        humanId
+      }
+    }
+  }
+`
+
+export const GET_CLAIM_CRUMB = gql`
+  query breadcrumbClaims($id: [String]) {
+    getClaimByIds(claimHumanIds: $id) {
+      claimName
+      humanId
+    }
+  }
+`
+
+export const GET_COLOR_CRUMB = gql`
+  query breadcrumbColor($id: ID!) {
+    getColor(id: $id) {
+      humanId
+      name
+    }
+  }
+`
+
+export const GET_COLOR_COLORO_CRUMB = gql`
+  query breadcrumbColor($id: ID!) {
+    getColorColoro(id: $id) {
+      humanId
+      name
+    }
+  }
+`
+
+export const GET_PALETTE_CRUMB = gql`
+  query breadcrumbPalette($id: ID!) {
+    getPalette(id: $id) {
+      description
+      humanId
+    }
+  }
+`
+
+export const GET_COLOR_PANTONE_CRUMB = gql`
+  query getColorPantone($id: ID!) {
+    getColorPantone(id: $id) {
+      humanId
+      name
+    }
+  }
+`
+
+export const GET_PRODUCT_CRUMB = gql`
+  query breadcrumbProduct($id: ID!) {
+    getProduct(id: $id) {
+      id
+      description
+    }
+  }
+`
+
+export const GET_SAMPLE = gql`
+  query breadcrumbSample($id: [ID!]) {
+    getSamplesByIdsV2(ids: $id) {
+      id
+      description
+    }
+  }
+`
+
+export const GET_TAG_CRUMB = gql`
+  query breadcrumbTag($id: ID!) {
+    getTag(id: $id) {
+      id
+      name
+    }
+  }
+`
+
+export const GET_TEAM_CRUMB = gql`
+  query breadcrumbTeam($id: ID!) {
+    getTeam(id: $id) {
+      id
+      name
+    }
+  }
+`
+
+export const GET_USER_CRUMB = gql`
+  query breadcrumbUser($id: ID!) {
+    getUserAttributes(id: $id) {
+      id
+      firstName
+      lastName
+    }
+  }
+`
+
+export const GET_WASH_CRUMB = gql`
+  query breadcrumbWash($id: ID!) {
+    getWash(id: $id) {
+      humanId
+      name: washDescription
+    }
+  }
+`
+
+export const GET_WORKSPACE_CRUMB = gql`
+  query breadcrumbWorkspace($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      id
+      description
+      workspaceType {
+        code
+      }
+    }
+  }
+`

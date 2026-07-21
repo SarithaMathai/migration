@@ -1,6 +1,6 @@
 ---
 name: federation-schema-derivation
-description: "Derives the target Netflix DGS GraphQL schema for a domain. Default mode is green-field (no existing DGS repo required). Uses federation-candidate-detection to classify types. Defines @key federation directives. Produces a gap analysis. Output: output/{domain}/03-schema.graphql + output/{domain}/03-schema-analysis.md"
+description: "Derives the target Netflix DGS GraphQL schema for a domain. Default mode is green-field (no existing DGS repo required). Uses federation-candidate-detection to classify types. Defines @key federation directives. Produces a gap analysis. Output: output/{domain}/be-03-schema.graphql + output/{domain}/be-03-schema-analysis.md"
 argument-hint: "Provide the domain whose Phase 2 analysis is complete. Example: 'Derive the DGS schema for bom' or 'Run Phase 3 for measurement'."
 ---
 
@@ -20,7 +20,7 @@ This skill is the schema contract output — the `.graphqls` file engineers will
 
 ## Cannot Run Without
 
-- `output/{domain}/02-resolver-analysis.md` — pseudo-logic and EXT inventory drive type classification
+- `output/{domain}/be-02-resolver-analysis.md` — pseudo-logic and EXT inventory drive type classification
 - `spark-internal-graphql/packages/data-source-spark/src/schemas/SPARK_{Domain}.graphql` — source schema
 
 ## Reference Files to Read First
@@ -53,7 +53,7 @@ If the engineer provides DGS files directly (pasted into chat), use them for rea
 ### Step 1: DGS Schema Check (Green-Field Default)
 
 **If no DGS repo available (default):**
-Mark schema status in `03-schema-analysis.md` as:
+Mark schema status in `be-03-schema-analysis.md` as:
 > "No existing DGS schema found — green-field derivation. All types and operations marked 🔜."
 
 Skip remainder of Step 1 and proceed to Step 2.
@@ -107,7 +107,7 @@ Every query, mutation, and field MUST have a `#` comment with status symbol and 
 
 ### Step 6: Write the Schema Analysis Document
 
-The `03-schema-analysis.md` document must include all sections from `templates/federation-entity.md`:
+The `be-03-schema-analysis.md` document must include all sections from `templates/federation-entity.md`:
 1. Header block
 2. Type Classification table (all types, one row per type)
 3. External Type Stubs table (gateway-stitched types with stub pattern)
@@ -125,10 +125,10 @@ For green-field: all Query/Mutation gap analysis rows are 🔜. Summary line: `0
 
 Write TWO files:
 
-### `output/{domain}/03-schema.graphql`
+### `output/{domain}/be-03-schema.graphql`
 The actual DGS schema file. Use the mandatory comment header from `reference/output-conventions.md` §8.
 
-### `output/{domain}/03-schema-analysis.md`
+### `output/{domain}/be-03-schema-analysis.md`
 Full analysis document. Follow `templates/federation-entity.md` for all table structures.
 
 ---
@@ -143,8 +143,8 @@ Full analysis document. Follow `templates/federation-entity.md` for all table st
 - [ ] Query Gap Analysis and Mutation Gap Analysis both present with summary lines
 - [ ] Schema Analysis Summary block is complete
 - [ ] Breaking change count is explicitly stated (0 for green-field)
-- [ ] `output/{domain}/03-schema.graphql` written with correct body ordering
-- [ ] `output/{domain}/03-schema-analysis.md` written with all required tables
+- [ ] `output/{domain}/be-03-schema.graphql` written with correct body ordering
+- [ ] `output/{domain}/be-03-schema-analysis.md` written with all required tables
 - [ ] Response footer included
 
 ## Next Skill

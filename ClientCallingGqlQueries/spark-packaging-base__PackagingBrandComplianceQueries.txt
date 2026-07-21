@@ -1,0 +1,24 @@
+import { gql } from '@apollo/client'
+
+export const GET_BRAND_COMPLIANCE_PRODUCTS_VALIDATIONS_BY_IDS = gql`
+  query getBrandComplianceProductValidationsByIds($ids: [String]!) {
+    getBrandComplianceProductValidationsByIds(ids: $ids) {
+      validBrandComplianceIds
+      invalidBrandComplianceIds
+      archivedBrandComplianceIds
+    }
+  }
+`
+
+export const GET_BRAND_COMPLIANCE_PRODUCTS_RECORD_BY_ID = gql`
+  query getBrandComplianceProductRecordById($id: String!) {
+    getBrandComplianceProductRecordById(id: $id) {
+      brandComplianceProductId
+      brandComplianceProductName
+      brandComplianceProductStatus
+      dpci
+      supplierId
+      isDeletedInBrandCompliance
+    }
+  }
+`

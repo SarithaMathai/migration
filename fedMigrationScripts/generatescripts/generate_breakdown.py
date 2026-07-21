@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-Generate FederatedGqlBrakDown-{domain}.md and Federated+Graphql+Stories+-+BreakDown.md.
+Generate FederatedGqlBreakDown-{domain}.md and Federated+Graphql+Stories+-+BreakDown.md.
 
 Format mirrors the reference Word docs in 'final PO BreakDown Doc/':
   - Compact header banner
-  - Scope · Effort · Sprint Sequencing · Capacity sections (from 04-po-summary.md)
+  - Scope · Effort · Sprint Sequencing · Capacity sections (from be-04-po-summary.md)
   - Stories rendered as TABLES (one row per story) grouped by phase — Confluence-ready
   - High/VH tests shown beneath the phase table, not inline
 
-Output:
-  oneStopDoc/{domain}/FederatedGqlBrakDown-{domain}.md   (per domain)
-  oneStopDoc/Federated+Graphql+Stories+-+BreakDown.md    (global)
+Output (per-domain artifacts in output/summary/{domain}/ — ONE merged page per domain,
+'## Backend' section from build_breakdown() here + '## Frontend' section from
+generate_frontend.py's build_fe_section(); program-level pages stay at the summary/ root):
+  output/summary/{domain}/FederatedGqlBreakDown-{domain}.md   (per domain, Backend + Frontend)
+  output/summary/Federated+Graphql+Stories+-+BreakDown.md     (global)
 
 Run:
     python generate_breakdown.py              # all domains + global
@@ -23,11 +25,13 @@ import sys
 from pathlib import Path
 from datetime import date
 
+from team_config import N_BE_ENGINEERS
+
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 HERE      = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
-UPD_SRC   = HERE.parent.parent / "output" / "initial-analysis"
-FALLBACK  = HERE.parent.parent / "output" / "initial-analysis"
+UPD_SRC   = HERE.parent.parent / "output" / "analysis"
+FALLBACK  = HERE.parent.parent / "output" / "analysis"
 OUT_DIR   = HERE.parent.parent / "output" / "summary"
 
 # Published pages (Confluence/Jira) must link to the repo on GitHub, not a local file path.
@@ -87,7 +91,7 @@ DGS_MAP = {
 
 PHASE_ICONS = {
     "S": "🔬", "A": "🧱", "B": "📖", "C": "🔍", "D": "✏️",
-    "E": "⚙️", "F": "🔗", "G": "🧪",
+    "E": "⚙️", "F": "🔗", "G": "🧪", "H": "🧬",
 }
 PHASE_NAMES = {
     "S": "Spikes",
@@ -98,6 +102,7 @@ PHASE_NAMES = {
     "E": "Complex Operations",
     "F": "Federation & Stitching",
     "G": "Field Resolvers & Tests",
+    "H": "Entity Resolution",
 }
 TYPE_ICONS = {
     "query":          "🔷",
@@ -119,6 +124,33 @@ COMPLEXITY_ICONS = {
     "very high": "🔴",
 }
 SIZE_MAP = {"low": "XS", "medium": "M", "high": "L", "very high": "XL"}
+
+# Nominal per-story day ranges by complexity — consistent with the AI-estimated phase
+# totals in each domain's be-04-po-summary.md (confirm in refinement). Used by the
+# 2-engineer lane plans and the program-level team plan.
+EFFORT_DAYS = {"low": (1, 2), "medium": (2, 4), "high": (4, 7), "very high": (7, 12)}
+
+# Domain ownership — stale from the retired 2 BE + 2 FE team model (lanes referenced
+# 01-implementation-plan-2BE-2FE.md, now 01-implementation-plan-1BE-1FE.md, a single
+# sequential lane per role). Left as historical per-domain labels; not rewired to the
+# 1BE+1FE model since generate_jira.py/generate_project_plan.py consume these labels as
+# Owner metadata — reassigning them is a separate decision, not a mechanical rename.
+DOMAIN_OWNERS = {
+    "product":        {"be": "BE-1", "fe": "FE-1 + FE-2"},
+    "claims":         {"be": "BE-1", "fe": "FE-2"},
+    "impression":     {"be": "BE-1", "fe": "FE-2"},
+    "watchlist":      {"be": "BE-2", "fe": "FE-1"},
+    "productDetails": {"be": "BE-2", "fe": "FE-1"},
+    "measurement":    {"be": "BE-2", "fe": "FE-2"},
+    "packaging":      {"be": "BE-2", "fe": "FE-2"},
+    "bom":            {"be": "BE-2", "fe": "FE-1"},
+}
+PRIORITY_MAP = {"very high": "Highest", "high": "High", "medium": "Medium", "low": "Low"}
+
+# XS story merging is OFF (user decision, 2026-07-17): every story stays separate,
+# one ticket per operation — do not group XS/Low stories into combined tickets.
+MERGE_XS = False
+MAX_XS_GROUP = 4          # ≥3 grouped XS promote the merged story to 🟡 Medium (M) — unused while MERGE_XS is off
 
 TSHIRT_DATA = {
     "product":        (76, 330),
@@ -150,7 +182,7 @@ def tshirt(domain: str) -> str:
 # Per-domain spike/decision tables are GONE. Every genuinely complex, cross-cutting
 # problem is generalized into ONE of these buckets and tracked once, globally.
 # A domain story that is gated on a bucket is marked 🔴🔬 in its phase table and
-# lists the SPARK-SPIKE-0x id in Depends On.
+# lists the SPIKE-0x id in Depends On.
 SPIKE_TITLES = {
     "01": "Non-Atomic Write Saga",
     "02": "TechPack Aggregate",
@@ -167,35 +199,34 @@ SPIKE_TITLES = {
 # Story-id → spike bucket. Any Phase-E story defaults to bucket 01 (multi-step write
 # saga); the entries below override that default or flag a non-E complex story.
 SPIKE_OVERRIDES = {
-    "SPARK-PROD-E01": "03",   # productBusinessPartnerActions — partner drop/undrop
-    "SPARK-PROD-E03": "02",   # getProductTechPack…          — TechPack aggregate
-    "SPARK-PROD-E04": "02",   # getProductTechPackBulk…      — TechPack aggregate
-    "SPARK-WS-E01":   "03",   # workspaceBusinessPartnerActions — partner drop/undrop
-    "SPARK-BOM-A04":  "05",   # BOM material @DgsTypeResolver — polymorphic
-    "SPARK-SMPL-B01": "05",   # SampleAsset union            — polymorphic
-    "SPARK-SRCH-A02": "05",   # search value-type resolution — polymorphic
-    "SPARK-PROD-G07": "04",   # unDroppablePartners          — not-removable read aggregation
-    "SPARK-WS-G05":   "04",   # workspace partners           — not-removable read aggregation
-    "SPARK-WS-D04":   "06b",  # addResourcesToWorkspaceV2    — cross-domain association
-    "SPARK-WS-G04":   "06a",  # Workspace.products           — cross-domain read/hydration
+    "PRODUCT-BE-E-01": "03",   # productBusinessPartnerActions — partner drop/undrop
+    "PRODUCT-BE-E-03": "02",   # getProductTechPack…          — TechPack aggregate
+    "PRODUCT-BE-E-04": "02",   # getProductTechPackBulk…      — TechPack aggregate
+    "WORKSPACE-BE-E-01":   "03",   # workspaceBusinessPartnerActions — partner drop/undrop
+    "BOM-BE-A-04":  "05",   # BOM material @DgsTypeResolver — polymorphic
+    "SAMPLE-BE-A-04": "05",   # SampleAsset union (later phase) — polymorphic
+    "SEARCH-BE-B-01": "05",   # search polymorphic stubs (later phase) — polymorphic
+    "PRODUCT-BE-G-07": "04",   # unDroppablePartners          — not-removable read aggregation
+    "PRODUCT-BE-G-11-1": "04", # notRemovablePartnerIds       — not-removable read aggregation (ADR-016)
+    "WORKSPACE-BE-G-05":   "04",   # workspace partners           — not-removable read aggregation
+    "WORKSPACE-BE-D-04":   "06b",  # addResourcesToWorkspaceV2    — cross-domain association
+    "WORKSPACE-BE-G-04":   "06a",  # Workspace.products           — cross-domain read/hydration
     # 06a (Hydration — reads) and 06b (Association — mutation link side-effects). Raised in
-    # PO review (SPARK-PROD-S01 "association pattern" → 06b, SPARK-PROD-S02 "two-stage hydration"
-    # → 06a, SPARK-BOM-S02 "material federation rollout order" → 06a). See each domain's
-    # 04-po-summary.md "Decisions Required" table for the source of truth.
-    "SPARK-PROD-C01": "06a",  # getProducts two-stage hydration          — SPARK-PROD-S02
-    "SPARK-PROD-D01": "06b",  # addProduct (workspace + attachment assoc) — SPARK-PROD-S01
-    "SPARK-PROD-D02": "06b",  # addProducts bulk (attachment links)      — SPARK-PROD-S01
-    "SPARK-PROD-D03": "06b",  # bulkUpdateProducts (mass assoc update)   — SPARK-PROD-S01
-    "SPARK-PROD-D04": "06b",  # updateProduct (attachment cleanup)       — SPARK-PROD-S01
-    "SPARK-PROD-D06": "06b",  # addTeamsToProduct (team/workspace)       — SPARK-PROD-S01
-    "SPARK-PROD-D07": "06b",  # addBusinessPartnersToProductWithType     — SPARK-PROD-S01
-    "SPARK-PROD-D11": "06b",  # updateWorkspaceAttributes                — SPARK-PROD-S01
-    "SPARK-BOM-B05":  "06a",  # getBomMaterialTypes (Material-Hub merge) — SPARK-BOM-S02 (rollout order)
+    # PO review (PRODUCT-BE-S-01 "association pattern" → 06b, PRODUCT-BE-S-02 "two-stage hydration"
+    # → 06a, BOM-BE-S-02 "material federation rollout order" → 06a). See each domain's
+    # be-04-po-summary.md "Decisions Required" table for the source of truth.
+    "PRODUCT-BE-C-01": "06a",  # getProducts two-stage hydration          — PRODUCT-BE-S-02
+    "PRODUCT-BE-D-01": "06b",  # addProduct (workspace + attachment assoc) — PRODUCT-BE-S-01
+    "PRODUCT-BE-D-02": "06b",  # addProducts bulk (attachment links)      — PRODUCT-BE-S-01
+    "PRODUCT-BE-D-04": "06b",  # updateProduct (attachment cleanup)       — PRODUCT-BE-S-01
+    # D-03 (pure passthrough) and D-06/D-07/D-11 (single-backend Collab Canvas writes) are
+    # descoped from 06b per draft ADR-011 §1 — they are NOT spike-gated.
+    "BOM-BE-B-05":  "06a",  # getBomMaterialTypes (Material-Hub merge) — BOM-BE-S-02 (rollout order)
 }
 
 
 def spike_for(story: dict) -> str | None:
-    """Return the SPARK-SPIKE bucket number this story is gated on, or None."""
+    """Return the SPIKE bucket number this story is gated on, or None."""
     sid = story["id"]
     if sid in SPIKE_OVERRIDES:
         return SPIKE_OVERRIDES[sid]
@@ -209,23 +240,23 @@ def spike_how_to_read() -> list[str]:
     return [
         "## How to read the spikes & related stories",
         "",
-        "> The `SPARK-SPIKE-0x` id is the join key between a **program spike** (here) and the **domain stories** "
+        "> The `SPIKE-0x` id is the join key between a **program spike** (here) and the **domain stories** "
         "it gates. Read **global → domain** to plan decisions, or **domain → global** to implement.",
         "",
         "**👔 Product Owner:**",
         "",
         "1. **Phase 0 — Program Spikes table** — what each spike blocks and its status. Nothing dependent starts until the spike's decision is recorded.",
         "2. **Spike Detail** (per bucket) — the brief, the **Decision to make**, the **intended steps**, and the resolver table (blast radius).",
-        "3. **Sequencing** — `SPARK-SPIKE-01/02/03` are critical path (Sprint 0); `04/05/06a/06b` run in parallel. Assign an owner + timebox each.",
+        "3. **Sequencing** — `SPIKE-01/02/03` are critical path (Sprint 0); `04/05/06a/06b` run in parallel. Assign an owner + timebox each.",
         "4. In a **domain page**, the *Spikes & Complex Cases* map lists which of that domain's stories are 🔴🔬-blocked — plan the domain around them.",
         "",
         "**🔧 Engineer:**",
         "",
-        "1. In the **domain A–G table**, find your story. If it's **🔴🔬 with `SPARK-SPIKE-0x` in Depends On**, the complex part is blocked until that spike concludes — check its status first.",
-        "2. **Follow the `SPARK-SPIKE-0x` id → Spike Detail**: the **intended cross-domain steps** (your target flow) + the resolver table (external services you'll call + what each resolver does today = your parity target).",
+        "1. In the **domain A–H table**, find your story. If it's **🔴🔬 with `SPIKE-0x` in Depends On**, the complex part is blocked until that spike concludes — check its status first.",
+        "2. **Follow the `SPIKE-0x` id → Spike Detail**: the **intended cross-domain steps** (your target flow) + the resolver table (external services you'll call + what each resolver does today = your parity target).",
         "3. **Research so far** — the **Phase 0 — Program Spikes** table links each spike to its `complexStories/<case>/` brief.",
         "4. **Non-gated stories** (no 🔴🔬) — build straight from the story's Acceptance Criteria; no spike needed.",
-        "5. **In Jira/CSV** — the spike is a `Spike` issue (`SPARK-SPIKE-0x`) with the brief + steps in its description; your gated story lists it in **Depends On**.",
+        "5. **In Jira/CSV** — the spike is a `Spike` issue (`SPIKE-0x`) with the brief + steps in its description; your gated story lists it in **Depends On**.",
         "",
         "> **One-line model —** *Product Owner:* \"which decisions block work, who owns them, when?\" → the spike table. "
         "*Engineer:* \"is my story blocked, and once unblocked what's the flow + who do I call?\" → follow the id to Spike Detail.",
@@ -254,43 +285,44 @@ def program_spike_table() -> list[str]:
         "",
         "| Spike ID | Bucket / Generic Problem | Domains affected (home story) | Blocks | Research so far | Status |",
         "|---|---|---|---|---|---|",
-        "| `SPARK-SPIKE-01` | 🔬 **Non-Atomic Write Saga** — a mutation fans out across ≥2 REST services "
+        "| `SPIKE-01` | 🔬 **Non-Atomic Write Saga** — a mutation fans out across ≥2 REST services "
         "(workspace-assoc · body · permissions · component-status) with no transaction; on partial failure state "
         "is left inconsistent. Choose the failure strategy: (a) compensating saga · (b) compensation-log + "
-        "best-effort · (c) best-effort. | bom `E01` · claims `E01` · measurement `E01` · packaging `E01` · "
-        "productDetails `E01` · watchlist `E01` · product `E02` | all "
-        "`E`-phase writes | `complexStories/non-atomic-write-saga/` (shared `WriteSaga`) | 🔴 Open — failure strategy to decide |",
-        "| `SPARK-SPIKE-02` | 🔬 **TechPack Aggregate** — build a `ProductTechPack` entity where **every field is "
-        "computed from a different microservice REST API**; pick the assembly pattern (A `extend type` · B elastic "
-        "DGS · C orchestrator · D interface · E materialized). | product `E03/E04` | product techpack | "
-        "`complexStories/techpack/` | 🔴 Open — assembly pattern to decide |",
-        "| `SPARK-SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business "
+        "best-effort · (c) best-effort. | bom `E-01` · claims `E-01` · measurement `E-01` · packaging `E-01` · "
+        "productDetails `E-01` · watchlist `E-01` · product `E-02` | all "
+        "`E`-phase writes | `complexStories/non-atomic-write-saga/` (brief + draft ADR-013 + [story breakdown](../../output/complexStories/non-atomic-write-saga/01-stories.md)) | 🟠 Draft ADR-013 proposed — shared `WriteSaga` module built (`PRODUCT-BE-E-00`, Sprint 0); consumers wired — ratification pending |",
+        "| `SPIKE-02` | 🔬 **TechPack Aggregate** — build a `ProductTechPack` entity where **every field is "
+        "computed from a different microservice REST API**; ratify the assembly pattern under federation. | product `E-03`/`E-04` | product techpack | "
+        "`complexStories/techpack/` (brief + draft ADR-015 + [story breakdown](../../output/complexStories/techpack/01-stories.md)) | 🟠 Draft ADR-015 proposed (facade-then-federate, ADR-015 Option B = catalogue \"Option D (hybrid)\") — full phase 1–3 story chain built (`E-03`/`E-04`, `H-01`–`H-06`, `F-09`) — ratification pending |",
+        "| `SPIKE-03` | 🔬 **Partner Drop/Undrop + Ownership** — orchestrated drop/undrop of a business "
         "partner across every referencing child domain; decide ownership (domain subgraph vs workspace) and the "
-        "write saga. | product `E01` · workspace `E01` | partner-write "
-        "`E`/`F` | `complexStories/partner-drop-undrop-write/` | 🔴 Open — ownership + orchestration to decide |",
-        "| `SPARK-SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which "
+        "write saga. | product `E-01` · workspace `E-01` (later phase) | partner-write "
+        "`E`/`F` | `complexStories/partner-drop-undrop-write/` (brief + draft ADR-012 + [story breakdown](../../output/complexStories/partner-drop-undrop-write/01-stories.md)) | 🟠 Draft ADR-012 proposed (owner-orchestrated saga + participant contract, via `PRODUCT-BE-E-00`) — ratification pending |",
+        "| `SPIKE-04` | 🔬 **Not-Removable / Undroppable Partners** — read aggregation computing which "
         "partners cannot be removed/dropped because still referenced (cross-domain `@requires` union). | product "
-        "`E01` · workspace `E01` | partner-read fields | "
-        "`complexStories/notRemovable-undroppable-partners/` | 🔴 Open — contribution contract to agree |",
-        "| `SPARK-SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category "
+        "`G-07` · `G-11-1` · workspace `G-05` (later phase) | partner-read fields | "
+        "`complexStories/notRemovable-undroppable-partners/` (brief + draft ADR-016 + [story breakdown](../../output/complexStories/notRemovable-undroppable-partners/01-stories.md)) | 🟠 Draft ADR-016 proposed (owner-`@requires` lane aggregation) — ratification pending |",
+        "| `SPIKE-05` | 🔬 **Polymorphic Type Resolution** — interfaces/unions resolved by a category "
         "dispatcher; confirm the full `code → type` table + union membership, then `@DgsTypeResolver` + per-variant "
-        "+ CI schema-conformance. | bom `A04` | type-resolver + "
-        "variant fields | `complexStories/polymorphic-type-resolution/` | 🔴 Open — code→type table to confirm |",
-        "| `SPARK-SPIKE-06a` | 🔬 **Hydration** — how a domain *reads* another's entity (federated `@key` ref vs "
+        "+ CI schema-conformance. | bom `A-04`/`G-08` (+ sample `A-04`/`G-02`, search `B-01`/`C-02` — later phase) | type-resolver + "
+        "variant fields | `complexStories/polymorphic-type-resolution/` (brief + draft ADR-017 + [story breakdown](../../output/complexStories/polymorphic-type-resolution/01-stories.md)) | 🟠 Draft ADR-017 proposed (per-site ports + CI conformance gate, `BOM-BE-A-05` built) — code→type table to confirm at ratification |",
+        "| `SPIKE-06a` | 🔬 **Hydration** — how a domain *reads* another's entity (federated `@key` ref vs "
         "REST client); two-stage hydration; federation/read-hub rollout ordering across sibling DGS. | product "
-        "`S02` (gates `C01`) · bom `B05` | hydration + rollout (reads) | "
-        "`complexStories/cross-domain-association/` | 🔴 Open — per-edge rule to decide |",
-        "| `SPARK-SPIKE-06b` | 🔬 **Cross-Domain Association** — one pattern for a mutation that also *links* its "
-        "record into a sibling domain (workspace/attachment/team/partner), incl. sync-vs-async and partial-failure "
-        "handling. | product `S01` (gates `D01`/`D02`/`D03`/`D04`/`D06`/`D07`/`D11`) | association-side writes | "
-        "`complexStories/cross-domain-association/` | 🔴 Open — pattern to choose |",
+        "`S-02` (gates `C-01`) · bom `B-05` | hydration + rollout (reads) | "
+        "`complexStories/cross-domain-association/` | 🔴 Open — per-edge rule to decide (concludes via `PRODUCT-BE-S-02`, no draft ADR of its own — distinct from 06b/ADR-011 below) |",
+        "| `SPIKE-06b` | 🔬 **Cross-Domain Association** — one pattern for a mutation that also *links* its "
+        "record into a sibling domain (workspace/attachment), incl. sync-vs-async and partial-failure "
+        "handling. `D-03` is a pure passthrough (no cross-domain call); `D-06`/`D-07`/`D-11` are single-backend writes "
+        "— the product backend owns all endpoints, no sibling service called (draft ADR-011 §1). | product `S-01` "
+        "(gates `D-01`/`D-02`/`D-04` only — see scope note) | association-side writes (D-01/D-02/D-04) | "
+        "`complexStories/cross-domain-association/` (brief + draft ADR-011 + [story breakdown](../../output/complexStories/cross-domain-association/01-stories.md)) | 🟠 Draft ADR-011 proposed (sync orchestration + shared association component) — `D-01`/`D-02`/`D-04` ACs updated — ratification pending |",
         "",
-        "> **Sequencing:** `SPARK-SPIKE-01/02/03` are on the critical path (they block `E`-phase writes and "
-        "TechPack); run them in Sprint 0 alongside each domain's `B01` module scaffold. `04/05/06a/06b` block "
+        "> **Sequencing:** `SPIKE-01/02/03` are on the critical path (they block `E`-phase writes and "
+        "TechPack); run them in Sprint 0 alongside each domain's `B-01` module scaffold. `04/05/06a/06b` block "
         "specific reads/writes and can run in parallel. Each spike concludes with the decision recorded back into "
         "the affected domain stories.",
         ">",
-        "> **Note on `06a`/`06b`:** these were originally tracked as one `SPARK-SPIKE-06` id. They're split "
+        "> **Note on `06a`/`06b`:** these were originally tracked as one `SPIKE-06` id. They're split "
         "because they answer different questions — 06a is \"how do I *read* another domain's data,\" 06b is \"how "
         "does my *write* also link into another domain\" — and a story should only cite the one it actually needs.",
         "",
@@ -304,12 +336,12 @@ def program_spike_table() -> list[str]:
         "|---|---|---|---|",
         "| `attachmentsWithMetaData` enrichment | 📎 **One attachments tab, three sources** — files, discussion "
         "files, and sample files must merge into one ordered, ACL-filtered feed without a Relationship-Service "
-        "walk. | product `G01/G03` · workspace `G01/G03` (later phase) | "
-        "`complexStories/attachments-enrichment/` |",
+        "walk. | product `G-01/G-03` · workspace `G-01/G-03` (later phase) | "
+        "`complexStories/attachments-enrichment/` (brief + draft ADR-018 + [story breakdown](../../output/complexStories/attachments-enrichment/01-stories.md)) |",
         "| `components` + `counts` rollups | 🧮 **Five domains, one dashboard number** — a product's component "
         "list and a workspace's counts strip both roll up parallel per-domain fan-outs plus a batched ACL call "
-        "into a single screen's worth of data. | product `G02` · workspace `G02/G04` (later phase) | "
-        "`complexStories/components-and-counts-rollups/` |",
+        "into a single screen's worth of data. | product `G-02` · workspace `G-02/G-04` (later phase) | "
+        "`complexStories/components-and-counts-rollups/` (brief + draft ADR-014 + [story breakdown](../../output/complexStories/components-and-counts-rollups/01-stories.md)) |",
         "",
         "---",
         "",
@@ -344,16 +376,23 @@ SPIKE_LAYMAN = {
            "such mutation should follow (sync direct call / event-driven / shared `AssociationService`), instead "
            "of each mutation inventing its own “write, then also link” logic. Unlike `06a`, there is no "
            "read-hydration or federated-reference question here — this is purely about how a *write* fans out to a "
-           "sibling domain.",
+           "sibling domain. **Scope (per draft ADR-011 §1):** `D-03` (`bulkUpdateProducts`) is a pure passthrough — no "
+           "cross-domain call. `D-06`/`D-07`/`D-11` (\"Collab Canvas\") are cross-domain in concept but all their "
+           "endpoints are on the product backend; no external workspace/partner service is called. Only "
+           "**D-01, D-02, D-04** are in scope.",
 }
 SPIKE_DECISION = {
     "01": "Pick (a) compensating saga, (b) compensation-log + best-effort, or (c) best-effort — and write down how to undo each step.",
-    "02": "Confirm the assembly pattern (chosen: Option A, `extend type ProductTechPack`) and each domain’s contribution.",
+    "02": "Ratify the assembly pattern and each domain’s contribution. Draft ADR-015 proposes "
+          "**facade-then-federate** (ADR-015 Option B; the catalogue label is \"Option D (hybrid)\"): a frozen "
+          "aggregation facade serves all 11 fields day 1 (`E-03`/`E-04`); each domain re-homes its slice as its "
+          "subgraph ships (`H-01`–`H-05` + the co-located `F-04`/`F-06`/`F-08`, `extend type ResourcesCount`); "
+          "the facade retires last (`F-09`).",
     "03": "Decide ownership (domain subgraph vs workspace) and the write-saga/rollback for the drop/undrop fan-out.",
     "04": "Agree the `@requires` contribution each domain exposes and where the union is computed.",
     "05": "Confirm the `code → type` table + union membership, then wire `@DgsTypeResolver` + CI conformance.",
     "06a": "Choose federated `@key` reference vs REST client per edge, and the cross-DGS rollout order.",
-    "06b": "Pick the association pattern (see `SPARK-PROD-S01`'s three candidates) and how a mid-flight "
+    "06b": "Pick the association pattern (see `PRODUCT-BE-S-01`'s three candidates) and how a mid-flight "
            "association failure is handled.",
 }
 # Intended cross-domain interaction steps per bucket — the target flow, in order,
@@ -368,10 +407,10 @@ SPIKE_STEPS = {
         "On any step failure → run the chosen strategy: compensate (saga) or log + best-effort",
     ],
     "02": [
-        "Gateway resolves the `ProductTechPack` **`@key`** (product id → shell entity)",
-        "Fans out **in parallel** to each contributing subgraph (attachments · discussions · samples · claims · BOMs · measurements · constructions · watchlists)",
-        "Each subgraph returns **only its own slice** (its count/list) — it owns that field",
-        "Gateway **stitches** the slices into one `ProductTechPack` response",
+        "**Phase 1 (`E-03`/`E-04`)** — thin `@DgsQuery` stub in `plm-product` → frozen aggregation facade answers all 11 `ResourcesCount` fields (works day 1, before any sibling federates)",
+        "**Phase 2 (`H-01`–`H-05` + co-located `F-04`/`F-06`/`F-08`)** — as each owning subgraph ships, it contributes its slice via `extend type ResourcesCount @key(fields: \"productId partnerId\")`; the facade stops serving that field (per-slice parity fixture gates the flip)",
+        "Each subgraph returns **only its own slice** (its count/list) — it owns that field; co-located domains (bom/measurement/construction/watchlist) contribute in-process",
+        "**Phase 3 (`F-09`)** — facade retired; the gateway resolves the `@key` shell and fans out `_entities` to the contributors",
     ],
     "03": [
         "Owner (product/workspace) receives the **drop/undrop** request and starts the orchestration",
@@ -398,10 +437,10 @@ SPIKE_STEPS = {
         "Sequence the **rollout order** so no consumer launches before its provider is federated",
     ],
     "06b": [
-        "Primary mutation writes its own record (product create/update/bulk-update)",
-        "If the input carries a cross-domain link (`workspaceId`, `copyProduct`, template attachments, teams, partners) → build the association per the **chosen S01 pattern** (sync call / event / shared service)",
-        "Apply the link to the target domain (workspace, attachment, team, partner)",
-        "Record what happens if the link step fails after the primary write succeeded (today: mostly silent/undocumented)",
+        "Primary mutation writes its own record (product create/update)",
+        "If the input carries a cross-domain link (`workspaceId`, `copyProduct`, template attachments) → build the association per the **chosen S-01 pattern** (draft ADR-011: shared association component, sync, service-to-service REST)",
+        "Apply the link to the target domain (workspace, attachment)",
+        "Record what happens if the link step fails after the primary write succeeded (today: mostly silent/undocumented; per-mutation failure policy is declared explicitly under ADR-011)",
     ],
 }
 SPIKE_CASE_FOLDER = {
@@ -470,7 +509,7 @@ def build_spike_detail(domain_data: list[tuple]) -> list[str]:
     for b in sorted(SPIKE_TITLES):
         rows = buckets.get(b, [])
         lines += [
-            f"### 🔬 `SPARK-SPIKE-{b}` · {SPIKE_TITLES[b]}",
+            f"### 🔬 `SPIKE-{b}` · {SPIKE_TITLES[b]}",
             "",
             *[f"- {sent.strip()}" for sent in re.split(r"(?<=[.!?]) +(?=[A-Z`])", SPIKE_LAYMAN[b]) if sent.strip()],
             "",
@@ -499,14 +538,14 @@ def build_spike_detail(domain_data: list[tuple]) -> list[str]:
 # ─── Source resolution ─────────────────────────────────────────────────────────
 def get_domain_dir(domain: str) -> Path:
     for src in [FALLBACK / domain]:
-        if (src / "04-stories.md").exists():
+        if (src / "be-04-stories.md").exists():
             return src
     raise FileNotFoundError(f"No source for '{domain}'")
 
 
 # ─── Text helpers ──────────────────────────────────────────────────────────────
 STORY_HEADER_RE = re.compile(
-    r"^### (SPARK-[A-Z]+-[A-Za-z0-9]+(?:-\d+)?) · (.+)$", re.MULTILINE
+    r"^### ([A-Z]+-BE-[A-Za-z]-\d+(?:-\d+)?) · (.+)$", re.MULTILINE
 )
 META_RE    = re.compile(r"\*\*Type:\*\*\s*([^·\n]+).*?\*\*Complexity:\*\*\s*([^·\n]+)", re.DOTALL)
 PHASE_RE   = re.compile(r"\*\*Phase:\*\*\s*([A-Z])\b")
@@ -520,7 +559,7 @@ ADR_RE     = re.compile(r"\*\*ADR:\*\*\s*([^\n]+)")
 
 def dedupe_ids(raw: str) -> str:
     """Collapse a comma-separated dependency list to unique ids, preserving order.
-    Fixes the 'B01, B01' class of bug left over from the Phase-A-dissolved-into-B01 rename."""
+    Fixes the 'B-01, B-01' class of bug left over from the Phase-A-dissolved-into-B-01 rename."""
     if not raw or raw.strip() in ("—", ""):
         return raw
     seen: list[str] = []
@@ -555,7 +594,7 @@ def clean_plain(t: str) -> str:
 
 def strip_noise(text: str) -> str:
     """Remove only genuine noise: 'Phase A dissolved' blockquote notes and pipeline footers.
-    Does NOT delete legit Phase-A story rows/refs — BOM's `A04` type-resolver is a real story."""
+    Does NOT delete legit Phase-A story rows/refs — BOM's `A-04` type-resolver is a real story."""
     text = re.sub(r"^>.*[Pp]hase A dissolved[^\n]*\n?", "", text, flags=re.MULTILINE)
     text = re.sub(r"^>.*No separate Phase A[^\n]*\n?", "", text, flags=re.MULTILINE)
     text = re.sub(r"^\*Pipeline 2\.0[^\n]*\n?", "",   text, flags=re.MULTILINE)
@@ -650,11 +689,11 @@ def parse_stories(path: Path) -> list[dict]:
         if phase_m:
             phase = phase_m.group(1)
         else:
-            yaml_p = re.search(r"\bphase:\s*([A-G])\b", body, re.IGNORECASE)
+            yaml_p = re.search(r"\bphase:\s*([A-H])\b", body, re.IGNORECASE)
             if yaml_p:
                 phase = yaml_p.group(1).upper()
             else:
-                id_p = re.search(r"SPARK-[A-Z]+-([A-G])\d", sid)
+                id_p = re.search(r"-BE-([A-H])-\d", sid)
                 phase = id_p.group(1) if id_p else "?"
 
         dep_m    = DEPENDS_RE.search(body)
@@ -700,9 +739,9 @@ def parse_stories(path: Path) -> list[dict]:
 
         # Depends on — strip to just story IDs for table readability, deduped.
         # Also drop references to now-removed domain spikes (bare `S0x` or `SPARK-*-S0x`) —
-        # spikes are centralized as program spikes; spike-gating is shown via SPARK-SPIKE-0x.
+        # spikes are centralized as program spikes; spike-gating is shown via SPIKE-0x.
         raw_dep = dep_m.group(1).strip() if dep_m else "—"
-        raw_dep = re.sub(r"\b(?:SPARK-[A-Z]+-)?S\d+\b", "", raw_dep)
+        raw_dep = re.sub(r"\b(?:[A-Z]+-BE-)?S-?\d+\b", "", raw_dep)
         raw_dep = re.sub(r"\s*,\s*,\s*", ", ", raw_dep).strip(" ,")
         depends = dedupe_ids(re.sub(r"\s+", " ", raw_dep).strip() or "—") or "—"
 
@@ -733,7 +772,90 @@ def parse_stories(path: Path) -> list[dict]:
             "ext_services": ext_services,
             "intent":     intent_m.group(1).strip() if intent_m else "",
         })
-    return out   # keep Phase A — the type-resolver story (e.g. BOM A04) is real, not dissolved
+    # keep Phase A — the type-resolver story (e.g. BOM A-04) is real, not dissolved
+    return merge_xs_stories(out) if MERGE_XS else out
+
+
+# ─── XS story merging (fewer, chunkier tickets) ───────────────────────────────
+def _dep_id_key(depends: str) -> tuple:
+    """Canonical in-domain dependency key for grouping: the sorted short ids."""
+    return tuple(sorted(set(re.findall(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", depends or ""))))
+
+
+def _op_name(title: str) -> str:
+    """`getClaimByIds(claimHumanIds)` → `getClaimByIds`."""
+    return re.sub(r"\(.*?\)", "", title).strip()
+
+
+def merge_xs_stories(stories: list[dict]) -> list[dict]:
+    """Merge 🟢 Low/XS stories that share phase + type + the same in-domain dependency
+    set into ONE story (id/anchor = first member). ≥3 members promote the merged story
+    to 🟡 Medium. All other stories' `Depends On` references to merged-away ids are
+    rewritten to the surviving id. `grouped_short`/`grouped_ids` record the members."""
+    keep: list[dict] = []
+    groups: dict[tuple, list[dict]] = {}
+    for s in stories:
+        mergeable = (
+            s["complexity"] == "low"
+            and "module init" not in (s.get("note", "") + " " + s["title"]).lower()
+            and not spike_for(s)
+            and not s.get("blocked")
+            and "SPIKE" not in (s.get("depends") or "")
+            and s["phase"] in PHASE_SEQ
+        )
+        if mergeable:
+            groups.setdefault((s["phase"], s["type"], _dep_id_key(s["depends"])), []).append(s)
+        else:
+            keep.append(s)
+
+    remap: dict[str, str] = {}   # merged-away short id -> surviving short id
+    merged_out: list[dict] = []
+    for members in groups.values():
+        members.sort(key=lambda s: s["id"])
+        # chunk so one merged story never swallows more than MAX_XS_GROUP XS
+        for i in range(0, len(members), MAX_XS_GROUP):
+            chunk = members[i:i + MAX_XS_GROUP]
+            if len(chunk) == 1:
+                merged_out.append(chunk[0])
+                continue
+            head = dict(chunk[0])
+            ops = [_op_name(m["title"]) for m in chunk]
+            head["title"] = " · ".join(ops)
+            head["complexity"] = "medium" if len(chunk) >= 3 else "low"
+            head["ac"] = [f"{_op_name(m['title'])}: {a}" for m in chunk for a in m["ac"]]
+            head["tests"] = [t for m in chunk for t in m["tests"]]
+            head["ext_services"] = list(dict.fromkeys(x for m in chunk for x in m["ext_services"]))
+            head["intent"] = "; ".join(dict.fromkeys(
+                m["intent"].rstrip(".") for m in chunk if m["intent"]))
+            head["covers"] = "; ".join(dict.fromkeys(m["covers"] for m in chunk if m["covers"]))
+            head["current"] = " ; ".join(dict.fromkeys(m["current"] for m in chunk if m["current"]))
+            head["target"] = " ; ".join(dict.fromkeys(m["target"] for m in chunk if m["target"]))
+            head["grouped_short"] = [_short_id(m["id"]) for m in chunk[1:]]
+            head["grouped_ids"] = [m["id"] for m in chunk[1:]]
+            for m in chunk[1:]:
+                remap[_short_id(m["id"])] = _short_id(head["id"])
+            merged_out.append(head)
+
+    out = keep + merged_out
+    if remap:
+        pat = re.compile(r"\b((?:[A-Z]+-BE-)?)([A-H]-\d+(?:-\d+)?)\b")
+        for s in out:
+            if s.get("depends") and s["depends"] != "—":
+                s["depends"] = dedupe_ids(pat.sub(
+                    lambda m: m.group(1) + remap.get(m.group(2), m.group(2)), s["depends"])) or "—"
+    # restore source order (phase, then id)
+    out.sort(key=lambda s: (PHASE_SEQ.find(s["phase"]) if s["phase"] in PHASE_SEQ else 99, s["id"]))
+    return out
+
+
+def xs_merge_map(domain: str) -> dict[str, str]:
+    """{merged-away FULL story id: surviving FULL story id} for one domain — lets the
+    frontend generator + Jira CSVs remap references to grouped XS stories."""
+    m: dict[str, str] = {}
+    for s in parse_stories(get_domain_dir(domain) / "be-04-stories.md"):
+        for gone in s.get("grouped_ids", []):
+            m[gone] = s["id"]
+    return m
 
 
 def group_by_phase(stories: list[dict]) -> dict[str, list]:
@@ -741,6 +863,314 @@ def group_by_phase(stories: list[dict]) -> dict[str, list]:
     for s in stories:
         g.setdefault(s["phase"], []).append(s)
     return dict(sorted(g.items()))
+
+
+# ─── Recommended implementation order (story map) ─────────────────────────────
+PHASE_SEQ = "ABCDEFGH"
+
+
+def phase_icon_legend(phases_present: str | None = None) -> str:
+    """Build the '🧱 A · 📖 B · ...' legend fragment from PHASE_ICONS, so a phase
+    (e.g. H, added after this legend was first hand-written) can never silently be
+    used in a doc without being defined here. Pass the domain's actual phase letters
+    to scope the legend to what that page uses; omit for the full A-H legend."""
+    seq = phases_present if phases_present is not None else PHASE_SEQ
+    return " · ".join(f"{PHASE_ICONS[p]} {p}" for p in PHASE_SEQ if p in seq)
+
+
+def _short_id(full_id: str) -> str:
+    m = re.search(r"-BE-([A-H]-\d+(?:-\d+)?)$", full_id)
+    return m.group(1) if m else full_id
+
+
+def _dependency_graph(stories: list[dict]):
+    """Shared dep-graph builder for the order map and the team lane plan.
+
+    Returns (by_short, deps, gates, scaffold):
+      by_short – {short_id: story dict}
+      deps     – {short_id: set of short_ids it depends on} (incl. the implicit scaffold edge)
+      gates    – {short_id: [gate strings]} — spike gates / cross-subgraph blocks
+                 (entry criteria, NOT ordering edges)
+      scaffold – short_ids of the module-init scaffold story
+    """
+    by_short = {_short_id(s["id"]): s for s in stories}
+
+    # The module-init scaffold story (see the B-01 note) is a prerequisite for every
+    # operation story but deliberately not repeated in each `Depends On` — restore that
+    # implicit edge so the map starts where the work starts.
+    scaffold = {k for k, s in by_short.items()
+                if "module init" in (s.get("note", "") + " " + s["title"]).lower()}
+
+    deps:  dict[str, set]  = {}
+    gates: dict[str, list] = {}
+    for k, s in by_short.items():
+        d = set()
+        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s["depends"]):
+            if m.group(1) in by_short and m.group(1) != k:
+                d.add(m.group(1))
+        spike = spike_for(s)
+        if spike:
+            gates.setdefault(k, []).append(f"🔬 SPIKE-{spike}")
+        for m in re.finditer(r"\bSPIKE-\w+\b", s["depends"]):
+            tag = f"🔬 {m.group(0)}"
+            if tag not in gates.get(k, []):
+                gates.setdefault(k, []).append(tag)
+        if s.get("blocked"):
+            gates.setdefault(k, []).append(f"⛔ BLOCKED-BY {clean_plain(s['blocked'])}")
+        if scaffold and k not in scaffold:
+            d |= scaffold
+        deps[k] = d
+    return by_short, deps, gates, scaffold
+
+
+def compute_implementation_order(stories: list[dict]):
+    """Layer the domain's stories into dependency steps (Kahn levels).
+
+    Returns (waves, gates, crit_path):
+      waves     – list of story-dict lists; a story in step N depends only on steps < N
+      gates     – {short_id: [gate strings]} — spike gates / cross-subgraph blocks
+                  (entry criteria, NOT ordering edges)
+      crit_path – the longest dependency chain, as short ids
+    """
+    by_short, deps, gates, _scaffold = _dependency_graph(stories)
+
+    level: dict[str, int] = {}
+    pending = dict(deps)
+    while pending:
+        ready = [k for k, d in pending.items() if all(x in level for x in d)]
+        if not ready:            # dependency cycle — dump the remainder into one final step
+            for k in pending:
+                level[k] = max(level.values(), default=0) + 1
+            break
+        for k in ready:
+            level[k] = (max(level[x] for x in deps[k]) + 1) if deps[k] else 1
+            del pending[k]
+
+    def wave_key(s: dict):
+        return (PHASE_SEQ.find(s["phase"]) if s["phase"] in PHASE_SEQ else 99,
+                _short_id(s["id"]))
+
+    waves = [sorted((by_short[k] for k in level if level[k] == n), key=wave_key)
+             for n in range(1, max(level.values(), default=0) + 1)]
+
+    # Longest dependency chain (critical path), reconstructed through the DAG. `deps[k]` is
+    # a set — iterate it in sorted order so a tie between two equal-length chains resolves
+    # the same way on every run (sets have no stable order across interpreter instances,
+    # so an unsorted max() here previously picked a different chain each run).
+    chain: dict[str, list] = {}
+    def chain_for(k: str) -> list:
+        if k not in chain:
+            chain[k] = []                       # cycle guard
+            best = max((chain_for(d) for d in sorted(deps[k])), key=len, default=[])
+            chain[k] = best + [k]
+        return chain[k]
+    crit = max((chain_for(k) for k in sorted(by_short)), key=len, default=[])
+
+    return waves, gates, crit
+
+
+def _wave_focus(wave: list[dict]) -> str:
+    """Category label for one step of the order map — same convention as the FE order
+    map's Focus column (which stages by reads → search → writes → sagas)."""
+    if any("module init" in (s.get("note", "") + " " + s["title"]).lower() for s in wave):
+        return "🧱 Module init — schema skeleton, service wiring (unblocks everything)"
+    phases = sorted({s["phase"] for s in wave if s["phase"] in PHASE_SEQ}, key=PHASE_SEQ.find)
+    if not phases:
+        return "—"
+    focus = " · ".join(f"{PHASE_ICONS[p]} {PHASE_NAMES[p]}" for p in phases)
+    return f"Fan-out — {focus}" if len(phases) >= 4 else focus
+
+
+def implementation_order_md(stories: list[dict]) -> list[str]:
+    """Markdown lines for the 'Recommended Implementation Order' section — shared by the
+    .md breakdown and the .docx renderer so both stay identical."""
+    if not stories:
+        return []
+    waves, gates, crit = compute_implementation_order(stories)
+    lines = [
+        "## Recommended Implementation Order",
+        "",
+        "> Derived from each story's `Depends On` edges (plus the module-init scaffold as the "
+        "implicit first step). A story appears in the earliest step where everything it depends "
+        "on is already done; **stories in the same step are independent of each other and "
+        "parallelize across engineers**. **Focus** names the phase category each step advances — "
+        "same convention as the frontend order map.",
+        "",
+        "> 🔬 spike gates and ⛔ cross-subgraph blocks are *entry criteria*, not ordering edges — "
+        "a gated story slides later without reshuffling the map.",
+        "",
+        "| Step | Stories (parallel set) | Entry gates in this step | Focus |",
+        "|---|---|---|---|",
+    ]
+    for i, wave in enumerate(waves, 1):
+        cell = ", ".join(f"{COMPLEXITY_ICONS.get(s['complexity'], '⚪')} `{_short_id(s['id'])}`"
+                         for s in wave)
+        gate_bits = [f"`{_short_id(s['id'])}` → " + " · ".join(gates[_short_id(s["id"])])
+                     for s in wave if _short_id(s["id"]) in gates]
+        lines.append(f"| {i} | {cell} | {'<br>'.join(gate_bits) or '—'} | {_wave_focus(wave)} |")
+    if crit:
+        lines += [
+            "",
+            "**Critical path:** " + " → ".join(f"`{k}`" for k in crit) +
+            f" — {len(crit)} sequential stories; everything else hangs off this chain in parallel.",
+        ]
+    lines += ["", "---", ""]
+    return lines
+
+
+# ─── Recommended story graph — 2 backend engineers ────────────────────────────
+def _schedule_lanes(stories: list[dict], n_eng: int = N_BE_ENGINEERS):
+    """Greedy list-scheduling of the dependency graph onto n engineers.
+
+    Returns (lanes, elapsed, sequential): lanes[e] = [(short_id, start, finish, stalled)],
+    times in nominal days (midpoint of EFFORT_DAYS); stalled marks a slot whose start was
+    delayed by a dependency, not by the engineer being busy."""
+    by_short, deps, _gates, _scaffold = _dependency_graph(stories)
+
+    def dur(k: str) -> float:
+        lo, hi = EFFORT_DAYS.get(by_short[k]["complexity"], (2, 4))
+        return (lo + hi) / 2
+
+    # priority = longest downstream chain (critical work first)
+    succ: dict[str, set] = {k: set() for k in by_short}
+    for k, ds in deps.items():
+        for d in ds:
+            succ.setdefault(d, set()).add(k)
+    weight: dict[str, float] = {}
+    def downstream(k: str) -> float:
+        if k not in weight:
+            weight[k] = 0.0   # cycle guard
+            weight[k] = dur(k) + max((downstream(x) for x in succ.get(k, ())), default=0.0)
+        return weight[k]
+    for k in by_short:
+        downstream(k)
+
+    eng_free = [0.0] * n_eng
+    finish: dict[str, float] = {}
+    lanes: list[list] = [[] for _ in range(n_eng)]
+    todo = set(by_short)
+    while todo:
+        best = None
+        for k in todo:
+            if any(d in todo for d in deps[k]):
+                continue
+            ready = max((finish[d] for d in deps[k]), default=0.0)
+            for e in range(n_eng):
+                start = max(eng_free[e], ready)
+                cand = (start, -weight[k], k, e, ready)
+                if best is None or cand < best:
+                    best = cand
+        if best is None:                      # dependency cycle — force the smallest id
+            k = min(todo)
+            e = eng_free.index(min(eng_free))
+            best = (eng_free[e], 0.0, k, e, eng_free[e])
+        start, _, k, e, ready = best
+        finish[k] = start + dur(k)
+        lanes[e].append((k, start, finish[k], ready > eng_free[e] + 1e-9))
+        eng_free[e] = finish[k]
+        todo.discard(k)
+    return lanes, max(eng_free, default=0.0), sum(dur(k) for k in by_short)
+
+
+def team_plan_md(stories: list[dict], n_eng: int = N_BE_ENGINEERS) -> list[str]:
+    """Markdown lines for 'Recommended Story Graph — N Backend Engineer(s)' — the order
+    map above packed onto a team of n_eng (default: team_config.N_BE_ENGINEERS) backend
+    engineers. Shared by the .md breakdown and the .docx renderer. Grouped-XS merges have
+    already happened in parse_stories."""
+    if not stories:
+        return []
+    by_short, deps, gates, _scaffold = _dependency_graph(stories)
+    lanes, elapsed, sequential = _schedule_lanes(stories, n_eng)
+
+    def cell(k: str, stalled: bool) -> str:
+        s = by_short[k]
+        lo, hi = EFFORT_DAYS.get(s["complexity"], (2, 4))
+        txt = f"{COMPLEXITY_ICONS.get(s['complexity'], '⚪')} `{k}` ({lo}–{hi}d)"
+        if s.get("grouped_short"):
+            txt += " *(grouped XS: +" + ", ".join(f"`{x}`" for x in s["grouped_short"]) + ")*"
+        if k in gates:
+            txt += " " + " ".join(g.split()[0] for g in gates[k])
+        if stalled:
+            blockers = ", ".join(f"`{d}`" for d in sorted(deps[k])) or "deps"
+            txt = f"⏳ after {blockers} → {txt}"
+        return txt
+
+    hdr = " | ".join(f"👤 BE-{e + 1}" for e in range(n_eng))
+    eng_word = "Engineer" if n_eng == 1 else "Engineers"
+    lines = [
+        f"## Recommended Story Graph — {n_eng} Backend {eng_word}",
+        "",
+        "> The order map above assumes unlimited parallelism; this packs the **same dependency "
+        f"graph onto {n_eng} backend {eng_word.lower()}** (greedy critical-chain scheduling, nominal "
+        "day-ranges from complexity — confirm in refinement). Read each column top-to-bottom as "
+        "one engineer's queue; ⏳ marks a slot that waits on a dependency, 🔬/⛔ are entry gates "
+        "that slide a slot without reshuffling the lanes.",
+        "",
+        f"| Slot | {hdr} |",
+        "|---|" + "---|" * n_eng,
+    ]
+    for i in range(max((len(l) for l in lanes), default=0)):
+        row = [cell(l[i][0], l[i][3]) if i < len(l) else "—" for l in lanes]
+        lines.append(f"| {i + 1} | " + " | ".join(row) + " |")
+
+    flows = []
+    for e, lane in enumerate(lanes, 1):
+        chain = " → ".join(f"`{k}`" for k, *_ in lane) or "—"
+        flows.append(f"**BE-{e}:** {chain}")
+    lines += ["", "<br>".join(flows), ""]
+    if n_eng == 1:
+        lines.append(f"**Elapsed (nominal midpoints):** ~{elapsed:.0f} working days.")
+    else:
+        lines.append(f"**Elapsed (nominal midpoints):** ~{elapsed:.0f} working days with {n_eng} engineers "
+                      f"vs ~{sequential:.0f} days sequential.")
+    lines += [
+        "",
+        "---",
+        "",
+    ]
+    return lines
+
+
+# ─── Live phase-summary table ─────────────────────────────────────────────────
+# Replaces the hand-authored "Story Summary by Phase" table from be-04-po-summary.md,
+# which drifted out of sync with be-04-stories.md in 4/8 domains (missing Phase H for
+# product, phantom rows, stale story counts — caught 2026-07-19 during a full-output
+# audit). Phase/Name/Stories/Effort are now always computed from the same parsed
+# `stories` list every other live count in this pipeline uses, so they can't drift.
+# "Ready when" is intentionally NOT reconstructed here — it was free-form dependency
+# prose that can't be derived mechanically without risking a misleading auto-summary;
+# the per-story "Depends On" column in the phase tables below is the live source of
+# truth for that.
+def live_phase_summary_md(stories: list[dict]) -> str:
+    by_phase: dict[str, list[dict]] = {}
+    for s in stories:
+        by_phase.setdefault(s["phase"], []).append(s)
+
+    lines = [
+        "| Phase | Name | Stories | Effort (est., +20% buffer) |",
+        "|-------|------|---------|----------------------------|",
+    ]
+    tot_n = tot_lo = tot_hi = 0
+    for p in PHASE_SEQ:
+        group = by_phase.get(p)
+        if not group:
+            continue
+        n = len(group)
+        lo = sum(EFFORT_DAYS.get(s["complexity"], (2, 4))[0] for s in group)
+        hi = sum(EFFORT_DAYS.get(s["complexity"], (2, 4))[1] for s in group)
+        lo_b, hi_b = round(lo * 1.2), round(hi * 1.2)
+        tot_n += n
+        tot_lo += lo_b
+        tot_hi += hi_b
+        lines.append(f"| {p} | {PHASE_NAMES[p]} | {n} | {lo_b}–{hi_b}d |")
+    lines.append(f"| **Total** | | **{tot_n}** | **{tot_lo}–{tot_hi}d** (buffered) |")
+    lines.append("")
+    lines.append("> Computed live from `be-04-stories.md` (phase + complexity per story) — "
+                  "always reconciles with the story tables below and the program overview. "
+                  "Effort = sum of per-story nominal day-ranges (Low 1–2 · Medium 2–4 · "
+                  "High 4–7 · Very High 7–12) × 1.2 buffer, AI-estimated — confirm in refinement. "
+                  "See each story's **Depends On** column for real sequencing.")
+    return "\n".join(lines)
 
 
 # ─── PO summary parser ────────────────────────────────────────────────────────
@@ -777,6 +1207,9 @@ def _ac_cell(s: dict) -> str:
     """Build the Acceptance Criteria cell: Intent, Today, then bulleted Done-when — one cell,
     <br>-separated so it renders as stacked lines in Markdown/Confluence tables."""
     parts: list[str] = []
+    if s.get("grouped_short"):
+        parts.append("**Grouped XS story —** combines former "
+                     + ", ".join(f"`{x}`" for x in s["grouped_short"]) + " (one PR train)")
     if s.get("intent"):
         parts.append(f"**Intent —** {s['intent'].strip()}")
     today = minimal_logic(s)
@@ -823,7 +1256,7 @@ def render_phase_table(phase_key: str, stories: list[dict]) -> list[str]:
         # Story cell — id + title, plus a spike-gated note when applicable.
         story_cell = f"{flag}{ticon} `{s['id']}`<br>{s['title']}"
         if spk:
-            story_cell += (f"<br>🔴🔬 _Spike-gated on `SPARK-SPIKE-{spk}` "
+            story_cell += (f"<br>🔴🔬 _Spike-gated on `SPIKE-{spk}` "
                            f"({SPIKE_TITLES.get(spk, '')}) — see global Spike Detail_")
 
         # Type cell — surface external Calls only when there are any (internal-only is noise).
@@ -834,7 +1267,7 @@ def render_phase_table(phase_key: str, stories: list[dict]) -> list[str]:
         # Depends cell — link the program spike first when the story is gated.
         dep = s["depends"]
         if spk:
-            sref = f"SPARK-SPIKE-{spk}"
+            sref = f"SPIKE-{spk}"
             dep  = sref if dep in ("—", "") else f"{sref}, {dep}"
 
         row = [
@@ -850,7 +1283,7 @@ def render_phase_table(phase_key: str, stories: list[dict]) -> list[str]:
 
     lines.append("")
 
-    # DGS init notes (B01-type) — kept as callouts beneath the table.
+    # DGS init notes (B-01-type) — kept as callouts beneath the table.
     for s in stories:
         if s["note"]:
             note_clean = strip_noise(s["note"])
@@ -898,8 +1331,8 @@ def build_breakdown(domain: str) -> str:
     src_dir  = get_domain_dir(domain)
     # Spike (Phase-S) stories are no longer domain-local — they are centralized as
     # program spikes on the global overview page, so drop them from every count and table.
-    stories  = [s for s in parse_stories(src_dir / "04-stories.md") if s["phase"] != "S"]
-    po       = read_po_sections(src_dir / "04-po-summary.md")
+    stories  = [s for s in parse_stories(src_dir / "be-04-stories.md") if s["phase"] != "S"]
+    po       = read_po_sections(src_dir / "be-04-po-summary.md")
     by_phase = group_by_phase(stories)
 
     total = len(stories)
@@ -925,7 +1358,7 @@ def build_breakdown(domain: str) -> str:
         "",
         "> **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  "
         "· 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  "
-        "· 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G",
+        f"· 🔬 Spike · 🔴🔬 spike-gated story · {phase_icon_legend()}",
         "",
         "---",
         "",
@@ -980,10 +1413,10 @@ def build_breakdown(domain: str) -> str:
             "|---|---|---|",
         ]
         for s, b in gated:
-            lines.append(f"| 🔴🔬 `{s['id']}` — {s['title']} | `SPARK-SPIKE-{b}` | {SPIKE_TITLES[b]} |")
+            lines.append(f"| 🔴🔬 `{s['id']}` — {s['title']} | `SPIKE-{b}` | {SPIKE_TITLES[b]} |")
         lines += [
             "",
-            f"> Follow a story's `SPARK-SPIKE-0x` id to the global **Spike Detail** for its brief, steps and "
+            f"> Follow a story's `SPIKE-0x` id to the global **Spike Detail** for its brief, steps and "
             f"cross-service resolver breakdown.",
             "",
         ]
@@ -1009,13 +1442,10 @@ def build_breakdown(domain: str) -> str:
         ]
 
     # §3 — Effort by Phase + Capacity Planning
-    if po.get("phases") or po.get("capacity"):
-        lines += ["## Effort Snapshot", ""]
-        if po.get("phases"):
-            lines += [po["phases"], ""]
-        if po.get("capacity"):
-            lines += ["", "**Capacity Planning**", "", po["capacity"], ""]
-        lines += ["---", ""]
+    lines += ["## Effort Snapshot", "", live_phase_summary_md(stories), ""]
+    if po.get("capacity"):
+        lines += ["", "**Capacity Planning**", "", po["capacity"], ""]
+    lines += ["---", ""]
 
     # §4 — Sprint Sequencing
     if po.get("sprints"):
@@ -1027,6 +1457,12 @@ def build_breakdown(domain: str) -> str:
             "---",
             "",
         ]
+
+    # §4b — Recommended Implementation Order (dependency-derived story map)
+    lines += implementation_order_md(stories)
+
+    # §4c — Recommended Story Graph — 2 Backend Engineers (lane plan)
+    lines += team_plan_md(stories)
 
     # §5 — Jira Stories by Phase (TABLE format)
     lines += [
@@ -1050,8 +1486,9 @@ def build_breakdown(domain: str) -> str:
             vh_count    = sum(1 for s in ph_stories if s["complexity"] == "very high")
             hi_count    = sum(1 for s in ph_stories if s["complexity"] == "high")
 
+            story_word = "story" if len(ph_stories) == 1 else "stories"
             lines += [
-                f"### {phase_icon} Phase {phase_key} — {phase_name} ({len(ph_stories)} stories)",
+                f"### {phase_icon} Phase {phase_key} — {phase_name} ({len(ph_stories)} {story_word})",
                 "",
             ]
             lines += render_phase_table(phase_key, ph_stories)
@@ -1093,8 +1530,13 @@ def program_overview_preamble() -> list[str]:
         "**Engineering model:** every story is self-contained in one PR — schema additions, DGS data fetcher, "
         "Kotlin REST service method, and Hive registry push. There are no separate service-layer stories.",
         "",
-        "**ACL note:** the current gateway obtains per-resource ACL capability tokens. ACL is **not** re-implemented "
-        "in the DGS layer (decided at program level); it is noted in stories for context only.",
+        "**ACL note:** the current gateway obtains per-resource ACL capability tokens. Per ADR-019 "
+        "(`complexStories/acl/01-adr-acl-mid-request-update.md`), permission-check and own-domain-token call "
+        "sites stay resolver-local (context-only, as before); the 31 downstream-token call sites — where a "
+        "resolver hands its token to a *different* domain's loader — use **Mid-Request ACL Update** "
+        "(`SparkSecurityService.updateCurrentUserPermissions(capabilityToken)`) before the downstream call. "
+        "Each complex case's own ADR carries an ACL note applying this classification to its specific call "
+        "sites.",
         "",
         "---",
         "",
@@ -1107,12 +1549,12 @@ def program_overview_preamble() -> list[str]:
         "| **subgraph** | one DGS (e.g. `plm-product`, `plm-sample`) |",
         "| **co-located** | a domain compiling into `plm-product` (in-process call, not a gateway hop) |",
         "| **CAT-1…5** | story categories: 1 schema · 2 resolver · 3 service · 4 federation · 5 tests |",
-        "| **Phase A–G** | the migration order within a domain (see the phases table below) |",
+        "| **Phase A–H** | the migration order within a domain (see the phases table below) |",
         "| **EXT severity** | 🔴 critical/sequential · 🟡 single enrichment call · 🔵 optional/gateway |",
         "",
         "---",
         "",
-        "## The migration phases (A→G) — the order of replacement",
+        "## The migration phases (A→H) — the order of replacement",
         "",
         "Stories are grouped into phases that encode the replacement order within a domain:",
         "",
@@ -1122,8 +1564,9 @@ def program_overview_preamble() -> list[str]:
         "| **B / C** | query resolvers (reads) | CAT-2 |",
         "| **D** | mutation resolvers (writes) | CAT-2 |",
         "| **E** | complex operations (multi-step writes, aggregations) — often a stub + facade pointing at a complex case | CAT-2 |",
-        "| **F** | federation boundaries — one story per cross-domain edge (`@extends @external`) | CAT-4 |",
+        "| **F** | federation platform work — gateway composition, facade retirement, stub verification, contract alignment (not entity resolution itself) | CAT-4 |",
         "| **G** | field resolvers (incl. the heavy ones) + the domain parity harness | CAT-2/CAT-5 |",
+        "| **H** | cross-subgraph entity resolution — real `@DgsEntityFetcher`/`@key` fields resolved by a *separate* subgraph (split out from Phase F) | CAT-4 |",
         "",
         "> **Phase 0 = Spikes** — time-boxed research producing a recorded decision before the phase it blocks.",
         "",
@@ -1146,6 +1589,27 @@ def program_overview_preamble() -> list[str]:
     ]
 
 
+def fe_story_stats() -> "dict[str, tuple[int, int, int]]":
+    """Per-domain frontend rollup {domain: (stories, effort_lo, effort_hi)} from
+    fe-08-frontend-stories.md via generate_frontend's parser — loaded lazily because
+    generate_word imports this module (a top-level import would be circular).
+    Returns {} when the frontend analysis isn't present."""
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("generate_frontend", HERE / "generate_frontend.py")
+        fe   = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fe)                          # type: ignore[union-attr]
+        stats: dict[str, tuple[int, int, int]] = {}
+        for s in fe.parse_fe_stories():
+            k = fe.domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])
+            lo, hi = fe._effort_range(s["effort"])
+            c, tlo, thi = stats.get(k, (0, 0, 0))
+            stats[k] = (c + 1, tlo + lo, thi + hi)
+        return stats
+    except Exception:
+        return {}
+
+
 def build_global(domains: "list[str] | None" = None, scope_label: str = "All Domains") -> str:
     today   = date.today().isoformat()
     domains = domains or ALL_DOMAINS
@@ -1154,6 +1618,10 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     all_stats:   list[tuple] = []
     domain_data: list[tuple] = []
     grand_total = grand_vh = grand_hi = grand_me = grand_lo = 0
+    fe_stats    = fe_story_stats()
+    fe_total    = sum(fe_stats.get(d, (0, 0, 0))[0] for d in domains)
+    fe_lo       = sum(fe_stats.get(d, (0, 0, 0))[1] for d in domains)
+    fe_hi       = sum(fe_stats.get(d, (0, 0, 0))[2] for d in domains)
 
     for domain in domains:
         label = DOMAIN_LABELS[domain]
@@ -1162,8 +1630,8 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
         try:
             src_dir  = get_domain_dir(domain)
             # Exclude Phase-S spikes — they are centralized as program spikes, not domain stories.
-            stories  = [s for s in parse_stories(src_dir / "04-stories.md") if s["phase"] != "S"]
-            po       = read_po_sections(src_dir / "04-po-summary.md")
+            stories  = [s for s in parse_stories(src_dir / "be-04-stories.md") if s["phase"] != "S"]
+            po       = read_po_sections(src_dir / "be-04-po-summary.md")
         except FileNotFoundError:
             stories = []
             po      = {}
@@ -1193,7 +1661,7 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
          f"({', '.join(DOMAIN_LABELS[d] for d in domains)}). The full-program overview is the untouched "
          "`Federated+Graphql+Stories+-+BreakDown` page." if is_custom else
          "> **Program overview** — the full `spark-internal-graphql` → Netflix DGS migration at a glance. "
-         "Each domain's phase tables live in its own FederatedGqlBrakDown-<domain> breakdown page (see the Domain "
+         "Each domain's phase tables live in its own FederatedGqlBreakDown-<domain> breakdown page (see the Domain "
          "Index); the complex, cross-cutting problems are centralized here as **program spikes** (below)."),
         "",
         "| | |",
@@ -1201,15 +1669,17 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
         "| **Program** | `spark-internal-graphql` → Netflix DGS Federation (Hive Schema Registry) |",
         f"| **Domains** | {n_domains} |",
         f"| **Target DGS services** | {n_dgs} |",
-        f"| **Total Stories** | **{grand_total}** |",
-        f"| **Complexity** | 🔴 {grand_vh} Very High · 🟠 {grand_hi} High · 🟡 {grand_me} Medium · 🟢 {grand_lo} Low |",
-        f"| **Phase Coverage** | 🔬 {len(SPIKE_TITLES)} Spikes · 🧱 A Foundation · 📖 B Reads · 🔍 C Search · ✏️ D Mutations · ⚙️ E Complex · 🔗 F Federation · 🧪 G Field-resolvers/Tests |",
-        f"| **Cross-domain spikes** | 🔬 {len(SPIKE_TITLES)} program-level research spikes (`SPARK-SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |",
+        f"| **Total Backend Stories** | **{grand_total}** |",
+        f"| **Total Frontend Stories** | **{fe_total}** · {fe_lo}–{fe_hi}d single-engineer (Frontend section of each per-domain `FederatedGqlBreakDown-<domain>` page) |",
+        f"| **Complexity (backend)** | 🔴 {grand_vh} Very High · 🟠 {grand_hi} High · 🟡 {grand_me} Medium · 🟢 {grand_lo} Low |",
+        f"| **Phase Coverage** | 🔬 {len(SPIKE_TITLES)} Spikes · " +
+        " · ".join(f"{PHASE_ICONS[p]} {p} {PHASE_NAMES[p]}" for p in PHASE_SEQ) + " |",
+        f"| **Cross-domain spikes** | 🔬 {len(SPIKE_TITLES)} program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |",
         f"| **Generated** | {today} |",
         "",
         "> **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  "
         "· 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  "
-        "· 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G",
+        f"· 🔬 Spike · 🔴🔬 spike-gated story · {phase_icon_legend()}",
         "",
         "---",
         "",
@@ -1218,21 +1688,26 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     lines += [
         "## Domain Index",
         "",
-        "> Each domain's full story detail is in its own breakdown page (named in the last column).",
+        "> Each domain's full story detail is in its own breakdown page — `FederatedGqlBreakDown-<domain>` "
+        "(in `output/summary/<domain>/`), one merged page with a `## Backend` and a `## Frontend` section. "
+        "Complexity columns are backend; FE effort is single-engineer, unbuffered.",
         "",
-        "| # | Domain | Target DGS | T-Shirt | Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | Breakdown page |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| # | Domain | Target DGS | T-Shirt | BE Stories | 🔴 VH | 🟠 High | 🟡 Med | 🟢 Low | FE Stories | FE effort | Breakdown page |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
 
     for i, (domain, label, dgs, ts, total, vh, hi, me, lo) in enumerate(all_stats, 1):
+        fc, flo, fhi = fe_stats.get(domain, (0, 0, 0))
         lines.append(
             f"| {i} | **{label}** | `{dgs}` | **{ts}** | "
-            f"**{total}** | {vh} | {hi} | {me} | {lo} | `FederatedGqlBrakDown-{domain}` |"
+            f"**{total}** | {vh} | {hi} | {me} | {lo} | **{fc}** | {flo}–{fhi}d | "
+            f"`FederatedGqlBreakDown-{domain}` |"
         )
 
     lines += [
         f"| | **TOTAL** | — | — | **{grand_total}** | "
-        f"**{grand_vh}** | **{grand_hi}** | **{grand_me}** | **{grand_lo}** | — |",
+        f"**{grand_vh}** | **{grand_hi}** | **{grand_me}** | **{grand_lo}** | "
+        f"**{fe_total}** | **{fe_lo}–{fe_hi}d** | — |",
         "",
         "---",
         "",
@@ -1242,20 +1717,84 @@ def build_global(domains: "list[str] | None" = None, scope_label: str = "All Dom
     lines += build_spike_detail(domain_data)
 
     # Per-domain story detail intentionally NOT included here — this is an overview.
-    # Each domain's phase tables live in its own FederatedGqlBrakDown-<domain> breakdown.
+    # Each domain's phase tables live in its own FederatedGqlBreakDown-<domain> breakdown.
 
     text = re.sub(r"\n+(?:---\s*)+$", "\n", "\n".join(lines))   # drop any trailing horizontal rule
     return strip_relative_links(repo_linkify(text))
 
 
 # ─── Runner ────────────────────────────────────────────────────────────────────
+def _demote_headings(text: str, levels: int = 1) -> str:
+    """Shift every Markdown ATX heading (# / ## / ### …) down by `levels` (adds that many
+    '#'). Used when merging a section that was built as its own standalone page (starting
+    at h1) into a combined page, so it nests correctly under a '## Backend' / '## Frontend'
+    top-level heading instead of colliding with it."""
+    return re.sub(r"(?m)^(#{1,6})(\s)", lambda m: ("#" * (len(m.group(1)) + levels)) + m.group(2), text)
+
+
+def _load_frontend_mod():
+    # Cross-module import, same importlib.util pattern generate_all.py / generate_team_plan.py
+    # use for sibling generator scripts.
+    import importlib.util as _ilu
+    spec = _ilu.spec_from_file_location("generate_frontend", HERE / "generate_frontend.py")
+    mod = _ilu.module_from_spec(spec)          # type: ignore[arg-type]
+    spec.loader.exec_module(mod)                # type: ignore[union-attr]
+    return mod
+
+
+def build_fe_section_for(domain: str) -> str | None:
+    """Load generate_frontend.py and build this domain's Frontend section markdown
+    (the FE-08 stories grouped for `domain`), or None if fe-08-frontend-stories.md has
+    no stories for this domain / doesn't exist."""
+    try:
+        fe_mod = _load_frontend_mod()
+        stories = fe_mod.parse_fe_stories()
+    except Exception:
+        return None
+    if not stories:
+        return None
+    from collections import defaultdict as _dd
+    by_dom = _dd(list)
+    for s in stories:
+        by_dom[fe_mod.domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])].append(s)
+    group = sorted(by_dom.get(domain, []), key=lambda s: s["id"])
+    if not group:
+        return None
+    ops = []
+    try:
+        client_defs = fe_mod.load_client_defs()
+        usage_idx = fe_mod.load_usage_index()
+        registry = fe_mod.build_schema_registry()
+        be_stories = fe_mod.load_be_stories()
+        ops, _frags, _coverage, _fragments = fe_mod.cross_reference(
+            client_defs, registry, usage_idx, be_stories)
+    except Exception:
+        ops = []
+    lines = fe_mod.build_fe_section(domain, group, ops)
+    return "\n".join(lines)
+
+
 def generate_breakdown_for(domain: str) -> None:
-    out_subdir = OUT_DIR / domain
-    out_subdir.mkdir(parents=True, exist_ok=True)
-    content  = build_breakdown(domain)
-    out_file = out_subdir / f"FederatedGqlBrakDown-{domain}.md"
+    # Per-domain artifact lives in output/summary/{domain}/ — ONE merged page:
+    # '## Backend' (this module's build_breakdown) + '## Frontend' (generate_frontend.py's
+    # build_fe_section), divided by a '---' like every other major-section break in this doc set.
+    domain_dir = OUT_DIR / domain
+    domain_dir.mkdir(parents=True, exist_ok=True)
+
+    # levels=2: each source page's own title starts at h1 (#) — demoting by 2 makes it h3
+    # (###), correctly nesting UNDER the '## Backend' / '## Frontend' wrapper (h2) below,
+    # not colliding with it at the same level.
+    be_content = _demote_headings(build_breakdown(domain), levels=2)
+    fe_raw = build_fe_section_for(domain)
+
+    parts = ["## Backend", "", be_content, ""]
+    if fe_raw:
+        parts += ["---", "", "## Frontend", "", _demote_headings(fe_raw, levels=2), ""]
+
+    content = "\n".join(parts)
+    out_file = domain_dir / f"FederatedGqlBreakDown-{domain}.md"
     out_file.write_text(content, encoding="utf-8")
-    print(f"  OK {domain}/FederatedGqlBrakDown-{domain}.md ({len(content):,} chars)")
+    print(f"  OK {domain}/FederatedGqlBreakDown-{domain}.md ({len(content):,} chars)")
 
 
 def generate_global() -> None:

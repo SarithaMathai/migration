@@ -1,10 +1,10 @@
-# Template: Migration Stories and PO Summary (`04-stories.md` + `04-po-summary.md`)
+# Template: Migration Stories and PO Summary (`be-04-stories.md` + `be-04-po-summary.md`)
 
 This template defines the format for Phase 4 story generation output.
 
 ---
 
-## `04-stories.md` — Structure
+## `be-04-stories.md` — Structure
 
 ```markdown
 # {Domain Display Name} — Migration Plan & Stories
@@ -13,7 +13,7 @@ This template defines the format for Phase 4 story generation output.
 > **Target DGS:** `{ServiceClassName}` (repo: `{repo-name}`)
 > **Pipeline Version:** 1.1
 > **Generated:** {YYYY-MM-DD}
-> **Depends on:** [02-resolver-analysis.md](./02-resolver-analysis.md), [03-schema.graphql](./03-schema.graphql), [03-schema-analysis.md](./03-schema-analysis.md)
+> **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md), [be-03-schema.graphql](./be-03-schema.graphql), [be-03-schema-analysis.md](./be-03-schema-analysis.md)
 
 ---
 
@@ -36,17 +36,17 @@ This template defines the format for Phase 4 story generation output.
 
 ```mermaid
 graph TD
-  A01["SPARK-{DOM}-A01: Schema"] --> B01["SPARK-{DOM}-B01: Service Layer"]
-  A01 --> B02["SPARK-{DOM}-B02: More Services"]
-  B01 --> C01["SPARK-{DOM}-C01: Query Fetcher"]
-  B02 --> C02["SPARK-{DOM}-C02: Mutation Fetcher"]
-  C01 --> D01["SPARK-{DOM}-D01: Federation Config"]
-  C01 --> E01["SPARK-{DOM}-E01: Tests"]
-  D01 --> E01
+  A-01["SPARK-{DOM}-A-01: Schema"] --> B-01["SPARK-{DOM}-B-01: Service Layer"]
+  A-01 --> B-02["SPARK-{DOM}-B-02: More Services"]
+  B-01 --> C-01["SPARK-{DOM}-C-01: Query Fetcher"]
+  B-02 --> C-02["SPARK-{DOM}-C-02: Mutation Fetcher"]
+  C-01 --> D-01["SPARK-{DOM}-D-01: Federation Config"]
+  C-01 --> E-01["SPARK-{DOM}-E-01: Tests"]
+  D-01 --> E-01
 
   %% Phase A
   subgraph PhaseA [Phase A: Foundation]
-    A01
+    A-01
   end
 ```
 
@@ -95,7 +95,7 @@ Every story uses this exact template. All sections are required.
 ---
 
 **Current Behavior (from Phase 2):**
-{Copy the relevant pseudo-logic from 02-resolver-analysis.md verbatim or lightly edited.
+{Copy the relevant pseudo-logic from be-02-resolver-analysis.md verbatim or lightly edited.
 This IS the implementation spec. Include:
 - Full step-by-step logic (numbered)
 - REST endpoint details (verb, URL, headers)
@@ -141,7 +141,7 @@ OR:
 ---
 
 **Acceptance Criteria:**
-1. GraphQL schema for `{operation}` matches `output/{domain}/03-schema.graphql`.
+1. GraphQL schema for `{operation}` matches `output/{domain}/be-03-schema.graphql`.
 2. Data fetcher is annotated with `{@DgsQuery|@DgsMutation|@DgsData}` and delegates to the service layer.
 3. Service layer makes `{HTTP verb}` call to `{base-url}/{endpoint}` with headers `Authorization` and `{SPARK-Capability-Token if applicable}`.
 4. Request transformation: `{specific rule — e.g., "camelCase input fields are converted to snake_case via Jackson NamingStrategies"}`.
@@ -177,7 +177,7 @@ OR:
 
 ---
 
-## `04-po-summary.md` — Structure
+## `be-04-po-summary.md` — Structure
 
 ```markdown
 # {Domain Display Name} — PO Sprint Planning Summary

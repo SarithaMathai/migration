@@ -1,0 +1,59 @@
+import { gql } from '@apollo/client'
+
+// Querying humanId or id will cache results, duplicating/overwriting entries as each entry has identical cacheId
+// versionHistoryNumber is used to cache component versions since object matches real SPARK_Bom object, and other schemas use "version", need a unique field name to cache
+export const GET_COMPONENT_HISTORY = gql`
+  query getComponentVersions($id: String!) {
+    getComponentVersions(id: $id) {
+      ... on SPARK_Bom {
+        componentId: humanId
+        version
+        versionHistoryNumber: version # See top of file
+        updatedBy {
+          firstName
+          lastName
+        }
+        updatedAt
+      }
+      ... on SPARK_Measurements {
+        componentId: humanId
+        version
+        versionHistoryNumber: version
+        updatedBy {
+          firstName
+          lastName
+        }
+        updatedAt
+      }
+      ... on SPARK_ProductDetails {
+        componentId: humanId
+        version
+        versionHistoryNumber: version
+        updatedBy {
+          firstName
+          lastName
+        }
+        updatedAt
+      }
+      ... on SPARK_Claims {
+        componentId: humanId
+        version
+        versionHistoryNumber: version
+        updatedBy {
+          firstName
+          lastName
+        }
+        updatedAt
+      }
+      ... on SPARK_Watchlist {
+        version
+        versionHistoryNumber: version
+        updatedBy {
+          firstName
+          lastName
+        }
+        updatedAt
+      }
+    }
+  }
+`

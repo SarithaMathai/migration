@@ -1,0 +1,776 @@
+import { gql } from '@apollo/client'
+import { VMM_BUSINESS_PARTNER_ON_PRODUCT } from './ProductFragments'
+
+// TODO: SPARK-10242 cleanup common discussion query files
+export const LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT = gql`
+  fragment LegacyUserProfileAttributesFragment on SPARK_UserProfileAttributes {
+    id
+    userProfileId
+    firstName
+    internal: isInternal
+    lastName
+    companyName
+    partnerId
+    roles {
+      id
+      value
+    }
+    accreditations {
+      code
+      description
+      status
+    }
+    primaryRole
+    outOfOfficeAttributes {
+      userOutOfOffice
+    }
+    active
+  }
+`
+
+export const LEGACY_DISCUSSION_TEAMS_FRAGMENT = gql`
+  fragment LegacyDiscussionTeamsFragment on SPARK_Team {
+    id
+    name
+    partnerName: partner_name
+    partnerId: partner_id
+    partnerType {
+      code
+      description
+    }
+    members {
+      user_profile_id
+      roles
+      memberDetails {
+        ...LegacyUserProfileAttributesFragment
+      }
+    }
+  }
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+
+export const LEGACY_DISCUSSION_PARTICIPANTS_FRAGMENT = gql`
+  fragment LegacyDiscussionParticipantsFragment on SPARK_Participants {
+    teams {
+      teamId
+      edited
+      businessPartner {
+        id
+        name # TODO: SPARK-10242 unify queries This was renamed to companyName
+      }
+      teamName # TODO: SPARK-10242 unify queries This was renamed to name
+      users {
+        # this was renamed to members
+        ...LegacyUserProfileAttributesFragment
+      }
+    }
+    users {
+      ...LegacyUserProfileAttributesFragment
+    }
+  }
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+
+export const LEGACY_DISCUSSION_ATTACHMENT_DETAILS_FRAGMENT = gql`
+  fragment LegacyDiscussionAttachmentDetailsFragment on SPARK_Attachment {
+    id
+    humanId
+    previewable
+    documentId
+    documentName
+    documentType
+    documentSize
+    createdAt
+    updatedAt
+    mediaType
+    sharedWithGallery
+    canShareWithGallery
+    attachmentCanShowdog
+    resource {
+      id
+      type
+    }
+    createdBy {
+      firstName
+      lastName
+    }
+    galleryDetails {
+      assetId
+      fileValid
+      validations {
+        name
+        description
+        message
+        classification
+      }
+    }
+    finalVirtualFile
+  }
+`
+
+export const REPLY_DETAILS_FRAGMENT = gql`
+  fragment ReplyDetailsFragment on SPARK_DiscussionReply {
+    id
+    discussionId
+    comment
+    createdTS
+    updateTS
+    draft
+    edited
+    attachments {
+      ...LegacyDiscussionAttachmentDetailsFragment
+    }
+    createdUser {
+      ...LegacyUserProfileAttributesFragment
+    }
+  }
+  ${LEGACY_DISCUSSION_ATTACHMENT_DETAILS_FRAGMENT}
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+
+export const DISCUSSION_DETAILS_FRAGMENT = gql`
+  fragment DiscussionDetailsFragment on SPARK_Discussion {
+    id
+    subject
+    createdTS
+    repliesCount
+    draft
+    authorName
+    comment
+    createdTS
+    discussionTitle
+    edited
+    announcement
+    partnerId
+    designPartnerId
+    updateTS
+    isSampleDiscussion
+    resources {
+      mappings {
+        product
+        sample
+        workspace
+      }
+    }
+    replies {
+      ...ReplyDetailsFragment
+    }
+    updatedUser {
+      ...LegacyUserProfileAttributesFragment
+    }
+    createdUser {
+      ...LegacyUserProfileAttributesFragment
+    }
+    participants {
+      ...LegacyDiscussionParticipantsFragment
+    }
+    businessPartner {
+      id
+      name
+      associatedPartnerType
+    }
+    droppedPartners {
+      id
+      name
+    }
+  }
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+  ${LEGACY_DISCUSSION_PARTICIPANTS_FRAGMENT}
+  ${REPLY_DETAILS_FRAGMENT}
+`
+
+export const GET_SPARK_PRODUCT_BP = gql`
+  query getProduct($id: ID!) {
+    getProduct(id: $id) {
+      id
+      businessPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+      droppedPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+    }
+  }
+  ${VMM_BUSINESS_PARTNER_ON_PRODUCT}
+`
+
+export const GET_SPARK_WORKSPACE_BP = gql`
+  query getWorkspaceV2($id: ID!) {
+    getWorkspaceV2(id: $id) {
+      id
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_SPARK_COLOR_BP = gql`
+  query getColor($id: ID!) {
+    getColor(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_SPARK_FABRIC_BP = gql`
+  query getFabric($id: ID!) {
+    getFabric(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_SPARK_COMBINATION_BP = gql`
+  query getCombination($id: ID!) {
+    getCombination(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+    }
+  }
+`
+
+export const GET_SPARK_COLOR_ARCHROMA_BP = gql`
+  query getColor($id: ID!) {
+    getColorArchroma(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_SPARK_ARTWORK_BP = gql`
+  query getArtwork($id: ID!) {
+    getArtwork(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_SPARK_WASH_BP = gql`
+  query getWash($id: ID!) {
+    getWash(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_SPARK_TRIM_BP = gql`
+  query getTrim($id: ID!) {
+    getTrim(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_SPARK_PALETTE_BP = gql`
+  query getPalette($id: ID!) {
+    getPalette(id: $id) {
+      humanId
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const ADD_ATTACHMENTS = gql`
+  mutation addBulkAttachment($attachments: [SPARK_BulkAttachmentInput]) {
+    addBulkAttachment(attachments: $attachments)
+  }
+`
+
+export const DELETE_ATTACHMENTS = gql`
+  mutation archiveAttachmentV3($id: ID!) {
+    archiveAttachmentV3(id: $id) {
+      humanId
+      documentId
+    }
+  }
+`
+
+export const GET_PRODUCT_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getProduct(id: $id) {
+      id
+      teams {
+        content {
+          ...LegacyDiscussionTeamsFragment
+        }
+      }
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`
+
+export const GET_COLOR_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getColor(id: $id) {
+      humanId
+      teams {
+        ...LegacyDiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`
+
+export const GET_FABRIC_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getFabric(id: $id) {
+      humanId
+      teams {
+        ...LegacyDiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`
+
+export const GET_COMBINATION_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getCombination(id: $id) {
+      humanId
+      teams {
+        ...LegacyDiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`
+
+export const GET_WASH_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getWash(id: $id) {
+      humanId
+      teams {
+        ...LegacyDiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`
+
+export const GET_COLOR_ARCHROMA_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getColorArchroma(id: $id) {
+      humanId
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+`
+
+export const GET_ARTWORK_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getArtwork(id: $id) {
+      humanId
+      teams {
+        ...LegacyDiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`
+
+export const GET_TRIM_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getTrim(id: $id) {
+      humanId
+      teams {
+        ...LegacyDiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`
+
+export const GET_USERS = gql`
+  query getUsers($partnerId: [ID], $name: String, $excludeIds: [String], $onlyInternal: Boolean) {
+    getUsers(partnerId: $partnerId, name: $name, excludeIds: $excludeIds, onlyInternal: $onlyInternal) {
+      content {
+        ...LegacyUserProfileAttributesFragment
+      }
+    }
+  }
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+
+export const REPLY_DETAILS_FRAGMENT_V2 = gql`
+  fragment ReplyDetailsFragmentV2 on SPARK_DiscussionReply {
+    id
+    discussionId
+    comment
+    createdTS
+    updateTS
+    draft
+    edited
+    attachmentsV2 {
+      ...LegacyDiscussionAttachmentDetailsFragment
+    }
+    createdUser {
+      ...LegacyUserProfileAttributesFragment
+    }
+  }
+  ${LEGACY_DISCUSSION_ATTACHMENT_DETAILS_FRAGMENT}
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+
+export const DISCUSSION_DETAILS_FRAGMENT_V2 = gql`
+  fragment DiscussionDetailsFragmentV2 on SPARK_Discussion {
+    id
+    subject
+    createdTS
+    repliesCount
+    draftReplyCount
+    draft
+    authorName
+    comment
+    createdTS
+    discussionTitle
+    edited
+    announcement
+    partnerId
+    designPartnerId
+    updateTS
+    isSampleDiscussion
+    resources {
+      mappings {
+        product
+        sample
+        workspace
+      }
+    }
+    repliesV2 {
+      ...ReplyDetailsFragmentV2
+    }
+    updatedUser {
+      ...LegacyUserProfileAttributesFragment
+    }
+    createdUser {
+      ...LegacyUserProfileAttributesFragment
+    }
+    participants {
+      ...LegacyDiscussionParticipantsFragment
+    }
+    businessPartner {
+      id
+      name
+      associatedPartnerType
+    }
+    droppedPartners {
+      id
+      name
+      associatedPartnerType
+    }
+  }
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+  ${LEGACY_DISCUSSION_PARTICIPANTS_FRAGMENT}
+  ${REPLY_DETAILS_FRAGMENT_V2}
+`
+
+export const LEGACY_DISCUSSION_LIST_FRAGMENT_V2 = gql`
+  fragment LegacyDiscussionListFragmentV2 on SPARK_Discussion {
+    id
+    subject
+    createdTS
+    repliesCount
+    draftReplyCount
+    draft
+    draftEditors
+    authorName
+    comment
+    createdTS
+    discussionTitle
+    edited
+    announcement
+    partnerId
+    designPartnerId
+    updateTS
+    isSampleDiscussion
+    lastReplyBy {
+      ...LegacyUserProfileAttributesFragment
+    }
+    lastReplyAt
+    resources {
+      mappings {
+        product
+        sample
+        workspace
+        bill_of_materials
+        packaging_bom
+        measurement_set
+        claim
+        construction_set
+        packaging
+      }
+    }
+    updatedUser {
+      ...LegacyUserProfileAttributesFragment
+    }
+    createdUser {
+      ...LegacyUserProfileAttributesFragment
+    }
+    participants {
+      ...LegacyDiscussionParticipantsFragment
+    }
+    businessPartner {
+      id
+      name
+      associatedPartnerType
+    }
+    droppedPartners {
+      id
+      name
+      associatedPartnerType
+    }
+    designPartners {
+      id
+      name
+      associatedPartnerType
+    }
+    tags {
+      id
+      name
+    }
+  }
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+  ${LEGACY_DISCUSSION_PARTICIPANTS_FRAGMENT}
+`
+
+export const DELETE_PARTICIPANT_V2 = gql`
+  mutation deleteParticipantV2($discussionId: ID!, $teamId: ID, $userId: ID, $partnerId: ID) {
+    deleteParticipantV2(id: $discussionId, teamId: $teamId, userId: $userId, partnerId: $partnerId) {
+      ...DiscussionDetailsFragmentV2
+    }
+  }
+  ${DISCUSSION_DETAILS_FRAGMENT_V2}
+`
+export const UPDATE_REPLY_V2 = gql`
+  mutation updateDiscussionReplyV2($sparkDiscussionReply: SPARK_DiscussionReplyInput!, $attachments: [SPARK_BulkAttachmentInput]) {
+    updateDiscussionReplyV2(sparkDiscussionReply: $sparkDiscussionReply, attachments: $attachments) {
+      ...ReplyDetailsFragmentV2
+    }
+  }
+  ${REPLY_DETAILS_FRAGMENT_V2}
+  ${LEGACY_USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+export const DELETE_REPLY_V2 = gql`
+  mutation deleteDiscussionReplyV2($discussionId: ID!, $replyId: ID!) {
+    deleteDiscussionReplyV2(id: $discussionId, replyId: $replyId)
+  }
+`
+
+export const GET_DISCUSSIONS_V2 = gql`
+  query getDiscussionsV2($resourceType: String!, $resourceId: String!, $partnerId: ID) {
+    getDiscussionsV2(resourceType: $resourceType, resourceId: $resourceId, partnerId: $partnerId) {
+      content {
+        discussionDto {
+          ...LegacyDiscussionListFragmentV2
+        }
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_LIST_FRAGMENT_V2}
+`
+
+export const GET_SPARK_PRODUCT_V2 = gql`
+  query getProduct($id: ID!, $partnerId: ID) {
+    getProduct(id: $id) {
+      id
+      businessPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+      droppedPartners {
+        ...VmmBusinessPartnerOnProduct
+      }
+      discussionsV2(partnerId: $partnerId) {
+        content {
+          discussionDto {
+            ...LegacyDiscussionListFragmentV2
+          }
+        }
+      }
+    }
+  }
+  ${VMM_BUSINESS_PARTNER_ON_PRODUCT}
+  ${LEGACY_DISCUSSION_LIST_FRAGMENT_V2}
+`
+
+export const GET_SPARK_WORKSPACE_V2 = gql`
+  query getWorkspaceV2($id: ID!, $partnerId: ID) {
+    getWorkspaceV2(id: $id) {
+      id
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      discussionsV2(partnerId: $partnerId) {
+        content {
+          discussionDto {
+            ...LegacyDiscussionListFragmentV2
+          }
+        }
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_LIST_FRAGMENT_V2}
+`
+
+export const GET_PALETTE_TEAMS = gql`
+  query getTeams($id: ID!) {
+    getPalette(id: $id) {
+      humanId
+      teams {
+        ...LegacyDiscussionTeamsFragment
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`
+
+export const ADD_SAMPLE_DISCUSSION_V3 = gql`
+  mutation addSampleDiscussionV3($discussion: SPARK_SampleDiscussionInput!) {
+    addSampleDiscussionV3(sparkSampleDiscussion: $discussion) {
+      discussionId
+      discussionThreadId
+    }
+  }
+`
+
+export const GET_HUB_MATERIAL_BP = gql`
+  query getHubMaterialTeams($id: ID!) {
+    getHubMaterial(id: $id) {
+      __typename
+      humanId
+      baseMaterial {
+        businessPartners {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+
+export const GET_HUB_MATERIAL_TEAMS = gql`
+  query getHubMaterialTeams($id: ID!) {
+    getHubMaterial(id: $id) {
+      __typename
+      humanId
+      baseMaterial {
+        teams {
+          ...LegacyDiscussionTeamsFragment
+        }
+      }
+    }
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+  ${LEGACY_DISCUSSION_TEAMS_FRAGMENT}
+`

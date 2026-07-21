@@ -1,0 +1,233 @@
+import { Modal, Button, Input, Grid } from '@design-systems/canvas-ui'
+import { C8CompatibleAutocomplete } from '@spark/canvas-7-compat'
+import React, { useCallback, useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
+import type { SPARK_Redux_CurrentUser } from 'UserProfile'
+import { currentUserSelector, isImpersonationSelector, isInternalSelector } from '@spark/legacy/selectors/currentUserSelector'
+import { setCurrentUserFromLocalStorage } from '../actions/userActions'
+import { gql, useMutation } from '@apollo/client'
+import { GET_USERS_LIST } from '@spark/legacy/routes/users/graphql/usersQueries'
+import { internalClient } from '@network/library'
+
+import _ from 'lodash'
+
+export const fetchUsers = async (search) => {
+  const results = []
+  if (search === '') return results
+
+  const queryResult = await internalClient.query({
+    query: GET_USERS_LIST,
+    variables: {
+      page: 0,
+      size: 20,
+      q: `${search}*`,
+      accreditation: null,
+      dpSecurity: false,
+      excludeInactive: true,
+    },
+  })
+
+  if (queryResult?.data?.getUsersElasticSearch?.content?.length > 0) {
+    return _.chain(queryResult?.data?.getUsersElasticSearch?.content || [])
+      .map((user) => ({
+        id: user.userProfileId,
+        value: `${user.firstName} ${user.lastName}`,
+        label: `${user.firstName} ${user.lastName} - ${user.companyName}`,
+        data: {
+          accreditations: user.accreditations,
+          displayText: user.firstName + ' ' + user.lastName,
+          companyName: user.companyName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          initials: user.firstName[0] + user.lastName[0],
+          outOfOfficeAttributes: user.outOfOfficeAttributes,
+          userProfileId: user.userProfileId,
+          userType: 'user',
+          partnerId: user.partnerId,
+          primaryRole: user.primaryRole,
+          currentVMMRole: user.currentVMMRole,
+        },
+      }))
+      .uniqBy('id')
+      .value()
+  }
+  return []
+}
+
+export const PRE_DEFINED_IMPERSONATION_PROFILES = [
+  {
+    id: 'external1',
+    label: 'External Renfro User # 1 (Dev) [Accredited]',
+    value: 'external1',
+  },
+  {
+    id: 'external2',
+    label: 'External Renfro User #2 (Dev) [Non-accredited]',
+    value: 'external2',
+  },
+  {
+    id: 'hansae',
+    label: 'External Hansae MV User (Dev)',
+    value: 'hansae',
+  },
+  {
+    id: 'designPartner',
+    label: 'Design Partner CDG User (Dev/Stage)',
+    value: 'designPartner',
+  },
+  {
+    id: 'external1s',
+    label: 'External Renfro User # 1 (Stage) [Accredited]',
+    value: 'external1s',
+  },
+  {
+    id: 'external2s',
+    label: 'External Renfro User #2 (Stage) [Non-accredited]',
+    value: 'external2s',
+  },
+  {
+    id: 'hansaeStage',
+    label: 'External Hansae MV User (Stage)',
+    value: 'hansaeStage',
+  },
+]
+
+export const specificUserOption = {
+  id: 'specific-user',
+  label: 'Specific User',
+  value: 'specific-user',
+}
+export const preDefinedUserOption = {
+  id: 'pre-defined',
+  label: 'Pre-Defined',
+  value: 'pre-defined',
+}
+
+export const USER_TYPE_OPTIONS = [preDefinedUserOption, specificUserOption]
+
+const getSelectValue = (valueOrOption: unknown) => {
+  if (valueOrOption && typeof valueOrOption === 'object' && 'value' in valueOrOption) {
+    return String((valueOrOption as { value: unknown }).value)
+  }
+
+  if (valueOrOption === null || valueOrOption === undefined) {
+    return ''
+  }
+
+  return String(valueOrOption)
+}
+
+interface ImpersonationProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+const Impersonation = ({ isOpen, onClose }: ImpersonationProps = {}) => {
+  const [impersonateUser] = useMutation(gql`
+    mutation impersonateUser($userId: String, $profile: String) {
+      impersonateUser(userId: $userId, profile: $profile) {
+        token
+        user
+      }
+    }
+  `)
+
+  const [userType, setUserType] = useState(preDefinedUserOption.value)
+  const [preDefinedProfile, setPreDefinedProfile] = useState('')
+  const [specificUserId, setSpecificUserId] = useState('')
+  const [shouldSkipSplashPage, setShouldSkipSplashPage] = useState(false)
+
+  const isImpersonationAllowed = useSelector(isImpersonationSelector)
+  const isInternal = useSelector(isInternalSelector)
+  const currentUser = useSelector(currentUserSelector) as SPARK_Redux_CurrentUser
+
+  const handleRefuseModal = () => {
+    setUserType(preDefinedUserOption.value)
+    setPreDefinedProfile('')
+    setSpecificUserId('')
+    setShouldSkipSplashPage(false)
+    localStorage.removeItem('skipSplashPage')
+    onClose?.()
+  }
+
+  const handleChangeShouldSkipSplashPage = (e) => {
+    setShouldSkipSplashPage(e.target.checked)
+    if (e.target.checked) {
+      localStorage.setItem('skipSplashPage', 'true')
+    } else {
+      localStorage.removeItem('skipSplashPage')
+    }
+  }
+
+  const handleImpersonateUser = useCallback(async () => {
+    const variables = userType === preDefinedUserOption.value ? { profile: preDefinedProfile } : { userId: specificUserId }
+    const { data } = await impersonateUser({ variables })
+    const user = data.impersonateUser?.user || '{}'
+
+    const previousUserState = localStorage.getItem('userLoginState')
+    localStorage.setItem('previousUserLoginState', previousUserState)
+    // THIS IS THE FLAG TO INDICATE THAT THE USER IS IMPERSONATING ANOTHER USER
+    localStorage.setItem('isImpersonating', 'true')
+    localStorage.setItem('userLoginState', user)
+    setCurrentUserFromLocalStorage()
+    window.location.reload()
+  }, [impersonateUser, preDefinedProfile, specificUserId, userType])
+
+  const isDisabled = useMemo(() => {
+    if (userType === preDefinedUserOption.value) {
+      return !preDefinedProfile
+    } else if (userType === specificUserOption.value) {
+      return !specificUserId
+    } else {
+      return true
+    }
+  }, [preDefinedProfile, specificUserId, userType])
+
+  if (isImpersonationAllowed && isInternal && currentUser.companyName === 'Target') {
+    return (
+      <Modal isOpen={isOpen} className="spark-modalOverflow--visible" headingText="Select a user to impersonate" onClose={handleRefuseModal}>
+        <Grid.Container>
+          <Grid.Item size={{ xs: 12 }}>
+            <Input.Select options={USER_TYPE_OPTIONS} onChange={(value) => setUserType(getSelectValue(value))} value={userType} />
+          </Grid.Item>
+          {userType === preDefinedUserOption.value && (
+            <Grid.Item size={{ xs: 12 }}>
+              <Input.Select options={PRE_DEFINED_IMPERSONATION_PROFILES} onChange={(value) => setPreDefinedProfile(getSelectValue(value))} value={preDefinedProfile} />
+            </Grid.Item>
+          )}
+          {userType === specificUserOption.value && (
+            <Grid.Item size={{ xs: 12 }}>
+              <C8CompatibleAutocomplete
+                label="Search by name"
+                id="impersonation-specific-user"
+                placeholder="Search by name"
+                value={setSpecificUserId}
+                options={fetchUsers}
+                onUpdate={(_, value) => setSpecificUserId(value?.id)}
+              />
+            </Grid.Item>
+          )}
+          <Grid.Item size={{ xs: true }}>
+            <Grid.Container>
+              <Grid.Item size={{ xs: true }}>
+                <Input.Switch id="skipSplashPages" isChecked={shouldSkipSplashPage} onChange={handleChangeShouldSkipSplashPage} label="Skip splash pages" />
+              </Grid.Item>
+              <Grid.Item>
+                <Button onClick={handleRefuseModal} aria-label="Cancel button">
+                  Cancel
+                </Button>
+              </Grid.Item>
+              <Grid.Item>
+                <Button disabled={isDisabled} variant="primary" onClick={handleImpersonateUser} aria-label="Impersonate selected user">
+                  Impersonate
+                </Button>
+              </Grid.Item>
+            </Grid.Container>
+          </Grid.Item>
+        </Grid.Container>
+      </Modal>
+    )
+  }
+}
+
+export default Impersonation

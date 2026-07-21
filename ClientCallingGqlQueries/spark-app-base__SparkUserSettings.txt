@@ -1,0 +1,62 @@
+import React, { useEffect, useRef, useMemo } from 'react'
+import { useQuery, gql } from '@apollo/client'
+import { useSelector } from 'react-redux'
+import _ from 'lodash'
+import { currentUserSelector } from '@spark/legacy/selectors/currentUserSelector'
+import listenForScanner from '@spark/legacy/services/barcodeScanner'
+import { GET_USER_SETTINGS } from '@core/base'
+import * as H from 'history'
+import { ga4Initialize } from '@network/library'
+import { sparkUserSettingsContext } from '@spark/legacy/containers/ContextHolder'
+const { Provider: UserSettingsProvider } = sparkUserSettingsContext
+
+const GET_USER_ROLES = gql`
+  query getUserRoles {
+    getRoles {
+      roles {
+        id
+        value
+      }
+    }
+  }
+`
+
+const SparkUserSettings = ({ children }) => {
+  listenForScanner()
+  //TODO: React-Router v6 migration - we should not be using browser history directly
+  const history = H.createBrowserHistory()
+
+  const previousGaPathname = useRef(window.location.pathname) // replace me
+
+  const currentUser: any = useSelector<any>((state) => {
+    return currentUserSelector(state)
+  })
+
+  const { internal, primaryRole, userProfileId } = useMemo(() => currentUser, [currentUser])
+
+  const { data } = useQuery(GET_USER_SETTINGS, { skip: !userProfileId })
+  const { data: userRoles } = useQuery(GET_USER_ROLES, { skip: !userProfileId })
+
+  const userSettings = data && data.getUserSettings
+
+  const rolesList = useMemo(() => (userRoles && userRoles.getRoles.roles) || [], [userRoles])
+  const userPrimaryRole = useMemo(() => {
+    if (rolesList.length) {
+      return (_.find(rolesList, ({ id }) => id === primaryRole) || {}).value || '(no role)'
+    }
+  }, [rolesList, primaryRole])
+
+  useEffect(() => {
+    if (userProfileId && process.env.NODE_ENV !== 'test' && userPrimaryRole) {
+      ga4Initialize(previousGaPathname, history, {
+        userProfileId,
+        internal,
+        userPrimaryRole: userPrimaryRole,
+      })
+    }
+  }, [userProfileId, internal, userPrimaryRole, history])
+
+  return <UserSettingsProvider value={userSettings}>{children}</UserSettingsProvider>
+}
+
+export default SparkUserSettings

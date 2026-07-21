@@ -1,0 +1,44 @@
+import { gql } from '@apollo/client'
+
+export const BULK_ADD_DELETE_RESOURCE_LINKS = gql`
+  mutation bulkAddDeleteResourceLinks($bulkAddDeleteResourceLinksRequest: SPARK_BulkAddDeleteResourceLinksInput) {
+    bulkAddDeleteResourceLinks(bulkAddDeleteResourceLinksRequest: $bulkAddDeleteResourceLinksRequest) {
+      sourceMaterial {
+        humanId
+      }
+      targetMaterial {
+        humanId
+      }
+    }
+  }
+`
+export const ADD_RESOURCE_LINK = gql`
+  mutation createResourceLink($resourceLink: Spark_ResourceLinkInput!) {
+    createResourceLink(resourceLink: $resourceLink) {
+      reason
+      sourceMaterial {
+        id
+        name
+      }
+      targetMaterial {
+        id
+        name
+      }
+    }
+  }
+`
+export const REMOVE_RESOURCE_LINK = gql`
+  mutation deleteResourceLink($targetId: String, $sourceId: String) {
+    deleteResourceLink(targetId: $targetId, sourceId: $sourceId) {
+      reason
+      sourceMaterial {
+        id
+        name
+      }
+      targetMaterial {
+        id
+        name
+      }
+    }
+  }
+`

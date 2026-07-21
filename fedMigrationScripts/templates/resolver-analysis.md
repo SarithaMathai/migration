@@ -1,4 +1,4 @@
-# Template: Resolver Analysis (`02-resolver-analysis.md`)
+# Template: Resolver Analysis (`be-02-resolver-analysis.md`)
 
 This template defines the exact format for Phase 2 resolver analysis output.
 Skills that produce this artifact must follow this structure exactly.
@@ -14,7 +14,7 @@ Skills that produce this artifact must follow this structure exactly.
 > **Target DGS:** `{ServiceClassName}` (repo: `{repo-name}`, url: `{base-url}`)
 > **Pipeline Version:** 1.1
 > **Generated:** {YYYY-MM-DD}
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md)
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md)
 > **DGS Target Status:** {Green-field (no existing DGS schema) | Existing schema found at {path}}
 > **Analysis Mode:** {Full | Quick Scan}
 ```
@@ -331,7 +331,7 @@ Use U{n} prefix.
 **Target Service:** `{ServiceClassName}` ({repo})
 **EXT Service Calls Found:** {n} total ({n} 🔴 RED / {n} 🟡 YELLOW / {n} 🔵 BLUE)
 **Output Files Written:**
-- `output/{domain}/02-resolver-analysis.md` ({n} lines)
+- `output/{domain}/be-02-resolver-analysis.md` ({n} lines)
 **Next Phase:** Phase 3 — Federation Schema Derivation
 **Open Questions:** {bullet list or "None"}
 ```

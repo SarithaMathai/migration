@@ -1,6 +1,23 @@
-Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,Status,Description
-Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
-Story,SPARK-IMP-B01,(Impression) searchImpressionsByProductId data fetcher [SPARK-IMP-B01],,Federate BreakDown Product,B,XS,dgs-migration,impression,query,,,To Do,"*Current Behaviour:*
+﻿Issue Type,Story ID,Summary,Epic Name,Epic Link,Phase,T-shirt size,Labels,Labels,Labels,Parent Link,Depends On,External Dependency,Status,Description
+Epic,,Federate BreakDown Product,Federate BreakDown Product,,,,dgs-migration,all-domains,epic,,,,,"Umbrella epic for the spark-internal-graphql to Netflix DGS federated GraphQL migration. Holds the stories and spikes for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); each story summary is prefixed with its domain (e.g. [BOM], [Product])."
+Story,IMPRESSION-BE-B-01,(Impression) searchImpressionsByProductId data fetcher [IMPRESSION-BE-B-01],,Federate BreakDown Product,B,XS,dgs-migration,impression,query,,,,To Do,"*Implementation Order:* 1 of 7 (Impression backend, step 1)
+*Domain:* Impression — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* None
+
+*Blocks:*
+* IMPRESSION-BE-B-02 — getImpressionCountsByProductId data fetcher
+* IMPRESSION-BE-D-01 — updateImpressions mutation
+* IMPRESSION-BE-F-01 — Product.impressions / impressionCounts
+* IMPRESSION-BE-G-01 — Impression field resolvers
+* IMPRESSION-BE-G-02 — ImpressionCount.counts aggregation
+* IMPRESSION-BE-G-04 — attachment entity reference
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
+
+*Current Behaviour:*
 * 1. `GET {base}/…/impressions/product/{id}?workspaceIds=…&partnerIds=…` → camelCase list. 2. `partnerIds` and `workspaceIds` forwarded as **repeated** query-string params. 3. `enableWorkspaceContextFiltering` is accepted but **not forwarded** to the backend today — intent must be confirmed.
 
 *Target:*
@@ -10,18 +27,48 @@ Story,SPARK-IMP-B01,(Impression) searchImpressionsByProductId data fetcher [SPAR
 1. `searchImpressionsByProductId(id)` returns impressions list; empty product → `[]`
 2. `partnerIds` and `workspaceIds` are forwarded as **repeated** query params (not CSV)
 3. `enableWorkspaceContextFiltering` intent is documented in code (forwarded or intentionally ignored)
-4. `./gradlew generateJava` passes and `DateTime` round-trips ISO-8601. *(One-time gate — verify once in this PR.)*"
-Story,SPARK-IMP-B02,(Impression) getImpressionCountsByProductId data fetcher [SPARK-IMP-B02],,Federate BreakDown Product,B,XS,dgs-migration,impression,query,,B01,To Do,"*Current Behaviour:*
-* 1. Reuses the same REST search call as B01 for `id`. 2. Returns the impressions list typed as `ImpressionCount`; the `counts` field (G02) aggregates the list.
+4. `./gradlew generateJava` passes and `DateTime` round-trips ISO-8601. *(One-time gate — verify once in this PR.)*
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,IMPRESSION-BE-B-02,(Impression) getImpressionCountsByProductId data fetcher [IMPRESSION-BE-B-02],,Federate BreakDown Product,B,XS,dgs-migration,impression,query,,B-01,,To Do,"*Implementation Order:* 2 of 7 (Impression backend, step 2)
+*Domain:* Impression — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
+* 1. Reuses the same REST search call as B-01 for `id`. 2. Returns the impressions list typed as `ImpressionCount`; the `counts` field (G-02) aggregates the list.
 
 *Target:*
-* - **Annotation:** `@DgsQuery getImpressionCountsByProductId(id): ImpressionCount` - Returns the search result as the `ImpressionCount` parent (G02 computes the `counts` child field). - **PO decision required:** preserve list-as-parent contract, or switch to a computed `ImpressionCountResult`?
+* - **Annotation:** `@DgsQuery getImpressionCountsByProductId(id): ImpressionCount` - Returns the search result as the `ImpressionCount` parent (G-02 computes the `counts` child field). - **PO decision required:** preserve list-as-parent contract, or switch to a computed `ImpressionCountResult`?
 
 *Acceptance Criteria:*
 1. Returns the impressions list as the `ImpressionCount` parent type
 2. The contract decision (list-as-parent vs typed result) is recorded in story comments
-3. Empty product → `counts` yields `totalCount: 0` (verified by G02)"
-Story,SPARK-IMP-D01,(Impression) updateImpressions mutation [SPARK-IMP-D01],,Federate BreakDown Product,D,M,dgs-migration,impression,mutation,,B01,To Do,"*Current Behaviour:*
+3. Empty product → `counts` yields `totalCount: 0` (verified by G-02)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,IMPRESSION-BE-D-01,(Impression) updateImpressions mutation [IMPRESSION-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,impression,mutation,,B-01,,To Do,"*Implementation Order:* 3 of 7 (Impression backend, step 2)
+*Domain:* Impression — *Team:* Backend — *Owner:* BE-1
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * 1. `PUT {base}/…/impressions/product/{productId}` with body `{ impressionsToDelete, impressionsToUpdate }` (snake_case). 2. On `validationErrors || message` in the response → throw.
 
 *Target:*
@@ -30,8 +77,23 @@ Story,SPARK-IMP-D01,(Impression) updateImpressions mutation [SPARK-IMP-D01],,Fed
 *Acceptance Criteria:*
 1. PUT body includes both delete and update sets in snake_case
 2. Response is mapped to camelCase and returned as `List<Impression>`
-3. Backend `validationErrors` or `message` → typed `ImpressionValidationException` thrown (not a silent partial return)"
-Story,SPARK-IMP-F01,(Impression) Product.impressions / impressionCounts (internal field resolver) [SPARK-IMP-F01],,Federate BreakDown Product,F,XS,dgs-migration,impression,field-resolver,,"B01, product B01",To Do,"*Current Behaviour:*
+3. Backend `validationErrors` or `message` → typed `ImpressionValidationException` thrown (not a silent partial return)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,IMPRESSION-BE-F-01,(Impression) Product.impressions / impressionCounts (internal field resolver) [IMPRESSION-BE-F-01],,Federate BreakDown Product,F,XS,dgs-migration,impression,field-resolver,,"B-01, product (`PRODUCT-BE-B-01`, exposes the field this story reads)",,To Do,"*Implementation Order:* 4 of 7 (Impression backend, step 2)
+*Domain:* Impression — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * Product exposes `impressions` and `impressionCounts` resolved via the impression search call (currently inside spark-internal-graphql).
 
 *Target:*
@@ -40,8 +102,24 @@ Story,SPARK-IMP-F01,(Impression) Product.impressions / impressionCounts (interna
 *Acceptance Criteria:*
 1. `Product.impressions` and `Product.impressionCounts` resolve in-process via `impressionService`
 2. No HTTP call is made during resolution (verified by unit test mock)
-3. Output matches the current product-side resolver (parity)"
-Story,SPARK-IMP-G01,(Impression) Impression field resolvers (5 fields) [SPARK-IMP-G01],,Federate BreakDown Product,G,XS,dgs-migration,impression,field-resolver,,B01,To Do,"*Current Behaviour:*
+3. Output matches the current product-side resolver (parity)
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,IMPRESSION-BE-G-01,(Impression) Impression field resolvers (5 fields) [IMPRESSION-BE-G-01],,Federate BreakDown Product,G,XS,dgs-migration,impression,field-resolver,,B-01,"user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 5 of 7 (Impression backend, step 2)
+*Domain:* Impression — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+
+*Blocks:*
+* IMPRESSION-FE-001
+* IMPRESSION-FE-002
+
+*Current Behaviour:*
 * 1. `businessPartners` — `loadBpsWithType(partnerIds.map(p => ({ partnerId: p })))` (🟡 vmm) 2. `owningBusinessPartner` — `loadBp(owningPartnerId)` (🔵 vmm) 3. `workspaces` — `getWorkspacesByIdsV2(workspaceContext)` or `[]` when context is empty (🟡 workspaceV2) 4. `createdBy` — `userAttributes.getUserByID.load(createdById)` (🔵 user-profile) 5. `updatedBy` — `userAttributes.getUserByID.load(updatedById)` (🔵 user-profile)
 
 *Target:*
@@ -50,19 +128,171 @@ Story,SPARK-IMP-G01,(Impression) Impression field resolvers (5 fields) [SPARK-IM
 *Acceptance Criteria:*
 1. `businessPartners` and `owningBusinessPartner` resolve correctly from `partnerIds` / `owningPartnerId`
 2. `workspaces` returns `[]` when `workspaceContext` is empty; the workspace service is not called
-3. `createdBy` / `updatedBy`: `null` id returns `null` — no exception thrown"
-Story,SPARK-IMP-G02,(Impression) ImpressionCount.counts aggregation [SPARK-IMP-G02],,Federate BreakDown Product,G,M,dgs-migration,impression,field-resolver,,B01,To Do,"*Current Behaviour:*
+3. `createdBy` / `updatedBy`: `null` id returns `null` — no exception thrown
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,IMPRESSION-BE-G-02,(Impression) ImpressionCount.counts aggregation [IMPRESSION-BE-G-02],,Federate BreakDown Product,G,M,dgs-migration,impression,field-resolver,,B-01,,To Do,"*Implementation Order:* 6 of 7 (Impression backend, step 2)
+*Domain:* Impression — *Team:* Backend — *Owner:* BE-1
+*Priority:* Medium — *Parallelizable:* Yes
+
+*Depends On:*
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+
+*Blocks:*
+* None
+
+*Current Behaviour:*
 * 1. Parent is the impressions array from the search result. 2. `parentId = impressions[0].parentId` → `product.getByID.load(parentId)` *(internal same-DGS)* → partner ids from the product. 3. Per-partner count: `impressions.filter(i => i.partnerIds.includes(partnerId)).length` for each partner id. 4. Append `{ bpType: 'totalCount', counts: impressions.length }` as the final row. 5. On **any** error → log and return `[{ bpType: 'totalCount', counts: 0 }]` (no exception thrown).
 
 *Target:*
-* - **Annotation:** `@DgsData counts` on `ImpressionCount` - Product fetched via `productService.getById(parentId)` (in-process, no HTTP). - Computes per-partner rows then appends the `totalCount` row. - Preserves the try/catch fallback: any error → `[{ bpType:'totalCount', counts:0 }]`. - **PO note:** if `ImpressionCountResult` restructure is adopted (see B02), this becomes a fetcher-level computation instead of a child field.
+* - **Annotation:** `@DgsData counts` on `ImpressionCount` - Product fetched via `productService.getById(parentId)` (in-process, no HTTP). - Computes per-partner rows then appends the `totalCount` row. - Preserves the try/catch fallback: any error → `[{ bpType:'totalCount', counts:0 }]`. - **PO note:** if `ImpressionCountResult` restructure is adopted (see B-02), this becomes a fetcher-level computation instead of a child field.
 
 *Acceptance Criteria:*
 1. One row per product partner containing the correct filtered impression count
 2. Final row is always `{ bpType: 'totalCount', counts: <total impressions length> }`
 3. Empty impressions list or missing product → `[{ bpType: 'totalCount', counts: 0 }]` — no exception is propagated
-4. Product is fetched in-process; no HTTP call is made"
-Story,SPARK-IMP-G03,(Impression) Test coverage & parity [SPARK-IMP-G03],,Federate BreakDown Product,G,XS,dgs-migration,impression,field-resolver,,"B01, B02, D01, G02",To Do,"*Acceptance Criteria:*
-1. Unit test coverage ≥ 80% for all impression data fetchers
-2. Parity tests are green for search, counts, and the update mutation
-3. The `counts` error-fallback path is explicitly covered by a unit test"
+4. Product is fetched in-process; no HTTP call is made
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Story,IMPRESSION-BE-G-04,"(Impression) attachment entity reference (recommended, PO-gated) [IMPRESSION-BE-G-04]",,Federate BreakDown Product,G,XS,dgs-migration,impression,field-resolver,,B-01,,Recommended (PO-gated — federation-review/03 §2 REC-2),"*Implementation Order:* 7 of 7 (Impression backend, step 2)
+*Domain:* Impression — *Team:* Backend — *Owner:* BE-1
+*Priority:* Low — *Parallelizable:* Yes
+
+*Depends On:*
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+
+*Blocks:*
+* None
+
+*Target:*
+* schema adds `attachment: Attachment` (declare the `Attachment @extends @key(fields:""id"")` stub); resolver emits `{id: attachmentId}` — the gateway/attachment subgraph hydrates (phase 2; until then the stitched gateway serves it). Optionally pair with `associatedBoms: [Bom]` (internal co-located resolver) if the UI asks — currently deferred (federation-review/03 §3).
+
+*Acceptance Criteria:*
+1. PO approval recorded (OQ-5) before implementation starts
+2. `attachment { id }` resolves as a stub; `attachmentId` unchanged (parity)
+3. Null-safe when `attachmentId` is absent
+
+*Definition of Done:*
+* PR merged on green (unit + parity tests pass)
+* Schema change pushed to Hive; operation(s) resolvable through the federated router
+* Response shape parity with the legacy gateway (no client-visible change)"
+Epic,,Federate BreakDown Product — Frontend,Federate BreakDown Product — Frontend,,,,fed-graphql-fe,frontend,epic,,,,,"Umbrella epic for the pdex-ui-react frontend migration to the federated GraphQL gateway. Holds the frontend stories for the 8 phase-1 domains (Product, Impression, BOM, Measurement, Product Details, Packaging, Watchlist, Claims); platform enablement (flag, codegen, cache remap, fragment sweep, dynamic-gql expansion) is already complete. Every story lists the backend stories it depends on; a frontend story is Done only after its backend dependencies are delivered."
+Story,IMPRESSION-FE-001,[Impression FE] Migrate `getBomDataAndImpressions` (with BOM wave) [IMPRESSION-FE-001],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,BOM-BE-A-04 BOM-BE-B-01 BOM-BE-B-03 BOM-BE-G-01 BOM-BE-G-03 BOM-BE-G-08 BOM-BE-G-12 BOM-BE-G-13 BOM-BE-G-17 BOM-FE-002 IMPRESSION-BE-B-01 IMPRESSION-BE-G-01 PRODUCT-BE-B-01,"user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 8 of 9 (Impression combined — frontend #1, cutover step 4)
+*Domain:* Impression — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* BOM-BE-A-04
+* BOM-BE-B-01
+* BOM-BE-B-03
+* BOM-BE-G-01
+* BOM-BE-G-03
+* BOM-BE-G-08
+* BOM-BE-G-12
+* BOM-BE-G-13
+* BOM-BE-G-17
+* BOM-FE-002
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+* IMPRESSION-BE-G-01 — Impression field resolvers
+* PRODUCT-BE-B-01
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* impression
+* *Depends on:* BOM-BE-A-04, BOM-BE-B-01, BOM-BE-B-03, BOM-BE-G-01, BOM-BE-G-03, BOM-BE-G-08, BOM-BE-G-12, BOM-BE-G-13, BOM-BE-G-17, BOM-FE-002, IMPRESSION-BE-B-01, IMPRESSION-BE-G-01, PRODUCT-BE-B-01
+* *Operations:* {{searchImpressionsByProductId}}, {{getBomByIds}}
+
+* *Business objective:*
+** The combined BOM + impressions view keeps one round trip and identical data.
+* *Technical objective:*
+** Migrate the cross-domain document when both roots are on the router (per [fe-07-network-call-analysis.md §2.1](./fe-07-network-call-analysis.md) — no interim split).
+* *Background / current implementation:*
+** One document selects {{getBomByIds}} and {{searchImpressionsByProductId}}; impression sub-type polymorphism (5 types) needs the regenerated {{possibleTypes}} map (ADR-017 — 🟠 draft).
+* *Required changes:*
+** Re-point after BOM-FE-002 lands; inline-fragment selections verified against federated impression sub-types.
+
+*Acceptance Criteria*
+
+1. Combined view renders identically in one request under the flag.
+2. All 5 impression sub-types resolve correctly in cache.
+
+*Testing*
+
+* Fixtures covering each sub-type; view integration test.
+
+* *Risk:* Low.
+* *Estimated effort:* 2–3 days
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"
+Story,IMPRESSION-FE-002,[Impression FE] Migrate `getCarryForwardFormData` (with Product wave) [IMPRESSION-FE-002],,Federate BreakDown Product — Frontend,FE,S,fed-graphql-fe,impression,query-migration,,BOM-BE-A-04 BOM-BE-B-01 BOM-BE-B-03 BOM-BE-G-01 BOM-BE-G-03 BOM-BE-G-08 BOM-BE-G-12 BOM-BE-G-13 BOM-BE-G-17 IMPRESSION-BE-B-01 IMPRESSION-BE-G-01 PRODUCT-BE-B-01 PRODUCT-BE-G-01 PRODUCT-BE-G-02 PRODUCT-BE-G-03 PRODUCT-BE-G-06 PRODUCT-BE-G-07 PRODUCT-BE-G-08 PRODUCT-BE-G-09 PRODUCT-BE-G-10 PRODUCT-BE-G-13 PRODUCT-BE-S-01 PRODUCT-FE-001,"user-profile, vmm, workspaceV2",To Do,"*Implementation Order:* 9 of 9 (Impression combined — frontend #2, cutover step 5)
+*Domain:* Impression — *Team:* Frontend — *Owner:* FE-2
+*Priority:* Low — *Parallelizable:* No
+
+*Depends On:*
+* BOM-BE-A-04
+* BOM-BE-B-01
+* BOM-BE-B-03
+* BOM-BE-G-01
+* BOM-BE-G-03
+* BOM-BE-G-08
+* BOM-BE-G-12
+* BOM-BE-G-13
+* BOM-BE-G-17
+* IMPRESSION-BE-B-01 — searchImpressionsByProductId data fetcher
+* IMPRESSION-BE-G-01 — Impression field resolvers
+* PRODUCT-BE-B-01
+* PRODUCT-BE-G-01
+* PRODUCT-BE-G-02
+* PRODUCT-BE-G-03
+* PRODUCT-BE-G-06
+* PRODUCT-BE-G-07
+* PRODUCT-BE-G-08
+* PRODUCT-BE-G-09
+* PRODUCT-BE-G-10
+* PRODUCT-BE-G-13
+* PRODUCT-BE-S-01
+* PRODUCT-FE-001
+
+*Blocks:*
+* None
+
+* *Type:* Query migration · *Impact:* Low · *Domain:* impression
+* *Depends on:* BOM-BE-A-04, BOM-BE-B-01, BOM-BE-B-03, BOM-BE-G-01, BOM-BE-G-03, BOM-BE-G-08, BOM-BE-G-12, BOM-BE-G-13, BOM-BE-G-17, IMPRESSION-BE-B-01, IMPRESSION-BE-G-01, PRODUCT-BE-B-01, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-S-01, PRODUCT-FE-001
+* *Operations:* {{searchImpressionsByProductId}}, {{getProduct}}
+
+* *Business objective:*
+** Carry-forward form keeps its combined product + impressions data.
+* *Technical objective:*
+** Migrate the cross-domain document when both roots are on the router.
+* *Required changes:*
+** Re-point after PRODUCT-FE-001; sub-type handling as IMPRESSION-FE-001.
+
+*Acceptance Criteria*
+
+1. Carry-forward form renders identically in one request under the flag.
+
+*Testing*
+
+* Carry-forward flow E2E.
+
+* *Risk:* Low.
+* *Estimated effort:* 1–2 days
+
+---
+
+## Claims
+
+*Definition of Done:*
+* Operations point at the federated router behind the platform flag
+* Dual-run parity clean; flag flip and rollback path verified
+* No UI regression (component tests + smoke suite)"

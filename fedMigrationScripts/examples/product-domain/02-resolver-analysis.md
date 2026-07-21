@@ -4,7 +4,7 @@
 > **Target DGS:** `ProductService` (repo: `plm-product`, url: `https://spark-product.dev.target.com`)
 > **Pipeline Version:** 1.1
 > **Generated:** 2026-05-01
-> **Depends on:** [01-schema-inventory.md](./01-schema-inventory.md)
+> **Depends on:** [be-01-schema-inventory.md](./be-01-schema-inventory.md)
 > **DGS Target Status:** Green-field (no existing DGS schema)
 
 ---
@@ -246,7 +246,7 @@ getProductTechPackCountV1(productId: ID!, partnerId: ID, workspaceContext: Strin
 **Target Service:** `ProductService` (plm-product)
 **EXT Service Calls Found:** 29 total (9 🔴 RED / 12 🟡 YELLOW / 8 🔵 BLUE)
 **Output Files Written:**
-- `output/product/02-resolver-analysis.md`
+- `output/product/be-02-resolver-analysis.md`
 **Next Phase:** Phase 3 — Federation Schema Derivation: `Derive the DGS schema for product — Phase 2 is done.`
 **Open Questions:**
 - Is the `division` loader bug already tracked? Should it be fixed in spark-internal-graphql before migration?

@@ -13,20 +13,22 @@
      **Current Behaviour** (what the gateway does today), **examples + pseudocode**, target DGS
      implementation, files to touch, **Acceptance Criteria**, and tests (High/VH).
 
-2. **Go to source when you implement:** `initial-analysis/{domain}/`
-   - `04-stories.md` — the story specs (source of truth; the comprehensive doc is generated from this).
-   - `02-resolver-analysis.md` — the **per-resolver logic of the current `spark-internal-graphql` gateway**
+2. **Go to source when you implement:** `analysis/{domain}/`
+   - `be-04-stories.md` — the story specs (source of truth; the comprehensive doc is generated from this).
+   - `be-02-resolver-analysis.md` — the **per-resolver logic of the current `spark-internal-graphql` gateway**
      (the `(Qn/Mn)` tag in a story's Current Behaviour points here).
-   - `03-schema.graphql` — the **target federated SDL** you're building toward.
-   - `01-schema-inventory.md` / `05-attribute-inventory.md` — the type/field surface + attribute mapping.
+   - `be-03-schema.graphql` — the **target federated SDL** you're building toward.
+   - `be-01-schema-inventory.md` / `be-05-attribute-inventory.md` — the type/field surface + attribute mapping.
 
 3. **For the hard cross-domain stories:** `output/complexStories/{case}/`
-   - `00-overview.md` (banner: Summary · Spike/ADR · Status · who-reads-what) · `ARCHITECTURE.md`
-     (design) · `01-stories.md` (sub-tasks) · `implementation/` (pseudo-code + SDL per cross-service op).
-   - **8 cases** = the 6 program spikes (+ 2 read patterns). How a spike's ADR becomes these stories:
-     `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`.
+   - `00-overview.md` (banner: Summary · Spike/ADR · Status · who-reads-what) · `01-adr-{case}.md`
+     (draft ADR: today's behavior, options, trade-offs, decision) · `01-stories.md` (sub-tasks, cross-
+     referenced by pin-down — full story text stays in the domain's `be-04-stories.md`).
+   - **9 cases** = the 6 numbered program spikes + `cross-domain-association` (`SPIKE-06`) + `acl`
+     (ADR-019 draft) + one case still in problem-brief stage (`acl` has no `01-stories.md` yet). How a
+     spike's ADR becomes these stories: `fedMigrationScripts/reference/SPIKE-ADR-LIFECYCLE.md`.
 
-4. **Patterns & how-to:** `reference/` (e.g. `reference-federation-patterns.md`, `RUN-NEW-DOMAIN.md`).
+4. **Patterns & how-to:** `reference/` (e.g. `federation-patterns-condensed.md`, `RUN-NEW-DOMAIN.md`).
 
 ---
 
@@ -36,8 +38,8 @@
   Behaviour* is its exact gateway logic today (DataLoader + REST endpoint).
 - **Thin wrapper:** the model, REST controller (GET/POST/PUT) and service already exist — you add only the
   Netflix-DGS layer (`@DgsQuery`/`@DgsMutation`/`@DgsData` + schema type + wiring).
-- **`B01` dependency = the module scaffold** (`{domain}.graphqls` + scalars + service/Feign wiring), landed once.
-  It's assumed, not repeated per row — after `B01`, B/C/D/G are parallel.
+- **`B-01` dependency = the module scaffold** (`{domain}.graphqls` + scalars + service/Feign wiring), landed once.
+  It's assumed, not repeated per row — after `B-01`, B/C/D/G are parallel.
 - **Ship on green:** merge + deploy a story once its own tests + parity pass. Exceptions are the
   cross-subgraph **BLOCKED-BY** field resolvers (wait for the owning subgraph).
 - **Acceptance Criteria + tests** are the definition of done; parity (new DGS output == old gateway output) is
@@ -45,9 +47,9 @@
 
 ## How to read a story row
 ```
-SPARK-BOM-B04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
+BOM-BE-B-04 · getBomByParentId · 🔷 Query · 🟢 Low [XS] · Depends On: — · ⬜ Not Started
 ```
 Phase 🔬0 🧱A 📖B 🔍C ✏️D ⚙️E 🔗F 🧪G · Type 🔷Query 🔶Mutation 🔸Resolver · Size 🟢XS 🟡M 🟠L 🔴XL.
 
-> **Do not edit** the generated `summary/` docs — edit `initial-analysis/{domain}/04-*.md` and regenerate
+> **Do not edit** the generated `summary/` docs — edit `analysis/{domain}/04-*.md` and regenerate
 > (see the Script Runner section in [`README.md`](./README.md)).

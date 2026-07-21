@@ -1,0 +1,55 @@
+import { gql } from '@apollo/client'
+
+const RESORUCE_LINK_MATERIAL_FRAGMENT = gql`
+  fragment ResourceLinkMaterialFragment on SPARK_ServiceMaterial {
+    humanId
+    thumbnailId
+    description
+    baseMaterial {
+      description
+      thumbnailId
+      designThumbnailId
+      __typename
+    }
+    __typename
+  }
+`
+
+export const SEARCH_RESOURCE_LINKS = gql`
+  query searchResourceLinks($targetIds: [String], $sourceIds: [String], $sourceType: String, $filterType: String) {
+    searchResourceLinks(targetIds: $targetIds, sourceIds: $sourceIds, sourceType: $sourceType, filterType: $filterType) {
+      resourceLinks {
+        reason
+        targetMaterial {
+          ...ResourceLinkMaterialFragment
+        }
+        sourceMaterial {
+          ...ResourceLinkMaterialFragment
+        }
+        __typename
+      }
+      __typename
+    }
+  }
+
+  ${RESORUCE_LINK_MATERIAL_FRAGMENT}
+`
+
+export const SEARCH_RESOURCE_LINKS_BY_SOURCE_ID = gql`
+  query searchResourceLinks($targetIds: [String], $sourceIds: [String], $filterType: String) {
+    searchResourceLinks(targetIds: $targetIds, sourceIds: $sourceIds, filterType: $filterType) {
+      materials {
+        humanId
+        id: humanId
+        name
+        thumbnailId
+        baseMaterial {
+          name
+          description
+          thumbnailId
+          designThumbnailId
+        }
+      }
+    }
+  }
+`

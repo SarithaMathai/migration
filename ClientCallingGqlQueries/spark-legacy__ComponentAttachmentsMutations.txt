@@ -1,0 +1,23 @@
+import { gql } from '@apollo/client'
+
+export const PUBLISH_ATTACHMENT_TO_GALLERY = gql`
+  mutation publishAttachmentToGallery($attachmentId: ID!) {
+    publishAttachmentToGallery(attachmentId: $attachmentId)
+  }
+`
+
+export const UNPUBLISH_ATTACHMENT_TO_GALLERY = gql`
+  mutation unpublishAttachmentToGallery($attachmentId: ID!) {
+    unpublishAttachmentToGallery(attachmentId: $attachmentId)
+  }
+`
+
+export const UPDATE_ATTACHMENT_MARK_3D_FINAL = gql`
+  mutation updateAttributes($attachment: SPARK_AttachmentAttributesUpdateInput) {
+    updateAttributes(attachment: $attachment) {
+      documentId
+      humanId
+      finalVirtualFile
+    }
+  }
+`

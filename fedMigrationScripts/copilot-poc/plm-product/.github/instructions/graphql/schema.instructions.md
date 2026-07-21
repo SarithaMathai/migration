@@ -22,6 +22,6 @@ description: "Schema rules for the plm-product federated subgraph (Netflix DGS +
 ## Evolution rules
 
 - Never delete or rename a field a client may still query — mark `@deprecated(reason: "…")` and record the removal in the story.
-- Match the target schema in `output/initial-analysis/{domain}/03-schema.graphql` at https://github.com/XXX; if the implementation must diverge, call it out in the PR description.
+- Match the target schema in `output/analysis/{domain}/be-03-schema.graphql` at https://github.com/XXX; if the implementation must diverge, call it out in the PR description.
 - New scalars must be registered in the scalar config before use.
 - Every schema change ships with its story's data fetcher in the same PR and must pass the Hive composition check before merge.

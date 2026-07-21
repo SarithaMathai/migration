@@ -1,0 +1,243 @@
+# =============================================================================
+# Packaging Domain — Federated Target DGS Schema (translated from source SDL)
+# Pipeline Version: 2.0 · Generated: 2026-06-27
+# DGS Target: Green-field → plm-product subgraph (co-located)
+# Source:    code/schemas/SPARK_Packaging.txt (the real SDL) + code/resolvers/product/SPARK_Packaging.txt (behaviour)
+# Target:    plm-product/apps/app/src/main/resources/schema/packaging.graphqls
+# This is the FEDERATED TARGET schema, translated from the SDL (SPARK_ prefix dropped, @key added).
+# Nullability/return-types from the SDL (verified against the resolver).
+# KEY (program decision 2026-07-17): all entities federate on `id`; the SDL exposes no `id`, so
+# Packaging.id / Dieline.id are SYNTHESIZED from humanId (Measurement pattern) for uniform stitching.
+# Status: 🔜 all need migration.
+# =============================================================================
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@extends", "@external", "@shareable"])
+
+scalar DateTime
+
+# --- Type references ---
+# INTERNAL (same plm-product subgraph; @extends @external is a standalone-compile placeholder):
+type Product @extends @key(fields: "id") { id: ID! @external }
+type ProductComponentStatus @extends @key(fields: "id") { id: ID! @external }
+type SpgFileLibrary @extends @key(fields: "id") { id: ID! @external }            # fileLibrary (co-located)
+# True federation stubs (separate DGS subgraphs + platform):
+type VMM_BusinessPartner @extends @key(fields: "id") { id: ID! @external }
+type Attachment @extends @key(fields: "id") { id: ID! @external }
+type SearchAttachment @extends @key(fields: "id") { id: ID! @external }          # search subgraph
+type WorkspaceV2 @extends @key(fields: "id") { id: ID! @external }
+type UserProfileAttributes @extends @key(fields: "id") { id: ID! @external }
+type UserGroup_Participants @extends @key(fields: "id") { id: ID! @external }
+type AccessControl @extends @key(fields: "id") { id: ID! @external }
+
+# --- Shared value types ---
+type CodeDescription @shareable { code: Int, description: String }
+type Paging @shareable { totalElements: Int, totalPages: Int, number: Int, size: Int }
+type Pageable @shareable { pageNumber: Int, pageSize: Int, offset: Int }
+
+# --- Owned entity: a packaging record ---
+type Packaging @key(fields: "id") {
+  id: ID!                         # @key — synthesized from humanId (SDL has no id; Measurement pattern)
+  humanId: String                 # kept for the client contract; source of the synthesized id
+  placeholderId: String
+  parentId: String
+  description: String
+  promoDescription: String
+  descriptionDisplayText: String
+  wave: String
+  waveDescription: String         # field resolver → tag name fallback
+  retailPrice: Float @deprecated  # resolver returns 0
+  requiresSuggestedRetailPrice: Boolean
+  suggestedRetailPriceByDPCI: [SuggestedRetailPriceByDPCI]   # field resolver → dielines→dpcis→pricing
+  projectType: Int  projectTypeName: String
+  projectItemType: Int  projectItemTypeName: String
+  projectLevel: Int  projectLevelName: String
+  group: Int  groupName: String
+  creativePath: Int  creativePathName: String
+  archived: Boolean
+  dielineEvaluators: [UserProfileAttributes]   # field resolver
+  dielineDueDate: String
+  handoffDueDate: String
+  workspaceIds: [String]
+  photoRequired: Boolean
+  illustrationRequired: Boolean
+  notes: String
+  status: CodeDescription
+  businessPartner: VMM_BusinessPartner          # field resolver
+  selectedComponents: [Int]
+  resolvedSelectedComponents: [CodeDescription]
+  version: Int
+  contactInformation: ContactInformation
+  warningsAndCautions: WarningsAndCautions
+  warningsAndCautionsList: [WarningsAndCautions]
+  copyWriterEditAndApproved: Boolean
+  packagingElements: [PackagingElement]
+  packagingInternalData: PackagingInternalData
+  fulfillmentTypeId: Int  fulfillmentTypeName: String
+  orderCode: String
+  manualLock: Boolean
+  statuses: [ProductComponentStatus]
+  # field resolvers ↓
+  product: Product
+  workspaces: [WorkspaceV2]
+  attachments: [SearchAttachment]
+  participantDetails: UserGroup_Participants
+  access: AccessControl
+  createdBy: UserProfileAttributes
+  updatedBy: UserProfileAttributes
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type PackagingPaged { content: [Packaging], paging: Paging, pageable: Pageable }
+type PackagingPagedForStatus { content: [Packaging] }
+type PackagingBulk { packaging: [Packaging] }
+type PackagingFieldValues { code: Int, description: String, shortDescription: String, resourceType: String @deprecated }
+type Countries { code: String, name: String }
+type SuggestedRetailPriceByDPCI { dpci: String, suggestedRetailPrice: Float }
+
+type ContactInformation { companyName: String, email: String, phone: String, address: String, softproofing: [Softproofing] }
+type Softproofing { name: String, email: String }
+type ShippingDestination {
+  shippingCompanyName: String  shippingContactName: String  shippingEmail: String  streetAddress: String
+  phoneNumber: String  fileDeliveryEmail: String @deprecated
+}
+type WarningsAndCautions {
+  countryOfOrigin: String  countryOfOriginName: String  front: String  back: String  sizing: String
+  netQuantity: String  comparedToCopy: String  additionalMiscCopy: String  copywriterNotes: String
+  reservedDpcis: [DielineReservedDpci]  descriptor: String  warningCaution: String
+}
+type PackagingElement {
+  id: String  selectedComponentId: Int  selectedComponentName: String
+  printers: [PrinterDieline]  packagingLibrary: SpgFileLibrary     # field resolver → fileLibrary (internal)
+}
+type PackagingInternalData { internalNotes: String, attachmentIds: [String] }
+type DielineReservedDpci { dpci: String }
+type Dieline_Round { originDielineId: String, roundNumber: Int, isParent: Boolean }
+type PrintingProcessSubstrate { substrateId: Int, substrateName: String, substrateShortName: String, freeText: String }
+type PrintingProcess {
+  substrate: PrintingProcessSubstrate  substrateColorId: Int  substrateColorName: String
+  printProcessId: Int  printProcessName: String  printOrientationId: Int  printOrientationName: String
+  quotedInkStation: String  iccProfile: String  internalPrintingProcessNotes: String
+}
+
+type PrinterDieline {
+  printerId: String  sizeIds: [String]  dielineContactName: String  dielineEmail: String
+  printerCompanyName: String  printerContactEmail: String  printerPhoneNumber: String  printerCode: String
+  printerAddress: String  printerCountry: String  printerCountryName: String  printerCity: String
+  printerState: String  printerZipcode: String  printerLocationId: Int
+  dielines(statusIdFilter: [String]): [Dieline]      # field resolver → getDielines (own)
+  reservedDpcis: [DielineReservedDpci]
+  printingProcess: PrintingProcess
+  printerSoftproofing: [Softproofing]
+  shippingDestination: ShippingDestination
+  fileDeliveryEmailList: [String]
+  isPrintInformationReviewed: Boolean
+  shippingAddressSameAsPrinterAddress: Boolean
+  attachmentIds: [String]
+}
+
+type Dieline @key(fields: "id") {
+  id: ID!                         # @key — synthesized from humanId (SDL has no id; Measurement pattern)
+  humanId: String                 # kept for the client contract; source of the synthesized id
+  printerId: String  parentId: String
+  reservedDpcis: [DielineReservedDpci]
+  dielineDueDate: String  sizeIds: [String]
+  dielineContactName: String  dielineEmail: String  printerCompanyName: String  printerContactEmail: String
+  printerCode: String  printerAddress: String  printerCountry: String  printerCountryName: String
+  printerCity: String  printerState: String  printerZipcode: String  printerLocationId: Int
+  evalFailedReasons: [PackagingFieldValues]
+  statusId: Int  statusName: String
+  round: Dieline_Round
+  evaluatedBy: UserProfileAttributes     # field resolver
+  evaluatedDate: String  comments: String  version: Int
+  attachmentId: String
+  attachment: Attachment                 # field resolver (🔴 attachment)
+  attachments: [SearchAttachment] @deprecated   # field resolver (🔴 search)
+}
+
+# --- Inputs ---
+input PackagingInput {
+  humanId: String  placeholderId: String  parentId: String!  description: String  promoDescription: String
+  wave: String  projectType: Int  projectItemType: Int  projectLevel: Int  group: Int
+  creativePath: Int @deprecated  retailPrice: Float  requiresSuggestedRetailPrice: Boolean  archived: Boolean
+  dielineEvaluators: [String]  dielineDueDate: String!  handoffDueDate: String  workspaceIds: [String!]
+  statusId: Int!  businessPartner: PackagingPartnerInput!  photoRequired: Boolean  illustrationRequired: Boolean
+  notes: String  selectedComponents: [Int!]  contactInformation: ContactInformationInput
+  warningsAndCautions: WarningsAndCautionsInput  warningsAndCautionsList: [WarningsAndCautionsInput]
+  copyWriterEditAndApproved: Boolean  packagingElements: [PackagingElementInput]
+  packagingInternalData: PackagingInternalDataInput  fulfillmentTypeId: Int  orderCode: String
+  participantDetails: UserGroup_ParticipantsInput  statuses: [WorkspaceStatusPairInput]
+  attachmentsToRemove: [String]  attachmentsToAdd: [PackagingAttachmentInput]
+  claimId: String  claimDetails: [PackagingClaimInput]      # claims pass-through
+}
+input PackagingBulkInput { packaging: [PackagingInput] }
+input PackagingClaimInput { rowId: String, packagingCopy: PackagingClaimCopyInput }
+input PackagingClaimCopyInput { packagingLocation: String, packagingVerbiage: String }
+input PackagingAttachmentInput { documentId: String, relatedResources: [String] }
+input DielineAttachmentCloneRef { resourceId: String!, businessPartner: ProductPartnerInput!, context: String, relatedResources: [String] }
+input PackagingPartnerInput { partnerId: ID, partnerType: Int, systemTeamId: String }
+input ProductPartnerInput { partnerId: ID!, partnerType: Int }
+input ContactInformationInput { companyName: String, email: String, phone: String, address: String, softproofing: [SoftproofingInput] }
+input SoftproofingInput { name: String, email: String }
+input ShippingDestinationInput {
+  shippingCompanyName: String  shippingContactName: String  shippingEmail: String  streetAddress: String
+  phoneNumber: String  fileDeliveryEmail: String @deprecated
+}
+input WarningsAndCautionsInput {
+  countryOfOrigin: String  front: String  back: String  sizing: String  netQuantity: String
+  comparedToCopy: String  additionalMiscCopy: String  copywriterNotes: String
+  reservedDpcis: [DielineReservedDpciInput]  descriptor: String  warningCaution: String
+}
+input PackagingElementInput { id: String, selectedComponentId: Int, printers: [PrinterDielineInput], packagingLibrary: PackagingLibraryInput }
+input PackagingLibraryInput { id: String! }
+input PrinterDielineInput {
+  printerId: String  sizeIds: [String]  dielineContactName: String  dielineEmail: String
+  printerCompanyName: String  printerContactEmail: String  printerPhoneNumber: String  printerCode: String
+  printerAddress: String  printerCountry: String  printerCity: String  printerState: String
+  printerZipcode: String  printerLocationId: Int  reservedDpcis: [DielineReservedDpciInput]
+  dielines: [DielineInput]  printingProcess: PrintingProcessInput  printerSoftproofing: [SoftproofingInput]
+  shippingDestination: ShippingDestinationInput  fileDeliveryEmailList: [String]
+  isPrintInformationReviewed: Boolean  shippingAddressSameAsPrinterAddress: Boolean  attachmentIds: [String]
+}
+input DielineReservedDpciInput { dpci: String }
+input DielineInput { humanId: String, newDieline: Boolean, statusId: Int, deleteDieline: Boolean, reservedDpcis: [DielineReservedDpciInput], attachmentId: String }
+input DielineEvaluationInput { dielineDueDate: String, statusId: Int!, evalFailedReasonIds: [Int], comments: String, workspaceIds: [String]! }
+input PrintingProcessInput {
+  substrate: PrintingProcessSubstrateInput  substrateColorId: Int  printProcessId: Int
+  printOrientationId: Int  quotedInkStation: String  iccProfile: String  internalPrintingProcessNotes: String
+}
+input PackagingInternalDataInput { internalNotes: String, attachmentIds: [String] }
+input PrintingProcessSubstrateInput { substrateId: Int, freeText: String }
+input ComponentStatusInput { workspaceId: String!, type: String, statusId: Int }   # matches SDL SPARK_ComponentStatusInput
+input WorkspaceStatusPairInput { workspaceId: ID, statusId: Int }
+input UserGroup_ParticipantsInput { _placeholder: String }
+
+# --- Queries (names + nullability preserved from the SDL) ---
+extend type Query {
+  getPackagings(page: Int = 0, size: Int = 10000, packagingIds: [String], parentIds: [String], workspaceIds: [String], partnerIds: [String], statusIds: [Int]): PackagingPaged   # 🔜 B-01
+  getPackagingById(packagingId: String!): Packaging                                                          # 🔜 B-02
+  getDielines(page: Int = 0, size: Int = 10000, packagingIds: [String], parentIds: [String], printerIds: [String], statusIds: [Int]): [Dieline]   # 🔜 B-03
+  getPackagingFieldValuesByType(type: String!, ids: [Int]): [PackagingFieldValues]                           # 🔜 B-04
+  getDielineEvaluationStatuses: [CodeDescription]                                                            # 🔜 B-05 (cacheable)
+  getCountries(codes: [String]): [Countries]                                                                 # 🔜 B-06 (cacheable)
+  getPackagingElastic(parentHumanId: String): [Packaging]                                                    # 🔜 C-01 (🔴 search)
+}
+
+# --- Mutations (names + nullability preserved from the SDL) ---
+extend type Mutation {
+  addPackaging(sparkPackaging: PackagingInput): Packaging                                                    # 🔜 D-01 (throws on validationErrors)
+  evaluateDieline(dielineId: String!, dielineEvaluation: DielineEvaluationInput): Dieline                    # 🔜 D-02
+  bulkAddPackagings(bulkPackagingInput: PackagingBulkInput!): PackagingBulk                                  # 🔜 D-03 (throws)
+  bulkUpdatePackagings(bulkPackagingInput: PackagingBulkInput!): PackagingBulk                               # 🔜 D-04 (throws)
+  exportPackaging(workspaceId: String!, workspaceDescription: String!, ids: [String]): String               # 🔜 D-05
+  lockPackaging(packagingId: String!): Packaging                                                             # 🔜 D-06
+  unlockPackaging(packagingId: String!): Packaging                                                           # 🔜 D-07
+  cloneFilesForDielines(attachmentIds: [String!], cloneReferences: [DielineAttachmentCloneRef!]): [Attachment]  # 🔜 D-08 (🔴 attachment)
+  updatePackagingComponentStatus(productId: String!, ids: [String]!, status: ComponentStatusInput): PackagingPagedForStatus  # 🔜 D-09 (no JWT — confirm)
+  updatePackaging(packagingId: String!, sparkPackaging: PackagingInput): Packaging                           # 🔜 E-01 (multi-step, non-atomic)
+}
+
+# --- Federation: Packaging contributes to Product (Phase F — INTERNAL, same subgraph) ---
+# Product.components(...) / packaging links resolve in-process (co-located); no gateway hop.
+# See reference-federation-patterns.md §0.

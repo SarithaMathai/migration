@@ -30,12 +30,12 @@ You name a domain (e.g., `bom`, `product`, `measurement`). The framework reads t
 
 | Artifact | File | Audience |
 |---------|------|---------|
-| Schema inventory | `01-schema-inventory.md` | Tech Lead |
-| Resolver pseudo-logic | `02-resolver-analysis.md` | Backend Engineers |
-| Target DGS schema | `03-schema.graphql` | Architects |
-| Schema gap analysis | `03-schema-analysis.md` | Architects |
-| Engineering stories | `04-stories.md` | Engineering Team |
-| PO sprint plan | `04-po-summary.md` | Product Owner |
+| Schema inventory | `be-01-schema-inventory.md` | Tech Lead |
+| Resolver pseudo-logic | `be-02-resolver-analysis.md` | Backend Engineers |
+| Target DGS schema | `be-03-schema.graphql` | Architects |
+| Schema gap analysis | `be-03-schema-analysis.md` | Architects |
+| Engineering stories | `be-04-stories.md` | Engineering Team |
+| PO sprint plan | `be-04-po-summary.md` | Product Owner |
 
 **What you do NOT need:**
 - The target DGS repository (e.g., `plm-product`, `plm-bom`)
@@ -58,8 +58,8 @@ Setup           Inventory            Analysis             Schema            Stor
 (~1 min)        (~3–5 min)           (~15–60 min)         Derivation        (~10 min)
                                                           (~5 min)
 
-No output.      01-schema-           02-resolver-          03-schema.        04-stories.md
-Confirms        inventory.md         analysis.md           graphql           04-po-summary.md
+No output.      01-schema-           02-resolver-          03-schema.        be-04-stories.md
+Confirms        inventory.md         analysis.md           graphql           be-04-po-summary.md
 paths and                                                  03-schema-
 loader key.                                                analysis.md
 ```
@@ -75,7 +75,7 @@ Confirms the domain name maps to a valid loader key, locates the source files, c
 Reads `context.js`, schema files, resolver files, service files, and all referenced utility files. Produces a complete manifest with file paths, line counts, cross-domain references, import dependency graph, and co-located domain siblings.
 
 **Skills used:** `graphql-schema-inventory`
-**Output:** `01-schema-inventory.md`
+**Output:** `be-01-schema-inventory.md`
 **Time:** ~3–5 minutes
 
 **Use when:**
@@ -88,7 +88,7 @@ Reads `context.js`, schema files, resolver files, service files, and all referen
 Reads every resolver, service method, and utility function and produces plain-English pseudo-logic that engineers can implement from — without reading JavaScript. Tags every cross-domain HTTP call with severity (🔴 RED / 🟡 YELLOW / 🔵 BLUE). Rates every operation by complexity.
 
 **Skills used:** `resolver-dependency-analysis`
-**Output:** `02-resolver-analysis.md`
+**Output:** `be-02-resolver-analysis.md`
 **Time:** ~15 min (small domain) to ~60 min (product domain, 2600+ lines)
 
 **Two modes:**
@@ -105,7 +105,7 @@ Reads every resolver, service method, and utility function and produces plain-En
 Derives the target DGS GraphQL schema. Classifies every type (Owned / Extended / External stub / Gateway-only / Shared / Input / Enum). Defines `@key` federation directives for owned entities. Produces a gap analysis.
 
 **Skills used:** `federation-schema-derivation`, `federation-candidate-detection`
-**Output:** `03-schema.graphql` + `03-schema-analysis.md`
+**Output:** `be-03-schema.graphql` + `be-03-schema-analysis.md`
 **Time:** ~5 minutes
 
 **Green-field mode** (default): No existing DGS repo needed. All types and operations marked 🔜. If you later provide DGS files, Phase 3 can be re-run with the existing schema for a real gap analysis.
@@ -120,7 +120,7 @@ Derives the target DGS GraphQL schema. Classifies every type (Owned / Extended /
 Breaks the migration into Jira-ready stories grouped by functional phase (A–Z). Each story embeds the Phase 2 pseudo-logic as the implementation spec, along with acceptance criteria, files to create, test cases, and dependency chain. Also produces a PO-facing sprint planning summary.
 
 **Skills used:** `migration-story-generation`, `stitching-pattern-analysis`
-**Output:** `04-stories.md` + `04-po-summary.md`
+**Output:** `be-04-stories.md` + `be-04-po-summary.md`
 **Time:** ~10 minutes
 
 **Cannot run without:** Phases 1, 2, and 3 complete. Stories embed pseudo-logic from Phase 2. Schema is referenced from Phase 3.
@@ -203,22 +203,22 @@ Produces all 6 artifacts in `output/bom/`. Takes 15–60 minutes depending on do
 ```
 Run the schema inventory for the bom domain.
 ```
-Review `output/bom/01-schema-inventory.md` with the team.
+Review `output/bom/be-01-schema-inventory.md` with the team.
 
 ```
 Run the resolver analysis for bom — Phase 1 is already done.
 ```
-Review `output/bom/02-resolver-analysis.md`. Discuss complexity and EXT dependencies.
+Review `output/bom/be-02-resolver-analysis.md`. Discuss complexity and EXT dependencies.
 
 ```
 Derive the DGS schema for bom — Phases 1 and 2 are done.
 ```
-Review `output/bom/03-schema.graphql` and `03-schema-analysis.md` with architects.
+Review `output/bom/be-03-schema.graphql` and `be-03-schema-analysis.md` with architects.
 
 ```
 Generate migration stories for bom — Phases 1, 2, and 3 are done.
 ```
-Produces `04-stories.md` and `04-po-summary.md`.
+Produces `be-04-stories.md` and `be-04-po-summary.md`.
 
 ---
 
@@ -256,14 +256,14 @@ The BOM analysis is complete — all 6 output files are in output/bom/. Give me 
 
 **Audit existing output:**
 ```
-Audit output/product/04-stories.md — check it against the story format and report any gaps.
+Audit output/product/be-04-stories.md — check it against the story format and report any gaps.
 ```
 
 ---
 
 ## 6. Understanding Each Output Artifact
 
-### `01-schema-inventory.md` — Schema Inventory
+### `be-01-schema-inventory.md` — Schema Inventory
 
 The entry point for every domain investigation. Contains:
 
@@ -282,7 +282,7 @@ The entry point for every domain investigation. Contains:
 
 ---
 
-### `02-resolver-analysis.md` — Resolver Dependency Analysis
+### `be-02-resolver-analysis.md` — Resolver Dependency Analysis
 
 The most detailed artifact. Contains:
 
@@ -304,7 +304,7 @@ The most detailed artifact. Contains:
 
 ---
 
-### `03-schema.graphql` — DGS Target Schema
+### `be-03-schema.graphql` — DGS Target Schema
 
 The actual GraphQL schema file ready to drop into the DGS service's `resources/schema/` folder.
 
@@ -321,7 +321,7 @@ The actual GraphQL schema file ready to drop into the DGS service's `resources/s
 
 ---
 
-### `03-schema-analysis.md` — Schema Gap Analysis
+### `be-03-schema-analysis.md` — Schema Gap Analysis
 
 Analytical companion to the schema file. Contains:
 
@@ -337,7 +337,7 @@ For green-field migrations: always `0 ✅ | {n} 🔜 | {n} ⏭`
 
 ---
 
-### `04-stories.md` — Engineering Migration Stories
+### `be-04-stories.md` — Engineering Migration Stories
 
 Jira-ready stories grouped by functional phase. Each story contains:
 
@@ -360,7 +360,7 @@ Functional phases: **A** (Schema) → **B** (Core Reads) → **C** (Mutations) �
 
 ---
 
-### `04-po-summary.md` — PO Sprint Planning Summary
+### `be-04-po-summary.md` — PO Sprint Planning Summary
 
 Plain-English, no pseudo-logic. Contains:
 

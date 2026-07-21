@@ -1,0 +1,393 @@
+import { gql } from '@apollo/client'
+import { LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT, LEGACY_PRODUCT_TEAMS_FOR_COMPONENT_DISCUSSION_FRAGMENT } from '@spark/product-queries'
+
+export const SPECIFICATION_TEMPLATE_FRAGMENT = gql`
+  fragment specificationTemplateFragment on SPARK_SpecificationTemplates {
+    category {
+      code
+      description
+    }
+    status {
+      code
+      description
+    }
+    createdAt
+    createdBy {
+      id
+      firstName
+      lastName
+      internal: isInternal
+      companyName
+      partnerId
+      defaultPartnerTypeDetails {
+        code
+        description
+      }
+    }
+    critical
+    detail
+    humanId
+    subCategory {
+      code
+      description
+    }
+    specialInstructions
+    updatedAt
+    updatedBy {
+      id
+      firstName
+      lastName
+      internal: isInternal
+      companyName
+      partnerId
+      defaultPartnerTypeDetails {
+        code
+        description
+      }
+    }
+    version
+    attachment {
+      documentId
+      humanId
+      documentName
+      documentSize
+      previewable
+      attachmentId
+    }
+  }
+`
+
+export const GET_SPECIFICATIONS_MASTER_DATA = gql`
+  query getProductDetailsCategorySection {
+    getProductDetailsCategorySection {
+      code
+      description
+      subCategories {
+        code
+        description
+      }
+    }
+    getProductDetailsStatus {
+      code
+      description
+    }
+  }
+`
+
+export const GET_SPECIFICATIONS = gql`
+  ${SPECIFICATION_TEMPLATE_FRAGMENT}
+  query getSpecificationTemplates($page: Int!, $size: Int!) {
+    getSpecificationTemplates(page: $page, size: $size) {
+      content {
+        ...specificationTemplateFragment
+      }
+      paging {
+        totalPages
+        totalElements
+        first
+        numberOfElements
+        page
+        size
+        number
+        last
+      }
+    }
+  }
+`
+
+export const CREATE_SPECIFICATIONS = gql`
+  mutation createSpecificationTemplate($templateData: SPARK_SpecificationTemplateInput) {
+    createSpecificationTemplate(templateData: $templateData) {
+      humanId
+    }
+  }
+`
+
+export const GET_SPECIFICATION_BY_ID = gql`
+  ${SPECIFICATION_TEMPLATE_FRAGMENT}
+  query getSpecificationTemplateById($id: ID!) {
+    getSpecificationTemplateById(id: $id) {
+      ...specificationTemplateFragment
+    }
+  }
+`
+
+export const UPDATE_SPECIFICATIONS = gql`
+  mutation updateSpecificationTemplate($templateData: SPARK_SpecificationTemplateInput) {
+    updateSpecificationTemplate(templateData: $templateData) {
+      humanId
+    }
+  }
+`
+
+export const GET_MASTER_DATA_AND_SPECIFICATION_TEMP_BY_ID = gql`
+  ${SPECIFICATION_TEMPLATE_FRAGMENT}
+  query getMasterDataAndSpecificationById($id: ID!) {
+    getProductDetailsCategorySection {
+      code
+      description
+      subCategories {
+        code
+        description
+      }
+    }
+    getProductDetailsStatus {
+      code
+      description
+    }
+    getSpecificationTemplateById(id: $id) {
+      ...specificationTemplateFragment
+    }
+  }
+`
+
+export const CREATE_PRODUCT_DETAILS_SET = gql`
+  mutation createProductDetailsSet($productDetails: productDetailSetInput) {
+    createProductDetailsSet(productDetails: $productDetails) {
+      humanId
+      version
+    }
+  }
+`
+
+export const PRODUCT_DETAILS_TEMPLATE_SEARCH_SUGGESTION = gql`
+  query getProductDetailsTemplateSuggestions($q: String, $size: Int) {
+    getProductDetailsTemplateSuggestions(q: $q, size: $size) {
+      suggestion
+    }
+  }
+`
+
+export const PRODUCT_DETAILS_TEMPLATE_SEARCH = gql`
+  ${SPECIFICATION_TEMPLATE_FRAGMENT}
+  query searchProductDetailsTemplates($q: String, $size: Int = 20, $page: Int = 0) {
+    searchProductDetailsTemplates(q: $q, size: $size, page: $page) {
+      content {
+        ...specificationTemplateFragment
+      }
+      paging {
+        totalPages
+        totalElements
+        first
+        numberOfElements
+        page
+        size
+        number
+        last
+      }
+    }
+  }
+`
+
+export const PRODUCT_DETAILS_DATA_FRAGMENT = gql`
+  fragment ProductDetailsDataFragment on SPARK_ProductDetails {
+    access {
+      permissions {
+        abstractAccessGroup {
+          id
+          grantees
+          type
+        }
+      }
+    }
+    currentUserPermissions {
+      permissions
+    }
+    humanId
+    version
+    status {
+      code
+      description
+    }
+    participantDetails {
+      ...LegacyComponentDiscussionParticipantsFragment
+    }
+    product {
+      id
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+      }
+      droppedPartnerIds
+      description
+      teams {
+        ...LegacyProductTeamsForComponentDiscussionFragment
+      }
+    }
+    manualLock
+    notes
+    name
+    parentId
+    rows {
+      templateId
+      section
+      criticalFromLibrary
+      category {
+        code
+        description
+        subCategories {
+          code
+          description
+        }
+      }
+      subCategory {
+        code
+        description
+      }
+      detail
+      critical
+      specialInstructions
+      attachment {
+        documentId
+        humanId
+        documentName
+        documentSize
+        previewable
+        attachmentId
+        mediaType
+        id: documentId
+      }
+      constructionSetAttachments {
+        documentId
+        humanId
+        documentName
+        documentSize
+        previewable
+        attachmentId
+        mediaType
+      }
+      id
+    }
+
+    workspaces {
+      id
+      description
+    }
+    businessPartners {
+      id
+      name
+      associatedPartnerType
+    }
+
+    createdBy {
+      id
+      firstName
+      lastName
+      internal: isInternal
+      companyName
+      partnerId
+      defaultPartnerTypeDetails {
+        code
+        description
+      }
+    }
+    updatedBy {
+      id
+      firstName
+      lastName
+      internal: isInternal
+      companyName
+      partnerId
+      defaultPartnerTypeDetails {
+        code
+        description
+      }
+    }
+    createdAt
+    updatedAt
+    archived
+    relatedResources
+    currentUserPermissions {
+      permissions
+      resourceId
+    }
+    attachment {
+      documentId
+      humanId
+      documentName
+      documentSize
+      previewable
+      attachmentId
+      mediaType
+      id
+    }
+  }
+  ${LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT}
+  ${LEGACY_PRODUCT_TEAMS_FOR_COMPONENT_DISCUSSION_FRAGMENT}
+`
+
+export const GET_PRODUCT_DETAILS_SET_BY_IDS = gql`
+  query getProductDetailsById($ids: [String]) {
+    getProductDetailsById(ids: $ids) {
+      ...ProductDetailsDataFragment
+    }
+  }
+  ${PRODUCT_DETAILS_DATA_FRAGMENT}
+`
+
+export const GET_PRODUCT_DETAILS_VERSION = gql`
+  query getComponentVersion($id: String!, $version: Int!) {
+    getComponentVersion(id: $id, version: $version) {
+      ... on SPARK_ProductDetails {
+        ...ProductDetailsDataFragment
+      }
+    }
+  }
+  ${PRODUCT_DETAILS_DATA_FRAGMENT}
+`
+
+export const PRODUCT_DETAILS_LOCK_UNLOCK = gql`
+  mutation productDetailLockUnlock($constructionSetId: ID!, $isLock: Boolean) {
+    productDetailLockUnlock(constructionSetId: $constructionSetId, isLock: $isLock) {
+      humanId
+      version
+    }
+  }
+`
+export const UPDATE_PRODUCT_DETAILS_SET = gql`
+  mutation updateProductDetailsSet($productDetailsId: ID!, $productDetails: productDetailSetUpdateInput) {
+    updateProductDetailsSet(productDetailsId: $productDetailsId, productDetails: $productDetails) {
+      humanId
+      version
+    }
+  }
+`
+
+export const CREATE_CATEGORY_SECTION = gql`
+  mutation createCategorySection($categorySectionInput: [SPARK_CategorySectionInput]) {
+    createCategoryAndSection(categorySectionInput: $categorySectionInput) {
+      category {
+        code
+        description
+        subCategories {
+          code
+          description
+        }
+      }
+    }
+  }
+`
+
+export const CLONE_PDTL_ATTACHMENTS = gql`
+  mutation cloneFilesForProductDetails($attachmentIds: [String!], $cloneReference: [PDTLAttachmentCloneRef]) {
+    cloneFilesForProductDetails(attachmentIds: $attachmentIds, cloneReference: $cloneReference) {
+      humanId
+      parentResource
+    }
+  }
+`
+
+export const UPDATE_PRODUCT_DETAIL_COMPONENT_STATUS = gql`
+  mutation updateProductDetailComponentStatus($productId: String!, $ids: [String]!, $status: SPARK_ComponentStatusInput) {
+    updateProductDetailComponentStatus(productId: $productId, ids: $ids, status: $status) {
+      content {
+        humanId
+      }
+    }
+  }
+`

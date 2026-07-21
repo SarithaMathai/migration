@@ -1,0 +1,546 @@
+import { gql } from '@apollo/client'
+import { COMBINATION_DETAILS_FRAGMENT, FABRIC_SPEC_COMBO_DETAILS_FRAGMENT } from '@spark/combination-graphql'
+import { SAMPLE_DETAILS_FRAGMENT } from '@spark/samples'
+import { SLIM_FABRIC_SPECIFICATION_DETAILS_FRAGMENT } from '@spark/fabric-graphql'
+
+export const GET_SAMPLE_BULK_EVAL_FORM_DATA = gql`
+  query getWorkspaceV2($page: Int, $size: Int, $id: ID!, $q: String, $filter: [String]) {
+    getProductSampleEvaluationTypesV2 {
+      code
+      description
+    }
+    getSampleFormats {
+      code
+      description
+      dueDate
+    }
+    getSampleEvaluationPurposes {
+      code
+      description
+    }
+    getWorkspaceV2(id: $id) {
+      id
+      products(page: $page, size: $size, q: $q, filter: $filter) {
+        paging {
+          totalElements
+          totalPages
+        }
+        content {
+          id
+          description
+          editable
+          thumbnailId
+          attachmentSummary {
+            isThumbnailPreviewable
+            totalAttachmentCount
+          }
+          businessPartners {
+            id
+            name
+            associatedPartnerType
+          }
+          droppedPartners {
+            id
+            name
+            associatedPartnerType
+          }
+          droppedPartnerIds
+          samples {
+            id
+            primaryThumbnailId
+            description
+            sampleType {
+              code
+              description
+            }
+            sampleFormat {
+              code
+              description
+            }
+            sampleEvaluationPurposes {
+              code
+              description
+            }
+            designEvaluators {
+              userProfileId
+              firstName
+              lastName
+            }
+            technicalEvaluators {
+              userProfileId
+              firstName
+              lastName
+            }
+            evaluationStatus {
+              description
+              code
+            }
+            businessPartner {
+              id
+              name
+              associatedPartnerType
+            }
+            sampleRound {
+              parent
+              roundNumber
+            }
+          }
+          teams {
+            content {
+              id
+              name
+              partnerId: partner_id
+              partnerName: partner_name
+              members {
+                userProfileId: user_profile_id
+                roles
+                memberDetails {
+                  id
+                  firstName
+                  lastName
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const BULK_EVALUATE_SAMPLES = gql`
+  mutation bulkEvaluateSamples($updateSamples: [SPARK_SampleUpdateSampleEvaluationInput!], $newSampleRounds: [SPARK_BulkSampleRound]) {
+    bulkEvaluateSamples(updateSamples: $updateSamples, newSampleRounds: $newSampleRounds) {
+      id
+    }
+  }
+`
+
+export const CLONE_SAMPLE_ATTACHMENTS = gql`
+  mutation bulkCloneFilesForEvaluate($attachmentIds: [String!], $cloneReferences: [SampleAttachmentCloneRef]) {
+    bulkCloneFilesForEvaluate(attachmentIds: $attachmentIds, cloneReferences: $cloneReferences) {
+      id
+      parentResource
+    }
+  }
+`
+
+export const GET_WORKSPACE_PRODUCTS = gql`
+  query getWorkspaceV2($page: Int, $size: Int, $id: ID!, $q: String, $filter: [String], $workspaceIdFilter: String) {
+    getWorkspaceV2(id: $id) {
+      id
+      products(page: $page, size: $size, q: $q, filter: $filter) {
+        content {
+          id
+          editable
+          brand {
+            id
+            name
+          }
+          packagingAttributes {
+            formatId
+            formatName
+            spgLibraryId
+            spgStatus {
+              code
+              description
+            }
+            spg {
+              humanId
+              name
+              description
+              packagingFormat {
+                code
+                description
+              }
+            }
+          }
+          department {
+            id
+            name
+            divisionName
+            divisionId
+          }
+          departments {
+            id
+            department {
+              id
+              name
+              displayText
+            }
+            division {
+              id
+              name
+              displayText
+            }
+            clazzes {
+              id
+              displayText
+            }
+            primaryCapacityTypeId
+            secondaryCapacityTypeId
+          }
+          clazz {
+            id
+            name
+          }
+          createdAt
+          status(workspaceIdFilter: $workspaceIdFilter) {
+            id
+            name
+          }
+          tags {
+            id
+            name
+            type
+          }
+          description
+          thumbnailId
+          primaryMaterial
+          secondaryMaterial
+          comments
+          vendorStyleNumber
+          businessPartners {
+            associatedPartnerType
+            name
+            id
+          }
+          samples {
+            id
+            rfidTagIds
+            createdAt
+            createdBy {
+              id
+            }
+            primaryThumbnailId
+            discussionParticipants {
+              teams {
+                name: teamName
+                businessPartner {
+                  id
+                  companyName: name
+                }
+                id: teamId
+                edited
+                members: users {
+                  userId
+                  memberDetails: userDetails {
+                    id
+                    userProfileId
+                    firstName
+                    lastName
+                    internal: isInternal
+                    companyName
+                    partnerId
+                    outOfOfficeAttributes {
+                      userOutOfOffice
+                    }
+                  }
+                }
+              }
+              users {
+                userDetails {
+                  id
+                  userProfileId
+                  firstName
+                  lastName
+                  companyName
+                  outOfOfficeAttributes {
+                    userOutOfOffice
+                  }
+                }
+              }
+            }
+            businessPartner {
+              id
+              name
+            }
+            sampleRound {
+              roundNumber
+              parent
+            }
+            sampleType {
+              code
+              description
+            }
+            sampleFormat {
+              code
+              description
+            }
+            sampleEvaluationPurposes {
+              code
+              description
+            }
+            designEvaluators {
+              userProfileId
+              firstName
+              lastName
+            }
+            technicalEvaluators {
+              userProfileId
+              firstName
+              lastName
+            }
+            description
+            notes
+            address
+            dueDate
+            quantity
+            createdAt
+            deliverTo
+            evaluationStatus {
+              code
+            }
+            tracking {
+              number
+              etaDate
+              receivedDate
+              status {
+                code
+                description
+              }
+              lateReason {
+                code
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const SAMPLE_BULK_UPDATE = gql`
+  mutation updateSamplesV2($samples: SPARK_UpdateSamplesInputV2!) {
+    updateSamplesV2(samples: $samples) {
+      id
+    }
+  }
+`
+
+export const GET_PRODUCT_SAMPLE_CONSTANTS = gql`
+  query getProductSampleConstants {
+    getSampleTrackingTypesV2 {
+      code
+      description
+    }
+    getSampleLateReasonTypesV2 {
+      code
+      description
+    }
+    getSampleProductTypesV2 {
+      code
+      description
+      disabled
+    }
+    getSampleMaterialTypesV2 {
+      code
+      description
+    }
+    getSampleFormats {
+      code
+      description
+      dueDate
+    }
+    getSampleEvaluationPurposes {
+      code
+      description
+    }
+    getSampleTypeFormatMappings {
+      sampleType
+      sampleFormat
+    }
+    getUserSettings {
+      userDefaults {
+        category
+        defaultOption {
+          sampleTypeId
+          sampleFormatId
+          sampleEvaluationPurposeIds
+        }
+      }
+    }
+  }
+`
+
+export const GET_WORKSPACE_COMBINATIONS = (isInternalUser: boolean) => gql`
+  query getWorkspaceV2($page: Int, $size: Int, $id: ID!, $q: String, $filter: [String]) {
+    getWorkspaceV2(id: $id) {
+      id
+      combinations(page: $page, size: $size, q: $q, filter: $filter) {
+        content {
+          ...CombinationDetailsFragment
+          fabricSpecCombos {
+            content {
+              ...FabricSpecComboDetailsFragment
+              samples {
+                content {
+                  ...SampleDetailsFragment
+                }
+              }
+            }
+            paging {
+              totalPages
+              totalElements
+            }
+          }
+        }
+      }
+    }
+  }
+  ${COMBINATION_DETAILS_FRAGMENT(isInternalUser)}
+  ${FABRIC_SPEC_COMBO_DETAILS_FRAGMENT(isInternalUser)}
+  ${SAMPLE_DETAILS_FRAGMENT}
+`
+
+export const GET_WORKSPACE_COMBINATIONS_SAMPLES = (isFabricSupplier) => gql`
+  query getWorkspaceV2(
+    $page: Int
+    $size: Int
+    $id: ID!
+    $q: String
+    $filter: [String]
+    $comboSamplesQuery: String
+    $comboSamplesPage: Int
+    $comboSamplesSize: Int
+  ) {
+    getWorkspaceV2(id: $id) {
+      id
+      combinations(page: $page, size: $size, q: $q, filter: $filter) {
+        paging {
+          totalPages
+          totalElements
+        }
+        content {    
+          businessPartners {
+            associatedPartnerType
+            name
+            id
+          }
+          fabricSpecCombos {
+            content {
+              humanId: id
+              parentComboId
+              fabricSpecId
+              status
+              sentToFpf
+              fabricSpec {
+                ...SlimFabricSpecificationDetailsFragment
+              }
+              intentLineIds
+              merchVendorTeams: ${!isFabricSupplier ? 'merchVendorTeams' : 'proxyMerchVendorTeams'} {
+                id
+                teamName
+                members {
+                  userProfileId
+                }
+                businessPartner {
+                  partnerId
+                  partnerName
+                }
+              }
+              createdAt
+              updatedAt
+              samples(page: $comboSamplesPage, size: $comboSamplesSize, query: $comboSamplesQuery) {
+                content{
+                  ...SampleDetailsFragment
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ${SLIM_FABRIC_SPECIFICATION_DETAILS_FRAGMENT}
+  ${SAMPLE_DETAILS_FRAGMENT}
+`
+
+export const GET_WORKSPACE_PRODUCTS_SAMPLES = gql`
+  query getWorkspaceV2($page: Int, $size: Int, $id: ID!, $q: String, $filter: [String], $workspaceIdFilter: String) {
+    getWorkspaceV2(id: $id) {
+      id
+      products(page: $page, size: $size, q: $q, filter: $filter) {
+        paging {
+          totalElements
+          totalPages
+        }
+        content {
+          id
+          vendorStyleNumber
+          status(workspaceIdFilter: $workspaceIdFilter) {
+            id
+            name
+          }
+          comments
+          tags {
+            id
+            name
+            type
+          }
+          clazz {
+            id
+            name
+          }
+          department {
+            id
+            name
+            divisionName
+            divisionId
+          }
+          brand {
+            id
+            name
+          }
+          description
+          sampleIds
+          developmentCost
+          editable
+          primaryMaterial
+          secondaryMaterial
+          thumbnailId
+          droppedPartnerIds
+          samples {
+            id
+            sampleType {
+              code
+              description
+            }
+            description
+            primaryThumbnailId
+            tracking {
+              status {
+                description
+                code
+              }
+              number
+              etaDate
+              receivedDate
+              lateReason {
+                code
+                description
+              }
+              lateReasonText
+            }
+            description
+            notes
+            dueDate
+            evaluationStatus {
+              description
+              code
+            }
+            businessPartner {
+              id
+              name
+            }
+            address
+            deliverTo
+            sampleRound {
+              roundNumber
+            }
+          }
+        }
+      }
+    }
+  }
+`

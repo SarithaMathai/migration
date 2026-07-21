@@ -1,0 +1,24 @@
+Do the complex-story ADR exercise for output/complexStories/<CASE>/ following the pattern of the
+existing 01-adr-*.md drafts (ADR-011..014):
+
+1. Read 00-overview.md for scope, spike id, and gated stories; check output/initial-analysis/<domain>/
+   04-stories.md for the stub stories' text.
+2. Deep-dive every named resolver/util in code/ (if a file is missing from this snapshot, fall back to
+   C:\Saritha\jun30\migration\code\). Verify loader→endpoint in code/services/. Document each function
+   as numbered steps with endpoints inline, one **Failure:**/**Gap:** line each, and flag defects with 🐞
+   (unchecked responses, unawaited calls, cross-resolver imports, N+1s, variableValues coupling).
+3. Build an interaction grid: functions × domain services, with subgraph homes from
+   fedMigrationScripts/reference/domain-service-catalog.md, order markers (①②③, ∥, 🔥, ✗?), and a
+   "true cross-subgraph?" verdict + key-findings blockquote that narrows the blast radius.
+4. Evaluate 3-4 migration options: comparison table first (option/semantics/parity/verdict), then per-option
+   ➕/➖ bullets. Stay consistent with the accepted stances: sync orchestration in the owning subgraph
+   (ADR-011), WriteSaga per-step policy (ADR-013), outbox precondition for anything async (ADR-011 §3-D),
+   async never for ACL/security edges (ADR-012). Add mermaid swimlanes only if options differ in sequencing.
+5. Write the draft to output/complexStories/<CASE>/01-adr-<short-name>.md as the next ADR number
+   (check existing 01-adr-* files), Status: 🔴 Proposed, with sections: header block · §1 today's behavior ·
+   §2 decision drivers · §3 options · §4 proposed decision + pin-downs table (item/choice/draft
+   recommendation, every 🐞 resolved as fix-with-documented-deviation or preserve-with-reason) ·
+   §5 consequences · §6 on-acceptance runbook per SPIKE-ADR-LIFECYCLE.md.
+Style: bullets never paragraphs; source-repo paths (resolvers/….js), never code/**/*.txt; repo URL
+https://github.com/XXX; backticks only on real identifiers. Finish with a chat summary leading with the
+key finding.

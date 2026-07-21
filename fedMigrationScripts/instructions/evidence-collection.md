@@ -11,12 +11,12 @@ Every domain investigation must produce all six artifacts before handing off to 
 
 | Artifact | File Name | Produced By | Must Have Before |
 |---------|----------|------------|-----------------|
-| Schema inventory | `01-schema-inventory.md` | Phase 1 | — |
-| Resolver analysis | `02-resolver-analysis.md` | Phase 2 | Phase 1 |
-| DGS schema | `03-schema.graphql` | Phase 3 | Phase 2 |
-| Schema gap analysis | `03-schema-analysis.md` | Phase 3 | Phase 2 |
-| Engineering stories | `04-stories.md` | Phase 4 | Phases 1+2+3 |
-| PO sprint plan | `04-po-summary.md` | Phase 4 | Phases 1+2+3 |
+| Schema inventory | `be-01-schema-inventory.md` | Phase 1 | — |
+| Resolver analysis | `be-02-resolver-analysis.md` | Phase 2 | Phase 1 |
+| DGS schema | `be-03-schema.graphql` | Phase 3 | Phase 2 |
+| Schema gap analysis | `be-03-schema-analysis.md` | Phase 3 | Phase 2 |
+| Engineering stories | `be-04-stories.md` | Phase 4 | Phases 1+2+3 |
+| PO sprint plan | `be-04-po-summary.md` | Phase 4 | Phases 1+2+3 |
 
 ---
 
@@ -39,7 +39,7 @@ All output goes under `output/{domain}/` using the loader key as the directory n
 
 ## What Makes a Finding Useful
 
-### In `02-resolver-analysis.md` (Pseudo-Logic)
+### In `be-02-resolver-analysis.md` (Pseudo-Logic)
 
 Each resolver block is evidence. For it to be useful to an engineer implementing the DGS service, it must include:
 
@@ -59,7 +59,7 @@ Each resolver block is evidence. For it to be useful to an engineer implementing
 
 ---
 
-### In `03-schema-analysis.md` (Gap Analysis)
+### In `be-03-schema-analysis.md` (Gap Analysis)
 
 The gap analysis is evidence of what needs to be built. For it to drive CAT-4 stories, it must include:
 
@@ -75,7 +75,7 @@ The gap analysis is evidence of what needs to be built. For it to drive CAT-4 st
 
 ---
 
-### In `04-stories.md` (Engineering Stories)
+### In `be-04-stories.md` (Engineering Stories)
 
 Each story is evidence of what to build. For it to be Jira-ready, it must include:
 
@@ -116,7 +116,7 @@ Purpose: {one-line description of why this call is made}
 
 Before handing off domain findings, run this audit:
 
-### Phase 1 (`01-schema-inventory.md`)
+### Phase 1 (`be-01-schema-inventory.md`)
 - [ ] Every source file is listed with path and line count
 - [ ] `context.js` entry is a verbatim JS code block (not paraphrased)
 - [ ] Co-located domains are listed
@@ -124,7 +124,7 @@ Before handing off domain findings, run this audit:
 - [ ] Summary statistics block is filled in
 - [ ] Large file warnings (⚠️) are noted if applicable
 
-### Phase 2 (`02-resolver-analysis.md`)
+### Phase 2 (`be-02-resolver-analysis.md`)
 - [ ] Every query resolver has a pseudo-logic block
 - [ ] Every mutation resolver has a pseudo-logic block with input validation
 - [ ] Non-trivial field resolvers are documented; trivial pass-throughs are grouped in a table
@@ -134,7 +134,7 @@ Before handing off domain findings, run this audit:
 - [ ] Key Findings section covers: highest risk, migration blockers, refactor recommendations, quick wins
 - [ ] No vague language in any pseudo-logic block
 
-### Phase 3 (`03-schema.graphql` + `03-schema-analysis.md`)
+### Phase 3 (`be-03-schema.graphql` + `be-03-schema-analysis.md`)
 - [ ] Schema file has mandatory comment header
 - [ ] Schema body follows correct section ordering
 - [ ] Every type is classified in the analysis document
@@ -143,7 +143,7 @@ Before handing off domain findings, run this audit:
 - [ ] Gap analysis summary line is present
 - [ ] DGS target status is explicitly stated
 
-### Phase 4 (`04-stories.md` + `04-po-summary.md`)
+### Phase 4 (`be-04-stories.md` + `be-04-po-summary.md`)
 - [ ] Every operation has at least one story
 - [ ] Every story uses the mandatory template from `templates/story-format.md`
 - [ ] Every story has objectively verifiable acceptance criteria
@@ -176,12 +176,12 @@ Record these cross-domain findings in a `SHARED_FINDINGS.md` at the root of `out
 # Shared Investigation Findings
 
 ## Shared Utils Analysis
-- commonLoaders.js: Analyzed for BOM domain (output/bom/02-resolver-analysis.md §U3)
+- commonLoaders.js: Analyzed for BOM domain (output/bom/be-02-resolver-analysis.md §U3)
   Applies to: product, measurement, impression, packaging
 
 ## Cross-Domain EXT Patterns
 - Attachment service calls: Documented in output/product/ and output/bom/
-  Standard pattern established — all future domains calling `attachment` loader key can reference output/product/02-resolver-analysis.md §EXT1
+  Standard pattern established — all future domains calling `attachment` loader key can reference output/product/be-02-resolver-analysis.md §EXT1
 
 ## Federation Decisions
 - Product type @key(fields: "id"): Decided in output/product/ federation analysis

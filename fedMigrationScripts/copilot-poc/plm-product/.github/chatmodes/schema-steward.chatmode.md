@@ -14,7 +14,7 @@ You review subgraph schema changes; you do not implement stories. Output is a re
 ## Workflow
 
 1. **Collect the diff** — every changed `.graphqls` file in `apps/app` on this branch.
-2. **Check against the target** — the domain's `03-schema.graphql` in `output/initial-analysis/{domain}/` at https://github.com/XXX. Flag any divergence not called out in the PR description.
+2. **Check against the target** — the domain's `be-03-schema.graphql` in `output/analysis/{domain}/` at https://github.com/XXX. Flag any divergence not called out in the PR description.
 3. **Federation review** — for each changed type:
    - Owned entity referenced by other subgraphs → has `@key` with the documented fields (composite keys like `@key(fields: "productId partnerId")` must match the analysis).
    - Reference to a co-located domain (product/bom/measurement/packaging/impression/productDetails/watchlist) → plain type reference, **no** `@extends` stub.

@@ -1,0 +1,249 @@
+import { gql } from '@apollo/client'
+
+export const ARTWORK_TEAM_FIELDS = gql`
+  fragment ArtworkTeamDetailsFragment on SPARK_Artwork {
+    humanId
+    teams {
+      id
+      accessControlGroupIds
+      teamType
+      name
+      partner_name
+      partner_id
+      partnerType {
+        code
+        description
+      }
+      members {
+        user_profile_id
+        roles
+      }
+      status_name
+    }
+    droppedPartnerIds
+    businessPartners {
+      id
+      name
+      role {
+        bpRoleName
+        bpRoleId
+        status {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const PALETTE_TEAM_FIELDS = gql`
+  fragment PaletteTeamDetailsFragment on SPARK_Palette {
+    humanId
+    teams {
+      id
+      accessControlGroupIds
+      teamType
+      name
+      partner_name
+      partner_id
+      partnerType {
+        code
+        description
+      }
+      members {
+        user_profile_id
+        roles
+      }
+      status_name
+    }
+    droppedPartnerIds
+    businessPartners {
+      id
+      name
+      role {
+        bpRoleName
+        bpRoleId
+        status {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const COMBINATION_TEAM_FIELDS = gql`
+  fragment CombinationTeamDetailsFragment on SPARK_Combination {
+    humanId
+    teams {
+      id
+      name
+      partnerName: partner_name
+      partner_name
+      accessControlGroupIds
+      partnerId: partner_id
+      partner_id
+      partnerType {
+        code
+        description
+      }
+      members {
+        userProfileId: user_profile_id
+        user_profile_id
+        roles
+      }
+      status_name
+      teamType
+    }
+
+    droppedPartnerIds
+    businessPartners {
+      id
+      name
+      role {
+        bpRoleName
+        bpRoleId
+        status {
+          id
+        }
+      }
+      associatedPartnerType
+    }
+  }
+`
+
+export const TRIM_TEAM_FIELDS = gql`
+  fragment TrimTeamDetailsFragment on SPARK_Trim {
+    humanId
+    teams {
+      id
+      accessControlGroupIds
+      teamType
+      name
+      partner_name
+      partner_id
+      partnerType {
+        code
+        description
+      }
+      members {
+        user_profile_id
+        roles
+      }
+      status_name
+    }
+    droppedPartnerIds
+    businessPartners {
+      id
+      name
+      role {
+        bpRoleName
+        bpRoleId
+        status {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const FILE_FIELDS = gql`
+  fragment FileDetails on SPARK_Attachment {
+    documentId
+    humanId
+    documentName
+    documentType
+    mediaType
+    documentSize
+    createdAt
+    createdBy {
+      firstName
+      lastName
+      isInternal
+      companyName
+    }
+    canShareWithGallery
+    attachmentCanShowdog
+    galleryDetails {
+      assetId
+      fileValid
+      transcoded
+      published
+      publishedAt
+    }
+    humanId
+    updatedAt
+    updatedBy {
+      firstName
+      lastName
+      isInternal
+      companyName
+    }
+    businessPartnersFull {
+      id
+      name
+    }
+    previewable
+    access {
+      locked
+      permissions {
+        abstractAccessGroup {
+          id
+          grantees
+          type
+        }
+      }
+    }
+    resource {
+      type
+      id
+    }
+    relationshipMetadata
+  }
+`
+
+export const BUSINESS_PARTNER_FIELDS = gql`
+  fragment BusinessPartnerDetails on VMM_BusinessPartner {
+    id
+    name
+    role {
+      bpRoleName
+      bpRoleId
+      status {
+        id
+      }
+    }
+  }
+`
+export const WASH_TEAM_FIELDS = gql`
+  fragment WashTeamDetailsFragment on SPARK_Wash {
+    humanId
+    teams {
+      id
+      accessControlGroupIds
+      teamType
+      name
+      partner_name
+      partner_id
+      partnerType {
+        code
+        description
+      }
+      members {
+        user_profile_id
+        roles
+      }
+      status_name
+    }
+    droppedPartnerIds
+    businessPartners {
+      id
+      name
+      role {
+        bpRoleName
+        bpRoleId
+        status {
+          id
+        }
+      }
+    }
+  }
+`

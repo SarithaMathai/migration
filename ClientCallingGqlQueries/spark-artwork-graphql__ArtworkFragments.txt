@@ -1,0 +1,116 @@
+import { gql } from '@apollo/client'
+import { COMMON_MATERIAL_FRAGMENT } from '@spark/materials-graphql'
+
+export const GET_ARTWORK_DETAIL = gql`
+  fragment GetArtworkDetails on SPARK_Artwork {
+    gvs
+    createdAt
+    createdBy {
+      firstName
+      lastName
+    }
+    updatedAt
+    updatedBy {
+      firstName
+      lastName
+    }
+    droppedPartnerIds
+    teams {
+      id
+      name
+      partner_name
+      partner_id
+      members {
+        user_profile_id
+        roles
+      }
+      status_name
+    }
+    tags {
+      id
+      name
+      archived
+    }
+    humanId
+    name
+    status {
+      code
+      description
+    }
+    styleClassification {
+      code
+      description
+    }
+    applicationTechnique {
+      code
+      description
+    }
+    placed
+    designHouse
+    designThumbnailId
+    designCycle {
+      id
+      name
+      archived
+    }
+    division {
+      id
+      name
+      displayText
+    }
+    departments {
+      id
+      name
+      displayText
+    }
+    brands {
+      name
+      id
+    }
+    notes
+    acquisitionMethod
+    additionalReferenceId
+    disableColorwayAutomation
+    biDirectionalLinkedArtworks {
+      humanId
+      additionalReferenceId
+      thumbnailId
+      name
+    }
+    thumbnailId
+    businessPartners {
+      id
+      name
+      associatedPartnerType
+    }
+    colorways {
+      humanId
+      name
+      otherColors
+      libraryColors {
+        red
+        green
+        blue
+        value: id
+        id: id
+        humanId: id
+        label: name
+        name: name
+      }
+      thumbnailId
+      status {
+        code
+        description
+      }
+    }
+    type {
+      code
+      description
+    }
+    parent {
+      ...CommonMaterialDetails
+    }
+  }
+
+  ${COMMON_MATERIAL_FRAGMENT}
+`

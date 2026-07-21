@@ -1,0 +1,123 @@
+import { gql } from '@apollo/client'
+
+export const FABRIC_COSTING_FRAGMENT = gql`
+  fragment FabricCostingFragment on SPARK_FabricCosting {
+    fabricCostingId
+    fabricSpec {
+      humanId
+      supplierId
+      supplierName
+      impressions {
+        facilities {
+          facilityId
+          facility {
+            id
+            name
+            countryOfOrigin
+            status
+            authorized
+            circuitBroken
+          }
+          type {
+            code
+            description
+          }
+        }
+      }
+    }
+    designCycle {
+      id
+      name
+      type
+    }
+    solidCost {
+      solid
+    }
+    yarnCost {
+      yarnCostOne {
+        value
+        description
+      }
+      yarnCostTwo {
+        value
+        description
+      }
+      yarnCostThree {
+        value
+        description
+      }
+      yarnCostFour {
+        value
+        description
+      }
+    }
+    yarnDyedStripesCost {
+      autoStripeEngineeredOnetoFour
+      autoStripeEngineeredFivePlus
+      feederStripe
+      stripeAvgCost
+    }
+    preparedForPrintCost {
+      offWhiteGround
+      bleachedWhiteGround
+      dyedGround
+      pfpAverageCost
+    }
+  }
+`
+export const FABRIC_COSTING_FRAGMENT_MINI = gql`
+  fragment FabricCostingFragmentMini on SPARK_FabricCosting {
+    fabricCostingId
+    fabricSpec {
+      humanId
+    }
+    designCycle {
+      id
+      name
+    }
+  }
+`
+
+export const FABRIC_COSTINGS_SEARCH_QUERY = gql`
+  query getFabricCostings($searchInput: SPARK_FabricCostingSearchFiltersInput!) {
+    getFabricCostingsBySearchFilters(fabricCostingSearchFilters: $searchInput) {
+      ...FabricCostingFragment
+    }
+  }
+  ${FABRIC_COSTING_FRAGMENT}
+`
+export const GET_ALL_COSTING = gql`
+  query getFabricCostings($searchInput: SPARK_FabricCostingSearchFiltersInput!) {
+    getFabricCostingsBySearchFilters(fabricCostingSearchFilters: $searchInput) {
+      ...FabricCostingFragmentMini
+    }
+  }
+  ${FABRIC_COSTING_FRAGMENT_MINI}
+`
+
+export const FABRIC_COSTING_BY_ID = gql`
+  query getFabricCostingById($fabricCostingId: ID!) {
+    getFabricCostingById(fabricCostingId: $fabricCostingId) {
+      ...FabricCostingFragment
+    }
+  }
+  ${FABRIC_COSTING_FRAGMENT}
+`
+
+export const ADD_FABRIC_COSTING = gql`
+  mutation addFabricCosting($sparkFabricCosting: SPARK_FabricCostingInput) {
+    addFabricCosting(sparkFabricCosting: $sparkFabricCosting) {
+      ...FabricCostingFragment
+    }
+  }
+  ${FABRIC_COSTING_FRAGMENT}
+`
+
+export const UPDATE_FABRIC_COSTING = gql`
+  mutation updateFabricCosting($sparkFabricCosting: SPARK_FabricCostingInput) {
+    updateFabricCosting(sparkFabricCosting: $sparkFabricCosting) {
+      ...FabricCostingFragment
+    }
+  }
+  ${FABRIC_COSTING_FRAGMENT}
+`

@@ -48,18 +48,18 @@ plm-product/
 
 ## Source of truth this POC assumes
 
-- Jira stories generated from `output/initial-analysis/{domain}/04-stories.md`, pushed from this migration repo.
-- Confluence pages `FederatedGqlBrakDown-{domain}` + the global overview (Phase 0 — Program Spikes).
+- Jira stories generated from `output/analysis/{domain}/be-04-stories.md`, pushed from this migration repo.
+- Confluence pages `FederatedGqlBreakDown-BE-{domain}` + the global overview (Phase 0 — Program Spikes).
 - `fedMigrationScripts/` and `output/` are checked in at `https://github.com/XXX` — instructions/prompts link there for the legacy pseudo-logic and target schema an Engineer needs mid-story.
 
 ## Try it
 
-1. `/check-spike-gate SPARK-PROD-E01` — confirm a Phase-E story's spike status before starting.
-2. `/implement-story SPARK-PROD-B02` (or switch to the **story-implementer** chat mode) — schema + Kotlin fetcher + service + tests in one pass.
-3. `/write-parity-tests getProduct SPARK-PROD-B02` or the **parity-checker** chat mode — after implementing, verify response-shape parity with the legacy resolver.
+1. `/check-spike-gate PRODUCT-BE-E-01` — confirm a Phase-E story's spike status before starting.
+2. `/implement-story PRODUCT-BE-B-02` (or switch to the **story-implementer** chat mode) — schema + Kotlin fetcher + service + tests in one pass.
+3. `/write-parity-tests getProduct PRODUCT-BE-B-02` or the **parity-checker** chat mode — after implementing, verify response-shape parity with the legacy resolver.
 4. **schema-steward** chat mode on any PR touching `.graphqls` — federation-safety review before the Hive push.
 
-See **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** for two full worked sessions — a simple story implemented start-to-finish (`SPARK-PROD-B01`) and a complex story caught by the spike gate (`SPARK-PROD-E01`) — showing exactly which chat mode, prompt, and instruction file fires at each step.
+See **[EXAMPLE-USAGE.md](./EXAMPLE-USAGE.md)** for two full worked sessions — a simple story implemented start-to-finish (`PRODUCT-BE-B-01`) and a complex story caught by the spike gate (`PRODUCT-BE-E-01`) — showing exactly which chat mode, prompt, and instruction file fires at each step.
 
 ## Phase A–G, one prompt each
 

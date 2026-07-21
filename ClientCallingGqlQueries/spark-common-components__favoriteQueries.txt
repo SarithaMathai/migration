@@ -1,0 +1,110 @@
+import { gql } from '@apollo/client'
+
+export const GET_FAVORITES_TEAMS = gql`
+  query getFavoriteTeams($types: [String]!) {
+    getFavoritesByTypes(types: $types, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        team {
+          name
+        }
+      }
+    }
+  }
+`
+export const GET_FAVORITES_PRODUCTS = gql`
+  query getFavoriteProducts($types: [String]!) {
+    getFavoritesByTypes(types: $types, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        product {
+          thumbnailId
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_WORKSPACES = gql`
+  query getFavoriteWorkspaces($types: [String]!) {
+    getFavoritesByTypes(types: $types, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        workspace {
+          workspaceType {
+            code
+            description
+          }
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_COMBINATIONS = gql`
+  query getFavoriteCombinations($types: [String]!) {
+    getFavoritesByTypes(types: $types, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        combination {
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_PALETTE = gql`
+  query getFavoritePalette($types: [String]!) {
+    getFavoritesByTypes(types: $types, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        palette {
+          thumbnailId
+          description
+        }
+      }
+    }
+  }
+`
+
+export const GET_FAVORITES_MATERIAL = gql`
+  query getFavoriteMaterial($types: [String]!) {
+    getFavoritesByTypes(types: $types, page: 0, size: 1000) {
+      content {
+        id
+        resource {
+          id
+          type
+        }
+        baseMaterial {
+          name
+          description
+          thumbnailId
+        }
+      }
+    }
+  }
+`

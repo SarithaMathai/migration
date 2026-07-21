@@ -1,0 +1,60 @@
+import { gql } from '@apollo/client'
+
+export const REFRESH_WORKSPACES = gql`
+  mutation refreshAllWorkspaces {
+    refreshAllWorkspaces
+  }
+`
+
+export const REFRESH_PRODUCTS = gql`
+  mutation refreshAllProducts {
+    refreshAllProducts
+  }
+`
+
+export const REFRESH_SAMPLES = gql`
+  mutation refreshAllSamples {
+    refreshAllSamples
+  }
+`
+export const REFRESH_WORKSPACE = gql`
+  mutation refreshWorkspace($id: ID!) {
+    refreshWorkspace(id: $id)
+  }
+`
+
+export const REFRESH_PRODUCT = gql`
+  mutation refreshProduct($id: ID!) {
+    refreshProduct(id: $id)
+  }
+`
+
+export const REFRESH_SAMPLE = gql`
+  mutation refreshSample($ids: [String]) {
+    refreshSample(ids: $ids)
+  }
+`
+
+export const RESEND_DISCUSSION = gql`
+  mutation resendDiscussion($id: ID!, $isReply: Boolean) {
+    resendDiscussion(id: $id, isReply: $isReply)
+  }
+`
+
+export const RETRY_PACKET = gql`
+  mutation retryPdfGeneration($reportId: String!) {
+    retryPdfGeneration(reportId: $reportId) {
+      id
+    }
+  }
+`
+export const EXPIRE_KEY = gql`
+  mutation expireRedisCacheKey($key: String) {
+    expireRedisCacheKey(key: $key)
+  }
+`
+export const REQUEST_REPORT = gql`
+  mutation requestClaimExport {
+    requestClaimExport
+  }
+`

@@ -1,0 +1,141 @@
+import { gql, useMutation, useQuery } from '@apollo/client'
+import Loading from '@spark/legacy/components/Loading'
+import Message from '@spark/legacy/components/Message'
+import React, { useCallback, useContext, useMemo } from 'react'
+import { connect } from 'react-redux'
+import { isInternalSelector, currentUserSelector } from '@spark/legacy/selectors/currentUserSelector'
+import SampleForm from '../components/SampleForm'
+import { ERROR_MESSAGE, RESOURCE_TYPES, VMM_ROLE_TYPE } from '@spark/static'
+import { GET_COLOR_ARCHROMA, getSampleElasticListQuery, GET_PRODUCT_V2 } from '@spark/samples'
+import _ from 'lodash'
+import { PUT_SAMPLE_MEASUREMENT, ProductContext } from '@spark/product-common'
+import { useGoogleAnalyticsContentGroup } from '@spark/legacy/customHooks/useGoogleAnalyticsContentGroup'
+import { withUserAccreditations } from '@spark/legacy/components/connectedComponents/GetUserAccreditations'
+import { useAccreditation } from '@spark/legacy/customHooks/useAccreditation'
+import { PartnerContext } from '@spark/product-common'
+import { useParams, useNavigate } from 'react-router-dom'
+
+export const ADD_SAMPLE = gql`
+  mutation createSamplesV2($sparkSample: SPARK_CreateSamplesInputV2!) {
+    createSamplesV2(samples: $sparkSample) {
+      id
+    }
+  }
+`
+
+export const getParentResourceDetailQuery = (parentResourceType) => {
+  if (parentResourceType === RESOURCE_TYPES.ColorArchroma || parentResourceType === RESOURCE_TYPES.TargetColorArchroma || parentResourceType === RESOURCE_TYPES.ReferenceColorArchroma) {
+    return GET_COLOR_ARCHROMA
+  } else {
+    return GET_PRODUCT_V2
+  }
+}
+
+export const SampleNew = ({ isInternal, requestedBy, parentHumanId, parentResourceType, refetch, callbackAfterCreate }) => {
+  const params = useParams<{ workspaceId?: string; productId?: string }>()
+  const navigate = useNavigate()
+  const { hasAccreditation, accreditationsWithoutStatus, currentUserAccessToEvaluate } = useAccreditation()
+  useGoogleAnalyticsContentGroup({ specificRoute: 'Sample Create' })
+  const workspaceId = params.workspaceId
+  const { partnerId } = useContext(PartnerContext)
+
+  const productContext = useContext(ProductContext)
+  const { loading, error, data } = useQuery(getParentResourceDetailQuery(parentResourceType), {
+    variables: { id: parentHumanId },
+    fetchPolicy: parentResourceType === RESOURCE_TYPES.Product ? 'no-cache' : 'cache-first', // Must be no-cache to not collide with getProductScaffolding,
+    errorPolicy: 'all',
+  })
+  const [addSampleMutation] = useMutation(ADD_SAMPLE, {
+    refetchQueries: [
+      {
+        query: getSampleElasticListQuery(parentResourceType),
+        variables: {
+          id: parentHumanId,
+        },
+      },
+    ],
+    awaitRefetchQueries: true,
+  })
+  const addSample = useCallback(
+    async (...args) => {
+      const response = await addSampleMutation(...args)
+      if (RESOURCE_TYPES.Product) {
+        productContext.refetches?.refetchProduct && productContext.refetches?.refetchProduct()
+        refetch && refetch()
+      }
+      return response
+    },
+    [addSampleMutation, productContext, refetch],
+  )
+  const [putSampleMeasurement] = useMutation(PUT_SAMPLE_MEASUREMENT)
+  const parentResource = _.get(data, 'getResource', {})
+  const sampleTypeData = _.get(data, 'getSampleTypes', {})
+  const sampleFormats = data?.getSampleFormats || []
+  const sampleEvaluationPurposes = data?.getSampleEvaluationPurposes || []
+  const typeFormatMappings = data?.getSampleTypeFormatMappings || []
+  const userDefaultOptions = data?.getUserSettings?.userDefaults?.filter((defaultSection) => defaultSection.category === 'SAMPLE')?.[0]?.defaultOption
+
+  const droppedPartnerIds = _.isEmpty(_.get(parentResource, 'droppedPartnerIds')) ? [] : _.get(parentResource, 'droppedPartnerIds')
+
+  const activePartners = useMemo(() => {
+    const partners = _.get(parentResource, 'businessPartners', [])
+    const activePartners = partners?.filter((item) => !droppedPartnerIds.includes(item.id)) || []
+
+    if (workspaceId && parentResourceType === RESOURCE_TYPES.Product) {
+      const currentWorkspace = _.find(parentResource.workspaces?.content, {
+        id: workspaceId,
+      })
+      return activePartners.filter((partner) => _.find(currentWorkspace.businessPartners, { id: partner.id }))
+    } else {
+      return activePartners
+    }
+  }, [parentResource, workspaceId, parentResourceType, droppedPartnerIds])
+
+  if (loading) return <Loading>Loading</Loading>
+  if (error) return <Message>{ERROR_MESSAGE.MESSAGE_OTHER}</Message>
+
+  const resourceTeams = _.get(parentResource, 'teams.content', [])
+
+  const handleRedirect = () => {
+    if (callbackAfterCreate && typeof callbackAfterCreate === 'function') {
+      callbackAfterCreate()
+    } else {
+      navigate(-1)
+    }
+  }
+
+  return (
+    <SampleForm
+      workspaceId={workspaceId}
+      createSamplesV2={addSample}
+      putSampleMeasurement={putSampleMeasurement}
+      partners={activePartners}
+      droppedPartnerIds={droppedPartnerIds}
+      isEdit={false}
+      isInternal={isInternal}
+      requestedBy={requestedBy}
+      parentResource={parentResource}
+      parentResourceType={parentResourceType}
+      sampleTypeOptions={sampleTypeData}
+      sampleFormats={sampleFormats}
+      sampleEvaluationPurposes={sampleEvaluationPurposes}
+      typeFormatMappings={typeFormatMappings}
+      userDefaultOptions={userDefaultOptions}
+      selectedBpId={partnerId}
+      resourceTeams={resourceTeams}
+      redirect={handleRedirect}
+      isDesignPartner={requestedBy.currentVMMRole === VMM_ROLE_TYPE.DESIGN_PARTNER}
+      isAccredited={hasAccreditation}
+      accreditations={accreditationsWithoutStatus}
+      currentUserAccessToEvaluate={currentUserAccessToEvaluate}
+    />
+  )
+}
+
+export function mapStateToProps(state) {
+  return {
+    requestedBy: currentUserSelector(state),
+    isInternal: isInternalSelector(state),
+  }
+}
+export default withUserAccreditations(connect(mapStateToProps)(SampleNew))

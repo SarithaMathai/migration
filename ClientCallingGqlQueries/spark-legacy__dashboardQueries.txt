@@ -1,0 +1,230 @@
+import { gql } from '@apollo/client'
+import { UNION_FRAGMENT } from './dashboardFragments'
+
+export const GET_TODOS = gql`
+  query getToDos {
+    getToDos {
+      id
+      partnerId
+      description
+      resource {
+        id
+        type
+        relatedResource
+        thumbnailId
+        resourceDescription
+      }
+    }
+  }
+`
+
+export const GET_NOTIFICATION_GROUP_STATS = gql`
+  query getNotificationGroupStats(
+    $page: Int
+    $size: Int
+    $recipientId: String
+    $complete: Boolean
+    $notificationTypes: [String]
+    $tags: [String]
+    $sampleStatuses: [String]
+    $conversationTypes: [String]
+  ) {
+    getNotificationGroupStats(
+      page: $page
+      size: $size
+      recipientId: $recipientId
+      complete: $complete
+      notificationTypes: $notificationTypes
+      tags: $tags
+      sampleStatuses: $sampleStatuses
+      conversationTypes: $conversationTypes
+    ) {
+      tags {
+        id
+        name
+      }
+      businessPartners {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_NOTIFICATION_GROUPS = gql`
+  query getNotificationGroups(
+    $page: Int
+    $size: Int
+    $recipientId: String
+    $complete: Boolean
+    $notificationTypes: [String]
+    $tags: [String]
+    $sampleStatuses: [String]
+    $conversationTypes: [String]
+    $watchlistActions: [String]
+    $claimActions: [String]
+    $businessPartnerIds: [String]
+  ) {
+    getNotificationGroups(
+      page: $page
+      size: $size
+      recipientId: $recipientId
+      complete: $complete
+      notificationTypes: $notificationTypes
+      tags: $tags
+      sampleStatuses: $sampleStatuses
+      conversationTypes: $conversationTypes
+      watchlistActions: $watchlistActions
+      claimActions: $claimActions
+      businessPartnerIds: $businessPartnerIds
+    ) {
+      paging {
+        totalPages
+        totalElements
+      }
+      content {
+        id
+        lastNotificationTime
+        totalAttachmentCount
+        primaryResourceId
+        primaryResourceType
+        workspaceId
+        discussion {
+          ...UnionFrag
+        }
+        sample {
+          ...UnionFrag
+        }
+        packaging {
+          ...UnionFrag
+        }
+        watchlist {
+          description
+          businessPartners {
+            id
+            name
+            role {
+              bpRoleName
+            }
+          }
+          id
+          productId
+          workspaceId
+          tags {
+            id
+            name
+          }
+        }
+        claim {
+          description
+          businessPartners {
+            id
+            name
+            role {
+              bpRoleName
+            }
+          }
+          id
+          productId
+          workspaceId
+          tags {
+            id
+            name
+          }
+        }
+        recipient {
+          userProfile {
+            companyName
+            id
+            userProfileId
+            firstName
+            lastName
+          }
+        }
+        notifications {
+          id
+          attachmentCount
+          author {
+            companyName
+            id
+            userProfileId
+            firstName
+            lastName
+          }
+          timestamp
+          tags {
+            id
+            name
+            type
+          }
+          notificationType
+          resourceType
+          resourceId
+          read
+          complete
+          flagged
+          parentId
+          relatedResources
+          resource {
+            ...UnionFrag
+          }
+        }
+      }
+    }
+  }
+  ${UNION_FRAGMENT}
+`
+
+export const GET_NOTIFICATIONS = gql`
+  query getNotifications($page: Int, $size: Int, $read: Boolean, $complete: Boolean, $notificationTypes: [String]) {
+    getNotifications(page: $page, size: $size, read: $read, complete: $complete, notificationTypes: $notificationTypes) {
+      paging {
+        totalPages
+      }
+      content {
+        id
+        author {
+          companyName
+          id
+          userProfileId
+          firstName
+          lastName
+        }
+        timestamp
+        tags {
+          id
+          name
+          type
+        }
+        notificationType
+        resourceType
+        resourceId
+        read
+        complete
+        flagged
+        parentId
+        relatedResources
+        resource {
+          ...UnionFrag
+        }
+      }
+    }
+  }
+  ${UNION_FRAGMENT}
+`
+
+export const GET_INBOX_NOTIFICATIONS_COUNT = gql`
+  query getNotificationGroupsCounts($inboxNotificationTypes: [String], $recipientId: String) {
+    total: getNotificationGroups(complete: false, recipientId: $recipientId, notificationTypes: $inboxNotificationTypes) {
+      paging {
+        totalElements
+      }
+    }
+
+    unread: getNotificationGroups(complete: false, recipientId: $recipientId, unread: true, notificationTypes: $inboxNotificationTypes) {
+      paging {
+        totalElements
+      }
+    }
+  }
+`

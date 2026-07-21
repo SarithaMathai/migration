@@ -1,0 +1,42 @@
+import { gql } from '@apollo/client'
+
+export const GET_TAG = gql`
+  query getTag($id: ID!) {
+    getTag(id: $id) {
+      id
+      name
+      type
+      typeAdd
+      updatedAt: updatedTimestamp
+      createdTimestamp
+      archived
+      createdBy {
+        userProfileId
+        firstName
+        lastName
+        isInternal
+        businessPartner {
+          id
+          name
+        }
+      }
+      updatedBy {
+        userProfileId
+        firstName
+        lastName
+        isInternal
+        businessPartner {
+          id
+          name
+        }
+      }
+    }
+    getHubMaterialTypes
+  }
+`
+
+export const GET_TAG_TYPES = gql`
+  query getTagTypes {
+    getHubMaterialTypes
+  }
+`

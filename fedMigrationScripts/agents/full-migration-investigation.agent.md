@@ -57,10 +57,10 @@ Migration analyst for the spark-internal-graphql → Netflix DGS cutover. Reads 
 | Phase | Skill | Output File | Audience |
 |-------|-------|-------------|----------|
 | Phase 0 (setup) | Workspace validation (see `instructions/onboarding.md`) | Chat confirmation only | Engineer |
-| Phase 1 | `skills/graphql-schema-inventory/SKILL.md` | `output/{domain}/01-schema-inventory.md` | Tech Lead |
-| Phase 2 | `skills/resolver-dependency-analysis/SKILL.md` | `output/{domain}/02-resolver-analysis.md` | Backend Engineers |
-| Phase 3 | `skills/federation-schema-derivation/SKILL.md` | `output/{domain}/03-schema.graphql` + `03-schema-analysis.md` | Architects |
-| Phase 4 | `skills/migration-story-generation/SKILL.md` | `output/{domain}/04-stories.md` + `04-po-summary.md` | PO + Engineers |
+| Phase 1 | `skills/graphql-schema-inventory/SKILL.md` | `output/{domain}/be-01-schema-inventory.md` | Tech Lead |
+| Phase 2 | `skills/resolver-dependency-analysis/SKILL.md` | `output/{domain}/be-02-resolver-analysis.md` | Backend Engineers |
+| Phase 3 | `skills/federation-schema-derivation/SKILL.md` | `output/{domain}/be-03-schema.graphql` + `be-03-schema-analysis.md` | Architects |
+| Phase 4 | `skills/migration-story-generation/SKILL.md` | `output/{domain}/be-04-stories.md` + `be-04-po-summary.md` | PO + Engineers |
 
 ---
 
@@ -171,7 +171,7 @@ Flag these patterns when found:
 | `commonLoaders.js` logic spanning multiple domains | Decomposition candidate |
 | Mixed-domain schema types | Federation boundary ambiguity |
 
-Add as a "Refactor Recommendations" section in `02-resolver-analysis.md` under Key Findings.
+Add as a "Refactor Recommendations" section in `be-02-resolver-analysis.md` under Key Findings.
 
 ---
 
@@ -202,11 +202,11 @@ Add as a "Refactor Recommendations" section in `02-resolver-analysis.md` under K
 → Runs Phase 0 through 4. Writes 6 files to output/bom/.
 
 "Run Phase 1 for measurement."
-→ Produces output/measurement/01-schema-inventory.md only.
+→ Produces output/measurement/be-01-schema-inventory.md only.
 
 "Break the attachment domain into stories — Phase 2 and 3 are done."
-→ Reads output/attachment/02-resolver-analysis.md and 03-*.
-→ Writes output/attachment/04-stories.md + 04-po-summary.md.
+→ Reads output/attachment/be-02-resolver-analysis.md and 03-*.
+→ Writes output/attachment/be-04-stories.md + be-04-po-summary.md.
 
 "Quick scan of product — top operations only."
 → Phase 1 + Quick Scan Phase 2 (queries and mutations, no field resolvers).

@@ -1,0 +1,38 @@
+import { gql, useQuery } from '@apollo/client'
+import { MaterialTypesGql } from 'MaterialTypes'
+
+interface UseMaterialTypesHookArgs {
+  skip?: boolean
+}
+
+interface UseMaterialTypesHook {
+  materialTypesLoading: boolean
+  materialTypesError: any
+  materialTypes: string[]
+}
+
+export const GET_MATERIAL_TYPES = gql`
+  query getMaterialTypes {
+    getHubMaterialTypes
+  }
+`
+
+export const useMaterialTypes = ({ skip }: UseMaterialTypesHookArgs = {}): UseMaterialTypesHook => {
+  const variables = {}
+
+  const { data, loading, error } = useQuery<MaterialTypesGql>(GET_MATERIAL_TYPES, {
+    variables,
+    fetchPolicy: 'cache-first',
+    skip,
+  })
+
+  const materialTypes = data?.getHubMaterialTypes || []
+
+  return {
+    materialTypesLoading: loading,
+    materialTypesError: error,
+    materialTypes,
+  }
+}
+
+export default useMaterialTypes

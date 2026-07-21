@@ -13,12 +13,12 @@ Run this before handing investigation artifacts to the engineering team.
 
 - [ ] Domain is in the service catalog (`reference/domain-service-catalog.md` §2)
 - [ ] All 6 artifacts exist in `output/{domain}/`:
-  - [ ] `01-schema-inventory.md`
-  - [ ] `02-resolver-analysis.md`
-  - [ ] `03-schema.graphql`
-  - [ ] `03-schema-analysis.md`
-  - [ ] `04-stories.md`
-  - [ ] `04-po-summary.md`
+  - [ ] `be-01-schema-inventory.md`
+  - [ ] `be-02-resolver-analysis.md`
+  - [ ] `be-03-schema.graphql`
+  - [ ] `be-03-schema-analysis.md`
+  - [ ] `be-04-stories.md`
+  - [ ] `be-04-po-summary.md`
 - [ ] All artifacts have the mandatory header block (domain, target DGS, pipeline version, date)
 - [ ] All artifacts have the response footer
 
@@ -174,7 +174,7 @@ This is the **Option D: Hybrid** approach — facade now, federate later.
 
 ## Risk Register Review
 
-Before cutover, review the Risk Register in `04-stories.md` and confirm each risk is:
+Before cutover, review the Risk Register in `be-04-stories.md` and confirm each risk is:
 
 - [ ] **Mitigated** — the mitigation was implemented and verified
 - [ ] **Accepted** — PO/Tech Lead consciously accepted the risk

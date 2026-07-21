@@ -1,0 +1,490 @@
+FE Story,FE Story Title,Section,Field/Query,Resolving BE Story,External Dependency,Ext-Story,New Gap?,Impacts (Queries),Notes
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,ancestryProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,attachments,PRODUCT-BE-G-03,attachment,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,attachmentsWithMetaData,PRODUCT-BE-G-01,attachment,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,brand,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,childProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,clazz,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,components,PRODUCT-BE-G-02,search,,No,getProduct,🔬 SPIKE-05 (gated)
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,createdBy,PRODUCT-BE-G-14,user-profile,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,currentUserPermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,department,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,departments,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,discussionsV2,PRODUCT-BE-G-06,discussion,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,division,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,droppedPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Query,getProduct,PRODUCT-BE-B-01,,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,isResourceCritical,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,linkedResourceId,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,resourcePermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,resourceTitle,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,status,PRODUCT-BE-G-07,vmm,,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,tags,PRODUCT-BE-G-13,tag,,No,getProduct,
+PRODUCT-FE-001,Migrate `getProduct` documents in product-queries,Field,workspaces,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,ancestryProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,attachments,PRODUCT-BE-G-03,attachment,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,attachmentsWithMetaData,PRODUCT-BE-G-01,attachment,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,brand,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,childProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,clazz,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,components,PRODUCT-BE-G-02,search,,No,getProduct,🔬 SPIKE-05 (gated)
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,createdBy,PRODUCT-BE-G-14,user-profile,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,currentUserPermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,department,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,departments,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,discussionsV2,PRODUCT-BE-G-06,discussion,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,division,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,droppedPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Query,getProduct,PRODUCT-BE-B-01,,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Query,getProductVersions,PRODUCT-BE-B-04,,,No,getProductVersions,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,isResourceCritical,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,linkedResourceId,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,resourcePermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,resourceTitle,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,status,PRODUCT-BE-G-07,vmm,,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,tags,PRODUCT-BE-G-13,tag,,No,getProduct,
+PRODUCT-FE-002,Migrate shared-library `getProduct` consumers,Field,workspaces,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+PRODUCT-FE-003,Migrate product list and bulk reads,Field,departments,PRODUCT-BE-G-13,ig,,No,getProductsByIds,
+PRODUCT-FE-003,Migrate product list and bulk reads,Query,getProducts,PRODUCT-BE-S-02,,,No,getProducts,
+PRODUCT-FE-003,Migrate product list and bulk reads,Query,getProductsByIds,PRODUCT-BE-B-02,,,No,getProductsByIds,
+PRODUCT-FE-003,Migrate product list and bulk reads,Query,getProductStatus,PRODUCT-BE-B-03,,,No,getProductsByIds,
+PRODUCT-FE-003,Migrate product list and bulk reads,Field,roles,NEW-PRODUCT-BE-G-??,,,Yes,getProductsByIds,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProductStatus,🔬 SPIKE-04 (gated)
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,departments,PRODUCT-BE-G-13,ig,,No,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,firstRoundSampleReceivedBySampleFormat,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,firstRoundSampleReceivedBySampleType,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Query,getProduct,PRODUCT-BE-B-01,,,No,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Query,getProductsByIds,PRODUCT-BE-B-02,,,No,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Query,getProductStatus,PRODUCT-BE-B-03,,,No,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,productSamplesReceivedBySampleFormat,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,productSamplesReceivedBySampleType,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,status,PRODUCT-BE-G-07,vmm,,No,getProductStatus,🔬 SPIKE-04 (gated); via `...ProductVendorAttributesFragment`
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,teams,PRODUCT-BE-G-06,teamV2,,No,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,totalProducts,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,totalProductsRequested,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,totalProductsWithBp,NEW-PRODUCT-BE-G-??,,,Yes,getProductStatus,
+PRODUCT-FE-004,Migrate product status and workspace-context reads,Field,vendorAttributes,PRODUCT-BE-G-07,vmm,,No,getProductStatus,🔬 SPIKE-04 (gated)
+PRODUCT-FE-005,Migrate template library and categories reads,Field,access,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,
+PRODUCT-FE-005,Migrate template library and categories reads,Field,additionalInfo,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProductTemplates,
+PRODUCT-FE-005,Migrate template library and categories reads,Field,brands,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,businessPartner,CLAIM-BE-G-02,vmm,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,categories,PRODUCT-BE-G-04,IG,,No,getCategories,
+PRODUCT-FE-005,Migrate template library and categories reads,Field,claimDetails,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,claimNotes,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,createdBy,CLAIM-BE-G-02,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,designPartner,CLAIM-BE-G-02,vmm,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,divisions,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
+PRODUCT-FE-005,Migrate template library and categories reads,Query,getCategories,PRODUCT-BE-C-03,,,No,getCategories,
+PRODUCT-FE-005,Migrate template library and categories reads,Query,getProductTemplates,PRODUCT-BE-C-02,,,No,getProductTemplates,
+PRODUCT-FE-005,Migrate template library and categories reads,Field,IG_Clazz_Filter,PRODUCT-BE-H-07,ig,PRODUCT-BE-H-07,No,getCategories,newly authored — PRODUCT-BE-H-07
+PRODUCT-FE-005,Migrate template library and categories reads,Field,parentDetails,CLAIM-BE-G-03,product,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,parentId,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,participantDetails,CLAIM-BE-G-01,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,product,CLAIM-BE-G-03,product,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,productTemplateDepartments,PRODUCT-BE-G-13,ig,,No,getProductTemplates,via `...productTemplateDetails`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,tags,PRODUCT-BE-G-13,tag,,No,getProductTemplates,via `...productTemplateDetails`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,teams,PRODUCT-BE-G-06,teamV2,,No,getProductTemplates,via `...LegacyComponentDiscussionParticipantsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,updatedBy,CLAIM-BE-G-02,user-profile,,No,getProductTemplates,cross-domain: `Claims` owned by `claims`; via `...FullClaimDetailsFragment`
+PRODUCT-FE-005,Migrate template library and categories reads,Field,users,NEW-PRODUCT-BE-G-??,,,Yes,getProductTemplates,via `...LegacyComponentDiscussionParticipantsFragment`
+PRODUCT-FE-006,Migrate product rules administration,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",🔬 SPIKE-04 (gated); via `...ProductRules`
+PRODUCT-FE-006,Migrate product rules administration,Field,departments,PRODUCT-BE-G-13,ig,,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",via `...ProductRules`
+PRODUCT-FE-006,Migrate product rules administration,Query,getAllAvailableRules,PRODUCT-BE-B-09,,,No,getAllAvailableRules,
+PRODUCT-FE-006,Migrate product rules administration,Query,getProductBPRules,PRODUCT-BE-B-11,,,No,getProductBPRules,
+PRODUCT-FE-006,Migrate product rules administration,Query,getProductDeptRules,PRODUCT-BE-B-10,,,No,getProductDeptRules,
+PRODUCT-FE-006,Migrate product rules administration,Query,getProductRules,PRODUCT-BE-B-07,,,No,getProductRules,
+PRODUCT-FE-006,Migrate product rules administration,Query,getProductRulesById,PRODUCT-BE-B-08,,,No,getProductRulesById,
+PRODUCT-FE-006,Migrate product rules administration,Field,insightsClassExclusion,PRODUCT-BE-H-08,ig,PRODUCT-BE-H-08,No,"getProductBPRules, getProductDeptRules, getProductRules, getProductRulesById, searchProductRules",newly authored — PRODUCT-BE-H-08; via `...ProductRules`
+PRODUCT-FE-006,Migrate product rules administration,Query,searchProductRules,PRODUCT-BE-C-05,,,No,searchProductRules,
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),Query,getProductTechPackBulkCountV1,PRODUCT-BE-E-04,,,No,getProductTechPackBulkCountV1,
+PRODUCT-FE-010,Migrate TechPack count queries (facade-then-federate),Query,getProductTechPackCountV1,PRODUCT-BE-E-03,,,No,getProductTechPackCountV1,
+PRODUCT-FE-011,Migrate component status rollups,Field,ancestryProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,attachments,PRODUCT-BE-G-03,attachment,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,attachmentsWithMetaData,PRODUCT-BE-G-01,attachment,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,brand,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,businessPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-011,Migrate component status rollups,Field,childProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,clazz,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,components,PRODUCT-BE-G-02,search,,No,getProduct,🔬 SPIKE-05 (gated)
+PRODUCT-FE-011,Migrate component status rollups,Field,createdBy,PRODUCT-BE-G-14,user-profile,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,currentUserPermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-011,Migrate component status rollups,Field,department,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,departments,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,discussionsV2,PRODUCT-BE-G-06,discussion,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,division,PRODUCT-BE-G-13,ig,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,droppedPartners,PRODUCT-BE-G-07,vmm,PRODUCT-BE-F-11,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-011,Migrate component status rollups,Query,getProduct,PRODUCT-BE-B-01,,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,isResourceCritical,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-011,Migrate component status rollups,Field,linkedResourceId,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-011,Migrate component status rollups,Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,resourcePermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,resourceTitle,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+PRODUCT-FE-011,Migrate component status rollups,Field,status,PRODUCT-BE-G-07,vmm,,No,getProduct,🔬 SPIKE-04 (gated)
+PRODUCT-FE-011,Migrate component status rollups,Field,tags,PRODUCT-BE-G-13,tag,,No,getProduct,
+PRODUCT-FE-011,Migrate component status rollups,Field,workspaces,PRODUCT-BE-G-09,workspaceV2,,No,getProduct,
+BOM-FE-002,Migrate BOM core reads,Field,additionalMaterialDetails,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,blue,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`
+BOM-FE-002,Migrate BOM core reads,Field,BomFabricSpecComboDetails,NEW-BOM-BE-G-??,,,Yes,getBomByParentId,fragment body not found in snapshot
+BOM-FE-002,Migrate BOM core reads,Field,BomFabricSpecComboSlimDetails,NEW-BOM-BE-G-??,,,Yes,getBomByIds,fragment body not found in snapshot
+BOM-FE-002,Migrate BOM core reads,Field,BOMTrimDetailsFragment,NEW-BOM-BE-G-??,,,Yes,getBomByIds,fragment body not found in snapshot
+BOM-FE-002,Migrate BOM core reads,Field,BomWashDetailsFragment,NEW-BOM-BE-G-??,,,Yes,getBomByIds,fragment body not found in snapshot
+BOM-FE-002,Migrate BOM core reads,Field,brand,PRODUCT-BE-G-13,ig,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,businessPartners,BOM-BE-G-01,vmm,,No,"getBomByIds, getBomByParentId",via `...BomDetails`; via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,certifications,BOM-BE-G-03,materialHub,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,countryOfOrigin,BOM-BE-G-03,tag,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,createdBy,BOM-BE-G-01,user-profile,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,criticalToQuality,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,droppedPartnerIds,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,droppedPartners,PRODUCT-BE-G-07,vmm,,No,getBomByIds,🔬 SPIKE-04 (gated); cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,editable,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,fabricRecord,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomComboSlimDetails`
+BOM-FE-002,Migrate BOM core reads,Field,fabricRecordDetail,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomFabricSpecDetails`
+BOM-FE-002,Migrate BOM core reads,Field,fabricRecordHumanId,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomComboSlimDetails`
+BOM-FE-002,Migrate BOM core reads,Field,fabricSpecCombos,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomComboSlimDetails`
+BOM-FE-002,Migrate BOM core reads,Query,getBomByIds,BOM-BE-B-01,,,No,"getBomByIds, getBomComponentStatus",
+BOM-FE-002,Migrate BOM core reads,Query,getBomByParentId,BOM-BE-B-04,,,No,getBomByParentId,
+BOM-FE-002,Migrate BOM core reads,Query,getBomStatus,BOM-BE-B-03,,,No,getBomStatus,
+BOM-FE-002,Migrate BOM core reads,Field,green,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`
+BOM-FE-002,Migrate BOM core reads,Field,groundColor,BOM-BE-G-12,search,,No,getBomByIds,via `...TrimLibraryImpressionDetails`
+BOM-FE-002,Migrate BOM core reads,Field,libraryResource,BOM-BE-G-03,materialHub,,No,"getBomByIds, getBomByParentId",via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,materialLibraryUom,BOM-BE-G-08,trim,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,origin,BOM-BE-G-03,materialHub,,No,getBomByIds,external via `origins`; via `...MaterialOrigins`
+BOM-FE-002,Migrate BOM core reads,Field,origins,BOM-BE-G-03,materialHub,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,owningPartnerType,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,packagingAttributes,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,parentHumanId,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomFabricSpecDetails`
+BOM-FE-002,Migrate BOM core reads,Field,participantDetails,BOM-BE-G-01,user-profile,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,percentage,BOM-BE-G-03,materialHub,,No,getBomByIds,external via `origins`; via `...MaterialOrigins`
+BOM-FE-002,Migrate BOM core reads,Field,preferredStyle,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,primaryMaterial,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,primaryMaterialAttachmentId,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,productMaterials,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,quantityUom,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,recycledContent,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,red,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`
+BOM-FE-002,Migrate BOM core reads,Field,reservedDpcis,PRODUCT-BE-G-10,apex,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,secondaryMaterial,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,sectionId,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,sectionName,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,sizeCaption,BOM-BE-G-08,trim,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,sizeUom,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,sizeValue,BOM-BE-G-08,trim,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,sliderColor,BOM-BE-G-13,search,,No,getBomByIds,via `...TrimZipperLibraryImpressionDetails`
+BOM-FE-002,Migrate BOM core reads,Field,SPARK_FabricSpecification_Files,NEW-BOM-BE-G-??,,,Yes,getBomByIds,fragment body not found in snapshot
+BOM-FE-002,Migrate BOM core reads,Field,tags,PRODUCT-BE-G-13,tag,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,tapeColor,BOM-BE-G-13,search,,No,getBomByIds,via `...TrimZipperLibraryImpressionDetails`
+BOM-FE-002,Migrate BOM core reads,Field,tcins,PRODUCT-BE-G-13,corona,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,teams,BOM-BE-G-01,user-profile,,No,getBomByIds,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`; via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,teethColor,BOM-BE-G-13,search,,No,getBomByIds,via `...TrimZipperLibraryImpressionDetails`
+BOM-FE-002,Migrate BOM core reads,Field,textColor,BOM-BE-G-12,search,,No,getBomByIds,via `...TrimLibraryImpressionDetails`
+BOM-FE-002,Migrate BOM core reads,Field,thumbnailId,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`; via `...BomFabricSpecDetails`; via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,updatedBy,BOM-BE-G-01,user-profile,,No,getBomByIds,via `...BomDetails`
+BOM-FE-002,Migrate BOM core reads,Field,users,BOM-BE-G-01,user-profile,,No,getBomByIds,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+BOM-FE-002,Migrate BOM core reads,Field,vendorStyleNumber,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-002,Migrate BOM core reads,Field,VMM_BusinessPartner,BOM-BE-G-01,vmm,,No,getBomByIds,external via `businessPartners`; via `...VmmBusinessPartnerOnProduct`
+BOM-FE-002,Migrate BOM core reads,Field,workspaces,BOM-BE-G-01,workspaceV2,,No,"getBomByIds, getBomByParentId",via `...BomDetails`; via `...ProductBaseInfoFragment`
+BOM-FE-003,Migrate BOM search and elastic reads,Field,businessPartners,BOM-BE-G-01,vmm,,No,getBomElastic,
+BOM-FE-003,Migrate BOM search and elastic reads,Query,getBomElastic,BOM-BE-C-01,,,No,getBomElastic,
+BOM-FE-003,Migrate BOM search and elastic reads,Query,searchMaterialsBom,BOM-BE-S-03,,,No,searchMaterialsBom,
+BOM-FE-004,Migrate BOM master-data reads,Query,getBomMaterialTypes,BOM-BE-B-05,,,No,getBomMaterialTypes,
+BOM-FE-004,Migrate BOM master-data reads,Query,getBomPackagingMaterialTypes,BOM-BE-B-06,,,No,"getBomPackagingMaterialTypes, getBomPackagingUnitOfMeasure",
+BOM-FE-004,Migrate BOM master-data reads,Query,getBomPackagingSubstrates,BOM-BE-B-07,,,No,getBomPackagingSubstrates,
+BOM-FE-004,Migrate BOM master-data reads,Query,getBomPackagingUnitOfMeasure,BOM-BE-B-08,,,No,"getBomPackagingMaterialTypes, getBomPackagingUnitOfMeasure",
+BOM-FE-004,Migrate BOM master-data reads,Field,shortDescription,NEW-BOM-BE-G-??,,,Yes,"getBomPackagingMaterialTypes, getBomPackagingUnitOfMeasure",
+BOM-FE-005,Migrate BOM supplier reads,Query,getComboSupplierForBom,BOM-BE-C-03,,,No,getComboSupplierForBom,
+BOM-FE-005,Migrate BOM supplier reads,Query,getValidRawMaterialSuppliersForBom,BOM-BE-C-05,,,No,"getValidRawMaterialSuppliersForBom, getValidTrimSuppliersForBom",
+BOM-FE-005,Migrate BOM supplier reads,Query,getValidTrimSuppliersForBom,BOM-BE-C-04,,,No,"getValidRawMaterialSuppliersForBom, getValidTrimSuppliersForBom",
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,additionalMaterialDetails,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,blue,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,BomFabricSpecComboDetails,NEW-BOM-BE-G-??,,,Yes,getBomByParentId,fragment body not found in snapshot
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,BomFabricSpecComboSlimDetails,NEW-BOM-BE-G-??,,,Yes,getBomByIds,fragment body not found in snapshot
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,BOMTrimDetailsFragment,NEW-BOM-BE-G-??,,,Yes,getBomByIds,fragment body not found in snapshot
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,BomWashDetailsFragment,NEW-BOM-BE-G-??,,,Yes,getBomByIds,fragment body not found in snapshot
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,brand,PRODUCT-BE-G-13,ig,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,businessPartners,BOM-BE-G-01,vmm,,No,"getBomByIds, getBomByParentId",via `...BomDetails`; via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,certifications,BOM-BE-G-03,materialHub,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,countryOfOrigin,BOM-BE-G-03,tag,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,createdBy,BOM-BE-G-01,user-profile,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,criticalToQuality,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,droppedPartnerIds,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,droppedPartners,PRODUCT-BE-G-07,vmm,,No,getBomByIds,🔬 SPIKE-04 (gated); cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,editable,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,fabricRecord,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomComboSlimDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,fabricRecordDetail,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomFabricSpecDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,fabricRecordHumanId,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomComboSlimDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,fabricSpecCombos,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomComboSlimDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Query,getBomByIds,BOM-BE-B-01,,,No,getBomByIds,
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Query,getBomByParentId,BOM-BE-B-04,,,No,getBomByParentId,
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,green,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,groundColor,BOM-BE-G-12,search,,No,getBomByIds,via `...TrimLibraryImpressionDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,libraryResource,BOM-BE-G-03,materialHub,,No,"getBomByIds, getBomByParentId",via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,materialLibraryUom,BOM-BE-G-08,trim,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,origin,BOM-BE-G-03,materialHub,,No,getBomByIds,external via `origins`; via `...MaterialOrigins`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,origins,BOM-BE-G-03,materialHub,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,owningPartnerType,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,packagingAttributes,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,parentHumanId,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BomFabricSpecDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,participantDetails,BOM-BE-G-01,user-profile,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,percentage,BOM-BE-G-03,materialHub,,No,getBomByIds,external via `origins`; via `...MaterialOrigins`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,preferredStyle,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,primaryMaterial,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,primaryMaterialAttachmentId,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,productMaterials,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,quantityUom,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,recycledContent,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,red,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,reservedDpcis,PRODUCT-BE-G-10,apex,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Query,searchMaterialsBom,BOM-BE-S-03,,,No,searchMaterialsBom,
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,secondaryMaterial,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,sectionId,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,sectionName,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,sizeCaption,BOM-BE-G-08,trim,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,sizeUom,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,sizeValue,BOM-BE-G-08,trim,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,sliderColor,BOM-BE-G-13,search,,No,getBomByIds,via `...TrimZipperLibraryImpressionDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,SPARK_FabricSpecification_Files,NEW-BOM-BE-G-??,,,Yes,getBomByIds,fragment body not found in snapshot
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,tags,PRODUCT-BE-G-13,tag,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,tapeColor,BOM-BE-G-13,search,,No,getBomByIds,via `...TrimZipperLibraryImpressionDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,tcins,PRODUCT-BE-G-13,corona,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,teams,BOM-BE-G-01,user-profile,,No,getBomByIds,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`; via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,teethColor,BOM-BE-G-13,search,,No,getBomByIds,via `...TrimZipperLibraryImpressionDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,textColor,BOM-BE-G-12,search,,No,getBomByIds,via `...TrimLibraryImpressionDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,thumbnailId,BOM-BE-G-12,search,,No,getBomByIds,external via `libraryResource`; via `...BOMColorDetailsFragment`; via `...BomFabricSpecDetails`; via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,updatedBy,BOM-BE-G-01,user-profile,,No,getBomByIds,via `...BomDetails`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,users,BOM-BE-G-01,user-profile,,No,getBomByIds,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,vendorStyleNumber,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,VMM_BusinessPartner,BOM-BE-G-01,vmm,,No,getBomByIds,external via `businessPartners`; via `...VmmBusinessPartnerOnProduct`
+BOM-FE-007,"Adopt BOM `supplier` entity references (optional, PO-gated)",Field,workspaces,BOM-BE-G-01,workspaceV2,,No,"getBomByIds, getBomByParentId",via `...BomDetails`; via `...ProductBaseInfoFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,brands,MST-BE-G-07,vmm,,No,getMeasurementByIds,via `...tightFitFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,businessPartners,MST-BE-G-01,vmm,,No,getMeasurementByIds,via `...measurementFieldsFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,createdBy,MST-BE-G-07,user-profile,,No,getMeasurementByIds,via `...measurementFieldsFragment`; via `...tightFitFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,departments,MST-BE-G-07,ig,,No,getMeasurementByIds,via `...tightFitFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,divisions,MST-BE-G-07,ig,,No,getMeasurementByIds,via `...tightFitFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Query,getMeasurementByIds,MST-BE-B-01,,,No,"getMeasurementByIds, getMeasurementComponentStatus",
+MST-FE-001,Migrate measurement reads and retire `humanId`,Query,getMeasurementSetStatus,MST-BE-B-04,,,No,getMeasurementSetStatus,
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,measurementTemplateFragment,NEW-MST-BE-G-??,,,Yes,getMeasurementByIds,fragment body not found in snapshot
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,participantDetails,MST-BE-G-01,user-profile,,No,getMeasurementByIds,via `...measurementFieldsFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,sizeTemplateFragmentWithRows,NEW-MST-BE-G-??,,,Yes,getMeasurementByIds,fragment body not found in snapshot
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,teams,MST-BE-G-01,user-profile,,No,getMeasurementByIds,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,updatedBy,MST-BE-G-07,user-profile,,No,getMeasurementByIds,via `...measurementFieldsFragment`; via `...tightFitFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,updatedFromResource,MST-BE-G-01,sampleV2,,No,getMeasurementByIds,via `...measurementFieldsFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,users,MST-BE-G-01,user-profile,,No,getMeasurementByIds,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+MST-FE-001,Migrate measurement reads and retire `humanId`,Field,workspaces,MST-BE-G-01,workspaceV2,,No,getMeasurementByIds,via `...measurementFieldsFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,brands,MST-BE-G-07,vmm,,No,getMeasurements,via `...tightFitFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,businessPartners,MST-BE-G-01,vmm,,No,getMeasurements,via `...measurementFieldsFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,createdBy,MST-BE-G-07,user-profile,,No,getMeasurements,via `...measurementFieldsFragment`; via `...tightFitFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,departments,MST-BE-G-07,ig,,No,getMeasurements,via `...tightFitFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,divisions,MST-BE-G-07,ig,,No,getMeasurements,via `...tightFitFragment`
+MST-FE-002,Migrate measurement list/search reads,Query,getMeasurements,MST-BE-C-01,,,No,getMeasurements,
+MST-FE-002,Migrate measurement list/search reads,Query,getMeasurementsElastic,MST-BE-C-02,,,No,getMeasurementsElastic,
+MST-FE-002,Migrate measurement list/search reads,Field,measurementTemplateFragment,NEW-MST-BE-G-??,,,Yes,getMeasurements,fragment body not found in snapshot
+MST-FE-002,Migrate measurement list/search reads,Field,participantDetails,MST-BE-G-01,user-profile,,No,getMeasurements,via `...measurementFieldsFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,sizeTemplateFragmentWithRows,NEW-MST-BE-G-??,,,Yes,getMeasurements,fragment body not found in snapshot
+MST-FE-002,Migrate measurement list/search reads,Field,teams,MST-BE-G-01,user-profile,,No,getMeasurements,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,updatedBy,MST-BE-G-07,user-profile,,No,getMeasurements,via `...measurementFieldsFragment`; via `...tightFitFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,updatedFromResource,MST-BE-G-01,sampleV2,,No,getMeasurements,via `...measurementFieldsFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,users,MST-BE-G-01,user-profile,,No,getMeasurements,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+MST-FE-002,Migrate measurement list/search reads,Field,workspaces,MST-BE-G-01,workspaceV2,,No,getMeasurements,via `...measurementFieldsFragment`
+MST-FE-003,Migrate measurement master-data reads,Query,getThicknessUnitsOfMeasure,MST-BE-B-03,,,No,getThicknessUnitsOfMeasure,
+MST-FE-003,Migrate measurement master-data reads,Query,getUnitsOfMeasure,MST-BE-B-02,,,No,"getThicknessUnitsOfMeasure, getUnitsOfMeasure",
+MST-FE-003,Migrate measurement master-data reads,Field,shortDescription,NEW-MST-BE-G-??,,,Yes,"getThicknessUnitsOfMeasure, getUnitsOfMeasure",
+PDTL-FE-001,Migrate product-details reads,Field,attachment,PDTL-BE-G-03,search,,No,getProductDetailsById,via `...ProductDetailsDataFragment`
+PDTL-FE-001,Migrate product-details reads,Field,businessPartners,PDTL-BE-G-02,vmm,,No,getProductDetailsById,via `...ProductDetailsDataFragment`
+PDTL-FE-001,Migrate product-details reads,Field,createdBy,PDTL-BE-G-02,user-profile,,No,getProductDetailsById,via `...ProductDetailsDataFragment`
+PDTL-FE-001,Migrate product-details reads,Query,getProductDetailsById,PDTL-BE-B-01,,,No,"getProductDetailComponentStatus, getProductDetailsById",
+PDTL-FE-001,Migrate product-details reads,Field,participantDetails,PDTL-BE-G-01,user-profile,,No,getProductDetailsById,via `...ProductDetailsDataFragment`
+PDTL-FE-001,Migrate product-details reads,Field,teams,PDTL-BE-G-01,user-profile,,No,getProductDetailsById,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+PDTL-FE-001,Migrate product-details reads,Field,updatedBy,PDTL-BE-G-02,user-profile,,No,getProductDetailsById,via `...ProductDetailsDataFragment`
+PDTL-FE-001,Migrate product-details reads,Field,users,PDTL-BE-G-01,user-profile,,No,getProductDetailsById,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+PDTL-FE-001,Migrate product-details reads,Field,workspaces,PDTL-BE-G-02,workspaceV2,,No,getProductDetailsById,via `...ProductDetailsDataFragment`
+PKG-FE-001,Migrate packaging reads,Field,businessPartner,PKG-BE-G-01,vmm,,No,"getPackagingById, getPackagings",via `...PackagingDetailsBaseFragment`; via `...PackagingDetailsFragment`
+PKG-FE-001,Migrate packaging reads,Field,createdBy,PKG-BE-G-02,user-profile,,No,"getPackagingById, getPackagings",via `...PackagingDetailsBaseFragment`; via `...PackagingDetailsFragment`
+PKG-FE-001,Migrate packaging reads,Field,dielineEvaluators,PKG-BE-G-02,user-profile,,No,"getPackagingById, getPackagings",via `...PackagingDetailsBaseFragment`; via `...PackagingDetailsFragment`
+PKG-FE-001,Migrate packaging reads,Query,getPackagingById,PKG-BE-B-02,,,No,"getPackagingById, getPackagingComponentStatus",
+PKG-FE-001,Migrate packaging reads,Query,getPackagings,PKG-BE-B-01,,,No,getPackagings,
+PKG-FE-001,Migrate packaging reads,Field,suggestedRetailPriceByDPCI,PKG-BE-G-04,apex,,No,"getPackagingById, getPackagings",via `...PackagingDetailsBaseFragment`; via `...PackagingDetailsFragment`
+PKG-FE-001,Migrate packaging reads,Field,updatedBy,PKG-BE-G-02,user-profile,,No,"getPackagingById, getPackagings",via `...PackagingDetailsBaseFragment`; via `...PackagingDetailsFragment`
+PKG-FE-001,Migrate packaging reads,Field,waveDescription,PKG-BE-G-04,tag,,No,"getPackagingById, getPackagings",via `...PackagingDetailsBaseFragment`; via `...PackagingDetailsFragment`
+PKG-FE-002,Migrate packaging master-data reads and retire deprecated fields,Query,getCountries,PKG-BE-B-06,,,No,getCountries,
+PKG-FE-002,Migrate packaging master-data reads and retire deprecated fields,Query,getPackagingFieldValuesByType,PKG-BE-B-04,,,No,getPackagingFieldValuesByType,
+PKG-FE-003,Migrate dieline flows,Field,attachment,PKG-BE-G-05,attachment,,No,getDielines,
+PKG-FE-003,Migrate dieline flows,Field,attachments,PKG-BE-G-05,search,,No,getDielines,
+PKG-FE-003,Migrate dieline flows,Field,evaluatedBy,PKG-BE-G-05,user-profile,,No,getDielines,
+PKG-FE-003,Migrate dieline flows,Query,getDielineEvaluationStatuses,PKG-BE-B-05,,,No,getDielineEvaluationStatuses,
+PKG-FE-003,Migrate dieline flows,Query,getDielines,PKG-BE-B-03,,,No,getDielines,
+WATCHLIST-FE-001,Migrate watchlist reads,Field,attachments,WATCHLIST-BE-G-03,search,,No,"getWatchlistByFilter, getWatchlistByIds",via `...WatchlistFields`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,brand,PRODUCT-BE-G-13,ig,,No,"getWatchlistByFilter, getWatchlistByIds",cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,createdBy,WATCHLIST-BE-G-02,user-profile,,No,"getWatchlistByFilter, getWatchlistByIds",via `...WatchlistFields`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,droppedPartnerIds,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,droppedPartners,PRODUCT-BE-G-07,vmm,,No,"getWatchlistByFilter, getWatchlistByIds",🔬 SPIKE-04 (gated); cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,editable,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Query,getWatchlistByFilter,WATCHLIST-BE-C-01,,,No,getWatchlistByFilter,
+WATCHLIST-FE-001,Migrate watchlist reads,Query,getWatchlistByIds,WATCHLIST-BE-B-01,,,No,getWatchlistByIds,
+WATCHLIST-FE-001,Migrate watchlist reads,Field,owningPartnerType,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,packagingAttributes,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,participantDetails,WATCHLIST-BE-G-02,user-group,,No,"getWatchlistByFilter, getWatchlistByIds",via `...WatchlistFields`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,preferredStyle,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,primaryMaterial,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,productMaterials,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,reservedDpcis,PRODUCT-BE-G-10,apex,,No,"getWatchlistByFilter, getWatchlistByIds",cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,secondaryMaterial,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,tags,PRODUCT-BE-G-13,tag,,No,"getWatchlistByFilter, getWatchlistByIds",cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,tcins,PRODUCT-BE-G-13,corona,,No,"getWatchlistByFilter, getWatchlistByIds",cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,teams,WATCHLIST-BE-G-02,user-group,,No,"getWatchlistByFilter, getWatchlistByIds",external via `participantDetails`; via `...ProductBaseInfoFragment`; via `...WatchlistParticipants`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,thumbnailId,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,updatedBy,WATCHLIST-BE-G-02,user-profile,,No,"getWatchlistByFilter, getWatchlistByIds",via `...WatchlistFields`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,users,WATCHLIST-BE-G-02,user-group,,No,"getWatchlistByFilter, getWatchlistByIds",external via `participantDetails`; via `...WatchlistParticipants`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,vendorStyleNumber,NEW-WATCHLIST-BE-G-??,,,Yes,"getWatchlistByFilter, getWatchlistByIds",via `...ProductBaseInfoFragment`
+WATCHLIST-FE-001,Migrate watchlist reads,Field,workspaces,PRODUCT-BE-G-09,workspaceV2,,No,"getWatchlistByFilter, getWatchlistByIds",cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`; via `...WatchlistFields`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,additionalMaterialDetails,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,blue,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BOMColorDetailsFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,BomFabricSpecComboSlimDetails,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",fragment body not found in snapshot
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,BOMTrimDetailsFragment,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",fragment body not found in snapshot
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,BomWashDetailsFragment,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",fragment body not found in snapshot
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,brand,PRODUCT-BE-G-13,ig,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,businessPartners,IMPRESSION-BE-G-01,vmm,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,certifications,BOM-BE-G-03,materialHub,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,components,NEW-IMPRESSION-BE-G-??,,,Yes,searchImpressionsByProductId,
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,countryOfOrigin,BOM-BE-G-03,tag,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,createdBy,BOM-BE-G-01,user-profile,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,criticalToQuality,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,department,NEW-IMPRESSION-BE-G-??,,,Yes,searchImpressionsByProductId,
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,departments,NEW-IMPRESSION-BE-G-??,,,Yes,searchImpressionsByProductId,
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,designPartnerId,NEW-IMPRESSION-BE-G-??,,,Yes,searchImpressionsByProductId,
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,droppedPartnerIds,NEW-IMPRESSION-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,droppedPartners,PRODUCT-BE-G-07,vmm,,No,"getBomByIds, searchImpressionsByProductId",🔬 SPIKE-04 (gated); cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,editable,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,fabricRecord,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BomComboSlimDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,fabricRecordDetail,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BomFabricSpecDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,fabricRecordHumanId,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BomComboSlimDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,fabricSpecCombos,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BomComboSlimDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Query,getBomByIds,BOM-BE-B-01,,,No,"getBomByIds, searchImpressionsByProductId",
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Query,getProduct,PRODUCT-BE-B-01,,,No,searchImpressionsByProductId,
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,green,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BOMColorDetailsFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,groundColor,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",via `...TrimLibraryImpressionDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,ImpressionFragment,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,fragment body not found in snapshot
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,libraryResource,BOM-BE-G-03,materialHub,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,materialLibraryUom,BOM-BE-G-08,trim,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,origin,BOM-BE-G-03,materialHub,,No,"getBomByIds, searchImpressionsByProductId",external via `origins`; via `...MaterialOrigins`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,origins,BOM-BE-G-03,materialHub,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,owningPartnerType,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,packagingAttributes,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,parentHumanId,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BomFabricSpecDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,participantDetails,BOM-BE-G-01,user-profile,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,percentage,BOM-BE-G-03,materialHub,,No,"getBomByIds, searchImpressionsByProductId",external via `origins`; via `...MaterialOrigins`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,preferredStyle,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,primaryMaterial,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,primaryMaterialAttachmentId,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,productMaterials,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,productWorkspaceInfo,NEW-IMPRESSION-BE-G-??,,,Yes,searchImpressionsByProductId,
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,quantityUom,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,recycledContent,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,red,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BOMColorDetailsFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,reservedDpcis,PRODUCT-BE-G-10,apex,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Query,searchImpressionsByProductId,IMPRESSION-BE-B-01,,,No,searchImpressionsByProductId,
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,secondaryMaterial,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,sectionId,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,sectionName,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,sizeCaption,BOM-BE-G-08,trim,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,sizeUom,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,sizeValue,BOM-BE-G-08,trim,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,sliderColor,BOM-BE-G-13,search,,No,"getBomByIds, searchImpressionsByProductId",via `...TrimZipperLibraryImpressionDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,SPARK_FabricSpecification_Files,NEW-BOM-BE-G-??,,,Yes,"getBomByIds, searchImpressionsByProductId",fragment body not found in snapshot
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,tags,PRODUCT-BE-G-13,tag,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,tapeColor,BOM-BE-G-13,search,,No,"getBomByIds, searchImpressionsByProductId",via `...TrimZipperLibraryImpressionDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,tcins,PRODUCT-BE-G-13,corona,,No,getBomByIds,cross-domain: `Product` owned by `product`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,teams,BOM-BE-G-01,user-profile,,No,"getBomByIds, searchImpressionsByProductId",external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,teethColor,BOM-BE-G-13,search,,No,"getBomByIds, searchImpressionsByProductId",via `...TrimZipperLibraryImpressionDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,textColor,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",via `...TrimLibraryImpressionDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,thumbnailId,BOM-BE-G-12,search,,No,"getBomByIds, searchImpressionsByProductId",external via `libraryResource`; via `...BOMColorDetailsFragment`; via `...BomFabricSpecDetails`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,updatedBy,BOM-BE-G-01,user-profile,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,users,BOM-BE-G-01,user-profile,,No,"getBomByIds, searchImpressionsByProductId",external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,vendorStyleNumber,NEW-BOM-BE-G-??,,,Yes,getBomByIds,via `...ProductBaseInfoFragment`
+IMPRESSION-FE-001,Migrate `getBomDataAndImpressions` (with BOM wave),Field,workspaces,BOM-BE-G-01,workspaceV2,,No,"getBomByIds, searchImpressionsByProductId",via `...BomDetails`; via `...ProductBaseInfoFragment`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,additionalMaterialDetails,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,ancestryProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,attachments,PRODUCT-BE-G-03,attachment,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,attachmentsV3,PRODUCT-BE-G-03,attachment,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,attachmentsWithMetaData,PRODUCT-BE-G-01,attachment,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,blue,BOM-BE-G-12,search,,No,searchImpressionsByProductId,external via `libraryResource`; via `...BOMColorDetailsFragment`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,BomFabricSpecComboSlimDetails,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,fragment body not found in snapshot
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,BOMTrimDetailsFragment,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,fragment body not found in snapshot
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,BomWashDetailsFragment,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,fragment body not found in snapshot
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,brand,PRODUCT-BE-G-13,ig,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,businessPartners,IMPRESSION-BE-G-01,vmm,,No,"getProduct, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,certifications,BOM-BE-G-03,materialHub,,No,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,childProducts,PRODUCT-BE-G-10,relationship,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,clazz,PRODUCT-BE-G-13,ig,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,components,PRODUCT-BE-G-02,search,,No,"getProduct, searchImpressionsByProductId",🔬 SPIKE-05 (gated)
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,countryOfOrigin,BOM-BE-G-03,tag,,No,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,createdBy,BOM-BE-G-01,user-profile,,No,"getProduct, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,criticalToQuality,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,department,PRODUCT-BE-G-13,ig,,No,"getProduct, searchImpressionsByProductId",
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,departments,PRODUCT-BE-G-13,ig,,No,"getProduct, searchImpressionsByProductId",
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,designPartnerId,NEW-IMPRESSION-BE-G-??,,,Yes,searchImpressionsByProductId,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,discussionsV2,PRODUCT-BE-G-06,discussion,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,division,PRODUCT-BE-G-13,ig,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,droppedPartners,PRODUCT-BE-G-07,vmm,,No,"getProduct, searchImpressionsByProductId",🔬 SPIKE-04 (gated)
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,fabricRecord,BOM-BE-G-12,search,,No,searchImpressionsByProductId,external via `libraryResource`; via `...BomComboSlimDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,fabricRecordDetail,BOM-BE-G-12,search,,No,searchImpressionsByProductId,external via `libraryResource`; via `...BomFabricSpecDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,fabricRecordHumanId,BOM-BE-G-12,search,,No,searchImpressionsByProductId,external via `libraryResource`; via `...BomComboSlimDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,fabricSpecCombos,BOM-BE-G-12,search,,No,searchImpressionsByProductId,external via `libraryResource`; via `...BomComboSlimDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Query,getBomByIds,BOM-BE-B-01,,,No,searchImpressionsByProductId,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Query,getProduct,PRODUCT-BE-B-01,,,No,"getProduct, searchImpressionsByProductId",
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,green,BOM-BE-G-12,search,,No,searchImpressionsByProductId,external via `libraryResource`; via `...BOMColorDetailsFragment`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,groundColor,BOM-BE-G-12,search,,No,searchImpressionsByProductId,via `...TrimLibraryImpressionDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,ImpressionFragment,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,fragment body not found in snapshot
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,isResourceCritical,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,libraryResource,BOM-BE-G-03,materialHub,,No,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,linkedResourceId,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,materialLibraryUom,BOM-BE-G-08,trim,,No,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,origin,BOM-BE-G-03,materialHub,,No,searchImpressionsByProductId,external via `origins`; via `...MaterialOrigins`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,origins,BOM-BE-G-03,materialHub,,No,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,parentHumanId,BOM-BE-G-12,search,,No,searchImpressionsByProductId,external via `libraryResource`; via `...BomFabricSpecDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,participantDetails,BOM-BE-G-01,user-profile,,No,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,percentage,BOM-BE-G-03,materialHub,,No,searchImpressionsByProductId,external via `origins`; via `...MaterialOrigins`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,primaryMaterialAttachmentId,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,productWorkspaceInfo,PRODUCT-BE-G-09,workspaceV2,,No,"getProduct, searchImpressionsByProductId",
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,quantityUom,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,recycledContent,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,red,BOM-BE-G-12,search,,No,searchImpressionsByProductId,external via `libraryResource`; via `...BOMColorDetailsFragment`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,resourcePermissions,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,resourceTitle,NEW-PRODUCT-BE-G-??,,,Yes,getProduct,via `...AttachmentsWithMetaData`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Query,searchImpressionsByProductId,IMPRESSION-BE-B-01,,,No,searchImpressionsByProductId,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,sectionId,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,sectionName,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,sizeCaption,BOM-BE-G-08,trim,,No,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,sizeUom,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,sizeValue,BOM-BE-G-08,trim,,No,searchImpressionsByProductId,via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,sliderColor,BOM-BE-G-13,search,,No,searchImpressionsByProductId,via `...TrimZipperLibraryImpressionDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,SPARK_FabricSpecification_Files,NEW-BOM-BE-G-??,,,Yes,searchImpressionsByProductId,fragment body not found in snapshot
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,tags,PRODUCT-BE-G-13,tag,,No,getProduct,
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,tapeColor,BOM-BE-G-13,search,,No,searchImpressionsByProductId,via `...TrimZipperLibraryImpressionDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,teams,BOM-BE-G-01,user-profile,,No,searchImpressionsByProductId,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,teethColor,BOM-BE-G-13,search,,No,searchImpressionsByProductId,via `...TrimZipperLibraryImpressionDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,textColor,BOM-BE-G-12,search,,No,searchImpressionsByProductId,via `...TrimLibraryImpressionDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,thumbnailId,BOM-BE-G-12,search,,No,"getProduct, searchImpressionsByProductId",external via `libraryResource`; via `...BOMColorDetailsFragment`; via `...BomFabricSpecDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,updatedBy,BOM-BE-G-01,user-profile,,No,"getProduct, searchImpressionsByProductId",via `...BomDetails`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,users,BOM-BE-G-01,user-profile,,No,searchImpressionsByProductId,external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+IMPRESSION-FE-002,Migrate `getCarryForwardFormData` (with Product wave),Field,workspaces,BOM-BE-G-01,workspaceV2,,No,"getProduct, searchImpressionsByProductId",via `...BomDetails`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,businessPartner,CLAIM-BE-G-02,vmm,,No,"getAllClaimsAbout, getClaimByIds",via `...FullClaimDetailsFragment`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,createdBy,CLAIM-BE-G-02,user-profile,,No,"getAllClaimsAbout, getClaimByIds, getClaims",via `...FullClaimDetailsFragment`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,designPartner,CLAIM-BE-G-02,vmm,,No,"getAllClaimsAbout, getClaimByIds",via `...FullClaimDetailsFragment`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Query,getAllClaimsAbout,CLAIM-BE-B-04,,,No,"getAllClaimsAbout, getClaimByIds, getClaims",
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Query,getClaimByIds,CLAIM-BE-B-02,,,No,"getAllClaimsAbout, getClaimByIds, getClaimComponentStatus",
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Query,getClaims,CLAIM-BE-B-01,,,No,"getAllClaimsAbout, getClaims",
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Query,getCommunicationChannels,CLAIM-BE-B-03,,,No,"getAllClaimsAbout, getClaimByIds, getClaims, getCommunicationChannels",
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,parentDetails,CLAIM-BE-G-03,product,,No,"getAllClaimsAbout, getClaimByIds",via `...FullClaimDetailsFragment`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,participantDetails,CLAIM-BE-G-01,user-profile,,No,"getAllClaimsAbout, getClaimByIds",via `...FullClaimDetailsFragment`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,product,CLAIM-BE-G-03,product,,No,"getAllClaimsAbout, getClaimByIds",via `...FullClaimDetailsFragment`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,teams,CLAIM-BE-G-01,user-profile,,No,"getAllClaimsAbout, getClaimByIds",external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,updatedBy,CLAIM-BE-G-02,user-profile,,No,"getAllClaimsAbout, getClaimByIds, getClaims",via `...FullClaimDetailsFragment`
+CLAIM-FE-002,Migrate claim reads (first cross-subgraph cutover),Field,users,CLAIM-BE-G-01,user-profile,,No,"getAllClaimsAbout, getClaimByIds",external via `participantDetails`; via `...LegacyComponentDiscussionParticipantsFragment`

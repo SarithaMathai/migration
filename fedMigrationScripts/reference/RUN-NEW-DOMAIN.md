@@ -6,16 +6,16 @@ a new domain end-to-end and produce all audience artifacts. The framework lives 
 ## What a run produces
 
 For domain `{X}` it creates `finalOutput/{x}/` with the 8 analysis files
-(`01-schema-inventory`, `02-resolver-analysis`, `03-schema.graphql`, `03-schema-analysis`,
-`04-stories`, `04-stories-index.yaml`, `04-po-summary`, `05-attribute-inventory`), then the consumption
+(`01-schema-inventory`, `02-resolver-analysis`, `be-03-schema.graphql`, `03-schema-analysis`,
+`04-stories`, `be-04-stories-index.yaml`, `04-po-summary`, `05-attribute-inventory`), then the consumption
 layer (`confluence/{x}.md`, refreshed `jira/` via `generate.py`), and refreshes the program rollups.
 
 ## Generic prompt (template)
 
 ```
 Analyze the GraphQL domain "{DOMAIN}" for the Spark → plm-product DGS migration, following the
-framework in finalOutput/scripts/ (skills 01 → 02 → 03 → 04 → 05 → 06, reference-output-conventions,
-reference-federation-patterns, domain-service-catalog).
+framework in finalOutput/scripts/ (skills 01 → 02 → 03 → 04 → 05 → 06, output-conventions-condensed,
+federation-patterns-condensed, domain-service-catalog).
 
 Sources (the SDL is the schema source of truth; cross-check behaviour against the resolver):
 - schema  : code/schemas/{SPARK_Domain}.txt
@@ -81,7 +81,7 @@ Analyze the GraphQL domain "watchlist" per finalOutput/scripts/ (skills 01→06)
 - service : code/services/product/Watchlist.txt
 Co-located in the plm-product monorepo (service uses the enterprise_product_development_products base);
 it contributes ResourcesCount.watchlists to Product TechPack INTERNALLY (CAT-2, like bom/measurement —
-see SPARK-PROD-F08). Output finalOutput/watchlist/01..05 + confluence/watchlist.md, run
+see PRODUCT-BE-F-08). Output finalOutput/watchlist/01..05 + confluence/watchlist.md, run
 python finalOutput/jira/generate.py, and refresh the program rollups. Follow the RUN-NEW-DOMAIN.md rules.
 ```
 
@@ -97,5 +97,5 @@ python finalOutput/jira/generate.py, and refresh the program rollups. Follow the
 ```
 
 ---
-*After any run, `jira/generate.py` auto-discovers the new `finalOutput/{domain}/04-stories-index.yaml` —
+*After any run, `jira/generate.py` auto-discovers the new `finalOutput/{domain}/be-04-stories-index.yaml` —
 no generator change needed. See [`skill-06-consumption-artifacts.md`](./skill-06-consumption-artifacts.md).*

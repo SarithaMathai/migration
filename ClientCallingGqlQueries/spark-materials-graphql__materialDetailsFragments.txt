@@ -1,0 +1,44 @@
+import { gql } from '@apollo/client'
+
+export const MATERIAL_DETAILS = gql`
+  fragment MaterialDetails on SPARK_MaterialsPaged {
+    content {
+      id
+      name
+      type
+      additionalReferenceId
+      thumbnailId
+      red
+      blue
+      green
+      applicationTechnique
+      placed
+      colorForAll {
+        code
+        description
+      }
+      sampledFabricSpecId
+      sampledFabricSpecComboId
+      solid
+    }
+    paging {
+      number
+      totalElements
+    }
+  }
+`
+
+export const MATERIAL_DETAILS_SLIM_BOM = gql`
+  fragment MaterialDetailsSlim on SPARK_MaterialsPaged {
+    content {
+      id
+      name
+      thumbnailId
+      placed
+    }
+    paging {
+      number
+      totalElements
+    }
+  }
+`

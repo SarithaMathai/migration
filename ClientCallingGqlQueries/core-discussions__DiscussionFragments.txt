@@ -1,0 +1,339 @@
+import { gql } from '@apollo/client'
+export const DISCUSSION_ATTACHMENT_DETAILS_FRAGMENT = gql`
+  fragment DiscussionAttachmentDetailsFragment on SPARK_Attachment {
+    id: attachmentId
+    humanId: attachmentId
+    previewable
+    documentId
+    documentName
+    documentType
+    documentSize
+    createdAt
+    updatedAt
+    mediaType
+    sharedWithGallery
+    canShareWithGallery
+    attachmentCanShowdog
+    resource {
+      id
+      type
+    }
+    createdBy {
+      firstName
+      lastName
+    }
+    galleryDetails {
+      fileValid
+      validations {
+        name
+        description
+        message
+        classification
+      }
+    }
+    finalVirtualFile
+  }
+`
+export const USER_PROFILE_ATTRIBUTES_FRAGMENT = gql`
+  fragment UserProfileAttributesFragment on SPARK_UserProfileAttributes {
+    id
+    userProfileId
+    firstName
+    internal: isInternal
+    lastName
+    companyName
+    partnerId
+    roles {
+      id
+      value
+    }
+    accreditations {
+      code
+      description
+      status
+    }
+    systemUser
+    primaryRole
+    outOfOfficeAttributes {
+      userOutOfOffice
+    }
+    active
+  }
+`
+
+export const DISCUSSION_PARTICIPANTS_FRAGMENT = gql`
+  fragment DiscussionParticipantsFragment on SPARK_Participants {
+    teams {
+      teamId
+      edited
+      businessPartner {
+        id
+        name # TODO: SPARK-10242 unify queries This was renamed to companyName
+      }
+      teamName # TODO: SPARK-10242 unify queries This was renamed to name
+      users {
+        # this was renamed to members
+        ...UserProfileAttributesFragment
+      }
+    }
+    users {
+      ...UserProfileAttributesFragment
+    }
+  }
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+export const DISCUSSION_PARTICIPANTS_FRAGMENT_NEW_WIP = gql`
+  fragment DiscussionParticipantsFragment_NEW_WIP on SPARK_Participants {
+    teams {
+      id: teamId
+      teamId
+      edited
+      partnerType
+      businessPartner {
+        id
+        name # TODO: This was renamed to companyName
+      }
+      teamName # TODO: This was renamed to name
+      users {
+        # this was renamed to members
+        ...UserProfileAttributesFragment
+      }
+    }
+    users {
+      ...UserProfileAttributesFragment
+    }
+  }
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+export const REPLY_DETAILS_FRAGMENT_V2 = gql`
+  fragment ReplyDetailsFragmentV3 on SPARK_DiscussionReply {
+    id
+    discussionId
+    comment
+    readByUserList
+    createdAt: createdTS
+    updatedAt: updateTS
+    isDraft: draft
+    draftEditors
+    isEdit: edited
+    isCritical: critical
+    isEditable: editable
+    attachmentsV2 {
+      ...DiscussionAttachmentDetailsFragment
+    }
+    createdUser {
+      ...UserProfileAttributesFragment
+    }
+  }
+  ${DISCUSSION_ATTACHMENT_DETAILS_FRAGMENT}
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+export const DISCUSSION_DETAILS_FRAGMENT_V3 = gql`
+  fragment DiscussionDetailsFragmentV3 on SPARK_Discussion {
+    id
+    subject
+    createdAt: createdTS
+    repliesCount
+    draftReplyCount
+    isDraft: draft
+    authorName
+    comment
+    createdAt: createdTS
+    discussionTitle
+    isEdit: edited
+    isCritical: critical
+    isEditable: editable
+    isAnnouncement: announcement
+    partnerId
+    designPartnerId
+    updatedAt: updateTS
+    isSampleDiscussion
+    readByUserList
+    associations
+    lastReplyBy {
+      ...UserProfileAttributesFragment
+    }
+    lastReplyAt
+    resources {
+      mappings {
+        product
+        sample
+        workspace
+      }
+    }
+    repliesV2 {
+      ...ReplyDetailsFragmentV3
+    }
+    updatedUser {
+      ...UserProfileAttributesFragment
+    }
+    createdUser {
+      ...UserProfileAttributesFragment
+    }
+    participants {
+      ...DiscussionParticipantsFragment_NEW_WIP
+    }
+    businessPartner {
+      id
+      name
+    }
+    droppedPartners {
+      id
+      name
+    }
+    tags {
+      id
+      name
+    }
+  }
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+  ${DISCUSSION_PARTICIPANTS_FRAGMENT_NEW_WIP}
+  ${REPLY_DETAILS_FRAGMENT_V2}
+`
+export const DISCUSSION_LIST_FRAGMENT_V2 = gql`
+  fragment DiscussionListFragmentV2 on SPARK_Discussion {
+    id
+    subject
+    createdTS
+    repliesCount
+    draftReplyCount
+    draft
+    draftEditors
+    authorName
+    comment
+    createdTS
+    discussionTitle
+    edited
+    announcement
+    partnerId
+    designPartnerId
+    updateTS
+    isSampleDiscussion
+    lastReplyBy {
+      ...UserProfileAttributesFragment
+    }
+    lastReplyAt
+    resources {
+      mappings {
+        product
+        sample
+        workspace
+        bill_of_materials
+        packaging_bom
+        packaging_bill_of_materials
+        measurement_set
+        claim
+        construction_set
+        packaging
+      }
+    }
+    updatedUser {
+      ...UserProfileAttributesFragment
+    }
+    createdUser {
+      ...UserProfileAttributesFragment
+    }
+    participants {
+      ...DiscussionParticipantsFragment
+    }
+    businessPartner {
+      id
+      name
+      associatedPartnerType
+    }
+    droppedPartners {
+      id
+      name
+      associatedPartnerType
+    }
+    designPartners {
+      id
+      name
+      associatedPartnerType
+    }
+    tags {
+      id
+      name
+    }
+  }
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+  ${DISCUSSION_PARTICIPANTS_FRAGMENT}
+`
+export const DISCUSSION_TEAMS_FRAGMENT = gql`
+  fragment DiscussionTeamsFragment on SPARK_Team {
+    id
+    teamId: id
+    name
+    partnerName: partner_name
+    partnerId: partner_id
+    partnerType {
+      code
+      description
+    }
+    purpose
+    members {
+      user_profile_id
+      roles
+      memberDetails {
+        ...UserProfileAttributesFragment
+      }
+    }
+  }
+  ${USER_PROFILE_ATTRIBUTES_FRAGMENT}
+`
+export const COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT = gql`
+  fragment ComponentDiscussionParticipantsFragment on SPARK_UserGroup_Participants {
+    teams {
+      teamName
+      businessPartner {
+        id
+        name
+      }
+      teamId
+      edited
+      usersInfo {
+        userId
+        userDetails {
+          accreditations {
+            code
+            description
+            status
+          }
+          id
+          active
+          userProfileId
+          firstName
+          lastName
+          isInternal
+          companyName
+          partnerId
+          outOfOfficeAttributes {
+            userOutOfOffice
+          }
+        }
+      }
+    }
+    users {
+      userDetails {
+        accreditations {
+          code
+          description
+          status
+        }
+        id
+        userProfileId
+        firstName
+        lastName
+        companyName
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+        roles {
+          id
+          value
+        }
+        primaryRole
+      }
+    }
+  }
+`

@@ -1,0 +1,528 @@
+import { gql } from '@apollo/client'
+import { LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT, LEGACY_PRODUCT_TEAMS_FOR_COMPONENT_DISCUSSION_FRAGMENT } from '@spark/product-queries'
+
+export const CLAIM_WORKSPACE_PRODUCT_FRAGMENT = gql`
+  fragment ClaimWorkspaceProductFragment on SPARK_Product {
+    id
+    createdAt
+    status(workspaceIdFilter: $workspaceIdFilter) {
+      id
+      name
+    }
+    vendorAttributes(workspaceIdFilter: $workspaceIdFilter) {
+      partnerId
+      status {
+        id
+        name
+        workspaceId
+      }
+      statusCount
+    }
+    comments
+    tags {
+      id
+      name
+      type
+    }
+    clazz {
+      id
+      displayText
+      classId
+      name
+    }
+    department {
+      id
+      name
+      divisionName
+      divisionId
+      displayText
+    }
+    brand {
+      id
+      name
+    }
+    resources {
+      mappings {
+        team
+      }
+    }
+    editable
+    description
+    primaryMaterial
+    secondaryMaterial
+    thumbnailId
+    productWorkspaceInfo {
+      humanId
+      carryForwardReason
+      linkedAttributes
+    }
+    attachmentSummary {
+      isThumbnailPreviewable
+      totalAttachmentCount
+    }
+    businessPartners {
+      id
+      name
+    }
+    droppedPartners {
+      id
+      name
+    }
+    droppedPartnerIds
+    parentProductId
+    vendorStyleNumber
+    numberOfPieces
+    developmentCost
+    presentationDimensions
+  }
+`
+
+export const CLAIM_DETAILS_FRAGMENT = gql`
+  fragment ClaimDetailsFragment on SPARK_Claims {
+    humanId
+    parentId
+    claimName
+    claimNotes
+    additionalInfo
+    currentUserPermissions {
+      permissions
+    }
+    access {
+      permissions {
+        abstractAccessGroup {
+          id
+          grantees
+          type
+        }
+      }
+    }
+    createdAt
+    subjectiveStatements
+    status {
+      code
+      description
+    }
+  }
+`
+
+export const FULL_CLAIM_DETAILS = (includeWorkspaces = true) => gql`
+  fragment FullClaimDetailsFragment on SPARK_Claims {
+    humanId
+    claimName
+    additionalInfo
+    claimNotes
+    parentId
+    product {
+      id
+      thumbnailId
+      teams {
+        ...LegacyProductTeamsForComponentDiscussionFragment
+      }
+    }
+    statuses {
+      workspaceId
+      type
+      status {
+        code
+        description
+      }
+    }
+    claimDetails {
+      id
+      claimId
+      claimName
+      claimDescription
+      guestFacingClaim
+      guestFacingClaimId
+      appliesTo
+      vendorSubstantiate {
+        substantiated
+        substantiatedAt
+        substantiatedBy {
+          id
+          firstName
+          lastName
+          internal: isInternal
+        }
+      }
+      communicationChannel {
+        code
+        description
+      }
+      status {
+        code
+        description
+      }
+      shareWithGuests
+      claimsAbout {
+        code
+        description
+      }
+      packagingCopy {
+        packagingLocation
+        packagingVerbiage
+      }
+    }
+    participantDetails {
+      ...LegacyComponentDiscussionParticipantsFragment
+    }
+    businessPartner {
+      id
+      name
+    }
+    designPartner {
+      id
+      name
+    }
+    updatedAt
+    status {
+      code
+      description
+    }
+    createdAt
+    createdBy {
+      id
+      firstName
+      lastName
+      internal: isInternal
+    }
+    updatedBy {
+      id
+      firstName
+      lastName
+      internal: isInternal
+    }
+    parentDetails {
+      otherClaimBps
+      droppedPartnerIds
+      systemTeams {
+        content {
+          id
+          businessPartnerId: partner_id
+          name: partner_name
+          systemTeamGroupId: accessControlGroupIds
+          teamType
+          teamName: name
+        }
+      }
+    }
+    ${
+      includeWorkspaces
+        ? `workspaces {
+      id
+      description
+    }`
+        : ''
+    }
+    manualLock
+    subjectiveStatements
+  }
+  ${LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT}
+  ${LEGACY_PRODUCT_TEAMS_FOR_COMPONENT_DISCUSSION_FRAGMENT}
+`
+
+export const GET_CLAIMS_AND_CHANNELS = gql`
+  query getClaims($parentHumanId: String, $claimHumanIds: [String], $partnerIds: [String]) {
+    getClaims(parentHumanId: $parentHumanId, claimHumanIds: $claimHumanIds, partnerIds: $partnerIds) {
+      ...ClaimDetailsFragment
+    }
+    getCommunicationChannels {
+      id: code
+      value: code
+      label: description
+      info: info
+    }
+    getAllClaimsAbout {
+      code
+      description
+    }
+  }
+  ${CLAIM_DETAILS_FRAGMENT}
+`
+export const GET_COMMUNICATION_CHANNELLS = gql`
+  query getCommunicationChannels {
+    getCommunicationChannels {
+      id: code
+      value: code
+      label: description
+      info: info
+    }
+  }
+`
+export const ADD_CLAIMS = gql`
+  mutation createClaim($sparkClaim: SPARK_ClaimsInput) {
+    createClaim(sparkClaim: $sparkClaim) {
+      humanId
+      parentId
+      claimName
+    }
+  }
+`
+export const UPDATE_CLAIM = gql`
+  mutation updateClaim($sparkClaim: SPARK_ClaimsUpdateInput) {
+    updateClaim(sparkClaim: $sparkClaim) {
+      humanId
+      version
+    }
+  }
+`
+
+export const LOCK_CLAIM = gql`
+  mutation lockClaim($claimId: String!) {
+    lockClaim(claimId: $claimId) {
+      humanId
+      manualLock
+    }
+  }
+`
+
+export const UNLOCK_CLAIM = gql`
+  mutation unlockClaim($claimId: String!) {
+    unlockClaim(claimId: $claimId) {
+      humanId
+      manualLock
+    }
+  }
+`
+
+export const BULK_UPDATE_CLAIM = gql`
+  mutation bulkUpdateClaim($sparkClaim: SPARK_BulkClaimsUpdateInput) {
+    bulkUpdateClaim(sparkClaim: $sparkClaim) {
+      humanId
+    }
+  }
+`
+export const GET_CLAIM_BY_ID = (includeWorkspaces = true) => gql`
+  query getClaimByIds($claimHumanIds: [String]) {
+    getClaimByIds(claimHumanIds: $claimHumanIds) {
+      ...FullClaimDetailsFragment
+    }
+    getCommunicationChannels {
+      id: code
+      value: code
+      label: description
+      info: info
+    }
+    getAllClaimsAbout {
+      code
+      description
+    }
+  }
+  ${FULL_CLAIM_DETAILS(includeWorkspaces)}
+`
+
+export const GET_CLAIM_VERSION = gql`
+  query getComponentVersion($id: String!, $version: Int!) {
+    getComponentVersion(id: $id, version: $version) {
+      ... on SPARK_Claims {
+        ...FullClaimDetailsFragment
+      }
+    }
+    getCommunicationChannels {
+      id: code
+      value: code
+      label: description
+      info: info
+    }
+  }
+  ${FULL_CLAIM_DETAILS(true)}
+`
+
+export const GET_EXTERNAL_CLAIMS = gql`
+  query getExternalClaims {
+    getExternalClaims {
+      id
+      name
+      description
+    }
+  }
+`
+
+export const GET_WORKSPACE_PRODUCTS_WITH_IDS = gql`
+  query getWorkspaceV2($page: Int, $size: Int, $id: ID!, $q: String, $filter: [String], $metric: Boolean, $workspaceIdFilter: String, $partnerIds: [String]) {
+    getWorkspaceV2(id: $id, metric: $metric) {
+      id
+      products(page: $page, size: $size, q: $q, filter: $filter) {
+        content {
+          claims(partnerIds: $partnerIds) {
+            ...FullClaimDetailsFragment
+          }
+          ...ClaimWorkspaceProductFragment
+        }
+      }
+    }
+  }
+  ${FULL_CLAIM_DETAILS(true)}
+  ${CLAIM_WORKSPACE_PRODUCT_FRAGMENT}
+`
+export const GET_PRODUCTS_WITH_IDS = gql`
+  query getProductTemplates(
+    $page: Int
+    $size: Int
+    $q: String
+    $filter: [String]
+    $resourceType: String
+    $resourceId: String
+    $includeBoms: Boolean = false
+    $includeClaims: Boolean = false
+    $includeMeasurementSets: Boolean = false
+    $includeProductDetails: Boolean = false
+    $workspaceIdFilter: String
+    $includeProductComponentsCount: Boolean = true
+  ) {
+    getProductTemplates(
+      resourceId: $resourceId
+      resourceType: $resourceType
+      page: $page
+      size: $size
+      q: $q
+      filter: $filter
+      includeBoms: $includeBoms
+      includeClaims: $includeClaims
+      includeMeasurementSets: $includeMeasurementSets
+      includeProductDetails: $includeProductDetails
+      includeProductComponentsCount: $includeProductComponentsCount
+    ) {
+      content {
+        claims(includeClaims: true) @include(if: $includeClaims) {
+          humanId
+          claimName
+          additionalInfo
+          claimNotes
+          parentId
+          product {
+            id
+            thumbnailId
+          }
+          claimDetails {
+            id
+            claimId
+            claimName
+            claimDescription
+            guestFacingClaim
+            guestFacingClaimId
+            appliesTo
+            vendorSubstantiate {
+              substantiated
+              substantiatedAt
+              substantiatedBy {
+                id
+                firstName
+                lastName
+                internal: isInternal
+              }
+            }
+            communicationChannel {
+              code
+              description
+            }
+            status {
+              code
+              description
+            }
+            shareWithGuests
+          }
+
+          businessPartner {
+            id
+            name
+          }
+          designPartner {
+            id
+            name
+          }
+          updatedAt
+          status {
+            code
+            description
+          }
+          createdAt
+
+          parentDetails {
+            otherClaimBps
+            droppedPartnerIds
+            systemTeams {
+              content {
+                id
+                businessPartnerId: partner_id
+                name: partner_name
+                systemTeamGroupId: accessControlGroupIds
+                teamType
+                teamName: name
+              }
+            }
+          }
+        }
+        productComponentsCounts {
+          name
+          count
+        }
+        id: humanId
+        status(workspaceIdFilter: $workspaceIdFilter) {
+          id
+          name
+        }
+        vendorAttributes(workspaceIdFilter: $workspaceIdFilter) {
+          partnerId
+          status {
+            id
+            name
+            workspaceId
+          }
+          statusCount
+        }
+        comments
+        tags {
+          id
+          name
+          type
+        }
+        clazz {
+          id
+          displayText
+          classId
+          name
+        }
+        department {
+          id
+          name
+          divisionName
+          divisionId
+          displayText
+        }
+        brand {
+          id
+          name
+        }
+        resources {
+          mappings {
+            team
+          }
+        }
+        editable
+        description
+        primaryMaterial
+        secondaryMaterial
+        thumbnailId
+        attachmentSummary {
+          isThumbnailPreviewable
+          totalAttachmentCount
+        }
+        businessPartners {
+          id
+          name
+        }
+        droppedPartners {
+          id
+          name
+        }
+        droppedPartnerIds
+        parentProductId
+        vendorStyleNumber
+        numberOfPieces
+        developmentCost
+        presentationDimensions
+      }
+    }
+  }
+`

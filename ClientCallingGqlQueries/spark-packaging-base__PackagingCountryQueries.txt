@@ -1,0 +1,11 @@
+import { gql } from '@apollo/client'
+
+export const GET_PACKAGING_COUNTRIES = gql`
+  query getCountries($codes: [String]) {
+    getCountries(codes: $codes) {
+      code
+      description
+      shortDescription
+    }
+  }
+`

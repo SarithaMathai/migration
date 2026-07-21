@@ -1,0 +1,35 @@
+import { gql } from '@apollo/client'
+
+import { DocumentNode } from 'graphql'
+
+export const ARCHIVE_ATTACHMENT: DocumentNode = gql`
+  mutation archiveAttachment($id: ID!) {
+    archiveAttachmentV3(id: $id) {
+      id
+    }
+  }
+`
+
+export const UPDATE_PRODUCT: DocumentNode = gql`
+  mutation updateProduct($input: SPARK_ProductUpdateInput!) {
+    updateProduct(input: $input) {
+      id
+    }
+  }
+`
+
+export const UPDATE_ARTWORK: DocumentNode = gql`
+  mutation updateArtwork($sparkArtwork: SPARK_ArtworkUpdate!) {
+    updateArtwork(sparkArtwork: $sparkArtwork) {
+      humanId
+    }
+  }
+`
+
+export const SET_FABRIC_THUMBNAIL: DocumentNode = gql`
+  mutation setFabricThumbnail($humanId: ID!, $thumbnailId: ID) {
+    setFabricThumbnail(humanId: $humanId, thumbnailId: $thumbnailId) {
+      thumbnailId
+    }
+  }
+`

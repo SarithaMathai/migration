@@ -1,0 +1,92 @@
+import { gql } from '@apollo/client'
+import { SPG_FRAGMENT } from '@spark/packaging-base'
+
+export const ADD_FILE_LIBRARY_ITEM = gql`
+  mutation addFileLibrary($sparkFileLibrary: SPARK_FileLibraryInput) {
+    addFileLibrary(sparkFileLibrary: $sparkFileLibrary) {
+      ... on SPARK_SpgFileLibrary {
+        humanId
+      }
+    }
+  }
+`
+export const UPDATE_FILE_LIBRARY_ITEM = gql`
+  mutation updateFileLibrary($humanId: String!, $sparkFileLibrary: SPARK_FileLibraryInput) {
+    updateFileLibrary(humanId: $humanId, sparkFileLibrary: $sparkFileLibrary) {
+      ... on SPARK_SpgFileLibrary {
+        ...SpgFragment
+      }
+    }
+  }
+  ${SPG_FRAGMENT}
+`
+
+export const GET_FILE_LIBRARIES = gql`
+  query getFileLibraries($page: Int = 0, $size: Int = 20, $humanIds: [String], $types: [String], $statusIds: [Int], $brandIds: [Int]) {
+    getFileLibraries(page: $page, size: $size, humanIds: $humanIds, types: $types, statusIds: $statusIds, brandIds: $brandIds) {
+      paging {
+        number
+        totalElements
+        totalPages
+        numberOfElements
+        size
+      }
+      content {
+        ...SpgFragment
+      }
+    }
+  }
+  ${SPG_FRAGMENT}
+`
+
+export const GET_PACKAGE_LIBRARY = gql`
+  query getPackageLibrary($id: String) {
+    getPackageLibrary(id: $id) {
+      ... on SPARK_SpgFileLibrary {
+        ...SpgFragment
+      }
+    }
+  }
+  ${SPG_FRAGMENT}
+`
+
+export const GET_RELATED_PACKAGING_COMPONENTS = gql`
+  query getRelatedPackagingComponents($id: String) {
+    getRelatedPackagingComponents(id: $id) {
+      content {
+        humanId
+        parentId
+        description
+        product {
+          description
+          thumbnailId
+        }
+      }
+    }
+  }
+`
+export const GET_FILES_V3 = gql`
+  query getAttachmentsV3($ids: [ID]!) {
+    getAttachmentsV3(ids: $ids) {
+      previewable
+      documentId
+      documentName
+      humanId
+      documentType
+      documentSize
+      createdAt
+      relatedResources
+    }
+  }
+`
+
+export const GENERATE_SPG_PACKET = gql`
+  mutation generateCoreTechPack($packetInput: SPARK_TechPackInput!) {
+    generateCoreTechPack(sparkTechpackContent: $packetInput) {
+      id
+      name
+      status
+      owner
+    }
+  }
+`

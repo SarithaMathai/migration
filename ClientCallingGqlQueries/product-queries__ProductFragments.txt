@@ -1,0 +1,180 @@
+import { gql } from '@apollo/client'
+
+export const VMM_BUSINESS_PARTNER_ON_PRODUCT = gql`
+  fragment VmmBusinessPartnerOnProduct on VMM_BusinessPartner {
+    id
+    name
+    associatedPartnerType
+    role {
+      roleCategory
+      bpRoleName
+      bpRoleId
+      status {
+        id
+      }
+    }
+  }
+`
+
+export const PRODUCT_VENDOR_ATTRIBUTES = gql`
+  fragment ProductVendorAttributesFragment on ProductVendorAttributes {
+    partnerId
+    partnerType
+    name
+    status {
+      id
+      name
+      workspaceId
+    }
+    statusCount
+  }
+`
+
+// Please use this over any other team fragmnet.
+// It is an overloaded fragment to make sure we don't miss any fields in the cache & components
+export const PRODUCT_FULL_TEAM_FRAGMENT = gql`
+  fragment ProductFullTeamFragment on SPARK_Team {
+    id
+    name
+    partner_id
+    partner_name
+    partnerName: partner_name
+    companyName: partner_name
+    partnerId: partner_id
+    purpose
+    accessControlGroupIds
+    partnerType {
+      code
+      description
+    }
+    members {
+      user_profile_id
+      userProfileId: user_profile_id
+      roles
+      memberDetails {
+        id
+        userProfileId
+        firstName
+        lastName
+        internal: isInternal
+        isInternal
+        companyName
+        partnerId
+        roles {
+          id
+          value
+        }
+        accreditations {
+          code
+          description
+          status
+        }
+        primaryRole
+        outOfOfficeAttributes {
+          userOutOfOffice
+        }
+        active
+      }
+    }
+    status_name
+  }
+`
+export const PRODUCT_BASE_INFO_FRAGMENT = gql`
+  fragment ProductBaseInfoFragment on SPARK_Product {
+    editable
+    description
+    owningPartnerType
+    thumbnailId
+    primaryMaterial
+    secondaryMaterial
+    brand {
+      id
+      name
+    }
+    productMaterials {
+      name
+      primary
+      libraryResource {
+        id
+      }
+    }
+    vendorStyleNumber
+    teams {
+      content {
+        ...ProductFullTeamFragment
+      }
+    }
+    tags {
+      id
+      name
+      type
+    }
+    tcins {
+      partnerId
+      tcin {
+        dpci
+        tcinId
+        createdAt
+        itemDetails {
+          primaryImage
+          launchDateTime
+          description
+          onlineUrl
+          color
+          size
+        }
+      }
+    }
+    reservedDpcis {
+      partnerId
+      reservedDpcis {
+        apexId
+        apexDescription
+        dpci
+        dpciStatus
+        dept
+        clazz
+        subClass
+        tcin
+      }
+    }
+    workspaces {
+      content {
+        id
+        description
+        businessPartners {
+          ...VmmBusinessPartnerOnProduct
+        }
+      }
+    }
+    businessPartners {
+      ...VmmBusinessPartnerOnProduct
+    }
+    droppedPartners {
+      ...VmmBusinessPartnerOnProduct
+    }
+    droppedPartnerIds
+    preferredStyle
+    packagingAttributes {
+      formatId
+      formatName
+      spgLibraryId
+      spgStatus {
+        code
+        description
+      }
+      spg {
+        humanId
+        name
+        description
+        passThrough
+        packagingFormat {
+          code
+          description
+        }
+      }
+    }
+  }
+  ${VMM_BUSINESS_PARTNER_ON_PRODUCT}
+  ${PRODUCT_FULL_TEAM_FRAGMENT}
+`

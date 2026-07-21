@@ -1,0 +1,1015 @@
+# =============================================================================
+# Product Domain — Federated Target DGS Schema (translated from source SDL)
+# Generated: 2026-06-26  ·  Pipeline Version: 2.0
+# DGS Target: Green-field — `plm-product` repo (Kotlin / Netflix DGS)
+# Source:     code/schemas/SPARK_Product.txt (the real SDL) + code/resolvers/SPARK_Product.txt (behaviour)
+# Target:     plm-product/apps/app/src/main/resources/schema/product.graphqls
+# This is the FEDERATED TARGET schema, translated from the source SDL (SPARK_ prefix dropped, @key/
+# @shareable/@extends added). Nullability is taken from the SDL. Where SDL and resolver disagree on
+# behaviour, the resolver wins (e.g. the Product.division latent bug — see §2 OWNED ENTITY note).
+# ACL: capability-token (JWT) usage in source is context-only; ACL is IGNORED in the DGS
+#      implementation (no ACL plumbing story). See 03-schema-analysis.md §ACL.
+#
+# Conventions:
+#   • Drop `SPARK_` prefix from owned types.
+#   • Keep platform prefixes (`VMM_`, `IG_`, `CORONA_`, `DOPPLER_`) for stitched stubs.
+#   • Federation v2.3 (`@key`, `@extends`, `@external`, `@requires`, `@shareable`).
+#
+# Status legend:
+#   ✅ already in DGS  ·  🔜 needs migration  ·  ⏭ deferred / latent
+# =============================================================================
+
+extend schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.3",
+    import: ["@key", "@extends", "@external", "@requires", "@shareable"]
+  )
+
+# ---- Scalars ----
+scalar DateTime
+
+# =============================================================================
+# 1. EXTERNAL STUBS — Gateway-stitched (🔵 BLUE per Phase 2 tagging)
+# =============================================================================
+
+# --- VMM platform ---
+# Keys aligned to the source SDL (core.txt: both types expose `id: ID`) and to the other 7 domain
+# schemas, which all stub VMM_BusinessPartner @key(fields: "id"). See federation-review/03 §R1-R2.
+type VMM_BusinessPartner @key(fields: "id") @extends {                  # 🔜
+  id: ID! @external
+}
+type VMM_Brand @key(fields: "id") @extends {                            # 🔜
+  id: ID! @external
+}
+
+# --- IG (Item Groups) platform ---
+type IG_Department @key(fields: "id") @extends { id: ID! @external }    # 🔜
+type IG_Division   @key(fields: "id") @extends { id: ID! @external }    # 🔜
+type IG_Clazz      @key(fields: "id") @extends { id: ID! @external }    # 🔜
+# IG_Clazz_Filter is a polymorphic projection used by SPARK_Categories;
+# kept as gateway-stitched stub to preserve current __resolveType default branch.
+type IG_Clazz_Filter @key(fields: "id") @extends { id: ID! @external }  # 🔜
+
+# --- Doppler platform ---
+type DopplerCapacityType @key(fields: "id") @extends { id: ID! @external }  # 🔜
+
+# --- Corona platform (item master) ---
+# ✅ DECIDED (2026-07-17, federation-review/03 §R6, OQ-2): stays an ENTITY keyed on tcinId — where a
+# tcin exists the record carries tcinId, and Corona INFLATES the item details from that key via the
+# gateway (same wrap-with-id pattern as the humanId-only entities).
+type CORONA_ItemDetails @key(fields: "tcinId") @extends {               # 🔜
+  tcinId: ID! @external
+}
+
+# --- APEX (DPCI / item setup) ---
+# No federation key needed today — APEX data is embedded into ReservedDpci value
+# objects on Product. Listed here only for documentation.
+
+# --- Brand Compliance / External Rating ---
+# Rating service is fetched server-side via API key; result returned as embedded
+# `Rating` value type — no federation stub required.
+
+# --- Sibling DGS subgraph stubs ---
+# Most are co-located in `plm-product` or arrive in phase 2. EXCEPTION (✅ confirmed 2026-07-17,
+# federation-review/08 OQ-6): `Claims` is a SEPARATE subgraph (repo `spark-claims`) — Product.claims /
+# Claims.product cross the Hive Gateway (hence PRODUCT-BE-H-06, the Product entity fetcher).
+type Attachment      @key(fields: "id") @extends { id: ID! @external }      # 🔜 attachment subgraph
+type SampleV2        @key(fields: "id") @extends { id: ID! @external }      # 🔜 sample subgraph
+type Tag             @key(fields: "id") @extends { id: ID! @external }      # 🔜 tag subgraph
+type WorkspaceV2     @key(fields: "id") @extends { id: ID! @external }      # 🔜 workspace subgraph
+type TeamV2          @key(fields: "teamId") @extends { teamId: ID! @external }  # 🔜 team subgraph
+type UserProfileAttributes @key(fields: "id") @extends { id: ID! @external }    # 🔜 user-profile subgraph
+type Discussion      @key(fields: "discussionId") @extends { discussionId: ID! @external }  # 🔜 discussion subgraph
+type DiscussionThread @key(fields: "discussionThreadId") @extends { discussionThreadId: ID! @external }  # 🔜
+type FileLibrary     @key(fields: "id") @extends { id: ID! @external }      # 🔜 file-library subgraph
+
+# Cross-subgraph paged wrappers `Product` selects but does not own (federation-review/03 §R4,
+# PRODUCT-BE-F-14 AC1): declared here as @shareable value types so this file compiles standalone.
+# Each owning subgraph (workspace/team/discussion — phase 2) is the source of truth for the shape;
+# these are placeholders sized to today's field usage and MUST be reconciled when those subgraphs land.
+type WorkspacesPagedV2 @shareable { content: [WorkspaceV2], paging: Paging, pageable: Pageable }  # 🔜 workspace subgraph
+type TeamPagedV2       @shareable { content: [TeamV2], paging: Paging, pageable: Pageable }        # 🔜 team subgraph
+type DiscussionElastic @shareable { content: [Discussion], paging: Paging }                        # 🔜 discussion subgraph
+# `TeamPaged` is also declared (as a value type) in claims/be-03-schema.graphql (R5) — same shape,
+# both @shareable; team subgraph phase-2 onboarding will retire both duplicates in favor of one owner.
+type TeamPaged @shareable { content: [TeamV2], paging: Paging }
+type Bom             @key(fields: "id") @extends { id: ID! @external }      # 🔜 bom subgraph
+# Type names aligned with the owning schemas (federation-review/03 §R3-R4): claims owns `Claims`,
+# productDetails owns `ProductDetails`. KEYS (program decision 2026-07-17): every entity federates on
+# `id`; owners whose SDL lacks an id (Claims, Packaging, Watchlist, Dieline) SYNTHESIZE `id` from
+# humanId — the Measurement pattern — so stitching is uniform on `id` across the supergraph.
+type Claims          @key(fields: "id") @extends { id: ID! @external }      # 🔜 claims subgraph (separate DGS; id synthesized from humanId)
+type Measurement     @key(fields: "id") @extends { id: ID! @external }      # 🔜 measurement subgraph
+type ProductDetails  @key(fields: "id") @extends { id: ID! @external }      # 🔜 product-details subgraph
+type Packaging       @key(fields: "id") @extends { id: ID! @external }      # 🔜 packaging subgraph (id synthesized from humanId)
+type ProductAsk      @key(fields: "id") @extends { id: ID! @external }      # 🔜 product-ask subgraph
+type ProductVariation @key(fields: "id") @extends { id: ID! @external }     # 🔜 product-variation subgraph
+
+# =============================================================================
+# 2. OWNED ENTITY — `Product`
+# =============================================================================
+
+type Product @key(fields: "id") {                                       # 🔜
+  # --- Identity & lifecycle ---
+  id: ID
+  humanId: String
+  type: Int                    # 100=Product, 101=Template, 102=BrandCompliance
+  owningPartnerType: Int
+  createdAt: DateTime!
+  createdBy: UserProfileAttributes
+  updatedAt: DateTime!
+  updatedBy: UserProfileAttributes
+  versionCreatedAt: DateTime
+  versionCreatedBy: UserProfileAttributes
+  version: Int
+
+  # --- Core descriptive ---
+  description: String
+  comments: String
+  internalNotes: String
+  vendorStyleNumber: String
+  primaryMaterial: String
+  secondaryMaterial: String
+  thumbnailId: String
+  brandComplianceRecordId: String
+  parentProductId: String
+  copyId: String
+  copyProductRequest: String
+  presentationDimensions: String
+  presentationHeight: String
+  presentationWidth: String
+  presentationDepth: String
+  numberOfPieces: Int
+  developmentCost: String
+  archived: Boolean
+  movable: Boolean
+  editable: Boolean
+  preferredStyle: Boolean
+  fbDpci: String
+
+  # --- Status ---
+  status(workspaceIdFilter: String, partnerIdFilter: String): ProductStatus
+
+  # --- Partner / team ---
+  vendorAttributes(workspaceIdFilter: String): [ProductVendorAttributes]
+  businessPartners(workspaceIdFilter: String): [VMM_BusinessPartner]
+  droppedPartners: [VMM_BusinessPartner]
+  notRemovablePartnerIds: [ID]
+  droppedPartnerIds: [ID]
+  designPartnerId: [ID]
+  unDroppablePartners(isDesignPartner: Boolean): [ID]
+
+  # --- Workspace ---
+  productWorkspaceAttributes(elasticVerify: Boolean): [ProductWorkspaceAttributes]
+  productWorkspaceInfo: [ProductWorkspaceInfo]
+  notRemovableWorkspaceIds: [String]
+  workspaces: WorkspacesPagedV2
+
+  # --- Teams ---
+  teams(partnerId: String, workspaceId: String): TeamPaged
+  teamsV2: TeamPagedV2
+
+  # --- Hierarchy lookups (gateway-stitched) ---
+  department:  IG_Department
+  departments: [DopplerDepartment]
+  division:    IG_Division
+  # NOTE: source resolver `division` currently calls the *department* loader.
+  # The DGS port wires this through DivisionService; behavior parity is verified
+  # via contract tests (the latent bug is fixed during migration).
+  clazz:  IG_Clazz
+  brand:  VMM_Brand
+  brands: [VMM_Brand]
+  divisions: [IG_Division]
+
+  # --- Attachments ---
+  attachments: [Attachment]
+  attachmentsWithMetaData: [AttachmentWithMetaData]
+  attachmentsV3(partnerId: ID, type: String, tags: [String], onlyProductPacketFiles: Boolean): SearchAttachmentsPaged
+  attachmentSummary: AttachmentSummary
+
+  # --- Samples ---
+  samples: [SampleV2]
+  sampleIds: [ID]
+  elasticSamplesList(query: String, page: Int, size: Int): SearchSamplesPaged
+  hasSamplesUpcomingDue: Boolean
+  hasNotEvaluatedReceivedSamples: Boolean
+  receivedNotEvaluatedCount: Int
+
+  # --- Components (co-located domains) ---
+  measurementSets(calculated: Boolean, includeMeasurements: Boolean): MeasurementPaged   # type name aligned with measurement's owned MeasurementPaged (federation-review/03 §R4)
+  claims(partnerIds: [String], includeClaims: Boolean): [Claims]
+  bom(includeBoms: Boolean): BomPaged
+  productBom(includeBoms: Boolean): BomPaged
+  packagingBom(includeBoms: Boolean): BomPaged
+  components(workspaceId: String, partnerId: ID, type: String, tags: [String], archived: Boolean, types: [Int]): SearchComponentsPaged
+
+  # --- Discussion ---
+  discussionsCount: Int
+  discussionsV2(partnerId: ID): DiscussionElastic
+
+  # --- Tags ---
+  tags: [Tag]
+
+  # --- TCIN / DPCI ---
+  tcins: [PartnerTcins]
+  reservedDpcis: [PartnerReservedDpci]
+  parentTcins: [String]
+  rating: Rating
+
+  # --- Relationships ---
+  ancestryProducts: [AncestryProducts]
+  childProducts: [ChildProducts]
+  copyProductResources: [ProductCopyResources]
+
+  # --- Template-only (type=101) ---
+  productTemplateDepartments: [IG_Department]
+  productTemplateStatus: ProductTemplateStatus
+  attachmentsData: ProductTemplateAttachments
+  productComponentsCounts: [ProductComponentsCounts]
+  productMaterials: [ProductMaterials]
+  packagingAttributes: [PackagingAttribute]
+
+  # --- Cross-domain (gateway-stitched) ---
+  variations(partnerId: String, workspaceId: String): [ProductVariation]
+  associateProductsAsks(workspaceIdFilter: String): [ProductAsk]
+}
+
+# =============================================================================
+# 3. COMPOSITE-KEY ENTITY — `ResourcesCount` (TechPack rollup)
+# =============================================================================
+# Per reference/federation-patterns.md §9: Product subgraph defines the type
+# and stub resolvers; each owning subgraph extends with @requires.
+# =============================================================================
+
+type ResourcesCount @key(fields: "productId partnerId") {               # 🔜
+  productId: ID!
+  partnerId: ID!
+  workspaceContext: String
+  parentProductId: ID
+  productThumbnailId: String
+
+  # Stub fields — Product returns null; owning subgraphs fill these in.
+  productAttachments:    [ID]   # → attachment subgraph
+  discussionAttachments: [ID]   # → attachment subgraph
+  discussions:           [ID]   # → discussion subgraph
+  sample:                [ID]   # → sample subgraph
+  measurementSets:       [ID]   # → measurement subgraph
+  claims:                [ID]   # → claim subgraph
+  productBoms:           [ID]   # → bom subgraph
+  packagingBoms:         [ID]   # → bom subgraph
+  boms:                  [ID]   # → bom subgraph (legacy combined)
+  constructions:         [ID]   # → construction subgraph
+  watchlists:            [ID]   # → watchlist subgraph
+}
+
+# =============================================================================
+# 4. OWNED VALUE OBJECTS (embedded — no @key)
+# =============================================================================
+
+type ProductStatus implements Categories {
+  id: ID
+  name: String
+}
+
+type ProductVendorAttributes {
+  partnerId: ID
+  partnerType: Int
+  name: String
+  status: CarryForwardProductStatus
+  statusCount: Int
+  allStatuses: [CarryForwardProductAllStatus]
+}
+
+type CarryForwardProductStatus {
+  id: ID
+  name: String
+  workspaceId: String
+}
+type CarryForwardProductAllStatus {
+  statusId: ID
+  statusName: String
+  workspaceId: String
+}
+
+type MasterProductStatus {
+  id: ID
+  name: String
+}
+
+type ProductWorkspaceAttributes {
+  humanId: String
+  workspaceId: String
+  designCycle: Tag
+  setDates: [String]
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  isHidden: Boolean
+  teams: [String]
+  archived: Boolean
+  linkedAttributes: [String]
+}
+
+type ProductWorkspaceInfo {
+  humanId: String
+  workspaceId: String
+  designCycle: Tag
+  setDates: [String]
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  isHidden: Boolean
+  teams: [String]
+  archived: Boolean
+  linkedAttributes: [String]
+  businessPartners: [WorkspaceInfoPartner]
+}
+
+type WorkspaceInfoPartner {
+  partnerId: ID
+  partnerType: Int
+  status: Int
+  preProdStatusAt: String
+  prodStatusAt: String
+  archived: Boolean
+  statusName: String
+  preferred: Boolean
+}
+
+type Rating {
+  averageRating: Float
+  reviewCount: Int
+}
+
+type ChildProducts {
+  id: String!
+  removable: Boolean
+}
+
+type AncestryProducts {
+  id: String!
+  removable: Boolean
+  description: String!
+  thumbnailId: String
+  type: String
+}
+
+type PartnerTcins {
+  partnerId: ID
+  tcin: [Tcin]
+}
+
+type Tcin {
+  tcinId: String
+  dpci: String
+  createdAt: DateTime
+  launchedAt: DateTime
+  relationshipType: CodeName
+  parentTcins: [String]
+  itemDetails: CORONA_ItemDetails
+  purchaseOrders: [PurchaseOrderDetails]
+}
+
+type PartnerReservedDpci {
+  partnerId: ID
+  reservedDpcis: [ReservedDpci]
+}
+
+type ReservedDpci {
+  apexId: String
+  apexDescription: String
+  dpci: String
+  dpciStatus: String          # 'reserved' | 'locked'
+  dept: Int
+  clazz: Int
+  subClass: Int
+  tcin: String
+}
+
+type PurchaseOrderDetails {
+  purchaseOrderNumber: String
+  orderUnits: Int
+}
+
+type CodeName {
+  code: String
+  name: String
+}
+
+type ProductMaterials {
+  name: String
+  primary: Boolean
+  libraryResource: ProductLibraryResource
+}
+type ProductLibraryResource { id: String }
+
+type PackagingAttribute {
+  formatId: Int
+  formatName: String
+  spgLibraryId: String
+  spgStatus: CodeDescription
+  spg: SpgFileLibrary
+}
+type SpgFileLibrary @shareable { id: String, name: String }
+
+type AttachmentSummary {
+  isThumbnailPreviewable: Boolean
+  totalAttachmentCount: Int
+}
+
+type AttachmentWithMetaData {
+  attachment: Attachment
+  linkedResourceId: String
+  isResourceCritical: Boolean
+  resourceTitle: String
+  currentUserPermissions: ResourcePermissions
+}
+
+type ResourcePermissions @shareable {
+  resourceId: String
+  permissions: [PermissionEntry]
+}
+type PermissionEntry @shareable {
+  permissionLevel: String
+  grantees: [String]
+}
+
+# ---- Pagination wrappers ----
+type ProductsPaged           { content: [Product], paging: Paging, pageable: Pageable }
+type ProductTemplatesList    { content: [Product], paging: Paging, pageable: Pageable }
+type SearchSamplesPaged      { content: [SampleV2], paging: Paging }
+type SearchAttachmentsPaged  { content: [Attachment], counts: [BpCount] }
+type SearchComponentsPaged {
+  content: [Component]
+  counts: [BpCount]
+  archivedCount: Int
+  countByComponents: [CountByComponent]
+}
+type BpCount { bpType: String, counts: Int }
+type CountByComponent {
+  type: String
+  counts: Int
+  countByStatus: [CountByComponentStatus]
+}
+type CountByComponentStatus {
+  code: String
+  counts: Int
+  workspaceContext: String
+}
+
+type Component {
+  id: String
+  name: String
+  type: String                # 'measurement' | 'claim' | 'bom' | 'packagingBom' | 'productDetail' | 'packaging'
+  createdBy: UserProfileAttributes
+  updatedBy: UserProfileAttributes
+  createdAt: DateTime
+  updatedAt: DateTime
+  parentResource: String
+  additionalDescription: String
+  relatedResources: [String]
+  workspaceContext: [String]
+  access: AccessV3
+  archived: Boolean
+  libraryLinked: Boolean
+  materials: [String]
+  status: CodeDescriptionOrder
+  statuses: [WorkspaceStatus]
+  rows: [JsonNode]
+  currentUserClaimPermissions: ResourcePermissions
+}
+type AccessV3 @shareable {
+  locked: Boolean
+  fabSuppliers: [ID]
+  designPartners: [ID]
+  merchVendors: [ID]
+  external: Boolean
+  bps: [ID]
+}
+type WorkspaceStatus @shareable {
+  workspaceId: String
+  status: CodeDescriptionOrder
+}
+
+# ---- Categories (polymorphic right-rail facets) ----
+# SOURCE SDL NOTE: the source models this as `interface SPARK_Categories { id: ID, name: String }`
+# (code/schemas/core.txt:116) with 13 implementers. We model the TARGET as a union of the 12 concrete
+# types the resolver's __resolveType actually returns (code/resolvers/SPARK_Product.txt:2470-2511).
+#   • IG_MerchType implements the interface in the SDL but is NEVER returned here — intentionally omitted.
+#   • Union (not interface) is the deliberate federation choice: members include platform/external stubs
+#     (VMM_Brand, IG_Department, IG_Division, IG_Clazz_Filter) that cannot `implements` a local interface
+#     across subgraphs. ⚠ CLIENT CONTRACT: with an interface, clients select `id`/`name` directly on
+#     `[Categories]`; with a union they need inline fragments. Verify consumers before cutover (A-04/G-04).
+union Categories =
+  | VMM_Brand
+  | IG_Department
+  | IG_Division
+  | IG_Clazz_Filter
+  | ProductStatus
+  | VMM_BusinessPartnerCategory
+  | Tag_Elastic
+  | Filter_SetDates
+  | Status
+  | FilterSampleType
+  | FilterSampleFormat
+  | Packaging_Field
+# DGS: implement `@DgsTypeResolver(name = "Categories")` mapping
+# category.type → concrete type. Preserve current default → IG_Clazz_Filter.
+
+type Tag_Elastic         { id: ID, name: String, type: String }
+type Filter_SetDates     { id: ID, name: String, type: String }
+type Status              { id: ID, name: String, type: String }
+type FilterSampleType    { id: ID, name: String, type: String }
+type FilterSampleFormat  { id: ID, name: String, type: String }
+type Packaging_Field     { id: ID, name: String, type: String }
+
+type ProductsCategories {
+  categories(type: String): [Categories]
+  categoryIds: [ID]
+  count: Int
+}
+
+type VMM_BusinessPartnerCategory {
+  id: ID
+  name: String
+  role: [VMM_BusinessPartner_Roles]
+  relationship: [VMM_BusinessPartner_Relationship]
+  associatedPartnerType: Int
+}
+
+# ---- Doppler department (Product-owned wrapper) ----
+type DopplerDepartment {
+  id: Int
+  divisionId: Int
+  classIds: [Int]
+  department: IG_Department
+  division: IG_Division
+  clazzes: [IG_Clazz]
+  primaryCapacityTypeId: Int
+  primaryCapacityTypeName: String
+  secondaryCapacityTypeId: Int
+  secondaryCapacityTypeName: String
+}
+
+# ---- Copy operation ----
+type ProductCopy {
+  copyId: String
+  requestId: String
+  resources: [ProductCopyResources]
+}
+type ProductCopyResources {
+  resourceType: String
+  count: Int
+}
+type ProductBulkType {
+  products: [Product]
+}
+
+# ---- Templates ----
+type ProductTemplateAttachments {
+  attachmentIds: [String]
+  attachments: [Attachment]
+}
+type ProductTemplateStatus {
+  code: Int
+  description: String
+}
+type ProductComponentsCounts {
+  name: String
+  count: Int
+}
+
+# ---- Rules ----
+type ProductRules @key(fields: "id") {                                  # 🔜
+  id: ID
+  active: Boolean
+  departments: [IG_Department]
+  businessPartners: [VMM_BusinessPartner]
+  rules: [Int] @deprecated(reason: "use rule attribute")
+  insightsClassExclusion: [IG_Clazz]
+  productId: String
+  rule: CodeDescription
+}
+type AvailableRules {
+  id: Int
+  name: String
+}
+# Note: rules data is served by the separate `spark_rules` service, not the
+# `enterprise_product_development_products` service. Confirm in Phase 4 whether
+# this stays inside `plm-product` or moves to its own DGS subgraph.
+
+# ---- Component status ----
+# @shareable: claims (separate subgraph) resolves Claims.statuses locally with this same shape —
+# duplicate value-type definitions must both be @shareable to compose (federation-review/03 §R5).
+type ProductComponentStatus @shareable {
+  workspaceId: String
+  type: String
+  status: CodeDescriptionOrder
+  overallStatus: CodeDescriptionOrder
+  updatedAt: DateTime!
+  updatedBy: UserProfileAttributes
+}
+
+# ---- Shared util types ----
+type Paging @shareable {
+  totalPages: Int
+  totalElements: Int
+  first: Boolean
+  numberOfElements: Int
+  size: Int
+  number: Int
+  last: Boolean
+  sort: JsonNode
+}
+type Pageable @shareable {
+  pageNumber: Int
+  pageSize: Int
+  offset: Int
+  paged: Boolean
+  unpaged: Boolean
+}
+type CodeDescription @shareable {
+  code: Int
+  description: String
+}
+type CodeDescriptionOrder @shareable {
+  code: Int
+  description: String
+  order: Int
+}
+scalar JsonNode
+
+# =============================================================================
+# 5. INPUT TYPES
+# =============================================================================
+
+input ProductInput {
+  description: String
+  departmentId: ID
+  divisionId: ID
+  classId: ID
+  brandId: ID
+  departments: [DopplerDepartmentInput]
+  primaryMaterial: String
+  secondaryMaterial: String
+  vendorStyleNumber: String
+  comments: String
+  internalNotes: String
+  tags: [String]
+  businessPartners: [ProductPartnerInput]
+  productWorkspaceAttributes: [ProductWorkspaceAttributesInput]
+  productWorkspaceInfo: [ProductWorkspaceInfoInput]
+  resources: ResourceMappingInput
+  attachmentId: String
+  numberOfPieces: Int
+  developmentCost: String
+  presentationDimensions: String
+  presentationHeight: String
+  presentationWidth: String
+  presentationDepth: String
+  teams: WorkspaceTeamContextInput
+  type: Int                      # 100 product, 101 template, 102 brand-compliance
+  template: Boolean
+  status: Int                    # template
+  divisionIds: [ID]              # template
+  brandIds: [ID]                 # template
+  departmentIds: [String]        # template
+  attachmentIds: [String]        # template
+  productMaterials: [ProductMaterialsInput]
+  packagingAttributes: [PackagingAttributeInput]
+  preferredStyle: Boolean
+  fbDpci: String
+  brandComplianceRecordId: Int
+  askId: String
+}
+
+input ProductUpdateInput {
+  id: ID!
+  description: String
+  departmentId: ID
+  divisionId: ID
+  classId: ID
+  brandId: ID
+  departments: [DopplerDepartmentInput]
+  primaryMaterial: String
+  secondaryMaterial: String
+  vendorStyleNumber: String
+  comments: String
+  internalNotes: String
+  tags: [String]
+  numberOfPieces: Int
+  developmentCost: String
+  presentationDimensions: String
+  presentationHeight: String
+  presentationWidth: String
+  presentationDepth: String
+  productWorkspaceAttributes: [ProductWorkspaceAttributesInput]
+  productWorkspaceInfo: [ProductWorkspaceInfoInput]
+  newBusinessPartners: [ProductPartnerInput]
+  statuses: [VendorAttributeInput]
+  newResources: ResourceMappingInput
+  thumbnailId: String
+  teams: WorkspaceTeamContextInput
+  carryForwardProduct: BulkCarryForwardProductInput
+  type: Int
+  template: Boolean
+  status: Int
+  divisionIds: [ID]
+  brandIds: [ID]
+  departmentIds: [String]
+  attachmentIds: [String]
+  removedProductTemplateAttachments: [ProductTemplateRemovedAttachments]
+  productMaterials: [ProductMaterialsInput]
+  packagingAttributes: [PackagingAttributeInput]
+  preferredStyle: Boolean
+  fbDpci: String
+}
+
+input ProductPartnerInput {
+  partnerId: ID!
+  partnerType: Int
+}
+
+input ProductPartnerActionInput {
+  productId: ID
+  resourceType: String
+  partnerId: ID
+  teamIds: [ID]
+  workspaceId: ID
+  partnerType: Int
+  dropped: Boolean
+}
+
+input ProductWorkspaceAttributesInput {
+  humanId: String!
+  designCycle: String
+  setDates: [String]
+  hidden: Boolean
+  protoApprovalDueDate: String
+  carryForwardReason: String
+}
+input ProductWorkspaceInfoInput {
+  humanId: String!
+  designCycle: String
+  setDates: [String]
+  hidden: Boolean
+  protoApprovalDueDate: String
+  carryForwardReason: String
+  businessPartners: [WorkspaceInfoPartnerInput]
+}
+input WorkspaceInfoPartnerInput {
+  partnerId: ID
+  partnerType: Int
+  status: Int
+  preProdStatusAt: String
+  prodStatusAt: String
+  archived: Boolean
+  statusName: String
+}
+
+input ProductPartnerStatusInput {
+  statusId: String
+  workspaceId: String
+  partnerId: ID
+}
+input VendorAttributeInput {
+  partnerId: ID!
+  statusId: ID!
+  workspaceId: String!
+}
+input ToggleInput {
+  productId: ID!
+  workspaceId: ID!
+  hidden: Boolean
+}
+
+input ProductTechPackCountInput {
+  productId: ID!
+  partnerId: ID
+  parentProductId: ID
+  workspaceContext: String
+}
+
+input ProductTemplateRemovedAttachments {
+  humanId: String
+  documentId: String
+}
+
+input ProductMaterialsInput {
+  name: String
+  primary: Boolean
+  libraryResource: ProductLibraryResourceInput
+}
+input ProductLibraryResourceInput { id: String }
+
+input PackagingAttributeInput {
+  formatId: Int
+  spgLibraryId: String
+  spgStatusId: Int
+  formatName: String
+}
+
+input DopplerDepartmentInput {
+  id: Int
+  divisionId: Int
+  classIds: [Int]
+  primaryCapacityTypeId: Int
+  secondaryCapacityTypeId: Int
+}
+
+input CarryForwardProductInput {
+  bomIds: [String]
+  claimIds: [String]
+  impressionIds: [String]
+  measurementSetIds: [String]
+  constructionSetIds: [String]
+  departmentIds: [Int]
+  teams: [WorkspaceTeamInput]
+  designCycle: String
+  carryForwardReason: String
+  protoApprovalDueDate: String
+  setDates: [String]
+  workspaceId: String
+  fromWorkspaceId: String
+  departmentId: Int
+  componentsInProgress: [String]
+  businessPartners: [BusinessPartnerInput]
+  initiatedFromPlan: Boolean
+  initiatedBy: InitiatedByInput
+  boms: [BombsWithMaterialInput]
+}
+input BulkCarryForwardProductInput {
+  teamIds: [String]
+  designCycle: String
+  carryForwardReason: String
+  protoApprovalDueDate: String
+  setDates: [String]
+  toWorkspaceId: String
+  fromWorkspaceId: String
+  departmentIds: [Int]
+}
+input BusinessPartnerInput { partnerId: ID, partnerType: Int }
+input InitiatedByInput {
+  userProfileId: String
+  internal: Boolean
+  partnerId: ID
+  systemTeamId: String
+  currentVmmRole: Int
+  approvedVmmRoles: [Int]
+  roles: [String]
+}
+input WorkspaceTeamPair { workspaceId: String, teamId: String! }
+input WorkspaceTeamContextInput {
+  teamWorkspacesToAdd: [WorkspaceTeamPair]
+  teamWorkspacesToRemove: [WorkspaceTeamPair]
+}
+input CopyProductInput {
+  targetProductId: String
+  sourceProductId: String
+  attachmentIds: [String]
+  claimIds: [String]
+  bomIds: [String]
+  measurementSetIds: [String]
+  constructionSetIds: [String]
+  packagingIds: [String]
+  boms: [BombsWithMaterialInput]
+  productTeams: [ProductTeamInput]
+}
+input ProductTeamInput {
+  teamId: ID
+  teamName: String
+  businessPartner: ProductPartnerInput
+}
+input BombsWithMaterialInput {
+  bomId: String
+  bomMaterialDtos: [BomMaterialDtosInput]
+  partners: [ProductPartnerInput]
+}
+input BomMaterialDtosInput {
+  humanId: String
+  rowId: String
+  categoryId: Int
+  partners: [ProductPartnerInput]
+}
+
+input ProductRuleCreateInput {
+  active: Boolean!
+  departments: [Int]
+  businessPartners: [ID]
+  rules: [Int]!
+}
+input ProductRuleUpdateInput {
+  id: ID!
+  active: Boolean!
+  departments: [Int]
+  businessPartners: [ID]
+  rules: [Int]!
+}
+
+input ComponentStatusInput {
+  workspaceId: String!
+  type: String
+  statusId: Int
+}
+input ComponentIdsInput {
+  bomIds: [String]
+  claimIds: [String]
+  constructionSetIds: [String]
+  measurementSetIds: [String]
+  packagingIds: [String]
+}
+input ProductComponentStatusUpdateInput {
+  workspaceId: String
+  statusId: Int
+  productId: String
+  bomIds: [String]
+  claimIds: [String]
+  constructionSetIds: [String]
+  measurementSetIds: [String]
+  packagingIds: [String]
+}
+
+# =============================================================================
+# 6. QUERIES (18 total)
+# =============================================================================
+
+extend type Query {
+  getProducts(
+    page: Int = 0
+    size: Int = 10000
+    q: String
+    filter: [String]
+    resourceType: String
+    resourceId: String
+    includeBoms: Boolean
+    includeClaims: Boolean
+    includeMeasurementSets: Boolean
+    includeProductDetails: Boolean
+  ): ProductsPaged                                                       # 🔜
+  getProductTemplates(
+    page: Int = 0
+    size: Int = 10000
+    q: String
+    resourceId: String
+    resourceType: String
+    filter: [String]
+    types: [Int]
+    includeBoms: Boolean = false
+    includeClaims: Boolean = false
+    includeMeasurementSets: Boolean = false
+    includeProductDetails: Boolean = false
+    includeClaimTemplates: Boolean = false
+    includeMeasurementSetTemplates: Boolean = false
+    includeProductDetailTemplates: Boolean = false
+    includeProductComponentsCount: Boolean = false
+    includeBomTemplates: Boolean = false
+  ): ProductTemplatesList                                                # 🔜
+  getProduct(id: ID!): Product                                           # 🔜
+  getCopyStatus(id: ID!): ProductCopy                                    # 🔜
+  getCategories(type: String!, resourceId: String, resourceType: String, productType: Int): ProductsCategories  # 🔜
+  getProductsByIds(ids: [ID]!): ProductsPaged                            # 🔜
+  getProductStatus: [MasterProductStatus]                                # 🔜
+  getProductTechPackCountV1(productId: ID!, partnerId: ID, workspaceContext: String, parentProductId: ID): ResourcesCount  # 🔜
+  getProductTechPackBulkCountV1(bulkTechPackCountResource: [ProductTechPackCountInput]): [ResourcesCount]                  # 🔜
+  getProductVersions(id: ID!): ProductsPaged                             # 🔜
+  getRatingByTcin(tcin: String): Rating                                  # 🔜  (external Bazaarvoice; null on error)
+  getProductRules: [ProductRules]                                        # 🔜
+  getProductRulesById(id: ID!): ProductRules                             # 🔜
+  getAllAvailableRules: [AvailableRules]                                 # 🔜
+  getProductDeptRules(productIds: [String], departmentIds: [Int], activeOnly: Boolean): [ProductRules]                     # 🔜  (USE_NEW_RULES_API flag)
+  getProductBPRules(productIds: [String], businessPartnerIds: [Int], activeOnly: Boolean): [ProductRules]                  # 🔜  (USE_NEW_RULES_API flag)
+  searchProductRules(productIds: [String], departmentIds: [Int], businessPartnerIds: [Int], activeOnly: Boolean): [ProductRules]  # 🔜  (USE_NEW_RULES_API flag)
+  getProductTemplateById(id: ID!): Product                               # 🔜
+}
+
+# =============================================================================
+# 7. MUTATIONS (22 implemented + 3 schema-drift wrappers)
+# =============================================================================
+
+extend type Mutation {
+  addProduct(workspaceId: ID, sparkProduct: ProductInput, copyProduct: CopyProductInput): Product                            # 🔜
+  updateProduct(input: ProductUpdateInput!, copyProduct: CopyProductInput): Product                                          # 🔜
+  carryForwardProduct(productId: String, carryForwardProductInput: CarryForwardProductInput): Product                        # 🔜
+  bulkUpdateProducts(products: [ProductUpdateInput]!): ProductBulkType                                                       # 🔜
+  addProducts(workspaceId: ID!, products: [ProductInput]): ProductBulkType                                                   # 🔜
+  addTeamsToProduct(productId: String!, teamIds: [String], workspaceIds: [String], newPartners: [ProductPartnerInput]): Product  # 🔜
+  addBusinessPartnersToProductWithType(productId: ID!, partners: [ProductPartnerInput]): Product                             # 🔜
+  removeProductResources(productId: ID!, resourceIds: [ID]): Product                                                          # 🔜
+  updateBusinessPartnerStatuses(productId: String!, statusInput: [ProductPartnerStatusInput]!): Product                      # 🔜
+  productBusinessPartnerActions(actionType: String!, values: ProductPartnerActionInput): Product                             # 🔜  Very-High
+  updateViewToggle(toggleInput: ToggleInput): Product                                                                         # 🔜
+  updateWorkspaceAttributes(productId: ID!, workspaceAttributesInput: ProductWorkspaceAttributesInput): Product              # 🔜
+  updateProductTeamsWorkspaceContext(productId: ID!, teamWorkspacesToAdd: [WorkspaceTeamPair], teamWorkspacesToRemove: [WorkspaceTeamPair]): Product  # 🔜
+  linkProduct(parentProductId: String!, childProductId: String!): Product                                                    # 🔜  (throws on backend error — only mutation that does)
+  unlinkProduct(parentProductId: String!, childProductId: String!): Product                                                  # 🔜
+  addProductRule(rule: ProductRuleCreateInput): ProductRules                                                                  # 🔜
+  updateProductRule(rule: ProductRuleUpdateInput): ProductRules                                                               # 🔜
+  deleteProductRule(ruleId: ID!): Boolean                                                                                     # 🔜
+  updateComponentStatus(productComponents: [ProductComponentStatusUpdateInput]): Product                                     # 🔜
+  updateComponentStatuses(productId: String!, ids: ComponentIdsInput!, status: ComponentStatusInput): Product                # 🔜
+
+  # --- Schema-drift wrappers: declared in source schema, no top-level resolver. ---
+  # Production traffic uses `productBusinessPartnerActions(actionType:"REMOVE_PARTNER" | "DROP_PARTNER" | "UNDROP_PARTNER")`
+  # for these flows. Migrate ONLY if active consumers are confirmed — otherwise mark ⏭ and delete from schema.
+  removeProductBusinessPartner(productId: ID!, partnerId: ID!): Product  @deprecated(reason: "use productBusinessPartnerActions(actionType:\"REMOVE_PARTNER\")")  # ⏭
+  dropProductBusinessPartner(productId: ID!, partnerId: ID!): Product    @deprecated(reason: "use productBusinessPartnerActions(actionType:\"DROP_PARTNER\")")     # ⏭
+  unDropProductBusinessPartner(productId: ID!, partnerId: ID!): Product  @deprecated(reason: "use productBusinessPartnerActions(actionType:\"UNDROP_PARTNER\")")   # ⏭
+}

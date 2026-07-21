@@ -1,0 +1,181 @@
+import { gql } from '@apollo/client'
+import { VMM_ROLE_TYPE } from '@spark/static'
+
+export const GET_BRANDS = gql`
+  query getBrands($query: String!) {
+    getBrands(query: $query) {
+      id
+      name
+    }
+  }
+`
+
+export const GET_CLAZZES_BY_MULTIPLE_DEPARTMENTS = gql`
+  query getClazzesByMultipleDepartments($departments: [ID!]) {
+    getClazzesByMultipleDepartments(departments: $departments) {
+      classId
+      name
+      displayText
+      department {
+        id
+      }
+    }
+  }
+`
+
+const DEPARTMENT_FRAGMENT = gql`
+  fragment DepartmentFragment on IG_Department {
+    id
+    name
+    divisionId
+    divisionName
+    displayText
+  }
+`
+export const GET_DEPARTMENTS = gql`
+  query getDepartments($query: String!) {
+    getDepartments(query: $query) {
+      ...DepartmentFragment
+    }
+  }
+  ${DEPARTMENT_FRAGMENT}
+`
+export const GET_DEPARTMENTS_BY_DIVISION = gql`
+  query getDepartmentsByDivision($divisionId: ID!, $query: String!) {
+    getDepartmentsByDivision(divisionId: $divisionId, query: $query) {
+      ...DepartmentFragment
+    }
+  }
+  ${DEPARTMENT_FRAGMENT}
+`
+
+export const GET_TAGS_BY_TYPE_W_LABEL = gql`
+  query getTagsByType($type: String!) {
+    getTags(type: $type, page: 0, size: 1000) {
+      content {
+        id
+        label: name
+      }
+    }
+  }
+`
+
+export const GET_DIVISIONS = gql`
+  query getDivisions {
+    getDivisions {
+      id
+      displayText
+      name
+    }
+  }
+`
+
+export const GET_FABRIC_SUPPLIERS = gql`
+  query getFabricSuppliers($query: String!) {
+    getBusinessPartnersByTypeAndQuery(query: $query, type: 7) {
+      id
+      name
+    }
+  }
+`
+
+export const GET_USER_ACCREDITATION = gql`
+  query getUserAttributes($id: ID!) {
+    getUserAttributes(id: $id) {
+      accreditation {
+        code
+        description
+      }
+      accreditations {
+        code
+        description
+        status
+      }
+    }
+  }
+`
+
+export const GET_MERCH_TYPES_BY_DEPARTMENT_ID = gql`
+  query getMerchTypesByDepartmentId($departmentId: ID!, $materialCategory: String!) {
+    getMerchTypesByDepartmentId(departmentId: $departmentId, materialCategory: $materialCategory)
+  }
+`
+
+export const GET_MERCH_VENDORS = gql`
+  query getMerchVendors($query: String!) {
+    getBusinessPartnersByTypeAndQuery(query: $query, type: 8) {
+      id
+      name
+    }
+  }
+`
+
+export const GET_CAPACITY_TYPES = gql`
+  query getCapacityTypes($departmentId: ID!) {
+    getCapacityTypes(departmentId: $departmentId) {
+      capacityTypePrimaryId
+      capacityTypePrimaryName
+      capacityTypeSecondaryId
+      capacityTypeSecondaryName
+    }
+  }
+`
+
+export const GET_RECENTLY_VIEWED_PRODUCTS = gql`
+  query getAllRecentlyViewedProducts($page: Int!, $size: Int!) {
+    getAllRecentlyViewed(type: "product", sort: "viewed,desc", page: $page, size: $size) {
+      content {
+        product {
+          id
+          thumbnailId
+          editable
+          businessPartners {
+            id
+            name
+            associatedPartnerType
+          }
+          description
+          attachments {
+            documentId
+            humanId
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_PRODUCT_STATUS = gql`
+  query getStatus {
+    getProductStatus {
+      id
+      name
+    }
+    getProductSampleEvaluationTypesV2 {
+      id: code
+      name: description
+    }
+    getSampleTrackingTypesV2 {
+      id: code
+      name: description
+    }
+  }
+`
+
+export const GET_TRIM_SUPPLIERS = gql`
+  query getTrimSuppliers($query: String!) {
+    getBusinessPartnersByTypeAndQuery(query: $query, type: ${VMM_ROLE_TYPE.TRIM_SUPPLIER}) {
+      id
+      name
+    }
+  }
+`
+
+export const GET_BUSINESS_PARTNERS_BY_TYPE = gql`
+  query getBusinessPartnersByType($type: Int) {
+    getBusinessPartnersByType(type: $type) {
+      id
+      name
+    }
+  }
+`

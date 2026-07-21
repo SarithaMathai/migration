@@ -1,0 +1,329 @@
+import { gql } from '@apollo/client'
+import { SPARK_MeasurementSet } from 'Measurement'
+import { LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT, LEGACY_PRODUCT_TEAMS_FOR_COMPONENT_DISCUSSION_FRAGMENT } from '@spark/product-queries'
+import { SIZE_TEMPLATE_FRAGMENT_WITH_ROWS } from './SizeTemplateQueries'
+import { MEASUREMENT_TEMPLATE_FRAGMENT } from './MeasurementTemplateQueries'
+import { TIGHT_FIT_FRAGMENT } from './TightFitQueries'
+import { POM_FRAGMENT } from '@spark/product-queries'
+
+const SAMPLE_MEASUREMENT_FRAGMENT = gql`
+  ${POM_FRAGMENT}
+  fragment SampleMeasurementFragment on SPARK_SampleMeasurementSet {
+    measurementSetId
+    measurementSetName
+    measurementSetType
+    measurementSizeId
+    measurementSize {
+      code
+      description
+      enabled
+      hidden
+    }
+    measurementSetVersion ## this is the measurementSets version
+    createdAt
+    createdBy {
+      id
+      firstName
+      lastName
+      companyName
+    }
+    rows {
+      measurementNew
+      measurementPartner
+      measurementTarget
+      measurementSetCritical
+      notes
+      pointOfMeasure {
+        ...PomFragment
+      }
+      requestedSampleSize
+      rowId
+      toleranceOver
+      toleranceUnder
+      unitOfMeasure {
+        code
+        description
+        shortDescription
+        name
+      }
+    }
+    sampleId
+    version ## this is sampleMeasurementSet version
+  }
+`
+
+export const MEASUREMENT_FIELDS_FRAGMENT = gql`
+  ${SIZE_TEMPLATE_FRAGMENT_WITH_ROWS}
+  ${MEASUREMENT_TEMPLATE_FRAGMENT}
+  ${TIGHT_FIT_FRAGMENT}
+  fragment measurementFieldsFragment on SPARK_Measurements {
+    humanId
+    resourceId
+    name
+    notes
+    createdAt
+    type
+    manualLock
+    version
+    workspaces {
+      id
+      description
+    }
+    sizeTemplate {
+      ...sizeTemplateFragmentWithRows
+    }
+    measurementTemplates {
+      ...measurementTemplateFragment
+    }
+    tightFitTemplate {
+      ...tightFitFragment
+    }
+    participantDetails {
+      ...LegacyComponentDiscussionParticipantsFragment
+    }
+    product {
+      id
+      editable
+      businessPartners {
+        id
+        name
+        associatedPartnerType
+      }
+      droppedPartners {
+        id
+        name
+      }
+      droppedPartnerIds
+      description
+      teams {
+        ...LegacyProductTeamsForComponentDiscussionFragment
+      }
+    }
+    currentUserPermissions {
+      permissions
+    }
+    access {
+      permissions {
+        abstractAccessGroup {
+          id
+          grantees
+          type
+        }
+      }
+    }
+    createdBy {
+      id
+      firstName
+      lastName
+    }
+    updatedAt
+    updatedBy {
+      id
+      firstName
+      lastName
+    }
+    updatedFromResource {
+      id
+      description
+    }
+    status {
+      code
+      description
+    }
+    defaultUnitOfMeasure {
+      description
+      code
+      name
+      shortDescription
+    }
+    coreSizes {
+      coreSizeId
+      sizeGroupId
+      baseSize {
+        id: code
+        value: code
+        label: description
+        code
+        description
+        enabled
+        hidden
+        source
+      }
+      sizes {
+        id: code
+        value: code
+        label: description
+        code
+        description
+        enabled
+        hidden
+        source
+      }
+    }
+    businessPartners {
+      name
+      id
+    }
+    toleranceSet {
+      id: code
+      value: code
+      label: description
+    }
+    rows {
+      rowId
+      critical
+      notes
+      toleranceOver
+      toleranceUnder
+      baseSizeValue
+      unitOfMeasure {
+        name
+        description
+        shortDescription
+        code
+      }
+      sizeValues {
+        code
+        description
+        diffFromNeighbor
+        manualValue
+        calculatedValue
+      }
+      pointOfMeasure {
+        pomId
+        pomName
+        critical
+        referenceId
+        version
+        specialInstructions
+        section {
+          code
+          description
+        }
+      }
+    }
+  }
+  ${LEGACY_COMPONENT_DISCUSSION_PARTICIPANTS_FRAGMENT}
+  ${LEGACY_PRODUCT_TEAMS_FOR_COMPONENT_DISCUSSION_FRAGMENT}
+`
+
+export const GET_MEASUREMENT_BY_IDS = gql`
+  ${MEASUREMENT_FIELDS_FRAGMENT}
+  query getMeasurementByIds($ids: [String!]) {
+    getMeasurementByIds(ids: $ids) {
+      content {
+        ...measurementFieldsFragment
+      }
+    }
+  }
+`
+
+export const GET_MEASURMENT_VERSION = gql`
+  query getComponentVersion($id: String!, $version: Int!) {
+    getComponentVersion(id: $id, version: $version) {
+      ... on SPARK_Measurements {
+        ...measurementFieldsFragment
+      }
+    }
+  }
+  ${MEASUREMENT_FIELDS_FRAGMENT}
+`
+
+export type SPARK_Result_GET_MEASUREMENTS = {
+  getMeasurements: {
+    content: SPARK_MeasurementSet[]
+  }
+}
+
+export const GET_MEASUREMENTS = gql`
+  ${MEASUREMENT_FIELDS_FRAGMENT}
+  query getMeasurements($resourceId: String, $calculated: Boolean, $businessPartnerIds: [String], $mustHaveRows: Boolean) {
+    getMeasurements(resourceId: $resourceId, calculated: $calculated, businessPartnerIds: $businessPartnerIds, mustHaveRows: $mustHaveRows) {
+      content {
+        ...measurementFieldsFragment
+      }
+    }
+  }
+`
+// Note: See withMeasurementsMetaData.js if you need this data.
+export const GET_UNITS_OF_MEASURE = gql`
+  query getUnitsOfMeasure {
+    getUnitsOfMeasure {
+      name
+      code
+      description
+      shortDescription
+    }
+  }
+`
+
+export const GET_MEASUREMENTS_META_DATA = gql`
+  query getMeasurementsMetaData {
+    getUnitsOfMeasure {
+      name
+      code
+      description
+      shortDescription
+    }
+    getThicknessUnitsOfMeasure {
+      name
+      code
+      description
+      shortDescription
+    }
+    getSections {
+      code
+      description
+      name: description
+      shortDescription: description
+    }
+  }
+`
+
+export const GET_MEASUREMENT_SET_STATUS = gql`
+  query getMeasurementSetStatus {
+    getMeasurementSetStatus {
+      code
+      description
+    }
+  }
+`
+export const LOCK_MEASUREMENT_SET = gql`
+  ${MEASUREMENT_FIELDS_FRAGMENT}
+  mutation lockMeasurementSet($measurementSetId: ID!) {
+    lockMeasurementSet(measurementSetId: $measurementSetId) {
+      ...measurementFieldsFragment
+    }
+  }
+`
+export const UNLOCK_MEASUREMENT_SET = gql`
+  ${MEASUREMENT_FIELDS_FRAGMENT}
+  mutation unlockMeasurementSet($measurementSetId: ID!) {
+    unlockMeasurementSet(measurementSetId: $measurementSetId) {
+      ...measurementFieldsFragment
+    }
+  }
+`
+
+export const PUT_SAMPLE_MEASUREMENT = gql`
+  ${SAMPLE_MEASUREMENT_FRAGMENT}
+  mutation putSampleMeasurementSet($sampleMeasurementSet: SPARK_SampleMeasurementSetInput!) {
+    putSampleMeasurementSet(sampleMeasurementSet: $sampleMeasurementSet) {
+      ...SampleMeasurementFragment
+    }
+  }
+`
+
+export const DELETE_SAMPLE_MEASUREMENT = gql`
+  mutation deleteSampleMeasurementSet($sampleId: String!) {
+    deleteSampleMeasurementSet(sampleId: $sampleId)
+  }
+`
+
+export const SEARCH_POM_SUGGESTIONS = gql`
+  query searchPointOfMeasureSuggestions($q: String!) {
+    searchSuggestions: searchPointOfMeasureSuggestions(q: $q) {
+      suggestion
+    }
+  }
+`

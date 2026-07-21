@@ -1,7 +1,7 @@
 # Skill 04 — Migration Story Generation (Pipeline 2.0)
 
-> **Outputs:** `output/{domain}/04-stories.md` (Jira-ready) + `output/{domain}/04-po-summary.md`
-> (Confluence-ready) + `output/{domain}/04-stories-index.yaml` (machine-readable for MCP bulk-create).
+> **Outputs:** `output/{domain}/be-04-stories.md` (Jira-ready) + `output/{domain}/be-04-po-summary.md`
+> (Confluence-ready) + `output/{domain}/be-04-stories-index.yaml` (machine-readable for MCP bulk-create).
 > **Depends on:** 02, 03, and 05. **Template:** [`story-template-engineer.md`](./story-template-engineer.md).
 
 ## The three Pipeline-2.0 rules (enforced)
@@ -20,24 +20,24 @@
    external stubs, interface `@DgsTypeResolver`, service Kotlin port, ACL/JWT plumbing).
 3. **CAT-4 federation** stories (Phase F) — one per cross-domain boundary from the EXT inventory. For a
    composite-key aggregate (e.g. TechPack `ResourcesCount`), use the facade-then-federate pattern in
-   [`reference-federation-patterns.md`](./reference-federation-patterns.md): one Phase-E stub+facade
+   [`federation-patterns-condensed.md`](./federation-patterns-condensed.md): one Phase-E stub+facade
    story, one Phase-F placeholder per owning subgraph (`BLOCKED-BY: {domain}`), one retirement story.
 4. **Tests** — fold unit/integration/parity test cases into each story's Test Cases (not separate
    stories), plus one domain-level parity-harness story in Phase G.
 5. **Build the artifacts** (below).
 
-## `04-stories.md` structure
+## `be-04-stories.md` structure
 Header → §1 Phases Overview (story counts per phase; **no day totals** — point to PO summary) →
 §2 Dependency Graph (Mermaid) → §3 Stories (Phase A→G, full junior template each) → §4 Risk Register.
 
-## `04-stories-index.yaml` (machine-readable — for Jira MCP)
+## `be-04-stories-index.yaml` (machine-readable — for Jira MCP)
 A list of every story with the fields a Jira MCP needs to create a ticket:
 
 ```yaml
 domain: bom
 target_dgs: plm-product
 stories:
-  - id: SPARK-BOM-B01
+  - id: BOM-BE-B-01
     summary: "Implement getBomByIds query data fetcher"
     epic: "BOM → plm-product migration"
     phase: B
@@ -49,7 +49,7 @@ stories:
     acceptance_criteria_count: 6
 ```
 
-## `04-po-summary.md` (Confluence-ready) — sections
+## `be-04-po-summary.md` (Confluence-ready) — sections
 What Are We Building (plain English) → Migration Scope (counts) → Story Summary by Phase
 (**rough day-ranges allowed here, labeled "AI-estimated, confirm in refinement"**) → Key Risk Areas →
 Decisions Required (with owners) → Dependency Map → Recommended Sprint Sequencing → Capacity Planning
@@ -59,7 +59,7 @@ Decisions Required (with owners) → Dependency Map → Recommended Sprint Seque
 - [ ] Exactly one story per operation; titles have no "and".
 - [ ] Every story passes the junior Definition-of-Ready checklist.
 - [ ] Every story has parsable YAML front-matter consistent with its body.
-- [ ] `04-stories-index.yaml` lists every story in `04-stories.md` (counts match).
+- [ ] `be-04-stories-index.yaml` lists every story in `be-04-stories.md` (counts match).
 - [ ] Every EXT boundary has a CAT-4 story; composite-key aggregates use the facade pattern.
 - [ ] Risk register has ≥1 entry per High/Very-High story, with an owner.
 - [ ] PO summary lists every story and its rough effort; no story is missing.

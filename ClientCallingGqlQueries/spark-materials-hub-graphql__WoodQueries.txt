@@ -1,0 +1,93 @@
+import { gql } from '@apollo/client'
+import { FILE_FIELDS } from '@spark/legacy/components/graphql/ComponentsFragments'
+import { BASE_MATERIAL_DETAILS } from './BaseMaterialQueries'
+
+export const WOOD_DETAILS = gql`
+  fragment WoodDetails on SPARK_Wood {
+    humanId
+    type
+    classification
+    baseMaterial {
+      ...BaseMaterialDetails
+    }
+    subType {
+      code
+      description
+    }
+
+    species {
+      code
+      description
+    }
+    finish {
+      code
+      description
+    }
+    reclaimed
+  }
+  ${FILE_FIELDS}
+  ${BASE_MATERIAL_DETAILS}
+`
+
+export const ADD_WOOD = gql`
+  mutation addWood($material: SPARK_WoodInput!) {
+    addMaterial: addWood(material: $material) {
+      ...WoodDetails
+    }
+  }
+  ${WOOD_DETAILS}
+`
+
+export const GET_WOOD_ENUMS = gql`
+  query getWoodEnums {
+    subtypes: getHubCodedOptions(type: "WoodSubtype") {
+      code
+      description
+    }
+    species: getHubCodedOptions(type: "WoodSpecies") {
+      code
+      description
+    }
+    finish: getHubCodedOptions(type: "WoodFinish") {
+      code
+      description
+    }
+    statuses: getHubCodedOptions(type: "Status") {
+      code
+      description
+    }
+    unitsOfMeasure: getHubUnitsOfMeasure {
+      code
+      description
+      symbol
+    }
+    originConfigurationOptions: getHubCodedOptions(type: "Origin") {
+      description
+      code
+    }
+  }
+`
+export const UPDATE_WOOD = gql`
+  mutation updateWood($material: SPARK_WoodInput!) {
+    updateWood(material: $material) {
+      ...WoodDetails
+    }
+  }
+  ${WOOD_DETAILS}
+`
+
+export const GET_WOOD_BY_ID = gql`
+  query getHubMaterial($id: ID!) {
+    getHubMaterial(id: $id) {
+      ... on SPARK_Wood {
+        ...WoodDetails
+      }
+    }
+    getUserAccessUnencoded(resourceIds: [$id]) {
+      resourcePermissions {
+        permissions
+      }
+    }
+  }
+  ${WOOD_DETAILS}
+`

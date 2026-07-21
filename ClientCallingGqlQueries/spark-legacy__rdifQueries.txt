@@ -1,0 +1,43 @@
+import { gql } from '@apollo/client'
+
+export const SEARCH_RFID_SUGGESTIONS = gql`
+  query searchRfidSuggestions($q: String!) {
+    searchRfidSuggestions(q: $q) {
+      suggestion
+    }
+  }
+`
+
+export const SEARCH_RFID_LOCATIONS = gql`
+  query searchRfidLocations($q: String) {
+    searchRfidLocations(q: $q) {
+      content {
+        antennaId
+        deviceHostname
+        epc
+        lastSeen
+        locationDescription
+        relatedResources
+        sample {
+          id
+          assetHumanId
+          description
+          relatedResources
+          parentId
+          tracking {
+            number
+          }
+        }
+      }
+      paging {
+        totalPages
+        totalElements
+        first
+        numberOfElements
+        page
+        size
+        number
+      }
+    }
+  }
+`

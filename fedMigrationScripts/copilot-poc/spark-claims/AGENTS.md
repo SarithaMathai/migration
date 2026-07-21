@@ -11,10 +11,10 @@ Instructions for the GitHub Copilot coding agent (and any other AGENTS.md-readin
 ## Before making a change
 
 1. Read `.github/copilot-instructions.md` for the migration model and hard rules — especially the note that this subgraph *contributes into* `Product`/`ResourcesCount` rather than owning cross-domain data itself.
-2. Identify the story id in the assigned issue (`SPARK-CLM-{phase}{n}`, e.g. `SPARK-CLM-B02`).
-3. Check spike gating: `SPARK-CLM-E01` is gated on `SPARK-SPIKE-01`. If assigned that story, comment on the issue with the open decision instead of coding — do not guess at a rollback/failure strategy yourself.
-4. Check federation blocking: `SPARK-CLM-F01` and `SPARK-CLM-F02` are **BLOCKED-BY** `plm-product` (the `Product` entity and the TechPack `ResourcesCount` facade must exist there first). If assigned one of these before that's confirmed live, comment and stop.
-5. Read the story's *Current Behaviour → Target → Files → Acceptance Criteria → Test Cases* and the operation's pseudo-logic in `output/initial-analysis/claims/02-resolver-analysis.md` (companion analysis repo, linked from the issue).
+2. Identify the story id in the assigned issue (`CLAIM-BE-{phase}-{nn}`, e.g. `CLAIM-BE-B-02`).
+3. Check spike gating: `CLAIM-BE-E-01` is gated on `SPIKE-01`. If assigned that story, comment on the issue with the open decision instead of coding — do not guess at a rollback/failure strategy yourself.
+4. Check federation blocking: `CLAIM-BE-F-01` and `CLAIM-BE-F-02` are **BLOCKED-BY** `plm-product` (the `Product` entity and the TechPack `ResourcesCount` facade must exist there first). If assigned one of these before that's confirmed live, comment and stop.
+5. Read the story's *Current Behaviour → Target → Files → Acceptance Criteria → Test Cases* and the operation's pseudo-logic in `output/analysis/claims/be-02-resolver-analysis.md` (companion analysis repo, linked from the issue).
 
 ## How to implement
 
