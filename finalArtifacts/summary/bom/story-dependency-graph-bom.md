@@ -6,77 +6,62 @@
 
 ## Graph A — Backend Story Dependency (build order)
 
-For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the scheduler enforces.
+One box per **phase** (reads, search, mutations, complex ops, federation, field resolvers, entity resolution) — not one box per story, which stops being readable past a couple dozen stories. An arrow between two phase boxes means at least one story in the target phase directly depends on a story in the source phase; the label is how many story-level dependencies that represents. 🔬/⛔ on a box means at least one story in that phase is spike- or cross-subgraph-gated — see the table below for exactly which one.
 
 ```mermaid
 flowchart TD
-  subgraph PHA["🧱 Phase A — Foundation & Type Resolvers"]
-    NA_04["A-04<br/>@DgsTypeResolver for the 2 BOM in…"]
-    NA_05["A-05<br/>Shared CI conformance gate + code…"]
-  end
-  subgraph PHB["📖 Phase B — Core Reads"]
-    NB_01["B-01<br/>getBomByIds data fetcher"]
-    NB_03["B-03<br/>getBomStatus (cacheable master da…"]
-    NB_04["B-04<br/>getBomByParentId data fetcher"]
-    NB_05["B-05<br/>getBomMaterialTypes (merge with M…"]
-    NB_06["B-06<br/>getBomPackagingMaterialTypes (cac…"]
-    NB_07["B-07<br/>getBomPackagingSubstrates (cachea…"]
-    NB_08["B-08<br/>getBomPackagingUnitOfMeasure (cac…"]
-  end
-  subgraph PHC["🔍 Phase C — Search & Listing"]
-    NC_01["C-01<br/>getBomElastic data fetcher"]
-    NC_02["C-02<br/>searchMaterialsBom data fetcher"]
-    NC_03["C-03<br/>getComboSupplierForBom data fetch…"]
-    NC_04["C-04<br/>getValidTrimSuppliersForBom data…"]
-    NC_05["C-05<br/>getValidRawMaterialSuppliersForBo…"]
-  end
-  subgraph PHD["✏️ Phase D — Mutations"]
-    ND_01["D-01<br/>addBom mutation"]
-    ND_02["D-02<br/>manageBomWorkspaces mutation"]
-    ND_03["D-03<br/>lockBom mutation"]
-    ND_04["D-04<br/>unlockBom mutation"]
-    ND_05["D-05<br/>updateBomComponentStatus mutation"]
-  end
-  subgraph PHE["⚙️ Phase E — Complex Operations"]
-    NE_01["E-01<br/>updateBom — 3-step orchestrated w…"]
-  end
-  subgraph PHF["🔗 Phase F — Federation & Stitching"]
-    NF_01["F-01<br/>Implement Product.productBoms / b…"]
-    NF_02["F-02<br/>Fill ResourcesCount.bomsCount (in…"]
-  end
-  subgraph PHG["🧪 Phase G — Field Resolvers & Tests"]
-    NG_01["G-01<br/>Bom field resolvers (9 shared fie…"]
-    NG_03["G-03<br/>BomMaterial field resolvers (8 fi…"]
-    NG_04["G-04<br/>BomPackagingMaterial field resolv…"]
-    NG_05["G-05<br/>BomFabricMaterial field resolvers…"]
-    NG_06["G-06<br/>BomFabricSpecMaterial field resol…"]
-    NG_07["G-07<br/>BomCombinationMaterial field reso…"]
-    NG_08["G-08<br/>BomTrimMaterial field resolvers (…"]
-    NG_09["G-09<br/>BomWashMaterial field resolvers (…"]
-    NG_10["G-10<br/>Impression library-resource resol…"]
-    NG_11["G-11<br/>BomFabricLibraryImpressionDetails…"]
-    NG_12["G-12<br/>BomTrimLibraryImpressionDetails f…"]
-    NG_13["G-13<br/>BomTrimZipperLibraryImpressionDet…"]
-    NG_14["G-14<br/>Trivial pass-through fields (bund…"]
-    NG_15["G-15<br/>BomMaterialSearchResult field res…"]
-    NG_17["G-17<br/>supplier entity references on mat…"]
-  end
-  NA_04 --> NA_05
-  ND_02 --> NE_01
-  NG_10 --> NG_11
-  NG_10 --> NG_12
-  NG_10 --> NG_13
-  NC_02 --> NG_15
-  NG_01 --> NG_17
-  G__SPIKE_05{{"🔬 SPIKE-05"}}
-  G__SPIKE_05 -.-> NA_04
-  G__SPIKE_06a{{"🔬 SPIKE-06a"}}
-  G__SPIKE_06a -.-> NB_05
-  G__SPIKE_01{{"🔬 SPIKE-01"}}
-  G__SPIKE_01 -.-> NE_01
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_{{"⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)"}}
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_ -.-> NE_01
+  PHA["🧱 Phase A<br/>Foundation & Type Resolvers<br/>(2 stories) 🔬"]
+  PHB["📖 Phase B<br/>Core Reads<br/>(7 stories) 🔬"]
+  PHC["🔍 Phase C<br/>Search & Listing<br/>(5 stories)"]
+  PHD["✏️ Phase D<br/>Mutations<br/>(5 stories)"]
+  PHE["⚙️ Phase E<br/>Complex Operations<br/>(1 story) 🔬 ⛔"]
+  PHF["🔗 Phase F<br/>Federation & Stitching<br/>(2 stories)"]
+  PHG["🧪 Phase G<br/>Field Resolvers & Tests<br/>(15 stories)"]
+  PHD -->|1 dep| PHE
+  PHC -->|1 dep| PHG
 ```
+
+**Story-level detail** (every story in this domain, its phase, its direct `Depends on:`, and any gate):
+
+| Story | Phase | Depends on | Gate |
+|---|---|---|---|
+| `A-04` — @DgsTypeResolver for the 2 BOM interfaces | A | — | 🔬 SPIKE-05 |
+| `A-05` — Shared CI conformance gate + code → type registry (SPIKE-05) | A | `A-04` | — |
+| `B-01` — getBomByIds data fetcher | B | — | — |
+| `B-03` — getBomStatus (cacheable master data) | B | — | — |
+| `B-04` — getBomByParentId data fetcher | B | — | — |
+| `B-05` — getBomMaterialTypes (merge with Material Hub) | B | — | 🔬 SPIKE-06a |
+| `B-06` — getBomPackagingMaterialTypes (cacheable) | B | — | — |
+| `B-07` — getBomPackagingSubstrates (cacheable) | B | — | — |
+| `B-08` — getBomPackagingUnitOfMeasure (cacheable) | B | — | — |
+| `C-01` — getBomElastic data fetcher | C | — | — |
+| `C-02` — searchMaterialsBom data fetcher | C | — | — |
+| `C-03` — getComboSupplierForBom data fetcher | C | — | — |
+| `C-04` — getValidTrimSuppliersForBom data fetcher | C | — | — |
+| `C-05` — getValidRawMaterialSuppliersForBom data fetcher | C | — | — |
+| `D-01` — addBom mutation | D | — | — |
+| `D-02` — manageBomWorkspaces mutation | D | — | — |
+| `D-03` — lockBom mutation | D | — | — |
+| `D-04` — unlockBom mutation | D | — | — |
+| `D-05` — updateBomComponentStatus mutation | D | — | — |
+| `E-01` — updateBom — 3-step orchestrated write | E | `D-02` | ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module), 🔬 SPIKE-01 |
+| `F-01` — Implement Product.productBoms / boms / packagingBoms (internal) | F | — | — |
+| `F-02` — Fill ResourcesCount.bomsCount (internal) | F | — | — |
+| `G-01` — Bom field resolvers (9 shared fields) | G | — | — |
+| `G-03` — BomMaterial field resolvers (8 fields) | G | — | — |
+| `G-04` — BomPackagingMaterial field resolvers (2 fields) | G | — | — |
+| `G-05` — BomFabricMaterial field resolvers (4 fields) | G | — | — |
+| `G-06` — BomFabricSpecMaterial field resolvers (4 fields) | G | — | — |
+| `G-07` — BomCombinationMaterial field resolvers (4 fields) | G | — | — |
+| `G-08` — BomTrimMaterial field resolvers (7 fields) — trim size dispatchers | G | — | — |
+| `G-09` — BomWashMaterial field resolvers (4 fields) | G | — | — |
+| `G-10` — Impression library-resource resolution (shared internal/external branch + MaterialDataLoader) | G | — | — |
+| `G-11` — BomFabricLibraryImpressionDetails.libraryResource | G | `G-10` | — |
+| `G-12` — BomTrimLibraryImpressionDetails field resolvers (3 fields) | G | `G-10` | — |
+| `G-13` — BomTrimZipperLibraryImpressionDetails field resolvers (3 colors) | G | `G-10` | — |
+| `G-14` — Trivial pass-through fields (bundle) | G | — | — |
+| `G-15` — BomMaterialSearchResult field resolvers (5 fields) | G | `C-02` | — |
+| `G-17` — supplier entity references on material rows (recommended, PO-gated) | G | `G-01` | — |
 
 ---
 

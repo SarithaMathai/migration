@@ -6,50 +6,39 @@
 
 ## Graph A — Backend Story Dependency (build order)
 
-For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the scheduler enforces.
+One box per **phase** (reads, search, mutations, complex ops, federation, field resolvers, entity resolution) — not one box per story, which stops being readable past a couple dozen stories. An arrow between two phase boxes means at least one story in the target phase directly depends on a story in the source phase; the label is how many story-level dependencies that represents. 🔬/⛔ on a box means at least one story in that phase is spike- or cross-subgraph-gated — see the table below for exactly which one.
 
 ```mermaid
 flowchart TD
-  subgraph PHB["📖 Phase B — Core Reads"]
-    NB_01["B-01<br/>getProductDetailsById(ids)"]
-  end
-  subgraph PHC["🔍 Phase C — Search & Listing"]
-    NC_01["C-01<br/>getProductDetailsElastic(resource…"]
-  end
-  subgraph PHD["✏️ Phase D — Mutations"]
-    ND_01["D-01<br/>createProductDetailsSet"]
-    ND_02["D-02<br/>updateProductDetailAccess"]
-    ND_03["D-03<br/>productDetailLockUnlock"]
-    ND_04["D-04<br/>cloneFilesForProductDetails"]
-    ND_05["D-05<br/>updateProductDetailComponentStatus"]
-  end
-  subgraph PHE["⚙️ Phase E — Complex Operations"]
-    NE_01["E-01<br/>updateProductDetailsSet (multi-st…"]
-  end
-  subgraph PHF["🔗 Phase F — Federation & Stitching"]
-    NF_01["F-01<br/>Product.productDetails (internal,…"]
-  end
-  subgraph PHG["🧪 Phase G — Field Resolvers & Tests"]
-    NG_01["G-01<br/>access + currentUserPermissions +…"]
-    NG_02["G-02<br/>product + createdBy + updatedBy +…"]
-    NG_03["G-03<br/>attachment + item attachment/cons…"]
-  end
-  NB_01 --> NC_01
-  NB_01 --> ND_01
-  NB_01 --> ND_02
-  NB_01 --> ND_03
-  NB_01 --> ND_04
-  NB_01 --> ND_05
-  NB_01 --> NE_01
-  NB_01 --> NF_01
-  NB_01 --> NG_01
-  NB_01 --> NG_02
-  NB_01 --> NG_03
-  G__SPIKE_01{{"🔬 SPIKE-01"}}
-  G__SPIKE_01 -.-> NE_01
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_{{"⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)"}}
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_ -.-> NE_01
+  PHB["📖 Phase B<br/>Core Reads<br/>(1 story)"]
+  PHC["🔍 Phase C<br/>Search & Listing<br/>(1 story)"]
+  PHD["✏️ Phase D<br/>Mutations<br/>(5 stories)"]
+  PHE["⚙️ Phase E<br/>Complex Operations<br/>(1 story) 🔬 ⛔"]
+  PHF["🔗 Phase F<br/>Federation & Stitching<br/>(1 story)"]
+  PHG["🧪 Phase G<br/>Field Resolvers & Tests<br/>(3 stories)"]
+  PHB -->|1 dep| PHC
+  PHB -->|5 deps| PHD
+  PHB -->|1 dep| PHE
+  PHB -->|1 dep| PHF
+  PHB -->|3 deps| PHG
 ```
+
+**Story-level detail** (every story in this domain, its phase, its direct `Depends on:`, and any gate):
+
+| Story | Phase | Depends on | Gate |
+|---|---|---|---|
+| `B-01` — getProductDetailsById(ids) | B | — | — |
+| `C-01` — getProductDetailsElastic(resourceId) | C | `B-01` | — |
+| `D-01` — createProductDetailsSet | D | `B-01` | — |
+| `D-02` — updateProductDetailAccess | D | `B-01` | — |
+| `D-03` — productDetailLockUnlock | D | `B-01` | — |
+| `D-04` — cloneFilesForProductDetails | D | `B-01` | — |
+| `D-05` — updateProductDetailComponentStatus | D | `B-01` | — |
+| `E-01` — updateProductDetailsSet (multi-step write) | E | `B-01` | ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module), 🔬 SPIKE-01 |
+| `F-01` — Product.productDetails (internal, same subgraph) | F | `B-01` | — |
+| `G-01` — access + currentUserPermissions + participantDetails | G | `B-01` | — |
+| `G-02` — product + createdBy + updatedBy + businessPartners + workspaces | G | `B-01` | — |
+| `G-03` — attachment + item attachment/constructionSetAttachments + category subCategories | G | `B-01` | — |
 
 ---
 

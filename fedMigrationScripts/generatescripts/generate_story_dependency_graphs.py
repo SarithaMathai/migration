@@ -7,10 +7,12 @@ DAG, fe-08's Depends-on lines) — nothing here invents new dependency facts, it
 be-04-stories.md / fe-08-frontend-stories.md already declare. Regenerate whenever those change.
 
   Graph A — BE Story Dependency (intra-domain build order)
-    Nodes: this domain's BE-* stories only, swimlaned by PHASE (B/C/D/E/F/G/H) — not by raw DAG
-    depth, which collapses to "step 1 = the module-init scaffold, step 2 = almost every other
-    story" for any domain where most stories only depend on that one scaffold, rendering as an
-    unreadable wall of 40+ nodes in one box. Edges: direct `Depends on:` only.
+    ONE box per phase (B/C/D/E/F/G/H), not one node per story — a story-level diagram stops being
+    readable past a couple dozen nodes, and phase is already a meaningful, size-bounded grouping
+    regardless of domain size. Cross-phase arrows are labeled with the story-level dependency
+    count they represent; 🔬/⛔ markers flag a phase containing a gated story. A companion table
+    (also generated, not hand-maintained) lists every story's phase, direct Depends-on, and gate,
+    so the story-level fact isn't lost, just moved out of the diagram.
     Audience: the backend engineer sequencing their own PRs.
 
   Graph B — FE Readiness (client story dependency)
@@ -70,17 +72,48 @@ def _label(short_id: str, title: str, max_len: int = 34) -> str:
     return f'["{text}"]'
 
 
-def build_be_graph(domain: str, stories: list[dict]) -> str:
-    """Graph A — BE Story Dependency. Swimlaned by PHASE (B/C/D/E/F/G/H), not raw DAG depth —
-    a depth-based grouping collapses to 'step 1 = the module-init scaffold, step 2 = nearly
-    every other story' for any domain where most stories only depend on that one scaffold
-    story, which renders as one unreadable wall of 40+ nodes. Phase is already meaningful
-    (reads vs mutations vs field resolvers) and keeps each swimlane to the size of one phase."""
+def _phase_dep_counts(stories: list[dict], by_short: dict) -> dict[str, dict[str, int]]:
+    """{from_phase: {to_phase: edge_count}} — every direct Depends-on edge, rolled up from
+    story-level to phase-level so Graph A can draw one arrow per phase pair (labeled with
+    how many story-level edges it represents) instead of one arrow per story pair."""
+    counts: dict[str, dict[str, int]] = {}
+    for s in stories:
+        sid = _short_id(s["id"])
+        if sid not in by_short:
+            continue
+        to_phase = s["phase"]
+        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s.get("depends", "") or ""):
+            dep = m.group(1)
+            if dep in by_short and dep != sid:
+                from_phase = by_short[dep]["phase"]
+                if from_phase != to_phase:
+                    counts.setdefault(from_phase, {})
+                    counts[from_phase][to_phase] = counts[from_phase].get(to_phase, 0) + 1
+    return counts
+
+
+def build_be_graph(domain: str, stories: list[dict]) -> tuple[str, str]:
+    """Graph A — BE Story Dependency. ONE box per phase (B/C/D/E/F/G/H), not one box per story —
+    a story-level diagram is unreadable past ~15-20 nodes, and a phase already groups stories
+    into a meaningful, bounded-size unit (reads vs mutations vs field resolvers) regardless of
+    domain size. Cross-phase arrows are labeled with how many story-level dependencies they
+    represent. Gate icons (🔬 spike, ⛔ cross-subgraph block) show on a phase box if ANY story in
+    that phase carries one — the specific story is named in the table returned alongside the
+    diagram, not spelled out in the diagram itself.
+    Returns (mermaid_block, detail_table_markdown)."""
     _waves, gates, _crit = compute_implementation_order(stories)
     by_short = {_short_id(s["id"]): s for s in stories}
     by_phase: dict[str, list] = {}
     for s in stories:
         by_phase.setdefault(s["phase"], []).append(s)
+
+    # Which phases contain a gated story, and which gate(s) — for the box marker + table.
+    phase_gates: dict[str, set] = {}
+    for sid, gate_list in gates.items():
+        if sid in by_short:
+            phase_gates.setdefault(by_short[sid]["phase"], set()).update(gate_list)
+
+    phase_counts = _phase_dep_counts(stories, by_short)
 
     lines = ["```mermaid", "flowchart TD"]
     for phase in PHASE_SEQ:
@@ -89,44 +122,34 @@ def build_be_graph(domain: str, stories: list[dict]) -> str:
             continue
         icon = PHASE_ICONS.get(phase, "")
         name = PHASE_NAMES.get(phase, phase)
-        lines.append(f'  subgraph PH{phase}["{icon} Phase {phase} — {name}"]')
-        for s in sorted(group, key=lambda s: _short_id(s["id"])):
-            sid = _short_id(s["id"])
-            lines.append(f"    {_mid(sid)}{_label(sid, s['title'])}")
-        lines.append("  end")
+        n = len(group)
+        gate_marker = " 🔬" if any(g.startswith("🔬") for g in phase_gates.get(phase, ())) else ""
+        gate_marker += " ⛔" if any(g.startswith("⛔") for g in phase_gates.get(phase, ())) else ""
+        label = f"{icon} Phase {phase}<br/>{name}<br/>({n} {'story' if n == 1 else 'stories'}){gate_marker}"
+        lines.append(f'  PH{phase}["{label}"]')
 
-    # Edges — direct Depends-on only (no transitive walk); this is what actually shows a reader
-    # which specific story unlocks which, without an upstream-chain fan-out from the scaffold story.
-    seen_edges = set()
-    for s in stories:
-        sid = _short_id(s["id"])
-        if sid not in by_short:
-            continue
-        for m in re.finditer(r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s.get("depends", "") or ""):
-            dep = m.group(1)
-            if dep in by_short and dep != sid:
-                edge = (dep, sid)
-                if edge not in seen_edges:
-                    seen_edges.add(edge)
-                    lines.append(f"  {_mid(dep)} --> {_mid(sid)}")
-
-    # Gates (spike / cross-subgraph blocks) — shown as dashed edges from an external gate node,
-    # not real ordering edges (matches the "entry criteria, not scheduler-enforced" convention
-    # used in output/overview/01-architecture-diagrams.md §3).
-    gate_nodes_emitted = set()
-    for sid, gate_list in gates.items():
-        if sid not in by_short:
-            continue
-        for g in gate_list:
-            gnode = "G" + re.sub(r"[^A-Za-z0-9]", "_", g)
-            if gnode not in gate_nodes_emitted:
-                gate_nodes_emitted.add(gnode)
-                label = g.replace('"', "'")
-                lines.append(f'  {gnode}{{{{"{label}"}}}}')
-            lines.append(f"  {gnode} -.-> {_mid(sid)}")
+    for from_phase, targets in phase_counts.items():
+        for to_phase, n in targets.items():
+            plural = "dep" if n == 1 else "deps"
+            lines.append(f"  PH{from_phase} -->|{n} {plural}| PH{to_phase}")
 
     lines.append("```")
-    return "\n".join(lines)
+    diagram = "\n".join(lines)
+
+    # Detail table — every story, its phase, and its direct Depends-on, so the story-level fact
+    # that used to be in the diagram is still in this file, just not cluttering the picture.
+    table = ["| Story | Phase | Depends on | Gate |", "|---|---|---|---|"]
+    for phase in PHASE_SEQ:
+        for s in sorted(by_phase.get(phase, []), key=lambda s: _short_id(s["id"])):
+            sid = _short_id(s["id"])
+            dep_ids = sorted({m.group(1) for m in re.finditer(
+                r"\b(?:[A-Z]+-BE-)?([A-H]-\d+(?:-\d+)?)\b", s.get("depends", "") or "")
+                if m.group(1) in by_short and m.group(1) != sid})
+            deps_cell = ", ".join(f"`{d}`" for d in dep_ids) or "—"
+            gate_cell = ", ".join(sorted(gates.get(sid, []))) or "—"
+            title = re.sub(r"`", "", s["title"]).strip()
+            table.append(f"| `{sid}` — {title} | {phase} | {deps_cell} | {gate_cell} |")
+    return diagram, "\n".join(table)
 
 
 def build_fe_graph_section(domain: str, be_stories: list[dict], fe_stories: list[dict]) -> str:
@@ -173,6 +196,7 @@ def generate_domain(domain: str) -> None:
         print(f"  ! {domain}: no stories found, skipping")
         return
     fe_stories = parse_fe_stories()
+    be_diagram, be_table = build_be_graph(domain, stories)
 
     label = DOMAIN_LABELS.get(domain, domain.title())
     story_link = f"../../../output/analysis/{domain}/be-04-stories.md"
@@ -188,13 +212,19 @@ def generate_domain(domain: str) -> None:
         "",
         "## Graph A — Backend Story Dependency (build order)",
         "",
-        "For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped "
-        "into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-"
-        "resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is "
-        "a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the "
-        "scheduler enforces.",
+        "One box per **phase** (reads, search, mutations, complex ops, federation, field resolvers, "
+        "entity resolution) — not one box per story, which stops being readable past a couple dozen "
+        "stories. An arrow between two phase boxes means at least one story in the target phase "
+        "directly depends on a story in the source phase; the label is how many story-level "
+        "dependencies that represents. 🔬/⛔ on a box means at least one story in that phase is "
+        "spike- or cross-subgraph-gated — see the table below for exactly which one.",
         "",
-        build_be_graph(domain, stories),
+        be_diagram,
+        "",
+        "**Story-level detail** (every story in this domain, its phase, its direct `Depends on:`, and "
+        "any gate):",
+        "",
+        be_table,
         "",
         "---",
         "",

@@ -6,34 +6,30 @@
 
 ## Graph A — Backend Story Dependency (build order)
 
-For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the scheduler enforces.
+One box per **phase** (reads, search, mutations, complex ops, federation, field resolvers, entity resolution) — not one box per story, which stops being readable past a couple dozen stories. An arrow between two phase boxes means at least one story in the target phase directly depends on a story in the source phase; the label is how many story-level dependencies that represents. 🔬/⛔ on a box means at least one story in that phase is spike- or cross-subgraph-gated — see the table below for exactly which one.
 
 ```mermaid
 flowchart TD
-  subgraph PHB["📖 Phase B — Core Reads"]
-    NB_01["B-01<br/>searchImpressionsByProductId data…"]
-    NB_02["B-02<br/>getImpressionCountsByProductId da…"]
-  end
-  subgraph PHD["✏️ Phase D — Mutations"]
-    ND_01["D-01<br/>updateImpressions mutation"]
-  end
-  subgraph PHF["🔗 Phase F — Federation & Stitching"]
-    NF_01["F-01<br/>Product.impressions / impressionC…"]
-  end
-  subgraph PHG["🧪 Phase G — Field Resolvers & Tests"]
-    NG_01["G-01<br/>Impression field resolvers (5 fie…"]
-    NG_02["G-02<br/>ImpressionCount.counts aggregation"]
-    NG_04["G-04<br/>attachment entity reference (reco…"]
-  end
-  NB_01 --> NB_02
-  NB_01 --> ND_01
-  NB_01 --> NF_01
-  NB_01 --> NG_01
-  NB_01 --> NG_02
-  NB_01 --> NG_04
-  G__BLOCKED_BY_product__PRODUCT_BE_B_01__exposes_the_field_this_story_reads_{{"⛔ BLOCKED-BY product (PRODUCT-BE-B-01, exposes the field this story reads)"}}
-  G__BLOCKED_BY_product__PRODUCT_BE_B_01__exposes_the_field_this_story_reads_ -.-> NF_01
+  PHB["📖 Phase B<br/>Core Reads<br/>(2 stories)"]
+  PHD["✏️ Phase D<br/>Mutations<br/>(1 story)"]
+  PHF["🔗 Phase F<br/>Federation & Stitching<br/>(1 story) ⛔"]
+  PHG["🧪 Phase G<br/>Field Resolvers & Tests<br/>(3 stories)"]
+  PHB -->|1 dep| PHD
+  PHB -->|1 dep| PHF
+  PHB -->|3 deps| PHG
 ```
+
+**Story-level detail** (every story in this domain, its phase, its direct `Depends on:`, and any gate):
+
+| Story | Phase | Depends on | Gate |
+|---|---|---|---|
+| `B-01` — searchImpressionsByProductId data fetcher | B | — | — |
+| `B-02` — getImpressionCountsByProductId data fetcher | B | `B-01` | — |
+| `D-01` — updateImpressions mutation | D | `B-01` | — |
+| `F-01` — Product.impressions / impressionCounts (internal field resolver) | F | `B-01` | ⛔ BLOCKED-BY product (PRODUCT-BE-B-01, exposes the field this story reads) |
+| `G-01` — Impression field resolvers (5 fields) | G | `B-01` | — |
+| `G-02` — ImpressionCount.counts aggregation | G | `B-01` | — |
+| `G-04` — attachment entity reference (recommended, PO-gated) | G | `B-01` | — |
 
 ---
 

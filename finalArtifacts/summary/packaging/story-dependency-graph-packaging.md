@@ -6,72 +6,50 @@
 
 ## Graph A — Backend Story Dependency (build order)
 
-For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the scheduler enforces.
+One box per **phase** (reads, search, mutations, complex ops, federation, field resolvers, entity resolution) — not one box per story, which stops being readable past a couple dozen stories. An arrow between two phase boxes means at least one story in the target phase directly depends on a story in the source phase; the label is how many story-level dependencies that represents. 🔬/⛔ on a box means at least one story in that phase is spike- or cross-subgraph-gated — see the table below for exactly which one.
 
 ```mermaid
 flowchart TD
-  subgraph PHB["📖 Phase B — Core Reads"]
-    NB_01["B-01<br/>getPackagings(...)"]
-    NB_02["B-02<br/>getPackagingById(packagingId)"]
-    NB_03["B-03<br/>getDielines(...)"]
-    NB_04["B-04<br/>getPackagingFieldValuesByType(typ…"]
-    NB_05["B-05<br/>getDielineEvaluationStatuses (cac…"]
-    NB_06["B-06<br/>getCountries(codes) (cacheable)"]
-  end
-  subgraph PHC["🔍 Phase C — Search & Listing"]
-    NC_01["C-01<br/>getPackagingElastic(parentHumanId)"]
-  end
-  subgraph PHD["✏️ Phase D — Mutations"]
-    ND_01["D-01<br/>addPackaging"]
-    ND_02["D-02<br/>evaluateDieline"]
-    ND_03["D-03<br/>bulkAddPackagings"]
-    ND_04["D-04<br/>bulkUpdatePackagings"]
-    ND_05["D-05<br/>exportPackaging"]
-    ND_06["D-06<br/>lockPackaging"]
-    ND_07["D-07<br/>unlockPackaging"]
-    ND_08["D-08<br/>cloneFilesForDielines"]
-    ND_09["D-09<br/>updatePackagingComponentStatus"]
-  end
-  subgraph PHE["⚙️ Phase E — Complex Operations"]
-    NE_01["E-01<br/>updatePackaging (multi-step write)"]
-  end
-  subgraph PHF["🔗 Phase F — Federation & Stitching"]
-    NF_01["F-01<br/>Product packaging links (internal…"]
-  end
-  subgraph PHG["🧪 Phase G — Field Resolvers & Tests"]
-    NG_01["G-01<br/>access + businessPartner + partic…"]
-    NG_02["G-02<br/>createdBy + updatedBy + dielineEv…"]
-    NG_03["G-03<br/>product + workspaces + attachments"]
-    NG_04["G-04<br/>suggestedRetailPriceByDPCI + wave…"]
-    NG_05["G-05<br/>Dieline + PrinterDieline + Packag…"]
-  end
-  NB_01 --> NB_02
-  NB_01 --> NB_03
-  NB_01 --> NB_04
-  NB_01 --> NB_05
-  NB_01 --> NB_06
-  NB_01 --> NC_01
-  NB_01 --> ND_01
-  NB_01 --> ND_02
-  NB_01 --> ND_03
-  NB_01 --> ND_04
-  NB_01 --> ND_05
-  NB_01 --> ND_06
-  NB_01 --> ND_07
-  NB_01 --> ND_08
-  NB_01 --> ND_09
-  NB_01 --> NE_01
-  NB_01 --> NF_01
-  NB_01 --> NG_01
-  NB_01 --> NG_02
-  NB_01 --> NG_03
-  NB_01 --> NG_04
-  NB_01 --> NG_05
-  G__SPIKE_01{{"🔬 SPIKE-01"}}
-  G__SPIKE_01 -.-> NE_01
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_{{"⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)"}}
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_ -.-> NE_01
+  PHB["📖 Phase B<br/>Core Reads<br/>(6 stories)"]
+  PHC["🔍 Phase C<br/>Search & Listing<br/>(1 story)"]
+  PHD["✏️ Phase D<br/>Mutations<br/>(9 stories)"]
+  PHE["⚙️ Phase E<br/>Complex Operations<br/>(1 story) 🔬 ⛔"]
+  PHF["🔗 Phase F<br/>Federation & Stitching<br/>(1 story)"]
+  PHG["🧪 Phase G<br/>Field Resolvers & Tests<br/>(5 stories)"]
+  PHB -->|1 dep| PHC
+  PHB -->|9 deps| PHD
+  PHB -->|1 dep| PHE
+  PHB -->|1 dep| PHF
+  PHB -->|5 deps| PHG
 ```
+
+**Story-level detail** (every story in this domain, its phase, its direct `Depends on:`, and any gate):
+
+| Story | Phase | Depends on | Gate |
+|---|---|---|---|
+| `B-01` — getPackagings(...) | B | — | — |
+| `B-02` — getPackagingById(packagingId) | B | `B-01` | — |
+| `B-03` — getDielines(...) | B | `B-01` | — |
+| `B-04` — getPackagingFieldValuesByType(type, ids) | B | `B-01` | — |
+| `B-05` — getDielineEvaluationStatuses (cacheable) | B | `B-01` | — |
+| `B-06` — getCountries(codes) (cacheable) | B | `B-01` | — |
+| `C-01` — getPackagingElastic(parentHumanId) | C | `B-01` | — |
+| `D-01` — addPackaging | D | `B-01` | — |
+| `D-02` — evaluateDieline | D | `B-01` | — |
+| `D-03` — bulkAddPackagings | D | `B-01` | — |
+| `D-04` — bulkUpdatePackagings | D | `B-01` | — |
+| `D-05` — exportPackaging | D | `B-01` | — |
+| `D-06` — lockPackaging | D | `B-01` | — |
+| `D-07` — unlockPackaging | D | `B-01` | — |
+| `D-08` — cloneFilesForDielines | D | `B-01` | — |
+| `D-09` — updatePackagingComponentStatus | D | `B-01` | — |
+| `E-01` — updatePackaging (multi-step write) | E | `B-01` | ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module), 🔬 SPIKE-01 |
+| `F-01` — Product packaging links (internal, same subgraph) | F | `B-01` | — |
+| `G-01` — access + businessPartner + participantDetails | G | `B-01` | — |
+| `G-02` — createdBy + updatedBy + dielineEvaluators | G | `B-01` | — |
+| `G-03` — product + workspaces + attachments | G | `B-01` | — |
+| `G-04` — suggestedRetailPriceByDPCI + waveDescription + retailPrice | G | `B-01` | — |
+| `G-05` — Dieline + PrinterDieline + PackagingElement field resolvers | G | `B-01` | — |
 
 ---
 

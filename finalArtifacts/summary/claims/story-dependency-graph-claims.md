@@ -6,71 +6,47 @@
 
 ## Graph A — Backend Story Dependency (build order)
 
-For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the scheduler enforces.
+One box per **phase** (reads, search, mutations, complex ops, federation, field resolvers, entity resolution) — not one box per story, which stops being readable past a couple dozen stories. An arrow between two phase boxes means at least one story in the target phase directly depends on a story in the source phase; the label is how many story-level dependencies that represents. 🔬/⛔ on a box means at least one story in that phase is spike- or cross-subgraph-gated — see the table below for exactly which one.
 
 ```mermaid
 flowchart TD
-  subgraph PHB["📖 Phase B — Core Reads"]
-    NB_01["B-01<br/>getClaims(parentHumanId, claimHum…"]
-    NB_02["B-02<br/>getClaimByIds(claimHumanIds)"]
-    NB_03["B-03<br/>getCommunicationChannels (cacheab…"]
-    NB_04["B-04<br/>getAllClaimsAbout (cacheable)"]
-    NB_05["B-05<br/>getClaimExports"]
-  end
-  subgraph PHC["🔍 Phase C — Search & Listing"]
-    NC_01["C-01<br/>searchGuestFacing(queryParam)"]
-    NC_02["C-02<br/>getClaimsElastic(parentHumanId)"]
-  end
-  subgraph PHD["✏️ Phase D — Mutations"]
-    ND_01["D-01<br/>createClaim"]
-    ND_02["D-02<br/>bulkUpdateClaim"]
-    ND_03["D-03<br/>requestClaimExport"]
-    ND_04["D-04<br/>lockClaim"]
-    ND_05["D-05<br/>unlockClaim"]
-  end
-  subgraph PHE["⚙️ Phase E — Complex Operations"]
-    NE_01["E-01<br/>updateClaim (proxy ACL + multi-st…"]
-  end
-  subgraph PHG["🧪 Phase G — Field Resolvers & Tests"]
-    NG_01["G-01<br/>access + currentUserPermissions +…"]
-    NG_02["G-02<br/>createdBy + updatedBy + businessP…"]
-    NG_03["G-03<br/>product + parentDetails (otherCla…"]
-    NG_04["G-04<br/>workspaces + ClaimSubstantiate.su…"]
-    NG_06["G-06<br/>Shared value-type alignment (@sha…"]
-  end
-  subgraph PHH["🧬 Phase H — Entity Resolution"]
-    NH_01["H-01<br/>Product.claims (federation contri…"]
-    NH_02["H-02<br/>ResourcesCount.claims (TechPack —…"]
-  end
-  NB_01 --> NB_02
-  NB_01 --> NB_03
-  NB_01 --> NB_04
-  NB_01 --> NB_05
-  NB_01 --> NC_01
-  NB_01 --> NC_02
-  NB_01 --> ND_01
-  NB_01 --> ND_02
-  NB_01 --> ND_03
-  NB_01 --> ND_04
-  NB_01 --> ND_05
-  NB_01 --> NE_01
-  NB_01 --> NH_01
-  NB_01 --> NH_02
-  NB_01 --> NG_01
-  NB_01 --> NG_02
-  NB_01 --> NG_03
-  NG_06 --> NG_03
-  NB_01 --> NG_04
-  NB_01 --> NG_06
-  G__SPIKE_01{{"🔬 SPIKE-01"}}
-  G__SPIKE_01 -.-> NE_01
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_{{"⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)"}}
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_ -.-> NE_01
-  G__BLOCKED_BY_product__PRODUCT_BE_F_14__product_side_stub_alignment__also_waits_on_the_Product_entity_existing__plm_product_Phase_A_{{"⛔ BLOCKED-BY product (PRODUCT-BE-F-14, product-side stub alignment; also waits on the Product entity existing, plm-product Phase A)"}}
-  G__BLOCKED_BY_product__PRODUCT_BE_F_14__product_side_stub_alignment__also_waits_on_the_Product_entity_existing__plm_product_Phase_A_ -.-> NH_01
-  G__BLOCKED_BY_product__PRODUCT_BE_E_03__TechPack_facade__also_PRODUCT_BE_F_14_contract_alignment_{{"⛔ BLOCKED-BY product (PRODUCT-BE-E-03, TechPack facade; also PRODUCT-BE-F-14 contract alignment)"}}
-  G__BLOCKED_BY_product__PRODUCT_BE_E_03__TechPack_facade__also_PRODUCT_BE_F_14_contract_alignment_ -.-> NH_02
+  PHB["📖 Phase B<br/>Core Reads<br/>(5 stories)"]
+  PHC["🔍 Phase C<br/>Search & Listing<br/>(2 stories)"]
+  PHD["✏️ Phase D<br/>Mutations<br/>(5 stories)"]
+  PHE["⚙️ Phase E<br/>Complex Operations<br/>(1 story) 🔬 ⛔"]
+  PHG["🧪 Phase G<br/>Field Resolvers & Tests<br/>(5 stories)"]
+  PHH["🧬 Phase H<br/>Entity Resolution<br/>(2 stories) ⛔"]
+  PHB -->|2 deps| PHC
+  PHB -->|5 deps| PHD
+  PHB -->|1 dep| PHE
+  PHB -->|2 deps| PHH
+  PHB -->|5 deps| PHG
 ```
+
+**Story-level detail** (every story in this domain, its phase, its direct `Depends on:`, and any gate):
+
+| Story | Phase | Depends on | Gate |
+|---|---|---|---|
+| `B-01` — getClaims(parentHumanId, claimHumanIds, partnerIds) | B | — | — |
+| `B-02` — getClaimByIds(claimHumanIds) | B | `B-01` | — |
+| `B-03` — getCommunicationChannels (cacheable) | B | `B-01` | — |
+| `B-04` — getAllClaimsAbout (cacheable) | B | `B-01` | — |
+| `B-05` — getClaimExports | B | `B-01` | — |
+| `C-01` — searchGuestFacing(queryParam) | C | `B-01` | — |
+| `C-02` — getClaimsElastic(parentHumanId) | C | `B-01` | — |
+| `D-01` — createClaim | D | `B-01` | — |
+| `D-02` — bulkUpdateClaim | D | `B-01` | — |
+| `D-03` — requestClaimExport | D | `B-01` | — |
+| `D-04` — lockClaim | D | `B-01` | — |
+| `D-05` — unlockClaim | D | `B-01` | — |
+| `E-01` — updateClaim (proxy ACL + multi-step write) | E | `B-01` | ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module), 🔬 SPIKE-01 |
+| `G-01` — access + currentUserPermissions + participantDetails | G | `B-01` | — |
+| `G-02` — createdBy + updatedBy + businessPartner + designPartner | G | `B-01` | — |
+| `G-03` — product + parentDetails (otherClaimBps / systemTeams / droppedPartnerIds) | G | `B-01`, `G-06` | — |
+| `G-04` — workspaces + ClaimSubstantiate.substantiatedBy + ClaimDetails.claimName | G | `B-01` | — |
+| `G-06` — Shared value-type alignment (@shareable instead of entity stubs) | G | `B-01` | — |
+| `H-01` — Product.claims (federation contribution) | H | `B-01` | ⛔ BLOCKED-BY product (PRODUCT-BE-F-14, product-side stub alignment; also waits on the Product entity existing, plm-product Phase A) |
+| `H-02` — ResourcesCount.claims (TechPack — claims side of PRODUCT-BE-H-04) | H | `B-01` | ⛔ BLOCKED-BY product (PRODUCT-BE-E-03, TechPack facade; also PRODUCT-BE-F-14 contract alignment) |
 
 ---
 

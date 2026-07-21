@@ -6,91 +6,59 @@
 
 ## Graph A — Backend Story Dependency (build order)
 
-For the engineer implementing this domain's backend: which story unlocks which. Nodes are grouped into swimlanes by **phase** (reads, then search, then mutations, then complex/federation/field-resolver work) — arrows show only the direct `Depends on:` edges. A dashed arrow from a diamond is a **gate** (a Phase-0 spike or a cross-subgraph block) — read-only context, not something the scheduler enforces.
+One box per **phase** (reads, search, mutations, complex ops, federation, field resolvers, entity resolution) — not one box per story, which stops being readable past a couple dozen stories. An arrow between two phase boxes means at least one story in the target phase directly depends on a story in the source phase; the label is how many story-level dependencies that represents. 🔬/⛔ on a box means at least one story in that phase is spike- or cross-subgraph-gated — see the table below for exactly which one.
 
 ```mermaid
 flowchart TD
-  subgraph PHB["📖 Phase B — Core Reads"]
-    NB_01["B-01<br/>getMeasurementByIds data fetcher"]
-    NB_02["B-02<br/>getUnitsOfMeasure (cacheable)"]
-    NB_03["B-03<br/>getThicknessUnitsOfMeasure (cache…"]
-    NB_04["B-04<br/>getMeasurementSetStatus (cacheabl…"]
-    NB_05["B-05<br/>getSampleMeasurement data fetcher"]
-    NB_06["B-06<br/>getMeasurementTemplates + getMeas…"]
-    NB_07["B-07<br/>getSizeTemplates + getSizeCategor…"]
-    NB_08["B-08<br/>getTightFits + getTightFitByIdAnd…"]
-    NB_09["B-09<br/>searchSparkSizes data fetcher (NE…"]
-  end
-  subgraph PHC["🔍 Phase C — Search & Listing"]
-    NC_01["C-01<br/>getMeasurements data fetcher (rel…"]
-    NC_02["C-02<br/>getMeasurementsElastic data fetch…"]
-  end
-  subgraph PHD["✏️ Phase D — Mutations"]
-    ND_01["D-01<br/>addMeasurement mutation"]
-    ND_02["D-02<br/>updateMeasurementAccess mutation"]
-    ND_03["D-03<br/>lockMeasurementSet mutation"]
-    ND_04["D-04<br/>unlockMeasurementSet mutation"]
-    ND_05["D-05<br/>updateMeasurementComponentStatus…"]
-    ND_06["D-06<br/>putSampleMeasurementSet mutation"]
-    ND_07["D-07<br/>deleteSampleMeasurementSet mutati…"]
-    ND_08["D-08<br/>addMeasurementTemplate + updateMe…"]
-    ND_09["D-09<br/>addSizeTemplate + updateSizeTempl…"]
-    ND_10["D-10<br/>addTightFit + updateTightFit muta…"]
-  end
-  subgraph PHE["⚙️ Phase E — Complex Operations"]
-    NE_01["E-01<br/>updateMeasurement — 2-step orches…"]
-  end
-  subgraph PHF["🔗 Phase F — Federation & Stitching"]
-    NF_01["F-01<br/>Implement Product.measurementSets…"]
-  end
-  subgraph PHG["🧪 Phase G — Field Resolvers & Tests"]
-    NG_01["G-01<br/>Measurement field resolvers (13 f…"]
-    NG_02["G-02<br/>SampleMeasurementSet field resolv…"]
-    NG_05["G-05<br/>MeasurementTemplate field resolve…"]
-    NG_06["G-06<br/>SizeTemplate field resolvers (3 f…"]
-    NG_07["G-07<br/>TightFit field resolvers (5 field…"]
-  end
-  subgraph PHH["🧬 Phase H — Entity Resolution"]
-    NH_01["H-01<br/>Contribute sampleMeasurement to t…"]
-    NH_02["H-02<br/>SampleMeasurementSet.sample forwa…"]
-  end
-  NB_01 --> NB_02
-  NB_01 --> NB_03
-  NB_01 --> NB_04
-  NB_01 --> NB_05
-  NB_01 --> NC_01
-  NB_01 --> NC_02
-  NB_01 --> ND_01
-  NB_01 --> ND_02
-  NB_01 --> ND_03
-  NB_01 --> ND_04
-  NB_01 --> ND_05
-  NB_01 --> ND_06
-  NB_01 --> ND_07
-  NB_06 --> ND_08
-  NB_07 --> ND_09
-  NB_08 --> ND_10
-  NB_01 --> NE_01
-  NB_01 --> NF_01
-  NB_01 --> NH_01
-  NB_02 --> NH_02
-  NB_05 --> NH_02
-  NB_01 --> NG_01
-  NB_06 --> NG_01
-  NB_07 --> NG_01
-  NB_08 --> NG_01
-  NB_01 --> NG_02
-  NB_06 --> NG_05
-  NB_07 --> NG_06
-  NB_08 --> NG_07
-  G__SPIKE_01{{"🔬 SPIKE-01"}}
-  G__SPIKE_01 -.-> NE_01
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_{{"⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)"}}
-  G__BLOCKED_BY_product__PRODUCT_BE_E_00__the_shared_WriteSaga_module_ -.-> NE_01
-  G__BLOCKED_BY_sample{{"⛔ BLOCKED-BY sample"}}
-  G__BLOCKED_BY_sample -.-> NH_01
-  G__BLOCKED_BY_sample -.-> NH_02
+  PHB["📖 Phase B<br/>Core Reads<br/>(9 stories)"]
+  PHC["🔍 Phase C<br/>Search & Listing<br/>(2 stories)"]
+  PHD["✏️ Phase D<br/>Mutations<br/>(10 stories)"]
+  PHE["⚙️ Phase E<br/>Complex Operations<br/>(1 story) 🔬 ⛔"]
+  PHF["🔗 Phase F<br/>Federation & Stitching<br/>(1 story)"]
+  PHG["🧪 Phase G<br/>Field Resolvers & Tests<br/>(5 stories)"]
+  PHH["🧬 Phase H<br/>Entity Resolution<br/>(2 stories) ⛔"]
+  PHB -->|2 deps| PHC
+  PHB -->|10 deps| PHD
+  PHB -->|1 dep| PHE
+  PHB -->|1 dep| PHF
+  PHB -->|3 deps| PHH
+  PHB -->|8 deps| PHG
 ```
+
+**Story-level detail** (every story in this domain, its phase, its direct `Depends on:`, and any gate):
+
+| Story | Phase | Depends on | Gate |
+|---|---|---|---|
+| `B-01` — getMeasurementByIds data fetcher | B | — | — |
+| `B-02` — getUnitsOfMeasure (cacheable) | B | `B-01` | — |
+| `B-03` — getThicknessUnitsOfMeasure (cacheable) | B | `B-01` | — |
+| `B-04` — getMeasurementSetStatus (cacheable) | B | `B-01` | — |
+| `B-05` — getSampleMeasurement data fetcher | B | `B-01` | — |
+| `B-06` — getMeasurementTemplates + getMeasurementTemplatesByIds data fetchers | B | — | — |
+| `B-07` — getSizeTemplates + getSizeCategories + getMaterialTypes data fetchers | B | — | — |
+| `B-08` — getTightFits + getTightFitByIdAndVersion data fetchers | B | — | — |
+| `B-09` — searchSparkSizes data fetcher (NEXUS + Tag fan-out) | B | — | — |
+| `C-01` — getMeasurements data fetcher (relationship + listing) | C | `B-01` | — |
+| `C-02` — getMeasurementsElastic data fetcher | C | `B-01` | — |
+| `D-01` — addMeasurement mutation | D | `B-01` | — |
+| `D-02` — updateMeasurementAccess mutation | D | `B-01` | — |
+| `D-03` — lockMeasurementSet mutation | D | `B-01` | — |
+| `D-04` — unlockMeasurementSet mutation | D | `B-01` | — |
+| `D-05` — updateMeasurementComponentStatus mutation | D | `B-01` | — |
+| `D-06` — putSampleMeasurementSet mutation | D | `B-01` | — |
+| `D-07` — deleteSampleMeasurementSet mutation | D | `B-01` | — |
+| `D-08` — addMeasurementTemplate + updateMeasurementTemplate + deleteMeasurementTemplate mutations | D | `B-06` | — |
+| `D-09` — addSizeTemplate + updateSizeTemplate mutations | D | `B-07` | — |
+| `D-10` — addTightFit + updateTightFit mutations | D | `B-08` | — |
+| `E-01` — updateMeasurement — 2-step orchestrated write | E | `B-01` | ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module), 🔬 SPIKE-01 |
+| `F-01` — Implement Product.measurementSets (internal) | F | `B-01` | — |
+| `G-01` — Measurement field resolvers (13 fields) | G | `B-01`, `B-06`, `B-07`, `B-08` | — |
+| `G-02` — SampleMeasurementSet field resolvers (2 fields) | G | `B-01` | — |
+| `G-05` — MeasurementTemplate field resolvers (5 fields) | G | `B-06` | — |
+| `G-06` — SizeTemplate field resolvers (3 fields) | G | `B-07` | — |
+| `G-07` — TightFit field resolvers (5 fields) | G | `B-08` | — |
+| `H-01` — Contribute sampleMeasurement to the SampleV2 entity | H | `B-01` | ⛔ BLOCKED-BY sample |
+| `H-02` — SampleMeasurementSet.sample forward reference (recommended, PO-gated) | H | `B-02`, `B-05` | ⛔ BLOCKED-BY sample |
 
 ---
 
