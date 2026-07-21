@@ -53,7 +53,10 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 
 | Story | Program spike | Bucket |
 |---|---|---|
+| 🔴🔬 `PRODUCT-BE-B-10` — `getProductDeptRules(productIds, departmentIds, activeOnly)` | `SPIKE-07` | Product Rules API Ownership |
+| 🔴🔬 `PRODUCT-BE-B-11` — `getProductBPRules(productIds, businessPartnerIds, activeOnly)` | `SPIKE-07` | Product Rules API Ownership |
 | 🔴🔬 `PRODUCT-BE-C-01` — `getProducts(...)` two-stage hydration | `SPIKE-06a` | Hydration |
+| 🔴🔬 `PRODUCT-BE-C-05` — `searchProductRules(...)` | `SPIKE-07` | Product Rules API Ownership |
 | 🔴🔬 `PRODUCT-BE-D-01` — `addProduct` | `SPIKE-06b` | Cross-Domain Association |
 | 🔴🔬 `PRODUCT-BE-D-02` — `addProducts` (bulk) | `SPIKE-06b` | Cross-Domain Association |
 | 🔴🔬 `PRODUCT-BE-D-04` — `updateProduct` | `SPIKE-06b` | Cross-Domain Association |
@@ -143,7 +146,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | Step | Stories (parallel set) | Entry gates in this step | Focus |
 |---|---|---|---|
 | 1 | 🟢 `B-01` | — | 🧱 Module init — schema skeleton, service wiring (unblocks everything) |
-| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟢 `B-07`, 🟢 `B-08`, 🟢 `B-09`, 🟢 `B-10`, 🟢 `B-11`, 🟠 `C-01`, 🟡 `C-02`, 🟡 `C-03`, 🟡 `C-04`, 🟡 `C-05`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟡 `D-05`, 🟢 `D-06`, 🟢 `D-07`, 🟢 `D-08`, 🟢 `D-09`, 🟢 `D-10`, 🟢 `D-11`, 🟢 `D-12`, 🟢 `D-13`, 🟢 `D-14`, 🟢 `D-15`, 🟢 `D-16`, 🟢 `D-17`, 🟢 `D-18`, 🟠 `E-00`, 🔴 `E-03`, 🟢 `F-14`, 🔴 `G-01`, 🔴 `G-02`, 🟡 `G-04`, 🟡 `G-05`, 🟡 `G-06`, 🟡 `G-07`, 🟡 `G-08`, 🟡 `G-09`, 🟡 `G-10`, 🟡 `G-11-1`, 🟡 `G-11-2`, 🟡 `G-13`, 🟢 `G-14`, 🟡 `G-15`, 🟡 `H-06` | `C-01` → 🔬 SPIKE-06a<br>`D-01` → 🔬 SPIKE-06b<br>`D-02` → 🔬 SPIKE-06b<br>`D-04` → 🔬 SPIKE-06b<br>`E-00` → 🔬 SPIKE-01<br>`E-03` → 🔬 SPIKE-02<br>`G-07` → 🔬 SPIKE-04<br>`G-11-1` → 🔬 SPIKE-04 | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests · 🧬 Entity Resolution |
+| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟢 `B-07`, 🟢 `B-08`, 🟢 `B-09`, 🟢 `B-10`, 🟢 `B-11`, 🟠 `C-01`, 🟡 `C-02`, 🟡 `C-03`, 🟡 `C-04`, 🟡 `C-05`, 🟡 `D-01`, 🟡 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟡 `D-05`, 🟢 `D-06`, 🟢 `D-07`, 🟢 `D-08`, 🟢 `D-09`, 🟢 `D-10`, 🟢 `D-11`, 🟢 `D-12`, 🟢 `D-13`, 🟢 `D-14`, 🟢 `D-15`, 🟢 `D-16`, 🟢 `D-17`, 🟢 `D-18`, 🟠 `E-00`, 🔴 `E-03`, 🟢 `F-14`, 🔴 `G-01`, 🔴 `G-02`, 🟡 `G-04`, 🟡 `G-05`, 🟡 `G-06`, 🟡 `G-07`, 🟡 `G-08`, 🟡 `G-09`, 🟡 `G-10`, 🟡 `G-11-1`, 🟡 `G-11-2`, 🟡 `G-13`, 🟢 `G-14`, 🟡 `G-15`, 🟡 `H-06` | `B-10` → 🔬 SPIKE-07<br>`B-11` → 🔬 SPIKE-07<br>`C-01` → 🔬 SPIKE-06a<br>`C-05` → 🔬 SPIKE-07<br>`D-01` → 🔬 SPIKE-06b<br>`D-02` → 🔬 SPIKE-06b<br>`D-04` → 🔬 SPIKE-06b<br>`E-00` → 🔬 SPIKE-01<br>`E-03` → 🔬 SPIKE-02<br>`G-07` → 🔬 SPIKE-04<br>`G-11-1` → 🔬 SPIKE-04 | Fan-out — 📖 Core Reads · 🔍 Search & Listing · ✏️ Mutations · ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests · 🧬 Entity Resolution |
 | 3 | 🔴 `E-01`, 🟠 `E-02`, 🔴 `E-04`, 🟢 `F-04`, 🟢 `F-06`, 🟢 `F-08`, 🟢 `F-10`, 🟠 `G-03`, 🟡 `G-17`, 🟡 `H-01`, 🟡 `H-02`, 🟡 `H-03`, 🟡 `H-04`, 🟡 `H-05` | `E-01` → 🔬 SPIKE-03<br>`E-02` → 🔬 SPIKE-01<br>`E-04` → 🔬 SPIKE-02<br>`H-01` → ⛔ BLOCKED-BY attachment domain (⛔ cross-subgraph — does not ship until plm-attachment is live)<br>`H-02` → ⛔ BLOCKED-BY discussion domain (⛔ cross-subgraph)<br>`H-03` → ⛔ BLOCKED-BY sample domain (⛔ cross-subgraph)<br>`H-04` → ⛔ BLOCKED-BY claim domain (⛔ cross-subgraph)<br>`H-05` → ⛔ BLOCKED-BY construction domain (⛔ cross-subgraph) | Fan-out — ⚙️ Complex Operations · 🔗 Federation & Stitching · 🧪 Field Resolvers & Tests · 🧬 Entity Resolution |
 | 4 | 🟢 `F-09`, 🟢 `F-11`, 🟢 `F-12` | — | 🔗 Federation & Stitching |
 
@@ -177,7 +180,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | 18 | 🟡 `C-02` (2–4d) |
 | 19 | 🟡 `C-03` (2–4d) |
 | 20 | 🟡 `C-04` (2–4d) |
-| 21 | 🟡 `C-05` (2–4d) |
+| 21 | 🟡 `C-05` (2–4d) 🔬 |
 | 22 | 🟡 `D-01` (2–4d) 🔬 |
 | 23 | 🟡 `D-02` (2–4d) 🔬 |
 | 24 | 🟡 `D-03` (2–4d) |
@@ -207,8 +210,8 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | 48 | 🟢 `B-07` (1–2d) |
 | 49 | 🟢 `B-08` (1–2d) |
 | 50 | 🟢 `B-09` (1–2d) |
-| 51 | 🟢 `B-10` (1–2d) |
-| 52 | 🟢 `B-11` (1–2d) |
+| 51 | 🟢 `B-10` (1–2d) 🔬 |
+| 52 | 🟢 `B-11` (1–2d) 🔬 |
 | 53 | 🟢 `D-06` (1–2d) |
 | 54 | 🟢 `D-07` (1–2d) |
 | 55 | 🟢 `D-08` (1–2d) |
@@ -250,8 +253,8 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | 🔷 `PRODUCT-BE-B-07`<br>`getProductRules` | 🟢 Low `XS` | Query | — | **Intent —** Returns the product business rules.<br>**Today —** getAllRules GET $… → content<br>**Done when:**<br>• returns rules content |
 | 🔷 `PRODUCT-BE-B-08`<br>`getProductRulesById(id)` | 🟢 Low `XS` | Query | — | **Intent —** Looks up one business rule by id.<br>**Today —** getRuleById GET $…<br>**Done when:**<br>• returns rule |
 | 🔷 `PRODUCT-BE-B-09`<br>`getAllAvailableRules` | 🟢 Low `XS` | Query | — | **Intent —** Lists all the rules that are available to apply.<br>**Today —** getAvailableRules GET …/spark_rules/v1/rules<br>**Done when:**<br>• returns available rules |
-| 🔷 `PRODUCT-BE-B-10`<br>`getProductDeptRules(productIds, departmentIds, activeOnly)` | 🟢 Low `XS` | Query<br>Calls: `ruleLibrary` | — | **Intent —** Returns the department-level rules for given products.<br>**Today —** flag fork USE_NEW_RULES_API ? ruleLibrary.searchRuleLibrary : product.searchProductDeptRules GET …/spark_rules/v1/search?productIds=&departmentIds=&activeOnly=. PO…<br>**Done when:**<br>• default `activeOnly=true`<br>• flag selects the correct backend |
-| 🔷 `PRODUCT-BE-B-11`<br>`getProductBPRules(productIds, businessPartnerIds, activeOnly)` | 🟢 Low `XS` | Query<br>Calls: `ruleLibrary` | — | **Intent —** Returns the business-partner-level rules for given products.<br>**Today —** same as B-10 with businessPartnerIds<br>**Done when:**<br>• flag fork honored; BP filter applied |
+| 🔴🔬 🔷 `PRODUCT-BE-B-10`<br>`getProductDeptRules(productIds, departmentIds, activeOnly)`<br>🔴🔬 _Spike-gated on `SPIKE-07` (Product Rules API Ownership) — see global Spike Detail_ | 🟢 Low `XS` | Query<br>Calls: `ruleLibrary` | SPIKE-07 | **Intent —** Returns the department-level rules for given products.<br>**Today —** flag fork USE_NEW_RULES_API ? ruleLibrary.searchRuleLibrary : product.searchProductDeptRules GET …/spark_rules/v1/search?productIds=&departmentIds=&activeOnly=. PO…<br>**Done when:**<br>• default `activeOnly=true`<br>• flag selects the correct backend<br>• Scope reconfirmed against `S-04`'s decision before implementation starts |
+| 🔴🔬 🔷 `PRODUCT-BE-B-11`<br>`getProductBPRules(productIds, businessPartnerIds, activeOnly)`<br>🔴🔬 _Spike-gated on `SPIKE-07` (Product Rules API Ownership) — see global Spike Detail_ | 🟢 Low `XS` | Query<br>Calls: `ruleLibrary` | SPIKE-07 | **Intent —** Returns the business-partner-level rules for given products.<br>**Today —** same as B-10 with businessPartnerIds<br>**Done when:**<br>• flag fork honored; BP filter applied<br>• Scope reconfirmed against `S-04`'s decision before implementation starts |
 
 > **`PRODUCT-BE-B-01`** — **Note — DGS Module Init (this PR only):** Creates `product.graphqls` (federation v2.3 header, scalars, owned types with `@key`, external stubs), registers scalars in `ScalarConfig.kt`, and wires the service and Feign client. Full type list: be-03-schema.graphql. **This scaffold is a prerequisite for every B/C/D/G story** — they need the module + schema file to compile their DGS wrapper — so it is assumed globally (shown once in the dependency graph) and **not repeated** in each story's `Depends On`. After it lands, the wrappers parallelize.
 
@@ -264,7 +267,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | 🔷 `PRODUCT-BE-C-02`<br>`getProductTemplates(...)` | 🟡 Medium `M` | Query<br>Calls: `search` | — | **Intent —** Lists product templates, with optional filters on what to include.<br>**Today —** (search) getFilteredProductsListing({resourceType:'product', includeBoms:false, ...7 includeXxxTemplates flags, types}) → return elastic response (no 2nd hydration)<br>**Done when:**<br>• all 7 template-include flags forwarded<br>• `types:[Int]` filter applied | — |
 | 🔷 `PRODUCT-BE-C-03`<br>`getCategories(...)` | 🟡 Medium `M` | Query<br>Calls: `search` | — | **Intent —** Returns the category tree for products.<br>**Today —** default productType ?? 100; (search) getProductCategories GET ${elastic}/search/${snake_case(type)}?resourceType=&resourceId=&productType= → ProductsCategories…<br>**Done when:**<br>• `snake_case(type)` path exact<br>• wires to `Categories` union | — |
 | 🔷 `PRODUCT-BE-C-04`<br>`getRatingByTcin(tcin)` (external rating) | 🟡 Medium `M` | Query<br>Calls: `rating` | — | **Intent —** Gets the customer rating for a product (from an external ratings service).<br>**Today —** (external) GET ${RATING_ENDPOINT}?reviewType=product&includes=statistics&reviewedId={tcin}&key={API_KEY} (skipJsonParse) → JSON.parse → {averageRating, reviewCount}…<br>**Done when:**<br>• parses statistics to `Rating`<br>• any error → null<br>• API key from config/Vault, not source | — |
-| 🔷 `PRODUCT-BE-C-05`<br>`searchProductRules(...)` | 🟡 Medium `M` | Query<br>Calls: `ruleLibrary` | — | **Intent —** Searches product rules.<br>**Today —** flag fork; legacy GET …/spark_rules/v1/search_mapped?... → productRuleResponseTransformer → camelCase<br>**Done when:**<br>• flag fork honored<br>• legacy response transformed correctly | — |
+| 🔴🔬 🔷 `PRODUCT-BE-C-05`<br>`searchProductRules(...)`<br>🔴🔬 _Spike-gated on `SPIKE-07` (Product Rules API Ownership) — see global Spike Detail_ | 🟡 Medium `M` | Query<br>Calls: `ruleLibrary` | SPIKE-07 | **Intent —** Searches product rules.<br>**Today —** flag fork; legacy GET …/spark_rules/v1/search_mapped?... → productRuleResponseTransformer → camelCase<br>**Done when:**<br>• flag fork honored<br>• legacy response transformed correctly<br>• Scope reconfirmed against `S-04`'s decision before implementation starts | — |
 
 
 ##### ✏️ Phase D — Mutations (18 stories)

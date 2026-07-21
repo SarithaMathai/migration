@@ -19,11 +19,15 @@ Program-level:
   output/summary/00-program-overview.md                      Merged program overview
   output/jira/all-stories.csv                                All stories + program spikes, one file
 
-  output/finalArtifacts/          Slim PO + implementing-engineer entry point (copies only,
-    00-overview.md                no new content): overview + sequencing, the Confluence
-    00-sequencing.md              breakdown per domain, and Jira CSVs (AC-only description).
-    {domain}/FederatedGqlBreakDown-{domain}.md(+.docx)
-    jira/{domain}.csv, jira/all-stories.csv
+finalArtifacts/ (repo root, sibling of output/ — NOT under output/) — the slim PO +
+implementing-engineer entry point. Copies only, no new content:
+  finalArtifacts/
+    00-overview.md                 program overview (what/why, totals, domain list)
+    00-sequencing.md               what's building + recommended build order (= 02-project-plan.md)
+    summary/{domain}/
+      FederatedGqlBreakDown-{domain}.md(+.docx)      Confluence-ready breakdown
+      story-dependency-graph-{domain}.md             2 mermaid graphs — BE build order + FE readiness
+    jira/{domain}.csv, jira/all-stories.csv          import-ready, Acceptance Criteria only
   For full story detail (Current Behaviour, Target implementation, Kotlin snippets), go to
   output/analysis/{domain}/be-04-stories.md — finalArtifacts links back there, it never repeats it.
 
@@ -45,7 +49,7 @@ from datetime import date
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 OUTPUT = ROOT / "output" / "summary"   # generated docs go to migration/output/summary/
-FINAL = ROOT / "output" / "finalArtifacts"
+FINAL = ROOT / "finalArtifacts"        # repo root, sibling of output/ — the slim entry point
 
 # ─── Import the two per-domain generators ────────────────────────────────────
 # (Run from the same directory — direct import works)
@@ -312,17 +316,19 @@ def build_program_overview() -> str:
 
 
 def build_final_artifacts() -> None:
-    """Assemble output/finalArtifacts/ — the slim, PO + implementing-engineer entry point.
+    """Assemble finalArtifacts/ (repo root) — the slim, PO + implementing-engineer entry point.
 
-    Everything here is a copy of a file generated elsewhere in this run; no new content is
-    authored. Three things, matching what PO/engineers actually need day to day:
-      - what stories exist + recommended sequencing  -> 00-overview.md, 00-sequencing.md
-      - the Confluence-ready breakdown per domain     -> {domain}/FederatedGqlBreakDown-{domain}.md(+.docx)
-      - Jira-pushable rows (AC only)                  -> jira/{domain}.csv, jira/all-stories.csv
+    Exactly 2 folders plus 2 loose overview files, everything a copy of a file generated
+    elsewhere in this run (no new content authored here):
+      finalArtifacts/00-overview.md, 00-sequencing.md        program orientation + build order
+      finalArtifacts/summary/{domain}/                       Confluence breakdown + dependency graphs
+      finalArtifacts/jira/{domain}.csv, all-stories.csv      import-ready, Acceptance Criteria only
 
     Deep-dive material (be-04-stories.md, *-comprehensive.md, output/analysis/, clientStoryDependency/,
     complexStories/) stays out — "refer to the story for more detail" points back at output/analysis/,
-    not into this folder.
+    not into this folder. The per-domain dependency graphs are generated directly into
+    finalArtifacts/summary/{domain}/ by generate_story_dependency_graphs.py (called from main(),
+    right before this function) rather than copied, since they have no other home in output/.
     """
     if FINAL.exists():
         shutil.rmtree(FINAL)
@@ -344,14 +350,14 @@ def build_final_artifacts() -> None:
     for domain in ALL_DOMAINS:
         for ext in (".md", ".docx"):
             name = f"FederatedGqlBreakDown-{domain}{ext}"
-            cp(OUTPUT / domain / name, FINAL / domain / name)
+            cp(OUTPUT / domain / name, FINAL / "summary" / domain / name)
 
     jira_dir = ROOT / "output" / "jira"
     cp(jira_dir / "all-stories.csv", FINAL / "jira" / "all-stories.csv")
     for domain in ALL_DOMAINS:
         cp(jira_dir / f"{domain}.csv", FINAL / "jira" / f"{domain}.csv")
 
-    print(f"  OK finalArtifacts/ ({len(copied)} files)")
+    print(f"  OK finalArtifacts/ ({len(copied)} files copied)")
     for m in missing:
         print(f"  ! finalArtifacts: missing source {m} — run a full `generate_all.py` first")
 
@@ -540,10 +546,19 @@ def main() -> None:
 
         # finalArtifacts/ — the slim PO + engineer entry point, assembled last so every
         # source file above (breakdowns, project plan, Jira CSVs) is fresh before copying.
+        # build_final_artifacts() wipes and recreates the folder, so it must run BEFORE the
+        # dependency graphs are written directly into it, not after.
         try:
             build_final_artifacts()
         except Exception as e:
             print(f"  FAIL finalArtifacts: {type(e).__name__}: {e}")
+
+        # Per-domain story dependency graphs (BE build order + FE readiness) — written directly
+        # into finalArtifacts/summary/{domain}/, since they have no other home in output/.
+        try:
+            _load("generate_story_dependency_graphs").main()
+        except Exception as e:
+            print(f"  FAIL story dependency graphs: {type(e).__name__}: {e}")
 
     print("\nDone. Run `python generate_all.py <domain>` to regenerate a single domain.\n")
 

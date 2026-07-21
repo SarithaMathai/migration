@@ -92,7 +92,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | 1 | TechPack facade: Node extract vs Kotlin aggregation | ✅ Direction resolved — facade-then-federate (draft ADR-015 Option B; catalogue "Option D Phase 1"); ADR ratification pending | Facade now, federate per-domain later, retire facade (`F-09`). See `E-03`'s note + `complexStories/techpack/`. |
 | 2 | `productBusinessPartnerActions` failure strategy | 🔬 **Spike** `PRODUCT-BE-S-03` (program id `SPIKE-03`, run first) | Blocks `E-01`. Draft ADR-012 in `complexStories/partner-drop-undrop-write/`. |
 | 3 | Delete or `@deprecated` the 3 drift partner wrappers | ⬜ Open (not a spike — needs a traffic survey, not research) | Blocks `F-12`. Owner: PO. |
-| 4 | `USE_NEW_RULES_API` cutover (rules may move to spark-tag DGS) | ⬜ Open (not a spike) | Blocks `B-10`/`B-11`/`C-05`. Owner: Product Owner. |
+| 4 | `USE_NEW_RULES_API` cutover (rules may move to spark-tag DGS) | 🔬 **Spike** `PRODUCT-BE-S-04` (program id `SPIKE-07`) | Blocks `B-10`/`B-11`/`C-05`. Also re-confirm `PRODUCT-FE-007`'s scope once resolved. Owner: Product Owner. |
 | 5 | `Product.division` bug fix — ship the response-shape change after a client survey | ✅ Resolved — ship straight, survey first | Tracked outside this Jira pipeline, created manually — see `be-04-stories.md` Phase G's `G-13` note. Owner: PO. |
 | 6 | `components` ACL batching approach | ✅ Resolved — batch, no N+1 | See `G-02`'s pseudocode; not an open question. |
 | — | `getProducts` two-stage hydration design | 🔬 **Spike** `PRODUCT-BE-S-02` | Blocks `C-01`. New item raised in review, not in the original 6. |

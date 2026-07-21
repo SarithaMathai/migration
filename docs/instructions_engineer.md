@@ -4,9 +4,11 @@
 > first time. Goal: by the end of this doc you can find your story, understand what it depends on and
 > what depends on it, and know what "done" means — without needing someone to walk you through it.
 >
-> **Just need the sequencing or the Jira ticket?** [`output/finalArtifacts/`](../output/finalArtifacts/) is
-> the slim entry point — `00-sequencing.md` (build order), `{domain}/FederatedGqlBreakDown-{domain}.md`
-> (Confluence breakdown), `jira/{domain}.csv` (import-ready, Acceptance Criteria only). Everything below is
+> **Just need the sequencing, dependency graph, or the Jira ticket?** [`finalArtifacts/`](../finalArtifacts/)
+> (repo root, sibling of `output/`) is the slim entry point — `00-sequencing.md` (build order),
+> `summary/{domain}/FederatedGqlBreakDown-{domain}.md` (Confluence breakdown),
+> `summary/{domain}/story-dependency-graph-{domain}.md` (2 visual graphs: BE build order + what must ship
+> before FE can start), `jira/{domain}.csv` (import-ready, Acceptance Criteria only). Everything below is
 > for when you need the full story text to actually implement it.
 >
 > Start at [`output/overview/00-program-overview.md`](../output/overview/00-program-overview.md) if you

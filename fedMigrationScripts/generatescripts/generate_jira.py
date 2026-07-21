@@ -117,6 +117,17 @@ PHASE_LABEL = {
 }
 DEFAULT_STATUS = "To Do"
 
+# Stories that exist and are fully documented in be-04-stories.md but are deliberately not
+# imported to Jira for this program — different team owns the work. Mirrored in
+# output/analysis/out-of-scope-backlog.md so the exclusion has a recorded reason, not just a
+# silent skip. Full story text (Current Behaviour, Target, AC) is untouched in be-04-stories.md.
+JIRA_EXCLUDED_STORIES = {
+    "PRODUCT-BE-D-15": "addProductRule — rules-write ownership sits with a different team; only "
+                        "the get*/search* rules reads are in this program's Jira scope for product",
+    "PRODUCT-BE-D-16": "updateProductRule — same rules-write ownership exclusion as D-15",
+    "PRODUCT-BE-D-17": "deleteProductRule — same rules-write ownership exclusion as D-15",
+}
+
 # ─── External Dependency column (from be-05's structured EXT (sev) column — never
 # scraped from free-text prose, which is incidental and inconsistent story-to-story) ──
 _csd_module = None
@@ -434,6 +445,8 @@ def build_story_rows(domain: str) -> list[list]:
         if s["phase"] == "S":
             continue
         if s["id"] in merge_map:                  # merged into a grouped-XS story — no own row
+            continue
+        if s["id"] in JIRA_EXCLUDED_STORIES:       # different team owns this — see out-of-scope-backlog.md
             continue
 
         size  = SIZE_MAP.get(s["complexity"], "M")

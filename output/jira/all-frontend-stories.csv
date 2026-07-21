@@ -1360,7 +1360,7 @@ Story,PRODUCT-FE-006,[Product FE] Migrate `getCategories` documents [PRODUCT-FE-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-007,[Product FE] Migrate product rules administration [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-07 PRODUCT-BE-B-08 PRODUCT-BE-B-09 PRODUCT-BE-B-10 PRODUCT-BE-B-11 PRODUCT-BE-C-05 PRODUCT-BE-D-15 PRODUCT-BE-D-16 PRODUCT-BE-D-17 PRODUCT-BE-G-07 PRODUCT-BE-G-13 PRODUCT-BE-H-08,"brand, corona, doppler, fileLibrary, ig, tag, vmm",To Do,"*Implementation Order:* 73 of 82 (Product combined — frontend #4, cutover step 4)
+Story,PRODUCT-FE-007,[Product FE] Migrate product rules administration [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-07 PRODUCT-BE-B-08 PRODUCT-BE-B-09 PRODUCT-BE-B-10 PRODUCT-BE-B-11 PRODUCT-BE-C-05 PRODUCT-BE-G-07 PRODUCT-BE-G-13 PRODUCT-BE-H-08,"brand, corona, doppler, fileLibrary, ig, tag, vmm",To Do,"*Implementation Order:* 73 of 82 (Product combined — frontend #4, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -1382,7 +1382,7 @@ Story,PRODUCT-FE-007,[Product FE] Migrate product rules administration [PRODUCT-
 * None
 
 * *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-D-15, PRODUCT-BE-D-16, PRODUCT-BE-D-17, PRODUCT-BE-G-07, PRODUCT-BE-G-13, PRODUCT-BE-H-08
+* *Depends on:* PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-G-07, PRODUCT-BE-G-13, PRODUCT-BE-H-08
 * *Operations:* {{getProductRules}}, {{getProductRulesById}}, {{getAllAvailableRules}}, {{getProductDeptRules}}, {{getProductBPRules}}, {{searchProductRules}}, {{addProductRule}}, {{updateProductRule}}, {{deleteProductRule}}
 
 * *Business objective:*

@@ -11,7 +11,7 @@
 ## 1. Phases Overview
 | Phase | Name | Stories |
 |---|---|---|
-| 0 | Spikes | S-01–S-03 |
+| 0 | Spikes | S-01–S-04 |
 | B | Core Reads | B-01–B-11 |
 | C | Search & Listing | C-01–C-05 |
 | D | Mutations (simple) | D-01–D-18 |
@@ -20,12 +20,17 @@
 | G | Field Resolvers, Utils (**G-11 split into G-11-1/G-11-2**; **G-17 added, recommended/PO-gated**) | G-01–G-11-2, G-13–G-15, G-17 |
 | H | Entity Resolution — cross-subgraph `@DgsEntityFetcher`/`@key` fields resolved by a *separate* subgraph (split out from Phase F) | H-01–H-06 |
 
-> **Phase 0 note.** Three items that used to sit as open "Decisions Required" bullets, or as a bare annotation
+> **Phase 0 note.** Four items that used to sit as open "Decisions Required" bullets, or as a bare annotation
 > on a story row, are now real spike stories: `S-01` (cross-domain association pattern, program id
 > `SPIKE-06b` — blocks `D-01`/`D-02`/`D-04`; draft ADR-011 descopes `D-03` (pure passthrough) and
 > `D-06`/`D-07`/`D-11` (single-backend writes)), `S-02` (`getProducts` two-stage hydration research, program id
 > `SPIKE-06a`, blocks `C-01`), `S-03` (partner drop/undrop failure strategy, program id `SPIKE-03`
-> — do this one first, blocks `E-01`; draft ADR-012).
+> — do this one first, blocks `E-01`; draft ADR-012), `S-04` (`USE_NEW_RULES_API` cutover, program id
+> `SPIKE-07` — rules may move to a `spark-tag` DGS, blocks `B-10`/`B-11`/`C-05`; also re-scopes
+> `PRODUCT-FE-007` if rules move).
+>
+> **Every spike-gated story also carries a 🔬 SPIKE-GATED callout right under its header** (see `B-10`/`B-11`/
+> `C-05` for the pattern) — don't rely on scanning `Depends on:` alone to spot a gated story.
 
 > **Self-contained story model.** The Netflix-DGS-on-REST framework already exists, so **every operation story below is end-to-end in a single PR**: it adds the schema (query/mutation + the GraphQL type definitions it returns), the DGS data fetcher, the Kotlin REST service method (read or write) that calls the backend, and pushes the schema change to the **Hive** registry. There is **no separate service-layer story** — the former `*Service` Kotlin-port story has been dissolved into the operation stories. The `Categories` union `@DgsTypeResolver` (A-04) remains a dedicated story.
 
@@ -201,6 +206,60 @@ one that fits a fan-out (not sequential) shape.
 
 ---
 
+### PRODUCT-BE-S-04 · `USE_NEW_RULES_API` cutover decision spike
+- **Type:** Spike · **Phase:** S · **Complexity:** Low · **Category:** CAT-1 · **Depends on:** — · **Blocks:** B-10, B-11, C-05 · **Program id:** `SPIKE-07`
+
+- **Layman summary:** 3 rules **read/search** operations — `getProductDeptRules`, `getProductBPRules`,
+- `searchProductRules` — already run behind a `USE_NEW_RULES_API` flag fork in production today: one code
+  path calls `product.searchProductDeptRules` directly, the other calls `ruleLibrary.searchRuleLibrary`. The
+  PO summary's decisions-required list (item #4) has flagged since the first pass that ratifying this flag
+  might mean these 3 operations actually belong to a **separate `spark-tag` DGS**, not `plm-product`. The
+  other 6 rules operations (3 plain reads + 3 writes) have no flag fork and are not in question — see the
+  Scope note below. Nobody has picked a side for the 3 flagged ones yet, so `B-10`/`B-11`/`C-05` are being
+  written today as if both code paths stay inside Product permanently, which may be wrong.
+- This spike exists to turn that open decision into an actual answer before those 3 stories are implemented,
+  the same way `S-01`/`S-02`/`S-03` turned Product's other three open decisions into spikes instead of leaving
+  them as PO-summary bullet points nobody owns.
+
+- **What's unknown:**
+1. Is `ruleLibrary.searchRuleLibrary` (the `USE_NEW_RULES_API=true` path) actually served by a distinct
+   `spark-tag` service today, or is it just a newer code path inside the same Product backend? (The current
+   analysis has not confirmed this either way — verify against the actual `ruleLibrary` client wiring.)
+2. What is the actual cutover timeline — is `USE_NEW_RULES_API` already fully rolled out (dead-flag removal
+   candidate) or still splitting traffic? This determines whether `B-10`/`B-11` even need to keep the flag
+   fork in the DGS layer or can wrap the new path only.
+
+- **Scope note:** the `USE_NEW_RULES_API` flag fork only exists on these 3 **read/search** operations
+  (`getProductDeptRules`, `getProductBPRules`, `searchProductRules`). The remaining rules operations have no
+  flag fork anywhere in the current analysis and call Product's own `spark_rules/v1` REST base
+  unconditionally, so they are **not in scope for this spike** and stay owned by Product regardless of outcome.
+
+- **Candidate outcomes:**
+| Option | What it means | Tradeoff |
+|---|---|---|
+| Stay on Product (status quo) | `B-10`/`B-11`/`C-05` ship as currently scoped, flag fork preserved in the DGS wrapper | No rescoping needed; carries flag-fork complexity into the federated graph permanently |
+| Split — 3 flagged reads move to `spark-tag`, everything else stays on Product | `PRODUCT-FE-007` splits into a Product-owned rules-admin story and a `spark-tag`-owned filter/search story | Matches the real backend boundary if `ruleLibrary` is genuinely separate; adds a second subgraph to phase 1's scope, but only for reads |
+
+- **Example:** today, `getProductDeptRules(productIds: [...], departmentIds: [...])` either calls
+- `product.searchProductDeptRules(...)` or `ruleLibrary.searchRuleLibrary(...)` depending on the flag. If
+  `ruleLibrary` turns out to be `spark-tag`'s client, then federating `getProductDeptRules` inside `plm-product`
+  means the federated resolver is silently calling out to a different microservice than the one it's
+  colocated with — worth knowing before `B-10` ships, not after.
+
+#### Acceptance Criteria
+
+1. Whether `ruleLibrary`/`spark-tag` is a real, separate backend service is confirmed (not assumed) and
+   recorded here.
+2. One of the two candidate outcomes above is chosen and recorded here, with the Product Owner named as
+   the decision owner (matches the existing PO-summary "Owner: Product Owner" note on decision #4).
+3. `B-10`, `B-11`, and `C-05`'s Target DGS Implementation and Depends On are updated to reflect the decision
+   — either confirmed as staying in Product, or re-scoped with a pointer to wherever the `spark-tag` stories
+   will be tracked. The 6 non-flagged rules operations are unaffected either way.
+4. If the split is chosen, `PRODUCT-FE-007`'s scope note (already flagged in `fe-08-frontend-stories.md`)
+   is confirmed against the concrete outcome rather than left as an open "re-verify at kickoff" caveat.
+
+---
+
 ### Phase B — Core Reads (one query per story)
 
 > Pattern: each story adds `@DgsQuery` + its `ProductReadService` method (calling the backend REST endpoint) + the returned GraphQL types + Hive schema push. Full pseudo-logic in [02 §Query Resolvers](./be-02-resolver-analysis.md). All depend on B-01 (module init).
@@ -330,29 +389,37 @@ one that fits a fan-out (not sequential) shape.
 ---
 
 ### PRODUCT-BE-B-10 · `getProductDeptRules(productIds, departmentIds, activeOnly)`
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔵 `ruleLibrary`
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** S-04 · **EXT:** 🔵 `ruleLibrary`
+
+> 🔬 **SPIKE-GATED — do not start until `PRODUCT-BE-S-04` resolves.** The `USE_NEW_RULES_API` cutover
+> decision may move this operation to a `spark-tag` DGS instead of `plm-product` — see `S-04`.
 
 - **In plain terms:** Returns the department-level rules for given products.
 
-- **Current Behaviour (Q15):** **flag fork** `USE_NEW_RULES_API ? ruleLibrary.searchRuleLibrary : product.searchProductDeptRules` `GET …/spark_rules/v1/search?productIds=&departmentIds=&activeOnly=`. **PO decision:** flag cutover (rules may move to spark-tag DGS). **Target:** `@DgsQuery`; both code paths covered. 
+- **Current Behaviour (Q15):** **flag fork** `USE_NEW_RULES_API ? ruleLibrary.searchRuleLibrary : product.searchProductDeptRules` `GET …/spark_rules/v1/search?productIds=&departmentIds=&activeOnly=`. **PO decision:** flag cutover (rules may move to spark-tag DGS) — **tracked as spike `S-04`.** **Target:** `@DgsQuery`; both code paths covered, pending `S-04`'s outcome. 
 
 #### Acceptance Criteria
 
 1. default `activeOnly=true`.
 2. flag selects the correct backend.
+3. Scope reconfirmed against `S-04`'s decision before implementation starts.
 
 ---
 
 ### PRODUCT-BE-B-11 · `getProductBPRules(productIds, businessPartnerIds, activeOnly)`
-- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔵 `ruleLibrary`
+- **Type:** Query · **Phase:** B · **Complexity:** Low · **Category:** CAT-2 · **Depends on:** S-04 · **EXT:** 🔵 `ruleLibrary`
+
+> 🔬 **SPIKE-GATED — do not start until `PRODUCT-BE-S-04` resolves.** Same `USE_NEW_RULES_API` cutover
+> decision as `B-10` — see `S-04`.
 
 - **In plain terms:** Returns the business-partner-level rules for given products.
 
-- **Current Behaviour (Q16):** same as B-10 with `businessPartnerIds`. **Target:** `@DgsQuery`. 
+- **Current Behaviour (Q16):** same as B-10 with `businessPartnerIds`. **Target:** `@DgsQuery`, pending `S-04`'s outcome. 
 
 #### Acceptance Criteria
 
 1. flag fork honored; BP filter applied.
+2. Scope reconfirmed against `S-04`'s decision before implementation starts.
 
 ---
 
@@ -436,16 +503,20 @@ returns canonical records enriched with elastic flags.
 ---
 
 ### PRODUCT-BE-C-05 · `searchProductRules(...)`
-- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** — · **EXT:** 🔵 `ruleLibrary`
+- **Type:** Query · **Phase:** C · **Complexity:** Medium · **Category:** CAT-2 · **Depends on:** S-04 · **EXT:** 🔵 `ruleLibrary`
+
+> 🔬 **SPIKE-GATED — do not start until `PRODUCT-BE-S-04` resolves.** Same `USE_NEW_RULES_API` cutover
+> decision as `B-10`/`B-11` — see `S-04`.
 
 - **In plain terms:** Searches product rules.
 
-- **Current Behaviour (Q17):** flag fork; legacy `GET …/spark_rules/v1/search_mapped?...` → `productRuleResponseTransformer` → camelCase. **Target:** `@DgsQuery`; port the transformer. 
+- **Current Behaviour (Q17):** flag fork; legacy `GET …/spark_rules/v1/search_mapped?...` → `productRuleResponseTransformer` → camelCase. **Target:** `@DgsQuery`; port the transformer, pending `S-04`'s outcome. 
 
 #### Acceptance Criteria
 
 1. flag fork honored.
 2. legacy response transformed correctly.
+3. Scope reconfirmed against `S-04`'s decision before implementation starts.
 
 ---
 

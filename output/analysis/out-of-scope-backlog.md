@@ -32,6 +32,19 @@
 | `BOM-BE-S-01` spike-closure decision | non-atomic-write-saga | the spike's three open questions are now answered by ADR-013 + `PRODUCT-BE-E-00`; the spike story is flagged superseded in its own body but not formally closed/removed — same question applies to any other now-redundant per-domain spike stories not audited in this pass | none | P3 — housekeeping, not blocking; a program-level decision on whether superseded spikes get removed or just flagged |
 | `PRODUCT-BE-D-01`/`D-02`/`D-04`'s (cross-domain-association) `Depends on:` not wired to `PRODUCT-BE-E-00` | cross-domain-association | D-02's pin-down 2 defers non-atomicity/compensation to `SPIKE-01` (now `PRODUCT-BE-E-00`), but none of D-01/D-02/D-04 declare it as a `Depends on:` — may be correct (a lighter compensating call inside `associate(...)` may not need full saga machinery) or may be an oversight | `PRODUCT-BE-E-00` | P2 — needs a judgment call once the shared component (above) is actually designed |
 
+## Excluded from Jira — different team owns the work
+
+> Unlike the sections above, these stories are **fully documented and remain in their domain's
+> `be-04-stories.md`** — they are real, estimable, phase-1-scoped work, just not this program's Jira import.
+> Excluded via `JIRA_EXCLUDED_STORIES` in `generate_jira.py`, so the exclusion is enforced by the generator,
+> not a manual CSV edit — re-running `generate_jira.py` will never accidentally re-include them.
+
+| Item | Source | Why out of scope | Depends on | Priority hint |
+|---|---|---|---|---|
+| `PRODUCT-BE-D-15` `addProductRule` | product rules admin | Rules-**write** ownership sits with a different team; only the `get*`/`search*` rules reads (`B-10`, `B-11`, `C-05`, `getProductRules`, `getProductRulesById`, `getAllAvailableRules`) are in this program's Jira scope for product | none | P3 — informational; pick up in the owning team's own backlog |
+| `PRODUCT-BE-D-16` `updateProductRule` | product rules admin | Same rules-write ownership exclusion as `D-15` | none | P3 |
+| `PRODUCT-BE-D-17` `deleteProductRule` | product rules admin | Same rules-write ownership exclusion as `D-15` | none | P3 |
+
 ## Generated-output staleness
 
 > **Regenerated and verified current** (as of this doc's last edit) — `output/summary/*` (all merged

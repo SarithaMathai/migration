@@ -39,13 +39,19 @@ Story,PRODUCT-BE-B-09,(Product) getAllAvailableRules [PRODUCT-BE-B-09],,Federate
 1. returns available rules
 
 *Full story:* be-04-stories.md#PRODUCT-BE-B-09"
-Story,PRODUCT-BE-B-10,"(Product) getProductDeptRules(productIds, departmentIds, activeOnly) [PRODUCT-BE-B-10]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,,To Do,"*Acceptance Criteria:*
+Story,PRODUCT-BE-B-10,"(Product) getProductDeptRules(productIds, departmentIds, activeOnly) [PRODUCT-BE-B-10]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,SPIKE-07,,To Do,"*Requires spike:* SPIKE-07 (Product Rules API Ownership) — see program spike
+
+*Acceptance Criteria:*
 1. default `activeOnly=true`
 2. flag selects the correct backend
+3. Scope reconfirmed against `S-04`'s decision before implementation starts
 
 *Full story:* be-04-stories.md#PRODUCT-BE-B-10"
-Story,PRODUCT-BE-B-11,"(Product) getProductBPRules(productIds, businessPartnerIds, activeOnly) [PRODUCT-BE-B-11]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,,To Do,"*Acceptance Criteria:*
+Story,PRODUCT-BE-B-11,"(Product) getProductBPRules(productIds, businessPartnerIds, activeOnly) [PRODUCT-BE-B-11]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,SPIKE-07,,To Do,"*Requires spike:* SPIKE-07 (Product Rules API Ownership) — see program spike
+
+*Acceptance Criteria:*
 1. flag fork honored; BP filter applied
+2. Scope reconfirmed against `S-04`'s decision before implementation starts
 
 *Full story:* be-04-stories.md#PRODUCT-BE-B-11"
 Story,PRODUCT-BE-C-01,(Product) getProducts(...) two-stage hydration [PRODUCT-BE-C-01],,Federate BreakDown Product,C,L,dgs-migration,product,search,,SPIKE-06a,,To Do,"*Requires spike:* SPIKE-06a (Hydration) — see program spike
@@ -79,9 +85,12 @@ Story,PRODUCT-BE-C-04,(Product) getRatingByTcin(tcin) (external rating) [PRODUCT
 3. API key from config/Vault, not source
 
 *Full story:* be-04-stories.md#PRODUCT-BE-C-04"
-Story,PRODUCT-BE-C-05,(Product) searchProductRules(...) [PRODUCT-BE-C-05],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,,To Do,"*Acceptance Criteria:*
+Story,PRODUCT-BE-C-05,(Product) searchProductRules(...) [PRODUCT-BE-C-05],,Federate BreakDown Product,C,M,dgs-migration,product,search,,SPIKE-07,,To Do,"*Requires spike:* SPIKE-07 (Product Rules API Ownership) — see program spike
+
+*Acceptance Criteria:*
 1. flag fork honored
 2. legacy response transformed correctly
+3. Scope reconfirmed against `S-04`'s decision before implementation starts
 
 *Full story:* be-04-stories.md#PRODUCT-BE-C-05"
 Story,PRODUCT-BE-D-01,(Product) addProduct [PRODUCT-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPIKE-06b,,To Do,"*Requires spike:* SPIKE-06b (Cross-Domain Association) — see program spike
@@ -169,18 +178,6 @@ Story,PRODUCT-BE-D-14,(Product) unlinkProduct [PRODUCT-BE-D-14],,Federate BreakD
 1. unlinks parent/child
 
 *Full story:* be-04-stories.md#PRODUCT-BE-D-14"
-Story,PRODUCT-BE-D-15,(Product) addProductRule [PRODUCT-BE-D-15],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,,To Do,"*Acceptance Criteria:*
-1. creates rule
-
-*Full story:* be-04-stories.md#PRODUCT-BE-D-15"
-Story,PRODUCT-BE-D-16,(Product) updateProductRule [PRODUCT-BE-D-16],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,,To Do,"*Acceptance Criteria:*
-1. updates rule
-
-*Full story:* be-04-stories.md#PRODUCT-BE-D-16"
-Story,PRODUCT-BE-D-17,(Product) deleteProductRule [PRODUCT-BE-D-17],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,,To Do,"*Acceptance Criteria:*
-1. deletes; returns Boolean
-
-*Full story:* be-04-stories.md#PRODUCT-BE-D-17"
 Story,PRODUCT-BE-D-18,(Product) updateComponentStatus (bulk) [PRODUCT-BE-D-18],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,,To Do,"*Acceptance Criteria:*
 1. bulk-updates component statuses
 
@@ -785,7 +782,7 @@ Story,PRODUCT-FE-006,[Product FE] Migrate `getCategories` documents [PRODUCT-FE-
 * Operations point at the federated router behind the platform flag
 * Dual-run parity clean; flag flip and rollback path verified
 * No UI regression (component tests + smoke suite)"
-Story,PRODUCT-FE-007,[Product FE] Migrate product rules administration [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-07 PRODUCT-BE-B-08 PRODUCT-BE-B-09 PRODUCT-BE-B-10 PRODUCT-BE-B-11 PRODUCT-BE-C-05 PRODUCT-BE-D-15 PRODUCT-BE-D-16 PRODUCT-BE-D-17 PRODUCT-BE-G-07 PRODUCT-BE-G-13 PRODUCT-BE-H-08,"brand, corona, doppler, fileLibrary, ig, tag, vmm",To Do,"*Implementation Order:* 73 of 82 (Product combined — frontend #4, cutover step 4)
+Story,PRODUCT-FE-007,[Product FE] Migrate product rules administration [PRODUCT-FE-007],,Federate BreakDown Product — Frontend,FE,M,fed-graphql-fe,product,query-+-mutation-migration,,PRODUCT-BE-B-07 PRODUCT-BE-B-08 PRODUCT-BE-B-09 PRODUCT-BE-B-10 PRODUCT-BE-B-11 PRODUCT-BE-C-05 PRODUCT-BE-G-07 PRODUCT-BE-G-13 PRODUCT-BE-H-08,"brand, corona, doppler, fileLibrary, ig, tag, vmm",To Do,"*Implementation Order:* 73 of 82 (Product combined — frontend #4, cutover step 4)
 *Domain:* Product — *Team:* Frontend — *Owner:* FE-1 + FE-2
 *Priority:* Medium — *Parallelizable:* Yes
 
@@ -807,7 +804,7 @@ Story,PRODUCT-FE-007,[Product FE] Migrate product rules administration [PRODUCT-
 * None
 
 * *Type:* Query + mutation migration · *Impact:* Medium · *Domain:* product
-* *Depends on:* PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-D-15, PRODUCT-BE-D-16, PRODUCT-BE-D-17, PRODUCT-BE-G-07, PRODUCT-BE-G-13, PRODUCT-BE-H-08
+* *Depends on:* PRODUCT-BE-B-07, PRODUCT-BE-B-08, PRODUCT-BE-B-09, PRODUCT-BE-B-10, PRODUCT-BE-B-11, PRODUCT-BE-C-05, PRODUCT-BE-G-07, PRODUCT-BE-G-13, PRODUCT-BE-H-08
 * *Operations:* {{getProductRules}}, {{getProductRulesById}}, {{getAllAvailableRules}}, {{getProductDeptRules}}, {{getProductBPRules}}, {{searchProductRules}}, {{addProductRule}}, {{updateProductRule}}, {{deleteProductRule}}
 
 * *Business objective:*

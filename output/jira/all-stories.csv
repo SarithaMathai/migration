@@ -99,6 +99,17 @@ Spike,SPIKE-06b,(Program) Cross-Domain Association [SPIKE-06b],,Federate BreakDo
 
 *Research so far:*
 * complexStories/cross-domain-association/"
+Spike,SPIKE-07,(Program) Product Rules API Ownership [SPIKE-07],,Federate BreakDown Product,S,M,dgs-migration,all-domains,spike,,,,To Do,"*Summary:*
+* Three product rules operations that filter or search by department, business partner, or free text (`getProductDeptRules`, `getProductBPRules`, `searchProductRules`) run behind a `USE_NEW_RULES_API` flag today — one code path calls Product's own backend, the other calls a `ruleLibrary` client that may actually belong to a separate `spark-tag` service. Every other rules operation (plain reads and all 3 writes) has no such fork and stays with Product either way. This spike confirms whether `ruleLibrary` is really a separate service and, if so, whether these 3 read/search operations should federate as part of Product or move to their own `spark-tag` subgraph.
+
+*Decision to make:*
+* Confirm whether `ruleLibrary` is a genuinely separate `spark-tag` service and, if so, decide whether `getProductDeptRules`/`getProductBPRules`/`searchProductRules` federate inside `plm-product` (status quo) or move to a `spark-tag` DGS.
+
+*Intended cross-domain steps:*
+1. Verify against the actual `ruleLibrary` client wiring whether it calls a distinct `spark-tag` service or Product's own backend under a different code path
+2. Check the `USE_NEW_RULES_API` rollout state — fully cut over (dead-flag removal candidate) or still splitting traffic
+3. Product Owner picks: stay on Product (status quo) vs split the 3 flagged reads to a `spark-tag` DGS
+4. Update `B-10`/`B-11`/`C-05`'s Target DGS Implementation and Depends On to match; re-confirm `PRODUCT-FE-007`'s scope if the split is chosen"
 Story,BOM-BE-A-04,(BOM) @DgsTypeResolver for the 2 BOM interfaces [BOM-BE-A-04],,Federate BreakDown Product,A,M,dgs-migration,bom,schema,,SPIKE-05,,To Do,"*Requires spike:* SPIKE-05 (Polymorphic Type Resolution) — see program spike
 
 *Acceptance Criteria:*
@@ -858,13 +869,19 @@ Story,PRODUCT-BE-B-09,(Product) getAllAvailableRules [PRODUCT-BE-B-09],,Federate
 1. returns available rules
 
 *Full story:* be-04-stories.md#PRODUCT-BE-B-09"
-Story,PRODUCT-BE-B-10,"(Product) getProductDeptRules(productIds, departmentIds, activeOnly) [PRODUCT-BE-B-10]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,,To Do,"*Acceptance Criteria:*
+Story,PRODUCT-BE-B-10,"(Product) getProductDeptRules(productIds, departmentIds, activeOnly) [PRODUCT-BE-B-10]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,SPIKE-07,,To Do,"*Requires spike:* SPIKE-07 (Product Rules API Ownership) — see program spike
+
+*Acceptance Criteria:*
 1. default `activeOnly=true`
 2. flag selects the correct backend
+3. Scope reconfirmed against `S-04`'s decision before implementation starts
 
 *Full story:* be-04-stories.md#PRODUCT-BE-B-10"
-Story,PRODUCT-BE-B-11,"(Product) getProductBPRules(productIds, businessPartnerIds, activeOnly) [PRODUCT-BE-B-11]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,,,To Do,"*Acceptance Criteria:*
+Story,PRODUCT-BE-B-11,"(Product) getProductBPRules(productIds, businessPartnerIds, activeOnly) [PRODUCT-BE-B-11]",,Federate BreakDown Product,B,XS,dgs-migration,product,query,,SPIKE-07,,To Do,"*Requires spike:* SPIKE-07 (Product Rules API Ownership) — see program spike
+
+*Acceptance Criteria:*
 1. flag fork honored; BP filter applied
+2. Scope reconfirmed against `S-04`'s decision before implementation starts
 
 *Full story:* be-04-stories.md#PRODUCT-BE-B-11"
 Story,PRODUCT-BE-C-01,(Product) getProducts(...) two-stage hydration [PRODUCT-BE-C-01],,Federate BreakDown Product,C,L,dgs-migration,product,search,,SPIKE-06a,,To Do,"*Requires spike:* SPIKE-06a (Hydration) — see program spike
@@ -898,9 +915,12 @@ Story,PRODUCT-BE-C-04,(Product) getRatingByTcin(tcin) (external rating) [PRODUCT
 3. API key from config/Vault, not source
 
 *Full story:* be-04-stories.md#PRODUCT-BE-C-04"
-Story,PRODUCT-BE-C-05,(Product) searchProductRules(...) [PRODUCT-BE-C-05],,Federate BreakDown Product,C,M,dgs-migration,product,search,,,,To Do,"*Acceptance Criteria:*
+Story,PRODUCT-BE-C-05,(Product) searchProductRules(...) [PRODUCT-BE-C-05],,Federate BreakDown Product,C,M,dgs-migration,product,search,,SPIKE-07,,To Do,"*Requires spike:* SPIKE-07 (Product Rules API Ownership) — see program spike
+
+*Acceptance Criteria:*
 1. flag fork honored
 2. legacy response transformed correctly
+3. Scope reconfirmed against `S-04`'s decision before implementation starts
 
 *Full story:* be-04-stories.md#PRODUCT-BE-C-05"
 Story,PRODUCT-BE-D-01,(Product) addProduct [PRODUCT-BE-D-01],,Federate BreakDown Product,D,M,dgs-migration,product,mutation,,SPIKE-06b,,To Do,"*Requires spike:* SPIKE-06b (Cross-Domain Association) — see program spike
@@ -988,18 +1008,6 @@ Story,PRODUCT-BE-D-14,(Product) unlinkProduct [PRODUCT-BE-D-14],,Federate BreakD
 1. unlinks parent/child
 
 *Full story:* be-04-stories.md#PRODUCT-BE-D-14"
-Story,PRODUCT-BE-D-15,(Product) addProductRule [PRODUCT-BE-D-15],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,,To Do,"*Acceptance Criteria:*
-1. creates rule
-
-*Full story:* be-04-stories.md#PRODUCT-BE-D-15"
-Story,PRODUCT-BE-D-16,(Product) updateProductRule [PRODUCT-BE-D-16],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,,To Do,"*Acceptance Criteria:*
-1. updates rule
-
-*Full story:* be-04-stories.md#PRODUCT-BE-D-16"
-Story,PRODUCT-BE-D-17,(Product) deleteProductRule [PRODUCT-BE-D-17],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,,To Do,"*Acceptance Criteria:*
-1. deletes; returns Boolean
-
-*Full story:* be-04-stories.md#PRODUCT-BE-D-17"
 Story,PRODUCT-BE-D-18,(Product) updateComponentStatus (bulk) [PRODUCT-BE-D-18],,Federate BreakDown Product,D,XS,dgs-migration,product,mutation,,,,To Do,"*Acceptance Criteria:*
 1. bulk-updates component statuses
 

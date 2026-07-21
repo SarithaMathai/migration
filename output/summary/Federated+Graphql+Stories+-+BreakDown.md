@@ -10,8 +10,8 @@
 | **Total Backend Stories** | **211** |
 | **Total Frontend Stories** | **41** · 165–256d single-engineer (Frontend section of each per-domain `FederatedGqlBreakDown-<domain>` page) |
 | **Complexity (backend)** | 🔴 6 Very High · 🟠 13 High · 🟡 74 Medium · 🟢 118 Low |
-| **Phase Coverage** | 🔬 7 Spikes · 🧱 A Foundation & Type Resolvers · 📖 B Core Reads · 🔍 C Search & Listing · ✏️ D Mutations · ⚙️ E Complex Operations · 🔗 F Federation & Stitching · 🧪 G Field Resolvers & Tests · 🧬 H Entity Resolution |
-| **Cross-domain spikes** | 🔬 7 program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
+| **Phase Coverage** | 🔬 8 Spikes · 🧱 A Foundation & Type Resolvers · 📖 B Core Reads · 🔍 C Search & Listing · ✏️ D Mutations · ⚙️ E Complex Operations · 🔗 F Federation & Stitching · 🧪 G Field Resolvers & Tests · 🧬 H Entity Resolution |
+| **Cross-domain spikes** | 🔬 8 program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
 | **Generated** | 2026-07-21 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
@@ -320,3 +320,27 @@ Stories are grouped into phases that encode the replacement order within a domai
 | 🔴🔬 `PRODUCT-BE-D-01` `addProduct` | product | Mutation | `workspaceV2`, `attachment` | POST ${v1} + optional copyProductToProduct(copyProduct) + workspace association |
 | 🔴🔬 `PRODUCT-BE-D-02` `addProducts` (bulk) | product | Mutation | `attachment` | bulk POST ${v1}/bulk + attachment-link side-effects (no rollback — preserve, flag) |
 | 🔴🔬 `PRODUCT-BE-D-04` `updateProduct` | product | Mutation | `attachment` | PUT ${v1}/{id} + optional copy + archive removed-template attachments (template branch) |
+
+
+---
+
+### 🔬 `SPIKE-07` · Product Rules API Ownership
+
+- Three product rules operations that filter or search by department, business partner, or free text (`getProductDeptRules`, `getProductBPRules`, `searchProductRules`) run behind a `USE_NEW_RULES_API` flag today — one code path calls Product's own backend, the other calls a `ruleLibrary` client that may actually belong to a separate `spark-tag` service.
+- Every other rules operation (plain reads and all 3 writes) has no such fork and stays with Product either way.
+- This spike confirms whether `ruleLibrary` is really a separate service and, if so, whether these 3 read/search operations should federate as part of Product or move to their own `spark-tag` subgraph.
+
+**Decision to make:** Confirm whether `ruleLibrary` is a genuinely separate `spark-tag` service and, if so, decide whether `getProductDeptRules`/`getProductBPRules`/`searchProductRules` federate inside `plm-product` (status quo) or move to a `spark-tag` DGS.
+
+**Intended cross-domain steps:**
+
+1. Verify against the actual `ruleLibrary` client wiring whether it calls a distinct `spark-tag` service or Product's own backend under a different code path
+2. Check the `USE_NEW_RULES_API` rollout state — fully cut over (dead-flag removal candidate) or still splitting traffic
+3. Product Owner picks: stay on Product (status quo) vs split the 3 flagged reads to a `spark-tag` DGS
+4. Update `B-10`/`B-11`/`C-05`'s Target DGS Implementation and Depends On to match; re-confirm `PRODUCT-FE-007`'s scope if the split is chosen
+
+| Resolver (home story) | Domain | Kind | Calls (external services) | What it does today (minimal) |
+|---|---|---|---|---|
+| 🔴🔬 `PRODUCT-BE-B-10` `getProductDeptRules(productIds, departmentIds, activeOnly)` | product | Query | `ruleLibrary` | flag fork USE_NEW_RULES_API ? ruleLibrary.searchRuleLibrary : product.searchProductDeptRules GET …/spark_rules/v1/search?productIds=&departmentIds=&activeOnly=. PO… |
+| 🔴🔬 `PRODUCT-BE-B-11` `getProductBPRules(productIds, businessPartnerIds, activeOnly)` | product | Query | `ruleLibrary` | same as B-10 with businessPartnerIds |
+| 🔴🔬 `PRODUCT-BE-C-05` `searchProductRules(...)` | product | Query | `ruleLibrary` | flag fork; legacy GET …/spark_rules/v1/search_mapped?... → productRuleResponseTransformer → camelCase |

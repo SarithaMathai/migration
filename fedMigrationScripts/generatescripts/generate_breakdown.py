@@ -195,6 +195,7 @@ SPIKE_TITLES = {
     #   06b — how a mutation also LINKS its record into a sibling domain (association side-effect)
     "06a": "Hydration",
     "06b": "Cross-Domain Association",
+    "07": "Product Rules API Ownership",
 }
 # Story-id → spike bucket. Any Phase-E story defaults to bucket 01 (multi-step write
 # saga); the entries below override that default or flag a non-E complex story.
@@ -222,6 +223,9 @@ SPIKE_OVERRIDES = {
     # D-03 (pure passthrough) and D-06/D-07/D-11 (single-backend Collab Canvas writes) are
     # descoped from 06b per draft ADR-011 §1 — they are NOT spike-gated.
     "BOM-BE-B-05":  "06a",  # getBomMaterialTypes (Material-Hub merge) — BOM-BE-S-02 (rollout order)
+    "PRODUCT-BE-B-10": "07",  # getProductDeptRules  — USE_NEW_RULES_API cutover, PRODUCT-BE-S-04
+    "PRODUCT-BE-B-11": "07",  # getProductBPRules    — USE_NEW_RULES_API cutover, PRODUCT-BE-S-04
+    "PRODUCT-BE-C-05": "07",  # searchProductRules   — USE_NEW_RULES_API cutover, PRODUCT-BE-S-04
 }
 
 
@@ -380,6 +384,13 @@ SPIKE_LAYMAN = {
            "cross-domain call. `D-06`/`D-07`/`D-11` (\"Collab Canvas\") are cross-domain in concept but all their "
            "endpoints are on the product backend; no external workspace/partner service is called. Only "
            "**D-01, D-02, D-04** are in scope.",
+    "07": "Three product rules operations that filter or search by department, business partner, or free text "
+          "(`getProductDeptRules`, `getProductBPRules`, `searchProductRules`) run behind a `USE_NEW_RULES_API` "
+          "flag today — one code path calls Product's own backend, the other calls a `ruleLibrary` client that "
+          "may actually belong to a separate `spark-tag` service. Every other rules operation (plain reads and "
+          "all 3 writes) has no such fork and stays with Product either way. This spike confirms whether "
+          "`ruleLibrary` is really a separate service and, if so, whether these 3 read/search operations should "
+          "federate as part of Product or move to their own `spark-tag` subgraph.",
 }
 SPIKE_DECISION = {
     "01": "Pick (a) compensating saga, (b) compensation-log + best-effort, or (c) best-effort — and write down how to undo each step.",
@@ -394,6 +405,9 @@ SPIKE_DECISION = {
     "06a": "Choose federated `@key` reference vs REST client per edge, and the cross-DGS rollout order.",
     "06b": "Pick the association pattern (see `PRODUCT-BE-S-01`'s three candidates) and how a mid-flight "
            "association failure is handled.",
+    "07": "Confirm whether `ruleLibrary` is a genuinely separate `spark-tag` service and, if so, decide whether "
+          "`getProductDeptRules`/`getProductBPRules`/`searchProductRules` federate inside `plm-product` "
+          "(status quo) or move to a `spark-tag` DGS.",
 }
 # Intended cross-domain interaction steps per bucket — the target flow, in order,
 # so an engineer can follow what talks to what. Shown under each gated story (domain doc)
@@ -441,6 +455,12 @@ SPIKE_STEPS = {
         "If the input carries a cross-domain link (`workspaceId`, `copyProduct`, template attachments) → build the association per the **chosen S-01 pattern** (draft ADR-011: shared association component, sync, service-to-service REST)",
         "Apply the link to the target domain (workspace, attachment)",
         "Record what happens if the link step fails after the primary write succeeded (today: mostly silent/undocumented; per-mutation failure policy is declared explicitly under ADR-011)",
+    ],
+    "07": [
+        "Verify against the actual `ruleLibrary` client wiring whether it calls a distinct `spark-tag` service or Product's own backend under a different code path",
+        "Check the `USE_NEW_RULES_API` rollout state — fully cut over (dead-flag removal candidate) or still splitting traffic",
+        "Product Owner picks: stay on Product (status quo) vs split the 3 flagged reads to a `spark-tag` DGS",
+        "Update `B-10`/`B-11`/`C-05`'s Target DGS Implementation and Depends On to match; re-confirm `PRODUCT-FE-007`'s scope if the split is chosen",
     ],
 }
 SPIKE_CASE_FOLDER = {

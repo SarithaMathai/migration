@@ -51,6 +51,11 @@ from pathlib import Path
 
 from team_config import N_FE_ENGINEERS
 
+try:
+    from generate_jira import JIRA_EXCLUDED_STORIES
+except Exception:                                    # pragma: no cover — fallback keeps CSVs generating
+    JIRA_EXCLUDED_STORIES = {}
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 CLIENT_DIR = ROOT / "ClientCallingGqlQueries"
@@ -1323,20 +1328,34 @@ def _fe_ext_services(dom, depends):
     return ", ".join(sorted(svcs))
 
 
+def _drop_excluded_deps(text: str) -> str:
+    """Strip Jira-excluded BE story ids (different team, never imported — see
+    JIRA_EXCLUDED_STORIES in generate_jira.py) from a comma-separated id list or a
+    `**Depends on:** id, id, ...` body line, so an FE ticket never references a BE
+    ticket that doesn't exist in Jira."""
+    if not JIRA_EXCLUDED_STORIES:
+        return text
+    for excluded in JIRA_EXCLUDED_STORIES:
+        text = re.sub(rf"\b{re.escape(excluded)}\b,?\s*", "", text)
+    return re.sub(r",\s*,", ",", text).strip().rstrip(",").strip()
+
+
 def _fe_story_rows(stories_group):
     meta = _fe_meta(stories_group)
     rows = []
     for s in stories_group:
         dom = domain_key_from_token(s["id"].rsplit("-FE-", 1)[0])
         label = DOMAIN_LABELS.get(dom, dom.title())
+        body = _drop_excluded_deps(_remap_body_be_ids(s["body"]))
         desc = "\n\n".join(x for x in (
-            meta.get(s["id"], ""), md_to_jira(_remap_body_be_ids(s["body"])), FE_DOD) if x)
-        ext = _fe_ext_services(dom, s["depends"])
+            meta.get(s["id"], ""), md_to_jira(body), FE_DOD) if x)
+        depends = [d for d in s["depends"] if d not in JIRA_EXCLUDED_STORIES]
+        ext = _fe_ext_services(dom, depends)
         rows.append([
             "Story", s["id"], f"[{label} FE] {s['title']} [{s['id']}]",
             "", FE_EPIC_NAME, "FE", impact_to_tshirt(s["impact"]),
             "fed-graphql-fe", dom, (s["type"] or "migration").lower().replace(" ", "-"),
-            "", " ".join(s["depends"]), ext, "To Do", desc,
+            "", " ".join(depends), ext, "To Do", desc,
         ])
     return rows
 
