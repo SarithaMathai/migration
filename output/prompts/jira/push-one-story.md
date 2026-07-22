@@ -2,23 +2,26 @@
 
 > **Use when:** you only need a single story pushed or refreshed — e.g. a story changed after a
 > staleness fix, or you're spot-checking the pipeline before a full domain push.
-> **Prerequisite:** a Jira MCP server connected. Confirm with: *"List the Jira MCP tools you currently
+> **Prerequisite:** a Jira MCP server connected. Confirm with: *"List the Jira tools you currently
 > have."*
 > **Background reading:** [`fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md`](../../../fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md).
+> **Content model:** the Jira description is Acceptance Criteria + a back-link, nothing else — full
+> story detail stays on GitHub, linked not duplicated.
 
 ---
 
 ## Prompt
 
-Replace `<STORY_ID>` (e.g. `PRODUCT-BE-D-01`), `<DOMAIN>` (its domain, e.g. `product`), and
-`<PROJECT_KEY>`.
+Replace `<STORY_ID>` (e.g. `PRODUCT-BE-D-01`), `<DOMAIN>` (its domain, e.g. `product`),
+`<PROJECT_KEY>`, and `<GITHUB_ORG>/<GITHUB_REPO>`.
 
 ```
-Using the Jira MCP tools:
+Using the Jira tools:
 
-1. Open output/jira/<DOMAIN>.csv and find the row where Story ID = <STORY_ID>. If it isn't in that
-   file, also check output/complexStories/*/*.csv (complex-case sub-tasks) and tell me which file
-   it came from.
+1. Open finalArtifacts/jira/<DOMAIN>.csv and find the row where Story ID = <STORY_ID>. If it isn't in
+   that file, also check output/complexStories/*/*.csv (complex-case sub-tasks) and
+   output/analysis/out-of-scope-backlog.md §"Excluded from Jira" (it may be deliberately excluded —
+   different team owns the work) and tell me which applies.
 
 2. Search Jira project <PROJECT_KEY> for an existing issue carrying this Story ID (in its summary or
    description, e.g. "[<STORY_ID>]", or a custom field/label if this project has one).
@@ -32,12 +35,15 @@ Using the Jira MCP tools:
     T-shirt-size label) and STOP for my approval before creating.
 
 Rules:
-- Include the FULL Description content: Current Behaviour, Target, every numbered Acceptance
-  Criterion, Test Cases, Depends On / Blocks (story id + name), Parallelizable, Owner, Priority,
-  Definition of Done. Don't drop or summarize any of it — fold anything with no matching Jira
-  field into the description body and tell me which fields that was.
-- FORMATTING: preserve paragraph breaks, bold/italic/inline-code/bullets/checklists — convert
-  markup to this Jira's format, don't strip or flatten it.
+- The Description column is ALREADY minimal (Acceptance Criteria + a "Full story:" back-link) — pass
+  it through as-is. Do NOT enrich it with Current Behaviour, Target implementation, or Test Cases from
+  be-04-stories.md; that content stays on GitHub, linked not duplicated.
+- REWRITE the "Full story:" line into a real URL:
+  "Full story: https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<STORY_ID>"
+- ADD "Domain overview: <URL>" if finalArtifacts/jira/confluence-page-map.csv has a row for <DOMAIN>;
+  otherwise skip and tell me Confluence hasn't been published for this domain yet.
+- FORMATTING: preserve the numbered Acceptance Criteria list and paragraph breaks — convert markup to
+  this Jira's format, don't strip or flatten it.
 - If the row's "Depends On" names another story, search for that story's existing Jira key too
   (same [bracket] search) and propose the link; if not found, note it as pending.
 

@@ -5,9 +5,11 @@
 > just need to refresh its content from the current `.md`/CSV source. This is UPDATE-ONLY: if no
 > matching issue is found in that epic, this prompt stops and asks you rather than creating one (use
 > `push-one-story.md` instead if you actually want create-or-update behavior).
-> **Prerequisite:** a Jira MCP server connected. Confirm with: *"List the Jira MCP tools you currently
+> **Prerequisite:** a Jira MCP server connected. Confirm with: *"List the Jira tools you currently
 > have."*
 > **Background reading:** [`fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md`](../../../fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md).
+> **Content model:** the Jira description is Acceptance Criteria + a back-link, nothing else — full
+> story detail stays on GitHub, linked not duplicated.
 
 ---
 
@@ -18,6 +20,7 @@
 | `<STORY_ID>` | The story's id as it appears in the source docs | `BOM-BE-E-01` |
 | `<EPIC_NAME>` | Exact epic name/summary this story should be under | `Federate BreakDown Product` (backend) or `Federate BreakDown Product — Frontend` (FE) |
 | `<PROJECT_KEY>` | Jira project key | `ENG` |
+| `<GITHUB_ORG>/<GITHUB_REPO>` | This repo's GitHub org/name | `myorg/spark-migration` |
 
 > **Note on epic names:** both epics are shared across ALL 8 domains — there is no per-domain epic.
 > The domain is instead carried on the issue's Labels (e.g. `bom`, `product`) and in the Story ID's
@@ -28,7 +31,7 @@
 ## Prompt
 
 ```
-Using the Jira MCP tools, find and UPDATE (do not create) the Jira issue for <STORY_ID>.
+Using the Jira tools, find and UPDATE (do not create) the Jira issue for <STORY_ID>.
 
 1. Find the epic in <PROJECT_KEY> whose name/summary is exactly "<EPIC_NAME>". If more than one issue
    matches that name, list them and ask me which one before continuing.
@@ -41,27 +44,29 @@ Using the Jira MCP tools, find and UPDATE (do not create) the Jira issue for <ST
    use push-one-story.md to create it) or whether I have the wrong epic name.
 
 Once the target issue is confirmed, pull the CURRENT source content for <STORY_ID>:
-- Find its row in output/jira/<DOMAIN>.csv (derive <DOMAIN> from the Story ID's prefix — e.g.
+- Find its row in finalArtifacts/jira/<DOMAIN>.csv (derive <DOMAIN> from the Story ID's prefix — e.g.
   BOM-BE-E-01 → bom.csv; a FE id like BOM-FE-002 → the same domain's csv, frontend block). If the id
-  isn't in that domain's CSV, also check output/complexStories/*/*.csv (complex-case sub-tasks) and
-  tell me which file it actually came from.
-- Cross-check against the full prose version in output/analysis/<DOMAIN>/be-04-stories.md (search
-  "### <STORY_ID>") — this is the fuller source; if the CSV's Description and the .md's prose
-  disagree on anything (e.g. an Acceptance Criterion reworded since the CSV was last generated), the
-  .md file wins and you should flag the discrepancy to me.
+  isn't in that domain's CSV, also check output/complexStories/*/*.csv and
+  output/analysis/out-of-scope-backlog.md §"Excluded from Jira" (may be deliberately excluded).
+- Cross-check the Acceptance Criteria against output/analysis/<DOMAIN>/be-04-stories.md (search
+  "### <STORY_ID>") — this is the fuller source; if the CSV's AC list and the .md's numbered AC list
+  disagree (e.g. reworded since the CSV was last generated), the .md file wins and you should flag
+  the discrepancy to me. Do NOT pull Current Behaviour/Target/Test Cases from the .md into the Jira
+  description — those stay on GitHub, linked not duplicated; only the Acceptance Criteria and the
+  back-link belong in the ticket.
 
-Show me a diff: current Jira field values vs. the source content — Summary, Description (Current
-Behaviour, Target, every numbered Acceptance Criterion, Test Cases, Depends On/Blocks by id+name,
-Parallelizable, Owner, Priority, Definition of Done), Labels, Phase label, T-shirt-size label. STOP
-and wait for my approval before changing anything.
+Show me a diff: current Jira field values vs. the source content — Summary, Description (Acceptance
+Criteria list + the "Full story:" link, rewritten as
+"https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<STORY_ID>",
+plus "Domain overview: <URL>" if finalArtifacts/jira/confluence-page-map.csv has a row for <DOMAIN>),
+Labels, Phase label, T-shirt-size label. STOP and wait for my approval before changing anything.
 
-FORMATTING (same contract as every other Jira/Confluence prompt in this repo): preserve paragraph
-breaks and inline markup (bold/italic/code/bullets/checklists) converted to this Jira's format — never
-flatten, strip, reword, or drop any Acceptance Criterion, Test Case, or dependency line, even ones
-that look repetitive.
+FORMATTING (same contract as every other Jira/Confluence prompt in this repo): preserve the numbered
+Acceptance Criteria list and paragraph breaks, converted to this Jira's format — never flatten, strip,
+reword, or drop any criterion.
 
 After my approval, apply the update and report the Jira key, URL, and a short list of what changed
-(e.g. "Description: 2 Acceptance Criteria reworded, 1 Test Case added; Labels: no change").
+(e.g. "Description: 1 Acceptance Criterion reworded, GitHub link added; Labels: no change").
 ```
 
 ---

@@ -1,22 +1,26 @@
 # Prompt — Push ALL stories for one domain to Jira
 
 > **Use when:** you want every backend + frontend story for one domain created (or updated) in Jira in
-> one pass. Fill in `<DOMAIN>` and `<PROJECT_KEY>`, run the dry-run prompt first, review its output
-> table, then run the second prompt to actually create/update and link dependencies.
-> **Prerequisite:** a Jira MCP server connected (Atlassian MCP or your enterprise custom MCP). Confirm
-> with: *"List the Jira MCP tools you currently have."*
+> one pass. Fill in `<DOMAIN>`, `<PROJECT_KEY>`, and `<GITHUB_ORG>/<GITHUB_REPO>`, run the dry-run
+> prompt first, review its output table, then run the second prompt to actually create/update and link
+> dependencies.
+> **Prerequisite:** a Jira MCP server connected (Atlassian MCP, your enterprise custom MCP, or
+> Copilot's own Jira tools). Confirm with: *"List the Jira tools you currently have."*
 > **Background reading (rules this prompt assumes):** [`fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md`](../../../fedMigrationScripts/docs/PUSH-TO-JIRA-CONFLUENCE.md).
+> **Content model:** the Jira description is Acceptance Criteria + a back-link, nothing else — full
+> story detail (Current Behaviour, Target, Test Cases) stays on GitHub in `be-04-stories.md` and is
+> linked to, never copied in. See the runbook above for why.
 
 ---
 
 ## Step 1 — dry run (no writes)
 
 Replace `<DOMAIN>` with one of: `product, bom, claims, measurement, impression, productDetails,
-packaging, watchlist`. Replace `<PROJECT_KEY>` with your Jira project key.
+packaging, watchlist`. Replace `<PROJECT_KEY>` and `<GITHUB_ORG>/<GITHUB_REPO>`.
 
 ```
-Using the Jira MCP tools, prepare (DO NOT CREATE YET) an import plan from
-output/jira/<DOMAIN>.csv into Jira project <PROJECT_KEY>.
+Using the Jira tools, prepare (DO NOT CREATE YET) an import plan from
+finalArtifacts/jira/<DOMAIN>.csv into Jira project <PROJECT_KEY>.
 
 This CSV holds ONE domain, in two blocks:
 - backend stories (Story IDs like <TOKEN>-BE-B-01) under the epic "Federate BreakDown Product";
@@ -36,20 +40,22 @@ Rules:
 - Attach every Story to the epic named in ITS OWN "Epic Link" column.
 - Map fields: Summary→summary, Description→description, T-shirt size→label "size-XS" (etc.),
   the three Labels columns→labels, Phase→label "phase-B" (frontend rows: Phase=FE → "phase-FE").
-- Include the FULL detail already in the CSV's Description column and don't drop any of it:
-  Current Behaviour, Target, Acceptance Criteria (every numbered item), Test Cases, Depends On /
-  Blocks (by story id AND name, never bare numbers), Parallelizable, Owner, Priority, Definition
-  of Done. If the target Jira field for one of these doesn't exist, keep it inline in the
-  description rather than dropping it, and tell me which fields you had to fold in this way.
-- FORMATTING: the Description is multi-paragraph with light markup (*emphasis*, **bold**, `code`,
-  "- " bullets, [ ] checklists). Preserve paragraph breaks and convert markup to this Jira's
-  description format (wiki markup or rich text). Do NOT collapse to one line, strip emphasis/code
-  marks, reword, or summarize anything.
+- The Description column is ALREADY minimal (Acceptance Criteria + a "Full story:" back-link) — pass
+  it through as-is. Do NOT enrich it with Current Behaviour, Target implementation, or Test Cases
+  pulled from be-04-stories.md; that stays on GitHub, linked not duplicated.
+- REWRITE the "Full story:" line from a relative path into a real URL:
+  "Full story: https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
+- ADD a second link line if finalArtifacts/jira/confluence-page-map.csv has a row for <DOMAIN>:
+  "Domain overview: <that row's Breakdown Page URL>". If the map file or the row doesn't exist yet,
+  skip this line and tell me Confluence hasn't been published for this domain.
+- FORMATTING: the Description's numbered Acceptance Criteria list must stay a numbered list —
+  preserve paragraph breaks and convert markup to this Jira's description format. Do NOT collapse to
+  one line, strip numbering, reword, or summarize anything.
 - The "Depends On" column lists other Story IDs. Don't resolve them to Jira keys yet — flag
   cross-domain ones (targets not in this CSV) separately; we link everything in step 2.
 
 Output a table: Story ID | create-or-update | proposed issue type | epic | summary | labels |
-depends-on. Then STOP and wait for my approval.
+depends-on | confluence-link-added(y/n). Then STOP and wait for my approval.
 ```
 
 ## Step 2 — create/update, then link dependencies
@@ -65,7 +71,8 @@ Looks good. Now:
 4. If a "Depends On" id is NOT in this CSV (cross-domain dependency), search Jira for an issue
    whose summary/description contains that id in [brackets]. Link it if found; if not found, list
    it under "pending links — import that domain, then rerun step 4."
-5. Report: Story ID → Jira key table, links created, and any pending links.
+5. Report: Story ID → Jira key table, links created, GitHub/Confluence links added, and any pending
+   links.
 ```
 
 ---
