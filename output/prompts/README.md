@@ -10,6 +10,10 @@
 > Chat instead of copy-pasting from here. [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md)
 > has the repo-wide publishing context (the three-tier model, formatting contract, hard rules) that
 > every Copilot prompt assumes.
+>
+> **Not sure what a filled-in run looks like?** [`example/`](example/) has a worked example for every
+> Jira and Confluence prompt — the prompt with placeholders replaced by real data, plus a realistic
+> sample of the agent's response, so you can see the whole interaction before running it for real.
 
 ## [jira/](jira/) — push stories to Jira
 
