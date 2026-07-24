@@ -74,7 +74,7 @@ FORMATTING AND CONTENT ARE THE CONTRACT — no data loss, no format loss, full s
   auto-convert them into Confluence smart links.
 - Any relative link to another file in this repo should become a link — to the live Confluence page
   if it already exists (check finalArtifacts/jira/confluence-page-map.csv) and the assistant can
-  resolve it, otherwise to GitHub (https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/<path>).
+  resolve it, otherwise to GitHub (https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/<path>).
   Never leave a bare local file path that won't resolve outside this machine, and never guess/fabricate
   a URL.
 

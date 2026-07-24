@@ -24,6 +24,10 @@ implementing-engineer entry point. Copies only, no new content:
   finalArtifacts/
     00-overview.md                 program overview (what/why, totals, domain list)
     00-sequencing.md               what's building + recommended build order (= 02-project-plan.md)
+    00-dependency-map.md           compact linear dep map, one row/story BE+FE (= 03-linear-dependency-map.md)
+    00-domain-rollout.md           domain-by-domain 1BE+1FE rollout, BE→FE gate per domain (= 01b-domain-rollout-*.md)
+    00-cheatsheet.md               condensed 1-pager: domain order + story build order (= 00-sequencing-cheatsheet.md)
+    00-fe-unblock-plan.md          blocker-first cross-domain: BE blockers + FE readiness waves (= 00-fe-unblock-plan.md)
     summary/{domain}/
       FederatedGqlBreakDown-{domain}.md(+.docx)      Confluence-ready breakdown
       story-dependency-graph-{domain}.md             FE readiness — which BE stories gate each FE story
@@ -346,6 +350,11 @@ def build_final_artifacts() -> None:
 
     cp(OUTPUT / "00-program-overview.md", FINAL / "00-overview.md")
     cp(OUTPUT / "02-project-plan.md", FINAL / "00-sequencing.md")
+    cp(OUTPUT / "03-linear-dependency-map.md", FINAL / "00-dependency-map.md")
+    from team_config import N_BE_ENGINEERS as _NBE, N_FE_ENGINEERS as _NFE
+    cp(OUTPUT / f"01b-domain-rollout-{_NBE}BE-{_NFE}FE.md", FINAL / "00-domain-rollout.md")
+    cp(OUTPUT / "00-sequencing-cheatsheet.md", FINAL / "00-cheatsheet.md")
+    cp(OUTPUT / "00-fe-unblock-plan.md", FINAL / "00-fe-unblock-plan.md")
 
     for domain in ALL_DOMAINS:
         for ext in (".md", ".docx"):
@@ -354,6 +363,7 @@ def build_final_artifacts() -> None:
 
     jira_dir = ROOT / "output" / "jira"
     cp(jira_dir / "all-stories.csv", FINAL / "jira" / "all-stories.csv")
+    cp(jira_dir / "spikes.csv", FINAL / "jira" / "spikes.csv")   # Step-0 push unit (create before any domain)
     for domain in ALL_DOMAINS:
         cp(jira_dir / f"{domain}.csv", FINAL / "jira" / f"{domain}.csv")
 
@@ -543,6 +553,35 @@ def main() -> None:
             _load("generate_project_plan").main()
         except Exception as e:
             print(f"  FAIL project plan: {type(e).__name__}: {e}")
+
+        # Compact linear dependency map (same steps/edges as the project plan, rendered as a
+        # one-row-per-story left→right chain). Runs after the project plan since it reuses it.
+        try:
+            _load("generate_linear_deps").main()
+        except Exception as e:
+            print(f"  FAIL linear dependency map: {type(e).__name__}: {e}")
+
+        # Domain-by-domain rollout (1 BE + 1 FE, one block per domain: BE builds → FE gate →
+        # FE cutover → done). Reuses the team-plan day math + the project-plan step engine, so
+        # it runs after both.
+        try:
+            _load("generate_domain_rollout").main()
+        except Exception as e:
+            print(f"  FAIL domain rollout: {type(e).__name__}: {e}")
+
+        # Sequencing cheat-sheet — the condensed one-pager (domain order + story build order),
+        # distilled from the four plan docs. Reuses the project-plan step engine, runs after it.
+        try:
+            _load("generate_sequencing_cheatsheet").main()
+        except Exception as e:
+            print(f"  FAIL sequencing cheatsheet: {type(e).__name__}: {e}")
+
+        # FE-unblock plan — blocker-first, cross-domain, dependency-only: which BE stories gate
+        # any FE story (build first) + FE readiness waves (parallel-eligible) + trailing BE.
+        try:
+            _load("generate_fe_unblock_plan").main()
+        except Exception as e:
+            print(f"  FAIL fe-unblock plan: {type(e).__name__}: {e}")
 
         # finalArtifacts/ — the slim PO + engineer entry point, assembled last so every
         # source file above (breakdowns, project plan, Jira CSVs) is fresh before copying.

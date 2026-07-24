@@ -8,7 +8,7 @@
 | **Impact** | 🔴 0 High · 🟡 0 Medium · 🟢 2 Low |
 | **Estimated effort** | 3–5 days (single-engineer) |
 | **Phase-1 surface** | 2 operation-to-root-field rows · 2 client files · 4 components |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 
@@ -26,7 +26,7 @@
 | Story | Title | Type | Impact | Effort | Depends on | Operations |
 |---|---|---|---|---|---|---|
 | `IMPRESSION-FE-001` | Migrate `getBomDataAndImpressions` (with BOM wave) | Query migration | 🟢 Low | 2–3 days | `BOM-BE-A-04`, `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-G-01`, `BOM-BE-G-03`, `BOM-BE-G-08`, `BOM-BE-G-12`, `BOM-BE-G-13`, `BOM-BE-G-17`, `BOM-FE-002`, `IMPRESSION-BE-B-01`, `IMPRESSION-BE-G-01`, `PRODUCT-BE-B-01` | `searchImpressionsByProductId`, `getBomByIds` |
-| `IMPRESSION-FE-002` | Migrate `getCarryForwardFormData` (with Product wave) | Query migration | 🟢 Low | 1–2 days | `BOM-BE-A-04`, `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-G-01`, `BOM-BE-G-03`, `BOM-BE-G-08`, `BOM-BE-G-12`, `BOM-BE-G-13`, `BOM-BE-G-17`, `IMPRESSION-BE-B-01`, `IMPRESSION-BE-G-01`, `PRODUCT-BE-B-01`, `PRODUCT-BE-G-01`, `PRODUCT-BE-G-02`, `PRODUCT-BE-G-03`, `PRODUCT-BE-G-06`, `PRODUCT-BE-G-07`, `PRODUCT-BE-G-08`, `PRODUCT-BE-G-09`, `PRODUCT-BE-G-10`, `PRODUCT-BE-G-13`, `PRODUCT-BE-S-01`, `PRODUCT-FE-001` | `searchImpressionsByProductId`, `getProduct` |
+| `IMPRESSION-FE-002` | Migrate `getCarryForwardFormData` (with Product wave) | Query migration | 🟢 Low | 1–2 days | `IMPRESSION-BE-B-01`, `IMPRESSION-BE-G-01`, `PRODUCT-BE-B-01`, `PRODUCT-BE-G-01`, `PRODUCT-BE-G-02`, `PRODUCT-BE-G-03`, `PRODUCT-BE-G-06`, `PRODUCT-BE-G-07`, `PRODUCT-BE-G-08`, `PRODUCT-BE-G-09`, `PRODUCT-BE-G-10`, `PRODUCT-BE-G-13`, `PRODUCT-BE-S-01`, `PRODUCT-FE-001` | `searchImpressionsByProductId`, `getProduct` |
 
 ---
 
@@ -37,7 +37,7 @@
 | Step | Stories (parallel set) | Waits for | Focus |
 |---|---|---|---|
 | 4 | 🟢 `IMPRESSION-FE-001` | `IMPRESSION-FE-001` → `BOM-BE-A-04`, `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-G-01` (+9) | Complex writes / sagas — needs backend phase E + ADR ratification |
-| 5 | 🟢 `IMPRESSION-FE-002` | `IMPRESSION-FE-002` → `BOM-BE-A-04`, `BOM-BE-B-01`, `BOM-BE-B-03`, `BOM-BE-G-01` (+19) | Externally gated — search/read-hub decision |
+| 5 | 🟢 `IMPRESSION-FE-002` | `IMPRESSION-FE-002` → `IMPRESSION-BE-B-01`, `IMPRESSION-BE-G-01`, `PRODUCT-BE-B-01`, `PRODUCT-BE-G-01` (+10) | Externally gated — search/read-hub decision |
 
 **Cutover flow:** `IMPRESSION-FE-001` → `IMPRESSION-FE-002`.
 

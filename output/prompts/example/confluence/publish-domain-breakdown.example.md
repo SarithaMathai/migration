@@ -41,7 +41,7 @@ FORMATTING AND CONTENT ARE THE CONTRACT — no data loss, no format loss, full s
   plain text — do not try to auto-convert them into Confluence smart links.
 - Any relative link to another file in this repo (be-04-stories.md, another domain's page, a
   complex-case brief) should become a GitHub link:
-  https://github.com/myorg/spark-migration/blob/main/<path> — never a local file path.
+  https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/<path> — never a local file path.
 - If the source file has more than one top-level section (e.g. a "## Backend" and a "## Frontend"
   section), publish ALL of them onto the SAME page, in the same order they appear in the source.
   Do not split sections into separate pages and do not omit any section.

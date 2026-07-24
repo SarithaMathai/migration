@@ -1,6 +1,6 @@
 # Backend GraphQL Schema Inventory — spark-internal-graphql (Phase-1 Domains)
 
-> Source: `schemas/*.graphqls` (spark-internal-graphql) · Generated: 2026-07-21
+> Source: `schemas/*.graphqls` (spark-internal-graphql) · Generated: 2026-07-24
 > Scope: the 8 phase-1 domain schemas. Cross-referenced against the frontend client inventory (fe-01-client-inventory.md).
 
 ## Summary

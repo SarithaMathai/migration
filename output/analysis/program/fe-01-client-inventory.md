@@ -1,6 +1,6 @@
 # Frontend GraphQL Client Inventory — Phase-1 Domains
 
-> Source: `pdex-ui-react` gql definitions (ClientCallingGqlQueries snapshot) · Generated: 2026-07-21
+> Source: `pdex-ui-react` gql definitions (ClientCallingGqlQueries snapshot) · Generated: 2026-07-24
 > Scope: frontend operations that call a phase-1 domain root field (product, bom, measurement, productDetails, packaging, watchlist, impression, claims), with variables, root fields, fragment usage and consuming files.
 
 ## Summary

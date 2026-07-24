@@ -9,7 +9,7 @@
 | **Total Stories** | 69 |
 | **Complexity** | 🔴 5 Very High · 🟠 4 High · 🟡 27 Medium · 🟢 33 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -377,7 +377,7 @@ hands its token to a *different* domain's loader — use **Mid-Request ACL Updat
 | **Impact** | 🔴 3 High · 🟡 9 Medium · 🟢 1 Low |
 | **Estimated effort** | 68–104 days (single-engineer) |
 | **Phase-1 surface** | 66 operation-to-root-field rows · 20 client files · 48 components |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

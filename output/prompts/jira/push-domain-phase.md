@@ -18,7 +18,7 @@
 ## Step 1 — dry run (no writes)
 
 Replace `<DOMAIN>` (one of: `product, bom, claims, measurement, impression, productDetails, packaging,
-watchlist`), `<PHASE>` (one letter, `A`–`H`), `<PROJECT_KEY>`, and `<GITHUB_ORG>/<GITHUB_REPO>`.
+watchlist`), `<PHASE>` (one letter, `A`–`H`), `<PROJECT_KEY>`, and `target-corp/saritha-mathai-repositories-research`.
 
 ```
 Using the Jira tools, prepare (DO NOT CREATE YET) an import plan for Phase <PHASE> of the
@@ -43,7 +43,7 @@ Rules:
   it through as-is. Do NOT pull in Current Behaviour, Target implementation, or Test Cases from
   be-04-stories.md; that content stays on GitHub, linked not duplicated.
 - REWRITE the "Full story:" line into a real URL:
-  "Full story: https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
 - ADD "Domain overview: <URL>" if finalArtifacts/jira/confluence-page-map.csv has a row for <DOMAIN>;
   otherwise skip and tell me.
 - FORMATTING: preserve the numbered Acceptance Criteria list and paragraph breaks, converting to this

@@ -995,8 +995,9 @@
 ### IMPRESSION-FE-002 · Migrate `getCarryForwardFormData` (with Product wave)
 
 - **Type:** Query migration · **Impact:** Low · **Domain:** impression
-- **Depends on:** BOM-BE-A-04, BOM-BE-B-01, BOM-BE-B-03, BOM-BE-G-01, BOM-BE-G-03, BOM-BE-G-08, BOM-BE-G-12, BOM-BE-G-13, BOM-BE-G-17, IMPRESSION-BE-B-01, IMPRESSION-BE-G-01, PRODUCT-BE-B-01, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-S-01, PRODUCT-FE-001
+- **Depends on:** IMPRESSION-BE-B-01, IMPRESSION-BE-G-01, PRODUCT-BE-B-01, PRODUCT-BE-G-01, PRODUCT-BE-G-02, PRODUCT-BE-G-03, PRODUCT-BE-G-06, PRODUCT-BE-G-07, PRODUCT-BE-G-08, PRODUCT-BE-G-09, PRODUCT-BE-G-10, PRODUCT-BE-G-13, PRODUCT-BE-S-01, PRODUCT-FE-001
 - **Operations:** `searchImpressionsByProductId`, `getProduct`
+- **Dependency note:** the `getCarryForwardFormData` query selects only `getProduct` (product) + `searchImpressionsByProductId` (impression) — **no BOM**. The 9 `BOM-BE-*` deps previously listed here were a copy-paste from the sibling `IMPRESSION-FE-001` (`getBomDataAndImpressions`, which *does* fire `getBomByIds`) and were removed 2026-07-24 after verifying against the client query in `ClientCallingGqlQueries/product-queries__ProductQueries.txt`.
 
 - **Business objective:**
   - Carry-forward form keeps its combined product + impressions data.

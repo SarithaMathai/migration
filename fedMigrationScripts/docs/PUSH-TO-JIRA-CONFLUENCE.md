@@ -43,8 +43,8 @@ GitHub (source of truth)  →  Confluence (curated planning docs)  →  Jira (ac
 > flatten, or summarize it**. If your MCP accepts only plain text for a field, the markup is passed
 > through as-is (readable), not removed.
 
-> **Repo placeholder.** Every GitHub link in these prompts uses `https://github.com/<GITHUB_ORG>/<GITHUB_REPO>`.
-> Replace `<GITHUB_ORG>/<GITHUB_REPO>` once, in your own copy of the prompt, with the real org/repo —
+> **Repo placeholder.** Every GitHub link in these prompts uses `https://github.com/target-corp/saritha-mathai-repositories-research`.
+> Replace `target-corp/saritha-mathai-repositories-research` once, in your own copy of the prompt, with the real org/repo —
 > never fabricate or guess a URL if you don't have the real one yet; leave the placeholder and flag it.
 
 > **Prerequisite:** an Atlassian MCP server (or Copilot's built-in Jira/Confluence tools) is configured
@@ -83,7 +83,7 @@ FORMATTING AND CONTENT ARE THE CONTRACT — no data loss, no format loss:
   with a prose description.
 - Story/domain IDs (e.g. PRODUCT-BE-B-01) stay as plain text — do not auto-convert to smart links.
 - Any relative link to another repo file becomes a GitHub link:
-  https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/<path> — never a local file path.
+  https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/<path> — never a local file path.
 
 Create-or-update by exact title (update in place, new version, same page id — never duplicate).
 
@@ -149,7 +149,7 @@ Title: (the ADR file's own H1 heading — read it first)
 Body: output/complexStories/<CASE>/01-adr-<case>.md
 
 Same formatting contract as above. Relative links inside this file to other repo files become GitHub
-links (https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/<path>), never local paths. Create-or-
+links (https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/<path>), never local paths. Create-or-
 update by exact title. Dry run first, then STOP for my approval.
 ```
 
@@ -214,7 +214,7 @@ Rules:
 - REWRITE the back-link before creating the issue: the CSV's "Full story:" line reads
   "be-04-stories.md#<Story ID>" (a relative path, correct inside the repo) — in the Jira description,
   expand it to a real URL:
-  "Full story: https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
 - ADD a second link line if finalArtifacts/jira/confluence-page-map.csv exists and has a row for
   <DOMAIN>: "Domain overview: <that row's Breakdown Page URL>". If the map file doesn't exist yet or
   has no row for this domain, skip this line and tell me Confluence hasn't been published for this

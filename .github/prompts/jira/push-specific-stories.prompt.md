@@ -17,7 +17,7 @@ never enrich it with Current Behaviour/Target/Test Cases from `be-04-stories.md`
    domains), or `output/complexStories/*/*.csv`, or flag it as excluded per
    `output/analysis/out-of-scope-backlog.md` §"Excluded from Jira". Plan create-or-update. Rewrite
    each `Full story:` line into a GitHub URL
-   (`https://github.com/${input:githubOrgRepo:<GITHUB_ORG>/<GITHUB_REPO>}/blob/main/output/analysis/<domain>/be-04-stories.md#<id>`)
+   (`https://github.com/${input:githubOrgRepo:target-corp/saritha-mathai-repositories-research}/blob/main/output/analysis/<domain>/be-04-stories.md#<id>`)
    and add a `Domain overview:` link where `finalArtifacts/jira/confluence-page-map.csv` has a row
    for that domain. Output a table: Story ID | source file | create-or-update | epic | depends-on.
    STOP for my approval.

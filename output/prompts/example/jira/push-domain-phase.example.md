@@ -3,7 +3,7 @@
 > Worked example of [`output/prompts/jira/push-domain-phase.md`](../../jira/push-domain-phase.md)
 > using real data. Values used: `<DOMAIN>` = `watchlist`, `<PHASE>` = `G` (field resolvers — the
 > phase with the most rows for this small domain, 4 stories, good for showing a mid-size batch),
-> `<PROJECT_KEY>` = `PROJ`, `<GITHUB_ORG>/<GITHUB_REPO>` = `myorg/spark-migration`.
+> `<PROJECT_KEY>` = `PROJ`, `target-corp/saritha-mathai-repositories-research` = `target-corp/saritha-mathai-repositories-research`.
 
 ---
 
@@ -32,7 +32,7 @@ Rules:
   it through as-is. Do NOT pull in Current Behaviour, Target implementation, or Test Cases from
   be-04-stories.md; that content stays on GitHub, linked not duplicated.
 - REWRITE the "Full story:" line into a real URL:
-  "Full story: https://github.com/myorg/spark-migration/blob/main/output/analysis/watchlist/be-04-stories.md#<Story ID>"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/watchlist/be-04-stories.md#<Story ID>"
 - ADD "Domain overview: <URL>" if finalArtifacts/jira/confluence-page-map.csv has a row for
   watchlist; otherwise skip and tell me.
 - FORMATTING: preserve the numbered Acceptance Criteria list and paragraph breaks, converting to this

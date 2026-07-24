@@ -8,7 +8,7 @@
 | **Impact** | 🔴 2 High · 🟡 2 Medium · 🟢 0 Low |
 | **Estimated effort** | 17–27 days (single-engineer) |
 | **Phase-1 surface** | 18 operation-to-root-field rows · 6 client files · 8 components |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

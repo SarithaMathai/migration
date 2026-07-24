@@ -19,7 +19,7 @@ stays on GitHub, linked not duplicated.
 1. Dry run (no writes): for every row, check whether a Jira issue already carries that Story ID
    (search `[<Story ID>]` in summary/description or a label). Plan create-or-update accordingly.
    Rewrite each row's `Full story:` line into
-   `https://github.com/${input:githubOrgRepo:<GITHUB_ORG>/<GITHUB_REPO>}/blob/main/output/analysis/${input:domain:bom}/be-04-stories.md#<Story ID>`.
+   `https://github.com/${input:githubOrgRepo:target-corp/saritha-mathai-repositories-research}/blob/main/output/analysis/${input:domain:bom}/be-04-stories.md#<Story ID>`.
    Add a `Domain overview:` line from `finalArtifacts/jira/confluence-page-map.csv` if a row exists
    for this domain. Output a table: Story ID | create-or-update | epic | labels | depends-on |
    confluence-link-added. STOP for my approval.

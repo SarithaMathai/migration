@@ -2,7 +2,7 @@
 
 > Worked example of [`output/prompts/jira/push-one-story.md`](../../jira/push-one-story.md) using
 > real data. Values used: `<STORY_ID>` = `WATCHLIST-BE-B-01`, `<DOMAIN>` = `watchlist`,
-> `<PROJECT_KEY>` = `PROJ`, `<GITHUB_ORG>/<GITHUB_REPO>` = `myorg/spark-migration`. This shows the
+> `<PROJECT_KEY>` = `PROJ`, `target-corp/saritha-mathai-repositories-research` = `target-corp/saritha-mathai-repositories-research`. This shows the
 > CREATE path (issue doesn't exist yet) — the smallest, simplest real story in the CSV.
 
 ---
@@ -33,7 +33,7 @@ Rules:
   it through as-is. Do NOT enrich it with Current Behaviour, Target implementation, or Test Cases from
   be-04-stories.md; that content stays on GitHub, linked not duplicated.
 - REWRITE the "Full story:" line into a real URL:
-  "Full story: https://github.com/myorg/spark-migration/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-01"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-01"
 - ADD "Domain overview: <URL>" if finalArtifacts/jira/confluence-page-map.csv has a row for
   watchlist; otherwise skip and tell me Confluence hasn't been published for this domain yet.
 - FORMATTING: preserve the numbered Acceptance Criteria list and paragraph breaks — convert markup to
@@ -63,7 +63,7 @@ Proposed fields:
   *Acceptance Criteria:*
   1. returns entries for ids; empty → []
 
-  Full story: https://github.com/myorg/spark-migration/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-01
+  Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-01
   Domain overview: https://confluence.com/Breakdown/Watchlist-Federated-GraphQL-Breakdown
   ---
   (found a row for watchlist in confluence-page-map.csv, added the Domain overview line)

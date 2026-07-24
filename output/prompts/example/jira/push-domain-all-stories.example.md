@@ -2,7 +2,7 @@
 
 > Worked example of [`output/prompts/jira/push-domain-all-stories.md`](../../jira/push-domain-all-stories.md)
 > using real data. Values used throughout: `<DOMAIN>` = `watchlist`, `<PROJECT_KEY>` = `PROJ`,
-> `<GITHUB_ORG>/<GITHUB_REPO>` = `myorg/spark-migration`. Watchlist is the smallest domain (16 rows:
+> `target-corp/saritha-mathai-repositories-research` = `target-corp/saritha-mathai-repositories-research`. Watchlist is the smallest domain (16 rows:
 > 13 backend + 3 frontend), so the full dry-run table fits without truncation.
 
 ---
@@ -35,7 +35,7 @@ Rules:
   it through as-is. Do NOT enrich it with Current Behaviour, Target implementation, or Test Cases
   pulled from be-04-stories.md; that content stays on GitHub, linked not duplicated.
 - REWRITE the "Full story:" line into a real URL:
-  "Full story: https://github.com/myorg/spark-migration/blob/main/output/analysis/watchlist/be-04-stories.md#<Story ID>"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/watchlist/be-04-stories.md#<Story ID>"
 - ADD a second link line if finalArtifacts/jira/confluence-page-map.csv has a row for watchlist:
   "Domain overview: <that row's Breakdown Page URL>". If the map file or the row doesn't exist yet,
   skip this line and tell me Confluence hasn't been published for this domain.

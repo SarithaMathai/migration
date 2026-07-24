@@ -178,6 +178,17 @@ def build_team_plan() -> str:
         "",
         "## Team & operating model",
         "",
+        "> **⚠ Priority reorder (2026-07-24):** an **external team is waiting on the "
+        "`watchlist` + `impression` dependencies**, so those two are prioritized. Impression's "
+        "*backend* is now pulled far forward (its A–E gate lands early — see the backend lane), "
+        "which is what unblocks the external consumer of the federated impression data. "
+        "Impression's *frontend* stories are fused with BOM + Product screens "
+        "(`getBomDataAndImpressions`, `getCarryForwardFormData`), so they still flip in the same "
+        "wave as BOM/Product — the scheduler will not place them ahead of the partner stories they "
+        "read. Net effect: `bom` and `product` core also move up; the smaller domains "
+        "(`productDetails`, `measurement`, `packaging`, `claims`) shift later. Order is set in "
+        "`team_config.py` (`BE_QUEUE` / `FE_WAVES`) with a revert note.",
+        "",
     ]
     if N_BE_ENGINEERS == 1:
         L.append(
@@ -257,7 +268,10 @@ def build_team_plan() -> str:
         "- Search-gated stories (`MST-FE-002`, `BOM-FE-003`, `PRODUCT-FE-002`) also wait on "
         "the search read-hub decision — external to this plan and may slide independently.",
         "- Impression rides its partner flips (`IMPRESSION-FE-001` with `BOM-FE-002`, "
-        "`IMPRESSION-FE-002` with `PRODUCT-FE-001`).",
+        "`IMPRESSION-FE-002` with `PRODUCT-FE-001`) — this is why the priority reorder pulls "
+        "`bom` and `product` forward too, not just impression. Impression's **backend** is "
+        "unblocked much earlier (see its A–E gate in the backend lane) for any external consumer "
+        "that needs the data rather than the UI cutover.",
         "",
         "---",
         "",

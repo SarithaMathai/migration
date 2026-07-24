@@ -9,7 +9,7 @@
 | **Total Stories** | 13 |
 | **Complexity** | 🔴 0 Very High · 🟠 1 High · 🟡 5 Medium · 🟢 7 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -205,7 +205,7 @@ to fix on the port.
 | **Impact** | 🔴 0 High · 🟡 1 Medium · 🟢 2 Low |
 | **Estimated effort** | 7–10 days (single-engineer) |
 | **Phase-1 surface** | 5 operation-to-root-field rows · 1 client files · 4 components |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

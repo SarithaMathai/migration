@@ -1,7 +1,7 @@
 # Spark → Federated GraphQL Migration — Program Overview
 
 > 🏷️ **Tags:** `dgs-migration` · `program-overview` — **Confluence:** *Federation Graph Migration* (space home)
-> **Generated:** 2026-07-21 · **Scope:** 8 domains (phase 1) · `spark-internal-graphql` → Netflix DGS via Hive Schema Registry
+> **Generated:** 2026-07-24 · **Scope:** 8 domains (phase 1) · `spark-internal-graphql` → Netflix DGS via Hive Schema Registry
 > Effort is **AI-estimated — confirm in refinement.**
 
 ---
@@ -122,4 +122,4 @@ Tier 4 — Federation:  all Phase H entity-resolution stories, once the owning s
 - **Read order by role + regeneration:** see `README.md`.
 
 ---
-*Program overview · generated 2026-07-21 from `output/analysis/*/04-*.md`.*
+*Program overview · generated 2026-07-24 from `output/analysis/*/04-*.md`.*

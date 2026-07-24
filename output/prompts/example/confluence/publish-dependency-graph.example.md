@@ -39,7 +39,7 @@ FORMATTING AND CONTENT ARE THE CONTRACT — no data loss, no format loss, full s
   means) stays as regular text at the top of the page, unchanged.
 - The back-link at the top of the source file (to be-04-stories.md and to 00-sequencing.md) becomes
   GitHub/Confluence links: the be-04-stories.md reference becomes
-  https://github.com/myorg/spark-migration/blob/main/output/analysis/watchlist/be-04-stories.md
+  https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/watchlist/be-04-stories.md
   and the 00-sequencing.md reference becomes a link to the live "Migration Sequencing & Roadmap"
   Confluence page if you can resolve it, otherwise a GitHub link to finalArtifacts/00-sequencing.md.
 - FE/BE story ids inside the diagrams (e.g. WATCHLIST-FE-001, B-01) stay as plain text inside the

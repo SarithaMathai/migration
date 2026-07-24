@@ -39,7 +39,7 @@ points at a fuller reference in `output/prompts/{confluence,jira}/` and
 - **Dry run, then stop for approval, then write.** No publish prompt writes without an explicit human
   confirmation of the dry-run plan.
 - **Relative repo links become real links** — GitHub blob URLs
-  (`https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/<path>` — replace the placeholder with
+  (`https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/<path>` — replace the placeholder with
   the real org/repo) or, where a Confluence page already exists for the target, a link to that live
   page. Never leave a local file path in a published artifact.
 - **Never fabricate a URL.** If you don't have the real GitHub org/repo or a Confluence page doesn't

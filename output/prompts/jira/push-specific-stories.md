@@ -12,7 +12,7 @@
 
 ## Step 1 — dry run (no writes)
 
-Replace `<PROJECT_KEY>`, `<GITHUB_ORG>/<GITHUB_REPO>`, and the story-id list.
+Replace `<PROJECT_KEY>`, `target-corp/saritha-mathai-repositories-research`, and the story-id list.
 
 ```
 Using the Jira tools, prepare (DO NOT CREATE YET) an import plan for exactly these story ids:
@@ -34,7 +34,7 @@ Rules:
 - The Description column is ALREADY minimal (Acceptance Criteria + a "Full story:" back-link) — pass
   it through as-is; do NOT add Current Behaviour, Target, or Test Cases from be-04-stories.md.
 - REWRITE each id's "Full story:" line into a real URL:
-  "Full story: https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<domain>/be-04-stories.md#<id>"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/<domain>/be-04-stories.md#<id>"
   (derive <domain> from which CSV the row came from).
 - ADD "Domain overview: <URL>" per id if finalArtifacts/jira/confluence-page-map.csv has a row for
   that id's domain; otherwise skip and tell me.

@@ -3,7 +3,7 @@
 > **Domain:** `impression`
 > **Target DGS:** `plm-product (co-located)`
 > **Pipeline Version:** 1.0
-> **Generated:** 2026-07-21
+> **Generated:** 2026-07-24
 > **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md)
 > **DGS Target Status:** Green-field
 

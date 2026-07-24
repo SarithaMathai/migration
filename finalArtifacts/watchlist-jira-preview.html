@@ -1,0 +1,619 @@
+<style>
+:root{
+  --bg:#fbfcfd; --panel:#ffffff; --ink:#182029; --ink-soft:#5b6b7c; --line:#e3e8ee;
+  --accent:#2f6bd6; --accent-soft:#eaf1fc;
+  --epic:#6b4fbb; --epic-bg:#f0ecf9;
+  --be:#2f6bd6; --fe:#0a7d5a;
+  --local:#3a7d44; --local-bg:#eaf5ec;
+  --cross:#b7791f; --cross-bg:#fbf1de;
+  --spike:#9c5bd0; --spike-bg:#f4ecfb;
+  --block:#5b6b7c; --block-bg:#eef1f4;
+  --warn:#b7791f; --ok:#3a7d44;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f151d; --panel:#161d27; --ink:#e6ecf3; --ink-soft:#9aabbd; --line:#28313d;
+    --accent:#5b91ea; --accent-soft:#1a2536;
+    --epic:#a98ee0; --epic-bg:#211b33;
+    --be:#5b91ea; --fe:#3fb58c;
+    --local:#5fb56b; --local-bg:#17271a;
+    --cross:#e0a13e; --cross-bg:#2c2413;
+    --spike:#bd8ee6; --spike-bg:#241a30;
+    --block:#9aabbd; --block-bg:#1d242e;
+    --warn:#e0a13e; --ok:#5fb56b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f151d; --panel:#161d27; --ink:#e6ecf3; --ink-soft:#9aabbd; --line:#28313d;
+  --accent:#5b91ea; --accent-soft:#1a2536; --epic:#a98ee0; --epic-bg:#211b33;
+  --be:#5b91ea; --fe:#3fb58c; --local:#5fb56b; --local-bg:#17271a;
+  --cross:#e0a13e; --cross-bg:#2c2413; --spike:#bd8ee6; --spike-bg:#241a30;
+  --block:#9aabbd; --block-bg:#1d242e; --warn:#e0a13e; --ok:#5fb56b;
+}
+:root[data-theme="light"]{
+  --bg:#fbfcfd; --panel:#ffffff; --ink:#182029; --ink-soft:#5b6b7c; --line:#e3e8ee;
+  --accent:#2f6bd6; --accent-soft:#eaf1fc; --epic:#6b4fbb; --epic-bg:#f0ecf9;
+  --be:#2f6bd6; --fe:#0a7d5a; --local:#3a7d44; --local-bg:#eaf5ec;
+  --cross:#b7791f; --cross-bg:#fbf1de; --spike:#9c5bd0; --spike-bg:#f4ecfb;
+  --block:#5b6b7c; --block-bg:#eef1f4; --warn:#b7791f; --ok:#3a7d44;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;
+  font-size:15px;-webkit-font-smoothing:antialiased}
+code{font-family:var(--mono);font-size:.88em}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 24px 64px}
+a{color:var(--accent)}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cross);font-weight:600}
+.hero h1{font-size:30px;margin:.3em 0 .2em;letter-spacing:-.02em;text-wrap:balance}
+.lede{color:var(--ink-soft);max-width:68ch;margin:.2em 0 0}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 16px;
+  min-width:92px;display:flex;flex-direction:column;gap:2px}
+.stat .num{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .lab{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
+.stat.warn .num{color:var(--warn)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 22px;margin:20px 0}
+.panel h2{font-size:18px;margin:0 0 4px;letter-spacing:-.01em}
+.panel-sub{color:var(--ink-soft);margin:.2em 0 16px;font-size:14px;max-width:74ch}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table.verify{border-collapse:collapse;width:100%;font-size:13.5px}
+table.verify th{text-align:left;background:var(--accent-soft);color:var(--ink);padding:9px 12px;
+  font-weight:600;font-size:12px;letter-spacing:.02em;position:sticky;top:0}
+table.verify td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:top}
+table.verify tr:hover td{background:var(--bg)}
+td.arrow{color:var(--ink-soft);white-space:nowrap;font-size:12px}
+td.ok{color:var(--ok)} td.warn{color:var(--warn)}
+.kindtag{font-size:11px;padding:1px 8px;border-radius:20px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.k-local{background:var(--local-bg);color:var(--local)}
+.k-cross{background:var(--cross-bg);color:var(--cross)}
+.k-spike{background:var(--spike-bg);color:var(--spike)}
+.callout{margin-top:16px;background:var(--cross-bg);border:1px solid color-mix(in srgb,var(--cross) 40%,transparent);
+  border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55}
+.maplist{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.maplist li{display:flex;gap:12px;align-items:baseline;font-size:14px;color:var(--ink-soft)}
+.maplist .k{flex:0 0 130px;font-weight:600;color:var(--ink)}
+.epicwrap{margin:18px 0 6px}
+.epic{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--epic-bg);
+  border:1px solid color-mix(in srgb,var(--epic) 30%,transparent);border-radius:10px;margin-bottom:12px}
+.epic h3{margin:0;font-size:15.5px;font-weight:650}
+.epic-count{margin-left:auto;font-size:12px;color:var(--ink-soft)}
+.issues{display:grid;gap:12px}
+.issue{border:1px solid var(--line);border-left:3px solid var(--be);border-radius:10px;padding:14px 16px;background:var(--panel)}
+.issue.fe{border-left-color:var(--fe)}
+.ihead{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:6px}
+.itype{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:5px}
+.t-story{background:var(--accent-soft);color:var(--be)}
+.t-fe{background:color-mix(in srgb,var(--fe) 16%,transparent);color:var(--fe)}
+.t-epic{background:var(--epic);color:#fff;padding:2px 9px;border-radius:5px}
+.iid{font-weight:600;color:var(--ink)}
+.chip{font-size:11.5px;background:var(--block-bg);color:var(--ink-soft);padding:1px 8px;border-radius:5px;font-weight:600}
+.status{margin-left:auto;font-size:11.5px;padding:2px 9px;border-radius:20px;font-weight:600}
+.st-todo{background:var(--block-bg);color:var(--ink-soft)}
+.st-rec{background:var(--spike-bg);color:var(--spike)}
+.ititle{margin:.1em 0 12px;font-size:15px;font-weight:600;line-height:1.35}
+.row{display:flex;gap:12px;align-items:baseline;padding:5px 0;border-top:1px dashed var(--line)}
+.row .k{flex:0 0 190px;font-size:12.5px;color:var(--ink-soft);font-weight:600}
+.row .k .hint{font-weight:400;opacity:.75}
+.row .v{flex:1;min-width:0}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:6px;font-size:12.5px;border:1px solid transparent}
+.pill code{font-size:12px}
+.dep-local{background:var(--local-bg);color:var(--local);border-color:color-mix(in srgb,var(--local) 25%,transparent)}
+.dep-cross{background:var(--cross-bg);color:var(--cross);border-color:color-mix(in srgb,var(--cross) 35%,transparent)}
+.dep-spike{background:var(--spike-bg);color:var(--spike);border-color:color-mix(in srgb,var(--spike) 30%,transparent)}
+.dep-block{background:var(--block-bg);color:var(--ink-soft)}
+.dep-note{font-size:11px;opacity:.85}
+.muted{color:var(--ink-soft);font-size:13px}
+.lbl{font-size:11px;background:var(--block-bg);color:var(--ink-soft);padding:1px 7px;border-radius:4px;margin-right:4px}
+details.desc{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+details.desc summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600;user-select:none}
+.descbody{font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);
+  border-radius:8px;padding:12px 14px;margin-top:10px;line-height:1.6}
+.descbody code{background:var(--block-bg);padding:1px 5px;border-radius:4px}
+.backlink{font-size:12px;color:var(--ink-soft);margin-top:8px;word-break:break-all}
+.foot{margin-top:32px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-soft);font-size:12.5px;line-height:1.7}
+@media (max-width:640px){
+  .row{flex-direction:column;gap:4px}
+  .row .k{flex-basis:auto}
+  .maplist li{flex-direction:column;gap:2px}
+  .maplist .k{flex-basis:auto}
+}
+</style>
+<title>Watchlist — Jira Import Preview</title>
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Jira push · dry-run preview · <strong>not yet created</strong></div>
+    <h1>Watchlist — Jira import preview</h1>
+    <p class="lede">Exactly what <code>finalArtifacts/jira/watchlist.csv</code> will create in Jira: <strong>2 epics, 13 backend + 3 frontend stories</strong>, their story-ID references, and the dependency links each row becomes. Review this before running the push prompt — no issues are created by opening this page.</p>
+    <div class="stats">
+      <div class="stat"><span class="num">2</span><span class="lab">Epics</span></div>
+      <div class="stat"><span class="num">13</span><span class="lab">BE stories</span></div>
+      <div class="stat"><span class="num">3</span><span class="lab">FE stories</span></div>
+      <div class="stat"><span class="num">21</span><span class="lab">in-domain links</span></div>
+      <div class="stat warn"><span class="num">1</span><span class="lab">cross-domain</span></div>
+      <div class="stat warn"><span class="num">1</span><span class="lab">spike gate</span></div>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>1 · Dependency links — verify before pushing</h2>
+    <p class="panel-sub">Each CSV <code>Depends On</code> id becomes a Jira <strong>"is blocked by"</strong> issue link (blocker = the dependency). In-domain targets link to keys created in this same push; the cross-domain and spike ones need their target to exist first.</p>
+    <div class="tablewrap">
+      <table class="verify">
+        <thead><tr><th>Story</th><th></th><th>Blocker (depends on)</th><th>Kind</th><th>Resolves how</th></tr></thead>
+        <tbody><tr>
+          <td><code>WATCHLIST-BE-B-02</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-B-03</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-C-01</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-D-01</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-D-02</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-E-01</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>SPIKE-01</code></td>
+          <td><span class="kindtag k-spike">spike</span></td>
+          <td class="warn">⚠ program spike — links if the spike issue exists</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-E-01</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-E-01</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>PRODUCT-BE-E-00</code></td>
+          <td><span class="kindtag k-cross">cross</span></td>
+          <td class="warn">⚠ NOT in this push — search Jira / import Product first</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-F-01</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-F-02</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-G-01</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-G-02</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-G-03</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-BE-G-05</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-G-02</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-001</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-B-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-001</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-C-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-001</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-G-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-001</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-G-02</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-001</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-G-03</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-001</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-G-05</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-002</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-D-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-002</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-D-02</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr><tr>
+          <td><code>WATCHLIST-FE-003</code></td>
+          <td class="arrow">is blocked by →</td>
+          <td><code>WATCHLIST-BE-E-01</code></td>
+          <td><span class="kindtag k-local">local</span></td>
+          <td class="ok">✓ in this push — links to its Jira key</td>
+        </tr></tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <strong>⚠ One cross-domain edge to watch:</strong> <code>WATCHLIST-BE-E-01</code> is blocked by <code>PRODUCT-BE-E-00</code> (the shared WriteSaga) and gated by <code>SPIKE-01</code>. Neither is in the Watchlist push — the push prompt will flag these as <em>pending links</em>. Import Product (or at least its epic + E-00) first, or accept them as pending and link on a re-run.
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2 · How each row maps to a Jira issue</h2>
+    <ul class="maplist">
+      <li><span class="k">Story ID</span> → appears in the summary as <code>[WATCHLIST-BE-…]</code> — this is how the push matches existing issues &amp; links dependencies</li>
+      <li><span class="k">Summary</span> → issue summary (domain-prefixed)</li>
+      <li><span class="k">Depends On</span> → <code>is blocked by</code> issue links</li>
+      <li><span class="k">Phase / T-shirt</span> → labels <code>phase-B</code>, <code>size-XS</code></li>
+      <li><span class="k">Description</span> → Acceptance Criteria + a <code>Full story:</code> GitHub back-link (nothing else)</li>
+      <li><span class="k">Epic Link</span> → attaches the story to its BE or FE epic</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>3 · The issues as they'll appear</h2>
+    
+    <section class="epicwrap">
+      <div class="epic">
+        <span class="itype t-epic">Epic</span>
+        <h3>Federate BreakDown Product</h3>
+        <span class="epic-count">13 stories</span>
+      </div>
+      <div class="issues">
+    <article class="issue be" id="WATCHLIST-BE-B-01">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-B-01</code>
+        <span class="chip">B</span>
+        <span class="chip">XS</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) getWatchlistByIds(ids)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="muted">none</span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-BE-B-02</code></span><span class="pill dep-block"><code>WATCHLIST-BE-B-03</code></span><span class="pill dep-block"><code>WATCHLIST-BE-C-01</code></span><span class="pill dep-block"><code>WATCHLIST-BE-D-01</code></span><span class="pill dep-block"><code>WATCHLIST-BE-D-02</code></span><span class="pill dep-block"><code>WATCHLIST-BE-E-01</code></span><span class="pill dep-block"><code>WATCHLIST-BE-F-01</code></span><span class="pill dep-block"><code>WATCHLIST-BE-F-02</code></span><span class="pill dep-block"><code>WATCHLIST-BE-G-01</code></span><span class="pill dep-block"><code>WATCHLIST-BE-G-02</code></span><span class="pill dep-block"><code>WATCHLIST-BE-G-03</code></span><span class="pill dep-block"><code>WATCHLIST-FE-001</code></span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. returns entries for ids; empty → []<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-B-01</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-01">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-01</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-B-02">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-B-02</code>
+        <span class="chip">B</span>
+        <span class="chip">XS</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) getWatchlistReasons (cacheable)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="muted">none</span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. returns reasons; cached<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-B-02</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-02">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-02</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-B-03">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-B-03</code>
+        <span class="chip">B</span>
+        <span class="chip">XS</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) getWatchlistInspectionActions (cacheable)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="muted">none</span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. returns actions; cached<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-B-03</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-03">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-B-03</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-C-01">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-C-01</code>
+        <span class="chip">C</span>
+        <span class="chip">M</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) getWatchlistByFilter(...) (4-step read)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-FE-001</code></span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. product→search→watchlist chain preserved<br>2. elastic query string exact (incl. <code>statusId: 501</code>)<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-C-01</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-C-01">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-C-01</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-D-01">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-D-01</code>
+        <span class="chip">D</span>
+        <span class="chip">M</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) createWatchlistEntries</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-FE-002</code></span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. creates each entry + its user group<br>2. either failure → exception<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-D-01</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-D-01">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-D-01</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-D-02">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-D-02</code>
+        <span class="chip">D</span>
+        <span class="chip">M</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) cloneFilesForWatchlist</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-FE-002</code></span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. clones each id with its paired cloneReference; <code>parentResource</code> stamped<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-D-02</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-D-02">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-D-02</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-E-01">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-E-01</code>
+        <span class="chip">E</span>
+        <span class="chip">L</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) updateWatchlistEntries (multi-step write)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-spike"><code>SPIKE-01</code> <span class="dep-note">spike gate</span></span><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span><span class="pill dep-cross"><code>PRODUCT-BE-E-00</code> <span class="dep-note">cross-domain · import Product first</span></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-FE-003</code></span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Requires spike:</strong> SPIKE-01 (Non-Atomic Write Saga) — see program spike<br><br><strong>Acceptance Criteria:</strong><br>1. user-group upserts complete before the watchlist update (race fixed)<br>2. removed attachments archived<br>3. partial-failure strategy<br><br><strong>Test Cases:</strong><br>* [ ] existing-participants path<br>* [ ] new-participants path<br>* [ ] attachment archive<br>* [ ] ordering/await<br>* [ ] partial-failure<br>* [ ] Parity: DGS response matches spark-internal-graphql baseline<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-E-01</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-E-01">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-E-01</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-F-01">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-F-01</code>
+        <span class="chip">F</span>
+        <span class="chip">XS</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) Product.watchlists (internal)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="muted">none</span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. resolves in-process; no gateway hop<br>2. Field resolver uses a <code>MappedBatchLoader&lt;String, List&lt;SPARK_Watchlist&gt;&gt;</code> (<code>watchlistByProductIdLoader</code>) — when the parent query returns N products, watchlists are resolved in 1 batched call (not N)<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-F-01</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-F-01">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-F-01</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-F-02">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-F-02</code>
+        <span class="chip">F</span>
+        <span class="chip">XS</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) ResourcesCount.watchlists (internal — TechPack)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="muted">none</span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. count resolves in-process; parity vs the TechPack facade<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-F-02</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-F-02">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-F-02</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-G-01">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-G-01</code>
+        <span class="chip">G</span>
+        <span class="chip">XS</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) Computed flatteners (status/reasons/inspection action)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-FE-001</code></span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. each flattener maps correctly<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-G-01</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-G-01">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-G-01</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-G-02">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-G-02</code>
+        <span class="chip">G</span>
+        <span class="chip">M</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) createdBy + updatedBy + workspaces + participantDetails + partnerName</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-BE-G-05</code></span><span class="pill dep-block"><code>WATCHLIST-FE-001</code></span></span></div>
+      <div class="row"><span class="k">External svc</span><span class="v">user-group, user-profile, vmm, workspaceV2</span></div>
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. each resolves; null-safe<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-G-02</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-G-02">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-G-02</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-G-03">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-G-03</code>
+        <span class="chip">G</span>
+        <span class="chip">M</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">(Watchlist) attachments + product</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-FE-001</code></span></span></div>
+      <div class="row"><span class="k">External svc</span><span class="v">search</span></div>
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. attachments via elastic<br>2. <code>product</code> null when not <code>PID*</code><br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-G-03</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-G-03">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-G-03</a></div>
+      </details>
+    </article>
+    <article class="issue be" id="WATCHLIST-BE-G-05">
+      <header class="ihead">
+        <span class="itype t-story">Story · BE</span>
+        <code class="iid">WATCHLIST-BE-G-05</code>
+        <span class="chip">G</span>
+        <span class="chip">XS</span>
+        <span class="status st-rec">Recommended (PO-gated — federation-review/03 §2 REC-3)</span>
+      </header>
+      <h4 class="ititle">(Watchlist) WatchlistPartner.partner entity reference (recommended, PO-gated)</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-G-02</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="pill dep-block"><code>WATCHLIST-FE-001</code></span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Acceptance Criteria:</strong><br>1. PO approval recorded (OQ-5) before implementation starts<br>2. <code>partner { id name }</code> resolves via the gateway; <code>partnerName</code> parity is preserved<br>3. No additional VMM calls from the watchlist subgraph (stub emission only)<br><br><strong>Full story:</strong> be-04-stories.md#WATCHLIST-BE-G-05</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-G-05">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-G-05</a></div>
+      </details>
+    </article></div>
+    </section>
+    
+    <section class="epicwrap">
+      <div class="epic">
+        <span class="itype t-epic">Epic</span>
+        <h3>Federate BreakDown Product — Frontend</h3>
+        <span class="epic-count">3 stories</span>
+      </div>
+      <div class="issues">
+    <article class="issue fe" id="WATCHLIST-FE-001">
+      <header class="ihead">
+        <span class="itype t-fe">Story · FE</span>
+        <code class="iid">WATCHLIST-FE-001</code>
+        <span class="chip">FE</span>
+        <span class="chip">S</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">[Watchlist FE] Migrate watchlist reads</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-B-01</code></span><span class="pill dep-local"><code>WATCHLIST-BE-C-01</code></span><span class="pill dep-local"><code>WATCHLIST-BE-G-01</code></span><span class="pill dep-local"><code>WATCHLIST-BE-G-02</code></span><span class="pill dep-local"><code>WATCHLIST-BE-G-03</code></span><span class="pill dep-local"><code>WATCHLIST-BE-G-05</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="muted">none</span></span></div>
+      <div class="row"><span class="k">External svc</span><span class="v">search, user-group, user-profile, vmm, workspaceV2</span></div>
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Implementation Order:</strong> 15 of 16 (Watchlist combined — frontend #2, cutover step 4)<br><strong>Domain:</strong> Watchlist — <strong>Team:</strong> Frontend — <strong>Owner:</strong> FE-1<br><strong>Priority:</strong> Low — <strong>Parallelizable:</strong> Yes<br><br><strong>Depends On:</strong><br>* WATCHLIST-BE-B-01 — getWatchlistByIds<br>* WATCHLIST-BE-C-01 — getWatchlistByFilter<br>* WATCHLIST-BE-G-01 — Computed flatteners<br>* WATCHLIST-BE-G-02 — createdBy + updatedBy + workspaces + participantDetails + partnerName<br>* WATCHLIST-BE-G-03 — attachments + product<br>* WATCHLIST-BE-G-05 — WatchlistPartner.partner entity reference<br><br><strong>Blocks:</strong><br>* None<br><br><strong> </strong>Type:<strong> Query migration · </strong>Impact:<strong> Low · </strong>Domain:* watchlist<br><strong> </strong>Depends on:* WATCHLIST-BE-B-01, WATCHLIST-BE-C-01, WATCHLIST-BE-G-01, WATCHLIST-BE-G-02, WATCHLIST-BE-G-03, WATCHLIST-BE-G-05<br><strong> </strong>Operations:* <code>getWatchlistByIds</code>, <code>getWatchlistByFilter</code><br><br><strong> </strong>Business objective:*<br>** Watchlist screens read from the federated graph unchanged — the pilot cutover candidate.<br><strong> </strong>Technical objective:*<br>** Migrate the 2 read documents in <code>watchlist/WatchlistQueries.ts</code> (fragments <code>WATCHLIST_FRAGMENT</code>, <code>WATCHLIST_PARTICIPANT_FRAGMENT</code>, shared <code>PRODUCT_BASE_INFO_FRAGMENT</code>).<br><strong> </strong>Required changes:*<br>** Fragment re-target (product base fragment shared with product domain); document re-point.<br><br><strong>Acceptance Criteria</strong><br><br>1. Watchlist list and detail render identically under the flag.<br><br><strong>Testing</strong><br><br>* Screen integration tests; shared-fragment cache assertion with product entities.<br><br><strong> </strong>Risk:* Low — smallest isolated domain; run first to validate the platform stack.<br><strong> </strong>Estimated effort:* 2–3 days<br><br><strong>Definition of Done:</strong><br>* Operations point at the federated router behind the platform flag<br>* Dual-run parity clean; flag flip and rollback path verified<br>* No UI regression (component tests + smoke suite)</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-FE-001">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-FE-001</a></div>
+      </details>
+    </article>
+    <article class="issue fe" id="WATCHLIST-FE-002">
+      <header class="ihead">
+        <span class="itype t-fe">Story · FE</span>
+        <code class="iid">WATCHLIST-FE-002</code>
+        <span class="chip">FE</span>
+        <span class="chip">S</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">[Watchlist FE] Migrate watchlist create and clone mutations</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-D-01</code></span><span class="pill dep-local"><code>WATCHLIST-BE-D-02</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="muted">none</span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Implementation Order:</strong> 14 of 16 (Watchlist combined — frontend #1, cutover step 3)<br><strong>Domain:</strong> Watchlist — <strong>Team:</strong> Frontend — <strong>Owner:</strong> FE-1<br><strong>Priority:</strong> Low — <strong>Parallelizable:</strong> No<br><br><strong>Depends On:</strong><br>* WATCHLIST-BE-D-01 — createWatchlistEntries<br>* WATCHLIST-BE-D-02 — cloneFilesForWatchlist<br><br><strong>Blocks:</strong><br>* None<br><br><strong> </strong>Type:<strong> Mutation migration · </strong>Impact:<strong> Low · </strong>Domain:* watchlist<br><strong> </strong>Depends on:* WATCHLIST-BE-D-01, WATCHLIST-BE-D-02<br><strong> </strong>Operations:* <code>createWatchlistEntries</code>, <code>cloneFilesForWatchlist</code><br><br><strong> </strong>Business objective:*<br>** Watchlist creation and file cloning write through the federated graph.<br><strong> </strong>Technical objective:*<br>** Migrate the 2 single-step mutations with cache writes.<br><strong> </strong>Required changes:*<br>** Input renames; response-driven list update.<br><br><strong>Acceptance Criteria</strong><br><br>1. Created entries appear without refetch; clone completes.<br><br><strong>Testing</strong><br><br>* Mutation unit tests; create E2E.<br><br><strong> </strong>Risk:* Low.<br><strong> </strong>Estimated effort:* 2–3 days<br><br><strong>Definition of Done:</strong><br>* Operations point at the federated router behind the platform flag<br>* Dual-run parity clean; flag flip and rollback path verified<br>* No UI regression (component tests + smoke suite)</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-FE-002">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-FE-002</a></div>
+      </details>
+    </article>
+    <article class="issue fe" id="WATCHLIST-FE-003">
+      <header class="ihead">
+        <span class="itype t-fe">Story · FE</span>
+        <code class="iid">WATCHLIST-FE-003</code>
+        <span class="chip">FE</span>
+        <span class="chip">M</span>
+        <span class="status st-todo">To Do</span>
+      </header>
+      <h4 class="ititle">[Watchlist FE] Migrate `updateWatchlistEntries` saga handling</h4>
+      <div class="row"><span class="k">Depends on <span class="hint">(→ Jira "is blocked by")</span></span><span class="v pills"><span class="pill dep-local"><code>WATCHLIST-BE-E-01</code></span></span></div>
+      <div class="row"><span class="k">Blocks</span><span class="v pills"><span class="muted">none</span></span></div>
+      
+      <details class="desc">
+        <summary>Jira description &amp; back-link</summary>
+        <div class="descbody"><strong>Implementation Order:</strong> 16 of 16 (Watchlist combined — frontend #3, cutover step 4)<br><strong>Domain:</strong> Watchlist — <strong>Team:</strong> Frontend — <strong>Owner:</strong> FE-1<br><strong>Priority:</strong> Medium — <strong>Parallelizable:</strong> Yes<br><br><strong>Depends On:</strong><br>* WATCHLIST-BE-E-01 — updateWatchlistEntries<br><br><strong>Blocks:</strong><br>* None<br><br><strong> </strong>Type:<strong> Mutation migration (complex) · </strong>Impact:<strong> Medium · </strong>Domain:* watchlist<br><strong> </strong>Depends on:* WATCHLIST-BE-E-01<br><strong> </strong>Operations:* <code>updateWatchlistEntries</code><br><br><strong> </strong>Business objective:*<br>** Bulk watchlist updates surface partial failures explicitly.<br><strong> </strong>Technical objective:*<br>** Adopt the multi-step write contract (<code>getWatchlistForBulkUpdate</code> feeds this flow).<br><strong> </strong>Required changes:*<br>** Per-entry outcome rendering; remove compensating refetch.<br><br><strong>Acceptance Criteria</strong><br><br>1. Bulk update shows per-entry outcomes; partial failure actionable.<br><br><strong>Testing</strong><br><br>* Induced step-failure tests; bulk-update E2E.<br><br><strong> </strong>Risk:* Medium — ADR-013 ratification dependency.<br><strong> </strong>Estimated effort:* 3–4 days<br><br>---<br><br>## Impression<br><br><strong>Definition of Done:</strong><br>* Operations point at the federated router behind the platform flag<br>* Dual-run parity clean; flag flip and rollback path verified<br>* No UI regression (component tests + smoke suite)</div>
+        <div class="backlink">↳ <em>Full story</em> rewrites to → <a href="https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-FE-003">https://github.com/&lt;ORG&gt;/&lt;REPO&gt;/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-FE-003</a></div>
+      </details>
+    </article></div>
+    </section>
+  </section>
+
+  <footer class="foot">
+    Generated from <code>finalArtifacts/jira/watchlist.csv</code> · preview only, nothing pushed · re-generate after any CSV change.
+    Push with <code>output/prompts/jira/push-domain-all-stories.md</code> (dry-run step first).
+  </footer>
+</div>

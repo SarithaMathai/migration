@@ -1,6 +1,6 @@
 # External Capability Stories — Consolidated by Reusable Dependency
 
-> **Generated:** 2026-07-21 · by `generate_ext_capabilities.py`. Auto-generated — regenerate after any `domain-service-catalog.md` or `be-04-stories.md` change; never hand-edit.
+> **Generated:** 2026-07-24 · by `generate_ext_capabilities.py`. Auto-generated — regenerate after any `domain-service-catalog.md` or `be-04-stories.md` change; never hand-edit.
 
 > **Why this file exists:** `output/clientStoryDependency/` and `output/analysis/program/ext-dependency-stories.md` correctly identify WHICH fields depend on an external service, but authored a story per (domain, field) — so the SAME external capability (e.g. VMM's business-partner lookup) could get re-authored once per consuming domain. This file re-groups every cross-domain/EXT resolver (`be-06-cross-domain-field-analysis.md`, all 8 domains) by its **owning service/platform** — the real reusable-capability boundary already encoded in `domain-service-catalog.md`'s owner-label column — so there is exactly ONE EXT story per capability, and every consuming domain gets its own lightweight verification story instead of a duplicate implementation story.
 

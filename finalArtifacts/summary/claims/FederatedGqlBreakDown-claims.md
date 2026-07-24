@@ -9,7 +9,7 @@
 | **Total Stories** | 20 |
 | **Complexity** | 🔴 0 Very High · 🟠 2 High · 🟡 8 Medium · 🟢 10 Low |
 | **Phase Coverage** | 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🧪 G · 🧬 H |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 
@@ -224,7 +224,7 @@ Per **ADR-019** ([`complexStories/acl/01-adr-acl-mid-request-update.md`](https:/
 | **Impact** | 🔴 2 High · 🟡 2 Medium · 🟢 0 Low |
 | **Estimated effort** | 17–27 days (single-engineer) |
 | **Phase-1 surface** | 18 operation-to-root-field rows · 6 client files · 8 components |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > A frontend story is **Done only after every backend story it depends on has been delivered**. Full story text (objectives, required changes, AC, testing) lives in fe-08-frontend-stories.md — the hand-authored source of truth; this page is the per-domain planning view.
 

@@ -51,7 +51,7 @@ just that one. Every domain links to the **same** two epics and appends to the *
 
 Paste this once per domain. Replace `<PROJECT_KEY>`, `<BE_EPIC_KEY>` / `<FE_EPIC_KEY>` (existing
 epics — create them on the first run if they don't exist yet), `<DOMAIN>` (e.g. `bom`, `product` —
-the file name without `.csv`), and `<GITHUB_ORG>/<GITHUB_REPO>`.
+the file name without `.csv`), and `target-corp/saritha-mathai-repositories-research`.
 
 ```
 You are pushing ONE domain of our migration backlog into Jira project <PROJECT_KEY>. Source file:
@@ -76,7 +76,7 @@ Labels, Labels, Parent Link, Depends On, External Dependency, Status, Descriptio
      change it).
    - description = the Description column's Acceptance Criteria list, PLUS rewrite its "Full story:"
      line from a relative path into a real URL:
-     "Full story: https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
+     "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
      Preserve the numbered-list formatting; do not collapse it to one line or strip the numbering.
      Do NOT add Current Behaviour, Target, or Test Cases — the CSV deliberately omits them (they stay
      on GitHub, linked).

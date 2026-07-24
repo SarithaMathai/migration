@@ -1,6 +1,6 @@
 # Domain-Level Analysis — Frontend GraphQL by Business Domain
 
-> Groups every frontend operation by backend business domain (not by client file) · Generated: 2026-07-21
+> Groups every frontend operation by backend business domain (not by client file) · Generated: 2026-07-24
 
 ## Phase-1 domains
 

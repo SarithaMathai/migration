@@ -1,7 +1,7 @@
 # Prompt — Push ALL stories for one domain to Jira
 
 > **Use when:** you want every backend + frontend story for one domain created (or updated) in Jira in
-> one pass. Fill in `<DOMAIN>`, `<PROJECT_KEY>`, and `<GITHUB_ORG>/<GITHUB_REPO>`, run the dry-run
+> one pass. Fill in `<DOMAIN>`, `<PROJECT_KEY>`, and `target-corp/saritha-mathai-repositories-research`, run the dry-run
 > prompt first, review its output table, then run the second prompt to actually create/update and link
 > dependencies.
 > **Prerequisite:** a Jira MCP server connected (Atlassian MCP, your enterprise custom MCP, or
@@ -16,7 +16,7 @@
 ## Step 1 — dry run (no writes)
 
 Replace `<DOMAIN>` with one of: `product, bom, claims, measurement, impression, productDetails,
-packaging, watchlist`. Replace `<PROJECT_KEY>` and `<GITHUB_ORG>/<GITHUB_REPO>`.
+packaging, watchlist`. Replace `<PROJECT_KEY>` and `target-corp/saritha-mathai-repositories-research`.
 
 ```
 Using the Jira tools, prepare (DO NOT CREATE YET) an import plan from
@@ -44,7 +44,7 @@ Rules:
   it through as-is. Do NOT enrich it with Current Behaviour, Target implementation, or Test Cases
   pulled from be-04-stories.md; that stays on GitHub, linked not duplicated.
 - REWRITE the "Full story:" line from a relative path into a real URL:
-  "Full story: https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<Story ID>"
 - ADD a second link line if finalArtifacts/jira/confluence-page-map.csv has a row for <DOMAIN>:
   "Domain overview: <that row's Breakdown Page URL>". If the map file or the row doesn't exist yet,
   skip this line and tell me Confluence hasn't been published for this domain.

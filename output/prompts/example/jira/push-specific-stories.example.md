@@ -3,7 +3,7 @@
 > Worked example of [`output/prompts/jira/push-specific-stories.md`](../../jira/push-specific-stories.md)
 > using real data. Values used: a hand-picked cross-domain list (`WATCHLIST-BE-B-01`,
 > `WATCHLIST-BE-E-01`, `BOM-BE-B-01`) to show the "search every domain's CSV" behavior,
-> `<PROJECT_KEY>` = `PROJ`, `<GITHUB_ORG>/<GITHUB_REPO>` = `myorg/spark-migration`.
+> `<PROJECT_KEY>` = `PROJ`, `target-corp/saritha-mathai-repositories-research` = `target-corp/saritha-mathai-repositories-research`.
 
 ---
 
@@ -29,7 +29,7 @@ Rules:
 - The Description column is ALREADY minimal (Acceptance Criteria + a "Full story:" back-link) — pass
   it through as-is; do NOT add Current Behaviour, Target, or Test Cases from be-04-stories.md.
 - REWRITE each id's "Full story:" line into a real URL:
-  "Full story: https://github.com/myorg/spark-migration/blob/main/output/analysis/<domain>/be-04-stories.md#<id>"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/<domain>/be-04-stories.md#<id>"
   (derive <domain> from which CSV the row came from).
 - ADD "Domain overview: <URL>" per id if finalArtifacts/jira/confluence-page-map.csv has a row for
   that id's domain; otherwise skip and tell me.

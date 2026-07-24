@@ -70,7 +70,7 @@ FORMATTING AND CONTENT ARE THE CONTRACT — no data loss, no format loss, full s
 - Any relative link to another file in this repo (a per-domain breakdown page, a complexStories
   brief) should become a link — to the live Confluence page if it already exists (check
   finalArtifacts/jira/confluence-page-map.csv) and the assistant can resolve it, otherwise to GitHub
-  (https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/<path>). Never leave a bare local file
+  (https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/<path>). Never leave a bare local file
   path, and never guess/fabricate a URL.
 
 Before publishing, do a dry run: tell me the target title, parent, and a section-by-section list of

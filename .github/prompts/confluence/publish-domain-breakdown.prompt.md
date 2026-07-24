@@ -19,7 +19,7 @@ Target: parent page `${input:parentPage:Federation Graph Migration ▸ Domains}`
    heading count). STOP for my approval.
 2. Publish (create-or-update by exact title, never duplicate). Preserve every table, heading level,
    checklist, and mermaid block verbatim — no summarizing, no flattening. Rewrite relative repo links
-   as `https://github.com/${input:githubOrgRepo:<GITHUB_ORG>/<GITHUB_REPO>}/blob/main/<path>`.
+   as `https://github.com/${input:githubOrgRepo:target-corp/saritha-mathai-repositories-research}/blob/main/<path>`.
 3. Verify: re-open the page and confirm table/heading/mermaid counts match the source.
 4. Append a row to `finalArtifacts/jira/confluence-page-map.csv` (Domain, Breakdown Page URL, FE
    Readiness Page URL) with this page's URL.

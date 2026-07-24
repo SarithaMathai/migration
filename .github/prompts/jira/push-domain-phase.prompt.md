@@ -16,7 +16,7 @@ never enrich it with Current Behaviour/Target/Test Cases from `be-04-stories.md`
 
 1. Dry run: filter rows to `Phase = ${input:phase:E}` (backend letter, or `FE` for frontend). If
    zero rows, stop and say so. For each: create-or-update plan, rewrite the back-link to
-   `https://github.com/${input:githubOrgRepo:<GITHUB_ORG>/<GITHUB_REPO>}/blob/main/output/analysis/${input:domain:bom}/be-04-stories.md#<Story ID>`,
+   `https://github.com/${input:githubOrgRepo:target-corp/saritha-mathai-repositories-research}/blob/main/output/analysis/${input:domain:bom}/be-04-stories.md#<Story ID>`,
    add a `Domain overview:` link if `finalArtifacts/jira/confluence-page-map.csv` has this domain.
    Flag any Depends-On pointing at an earlier phase not yet pushed. STOP for my approval.
 2. After approval: create/update, link in-batch and found-in-Jira dependencies, leave

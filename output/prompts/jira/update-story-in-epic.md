@@ -20,7 +20,7 @@
 | `<STORY_ID>` | The story's id as it appears in the source docs | `BOM-BE-E-01` |
 | `<EPIC_NAME>` | Exact epic name/summary this story should be under | `Federate BreakDown Product` (backend) or `Federate BreakDown Product — Frontend` (FE) |
 | `<PROJECT_KEY>` | Jira project key | `ENG` |
-| `<GITHUB_ORG>/<GITHUB_REPO>` | This repo's GitHub org/name | `myorg/spark-migration` |
+| `target-corp/saritha-mathai-repositories-research` | This repo's GitHub org/name | `target-corp/saritha-mathai-repositories-research` |
 
 > **Note on epic names:** both epics are shared across ALL 8 domains — there is no per-domain epic.
 > The domain is instead carried on the issue's Labels (e.g. `bom`, `product`) and in the Story ID's
@@ -57,7 +57,7 @@ Once the target issue is confirmed, pull the CURRENT source content for <STORY_I
 
 Show me a diff: current Jira field values vs. the source content — Summary, Description (Acceptance
 Criteria list + the "Full story:" link, rewritten as
-"https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<STORY_ID>",
+"https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<STORY_ID>",
 plus "Domain overview: <URL>" if finalArtifacts/jira/confluence-page-map.csv has a row for <DOMAIN>),
 Labels, Phase label, T-shirt-size label. STOP and wait for my approval before changing anything.
 

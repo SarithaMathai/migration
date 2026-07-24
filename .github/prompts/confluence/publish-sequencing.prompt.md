@@ -21,7 +21,7 @@ Target: parent page `${input:parentPage:Federation Graph Migration ▸ Program}`
 2. Publish (create-or-update by exact title, never duplicate). Every domain section, every table row
    (including the long story-sequence tables), every status/gate icon (🟢🟡🟠🔴🔬⛔) preserved
    verbatim — no sampling, no truncating, no summarizing a long table. Rewrite relative repo links as
-   GitHub links (`https://github.com/${input:githubOrgRepo:<GITHUB_ORG>/<GITHUB_REPO>}/blob/main/<path>`).
+   GitHub links (`https://github.com/${input:githubOrgRepo:target-corp/saritha-mathai-repositories-research}/blob/main/<path>`).
 3. Verify: re-open the page, confirm the row count of EVERY story-sequence table matches the source
    exactly — this is where silent truncation is most likely to hide on this page specifically.
 

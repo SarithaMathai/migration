@@ -79,6 +79,18 @@ optional for the longest pages) — usable via Copilot + org Claude, or any Copi
 with Confluence access. **Copilot-native versions** (with `${input:}` placeholders, invoke via
 `/prompt-name`) live under [`.github/prompts/confluence/`](../../.github/prompts/confluence/).
 
+### [confluence/readymade/](confluence/readymade/) — pre-wired **update-in-place** prompts for the live PPDE pages
+
+The prompts above take placeholders and *find-or-create* a page by title. Once the pages exist in
+Confluence (the PPDE space — see `output/prompts/example/confluence/scrap.txt` for the live-page list),
+use [`confluence/readymade/`](confluence/readymade/) instead: **11 prompts, each hard-wired to one live
+page id**, that only ever **update it in place** — no `<DOMAIN>`/`<PARENT_PAGE>` to fill, no risk of
+forking a duplicate. One per domain breakdown (×8), plus the main/overview landing page, the stories
+Breakdown Overview, and the single **Complex Scenarios** page (which assembles all 9 complex cases —
+problem brief + full draft ADR each — onto one page). Same zero-loss formatting contract, same dry-run
+-then-approve gate. See [`confluence/readymade/README.md`](confluence/readymade/README.md) for the
+page↔source↔id map and run order.
+
 **Confluence → Jira handoff:** the domain breakdown and dependency-graph prompts write/update a row in
 `finalArtifacts/jira/confluence-page-map.csv` after publishing — the Jira prompts read this file to
 link each story ticket back to its domain's Confluence page. Publish Confluence before Jira for a

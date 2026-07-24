@@ -16,7 +16,7 @@ Target: parent page `${input:parentPage:Federation Graph Migration}`, title
 1. Dry run: report a section manifest (table count, heading count). STOP for my approval.
 2. Publish (create-or-update by exact title, never duplicate). Every table, heading level, and
    status icon (🔴🟠🟡🟢) preserved verbatim. Rewrite relative repo links as GitHub links
-   (`https://github.com/${input:githubOrgRepo:<GITHUB_ORG>/<GITHUB_REPO>}/blob/main/<path>`) or, if
+   (`https://github.com/${input:githubOrgRepo:target-corp/saritha-mathai-repositories-research}/blob/main/<path>`) or, if
    the target page already exists in Confluence (check `finalArtifacts/jira/confluence-page-map.csv`),
    link to the live page instead.
 3. Verify: re-open the page, confirm table/heading counts match the source.

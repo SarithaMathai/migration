@@ -15,7 +15,7 @@ Follow the full rules in `output/prompts/jira/push-one-story.md` — this prompt
 2. Search Jira for an existing issue carrying this Story ID.
 3. Show a diff (if updating) or the fields you'd set (if creating) — Summary, Description (numbered
    Acceptance Criteria + rewritten GitHub back-link
-   `https://github.com/${input:githubOrgRepo:<GITHUB_ORG>/<GITHUB_REPO>}/blob/main/output/analysis/${input:domain:product}/be-04-stories.md#${input:storyId:PRODUCT-BE-D-01}`
+   `https://github.com/${input:githubOrgRepo:target-corp/saritha-mathai-repositories-research}/blob/main/output/analysis/${input:domain:product}/be-04-stories.md#${input:storyId:PRODUCT-BE-D-01}`
    + a `Domain overview:` link from `finalArtifacts/jira/confluence-page-map.csv` if present), Labels,
    Phase, T-shirt size. Do NOT add Current Behaviour/Target/Test Cases — not in scope for this ticket.
    STOP for my approval.

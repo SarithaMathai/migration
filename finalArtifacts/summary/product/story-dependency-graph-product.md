@@ -1,6 +1,6 @@
 # Product — Frontend Readiness
 
-> Generated 2026-07-21 from `fe-08-frontend-stories.md` — regenerate via `generate_story_dependency_graphs.py` (also runs inside `generate_all.py`). Full story text (Current Behaviour, Target implementation, Acceptance Criteria): [product/be-04-stories.md](../../../output/analysis/product/be-04-stories.md). Backend build-order sequencing: [00-sequencing.md](../../00-sequencing.md).
+> Generated 2026-07-24 from `fe-08-frontend-stories.md` — regenerate via `generate_story_dependency_graphs.py` (also runs inside `generate_all.py`). Full story text (Current Behaviour, Target implementation, Acceptance Criteria): [product/be-04-stories.md](../../../output/analysis/product/be-04-stories.md). Backend build-order sequencing: [00-sequencing.md](../../00-sequencing.md).
 
 ---
 
@@ -244,4 +244,4 @@ flowchart LR
 ```
 
 ---
-*Story dependency graph · product · generated 2026-07-21.*
+*Story dependency graph · product · generated 2026-07-24.*

@@ -3,7 +3,7 @@
 > **Domain:** `product`
 > **Target DGS:** `plm-product (host)`
 > **Pipeline Version:** 1.0
-> **Generated:** 2026-07-21
+> **Generated:** 2026-07-24
 > **Depends on:** [be-02-resolver-analysis.md](./be-02-resolver-analysis.md) · [be-03-schema.graphql](./be-03-schema.graphql)
 > **DGS Target Status:** Green-field
 

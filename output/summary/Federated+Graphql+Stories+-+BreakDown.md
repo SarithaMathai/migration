@@ -12,7 +12,7 @@
 | **Complexity (backend)** | 🔴 6 Very High · 🟠 13 High · 🟡 74 Medium · 🟢 118 Low |
 | **Phase Coverage** | 🔬 8 Spikes · 🧱 A Foundation & Type Resolvers · 📖 B Core Reads · 🔍 C Search & Listing · ✏️ D Mutations · ⚙️ E Complex Operations · 🔗 F Federation & Stitching · 🧪 G Field Resolvers & Tests · 🧬 H Entity Resolution |
 | **Cross-domain spikes** | 🔬 8 program-level research spikes (`SPIKE-06` split into `06a` Hydration / `06b` Association) — see *Phase 0 — Program Spikes* below. Only genuinely **complex** problems that need a solve/migrate approach are spikes; straightforward decisions are resolved inline in the owning story. |
-| **Generated** | 2026-07-21 |
+| **Generated** | 2026-07-24 |
 
 > **Icons:** 🔷 Query · 🔶 Mutation · 🔸 Field Resolver  · 🔴 Very High · 🟠 High · 🟡 Medium · 🟢 Low  · 🔬 Spike · 🔴🔬 spike-gated story · 🧱 A · 📖 B · 🔍 C · ✏️ D · ⚙️ E · 🔗 F · 🧪 G · 🧬 H
 

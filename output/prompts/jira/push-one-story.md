@@ -13,7 +13,7 @@
 ## Prompt
 
 Replace `<STORY_ID>` (e.g. `PRODUCT-BE-D-01`), `<DOMAIN>` (its domain, e.g. `product`),
-`<PROJECT_KEY>`, and `<GITHUB_ORG>/<GITHUB_REPO>`.
+`<PROJECT_KEY>`, and `target-corp/saritha-mathai-repositories-research`.
 
 ```
 Using the Jira tools:
@@ -39,7 +39,7 @@ Rules:
   it through as-is. Do NOT enrich it with Current Behaviour, Target implementation, or Test Cases from
   be-04-stories.md; that content stays on GitHub, linked not duplicated.
 - REWRITE the "Full story:" line into a real URL:
-  "Full story: https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<STORY_ID>"
+  "Full story: https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/<DOMAIN>/be-04-stories.md#<STORY_ID>"
 - ADD "Domain overview: <URL>" if finalArtifacts/jira/confluence-page-map.csv has a row for <DOMAIN>;
   otherwise skip and tell me Confluence hasn't been published for this domain yet.
 - FORMATTING: preserve the numbered Acceptance Criteria list and paragraph breaks — convert markup to

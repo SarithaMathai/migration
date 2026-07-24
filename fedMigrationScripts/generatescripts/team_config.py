@@ -26,22 +26,27 @@ N_FE_ENGINEERS = 1
 # N parallel lanes by a greedy critical-path heuristic — the order below still expresses
 # priority (earlier = higher priority when two domains could start at once).
 #
-# product first: host DGS, largest surface, shared wiring everything else co-locates
-# into. Then the FE-wave-feeding order for the co-located domains (watchlist through
-# bom), then the two separate-subgraph/small-tail domains (claims, impression).
+# ⚠ REORDERED 2026-07-24 to unblock an EXTERNAL TEAM waiting on watchlist + impression.
+# The external consumer depends on the federated backend data for those two domains, and
+# (per the user's call) their FE cutovers are pulled forward too. Because impression's FE
+# stories are FUSED with BOM + Product screens (IMPRESSION-FE-001 needs 10 BOM BE stories +
+# BOM-FE-002; IMPRESSION-FE-002 needs ~13 Product BE stories + PRODUCT-FE-001), pulling
+# impression's FE forward necessarily pulls BOM's and Product's core BE+FE forward with it.
+# So the priority front of the queue is: product, bom, impression, watchlist — everything
+# impression's FE transitively needs — then the remaining domains in the old order.
 #
-# ⚠ product MUST stay first with N_BE_ENGINEERS == 1 (or be on the first lane to start
-# with N_BE_ENGINEERS > 1): PRODUCT-BE-E-00 (the shared WriteSaga module, ADR-013) is a
-# cross-domain Blocked-by dependency for bom/measurement/packaging/productDetails/
-# watchlist/claims's own E-01 stories. Verified — with product first, E-00 finishes on
-# day ~16 of product's ~200-day build, long before any other domain's lane starts, so no
-# consumer can be scheduled ahead of its producer. Moving product later (or splitting it
-# across a later parallel lane with N_BE_ENGINEERS > 1) would need E-00 pulled out and
-# scheduled as its own zero-dependency first step, not left implicit in product's queue
-# position.
+# product STAYS first: (1) PRODUCT-BE-E-00 (shared WriteSaga, ADR-013) blocks every domain's
+# E-01 write story — it finishes ~day 16 of product's build, before any consumer's E-01 is
+# reached; (2) impression FE + BOM FE both need Product BE stories (PRODUCT-BE-B-01/G-0x/S-01,
+# PRODUCT-FE-001), so product's core must precede them anyway. bom second: impression FE needs
+# BOM core (A-04/B-0x/G-0x + BOM-FE-002). impression third, watchlist fourth (watchlist is the
+# wave-1 pilot on the FE side; its BE is tiny and independent apart from E-01 waiting on E-00).
+#
+# To revert to the pilot-first ordering, restore: product, watchlist, productDetails,
+# measurement, packaging, bom, claims, impression (and the matching FE_WAVES below).
 BE_QUEUE = [
-    "product", "watchlist", "productDetails", "measurement", "packaging", "bom",
-    "claims", "impression",
+    "product", "bom", "impression", "watchlist",
+    "productDetails", "measurement", "packaging", "claims",
 ]
 
 # ─── Frontend wave plan ─────────────────────────────────────────────────────
@@ -49,13 +54,20 @@ BE_QUEUE = [
 # Waves are entry gates (e.g. wave 2 doesn't start before the wave-1 pilot's soak period
 # ends), not engineer assignments — the program-level scheduler packs the domains within
 # and across waves onto N_FE_ENGINEERS parallel lanes by the same greedy heuristic as BE.
+# ⚠ REORDERED 2026-07-24 (see BE_QUEUE note): external team needs watchlist + impression
+# flipped early. watchlist stays the wave-1 pilot (smallest, safest flag flip + soak). Then
+# wave 2 brings product + bom + impression together — impression FE literally shares queries
+# with BOM/Product screens (getBomDataAndImpressions, getCarryForwardFormData), so they must
+# flip in the same wave, not before their partners. The remaining domains follow in wave 3.
+# Revert note: the pilot-first order was watchlist(1), productDetails/measurement/packaging(2),
+# bom/claims(3), product/impression(4).
 FE_WAVES = [
     (1, "watchlist"),
-    (2, "productDetails"),
-    (2, "measurement"),
-    (2, "packaging"),
-    (3, "bom"),
+    (2, "product"),
+    (2, "bom"),
+    (2, "impression"),
+    (3, "productDetails"),
+    (3, "measurement"),
+    (3, "packaging"),
     (3, "claims"),
-    (4, "product"),
-    (4, "impression"),
 ]

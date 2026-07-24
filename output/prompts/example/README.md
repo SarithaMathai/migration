@@ -14,7 +14,7 @@ Every example uses the same consistent scenario, so they read as one coherent wo
 |---|---|---|
 | `<DOMAIN>` | `watchlist` | Smallest phase-1 domain (13 backend + 3 frontend stories) — full output fits without truncation |
 | `<PROJECT_KEY>` | `PROJ` | Example Jira project key |
-| `<GITHUB_ORG>/<GITHUB_REPO>` | `myorg/spark-migration` | Example GitHub org/repo — replace with the real one in actual use |
+| `target-corp/saritha-mathai-repositories-research` | `target-corp/saritha-mathai-repositories-research` | Example GitHub org/repo — replace with the real one in actual use |
 | `<PARENT_PAGE>` | `https://confluence.com/Breakdown` | Example Confluence parent page |
 | `<STORY_ID>` | `WATCHLIST-BE-B-01` (simple, no deps) or `WATCHLIST-BE-E-01` (has a spike gate + cross-domain dependency) | Used where a single-story example is needed — picked to show both the trivial and the interesting case |
 

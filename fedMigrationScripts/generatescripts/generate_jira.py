@@ -537,6 +537,19 @@ def generate_domain(domain: str, out_dir: "Path | None" = None) -> int:
     return len(rows)
 
 
+def generate_spikes_csv() -> None:
+    """Standalone spikes.csv — the shared epic + the 8 program spike rows, so the spikes can be
+    pushed to Jira as their own unit (Step 0 of a by-domain rollout) BEFORE any domain. Every
+    domain story that lists a SPIKE-xx in its Depends On links to a spike issue created from here;
+    without pushing this first, every spike link is left pending. Same rows as appear in
+    all-stories.csv — this file just isolates them for a first, standalone push."""
+    rows = [epic_row()] + program_spike_rows()
+    out = JIRA_OUT / "spikes.csv"
+    write_csv(rows, out)
+    spike_count = sum(1 for r in rows if r[0] == "Spike")
+    print(f"  OK spikes.csv ({spike_count} program spikes + shared epic)")
+
+
 def generate_all_csv(domains: list[str]) -> None:
     all_rows: list[list] = [epic_row()]          # ONE shared epic for all domains
     all_rows.extend(program_spike_rows())        # the generalized cross-domain spikes (one per bucket)
@@ -567,6 +580,7 @@ if __name__ == "__main__":
             print(f"  FAIL {d}: {e}")
 
     if not targets:
+        generate_spikes_csv()
         generate_all_csv(domains)
 
     print(f"\nDone. Output: {JIRA_OUT}")

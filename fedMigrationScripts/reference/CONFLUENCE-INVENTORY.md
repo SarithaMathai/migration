@@ -108,7 +108,7 @@ ratification, not preemptively.
 1. Update by exact title — never create duplicates; keep titles stable across re-syncs.
 2. Formatting preserved end-to-end: tables, headings, emphasis, code, checklists, quotes, emoji,
    mermaid diagrams (as a code macro carrying the full diagram source, not a prose description).
-3. Repository references become GitHub links (`https://github.com/<GITHUB_ORG>/<GITHUB_REPO>/blob/main/...`)
+3. Repository references become GitHub links (`https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/...`)
    — never a local file path. Story IDs stay as plain text.
 4. Publish order: space home → Program roll-ups → Domains (breakdown, then FE-readiness) → deep-dive
    tier and Architecture ADRs on request only.

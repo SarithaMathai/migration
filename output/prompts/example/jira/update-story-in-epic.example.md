@@ -2,7 +2,7 @@
 
 > Worked example of [`output/prompts/jira/update-story-in-epic.md`](../../jira/update-story-in-epic.md)
 > using real data. Values used: `<STORY_ID>` = `WATCHLIST-BE-E-01`, `<EPIC_NAME>` = `Federate
-> BreakDown Product`, `<PROJECT_KEY>` = `PROJ`, `<GITHUB_ORG>/<GITHUB_REPO>` = `myorg/spark-migration`.
+> BreakDown Product`, `<PROJECT_KEY>` = `PROJ`, `target-corp/saritha-mathai-repositories-research` = `target-corp/saritha-mathai-repositories-research`.
 > Scenario: this story was imported a while ago; its Acceptance Criteria have since been reworded in
 > `be-04-stories.md` (a spike note was added), and you want to refresh it without knowing its Jira key.
 
@@ -38,7 +38,7 @@ Once the target issue is confirmed, pull the CURRENT source content for WATCHLIS
 
 Show me a diff: current Jira field values vs. the source content — Summary, Description (Acceptance
 Criteria list + the "Full story:" link, rewritten as
-"https://github.com/myorg/spark-migration/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-E-01",
+"https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/output/analysis/watchlist/be-04-stories.md#WATCHLIST-BE-E-01",
 plus "Domain overview: <URL>" if finalArtifacts/jira/confluence-page-map.csv has a row for watchlist),
 Labels, Phase label, T-shirt-size label. STOP and wait for my approval before changing anything.
 

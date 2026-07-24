@@ -1,6 +1,6 @@
 # Traceability Matrix — Domain → Schema → Resolver → Client → Impact → Stories
 
-> Generated: 2026-07-21 · One row per phase-1 frontend operation × backend root field.
+> Generated: 2026-07-24 · One row per phase-1 frontend operation × backend root field.
 > Chain: Business Domain → Backend Schema → Resolver → Frontend Query → Client Component → FE story → BE story.
 
 ## Product

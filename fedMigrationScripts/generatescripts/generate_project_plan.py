@@ -12,7 +12,7 @@ Ordering rules (per domain):
   • A frontend story slots into the earliest step AFTER all its backend dependencies,
     while keeping the cutover discipline sequential: reads flip before writes before
     sagas (the FE stage order from the FE breakdown pages).
-  • Domains run in the program cutover order (pilot first, Product last) — staffing and
+  • Domains run in the program cutover order from team_config.FE_WAVES — staffing and
     calendar for the team live in 01-implementation-plan-{N_BE_ENGINEERS}BE-{N_FE_ENGINEERS}FE.md
     (team size set in team_config.py).
 """
@@ -39,19 +39,21 @@ def _load(name: str):
 bd = _load("generate_breakdown")
 fe = _load("generate_frontend")
 
-# Program cutover order — watchlist pilot first, Product last, Impression riding its
-# partner flips. Same sequencing rationale as the team plan + fe-10.
-DOMAIN_ORDER = ["watchlist", "productDetails", "measurement", "packaging",
-                "bom", "claims", "product", "impression"]
+# Program cutover order — derived from team_config.FE_WAVES (the FE flip order) so this doc
+# and the team/rollout plans can never drift out of sync when the order is re-prioritized.
+# team_config is the single source of truth for team size + sequencing.
+from team_config import FE_WAVES as _FE_WAVES, BE_QUEUE as _BE_QUEUE
+DOMAIN_ORDER = ([d for _w, d in _FE_WAVES]
+                + [d for d in _BE_QUEUE if d not in {x for _w, x in _FE_WAVES}])
 ORDER_WHY = {
     "watchlist":      "Wave 1 pilot — smallest isolated surface; proves flag flip + rollback",
-    "productDetails": "Wave 2 — small, isolated, no shared blockers",
-    "measurement":    "Wave 2 — parallel with Product Details",
-    "packaging":      "Wave 2 — parallel with the other wave-2 domains",
-    "bom":            "Wave 3 — high complexity, search-gated list views",
-    "claims":         "Wave 3 — first cross-subgraph cutover (`spark-claims`)",
-    "product":        "Wave 4 — largest surface, incremental slices, orchestrated writes last",
-    "impression":     "Wave 4 rider — flips with its partner domains (BOM / Product)",
+    "productDetails": "Small, isolated, no shared blockers",
+    "measurement":    "Parallel with the other small domains",
+    "packaging":      "Parallel with the other small domains",
+    "bom":            "High complexity, search-gated list views — pulled up to feed impression FE",
+    "claims":         "First cross-subgraph cutover (`spark-claims`)",
+    "product":        "Largest surface + host DGS — pulled up (feeds impression/BOM FE); writes last",
+    "impression":     "Prioritized for an external team; FE flips with its BOM / Product partners",
 }
 
 _BE_SHORT_RE = re.compile(r"-BE-([A-H]-\d+(?:-\d+)?)$")
@@ -290,9 +292,11 @@ def build_project_plan() -> str:
                  f"{len(fe_groups.get(dom, []))} |")
     L += [
         "",
-        "> Wave-2/3 domains parallelize across the team — the numbering is the *flip* order. "
-        "Phase-0 spikes (SPIKE-01…07) run before/alongside step 1 of the first domains; "
-        "E-phase stories are gated on their outcomes.",
+        "> The numbering is the FE *flip* (cutover) order, set in `team_config.py`. "
+        "**Reordered 2026-07-24** to prioritize `watchlist` + `impression` for an external team — "
+        "which pulls `product` and `bom` up too, since impression's FE is fused with their screens. "
+        "Phase-0 spikes (SPIKE-01…07) run before/alongside step 1 of the first domains; E-phase "
+        "stories are gated on their outcomes.",
         "",
         "---",
         "",

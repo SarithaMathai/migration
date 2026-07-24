@@ -1,6 +1,6 @@
 # Project Plan — Combined Backend + Frontend Story Order
 
-> 🏷️ **Tags:** `dgs-migration` · `project-plan` — **Generated:** 2026-07-21 · One combined implementation sequence per domain: backend build steps from the story dependency graph, frontend cutovers slotted into the earliest step after their backend dependencies (reads flip before writes before sagas).
+> 🏷️ **Tags:** `dgs-migration` · `project-plan` — **Generated:** 2026-07-24 · One combined implementation sequence per domain: backend build steps from the story dependency graph, frontend cutovers slotted into the earliest step after their backend dependencies (reads flip before writes before sagas).
 > Staffing + calendar for the 1 BE + 1 FE team: see 01-implementation-plan-1BE-1FE.md (team size set in team_config.py). Day figures are AI-estimated nominal midpoints — confirm in refinement.
 
 ---
@@ -10,15 +10,15 @@
 | # | Domain | Why here | BE stories | FE stories |
 |---|---|---|---|---|
 | 1 | **Watchlist** | Wave 1 pilot — smallest isolated surface; proves flag flip + rollback | 13 | 3 |
-| 2 | **Product Details** | Wave 2 — small, isolated, no shared blockers | 12 | 3 |
-| 3 | **Measurement** | Wave 2 — parallel with Product Details | 30 | 4 |
-| 4 | **Packaging** | Wave 2 — parallel with the other wave-2 domains | 23 | 5 |
-| 5 | **BOM** | Wave 3 — high complexity, search-gated list views | 37 | 7 |
-| 6 | **Claims** | Wave 3 — first cross-subgraph cutover (`spark-claims`) | 20 | 4 |
-| 7 | **Product** | Wave 4 — largest surface, incremental slices, orchestrated writes last | 69 | 13 |
-| 8 | **Impression** | Wave 4 rider — flips with its partner domains (BOM / Product) | 7 | 2 |
+| 2 | **Product** | Largest surface + host DGS — pulled up (feeds impression/BOM FE); writes last | 69 | 13 |
+| 3 | **BOM** | High complexity, search-gated list views — pulled up to feed impression FE | 37 | 7 |
+| 4 | **Impression** | Prioritized for an external team; FE flips with its BOM / Product partners | 7 | 2 |
+| 5 | **Product Details** | Small, isolated, no shared blockers | 12 | 3 |
+| 6 | **Measurement** | Parallel with the other small domains | 30 | 4 |
+| 7 | **Packaging** | Parallel with the other small domains | 23 | 5 |
+| 8 | **Claims** | First cross-subgraph cutover (`spark-claims`) | 20 | 4 |
 
-> Wave-2/3 domains parallelize across the team — the numbering is the *flip* order. Phase-0 spikes (SPIKE-01…07) run before/alongside step 1 of the first domains; E-phase stories are gated on their outcomes.
+> The numbering is the FE *flip* (cutover) order, set in `team_config.py`. **Reordered 2026-07-24** to prioritize `watchlist` + `impression` for an external team — which pulls `product` and `bom` up too, since impression's FE is fused with their screens. Phase-0 spikes (SPIKE-01…07) run before/alongside step 1 of the first domains; E-phase stories are gated on their outcomes.
 
 ---
 
@@ -69,312 +69,9 @@
 
 ---
 
-## Product Details
-
-> Wave 2 — small, isolated, no shared blockers · **12 BE + 3 FE stories** · ≈ 31 BE + 10 FE nominal days · **Owners:** Backend BE-2 · Frontend FE-1. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
-
-**Roadmap**
-
-- **Backend (BE-2):** `B-01` → (11 in parallel: `C-01` … `G-03`)
-- **↓ unlocks frontend after backend step 2**
-- **Frontend (FE-1):** `PDTL-FE-002` → `PDTL-FE-001` ‖ `PDTL-FE-003`
-
-| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
-|---|---|---|---|
-| 1 | 🟢 `B-01` | — | — |
-| 2 | 🟡 `C-01`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟡 `D-04`, 🟢 `D-05`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟡 `G-02`, 🟡 `G-03` | — | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module) |
-| 3 | — | 🟡 `PDTL-FE-002` | — |
-| 4 | — | 🟢 `PDTL-FE-001`, 🟡 `PDTL-FE-003` | — |
-
-### Story sequence
-
-> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
-
-| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
-|---|---|---|---|---|---|---|
-| 1 | 1 | 🟢 `B-01` — getProductDetailsById | Backend · BE-2 | None | every story in this domain (module scaffold) | No |
-| 2 | 2 | 🟡 `C-01` — getProductDetailsElastic | Backend · BE-2 | `B-01` — getProductDetailsById | None | Yes |
-| 3 | 2 | 🟡 `D-01` — createProductDetailsSet | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-002` | Yes |
-| 4 | 2 | 🟢 `D-02` — updateProductDetailAccess | Backend · BE-2 | `B-01` — getProductDetailsById | None | Yes |
-| 5 | 2 | 🟢 `D-03` — productDetailLockUnlock | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-002` | Yes |
-| 6 | 2 | 🟡 `D-04` — cloneFilesForProductDetails | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-002` | Yes |
-| 7 | 2 | 🟢 `D-05` — updateProductDetailComponentStatus | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-002` | Yes |
-| 8 | 2 | 🟠 `E-01` — updateProductDetailsSet | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-003` | Yes |
-| 9 | 2 | 🟢 `F-01` — Product.productDetails | Backend · BE-2 | `B-01` — getProductDetailsById | None | Yes |
-| 10 | 2 | 🟡 `G-01` — access + currentUserPermissions + parti… | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-001` | Yes |
-| 11 | 2 | 🟡 `G-02` — product + createdBy + updatedBy + busin… | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-001` | Yes |
-| 12 | 2 | 🟡 `G-03` — attachment + item attachment/constructi… | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-001` | Yes |
-| 13 | 3 | 🟡 `PDTL-FE-002` — Migrate product-details simple mutations | Frontend · FE-1 | `D-01` — createProductDetailsSet, `D-03` — productDetailLockUnlock, `D-04` — cloneFilesForProductDet…, `D-05` — updateProductDetailComp… | None | No |
-| 14 | 4 | 🟢 `PDTL-FE-001` — Migrate product-details reads | Frontend · FE-1 | `B-01` — getProductDetailsById, `G-01` — access + currentUserPer…, `G-02` — product + createdBy + u…, `G-03` — attachment + item attac… | None | Yes |
-| 15 | 4 | 🟡 `PDTL-FE-003` — Migrate updateProductDetailsSet saga ha… | Frontend · FE-1 | `E-01` — updateProductDetailsSet | None | Yes |
-
-**Backend critical path:** `B-01` → `C-01`.
-**Frontend cutover flow:** `PDTL-FE-002` → `PDTL-FE-001` → `PDTL-FE-003`.
-
-**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
-
----
-
-## Measurement
-
-> Wave 2 — parallel with Product Details · **30 BE + 4 FE stories** · ≈ 56 BE + 16 FE nominal days · **Owners:** Backend BE-2 · Frontend FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
-
-**Roadmap**
-
-- **Backend (BE-2):** `B-01` → (21 in parallel: `B-02` … `H-01`) → (8 in parallel: `D-08` … `H-02`)
-- **↓ unlocks frontend after backend step 2**
-- **Frontend (FE-2):** `MST-FE-003` → `MST-FE-004` → `MST-FE-001` ‖ `MST-FE-002`
-
-| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
-|---|---|---|---|
-| 1 | 🟢 `B-01` | — | — |
-| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟢 `B-07`, 🟢 `B-08`, 🟢 `B-09`, 🟡 `C-01`, 🟢 `C-02`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟡 `D-06`, 🟢 `D-07`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `G-02`, 🟢 `H-01` | — | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)<br>`H-01` → ⛔ BLOCKED-BY sample |
-| 3 | 🟢 `D-08`, 🟢 `D-09`, 🟢 `D-10`, 🟡 `G-01`, 🟢 `G-05`, 🟢 `G-06`, 🟢 `G-07`, 🟢 `H-02` | 🟢 `MST-FE-003` | `H-02` → ⛔ BLOCKED-BY sample |
-| 4 | — | 🟡 `MST-FE-004` | — |
-| 5 | — | 🟡 `MST-FE-001`, 🟡 `MST-FE-002` | — |
-
-### Story sequence
-
-> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
-
-| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
-|---|---|---|---|---|---|---|
-| 1 | 1 | 🟢 `B-01` — getMeasurementByIds data fetcher | Backend · BE-2 | None | every story in this domain (module scaffold) | No |
-| 2 | 2 | 🟢 `B-02` — getUnitsOfMeasure | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `H-02`, `MST-FE-003` | Yes |
-| 3 | 2 | 🟢 `B-03` — getThicknessUnitsOfMeasure | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-003` | Yes |
-| 4 | 2 | 🟢 `B-04` — getMeasurementSetStatus | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-001`, `MST-FE-003` | Yes |
-| 5 | 2 | 🟢 `B-05` — getSampleMeasurement data fetcher | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `H-02` | Yes |
-| 6 | 2 | 🟢 `B-06` — getMeasurementTemplates + getMeasuremen… | Backend · BE-2 | None | `D-08`, `G-01`, `G-05` | Yes |
-| 7 | 2 | 🟢 `B-07` — getSizeTemplates + getSizeCategories + … | Backend · BE-2 | None | `D-09`, `G-01`, `G-06` | Yes |
-| 8 | 2 | 🟢 `B-08` — getTightFits + getTightFitByIdAndVersio… | Backend · BE-2 | None | `D-10`, `G-01`, `G-07` | Yes |
-| 9 | 2 | 🟢 `B-09` — searchSparkSizes data fetcher | Backend · BE-2 | None | None | Yes |
-| 10 | 2 | 🟡 `C-01` — getMeasurements data fetcher | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-002` | Yes |
-| 11 | 2 | 🟢 `C-02` — getMeasurementsElastic data fetcher | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-002` | Yes |
-| 12 | 2 | 🟡 `D-01` — addMeasurement mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
-| 13 | 2 | 🟢 `D-02` — updateMeasurementAccess mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
-| 14 | 2 | 🟢 `D-03` — lockMeasurementSet mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-004` | Yes |
-| 15 | 2 | 🟢 `D-04` — unlockMeasurementSet mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-004` | Yes |
-| 16 | 2 | 🟢 `D-05` — updateMeasurementComponentStatus mutati… | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
-| 17 | 2 | 🟡 `D-06` — putSampleMeasurementSet mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-004` | Yes |
-| 18 | 2 | 🟢 `D-07` — deleteSampleMeasurementSet mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-004` | Yes |
-| 19 | 2 | 🟠 `E-01` — updateMeasurement — 2-step orchestrated… | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
-| 20 | 2 | 🟡 `F-01` — Implement Product.measurementSets | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
-| 21 | 2 | 🟢 `G-02` — SampleMeasurementSet field resolvers | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
-| 22 | 2 | 🟢 `H-01` — Contribute sampleMeasurement to the Sam… | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
-| 23 | 3 | 🟢 `D-08` — addMeasurementTemplate + updateMeasurem… | Backend · BE-2 | `B-06` — getMeasurementTemplates… | None | Yes |
-| 24 | 3 | 🟢 `D-09` — addSizeTemplate + updateSizeTemplate mu… | Backend · BE-2 | `B-07` — getSizeTemplates + getS… | None | Yes |
-| 25 | 3 | 🟢 `D-10` — addTightFit + updateTightFit mutations | Backend · BE-2 | `B-08` — getTightFits + getTight… | None | Yes |
-| 26 | 3 | 🟡 `G-01` — Measurement field resolvers | Backend · BE-2 | `B-01` — getMeasurementByIds dat…, `B-06` — getMeasurementTemplates…, `B-07` — getSizeTemplates + getS…, `B-08` — getTightFits + getTight… | `MST-FE-001`, `MST-FE-002` | Yes |
-| 27 | 3 | 🟢 `G-05` — MeasurementTemplate field resolvers | Backend · BE-2 | `B-06` — getMeasurementTemplates… | None | Yes |
-| 28 | 3 | 🟢 `G-06` — SizeTemplate field resolvers | Backend · BE-2 | `B-07` — getSizeTemplates + getS… | None | Yes |
-| 29 | 3 | 🟢 `G-07` — TightFit field resolvers | Backend · BE-2 | `B-08` — getTightFits + getTight… | `MST-FE-001`, `MST-FE-002` | Yes |
-| 30 | 3 | 🟢 `H-02` — SampleMeasurementSet.sample forward ref… | Backend · BE-2 | `B-02` — getUnitsOfMeasure, `B-05` — getSampleMeasurement da… | None | Yes |
-| 31 | 3 | 🟢 `MST-FE-003` — Migrate measurement master-data reads | Frontend · FE-2 | `B-02` — getUnitsOfMeasure, `B-03` — getThicknessUnitsOfMeas…, `B-04` — getMeasurementSetStatus | None | Yes |
-| 32 | 4 | 🟡 `MST-FE-004` — Migrate measurement mutations | Frontend · FE-2 | `D-03` — lockMeasurementSet muta…, `D-04` — unlockMeasurementSet mu…, `D-06` — putSampleMeasurementSet…, `D-07` — deleteSampleMeasurement… | None | No |
-| 33 | 5 | 🟡 `MST-FE-001` — Migrate measurement reads and retire hu… | Frontend · FE-2 | `B-01` — getMeasurementByIds dat…, `B-04` — getMeasurementSetStatus, `G-01` — Measurement field resol…, `G-07` — TightFit field resolvers | None | Yes |
-| 34 | 5 | 🟡 `MST-FE-002` — Migrate measurement list/search reads | Frontend · FE-2 | `B-01` — getMeasurementByIds dat…, `C-01` — getMeasurements data fe…, `C-02` — getMeasurementsElastic …, `G-01` — Measurement field resol…, `G-07` — TightFit field resolvers | None | Yes |
-
-**Backend critical path:** `B-01` → `B-06` → `D-08`.
-**Frontend cutover flow:** `MST-FE-003` → `MST-FE-004` → `MST-FE-001` → `MST-FE-002`.
-
-**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
-
----
-
-## Packaging
-
-> Wave 2 — parallel with the other wave-2 domains · **23 BE + 5 FE stories** · ≈ 54 BE + 27 FE nominal days · **Owners:** Backend BE-2 · Frontend FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
-
-**Roadmap**
-
-- **Backend (BE-2):** `B-01` → (22 in parallel: `B-02` … `G-05`)
-- **↓ unlocks frontend after backend step 2**
-- **Frontend (FE-2):** `PKG-FE-002` → `PKG-FE-004` → `PKG-FE-001` ‖ `PKG-FE-003` ‖ `PKG-FE-005`
-
-| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
-|---|---|---|---|
-| 1 | 🟢 `B-01` | — | — |
-| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟡 `C-01`, 🟡 `D-01`, 🟢 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟢 `D-05`, 🟢 `D-06`, 🟢 `D-07`, 🟡 `D-08`, 🟢 `D-09`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟢 `G-02`, 🟡 `G-03`, 🟠 `G-04`, 🟡 `G-05` | — | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module) |
-| 3 | — | 🟢 `PKG-FE-002` | — |
-| 4 | — | 🟡 `PKG-FE-004` | — |
-| 5 | — | 🟡 `PKG-FE-001`, 🟡 `PKG-FE-003`, 🔴 `PKG-FE-005` | — |
-
-### Story sequence
-
-> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
-
-| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
-|---|---|---|---|---|---|---|
-| 1 | 1 | 🟢 `B-01` — getPackagings | Backend · BE-2 | None | every story in this domain (module scaffold) | No |
-| 2 | 2 | 🟢 `B-02` — getPackagingById | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-001` | Yes |
-| 3 | 2 | 🟢 `B-03` — getDielines | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-003` | Yes |
-| 4 | 2 | 🟢 `B-04` — getPackagingFieldValuesByType | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-002` | Yes |
-| 5 | 2 | 🟢 `B-05` — getDielineEvaluationStatuses | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-003` | Yes |
-| 6 | 2 | 🟢 `B-06` — getCountries | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-002` | Yes |
-| 7 | 2 | 🟡 `C-01` — getPackagingElastic | Backend · BE-2 | `B-01` — getPackagings | None | Yes |
-| 8 | 2 | 🟡 `D-01` — addPackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
-| 9 | 2 | 🟢 `D-02` — evaluateDieline | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-003` | Yes |
-| 10 | 2 | 🟡 `D-03` — bulkAddPackagings | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
-| 11 | 2 | 🟡 `D-04` — bulkUpdatePackagings | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
-| 12 | 2 | 🟢 `D-05` — exportPackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
-| 13 | 2 | 🟢 `D-06` — lockPackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
-| 14 | 2 | 🟢 `D-07` — unlockPackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
-| 15 | 2 | 🟡 `D-08` — cloneFilesForDielines | Backend · BE-2 | `B-01` — getPackagings | None | Yes |
-| 16 | 2 | 🟢 `D-09` — updatePackagingComponentStatus | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
-| 17 | 2 | 🟠 `E-01` — updatePackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-005` | Yes |
-| 18 | 2 | 🟢 `F-01` — Product packaging links | Backend · BE-2 | `B-01` — getPackagings | None | Yes |
-| 19 | 2 | 🟡 `G-01` — access + businessPartner + participantD… | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-001` | Yes |
-| 20 | 2 | 🟢 `G-02` — createdBy + updatedBy + dielineEvaluato… | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-001` | Yes |
-| 21 | 2 | 🟡 `G-03` — product + workspaces + attachments | Backend · BE-2 | `B-01` — getPackagings | None | Yes |
-| 22 | 2 | 🟠 `G-04` — suggestedRetailPriceByDPCI + waveDescri… | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-001` | Yes |
-| 23 | 2 | 🟡 `G-05` — Dieline + PrinterDieline + PackagingEle… | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-003` | Yes |
-| 24 | 3 | 🟢 `PKG-FE-002` — Migrate packaging master-data reads and… | Frontend · FE-2 | `B-04` — getPackagingFieldValues…, `B-06` — getCountries | None | No |
-| 25 | 4 | 🟡 `PKG-FE-004` — Migrate packaging simple mutations and … | Frontend · FE-2 | `D-01` — addPackaging, `D-03` — bulkAddPackagings, `D-04` — bulkUpdatePackagings, `D-05` — exportPackaging, `D-06` — lockPackaging, `D-07` — unlockPackaging, `D-09` — updatePackagingComponen… | None | No |
-| 26 | 5 | 🟡 `PKG-FE-001` — Migrate packaging reads | Frontend · FE-2 | `B-01` — getPackagings, `B-02` — getPackagingById, `G-01` — access + businessPartne…, `G-02` — createdBy + updatedBy +…, `G-04` — suggestedRetailPriceByD… | None | Yes |
-| 27 | 5 | 🟡 `PKG-FE-003` — Migrate dieline flows | Frontend · FE-2 | `B-03` — getDielines, `B-05` — getDielineEvaluationSta…, `D-02` — evaluateDieline, `G-05` — Dieline + PrinterDielin… | None | Yes |
-| 28 | 5 | 🔴 `PKG-FE-005` — Migrate updatePackaging saga handling a… | Frontend · FE-2 | `E-01` — updatePackaging | None | Yes |
-
-**Backend critical path:** `B-01` → `B-02`.
-**Frontend cutover flow:** `PKG-FE-002` → `PKG-FE-004` → `PKG-FE-001` → `PKG-FE-003` → `PKG-FE-005`.
-
-**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
-
----
-
-## BOM
-
-> Wave 3 — high complexity, search-gated list views · **37 BE + 7 FE stories** · ≈ 91 BE + 38 FE nominal days · **Owners:** Backend BE-2 · Frontend FE-1. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
-
-**Roadmap**
-
-- **Backend (BE-2):** `B-01` → (29 in parallel: `A-04` … `G-14`) → (7 in parallel: `A-05` … `G-17`)
-- **↓ unlocks frontend after step 1 (no backend dependency)**
-- **Frontend (FE-1):** `BOM-FE-001` → `BOM-FE-005` → `BOM-FE-002` ‖ `BOM-FE-004` → `BOM-FE-003` ‖ `BOM-FE-006` ‖ `BOM-FE-007`
-
-| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
-|---|---|---|---|
-| 1 | 🟢 `B-01` | 🔴 `BOM-FE-001` | — |
-| 2 | 🟡 `A-04`, 🟢 `B-03`, 🟢 `B-04`, 🟡 `B-05`, 🟢 `B-06`, 🟢 `B-07`, 🟢 `B-08`, 🟢 `C-01`, 🟡 `C-02`, 🟡 `C-03`, 🟢 `C-04`, 🟢 `C-05`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟡 `G-03`, 🟢 `G-04`, 🟢 `G-05`, 🟢 `G-06`, 🟢 `G-07`, 🟠 `G-08`, 🟢 `G-09`, 🟠 `G-10`, 🟢 `G-14` | — | `A-04` → 🔬 SPIKE-05<br>`B-05` → 🔬 SPIKE-06a |
-| 3 | 🟡 `A-05`, 🔴 `E-01`, 🟡 `G-11`, 🟡 `G-12`, 🟢 `G-13`, 🟡 `G-15`, 🟡 `G-17` | 🟡 `BOM-FE-005` | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module) |
-| 4 | — | 🔴 `BOM-FE-002`, 🟢 `BOM-FE-004` | — |
-| 5 | — | 🔴 `BOM-FE-003`, 🔴 `BOM-FE-006`, 🟢 `BOM-FE-007` | — |
-
-### Story sequence
-
-> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
-
-| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
-|---|---|---|---|---|---|---|
-| 1 | 1 | 🟢 `B-01` — getBomByIds data fetcher | Backend · BE-2 | None | every story in this domain (module scaffold) | Yes |
-| 2 | 1 | 🔴 `BOM-FE-001` — Statically expand BOM fragment factories | Frontend · FE-1 | None | `BOM-FE-002` | Yes |
-| 3 | 2 | 🟡 `A-04` — @DgsTypeResolver for the 2 BOM interfac… | Backend · BE-2 | None | `A-05`, `BOM-FE-002`, `BOM-FE-007` | Yes |
-| 4 | 2 | 🟢 `B-03` — getBomStatus | Backend · BE-2 | None | `BOM-FE-002`, `BOM-FE-007` | Yes |
-| 5 | 2 | 🟢 `B-04` — getBomByParentId data fetcher | Backend · BE-2 | None | `BOM-FE-002`, `BOM-FE-007` | Yes |
-| 6 | 2 | 🟡 `B-05` — getBomMaterialTypes | Backend · BE-2 | None | `BOM-FE-004` | Yes |
-| 7 | 2 | 🟢 `B-06` — getBomPackagingMaterialTypes | Backend · BE-2 | None | `BOM-FE-004` | Yes |
-| 8 | 2 | 🟢 `B-07` — getBomPackagingSubstrates | Backend · BE-2 | None | `BOM-FE-004` | Yes |
-| 9 | 2 | 🟢 `B-08` — getBomPackagingUnitOfMeasure | Backend · BE-2 | None | `BOM-FE-004` | Yes |
-| 10 | 2 | 🟢 `C-01` — getBomElastic data fetcher | Backend · BE-2 | None | `BOM-FE-003` | Yes |
-| 11 | 2 | 🟡 `C-02` — searchMaterialsBom data fetcher | Backend · BE-2 | None | `G-15` | Yes |
-| 12 | 2 | 🟡 `C-03` — getComboSupplierForBom data fetcher | Backend · BE-2 | None | `BOM-FE-005` | Yes |
-| 13 | 2 | 🟢 `C-04` — getValidTrimSuppliersForBom data fetcher | Backend · BE-2 | None | `BOM-FE-005` | Yes |
-| 14 | 2 | 🟢 `C-05` — getValidRawMaterialSuppliersForBom data… | Backend · BE-2 | None | `BOM-FE-005` | Yes |
-| 15 | 2 | 🟡 `D-01` — addBom mutation | Backend · BE-2 | None | `BOM-FE-006` | Yes |
-| 16 | 2 | 🟢 `D-02` — manageBomWorkspaces mutation | Backend · BE-2 | None | `E-01` | Yes |
-| 17 | 2 | 🟢 `D-03` — lockBom mutation | Backend · BE-2 | None | `BOM-FE-006` | Yes |
-| 18 | 2 | 🟢 `D-04` — unlockBom mutation | Backend · BE-2 | None | `BOM-FE-006` | Yes |
-| 19 | 2 | 🟢 `D-05` — updateBomComponentStatus mutation | Backend · BE-2 | None | `BOM-FE-006` | Yes |
-| 20 | 2 | 🟡 `F-01` — Implement Product.productBoms / boms / … | Backend · BE-2 | None | None | Yes |
-| 21 | 2 | 🟢 `F-02` — Fill ResourcesCount.bomsCount | Backend · BE-2 | None | None | Yes |
-| 22 | 2 | 🟡 `G-01` — Bom field resolvers | Backend · BE-2 | None | `G-17`, `BOM-FE-002`, `BOM-FE-003`, `BOM-FE-007` | Yes |
-| 23 | 2 | 🟡 `G-03` — BomMaterial field resolvers | Backend · BE-2 | None | `BOM-FE-002`, `BOM-FE-007` | Yes |
-| 24 | 2 | 🟢 `G-04` — BomPackagingMaterial field resolvers | Backend · BE-2 | None | None | Yes |
-| 25 | 2 | 🟢 `G-05` — BomFabricMaterial field resolvers | Backend · BE-2 | None | None | Yes |
-| 26 | 2 | 🟢 `G-06` — BomFabricSpecMaterial field resolvers | Backend · BE-2 | None | None | Yes |
-| 27 | 2 | 🟢 `G-07` — BomCombinationMaterial field resolvers | Backend · BE-2 | None | None | Yes |
-| 28 | 2 | 🟠 `G-08` — BomTrimMaterial field resolvers  — trim… | Backend · BE-2 | None | `BOM-FE-002`, `BOM-FE-007` | Yes |
-| 29 | 2 | 🟢 `G-09` — BomWashMaterial field resolvers | Backend · BE-2 | None | None | Yes |
-| 30 | 2 | 🟠 `G-10` — Impression library-resource resolution | Backend · BE-2 | None | `G-11`, `G-12`, `G-13` | Yes |
-| 31 | 2 | 🟢 `G-14` — Trivial pass-through fields | Backend · BE-2 | None | `BOM-FE-003`, `BOM-FE-004`, `BOM-FE-007` | Yes |
-| 32 | 3 | 🟡 `A-05` — Shared CI conformance gate + code → typ… | Backend · BE-2 | `A-04` — @DgsTypeResolver for th… | None | Yes |
-| 33 | 3 | 🔴 `E-01` — updateBom — 3-step orchestrated write | Backend · BE-2 | `D-02` — manageBomWorkspaces mut… | None | Yes |
-| 34 | 3 | 🟡 `G-11` — BomFabricLibraryImpressionDetails.libra… | Backend · BE-2 | `G-10` — Impression library-reso… | None | Yes |
-| 35 | 3 | 🟡 `G-12` — BomTrimLibraryImpressionDetails field r… | Backend · BE-2 | `G-10` — Impression library-reso… | `BOM-FE-002`, `BOM-FE-007` | Yes |
-| 36 | 3 | 🟢 `G-13` — BomTrimZipperLibraryImpressionDetails f… | Backend · BE-2 | `G-10` — Impression library-reso… | `BOM-FE-002`, `BOM-FE-007` | Yes |
-| 37 | 3 | 🟡 `G-15` — BomMaterialSearchResult field resolvers | Backend · BE-2 | `C-02` — searchMaterialsBom data… | None | Yes |
-| 38 | 3 | 🟡 `G-17` — supplier entity references on material … | Backend · BE-2 | `G-01` — Bom field resolvers | `BOM-FE-002`, `BOM-FE-007` | Yes |
-| 39 | 3 | 🟡 `BOM-FE-005` — Migrate BOM supplier reads | Frontend · FE-1 | `C-03` — getComboSupplierForBom …, `C-04` — getValidTrimSuppliersFo…, `C-05` — getValidRawMaterialSupp… | None | Yes |
-| 40 | 4 | 🔴 `BOM-FE-002` — Migrate BOM core reads | Frontend · FE-1 | `A-04` — @DgsTypeResolver for th…, `B-01` — getBomByIds data fetcher, `B-03` — getBomStatus, `B-04` — getBomByParentId data f…, `G-01` — Bom field resolvers, `G-03` — BomMaterial field resol…, `G-08` — BomTrimMaterial field r…, `G-12` — BomTrimLibraryImpressio…, `G-13` — BomTrimZipperLibraryImp…, `G-17` — supplier entity referen…, `BOM-FE-001` — Statically expand BOM f… | `BOM-FE-007` | Yes |
-| 41 | 4 | 🟢 `BOM-FE-004` — Migrate BOM master-data reads | Frontend · FE-1 | `B-05` — getBomMaterialTypes, `B-06` — getBomPackagingMaterial…, `B-07` — getBomPackagingSubstrat…, `B-08` — getBomPackagingUnitOfMe…, `G-14` — Trivial pass-through fi… | None | Yes |
-| 42 | 5 | 🔴 `BOM-FE-003` — Migrate BOM search and elastic reads | Frontend · FE-1 | `C-01` — getBomElastic data fetc…, `G-01` — Bom field resolvers, `G-14` — Trivial pass-through fi…, `BOM-BE-S-03` | None | Yes |
-| 43 | 5 | 🔴 `BOM-FE-006` — Migrate BOM mutations including updateB… | Frontend · FE-1 | `D-01` — addBom mutation, `D-03` — lockBom mutation, `D-04` — unlockBom mutation, `D-05` — updateBomComponentStatu…, `BOM-BE-S-01` | None | Yes |
-| 44 | 5 | 🟢 `BOM-FE-007` — Adopt BOM supplier entity references | Frontend · FE-1 | `A-04` — @DgsTypeResolver for th…, `B-01` — getBomByIds data fetcher, `B-03` — getBomStatus, `B-04` — getBomByParentId data f…, `G-01` — Bom field resolvers, `G-03` — BomMaterial field resol…, `G-08` — BomTrimMaterial field r…, `G-12` — BomTrimLibraryImpressio…, `G-13` — BomTrimZipperLibraryImp…, `G-14` — Trivial pass-through fi…, `G-17` — supplier entity referen…, `BOM-BE-S-03`, `BOM-FE-002` — Migrate BOM core reads | None | Yes |
-
-**Backend critical path:** `B-01` → `A-04` → `A-05`.
-**Frontend cutover flow:** `BOM-FE-001` → `BOM-FE-005` → `BOM-FE-002` → `BOM-FE-004` → `BOM-FE-003` → `BOM-FE-006` → `BOM-FE-007`.
-
-**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
-
----
-
-## Claims
-
-> Wave 3 — first cross-subgraph cutover (`spark-claims`) · **20 BE + 4 FE stories** · ≈ 50 BE + 22 FE nominal days · **Owners:** Backend BE-1 · Frontend FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
-
-**Roadmap**
-
-- **Backend (BE-1):** `B-01` → (18 in parallel: `B-02` … `H-02`) → `G-03`
-- **↓ unlocks frontend after step 1 (no backend dependency)**
-- **Frontend (FE-2):** `CLAIM-FE-001` → `CLAIM-FE-003` → `CLAIM-FE-002` ‖ `CLAIM-FE-004`
-
-| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
-|---|---|---|---|
-| 1 | 🟢 `B-01` | 🟡 `CLAIM-FE-001` | — |
-| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟡 `C-01`, 🟡 `C-02`, 🟡 `D-01`, 🟡 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟠 `E-01`, 🟡 `G-01`, 🟡 `G-02`, 🟡 `G-04`, 🟢 `G-06`, 🟡 `H-01`, 🟢 `H-02` | — | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)<br>`H-01` → ⛔ BLOCKED-BY product (PRODUCT-BE-F-14, product-side stub alignment; also waits on the Product entity existing, plm-product Phase A)<br>`H-02` → ⛔ BLOCKED-BY product (PRODUCT-BE-E-03, TechPack facade; also PRODUCT-BE-F-14 contract alignment) |
-| 3 | 🟠 `G-03` | 🟡 `CLAIM-FE-003` | — |
-| 4 | — | 🔴 `CLAIM-FE-002`, 🔴 `CLAIM-FE-004` | — |
-
-### Story sequence
-
-> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
-
-| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
-|---|---|---|---|---|---|---|
-| 1 | 1 | 🟢 `B-01` — getClaims | Backend · BE-1 | None | every story in this domain (module scaffold) | Yes |
-| 2 | 1 | 🟡 `CLAIM-FE-001` — Split the claim fragment factory and re… | Frontend · FE-2 | None | `CLAIM-FE-002` | Yes |
-| 3 | 2 | 🟢 `B-02` — getClaimByIds | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
-| 4 | 2 | 🟢 `B-03` — getCommunicationChannels | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
-| 5 | 2 | 🟢 `B-04` — getAllClaimsAbout | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
-| 6 | 2 | 🟢 `B-05` — getClaimExports | Backend · BE-1 | `B-01` — getClaims | None | Yes |
-| 7 | 2 | 🟡 `C-01` — searchGuestFacing | Backend · BE-1 | `B-01` — getClaims | None | Yes |
-| 8 | 2 | 🟡 `C-02` — getClaimsElastic | Backend · BE-1 | `B-01` — getClaims | None | Yes |
-| 9 | 2 | 🟡 `D-01` — createClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
-| 10 | 2 | 🟡 `D-02` — bulkUpdateClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
-| 11 | 2 | 🟢 `D-03` — requestClaimExport | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
-| 12 | 2 | 🟢 `D-04` — lockClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
-| 13 | 2 | 🟢 `D-05` — unlockClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
-| 14 | 2 | 🟠 `E-01` — updateClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-004` | Yes |
-| 15 | 2 | 🟡 `G-01` — access + currentUserPermissions + parti… | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
-| 16 | 2 | 🟡 `G-02` — createdBy + updatedBy + businessPartner… | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
-| 17 | 2 | 🟡 `G-04` — workspaces + ClaimSubstantiate.substant… | Backend · BE-1 | `B-01` — getClaims | None | Yes |
-| 18 | 2 | 🟢 `G-06` — Shared value-type alignment | Backend · BE-1 | `B-01` — getClaims | `G-03` | Yes |
-| 19 | 2 | 🟡 `H-01` — Product.claims | Backend · BE-1 | `B-01` — getClaims | None | Yes |
-| 20 | 2 | 🟢 `H-02` — ResourcesCount.claims | Backend · BE-1 | `B-01` — getClaims | None | Yes |
-| 21 | 3 | 🟠 `G-03` — product + parentDetails | Backend · BE-1 | `B-01` — getClaims, `G-06` — Shared value-type align… | `CLAIM-FE-002` | Yes |
-| 22 | 3 | 🟡 `CLAIM-FE-003` — Migrate claim simple mutations and expo… | Frontend · FE-2 | `D-01` — createClaim, `D-02` — bulkUpdateClaim, `D-03` — requestClaimExport, `D-04` — lockClaim, `D-05` — unlockClaim | None | Yes |
-| 23 | 4 | 🔴 `CLAIM-FE-002` — Migrate claim reads | Frontend · FE-2 | `B-01` — getClaims, `B-02` — getClaimByIds, `B-03` — getCommunicationChannels, `B-04` — getAllClaimsAbout, `G-01` — access + currentUserPer…, `G-02` — createdBy + updatedBy +…, `G-03` — product + parentDetails, `CLAIM-FE-001` — Split the claim fragmen…, `PRODUCT-BE-H-06` | None | Yes |
-| 24 | 4 | 🔴 `CLAIM-FE-004` — Migrate updateClaim multi-step write ha… | Frontend · FE-2 | `E-01` — updateClaim | None | Yes |
-
-**Backend critical path:** `B-01` → `G-06` → `G-03`.
-**Frontend cutover flow:** `CLAIM-FE-001` → `CLAIM-FE-003` → `CLAIM-FE-002` → `CLAIM-FE-004`.
-
-**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
-
----
-
 ## Product
 
-> Wave 4 — largest surface, incremental slices, orchestrated writes last · **69 BE + 13 FE stories** · ≈ 200 BE + 86 FE nominal days · **Owners:** Backend BE-1 · Frontend FE-1 + FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
+> Largest surface + host DGS — pulled up (feeds impression/BOM FE); writes last · **69 BE + 13 FE stories** · ≈ 200 BE + 86 FE nominal days · **Owners:** Backend BE-1 · Frontend FE-1 + FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
 
 **Roadmap**
 
@@ -488,9 +185,85 @@
 
 ---
 
+## BOM
+
+> High complexity, search-gated list views — pulled up to feed impression FE · **37 BE + 7 FE stories** · ≈ 91 BE + 38 FE nominal days · **Owners:** Backend BE-2 · Frontend FE-1. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
+
+**Roadmap**
+
+- **Backend (BE-2):** `B-01` → (29 in parallel: `A-04` … `G-14`) → (7 in parallel: `A-05` … `G-17`)
+- **↓ unlocks frontend after step 1 (no backend dependency)**
+- **Frontend (FE-1):** `BOM-FE-001` → `BOM-FE-005` → `BOM-FE-002` ‖ `BOM-FE-004` → `BOM-FE-003` ‖ `BOM-FE-006` ‖ `BOM-FE-007`
+
+| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | 🔴 `BOM-FE-001` | — |
+| 2 | 🟡 `A-04`, 🟢 `B-03`, 🟢 `B-04`, 🟡 `B-05`, 🟢 `B-06`, 🟢 `B-07`, 🟢 `B-08`, 🟢 `C-01`, 🟡 `C-02`, 🟡 `C-03`, 🟢 `C-04`, 🟢 `C-05`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟡 `F-01`, 🟢 `F-02`, 🟡 `G-01`, 🟡 `G-03`, 🟢 `G-04`, 🟢 `G-05`, 🟢 `G-06`, 🟢 `G-07`, 🟠 `G-08`, 🟢 `G-09`, 🟠 `G-10`, 🟢 `G-14` | — | `A-04` → 🔬 SPIKE-05<br>`B-05` → 🔬 SPIKE-06a |
+| 3 | 🟡 `A-05`, 🔴 `E-01`, 🟡 `G-11`, 🟡 `G-12`, 🟢 `G-13`, 🟡 `G-15`, 🟡 `G-17` | 🟡 `BOM-FE-005` | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module) |
+| 4 | — | 🔴 `BOM-FE-002`, 🟢 `BOM-FE-004` | — |
+| 5 | — | 🔴 `BOM-FE-003`, 🔴 `BOM-FE-006`, 🟢 `BOM-FE-007` | — |
+
+### Story sequence
+
+> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
+
+| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
+|---|---|---|---|---|---|---|
+| 1 | 1 | 🟢 `B-01` — getBomByIds data fetcher | Backend · BE-2 | None | every story in this domain (module scaffold) | Yes |
+| 2 | 1 | 🔴 `BOM-FE-001` — Statically expand BOM fragment factories | Frontend · FE-1 | None | `BOM-FE-002` | Yes |
+| 3 | 2 | 🟡 `A-04` — @DgsTypeResolver for the 2 BOM interfac… | Backend · BE-2 | None | `A-05`, `BOM-FE-002`, `BOM-FE-007` | Yes |
+| 4 | 2 | 🟢 `B-03` — getBomStatus | Backend · BE-2 | None | `BOM-FE-002`, `BOM-FE-007` | Yes |
+| 5 | 2 | 🟢 `B-04` — getBomByParentId data fetcher | Backend · BE-2 | None | `BOM-FE-002`, `BOM-FE-007` | Yes |
+| 6 | 2 | 🟡 `B-05` — getBomMaterialTypes | Backend · BE-2 | None | `BOM-FE-004` | Yes |
+| 7 | 2 | 🟢 `B-06` — getBomPackagingMaterialTypes | Backend · BE-2 | None | `BOM-FE-004` | Yes |
+| 8 | 2 | 🟢 `B-07` — getBomPackagingSubstrates | Backend · BE-2 | None | `BOM-FE-004` | Yes |
+| 9 | 2 | 🟢 `B-08` — getBomPackagingUnitOfMeasure | Backend · BE-2 | None | `BOM-FE-004` | Yes |
+| 10 | 2 | 🟢 `C-01` — getBomElastic data fetcher | Backend · BE-2 | None | `BOM-FE-003` | Yes |
+| 11 | 2 | 🟡 `C-02` — searchMaterialsBom data fetcher | Backend · BE-2 | None | `G-15` | Yes |
+| 12 | 2 | 🟡 `C-03` — getComboSupplierForBom data fetcher | Backend · BE-2 | None | `BOM-FE-005` | Yes |
+| 13 | 2 | 🟢 `C-04` — getValidTrimSuppliersForBom data fetcher | Backend · BE-2 | None | `BOM-FE-005` | Yes |
+| 14 | 2 | 🟢 `C-05` — getValidRawMaterialSuppliersForBom data… | Backend · BE-2 | None | `BOM-FE-005` | Yes |
+| 15 | 2 | 🟡 `D-01` — addBom mutation | Backend · BE-2 | None | `BOM-FE-006` | Yes |
+| 16 | 2 | 🟢 `D-02` — manageBomWorkspaces mutation | Backend · BE-2 | None | `E-01` | Yes |
+| 17 | 2 | 🟢 `D-03` — lockBom mutation | Backend · BE-2 | None | `BOM-FE-006` | Yes |
+| 18 | 2 | 🟢 `D-04` — unlockBom mutation | Backend · BE-2 | None | `BOM-FE-006` | Yes |
+| 19 | 2 | 🟢 `D-05` — updateBomComponentStatus mutation | Backend · BE-2 | None | `BOM-FE-006` | Yes |
+| 20 | 2 | 🟡 `F-01` — Implement Product.productBoms / boms / … | Backend · BE-2 | None | None | Yes |
+| 21 | 2 | 🟢 `F-02` — Fill ResourcesCount.bomsCount | Backend · BE-2 | None | None | Yes |
+| 22 | 2 | 🟡 `G-01` — Bom field resolvers | Backend · BE-2 | None | `G-17`, `BOM-FE-002`, `BOM-FE-003`, `BOM-FE-007` | Yes |
+| 23 | 2 | 🟡 `G-03` — BomMaterial field resolvers | Backend · BE-2 | None | `BOM-FE-002`, `BOM-FE-007` | Yes |
+| 24 | 2 | 🟢 `G-04` — BomPackagingMaterial field resolvers | Backend · BE-2 | None | None | Yes |
+| 25 | 2 | 🟢 `G-05` — BomFabricMaterial field resolvers | Backend · BE-2 | None | None | Yes |
+| 26 | 2 | 🟢 `G-06` — BomFabricSpecMaterial field resolvers | Backend · BE-2 | None | None | Yes |
+| 27 | 2 | 🟢 `G-07` — BomCombinationMaterial field resolvers | Backend · BE-2 | None | None | Yes |
+| 28 | 2 | 🟠 `G-08` — BomTrimMaterial field resolvers  — trim… | Backend · BE-2 | None | `BOM-FE-002`, `BOM-FE-007` | Yes |
+| 29 | 2 | 🟢 `G-09` — BomWashMaterial field resolvers | Backend · BE-2 | None | None | Yes |
+| 30 | 2 | 🟠 `G-10` — Impression library-resource resolution | Backend · BE-2 | None | `G-11`, `G-12`, `G-13` | Yes |
+| 31 | 2 | 🟢 `G-14` — Trivial pass-through fields | Backend · BE-2 | None | `BOM-FE-003`, `BOM-FE-004`, `BOM-FE-007` | Yes |
+| 32 | 3 | 🟡 `A-05` — Shared CI conformance gate + code → typ… | Backend · BE-2 | `A-04` — @DgsTypeResolver for th… | None | Yes |
+| 33 | 3 | 🔴 `E-01` — updateBom — 3-step orchestrated write | Backend · BE-2 | `D-02` — manageBomWorkspaces mut… | None | Yes |
+| 34 | 3 | 🟡 `G-11` — BomFabricLibraryImpressionDetails.libra… | Backend · BE-2 | `G-10` — Impression library-reso… | None | Yes |
+| 35 | 3 | 🟡 `G-12` — BomTrimLibraryImpressionDetails field r… | Backend · BE-2 | `G-10` — Impression library-reso… | `BOM-FE-002`, `BOM-FE-007` | Yes |
+| 36 | 3 | 🟢 `G-13` — BomTrimZipperLibraryImpressionDetails f… | Backend · BE-2 | `G-10` — Impression library-reso… | `BOM-FE-002`, `BOM-FE-007` | Yes |
+| 37 | 3 | 🟡 `G-15` — BomMaterialSearchResult field resolvers | Backend · BE-2 | `C-02` — searchMaterialsBom data… | None | Yes |
+| 38 | 3 | 🟡 `G-17` — supplier entity references on material … | Backend · BE-2 | `G-01` — Bom field resolvers | `BOM-FE-002`, `BOM-FE-007` | Yes |
+| 39 | 3 | 🟡 `BOM-FE-005` — Migrate BOM supplier reads | Frontend · FE-1 | `C-03` — getComboSupplierForBom …, `C-04` — getValidTrimSuppliersFo…, `C-05` — getValidRawMaterialSupp… | None | Yes |
+| 40 | 4 | 🔴 `BOM-FE-002` — Migrate BOM core reads | Frontend · FE-1 | `A-04` — @DgsTypeResolver for th…, `B-01` — getBomByIds data fetcher, `B-03` — getBomStatus, `B-04` — getBomByParentId data f…, `G-01` — Bom field resolvers, `G-03` — BomMaterial field resol…, `G-08` — BomTrimMaterial field r…, `G-12` — BomTrimLibraryImpressio…, `G-13` — BomTrimZipperLibraryImp…, `G-17` — supplier entity referen…, `BOM-FE-001` — Statically expand BOM f… | `BOM-FE-007` | Yes |
+| 41 | 4 | 🟢 `BOM-FE-004` — Migrate BOM master-data reads | Frontend · FE-1 | `B-05` — getBomMaterialTypes, `B-06` — getBomPackagingMaterial…, `B-07` — getBomPackagingSubstrat…, `B-08` — getBomPackagingUnitOfMe…, `G-14` — Trivial pass-through fi… | None | Yes |
+| 42 | 5 | 🔴 `BOM-FE-003` — Migrate BOM search and elastic reads | Frontend · FE-1 | `C-01` — getBomElastic data fetc…, `G-01` — Bom field resolvers, `G-14` — Trivial pass-through fi…, `BOM-BE-S-03` | None | Yes |
+| 43 | 5 | 🔴 `BOM-FE-006` — Migrate BOM mutations including updateB… | Frontend · FE-1 | `D-01` — addBom mutation, `D-03` — lockBom mutation, `D-04` — unlockBom mutation, `D-05` — updateBomComponentStatu…, `BOM-BE-S-01` | None | Yes |
+| 44 | 5 | 🟢 `BOM-FE-007` — Adopt BOM supplier entity references | Frontend · FE-1 | `A-04` — @DgsTypeResolver for th…, `B-01` — getBomByIds data fetcher, `B-03` — getBomStatus, `B-04` — getBomByParentId data f…, `G-01` — Bom field resolvers, `G-03` — BomMaterial field resol…, `G-08` — BomTrimMaterial field r…, `G-12` — BomTrimLibraryImpressio…, `G-13` — BomTrimZipperLibraryImp…, `G-14` — Trivial pass-through fi…, `G-17` — supplier entity referen…, `BOM-BE-S-03`, `BOM-FE-002` — Migrate BOM core reads | None | Yes |
+
+**Backend critical path:** `B-01` → `A-04` → `A-05`.
+**Frontend cutover flow:** `BOM-FE-001` → `BOM-FE-005` → `BOM-FE-002` → `BOM-FE-004` → `BOM-FE-003` → `BOM-FE-006` → `BOM-FE-007`.
+
+**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
+
+---
+
 ## Impression
 
-> Wave 4 rider — flips with its partner domains (BOM / Product) · **7 BE + 2 FE stories** · ≈ 14 BE + 4 FE nominal days · **Owners:** Backend BE-1 · Frontend FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
+> Prioritized for an external team; FE flips with its BOM / Product partners · **7 BE + 2 FE stories** · ≈ 14 BE + 4 FE nominal days · **Owners:** Backend BE-1 · Frontend FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
 
 **Roadmap**
 
@@ -515,11 +288,11 @@
 | 2 | 2 | 🟢 `B-02` — getImpressionCountsByProductId data fet… | Backend · BE-1 | `B-01` — searchImpressionsByProd… | None | Yes |
 | 3 | 2 | 🟡 `D-01` — updateImpressions mutation | Backend · BE-1 | `B-01` — searchImpressionsByProd… | None | Yes |
 | 4 | 2 | 🟢 `F-01` — Product.impressions / impressionCounts | Backend · BE-1 | `B-01` — searchImpressionsByProd… | None | Yes |
-| 5 | 2 | 🟢 `G-01` — Impression field resolvers | Backend · BE-1 | `B-01` — searchImpressionsByProd… | `IMPRESSION-FE-001`, `IMPRESSION-FE-001`, `IMPRESSION-FE-002`, `IMPRESSION-FE-002`, `IMPRESSION-FE-002` | Yes |
+| 5 | 2 | 🟢 `G-01` — Impression field resolvers | Backend · BE-1 | `B-01` — searchImpressionsByProd… | `IMPRESSION-FE-001`, `IMPRESSION-FE-001`, `IMPRESSION-FE-002`, `IMPRESSION-FE-002` | Yes |
 | 6 | 2 | 🟡 `G-02` — ImpressionCount.counts aggregation | Backend · BE-1 | `B-01` — searchImpressionsByProd… | `IMPRESSION-FE-002` | Yes |
 | 7 | 2 | 🟢 `G-04` — attachment entity reference | Backend · BE-1 | `B-01` — searchImpressionsByProd… | None | Yes |
 | 8 | 3 | 🟢 `IMPRESSION-FE-001` — Migrate getBomDataAndImpressions | Frontend · FE-2 | `BOM-BE-A-04`, `B-01` — searchImpressionsByProd…, `BOM-BE-B-03`, `G-01` — Impression field resolv…, `BOM-BE-G-03`, `BOM-BE-G-08`, `BOM-BE-G-12`, `BOM-BE-G-13`, `BOM-BE-G-17`, `BOM-FE-002`, `B-01` — searchImpressionsByProd…, `G-01` — Impression field resolv…, `B-01` — searchImpressionsByProd… | None | No |
-| 9 | 4 | 🟢 `IMPRESSION-FE-002` — Migrate getCarryForwardFormData | Frontend · FE-2 | `BOM-BE-A-04`, `B-01` — searchImpressionsByProd…, `BOM-BE-B-03`, `G-01` — Impression field resolv…, `BOM-BE-G-03`, `BOM-BE-G-08`, `BOM-BE-G-12`, `BOM-BE-G-13`, `BOM-BE-G-17`, `B-01` — searchImpressionsByProd…, `G-01` — Impression field resolv…, `B-01` — searchImpressionsByProd…, `G-01` — Impression field resolv…, `G-02` — ImpressionCount.counts …, `PRODUCT-BE-G-03`, `PRODUCT-BE-G-06`, `PRODUCT-BE-G-07`, `PRODUCT-BE-G-08`, `PRODUCT-BE-G-09`, `PRODUCT-BE-G-10`, `PRODUCT-BE-G-13`, `PRODUCT-BE-S-01`, `PRODUCT-FE-001` | None | No |
+| 9 | 4 | 🟢 `IMPRESSION-FE-002` — Migrate getCarryForwardFormData | Frontend · FE-2 | `B-01` — searchImpressionsByProd…, `G-01` — Impression field resolv…, `B-01` — searchImpressionsByProd…, `G-01` — Impression field resolv…, `G-02` — ImpressionCount.counts …, `PRODUCT-BE-G-03`, `PRODUCT-BE-G-06`, `PRODUCT-BE-G-07`, `PRODUCT-BE-G-08`, `PRODUCT-BE-G-09`, `PRODUCT-BE-G-10`, `PRODUCT-BE-G-13`, `PRODUCT-BE-S-01`, `PRODUCT-FE-001` | None | No |
 
 **Backend critical path:** `B-01` → `B-02`.
 **Frontend cutover flow:** `IMPRESSION-FE-001` → `IMPRESSION-FE-002`.
@@ -528,4 +301,231 @@
 
 ---
 
-*Project plan · generated 2026-07-21 by generate_project_plan.py.*
+## Product Details
+
+> Small, isolated, no shared blockers · **12 BE + 3 FE stories** · ≈ 31 BE + 10 FE nominal days · **Owners:** Backend BE-2 · Frontend FE-1. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
+
+**Roadmap**
+
+- **Backend (BE-2):** `B-01` → (11 in parallel: `C-01` … `G-03`)
+- **↓ unlocks frontend after backend step 2**
+- **Frontend (FE-1):** `PDTL-FE-002` → `PDTL-FE-001` ‖ `PDTL-FE-003`
+
+| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | — |
+| 2 | 🟡 `C-01`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟡 `D-04`, 🟢 `D-05`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟡 `G-02`, 🟡 `G-03` | — | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module) |
+| 3 | — | 🟡 `PDTL-FE-002` | — |
+| 4 | — | 🟢 `PDTL-FE-001`, 🟡 `PDTL-FE-003` | — |
+
+### Story sequence
+
+> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
+
+| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
+|---|---|---|---|---|---|---|
+| 1 | 1 | 🟢 `B-01` — getProductDetailsById | Backend · BE-2 | None | every story in this domain (module scaffold) | No |
+| 2 | 2 | 🟡 `C-01` — getProductDetailsElastic | Backend · BE-2 | `B-01` — getProductDetailsById | None | Yes |
+| 3 | 2 | 🟡 `D-01` — createProductDetailsSet | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-002` | Yes |
+| 4 | 2 | 🟢 `D-02` — updateProductDetailAccess | Backend · BE-2 | `B-01` — getProductDetailsById | None | Yes |
+| 5 | 2 | 🟢 `D-03` — productDetailLockUnlock | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-002` | Yes |
+| 6 | 2 | 🟡 `D-04` — cloneFilesForProductDetails | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-002` | Yes |
+| 7 | 2 | 🟢 `D-05` — updateProductDetailComponentStatus | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-002` | Yes |
+| 8 | 2 | 🟠 `E-01` — updateProductDetailsSet | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-003` | Yes |
+| 9 | 2 | 🟢 `F-01` — Product.productDetails | Backend · BE-2 | `B-01` — getProductDetailsById | None | Yes |
+| 10 | 2 | 🟡 `G-01` — access + currentUserPermissions + parti… | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-001` | Yes |
+| 11 | 2 | 🟡 `G-02` — product + createdBy + updatedBy + busin… | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-001` | Yes |
+| 12 | 2 | 🟡 `G-03` — attachment + item attachment/constructi… | Backend · BE-2 | `B-01` — getProductDetailsById | `PDTL-FE-001` | Yes |
+| 13 | 3 | 🟡 `PDTL-FE-002` — Migrate product-details simple mutations | Frontend · FE-1 | `D-01` — createProductDetailsSet, `D-03` — productDetailLockUnlock, `D-04` — cloneFilesForProductDet…, `D-05` — updateProductDetailComp… | None | No |
+| 14 | 4 | 🟢 `PDTL-FE-001` — Migrate product-details reads | Frontend · FE-1 | `B-01` — getProductDetailsById, `G-01` — access + currentUserPer…, `G-02` — product + createdBy + u…, `G-03` — attachment + item attac… | None | Yes |
+| 15 | 4 | 🟡 `PDTL-FE-003` — Migrate updateProductDetailsSet saga ha… | Frontend · FE-1 | `E-01` — updateProductDetailsSet | None | Yes |
+
+**Backend critical path:** `B-01` → `C-01`.
+**Frontend cutover flow:** `PDTL-FE-002` → `PDTL-FE-001` → `PDTL-FE-003`.
+
+**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
+
+---
+
+## Measurement
+
+> Parallel with the other small domains · **30 BE + 4 FE stories** · ≈ 56 BE + 16 FE nominal days · **Owners:** Backend BE-2 · Frontend FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
+
+**Roadmap**
+
+- **Backend (BE-2):** `B-01` → (21 in parallel: `B-02` … `H-01`) → (8 in parallel: `D-08` … `H-02`)
+- **↓ unlocks frontend after backend step 2**
+- **Frontend (FE-2):** `MST-FE-003` → `MST-FE-004` → `MST-FE-001` ‖ `MST-FE-002`
+
+| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | — |
+| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟢 `B-07`, 🟢 `B-08`, 🟢 `B-09`, 🟡 `C-01`, 🟢 `C-02`, 🟡 `D-01`, 🟢 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟡 `D-06`, 🟢 `D-07`, 🟠 `E-01`, 🟡 `F-01`, 🟢 `G-02`, 🟢 `H-01` | — | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)<br>`H-01` → ⛔ BLOCKED-BY sample |
+| 3 | 🟢 `D-08`, 🟢 `D-09`, 🟢 `D-10`, 🟡 `G-01`, 🟢 `G-05`, 🟢 `G-06`, 🟢 `G-07`, 🟢 `H-02` | 🟢 `MST-FE-003` | `H-02` → ⛔ BLOCKED-BY sample |
+| 4 | — | 🟡 `MST-FE-004` | — |
+| 5 | — | 🟡 `MST-FE-001`, 🟡 `MST-FE-002` | — |
+
+### Story sequence
+
+> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
+
+| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
+|---|---|---|---|---|---|---|
+| 1 | 1 | 🟢 `B-01` — getMeasurementByIds data fetcher | Backend · BE-2 | None | every story in this domain (module scaffold) | No |
+| 2 | 2 | 🟢 `B-02` — getUnitsOfMeasure | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `H-02`, `MST-FE-003` | Yes |
+| 3 | 2 | 🟢 `B-03` — getThicknessUnitsOfMeasure | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-003` | Yes |
+| 4 | 2 | 🟢 `B-04` — getMeasurementSetStatus | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-001`, `MST-FE-003` | Yes |
+| 5 | 2 | 🟢 `B-05` — getSampleMeasurement data fetcher | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `H-02` | Yes |
+| 6 | 2 | 🟢 `B-06` — getMeasurementTemplates + getMeasuremen… | Backend · BE-2 | None | `D-08`, `G-01`, `G-05` | Yes |
+| 7 | 2 | 🟢 `B-07` — getSizeTemplates + getSizeCategories + … | Backend · BE-2 | None | `D-09`, `G-01`, `G-06` | Yes |
+| 8 | 2 | 🟢 `B-08` — getTightFits + getTightFitByIdAndVersio… | Backend · BE-2 | None | `D-10`, `G-01`, `G-07` | Yes |
+| 9 | 2 | 🟢 `B-09` — searchSparkSizes data fetcher | Backend · BE-2 | None | None | Yes |
+| 10 | 2 | 🟡 `C-01` — getMeasurements data fetcher | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-002` | Yes |
+| 11 | 2 | 🟢 `C-02` — getMeasurementsElastic data fetcher | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-002` | Yes |
+| 12 | 2 | 🟡 `D-01` — addMeasurement mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
+| 13 | 2 | 🟢 `D-02` — updateMeasurementAccess mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
+| 14 | 2 | 🟢 `D-03` — lockMeasurementSet mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-004` | Yes |
+| 15 | 2 | 🟢 `D-04` — unlockMeasurementSet mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-004` | Yes |
+| 16 | 2 | 🟢 `D-05` — updateMeasurementComponentStatus mutati… | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
+| 17 | 2 | 🟡 `D-06` — putSampleMeasurementSet mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-004` | Yes |
+| 18 | 2 | 🟢 `D-07` — deleteSampleMeasurementSet mutation | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | `MST-FE-004` | Yes |
+| 19 | 2 | 🟠 `E-01` — updateMeasurement — 2-step orchestrated… | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
+| 20 | 2 | 🟡 `F-01` — Implement Product.measurementSets | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
+| 21 | 2 | 🟢 `G-02` — SampleMeasurementSet field resolvers | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
+| 22 | 2 | 🟢 `H-01` — Contribute sampleMeasurement to the Sam… | Backend · BE-2 | `B-01` — getMeasurementByIds dat… | None | Yes |
+| 23 | 3 | 🟢 `D-08` — addMeasurementTemplate + updateMeasurem… | Backend · BE-2 | `B-06` — getMeasurementTemplates… | None | Yes |
+| 24 | 3 | 🟢 `D-09` — addSizeTemplate + updateSizeTemplate mu… | Backend · BE-2 | `B-07` — getSizeTemplates + getS… | None | Yes |
+| 25 | 3 | 🟢 `D-10` — addTightFit + updateTightFit mutations | Backend · BE-2 | `B-08` — getTightFits + getTight… | None | Yes |
+| 26 | 3 | 🟡 `G-01` — Measurement field resolvers | Backend · BE-2 | `B-01` — getMeasurementByIds dat…, `B-06` — getMeasurementTemplates…, `B-07` — getSizeTemplates + getS…, `B-08` — getTightFits + getTight… | `MST-FE-001`, `MST-FE-002` | Yes |
+| 27 | 3 | 🟢 `G-05` — MeasurementTemplate field resolvers | Backend · BE-2 | `B-06` — getMeasurementTemplates… | None | Yes |
+| 28 | 3 | 🟢 `G-06` — SizeTemplate field resolvers | Backend · BE-2 | `B-07` — getSizeTemplates + getS… | None | Yes |
+| 29 | 3 | 🟢 `G-07` — TightFit field resolvers | Backend · BE-2 | `B-08` — getTightFits + getTight… | `MST-FE-001`, `MST-FE-002` | Yes |
+| 30 | 3 | 🟢 `H-02` — SampleMeasurementSet.sample forward ref… | Backend · BE-2 | `B-02` — getUnitsOfMeasure, `B-05` — getSampleMeasurement da… | None | Yes |
+| 31 | 3 | 🟢 `MST-FE-003` — Migrate measurement master-data reads | Frontend · FE-2 | `B-02` — getUnitsOfMeasure, `B-03` — getThicknessUnitsOfMeas…, `B-04` — getMeasurementSetStatus | None | Yes |
+| 32 | 4 | 🟡 `MST-FE-004` — Migrate measurement mutations | Frontend · FE-2 | `D-03` — lockMeasurementSet muta…, `D-04` — unlockMeasurementSet mu…, `D-06` — putSampleMeasurementSet…, `D-07` — deleteSampleMeasurement… | None | No |
+| 33 | 5 | 🟡 `MST-FE-001` — Migrate measurement reads and retire hu… | Frontend · FE-2 | `B-01` — getMeasurementByIds dat…, `B-04` — getMeasurementSetStatus, `G-01` — Measurement field resol…, `G-07` — TightFit field resolvers | None | Yes |
+| 34 | 5 | 🟡 `MST-FE-002` — Migrate measurement list/search reads | Frontend · FE-2 | `B-01` — getMeasurementByIds dat…, `C-01` — getMeasurements data fe…, `C-02` — getMeasurementsElastic …, `G-01` — Measurement field resol…, `G-07` — TightFit field resolvers | None | Yes |
+
+**Backend critical path:** `B-01` → `B-06` → `D-08`.
+**Frontend cutover flow:** `MST-FE-003` → `MST-FE-004` → `MST-FE-001` → `MST-FE-002`.
+
+**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
+
+---
+
+## Packaging
+
+> Parallel with the other small domains · **23 BE + 5 FE stories** · ≈ 54 BE + 27 FE nominal days · **Owners:** Backend BE-2 · Frontend FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
+
+**Roadmap**
+
+- **Backend (BE-2):** `B-01` → (22 in parallel: `B-02` … `G-05`)
+- **↓ unlocks frontend after backend step 2**
+- **Frontend (FE-2):** `PKG-FE-002` → `PKG-FE-004` → `PKG-FE-001` ‖ `PKG-FE-003` ‖ `PKG-FE-005`
+
+| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | — | — |
+| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟢 `B-06`, 🟡 `C-01`, 🟡 `D-01`, 🟢 `D-02`, 🟡 `D-03`, 🟡 `D-04`, 🟢 `D-05`, 🟢 `D-06`, 🟢 `D-07`, 🟡 `D-08`, 🟢 `D-09`, 🟠 `E-01`, 🟢 `F-01`, 🟡 `G-01`, 🟢 `G-02`, 🟡 `G-03`, 🟠 `G-04`, 🟡 `G-05` | — | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module) |
+| 3 | — | 🟢 `PKG-FE-002` | — |
+| 4 | — | 🟡 `PKG-FE-004` | — |
+| 5 | — | 🟡 `PKG-FE-001`, 🟡 `PKG-FE-003`, 🔴 `PKG-FE-005` | — |
+
+### Story sequence
+
+> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
+
+| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
+|---|---|---|---|---|---|---|
+| 1 | 1 | 🟢 `B-01` — getPackagings | Backend · BE-2 | None | every story in this domain (module scaffold) | No |
+| 2 | 2 | 🟢 `B-02` — getPackagingById | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-001` | Yes |
+| 3 | 2 | 🟢 `B-03` — getDielines | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-003` | Yes |
+| 4 | 2 | 🟢 `B-04` — getPackagingFieldValuesByType | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-002` | Yes |
+| 5 | 2 | 🟢 `B-05` — getDielineEvaluationStatuses | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-003` | Yes |
+| 6 | 2 | 🟢 `B-06` — getCountries | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-002` | Yes |
+| 7 | 2 | 🟡 `C-01` — getPackagingElastic | Backend · BE-2 | `B-01` — getPackagings | None | Yes |
+| 8 | 2 | 🟡 `D-01` — addPackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
+| 9 | 2 | 🟢 `D-02` — evaluateDieline | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-003` | Yes |
+| 10 | 2 | 🟡 `D-03` — bulkAddPackagings | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
+| 11 | 2 | 🟡 `D-04` — bulkUpdatePackagings | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
+| 12 | 2 | 🟢 `D-05` — exportPackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
+| 13 | 2 | 🟢 `D-06` — lockPackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
+| 14 | 2 | 🟢 `D-07` — unlockPackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
+| 15 | 2 | 🟡 `D-08` — cloneFilesForDielines | Backend · BE-2 | `B-01` — getPackagings | None | Yes |
+| 16 | 2 | 🟢 `D-09` — updatePackagingComponentStatus | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-004` | Yes |
+| 17 | 2 | 🟠 `E-01` — updatePackaging | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-005` | Yes |
+| 18 | 2 | 🟢 `F-01` — Product packaging links | Backend · BE-2 | `B-01` — getPackagings | None | Yes |
+| 19 | 2 | 🟡 `G-01` — access + businessPartner + participantD… | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-001` | Yes |
+| 20 | 2 | 🟢 `G-02` — createdBy + updatedBy + dielineEvaluato… | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-001` | Yes |
+| 21 | 2 | 🟡 `G-03` — product + workspaces + attachments | Backend · BE-2 | `B-01` — getPackagings | None | Yes |
+| 22 | 2 | 🟠 `G-04` — suggestedRetailPriceByDPCI + waveDescri… | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-001` | Yes |
+| 23 | 2 | 🟡 `G-05` — Dieline + PrinterDieline + PackagingEle… | Backend · BE-2 | `B-01` — getPackagings | `PKG-FE-003` | Yes |
+| 24 | 3 | 🟢 `PKG-FE-002` — Migrate packaging master-data reads and… | Frontend · FE-2 | `B-04` — getPackagingFieldValues…, `B-06` — getCountries | None | No |
+| 25 | 4 | 🟡 `PKG-FE-004` — Migrate packaging simple mutations and … | Frontend · FE-2 | `D-01` — addPackaging, `D-03` — bulkAddPackagings, `D-04` — bulkUpdatePackagings, `D-05` — exportPackaging, `D-06` — lockPackaging, `D-07` — unlockPackaging, `D-09` — updatePackagingComponen… | None | No |
+| 26 | 5 | 🟡 `PKG-FE-001` — Migrate packaging reads | Frontend · FE-2 | `B-01` — getPackagings, `B-02` — getPackagingById, `G-01` — access + businessPartne…, `G-02` — createdBy + updatedBy +…, `G-04` — suggestedRetailPriceByD… | None | Yes |
+| 27 | 5 | 🟡 `PKG-FE-003` — Migrate dieline flows | Frontend · FE-2 | `B-03` — getDielines, `B-05` — getDielineEvaluationSta…, `D-02` — evaluateDieline, `G-05` — Dieline + PrinterDielin… | None | Yes |
+| 28 | 5 | 🔴 `PKG-FE-005` — Migrate updatePackaging saga handling a… | Frontend · FE-2 | `E-01` — updatePackaging | None | Yes |
+
+**Backend critical path:** `B-01` → `B-02`.
+**Frontend cutover flow:** `PKG-FE-002` → `PKG-FE-004` → `PKG-FE-001` → `PKG-FE-003` → `PKG-FE-005`.
+
+**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
+
+---
+
+## Claims
+
+> First cross-subgraph cutover (`spark-claims`) · **20 BE + 4 FE stories** · ≈ 50 BE + 22 FE nominal days · **Owners:** Backend BE-1 · Frontend FE-2. Stories in the same step are independent and parallelize; a FE story never starts before every BE story it depends on is delivered.
+
+**Roadmap**
+
+- **Backend (BE-1):** `B-01` → (18 in parallel: `B-02` … `H-02`) → `G-03`
+- **↓ unlocks frontend after step 1 (no backend dependency)**
+- **Frontend (FE-2):** `CLAIM-FE-001` → `CLAIM-FE-003` → `CLAIM-FE-002` ‖ `CLAIM-FE-004`
+
+| Step | 🛠️ Backend — build | 🖥️ Frontend — cutover | Gates / notes |
+|---|---|---|---|
+| 1 | 🟢 `B-01` | 🟡 `CLAIM-FE-001` | — |
+| 2 | 🟢 `B-02`, 🟢 `B-03`, 🟢 `B-04`, 🟢 `B-05`, 🟡 `C-01`, 🟡 `C-02`, 🟡 `D-01`, 🟡 `D-02`, 🟢 `D-03`, 🟢 `D-04`, 🟢 `D-05`, 🟠 `E-01`, 🟡 `G-01`, 🟡 `G-02`, 🟡 `G-04`, 🟢 `G-06`, 🟡 `H-01`, 🟢 `H-02` | — | `E-01` → 🔬 SPIKE-01 · ⛔ BLOCKED-BY product (PRODUCT-BE-E-00, the shared WriteSaga module)<br>`H-01` → ⛔ BLOCKED-BY product (PRODUCT-BE-F-14, product-side stub alignment; also waits on the Product entity existing, plm-product Phase A)<br>`H-02` → ⛔ BLOCKED-BY product (PRODUCT-BE-E-03, TechPack facade; also PRODUCT-BE-F-14 contract alignment) |
+| 3 | 🟠 `G-03` | 🟡 `CLAIM-FE-003` | — |
+| 4 | — | 🔴 `CLAIM-FE-002`, 🔴 `CLAIM-FE-004` | — |
+
+### Story sequence
+
+> One row per story in implementation order. `Depends On`/`Blocks` reference story ids + names (never order numbers). Every operation story also implicitly requires the `B-01` module-init scaffold — not repeated per row. **Parallelizable = Yes** means other stories share its step.
+
+| Order | Step | Story | Team · Owner | Depends On | Blocks | ∥ |
+|---|---|---|---|---|---|---|
+| 1 | 1 | 🟢 `B-01` — getClaims | Backend · BE-1 | None | every story in this domain (module scaffold) | Yes |
+| 2 | 1 | 🟡 `CLAIM-FE-001` — Split the claim fragment factory and re… | Frontend · FE-2 | None | `CLAIM-FE-002` | Yes |
+| 3 | 2 | 🟢 `B-02` — getClaimByIds | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
+| 4 | 2 | 🟢 `B-03` — getCommunicationChannels | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
+| 5 | 2 | 🟢 `B-04` — getAllClaimsAbout | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
+| 6 | 2 | 🟢 `B-05` — getClaimExports | Backend · BE-1 | `B-01` — getClaims | None | Yes |
+| 7 | 2 | 🟡 `C-01` — searchGuestFacing | Backend · BE-1 | `B-01` — getClaims | None | Yes |
+| 8 | 2 | 🟡 `C-02` — getClaimsElastic | Backend · BE-1 | `B-01` — getClaims | None | Yes |
+| 9 | 2 | 🟡 `D-01` — createClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
+| 10 | 2 | 🟡 `D-02` — bulkUpdateClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
+| 11 | 2 | 🟢 `D-03` — requestClaimExport | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
+| 12 | 2 | 🟢 `D-04` — lockClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
+| 13 | 2 | 🟢 `D-05` — unlockClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-003` | Yes |
+| 14 | 2 | 🟠 `E-01` — updateClaim | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-004` | Yes |
+| 15 | 2 | 🟡 `G-01` — access + currentUserPermissions + parti… | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
+| 16 | 2 | 🟡 `G-02` — createdBy + updatedBy + businessPartner… | Backend · BE-1 | `B-01` — getClaims | `CLAIM-FE-002` | Yes |
+| 17 | 2 | 🟡 `G-04` — workspaces + ClaimSubstantiate.substant… | Backend · BE-1 | `B-01` — getClaims | None | Yes |
+| 18 | 2 | 🟢 `G-06` — Shared value-type alignment | Backend · BE-1 | `B-01` — getClaims | `G-03` | Yes |
+| 19 | 2 | 🟡 `H-01` — Product.claims | Backend · BE-1 | `B-01` — getClaims | None | Yes |
+| 20 | 2 | 🟢 `H-02` — ResourcesCount.claims | Backend · BE-1 | `B-01` — getClaims | None | Yes |
+| 21 | 3 | 🟠 `G-03` — product + parentDetails | Backend · BE-1 | `B-01` — getClaims, `G-06` — Shared value-type align… | `CLAIM-FE-002` | Yes |
+| 22 | 3 | 🟡 `CLAIM-FE-003` — Migrate claim simple mutations and expo… | Frontend · FE-2 | `D-01` — createClaim, `D-02` — bulkUpdateClaim, `D-03` — requestClaimExport, `D-04` — lockClaim, `D-05` — unlockClaim | None | Yes |
+| 23 | 4 | 🔴 `CLAIM-FE-002` — Migrate claim reads | Frontend · FE-2 | `B-01` — getClaims, `B-02` — getClaimByIds, `B-03` — getCommunicationChannels, `B-04` — getAllClaimsAbout, `G-01` — access + currentUserPer…, `G-02` — createdBy + updatedBy +…, `G-03` — product + parentDetails, `CLAIM-FE-001` — Split the claim fragmen…, `PRODUCT-BE-H-06` | None | Yes |
+| 24 | 4 | 🔴 `CLAIM-FE-004` — Migrate updateClaim multi-step write ha… | Frontend · FE-2 | `E-01` — updateClaim | None | Yes |
+
+**Backend critical path:** `B-01` → `G-06` → `G-03`.
+**Frontend cutover flow:** `CLAIM-FE-001` → `CLAIM-FE-003` → `CLAIM-FE-002` → `CLAIM-FE-004`.
+
+**Domain done when:** the last FE story is flipped and stable; BE F/G stories (federation stitches, field-resolver parity) may trail post-flip.
+
+---
+
+*Project plan · generated 2026-07-24 by generate_project_plan.py.*

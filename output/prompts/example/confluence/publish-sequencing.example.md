@@ -43,7 +43,7 @@ FORMATTING AND CONTENT ARE THE CONTRACT — no data loss, no format loss, full s
 - Story IDs (e.g. PRODUCT-BE-B-01) and FE story IDs (e.g. WATCHLIST-FE-001) stay as plain text — do
   not try to auto-convert them into Confluence smart links.
 - Any relative link to another file in this repo should become a GitHub link:
-  https://github.com/myorg/spark-migration/blob/main/<path> — never a local file path.
+  https://github.com/target-corp/saritha-mathai-repositories-research/blob/main/<path> — never a local file path.
 
 Before publishing, do a dry run: tell me the target title, parent, and a section-by-section manifest
 (number of domain sections, total table row count across all story-sequence tables, heading count) so
